@@ -30,20 +30,20 @@
 // internal variables
 //----------------------------------------------------------
 
-volatile uint32_t realTime; // real time counter, in ms
+volatile uint32_t jiffies; // real time counter, in ms
 
-//----------------------------------------------------------
-// function implementations
-//----------------------------------------------------------
-uint32_t getRealTime() {
-    uint32_t ret;
-    atomic_read(realTime, ret);
-    return ret;
-}
+// //----------------------------------------------------------
+// // function implementations
+// //----------------------------------------------------------
+// uint32_t getRealTime() {
+//     uint32_t ret;
+//     atomic_read(realTime, ret);
+//     return ret;
+// }
 
 void incRealtime(uint32_t inc)
 {
-    atomic_inc(realTime, inc);
+    atomic_inc(jiffies, inc);
 }
 
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
@@ -54,7 +54,7 @@ ALARM_TIMER_INTERRUPT()
     if (ALARM_TIMER_EXPIRED())
     {
         // increment the 'real time' value
-        ++realTime;
+        ++jiffies;
 
 #ifdef USE_ALARMS
         if (getNextAlarm) {

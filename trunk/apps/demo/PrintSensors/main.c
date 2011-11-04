@@ -35,4 +35,3 @@ void appMain(void)
         msleep(1000); // sleep one second
     }
 }
-
