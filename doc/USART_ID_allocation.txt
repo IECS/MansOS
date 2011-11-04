@@ -1,0 +1,13 @@
+Serial IDS on Tmote Sky / generic MSP430:
+
+USART0:
+* CC2420 radio
+  (CC2420_USART_ID in sources)
+* external flash, i.e. m25p80 chip 
+  (M25P80_USART_ID in sources)
+* GPS on lynxmote
+
+USART1:
+* debug output: USART1
+  (dprint.h file in sources)
+* SD card on lynxmote: USART1

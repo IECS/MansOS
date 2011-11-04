@@ -1,0 +1,132 @@
+Sanjemtie dati, kad nekas netiek raidiits:
+
+Sheit vieninieki ir 434 biti no 2048 - aptuveni piekta dalja.
+Piektaa sestaa dalja bitu ir tipisks rezultaats.
+Spriezhot peec testiem ar LEDu izmantoshanu, bez drukaashanas uz seriaalo portu,
+inverteetu samplju skaits kljuust daudz lielaaks,
+ja seriaalais ports nav netiek izmantots.
+(Tas ir, ja es nebuutu piesleedzies pa minicom, situaacija buutu sliktaaka).
+Datos redzams zinaams paterns, varbuut to ir veerts izmantot.
+
+00 00 00 f8 0f 00 00 00 f8 0f 00 00 00 c8 07 00
+00 00 fe 07 00 00 00 ff 01 00 00 80 ff 00 00 00
+80 7f 00 00 00 c0 7f 00 00 00 e0 3f 00 00 00 e0
+1f 00 00 00 f0 0f 00 00 00 f8 0f 00 00 00 f8 07
+00 00 00 fc 03 00 00 00 fe 01 00 00 00 ff 01 00
+00 00 ff 00 00 00 80 7f 00 00 00 80 7f 00 00 00
+e0 3f 00 00 00 c0 3f 00 00 00 e0 1f 00 00 00 f0
+0f 00 00 00 f8 07 00 00 00 fc 03 00 00 00 fe 03
+00 00 00 fe 01 00 00 00 ff 01 00 00 00 ff 00 00
+00 80 7f 00 00 00 c0 7f 00 00 00 e0 3f 00 00 00
+e0 1f 00 00 00 f0 0f 00 00 00 f8 0f 00 00 00 fc
+07 00 00 00 fc 03 00 00 00 fe 01 00 00 00 ff 00
+00 00 80 ff 00 00 00 80 7f 00 00 00 c0 7f 00 00
+00 c0 3f 00 00 00 c0 3f 00 00 00 f0 1f 00 00 00
+f0 0f 00 00 00 f8 07 00 00 00 fc 07 00 00 00 fc
+01 00 00 00 ff 00 00 00 00 ff 00 00 00 80 7f 00
+
+
+Sanjemtie dati, kad tiek raidiita 1010101010101 sekvence ar bitrate ~10000 bps:
+
+3c 3c 1f 0f 0f 0f 8f 87 87 87 87 c7 83 c3 c3 c3
+e3 e0 e0 e0 e0 70 70 70 78 70 30 3c 3c 3c 3c 1c
+1e 1e 1e 1e 0e 0f 0f 0f 07 83 83 83 c3 c3 e3 e1
+e1 e1 e1 f1 f0 f0 f0 f0 78 78 38 78 38 3e 1e 1e
+1e 1e 0f 0f 0f 0f 0f 87 87 87 87 83 c1 c1 c1 c1
+c1 e0 e0 f0 f0 70 78 78 78 78 38 3c 3c 3e 3c 1c
+0f 0f 1f 0f 8f 87 87 87 87 c7 83 c3 c3 c1 e1 e0
+e0 e0 e0 70 70 70 70 78 38 3c 3c 3c 3c 1c 1e 1e
+1e 1e 0f 0f 07 0f 87 87 83 83 c3 c3 c3 e1 e1 e1
+e1 f1 f0 f0 f0 f0 78 78 3c 38 3c 1e 1e 1e 1e 1e
+0f 0f 0f 0f 0f 87 87 87 83 83 c1 c1 c1 c1 c1 e0
+f0 f0 f0 70 78 78 78 78 38 3c 3c 3c 3c 3e 0f 0f
+0f 0f 0f 87 87 87 87 c7 83 c3 c3 c3 e3 e0 e0 e0
+e0 70 70 70 70 78 38 3c 3c 3c 3c 1c 1e 1e 1e 1e
+0e 0f 0f 07 07 83 c3 83 c3 c3 e3 e1 e1 e1 e1 f1
+f0 f0 f0 70 78 78 38 38 3c 1e 1e 1e 1e 1e 0f 0f
+
+
+Sanjemtie dati, kad tiek raidiita 1010101010101 sekvence ar bitrate ~1000 bps:
+7f 00 00 00 00 e0 ff ff ff ff 07 00 00 00 00 fe          
+ff ff ff 3f 00 00 00 00 e0 ff ff ff ff 01 00 00          
+00 00 ff ff ff ff 1f 00 00 00 00 f0 ff ff ff ff
+01 00 00 00 80 ff ff ff ff 0f 00 00 00 00 f8 ff
+ff ff ff 00 00 00 00 c0 ff ff ff ff 0f 00 00 00
+00 fc ff ff ff 7f 00 00 00 00 c0 ff ff ff ff 07
+00 00 00 00 fe ff ff ff 3f 00 00 00 00 c0 ff ff
+ff ff 07 00 00 00 00 fe ff ff ff 3f 00 00 00 00
+e0 ff ff ff ff 03 00 00 00 00 ff ff ff ff 1f 00
+00 00 00 f0 ff ff ff ff 01 00 00 00 80 ff ff ff
+ff 1f 00 00 00 00 f8 ff ff ff ff 00 00 00 00 80
+ff ff ff ff 0f 00 00 00 00 fc ff ff ff 7f 00 00
+00 00 c0 ff ff ff ff 07 00 00 00 00 fe ff ff ff
+3f 00 00 00 00 e0 ff ff ff ff 07 00 00 00 00 fe
+ff ff ff 3f 00 00 00 00 e0 ff ff ff ff 03 00 00
+00 00 ff ff ff ff 3f 00 00 00 00 f0 ff ff ff ff
+
+
+Sanjemtie dati, kad tiek raidiits nepaartaukts vieninieks:
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff fc ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+7f fc ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+
+
+Sanjemtie dati, kad tiek raidiits nepaartaukts vieninieks, bez raidiitaaja antenas:
+Sheit ir inverteeti 165 biti (~8%)
+fe ff ff ff 1f fe bf ff ff 9f ff cf ff ff 8f ff
+ef ff ff 9f ff e7 ff ff c1 ff fb ff ff e1 ff ff
+ff ff e0 ff f8 ff 3f f8 ff fe ff 3f fc ff ff ff
+3f fe ff ff ff 07 fe bf ff ff 07 ff 9f ff ff 83
+ff c7 ff ff c1 ff ff ff ff ff ff f1 ff ff ff ff
+ff ff 7f f0 ff f8 ff ff ff 7f fe ff ff ff 7f fe
+ff ff ff 3f ff ff 07 ff ff ff ff ff ff 8f ff ff
+ff ff ff ff ff ff ff e7 ff ff ff ff f9 ff ff ff
+ff fc ff 9f ff ff ff ff ff ff 7f ff ff ff ff 3f
+ff ff ff ff ff ff ff fd ff ef ff ff ff ff e7 ff
+ff ff ff e7 ff ff ff ff f0 ff bf ff ff f8 ff df
+ff ff fe ff ef ff 7f ff ff ff ff bf ff ff f3 ff
+ff ff ff ff ff ff ff ff fd ff e7 ff ff ff ff f7
+ff 7f fc ff f1 ff df ff ff f8 ff df ff ff f8 ff
+ff ff ff ff ff ff ff 1f fe ff ff ff 1f ff ff fd
+ff df ff ff fc ff ff ff ff ff ff e7 ff 7f ff ff
+
+
+Sanjemtie dati, kad tiek raidiits nepaartaukts vieninieks, bez raidiitaaja antenas,
+un bez uztveereeja antenas:
+Sheit ir inverteeti tikai 69 biti.
+(Jaa, rezultaats ir labaaks nekaa ar antenu, bet taapeec, ka pakustinaaju uz galda esosho sisteemu.
+Pret taadu kustinaashanu, rokas pielikshanu utt. taa ir dadudz juutiigaaka.
+Tomeer izmnjemot antenu pie taadas datu kvalitaates kaa ieprieksheeja piemeeraa redzams,
+ka rezutaati kluust daduz sliktaaki.)
+
+
+ff 8f ff ff ff f9 ff bf ff ff 7f ff ff ff 3f f2
+ff ff ff 87 ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff f9 ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff 1f fc 3f d0 ff ff
+ff ff ff ff ff ff e1 ff ff ff f8 ff ff ff ff ff
+ff ff ff ff ff ff 9f ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff 8f ff ff ff ff
+ff ff ff ff ff fb ff ff ff ff df ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff e3 ff
+ff ff ff ff ff ff ff ff ff ff ff fe ff ff ff ff
+ff ff f7 0f ff ff ff ff cf ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ff ff ff ff df ff
+ff ff 5f ff ff ff ff ff ff ff ff ff ff ff ff ff
+ff ff ff ff ff ff ff ff ff ff ef ff ff ff ff ff
+83 ff ff ff fc ff ff ff ff ff ff ff ff c7 ff ff
+

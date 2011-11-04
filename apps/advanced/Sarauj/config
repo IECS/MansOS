@@ -1,0 +1,7 @@
+#
+# Application specific config file
+#
+
+#USE_THREADS=y
+USE_ADC = y
+USE_I2C = y

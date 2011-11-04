@@ -1,0 +1,18 @@
+INCLUDES = ../../../mos/lib/gps
+
+all: gpstest run
+
+gpstest: gps.o gpstest.o
+	g++ -o gpstest gps.o gpstest.o -I
+
+gps.o: gps.c gps.h
+	g++ -o gps.o -c gps.c-I $(INCLUDES)
+
+gpstest.o: gpstest.c
+	g++ -o gpstest.o -c gpstest.c -I $(INCLUDES)
+
+run: gpstest
+	./gpstest
+
+clean:
+	rm -rf gpstest *.o

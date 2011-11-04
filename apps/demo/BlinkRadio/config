@@ -1,0 +1,12 @@
+#
+# Application specific config file
+#
+
+USE_RADIO=y
+USE_LEDS=y
+USE_PRINT=y
+
+CONST_RSSI_UPPER_BOUND=30
+CONST_RSSI_LOWER_BOUND=-70
+
+CONST_TX_POWER=31
