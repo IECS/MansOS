@@ -76,8 +76,8 @@ uint_t USARTSetReceiveHandle(uint8_t id, USARTCallback_t cb);
  *              When len is zero, no packet size is checked, only on newline
  *              reception the callback is called.
  */
-uint_t USARTSetPacketReceiveHandle(uint8_t id, USARTCallback_t cb, void *buffer,
-        uint16_t len);
+uint_t USARTSetPacketReceiveHandle(uint8_t id, USARTCallback_t cb,
+        void *buffer, uint16_t len);
 
 // Implemented in HPL
 uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf);

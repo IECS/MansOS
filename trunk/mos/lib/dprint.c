@@ -70,7 +70,7 @@ void radioPrint( char* str )
 
 void serialPrint(char* str)
 {
-    USARTSendString( 1,  str);
+    USARTSendString(PRINTF_USART_ID,  str);
 }
 
 #endif // !DPRINT_TO_RADIO

@@ -25,54 +25,113 @@
 // PC USART
 //
 
-#include <kernel/defines.h>
+#include <hil/usart.h>
 #include <string.h>
 #include <stdio.h>
+#include <pthread.h>
+#include <unistd.h>
 #include "usart_hal.h"
-
-
-//===========================================================
-// Data types and constants
-//===========================================================
-void (*usartRecvCb)(uint8_t);
 
 //===========================================================
 // Variables
 //===========================================================
-void (*usartRecvCb)(uint8_t);
+
+USARTCallback_t usartRecvCb[USART_COUNT];
+
+static bool txEnabled[USART_COUNT];
+static bool rxEnabled[USART_COUNT];
+static pthread_t rxThread;
+static void *rxHandler(void *dummy);
 
 //===========================================================
 // Procedures
 //===========================================================
 
-uint8_t USARTInit( uint8_t id, uint32_t speed, uint8_t conf)
+uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf)
 {
     return 0;
 }
 
-uint8_t USARTSendByte( uint8_t id, uint8_t data)
+uint_t USARTSendByte( uint8_t id, uint8_t data)
 {
-    printf("%c", data);
+    if (id >= USART_COUNT) return (uint_t)-1u;
+
+    if (txEnabled[id]) {
+        printf("%c", data);
+        fflush(stdout);
+    }
     return 0;
 }
 
-
-uint8_t USARTEnableTX( uint8_t id )
+uint_t USARTEnableTX( uint8_t id )
 {
+    if (id >= USART_COUNT) return (uint_t)-1u;
+
+    txEnabled[id] = true;
     return 0;
 }
 
-uint8_t USARTDisableTX( uint8_t id )
+uint_t USARTDisableTX( uint8_t id )
 {
+    if (id > USART_COUNT) return (uint_t)-1u;
+
+    txEnabled[id] = false;
     return 0;
 }
 
-uint8_t USARTEnableRX( uint8_t id )
+uint_t USARTEnableRX( uint8_t id )
 {
+    if (id >= USART_COUNT) return (uint_t)-1u;
+
+    if (!rxEnabled[id]) {
+        rxEnabled[id] = true;
+        pthread_create(&rxThread, NULL, rxHandler, (void *) (uint32_t) id);
+    }
     return 0;
 }
 
-uint8_t USARTDisableRX( uint8_t id )
+uint_t USARTDisableRX( uint8_t id )
 {
+    if (id > USART_COUNT) return (uint_t)-1u;
+
+    if (rxEnabled[id]) {
+        rxEnabled[id] = false;
+        pthread_join(rxThread, NULL);
+    }
     return 0;
+}
+
+// simulate serial rx in a separate thread
+static void *rxHandler(void *arg)
+{
+    uint8_t id = (uint8_t) (uint32_t) arg;
+
+    while (rxEnabled[id]) {
+        fd_set rfds;
+        struct timeval tv;
+        int ret;
+
+        FD_ZERO(&rfds);
+        FD_SET(0, &rfds);
+
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+
+        ret = select(1, &rfds, NULL, NULL, &tv);
+        if (ret == -1) {
+            perror("rxHandler select");
+            break;
+        }
+
+        if (FD_ISSET(0, &rfds)) {
+            char c = 0;
+            ssize_t ret = read(0, &c, 1);
+            if (ret < 0) {
+                perror("rxHandler read");
+                break;
+            }
+            if (usartRecvCb[id]) usartRecvCb[id](c);
+        }        
+    }
+    pthread_exit(NULL);
 }
