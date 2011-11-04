@@ -34,7 +34,7 @@
 SOURCES = main.c
 
 # Module is the name of the main module buit by this makefile
-APPMOD = AdcTest
+APPMOD = PrintADC
 
 # --------------------------------------------------------------------
 # Set the key variables

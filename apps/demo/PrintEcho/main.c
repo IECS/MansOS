@@ -29,18 +29,36 @@
 
 #include "stdmansos.h"
 
-char buffer[255];
+#define PROMPT "$ "
 
-void usartReceive(uint8_t length) {
-    PRINTF("%s", buffer);
-    if (buffer[length - 1] != '\n') {
-        // print newline as well
-        PRINT("\n");
+void usartReceive(uint8_t byte) {
+    static uint16_t bytesReceived;
+    static char buffer[255];
+
+    // echo the byte back
+    USARTSendByte(PRINTF_USART_ID, byte);
+
+    // store it in the buffer
+    buffer[bytesReceived++] = byte;
+
+    if (byte == '\n' || byte == '\r' || bytesReceived == sizeof(buffer) - 1) {
+        buffer[bytesReceived] = 0;
+        PRINTF("\n%s", buffer);
+        if (byte != '\n') {
+            // print newline as well
+            PRINT("\n");
+        }
+        bytesReceived = 0; // reset reception
+        PRINT(PROMPT);
     }
 }
 
+
 void appMain(void)
 {
-    USARTSetPacketReceiveHandle(PRINTF_USART_ID, usartReceive,
-            (uint8_t *)buffer, sizeof(buffer));
+    USARTSetReceiveHandle(PRINTF_USART_ID, usartReceive);
+
+    mdelay(1000);
+    PRINTF("Type your text here, press enter, and the mote will echo it back\n");
+    PRINT(PROMPT);
 }

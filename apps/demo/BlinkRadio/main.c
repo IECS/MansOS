@@ -56,7 +56,7 @@ uint8_t rxOk;
 
 void rcvRadio(void)
 {
-    static uint8_t buffer[130];
+    static uint8_t buffer[RADIO_MAX_PACKET];
     uint16_t len;
     len = radioRecv(buffer, sizeof(buffer));
     ++rxOk;

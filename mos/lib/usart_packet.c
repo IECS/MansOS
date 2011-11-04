@@ -23,6 +23,8 @@
 
 #include <hil/usart.h>
 
+#include <lib/dprint.h>
+
 //===========================================================
 // Data types and constants
 //===========================================================
@@ -61,7 +63,7 @@ void handleUsartByte(uint8_t byte) {
         // store byte
         packetBuffer[bytesReceived] = byte;
         ++bytesReceived;
-        if (byte == '\n' || bytesReceived == bufferSize) {
+        if (byte == '\n' || byte == '\r' || bytesReceived == bufferSize) {
             packetBuffer[bytesReceived] = 0;
             packetHandler(bytesReceived);
             bytesReceived = 0; // reset reception
