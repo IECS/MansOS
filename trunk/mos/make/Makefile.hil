@@ -1,0 +1,138 @@
+#-*-Makefile-*- vim:syntax=make
+# /*
+#  * "Copyright (c) 2008  Leo Selavo and the contributors."
+#  *
+#  * Redistribution and use in source and binary forms, with or without
+#  * modification, are permitted provided that the following conditions
+#  * are met:
+#  * 1. Redistributions of source code must retain the above copyright
+#  *    notice, this list of conditions and the following disclaimer.
+#  * 2. Redistributions in binary form must reproduce the above copyright
+#  *    notice, this list of conditions and the following disclaimer in the
+#  *    documentation and/or other materials provided with the distribution.
+#  * 3. No names of the contributors  
+#  *    may be used to endorse or promote products derived from this software
+#  *    without specific prior written permission.
+#  *
+#  * THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS ``AS IS'' AND
+#  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  * ARE DISCLAIMED.  IN NO EVENT SHALL THE CONTRIBUTORS BE LIABLE
+#  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+#  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+#  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+#  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+#  * SUCH DAMAGE.
+#  */
+
+#============================================================================
+#	Platform-independent Hardware Interface Layer - HIL
+#============================================================================
+
+#===== Component locations =====
+PDFS      = /mos/hil/fs
+NET       = $(MOS)/net
+
+#===== Sources =====
+
+PSOURCES += $(MOS)/hil/mem.c
+PSOURCES += $(MOS)/hil/spi.c
+PSOURCES += $(MOS)/hil/errors.c
+PSOURCES-$(USE_SERIAL) += $(MOS)/hil/usart.c
+PSOURCES-$(USE_ADC) += $(MOS)/hil/adc.c
+PSOURCES-$(USE_LEDS) += $(MOS)/hil/leds.c
+PSOURCES-$(USE_SOFT_I2C) += $(MOS)/hil/i2c_soft.c
+PSOURCES-$(USE_SOFT_SPI) += $(MOS)/hil/spi_soft.c
+
+PSOURCES-$(USE_KERNEL_MAIN) += $(MOS)/kernel/kernelmain.c
+
+PSOURCES-$(USE_PRINT) += $(MOS)/lib/dprint.c
+PSOURCES-$(USE_ASSERT) += $(MOS)/lib/assert.c
+PSOURCES-$(USE_RANDOM) += $(MOS)/lib/random.c
+PSOURCES-$(USE_PRINT) += $(MOS)/lib/usart_packet.c
+PSOURCES-$(USE_GPS) += $(MOS)/lib/nmea/nmea.c
+PSOURCES-$(USE_GPS) += $(MOS)/lib/nmea/nmea_stream.c
+#PSOURCES += $(MOS)/lib/hash.c
+#PSOURCES += $(MOS)/lib/tosmsg.c
+PSOURCES-$(USE_CRC) += $(MOS)/lib/codec/crc.c
+
+PSOURCES-$(USE_NET) += $(NET)/socket.c
+PSOURCES-$(USE_NET) += $(NET)/comm.c
+PSOURCES-$(USE_NET) += $(NET)/mac.c
+PSOURCES-$(USE_NET) += $(NET)/queue.c
+
+PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/alarms.c
+PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/main.c
+PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/mutex.c
+PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/threads.c
+PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/timing.c
+
+ifeq ($(USE_EXP_THREADS),y)
+
+PSOURCES-$(USE_RADIO) += $(MOS)/kernel/threads/radio.c
+PSOURCES-$(USE_NET_STATS) += $(NET)/net-stats.c
+
+ifeq ($(CONST_MAC_PROTOCOL),MAC_PROTOCOL_NULL)
+PSOURCES-$(USE_NET) += $(NET)/mac/null.c
+else
+ifeq ($(CONST_MAC_PROTOCOL),MAC_PROTOCOL_CSMA)
+PSOURCES-$(USE_NET) += $(NET)/mac/csma.c
+else
+ifeq ($(CONST_MAC_PROTOCOL),MAC_PROTOCOL_CSMA_ACK)
+PSOURCES-$(USE_NET) += $(NET)/mac/csma-ack.c
+else
+#$(error "Error: no MAC protocol selected!")
+endif
+endif
+endif
+
+ifeq ($(BASE_STATION),y)
+CFLAGS += -DBASE_STATION=1
+PSOURCES-$(USE_NET) += $(NET)/routing/dv-bs.c
+else
+PSOURCES-$(USE_NET) += $(NET)/routing/dv.c
+endif
+
+else #! USE_EXP_THREADS
+
+PSOURCES += $(MOS)/hil/clock.c
+PSOURCES += $(MOS)/hil/sleep.c
+PSOURCES-$(USE_ALARMS) += $(MOS)/hil/alarm.c
+
+endif # ifeq($(USE_EXP_THREADS),y)
+
+PSOURCES-$(USE_NET) += $(MOS)/lib/buffer.c
+PSOURCES-$(USE_HD4478_LCD) += $(MOS)/chips/hd4478/hd4478.c
+PSOURCES-$(USE_SD_CARD) += $(MOS)/fs/sdcard/halayer.c
+PSOURCES-$(USE_SD_CARD) += $(MOS)/fs/sdcard/mmc.c
+PSOURCES-$(USE_SD_CARD) += $(MOS)/fs/sdcard/sdcard_hal.c
+PSOURCES-$(USE_SD_CARD) += $(MOS)/fs/sdcard/fatlib.c
+
+PSOURCES-$(USE_REPROGRAMMING) += $(MOS)/kernel/boot.c
+PSOURCES-$(USE_REPROGRAMMING) += $(MOS)/kernel/reprogramming.c
+
+PSOURCES-$(USE_SMP) += $(MOS)/smp/smp.c
+PSOURCES-$(USE_SMP) += $(MOS)/smp/proxy.c
+PSOURCES-$(USE_SMP) += $(MOS)/smp/codec.c
+PSOURCES-$(USE_SMP) += $(MOS)/smp/command.c
+
+ifneq ($(USE_NET),y)
+PSOURCES += $(MOS)/net/nonet.c
+endif
+
+PSOURCES-$(USE_FIBERS) += $(MOS)/kernel/coop_scheduler.c
+
+#PSOURCES-$(USE_EXT_FLASH) += $(MOS)/hil/fstream.c
+
+PSOURCES-$(USE_FS) += \
+	$(MOSROOT)$(PDFS)/core.c        \
+	$(MOSROOT)$(PDFS)/prefix.c      \
+	$(MOSROOT)$(PDFS)/dev/dev.c     \
+	$(MOSROOT)$(PDFS)/dev/leds.c    \
+	$(MOSROOT)$(PDFS)/dev/null.c    \
+	$(MOSROOT)$(PDFS)/block/block.c \
+	$(MOSROOT)$(PDFS)/block/meta.c  \
+	$(MOSROOT)$(PDFS)/block/alloc.c
+

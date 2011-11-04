@@ -1,0 +1,31 @@
+
+all:
+	(cd 0-Lockup; $(MAKE) telosb)
+	(cd 0-Overflow-User; $(MAKE) telosb)
+	(cd 0-Overflow-Kernel; $(MAKE) telosb)
+	(cd 1a-Blink-mdelay; $(MAKE) telosb)
+	(cd 1b-Blink-msleep; $(MAKE) telosb)
+	(cd 1c-Blink-Multi; $(MAKE) telosb)
+	(cd 2-Alarms; $(MAKE) telosb)
+	(cd 3-Locking; $(MAKE) telosb)
+	(cd 3-Locking-Multi; $(MAKE) telosb)
+	(cd 4-Exit; $(MAKE) telosb)
+	(cd 5-Radio; $(MAKE) telosb)
+	(cd 6-MAC; $(MAKE) telosb)
+	(cd 7-Sockets; $(MAKE) telosb)
+
+
+clean:
+	(cd 0-Lockup; $(MAKE) clean)
+	(cd 0-Overflow-User; $(MAKE) clean)
+	(cd 0-Overflow-Kernel; $(MAKE) clean)
+	(cd 1a-Blink-mdelay; $(MAKE) clean)
+	(cd 1b-Blink-msleep; $(MAKE) clean)
+	(cd 1c-Blink-Multi; $(MAKE) clean)
+	(cd 2-Alarms; $(MAKE) clean)
+	(cd 3-Locking; $(MAKE) clean)
+	(cd 3-Locking-Multi; $(MAKE) clean)
+	(cd 4-Exit; $(MAKE) clean)
+	(cd 5-Radio; $(MAKE) clean)
+	(cd 6-MAC; $(MAKE) clean)
+	(cd 7-Sockets; $(MAKE) clean)

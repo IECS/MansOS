@@ -1,0 +1,5 @@
+USE_GPS = y
+#USE_NET = y
+#USE_THREADS = y
+#USE_FLASH = y
+USE_RADIO = y

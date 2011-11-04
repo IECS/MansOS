@@ -1,0 +1,7 @@
+#
+# Application specific config file
+#
+
+USE_ADC = y
+USE_HD4478_LCD = y
+CFLAGS += -DUSE_DEFAULT_HD4478_PINOUT=y

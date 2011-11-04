@@ -1,0 +1,6 @@
+USE_ADC=y
+USE_RADIO=y
+USE_BEEPER=y
+
+# Change serial port speed
+CFLAGS = -DSERIAL_PORT_BAUDRATE=115200

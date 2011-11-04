@@ -1,0 +1,10 @@
+# Declare using of serial number
+USE_SERIAL_NUMBER=y
+
+# Declare using of DS2411 Silicon Serial Number(telosb)
+#CONST_SNUM_CHIP=SNUM_DS2411
+
+# Declare using of DS2401 Silicon Serial Number
+CONST_SNUM_CHIP=SNUM_DS2401
+
+#DEBUG=y

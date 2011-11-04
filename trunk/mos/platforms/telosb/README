@@ -1,0 +1,5 @@
+Support for TelosB and compatible sensor motes using the msp430F1611 processor.
+The following platforms have been tested in MansOS using this platform:
+ * TelosB
+ * Tmote Sky
+ * Tmote Mini 

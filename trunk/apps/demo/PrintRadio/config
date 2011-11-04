@@ -1,0 +1,7 @@
+#
+# Application specific config file
+#
+
+USE_RADIO=y
+
+DEBUG=y

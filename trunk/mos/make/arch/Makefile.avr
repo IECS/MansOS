@@ -1,0 +1,74 @@
+#-*-Makefile-*- vim:syntax=make
+#
+# Copyright (c) 2010 Leo Selavo and the contributors. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#  * Redistributions of source code must retain the above copyright notice,
+#    this list of  conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+##======= Compilers and options ===========
+
+CC = avr-gcc
+OBJCOPY = avr-objcopy
+CFLAGS += -DMCU_AVR=1 -mmcu=$(MCU_MODEL)
+CFLAGS += -DCPU_MHZ=$(CPU_MHZ)
+CFLAGS += -g -Wall
+
+# Set up the Atmega BSL port
+BSL ?= avrdude
+BSLCONFIG ?=
+
+PROGRAMMER = stk500v1 
+BAUDRATE ?= 57600
+
+include $(MAKEFILE_GCC)
+
+#===== Additional includes =====
+
+
+#===== Sources =====
+
+PSOURCES-$(USE_I2C) += $(MOS)/arch/avr/i2c_hal.c
+PSOURCES-$(USE_ADDRESSING) += $(MOS)/arch/avr/comm_hal.c
+PSOURCES-$(USE_WATCHDOG) += $(MOS)/arch/avr/watchdog.c
+
+PSOURCES-$(USE_SERIAL) += $(MOS)/chips/atmega/atmega_usart.c
+PSOURCES-$(USE_I2C) += $(MOS)/chips/atmega/atmega_2wire.c
+ifneq ($(USE_EXP_THREADS),y)
+PSOURCES += $(MOS)/chips/atmega/atmega_timers.c
+endif
+
+PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/avr/timing.c
+
+#===== Build and Upload Rules =====
+
+EXECUTABLE = $(OUTDIR)/image.ihex
+
+$(EXECUTABLE) : $(OUTDIR)/$(APPMOD).elf
+	$(Print) ""
+	$(OBJCOPY) -O ihex $(OUTDIR)/$(APPMOD).elf $(EXECUTABLE)
+
+upload : build
+	$(Print) ""
+	$(MOTELIST)
+	$(Print) ""
+	$(BSL) $(BSLCONFIG) -q -q -p $(MCU_MODEL) -c $(PROGRAMMER) -P $(BSLPORT) -b $(BAUDRATE) -D -Uflash:w:$(EXECUTABLE):i
+
+memdump : build
+	$(MEMDUMP) $(OUTDIR)/$(APPMOD).elf avr

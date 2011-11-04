@@ -1,0 +1,181 @@
+General design
+==============
+
+User interface
+--------------
+The user interface, declared and documented in <hil/fs.h>, specifies functions
+to open, read/write and close files, and as well to delete/rename files. The
+functions are similar to their POSIX counterparts. In particular, this means
+that fsRead() and fsWrite() can read/write less bytes than requested, and this
+will not indicate an error. A proper way to write a data buffer to a file could
+be:
+
+    /*
+     * Suppose "f" is a file open for appending and the array "data" of length
+     * DATA_LEN holds the data
+     */
+
+    fsOff_t written = 0;
+    while (written < DATA_LEN)
+    {
+        ssize_t ret = fsWrite(f, data + written, DATA_LEN - written);
+        if (ret < 1)
+        {
+            /* Handle write error here */
+        }
+        else
+            written += ret;
+    }
+
+See apps/tests/FSTest for more usage examples.
+
+Subsystems
+----------
+The filesystem consists of several subsystems and a core layer that coordinates
+their work. A subsystem provides its own implementation of operations on files
+and owns a so-called path prefix. Operations on files whose name contains the
+prefix are delegated to the corresponding subsystem, with the prefix stripped.
+Therefore, a subsystem can freely decide what operations on a file mean as long
+as they conform to the required interface, specified in <hil/fs/prefix.h>.
+Subsystems are registered at compile time in <hil/fs/subsystems.h>.
+
+As an example, opening "/dev/leds" will select the /dev subsystem and call its
+open function with filename "leds".
+
+Files withing a subsystem are identified by a pointer to void, whose meaning is
+subsystem-dependent and which is returned by subsystem's open(). The core layer
+stores a "file handle" for each open file. This structure contains two fields:
+
+    +-----------------------------------------------+
+    | Pointer to the subsystem operations structure |
+    | Unique identifier (pointer to void)           |
+    +-----------------------------------------------+
+
+Each operation on an open file simply invokes the corresponding function from
+the subsystem operations list with the identifier as one of the parameters.
+
+Device subsystem
+================
+The device subsystem, prefix "/dev/", is intended to provide file-like access
+to physical and logical devices. Each file in this subsystem has an associated
+device file driver, which carries out operations on this file. A device file
+driver has to provide functions to open, read, write and close the file (see
+<hil/fs/dev/dev.h>).
+
+Device file registration is compile time and is located in
+<hil/fs/dev/devices.h>.
+
+Block subsystem
+===============
+The block subsystem, prefix "/blk/", implements data storage in the data flash
+chip.
+
+Data organization in the flash
+------------------------------
+Flash memory has several distinctive properties: a) it can be generally only
+written once without a subsequent erase cycle; b) only whole blocks of memory,
+called segments, can be erased. It would seem natural to allocate full segments
+for files; but segments can be very large and such approach could result in
+space loss.
+
+A file therefore consists of a linear list of "data blocks", which are smaller
+than a segment. Data blocks are identified by their number. In a file, each
+data block except the very last one contains the number of the next block in
+chain.
+
+A data block is further divided in "data chunks", which are small enough to be
+loadable in RAM. Each data chunk can have a checksum of its content. Since it
+can be fully loaded and checked in one go, this allows to avoid first checking
+the data on flash and then re-reading it.
+
+Since data written to the flash can't be freely changed, only read and append
+modes are supported.
+
+Data block management
+---------------------
+To keep track of free and allocated blocks, a block table is stored in
+configuration EEPROM. The table takes two bits per block. A block can be in
+either of the three states:
+  a) The block is ready to be used;
+  b) The block is allocated;
+  c) The block is free, but needs to be erased before reuse.
+
+Note that a block in state (c) can only be made ready for use if the entire
+segment it is in has no used blocks and so can be erased.
+
+Data block allocation
+---------------------
+The block allocation algorithm tries to do two things:
+  a) Allocate blocks in such manner that blocks within the same segment belong
+     to the same file. This way, if the file is deleted, the whole segment no
+     longer contains used blocks and can be erased for further use.
+  b) Employ wear-leveling, that is, subject all flash memory cells to possibly
+     equal stress. This has a positive effect on flash memory life duration.
+
+To achieve these goals, the following search order is used for block requests:
+  a) Random block in the same segment as the previous block in the current file;
+  b) Random block in a random free segment;
+  c) Random block in a random segment that can be erased;
+  d) All other blocks.
+
+Root directory
+--------------
+The root directory, also stored in configuration EEPROM, holds records, "file
+entries", of following structure:
+
+    +------------------------------------+
+    | File name (fixed length)           |
+    | First data block number            |
+    | File size                          |
+    | File attributes                    |
+    | Checksum of last, incomplete chunk |
+    +------------------------------------+
+
+The checksum of the last data chunk has to be stored here because, as data
+will be appended to the incomplete chunk, the checksum will change, but it can
+only be written once to the data flash. Hence it can't be written before the
+data chunk is complete.
+
+File representation in RAM
+--------------------------
+Files are designed to be accessible by multiple threads at the same time. Only
+one thread at a time can append to a file.
+
+File control data in RAM is split in two parts: one part is associated with a
+file and is common to all threads accessing this file; the other part is private
+to each thread.
+
+The first part, "file control block", has the following structure:
+
+    +--------------------------------------------------+
+    | Protecting mutex (ideally should be an r/w lock) |
+    | File entry number                                |
+    | Reference count                                  |
+    | First data block number                          |
+    | File size in the storage                         |
+    | Checksum of last chunk                           |
+    | 'open-for-write' flag                            |
+    +--------------------------------------------------+
+
+The file size, first block number and checksum are cached from EEPROM when the
+file is first opened and are occasionally synced afterwards (for example, on a
+fsFlush() or fsClose() call). A file control block is allocated on first request
+to open the file. Subsequent requests reuse the same control block and increment
+reference count. Closing a file decrements reference count. If it reaches zero,
+metadata is synced with EEPROM and the file control block is deallocated. The
+'open-for-write' flag serves to prevent multiple threads from opening the file
+in append mode.
+
+The private part, "block file handle", is smaller:
+
+    +-----------------------------------------------+
+    | Pointer to a file control block               |
+    | File open mode                                |
+    | File position                                 |
+    | Current block number                          |
+    | Data buffer                                   |
+    | The end of buffered data (only for read mode) |
+    +-----------------------------------------------+
+
+The end of buffered data is used to determine the position at which to fill the
+buffer with a new portion of data.

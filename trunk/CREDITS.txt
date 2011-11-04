@@ -1,0 +1,24 @@
+MansOS operating system, credits.
+================================
+
+MansOS operating system has been developed since 2007 
+with the following people contributing to the project at various times:
+
+* Leo Selavo
+* Girts Strazdins
+* Atis Elsts
+* Janis Gengeris
+* Raimonds Samofals
+* Leons Bekkers
+
+
+Certain aspects of MansOS have been influenced by the following other projects:
+
+* TinyOS operating system
+* LiteOS operating system
+* Contiki operating system
+* Mantis operating system
+* Brennen Ball at http://blog.diyembedded.com/
+
+=================================
+Thanks to all contributors!

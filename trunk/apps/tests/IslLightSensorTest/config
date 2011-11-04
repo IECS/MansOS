@@ -1,0 +1,15 @@
+#
+# Application specific config file
+#
+
+USE_SOFT_I2C=y
+USE_ISL29003=y
+
+CONST_SDA_PORT=2
+#CONST_SDA_PIN=6    // For old SAD motes
+CONST_SDA_PIN=3
+CONST_SCL_PORT=2
+#CONST_SCL_PIN=7    // For old SAD motes
+CONST_SCL_PIN=4
+
+#MCU_MODEL = msp430x1612    // For old SAD motes

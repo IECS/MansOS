@@ -1,0 +1,112 @@
+#-*-Makefile-*- vim:syntax?=make
+#
+# Copyright (c) 2010 Leo Selavo and the contributors. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#  * Redistributions of source code must retain the above copyright notice,
+#    this list of  conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#
+# This is the default config file.
+# Applications can override it in a 'config' file in the project directory.
+# The minimalst people may override in the same project Makefile.
+#
+# Note that this file only tells what to compile, not what to link!
+# Linker script can discard even files that were compiled. 
+# For example, if ADC is not used by the application. there is no need to 
+# include ADC related code in the resulting program, and linker script will
+# automatically detect that.
+#
+# Some have used the NO_* flags as defines in their C code, e.g. NO_THREADS.
+# Please do not expect that the make will generate those for you. 
+# Use USE_* instead. Defining both would be a bad style.
+
+USE_KERNEL_MAIN ?= y
+USE_FIBERS ?= n
+# XXX: dependent on USE_HARDWARE_TIMERS
+USE_ALARMS ?= y
+USE_LEDS ?= y
+USE_ADC ?= y
+USE_RADIO ?= y
+USE_SERIAL ?= y
+USE_PRINT ?= y
+USE_CRC ?= y
+USE_NET ?= n
+USE_USER_BUTTON ?= n
+USE_FLASH ?= n
+USE_EXT_FLASH ?= n
+USE_EEPROM ?= n
+USE_SD_CARD ?= n
+USE_WATCHDOG ?= n
+USE_SOFT_I2C ?= n
+USE_I2C ?= n
+USE_REPROGRAMMING ?= n
+USE_SMP ?= n
+USE_FS ?= n
+USE_ASSERT ?= y
+USE_HUMIDITY ?= n
+
+# timers are needed for e.g. USART communication and alarms; disable with care!
+USE_HARDWARE_TIMERS ?= y
+
+# experimental threading model
+USE_EXP_THREADS ?= n
+
+#TODO: what are these?
+USE_TELOSB_FLASH ?= n
+USE_TELOSB_HUMIDITY ?= n
+
+#TODO:
+#USE_PRINT_SERIAL ?= y
+#USE_PRINT_RADIO ?= y
+#USE_PRINT_BUFFER_SIZE ?= 128
+
+ifeq ($(USE_NET),y)
+   USE_ADDRESSING ?= y
+   USE_RANDOM ?= y
+endif
+USE_ADDRESSING ?= n
+USE_RANDOM ?= n
+
+ifeq ($(USE_ADDRESSING),y)
+    USE_SERIAL_NUMBER ?= y
+endif
+ifeq ($(USE_RANDOM),y)
+    USE_SERIAL_NUMBER ?= y
+endif
+USE_SERIAL_NUMBER ?= n
+
+ifeq ($(USE_EXT_FLASH),y)
+# need to compile all of serial code only because ext flash is using SPI!
+    USE_SERIAL=y
+endif
+
+USE_NET_STATS ?= n
+
+ifeq ($(USE_REPROGRAMMING),y)
+    USE_SMP=y
+    USE_ADC=y
+    USE_RADIO=y
+    USE_ADDRESSING=y
+    USE_HUMIDITY=y
+    USE_RANDOM=y
+    USE_FLASH=y
+    USE_EXT_FLASH=y
+    USE_WATCHDOG=y
+    USE_SERIAL_NUMBER=y
+endif

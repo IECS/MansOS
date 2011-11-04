@@ -1,0 +1,10 @@
+#
+# Application specific config file
+#
+
+USE_THREADS   = n
+USE_EEPROM    = y
+USE_FLASH     = y
+USE_EXT_FLASH = y
+USE_RANDOM    = y
+USE_FS        = y
