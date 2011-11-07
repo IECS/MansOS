@@ -29,11 +29,12 @@
 #ifndef _MANSOS_SLEEP_H
 #define _MANSOS_SLEEP_H
 
-#ifdef USE_EXP_THREADS
-#error Do not include this file, use thread specific sleep instead!
-#endif
-
 #include <kernel/defines.h>
+
+#ifdef USE_EXP_THREADS
+// use thread specific sleep instead.
+#include <threads/threads.h>
+#endif
 
 #ifdef PLATFORM_PC
 // sleep already defined on PC platform

@@ -21,50 +21,57 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_ALARMS_H
-#define MANSOS_ALARMS_H
+//
+// Alarm implementation (system-only API)
+//
 
-#include <kernel/defines.h>
+#ifndef MANSOS_ALARMS_SYSTEM_H
+#define MANSOS_ALARMS_SYSTEM_H
+
 #include <lib/list.h>
+// include user API
+#include <hil/alarms.h>
 
-// callback function signature
-typedef void (*AlarmCallback)(void *);
+typedef SLIST_HEAD(head, Alarm_s) AlarmList_t;
 
-typedef struct Alarm_s {
-    // list interface
-    SLIST_ENTRY(Alarm_s) chain;
-    // callback function pointer
-    AlarmCallback callback;
-    // parameter passed to callback function
-    void *data;
-    // time when the alarm should be fired
-    uint32_t jiffies;
-} Alarm_t;
+// the global list with all alarms
+extern AlarmList_t alarmListHead;
 
-// ----------------------------------------------------------------
-// System-only API
-
+// initiaze alarms
 void initAlarms(void);
 
-// called from kernel context
+// called from kernel context (when threads are enabled)
+// or from interrupt context (when threads are not enabled)
 void alarmsProcess(void);
 
+#if USE_EXP_THREADS
 // called from interrupt context
-void scheduleProcessAlarms(void);
+static inline void scheduleProcessAlarms(uint32_t now)
+{
+    // if there are no alarms, return
+    if (SLIST_EMPTY(&alarmListHead)) return;
+    // take the fist alarm and compare its time with the current time
+    if (timeAfter32(SLIST_FIRST(&alarmListHead)->jiffies, now) == false) {
+        processFlags.bits.alarmsProcess = true;
+    }
+}
 
 // used for kernel to determine how long to put kernel thread to sleep
-uint32_t getNextAlarmTime(void);
+static inline uint32_t getNextAlarmTime(void)
+{
+    Alarm_t *first = SLIST_FIRST(&alarmListHead);
+    return first ? first->jiffies : getJiffies() + MAX_KERNEL_SLEEP_TIME;
+}
+#else // not using threads
 
-// ----------------------------------------------------------------
-// User API
+// called from interrupt context
+static inline bool hasAnyReadyAlarms(uint32_t now) {
+    // if there are no alarms, return false
+    if (SLIST_EMPTY(&alarmListHead)) return false;
+    // take the fist alarm and compare its time with the current time
+    return !timeAfter32(SLIST_FIRST(&alarmListHead)->jiffies, now);
+}
 
-void alarmInit(Alarm_t *, AlarmCallback cb, void *param);
-
-void alarmSchedule(Alarm_t *, uint32_t milliseconds);
-
-void alarmRemove(Alarm_t *);
-
-// valid only if the alarm is scheduled
-uint32_t getAlarmTime(Alarm_t *);
+#endif // USE_EXP_THREADS
 
 #endif

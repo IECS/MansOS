@@ -23,7 +23,7 @@
 
 #include "radio.h"
 #include <lib/dprint.h>
-#include "platform_hpl.h"
+#include <platform.h>
 
 RadioPacketBuffer_t *radioPacketBuffer;
 

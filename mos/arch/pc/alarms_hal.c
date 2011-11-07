@@ -22,7 +22,7 @@
  */
 
 #include <unistd.h>
-#include "alarm.h"
+#include "alarms.h"
 #include <hil/timers.h>
 #include <net/addr.h>
 

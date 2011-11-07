@@ -95,7 +95,7 @@ void initCommHal() {
     // this is a "specific thread", not part of the scheduler
     // create it even, when threads are turned off
     pthread_create(&intThread, NULL, intHandler, NULL);
-    // initialization of alarmIntHandler moved to platform_hpl
+    // initialization of alarmIntHandler moved to alarms_hal.c
 }
 
 // simulate interrupt handler in separate thread

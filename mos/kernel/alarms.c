@@ -21,13 +21,18 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "alarms.h"
-#include "threads.h"
-#include "platform_hpl.h"
+#if USE_EXP_THREADS
+#include "threads/threads.h"
+#endif
+#include "alarms_system.h"
+#include <hil/timers.h>
 #include <lib/dprint.h>
 
 // the global list with all alarms
-static SLIST_HEAD(head, Alarm_s) alarmListHead;
+//static SLIST_HEAD(head, Alarm_s) alarmListHead;
+
+// the global list with all alarms
+AlarmList_t alarmListHead;
 
 void initAlarms(void)
 {
@@ -35,14 +40,6 @@ void initAlarms(void)
 
     ALARM_TIMER_START();
     ENABLE_ALARM_INTERRUPT();
-}
-
-void scheduleProcessAlarms(void)
-{
-    Alarm_t *a = SLIST_FIRST(&alarmListHead);
-    if (a && !timeAfter32(a->jiffies, jiffies)) {
-        processFlags.bits.alarmsProcess = true;
-    }
 }
 
 void alarmsProcess(void)
@@ -104,11 +101,13 @@ void alarmSchedule(Alarm_t *alarm, uint32_t milliseconds)
     }
     SLIST_INSERT(prev, alarm, chain);
 
+#if USE_EXP_THREADS
     // always reschedule alarm processing in case some alarm was added
     // that might need to be processed before end of current kernel sleep time
     processFlags.bits.alarmsProcess = true;
     // and make sure the kernel thread is awake and ready to deal with it
     threadWakeup(KERNEL_THREAD_INDEX, THREAD_READY);
+#endif
 
     ATOMIC_END(h);
 }
@@ -119,12 +118,6 @@ void alarmRemove(Alarm_t *alarm)
     ATOMIC_START(h);
     SLIST_REMOVE_SAFE(&alarmListHead, alarm, Alarm_s, chain);
     ATOMIC_END(h);
-}
-
-uint32_t getNextAlarmTime(void)
-{
-    Alarm_t *first = SLIST_FIRST(&alarmListHead);
-    return first ? first->jiffies : getJiffies() + MAX_KERNEL_SLEEP_TIME;
 }
 
 uint32_t getAlarmTime(Alarm_t *alarm)
