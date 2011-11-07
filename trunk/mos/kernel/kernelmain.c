@@ -43,8 +43,8 @@
 #endif // USE_FIBERS
 #ifdef USE_EXP_THREADS
 #include "threads/threads.h"
-#include "threads/alarms.h"
 #endif
+#include "alarms_system.h"
 #include <net/comm.h>
 
 #if (defined DEBUG && !defined DPRINT_TO_RADIO)
@@ -94,8 +94,7 @@ static void initSystem(void)
     INIT_PRINTF("init radio...\n");
     radioInit();
 #endif
-#if USE_EXP_THREADS
-    // init experimental alarms
+#if USE_ALARMS
     INIT_PRINTF("init alarms...\n");
     initAlarms();
 #endif
@@ -152,8 +151,8 @@ int main(void)
 #else
     PRAGMA(message "Not using threads");
 # if USE_ALARMS
-    ALARM_TIMER_START();
-    ENABLE_ALARM_INTERRUPT();
+//    ALARM_TIMER_START();
+//    ENABLE_ALARM_INTERRUPT();
 # endif
     ENABLE_INTS();
 //fibers

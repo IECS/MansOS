@@ -22,7 +22,7 @@
  */
 
 #include "msp430_timers.h"
-#include <hil/clock.h>
+#include <hil/timers.h>
 
 void msp430TimerBSet(uint16_t ms)
 {

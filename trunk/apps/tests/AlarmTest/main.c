@@ -21,10 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "mansos.h"
-#include "leds.h"
-#include "alarm.h"
-#include "dprint.h"
+#include "stdmansos.h"
 
 Alarm_t timer1;
 Alarm_t timer2;
@@ -33,26 +30,29 @@ void onTimer1(void *x)
 {
     static uint8_t counter;
 
-    TPRINTF("onTimer1\n");
+    PRINTF("onTimer1\n");
     toggleRedLed();
-    if (++counter == 3) {
-        PRINTF("reregister alarm\n");
-        removeAlarm(&timer2);
-        // when removing an alarm, nextMs is cleared, restore it
-        timer2.nextMsec = timer2.msecs = 200;
-        alarmRegister(&timer2);
-    }
+//    if (++counter == 3) {
+//        PRINTF("reregister alarm\n");
+//        removeAlarm(&timer2);
+//        // when removing an alarm, nextMs is cleared, restore it
+//        timer2.nextMsec = timer2.msecs = 200;
+//        alarmRegister(&timer2);
+//    }
+    alarmSchedule(&timer1, 700);
 }
 
 void onTimer2(void *x)
 {
-    TPRINTF("onTimer2\n");
+    PRINTF("onTimer2\n");
     toggleBlueLed();
 }
 
 void appMain(void)
 {
-    PRINT_INIT(128);
-    alarmInitAndRegister(&timer1, onTimer1, 700, true, NULL);
-    alarmInitAndRegister(&timer2, onTimer2, 1000, true, NULL);
+    alarmInit(&timer1, onTimer1, NULL);
+    alarmSchedule(&timer1, 700);
+
+    alarmInit(&timer2, onTimer2, NULL);
+    alarmSchedule(&timer2, 1000);
 }

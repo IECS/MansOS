@@ -47,6 +47,7 @@ PSOURCES-$(USE_SOFT_I2C) += $(MOS)/hil/i2c_soft.c
 PSOURCES-$(USE_SOFT_SPI) += $(MOS)/hil/spi_soft.c
 
 PSOURCES-$(USE_KERNEL_MAIN) += $(MOS)/kernel/kernelmain.c
+PSOURCES-$(USE_ALARMS) += $(MOS)/kernel/alarms.c
 
 PSOURCES-$(USE_PRINT) += $(MOS)/lib/dprint.c
 PSOURCES-$(USE_ASSERT) += $(MOS)/lib/assert.c
@@ -63,7 +64,6 @@ PSOURCES-$(USE_NET) += $(NET)/comm.c
 PSOURCES-$(USE_NET) += $(NET)/mac.c
 PSOURCES-$(USE_NET) += $(NET)/queue.c
 
-PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/alarms.c
 PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/main.c
 PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/mutex.c
 PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/threads.c
@@ -97,9 +97,7 @@ endif
 
 else #! USE_EXP_THREADS
 
-PSOURCES += $(MOS)/hil/clock.c
-PSOURCES += $(MOS)/hil/sleep.c
-PSOURCES-$(USE_ALARMS) += $(MOS)/hil/alarm.c
+PSOURCES += $(MOS)/kernel/nothreads/timing.c
 
 endif # ifeq($(USE_EXP_THREADS),y)
 

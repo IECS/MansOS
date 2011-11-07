@@ -21,7 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "platform_hpl.h"
+#include <platform.h>
 #include "../timing.h"
 
 static inline uint16_t msToSleepCycles(uint16_t ms) {

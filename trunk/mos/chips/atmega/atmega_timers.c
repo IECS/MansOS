@@ -22,7 +22,7 @@
  */
 
 #include "atmega_timers.h"
-#include <hil/clock.h>
+#include <hil/timers.h>
 
 // set OCR for sleep timer, taking sleep clock and divider into account
 void atmegaTimer1Set(uint16_t ms) {

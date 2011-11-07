@@ -22,7 +22,7 @@
  */
 
 #include "threads.h"
-#include "alarms.h"
+#include <kernel/alarms_system.h>
 #include "radio.h"
 #include <net/mac.h>
 #include <kernel/stdmansos.h>

@@ -24,12 +24,28 @@
 #ifndef MOS_HIL_TIMERS_H
 #define MOS_HIL_TIMERS_H
 
-#include <kernel/stdtypes.h>
+#include <platform.h>
 
 #if PLATFORM_PC
 uint32_t getRealTime(void);
 #else
 #include <kernel/threads/timing.h>
-#endif
+
+extern volatile uint32_t jiffies;
+
+// used when waking up from sleep during which the realtime
+// counter was not incremented
+static inline void incRealtime(uint32_t inc)
+{
+    atomic_inc(jiffies, inc);
+}
+
+
+static inline uint16_t msToSleepCycles(uint16_t ms) {
+    return ms * SLEEP_CYCLES
+        + (uint16_t) ((uint32_t) ms * (uint32_t) SLEEP_CYCLES_DEC / 1000ull);
+}
+
+#endif // PLATFORM_PC
 
 #endif

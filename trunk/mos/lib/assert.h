@@ -36,7 +36,7 @@
 #ifdef USE_EXP_THREADS
 #  define RESET_SP() SET_SP(threadStackBuffer + THREAD_STACK_SIZE)
 /* It makes sense to define RESET_SP() always, but the above will fail if
- * expthreads are not linked in. It would be nice for <platform_hpl.h> to
+ * expthreads are not linked in. It would be nice for <platform.h> to
  * define RESET_SP(), which would allow to drop the expthreads reference in
  * this file.
  */

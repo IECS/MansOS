@@ -28,11 +28,8 @@
 
 #include "mansos.h"
 
-#if USE_EXP_THREADS
-#include "threads/threads.h"
-#else
 #include <hil/sleep.h>
-#endif
+#include <hil/alarms.h>
 #include <hil/gpio.h>
 #include <hil/adc.h>
 #include <hil/light.h>

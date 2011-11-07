@@ -1,5 +1,4 @@
 #include "stdmansos.h"
-#include <kernel/expthreads/alarms.h>
 
 Alarm_t alarm1;
 Alarm_t alarm2;

@@ -21,9 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <kernel/defines.h>
+#include <kernel/alarms_system.h>
 #include <platform.h>
-#include <hil/alarm.h>
 #include <hil/radio.h> // XXX
 
 //----------------------------------------------------------
@@ -32,49 +31,50 @@
 
 volatile uint32_t jiffies; // real time counter, in ms
 
-// //----------------------------------------------------------
-// // function implementations
-// //----------------------------------------------------------
-// uint32_t getRealTime() {
-//     uint32_t ret;
-//     atomic_read(realTime, ret);
-//     return ret;
-// }
-
-void incRealtime(uint32_t inc)
-{
-    atomic_inc(jiffies, inc);
-}
-
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 
 // alarm timer interrupt handler
 ALARM_TIMER_INTERRUPT()
 {
-    if (ALARM_TIMER_EXPIRED())
-    {
-        // increment the 'real time' value
+    if (!ALARM_TIMER_EXPIRED()) return;
+
+    // reset the counter
+    ALARM_TIMER_VALUE = 0;
+
+    jiffies += JIFFY_MS_COUNT;
+
+    //
+    // Clock error (software, due to rounding) is 32/32768 seconds per second,
+    // or 0.99609375 milliseconds per each 1.02 seconds
+    // We assume it's precisely 1 millisecond per each 1.02 seconds and fix that error here.
+    // The precision is improved 255 times. (0.99609375 compared to 1-0.99609375=0.00390625)
+    //
+    bool fixed = false;
+    if (!((jiffies / 10) % 102)) {  // XXX: division...
+        // fix them
         ++jiffies;
+        fixed = true;
+    }
 
 #ifdef USE_ALARMS
-        if (getNextAlarm) {
-            Alarm_t *head = getNextAlarm();
-            //HACK! the head shouldn't ever have 0 msecs here.
-            if (head && head->msecs == 0) {
-                fireAlarm();
-            } else if (head && (--(head->msecs) == 0)) {
-                fireAlarm();
-            }
-        }
+    if (hasAnyReadyAlarms(jiffies)) {
+        alarmsProcess();
+    }
+        // if (getNextAlarm) {
+        //     Alarm_t *head = getNextAlarm();
+        //     //HACK! the head shouldn't ever have 0 msecs here.
+        //     if (head && head->msecs == 0) {
+        //         fireAlarm();
+        //     } else if (head && (--(head->msecs) == 0)) {
+        //         fireAlarm();
+        //     }
+        // }
 #endif // USE_ALARMS
 
-        // TODO: remove this code!
+    // TODO: remove this code!
 #if USE_RADIO && (RADIO_CHIP==RADIO_CHIP_MRF24J40)
-        if ((realTime & 7) == 0) {
-            if (mrf24j40PollForPacket) mrf24j40PollForPacket();
-        }
+    if (mrf24j40PollForPacket) mrf24j40PollForPacket();
 #endif
-    }
 }
 
 //
@@ -96,3 +96,34 @@ SLEEP_TIMER_INTERRUPT()
 
 #endif // !CUSTOM_TIMER_INTERRUPT_HANDLERS
 
+#ifndef PLATFORM_PC
+
+void msleep(uint16_t milliseconds)
+{
+    // setup sleep timer
+    SLEEP_TIMER_SET(milliseconds);
+    // start timer B
+    SLEEP_TIMER_START();
+    // stop timer A
+    DISABLE_ALARM_INTERRUPT();
+    // enter low power mode 3
+    ENTER_SLEEP_MODE();
+}
+
+uint16_t sleep(uint16_t seconds)
+{
+    // 
+    // Maximal supported sleeping time is 15984 msec.
+    // XXX: we do not account for the time that was spent
+    // in the loop and in function calls.
+    // 
+    while (seconds > PLATFORM_MAX_SLEEP_SECONDS) {
+        seconds -= PLATFORM_MAX_SLEEP_SECONDS;
+        msleep(PLATFORM_MAX_SLEEP_MS);
+    }
+    msleep(seconds * 1000);
+
+    return 0; // keep this function compatible with sleep() on PC
+}
+
+#endif // !PLATFORM_PC

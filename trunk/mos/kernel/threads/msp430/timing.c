@@ -21,7 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "platform_hpl.h"
+#include <platform.h>
 #include "../timing.h"
 #include <lib/assert.h>
 

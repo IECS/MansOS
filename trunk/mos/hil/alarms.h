@@ -21,49 +21,37 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Alarm (software timer) API
- */
-
-#ifndef MOS_HIL_ALARM_H
-#define MOS_HIL_ALARM_H
+#ifndef MANSOS_ALARMS_H
+#define MANSOS_ALARMS_H
 
 #include <kernel/defines.h>
+#include <lib/list.h>
 
-//----------------------------------------------------------
-// types
-//----------------------------------------------------------
-typedef void (*AlarmFunc_p)(void *userData);
+// callback function signature
+typedef void (*AlarmCallback)(void *);
 
-typedef struct _Alarm_t
-{
-    AlarmFunc_p callback; // called in interrupt context
+typedef struct Alarm_s {
+    // list interface
+    SLIST_ENTRY(Alarm_s) chain;
+    // callback function pointer
+    AlarmCallback callback;
+    // parameter passed to callback function
     void *data;
-    uint32_t msecs;
-    // when alarm called, msec is reset to this value. Use for periodic alarms
-    uint32_t nextMsec;
-    // next alarm in the list
-    struct _Alarm_t *next;
+    // time when the alarm should be fired
+    uint32_t jiffies;
 } Alarm_t;
 
+// -----------------------------------------------
+// User API functions
+// -----------------------------------------------
 
-//----------------------------------------------------------
-// functions
-//----------------------------------------------------------
-void alarmInit(Alarm_t *obj, AlarmFunc_p func,
-               uint32_t msec, bool periodic, void *data);
+void alarmInit(Alarm_t *, AlarmCallback cb, void *param);
 
-void alarmRegister(Alarm_t *new);
+void alarmSchedule(Alarm_t *, uint32_t milliseconds);
 
-void alarmInitAndRegister(Alarm_t *obj, AlarmFunc_p callback,
-        uint32_t msec, bool periodic, void *data);
+void alarmRemove(Alarm_t *);
 
-void fireAlarm(void) WEAK_SYMBOL;
-
-bool removeAlarm(Alarm_t *alarm);
-
-bool haveAlarms(void);
-
-Alarm_t* getNextAlarm(void) WEAK_SYMBOL;
+// valid only if the alarm is scheduled
+uint32_t getAlarmTime(Alarm_t *);
 
 #endif

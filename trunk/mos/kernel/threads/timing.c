@@ -22,8 +22,8 @@
  */
 
 #include "threads.h"
-#include "alarms.h"
-#include "platform_hpl.h"
+#include <kernel/alarms_system.h>
+#include <platform.h>
 #include <hil/radio.h> // XXX
 
 volatile uint32_t jiffies;
@@ -37,7 +37,6 @@ ALARM_TIMER_INTERRUPT()
 
     // reset the counter
     ALARM_TIMER_VALUE = 0;
-    // SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
 
     jiffies += JIFFY_MS_COUNT;
 
@@ -45,7 +44,7 @@ ALARM_TIMER_INTERRUPT()
     // Clock error (software, due to rounding) is 32/32768 seconds per second,
     // or 0.99609375 milliseconds per each 1.02 seconds
     // We assume it's precisely 1 millisecond per each 1.02 seconds and fix that error here.
-    // The precision is improved 255 times. (0.99609375 against 1-0.99609375=0.00390625)
+    // The precision is improved 255 times. (0.99609375 compared to 1-0.99609375=0.00390625)
     //
     bool fixed = false;
     if (!((jiffies / 10) % 102)) {  // XXX: division...
@@ -68,7 +67,7 @@ ALARM_TIMER_INTERRUPT()
     // check if any alarm has expired and mark it for processing
     if (!processFlags.bits.alarmsProcess) {
         // ..but avoid calling it more than once! (in case the call takes >1 jiffy)
-        scheduleProcessAlarms();
+        scheduleProcessAlarms(jiffies);
     }
     if (processFlags.value) {
         if (currentThread->index != KERNEL_THREAD_INDEX) {

@@ -56,7 +56,6 @@ void usartReceive(uint8_t byte) {
     }
 }
 
-
 void appMain(void)
 {
     USARTSetReceiveHandle(PRINTF_USART_ID, usartReceive);
