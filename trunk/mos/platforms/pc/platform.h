@@ -43,6 +43,7 @@
 #define ENABLE_ALARM_INTERRUPT()
 #define DISABLE_ALARM_INTERRUPT()
 #define ALARM_TIMER_EXPIRED() (1)
+#define RESET_ALARM_TIMER()
 
 #define SLEEP_TIMER_STOP()
 #define SLEEP_TIMER_EXPIRED() (1)
@@ -67,6 +68,11 @@ enum {
     PLATFORM_MAX_SLEEP_SECONDS = PLATFORM_MAX_SLEEP_MS / 1000,
 };
 
+#define JIFFY_MS_COUNT 1
+
+#define SLEEP_CYCLES 0
+#define SLEEP_CYCLES_DEC 0
+
 #define ATOMIC_START(x) ((void) x)
 #define ATOMIC_END(x)   ((void) x)
 
@@ -85,6 +91,5 @@ enum {
 #define LED_COUNT 4
 
 #define LEDS_ON_WITH_HIGH 1
-
 
 #endif

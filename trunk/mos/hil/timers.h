@@ -26,9 +26,9 @@
 
 #include <platform.h>
 
-#if PLATFORM_PC
-uint32_t getRealTime(void);
-#else
+// #if PLATFORM_PC
+// uint32_t getRealTime(void);
+// #else
 #include <kernel/threads/timing.h>
 
 extern volatile uint32_t jiffies;
@@ -46,6 +46,6 @@ static inline uint16_t msToSleepCycles(uint16_t ms) {
         + (uint16_t) ((uint32_t) ms * (uint32_t) SLEEP_CYCLES_DEC / 1000ull);
 }
 
-#endif // PLATFORM_PC
+//#endif // PLATFORM_PC
 
 #endif

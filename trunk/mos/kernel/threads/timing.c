@@ -36,7 +36,7 @@ ALARM_TIMER_INTERRUPT()
     if (!ALARM_TIMER_EXPIRED()) return;
 
     // reset the counter
-    ALARM_TIMER_VALUE = 0;
+    RESET_ALARM_TIMER();
 
     jiffies += JIFFY_MS_COUNT;
 
