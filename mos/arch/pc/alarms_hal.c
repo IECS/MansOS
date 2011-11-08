@@ -22,9 +22,9 @@
  */
 
 #include <unistd.h>
-#include "alarms.h"
 #include <hil/timers.h>
-#include <net/addr.h>
+#include <kernel/alarms_system.h>
+#include <sys/time.h>
 
 //----------------------------------------------------------
 // platform-specific functions, required by alarm in HIL
@@ -42,33 +42,36 @@ void platformTurnAlarmsOn(void) {
 //    mos_mutex_unlock(&alarmMutex);
 }
 
+static uint32_t getPcTime(void)
+{
+    struct timeval tv;
+    if (gettimeofday(&tv, NULL)) {
+        return 0; // error occurred
+    } else {
+        // clear biggest bits of seconds to escape overflow - we are not
+        // actually interested in years, etc
+        return (tv.tv_sec & 0x000fffff) * 1000 + tv.tv_usec / 1000;
+    }
+}
+
 //----------------------------------------------------------
 // alarm handling functions
 //----------------------------------------------------------
 
 void *alarmIntHandler(void *dummy) {
-    uint32_t lastTime = getRealTime();
+    uint32_t lastTime = getPcTime();
     while (1) {
-        usleep(1000);
+        usleep(10000);
 
-        uint32_t thisTime = getRealTime();
-        uint32_t diff = thisTime - lastTime;
+        uint32_t now = getPcTime();
+        incRealtime(now - lastTime);
+        lastTime = now;
 
 // TODO
 //        mos_mutex_lock(&alarmMutex);
-        Alarm_t *a = getNextAlarm();
-        if (a) {
-            if (a->msecs <= diff) {
-                a->msecs = 0;
-                fireAlarm();
-            } else {
-                a->msecs -= diff;
-            }
-        }
+        alarmsProcess();
 // TODO
 //        mos_mutex_unlock(&alarmMutex);
-
-        lastTime = thisTime;
     }
     return 0;
 }

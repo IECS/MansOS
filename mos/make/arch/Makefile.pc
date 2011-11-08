@@ -43,7 +43,6 @@ endif
 
 PLATFORM_HAL=$(MOS)/arch/pc
 
-PSOURCES += $(PLATFORM_HAL)/timer_hal.c
 PSOURCES += $(PLATFORM_HAL)/alarms_hal.c
 PSOURCES += $(PLATFORM_HAL)/sem_hal.c
 PSOURCES-$(USE_LEDS) += $(PLATFORM_HAL)/leds_hal.c
