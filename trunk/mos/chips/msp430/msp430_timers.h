@@ -76,15 +76,11 @@
 #endif
 
 enum {
-#if USE_EXP_THREADS
-    JIFFY_MS_COUNT = 10, // jiffy counter signals every 10 milliseconds
-#else
-    JIFFY_MS_COUNT = 1,  // jiffy counter signals every 1 millisecond
-#endif
+    JIFFY_MS_COUNT = 1000 / TIMER_INTERRUPT_HZ, // jiffy counter signals every 10 milliseconds
     // how many ticks per jiffy
     // JIFFY_CYCLES = JIFFY_MS_COUNT
-    //    * (JIFFY_CLOCK_SPEED / 1000 / JIFFY_CLOCK_DIVIDER),
-    // in this case, 1 jiffy = 32768 / 1000 / 1 = 32 clock cycles
+    //    * (JIFFY_CLOCK_SPEED / TIMER_INTERRUPT_HZ / JIFFY_CLOCK_DIVIDER),
+    // in 1 jiffy = 1 ms case, 1 jiffy = 32768 / 1000 / 1 = 32 clock cycles
 
     PLATFORM_MIN_SLEEP_MS = 10, // min sleep amount = 10ms
     PLATFORM_MAX_SLEEP_MS = 0xffff / (SLEEP_CLOCK_SPEED / 1000 / SLEEP_CLOCK_DIVIDER + 1),

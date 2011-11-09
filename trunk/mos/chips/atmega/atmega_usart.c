@@ -141,14 +141,11 @@ uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf)
 uint_t USARTSendByte(uint8_t id, uint8_t data)
 {
     /* Wait for empty transmit buffer */
-    while (!(UCSR0A & (1 << UDRE0))) {}
+    while (!(UCSR0A & (1 << UDRE0))) { }
     /* Put data into buffer, sends the data */
     UDR0 = data;
     return 0;
 }; 
-
-
-
 
 //-----------------------------------------------------------
 //-----------------------------------------------------------
@@ -221,7 +218,7 @@ uint_t USARTDisableRX(uint8_t id)
 
 
 // USART RX interrupt handler
-#if PLATFORM_WASPMOTE
+#if USART_COUNT > 1
 
 ISR(USART0_RX_vect) {
     if (USART_RX0_READY() && !USART_RX0_ERROR()) {
@@ -243,7 +240,7 @@ ISR(USART1_RX_vect) {
     }
 }
 
-#else
+#else // USART_COUNT == 1
 
 ISR(USART_RX_vect) {
     if (USART_RX_READY() && !USART_RX_ERROR()) {
@@ -255,7 +252,7 @@ ISR(USART_RX_vect) {
     }
 }
 
-#endif
+#endif // USART_COUNT
 
 //===========================================================
 //===========================================================

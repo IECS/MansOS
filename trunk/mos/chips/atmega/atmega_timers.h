@@ -40,10 +40,10 @@
 #define SLEEP_CLOCK_DIVIDER 1024
 
 enum {
-    JIFFY_MS_COUNT = 1, // jiffy counter signals every 1 millisecond
+    JIFFY_MS_COUNT = 1000 / TIMER_INTERRUPT_HZ,
     // how many ticks per jiffy
-    JIFFY_CYCLES = JIFFY_MS_COUNT * (CPU_SPEED / 1000 / JIFFY_CLOCK_DIVIDER),
-    // in this case, 1 jiffy = 16000 / 64 = 250 clock cycles
+    JIFFY_CYCLES = JIFFY_MS_COUNT * (CPU_SPEED / TIMER_INTERRUPT_HZ / JIFFY_CLOCK_DIVIDER),
+    // in 1 jiffy = 1 ms case, 1 jiffy = 16000 / 64 = 250 clock cycles
 
     PLATFORM_MIN_SLEEP_MS = 10, // min sleep amount = 10ms
     PLATFORM_MAX_SLEEP_MS = 0xffff / (CPU_SPEED / 1000 / SLEEP_CLOCK_DIVIDER + 1),

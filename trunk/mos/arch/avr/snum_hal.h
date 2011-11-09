@@ -32,7 +32,7 @@
 #include <string.h>
 
 // No serial number on Arduino.
-// (could simulate it suing EEPROM?)
+// (could simulate it using EEPROM?)
 static inline bool halGetSerialNumber(unsigned char *buf) {
     memset(buf, 0, 8);
     return true;

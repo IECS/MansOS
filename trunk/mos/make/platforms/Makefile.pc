@@ -30,6 +30,8 @@
 # Define platform variables
 
 ARCH = pc
+# code needs this
+CPU_MHZ ?= 4
 
 CFLAGS += -DPLATFORM_PC=1
 

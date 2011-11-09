@@ -44,10 +44,6 @@
 #define LEDS_ON_WITH_HIGH 1
 #endif
 
-#ifndef CPU_MHZ
-#define CPU_MHZ 16
-#endif
-
 void initPlatform(void);
 
 #ifndef PRINT_BUFFER_SIZE

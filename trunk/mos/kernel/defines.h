@@ -102,11 +102,16 @@
 #define SERIAL_PORT_BAUDRATE 38400
 #endif
 
+#ifndef CPU_MHZ
+#error CPU_MHZ must be defined!
+#endif
+
 // timer frequency, times per second;
-#if USE_EXP_THREADS
-#define TIMER_INTERRUPT_HZ  100 // if experimental threads are used
+#if CPU_MHZ > 4 && MCU_AVR
+// sorry, cannot support once-per-10ms ticks - 8-bit timer overflow!
+#define TIMER_INTERRUPT_HZ  1000
 #else
-#define TIMER_INTERRUPT_HZ 1000 // old style
+#define TIMER_INTERRUPT_HZ  100
 #endif
 
 #endif // _MANSOS_DEFINES_H_

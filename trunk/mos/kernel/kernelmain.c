@@ -32,20 +32,18 @@
 #include <smp/smp.h>
 #include <lib/random.h>
 #include <lib/assert.h>
-#ifdef USE_EXT_FLASH
+#if USE_EXT_FLASH
 #include <hil/extflash.h>
 #endif
-#ifdef USE_REPROGRAMMING
+#if USE_FLASH
 #include "boot.h"
 #endif
-#ifdef USE_FIBERS
 #include "coop_scheduler.h"
-#endif // USE_FIBERS
-#ifdef USE_EXP_THREADS
-#include "threads/threads.h"
-#endif
 #include "alarms_system.h"
 #include <net/comm.h>
+#if USE_EXP_THREADS
+#include "threads/threads.h"
+#endif
 
 #if (defined DEBUG && !defined DPRINT_TO_RADIO)
 #define INIT_PRINTF(...) PRINTF(__VA_ARGS__)
@@ -68,7 +66,7 @@ static void initSystem(void)
     initPlatform();
 
     // init printing to serial (makes sense only after clock has been calibrated)
-    if (printInit) printInit();
+    if (printInit != NULL) printInit();
 
     INIT_PRINTF("starting MansOS...\n");
 
@@ -77,7 +75,7 @@ static void initSystem(void)
     initLeds();
 #endif
 #ifdef USE_ADC
-    if (initAdc) {
+    if (initAdc != NULL) {
         INIT_PRINTF("init ADC...\n");
         initAdc();
     }
@@ -137,6 +135,8 @@ int main(void)
 {
     initSystem();
 
+    PRINTF("starting...\n");
+
 // ------------------------------------------
 #ifdef USE_EXP_THREADS
     PRAGMA(message "Using threads");
@@ -150,17 +150,16 @@ int main(void)
 // ------------------------------------------
 #else
     PRAGMA(message "Not using threads");
-# if USE_ALARMS
-//    ALARM_TIMER_START();
-//    ENABLE_ALARM_INTERRUPT();
-# endif
+
     ENABLE_INTS();
-//fibers
+
 #ifdef USE_FIBERS
     coopSchedStart();
-#endif // USE_FIBERS
+#else
     appMain();
-#endif
+#endif // !USE_FIBERS
+
+#endif // !USE_EXP_THREADS
 
     return 0;
 }
