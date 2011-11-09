@@ -118,7 +118,7 @@ extern uint8_t threadStackBuffer[];
 
 //
 // This is the main scheduling function.
-// Depending on threadas status and the value of global variable 'jiffiesToSleep', it can:
+// Depending on thread status and the value of global variable 'jiffiesToSleep', it can:
 // * switch to a new thread
 // * keep running the current thread, if 'jiffiesToSleep' is 0, and no other thread are ready
 // * enter low power mode, if all threads are in sleeping state

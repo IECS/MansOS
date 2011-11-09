@@ -97,7 +97,8 @@ endif
 
 else #! USE_EXP_THREADS
 
-PSOURCES += $(MOS)/kernel/nothreads/timing.c
+PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/nothreads/timing.c
+PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/nothreads/sleep.c
 
 endif # ifeq($(USE_EXP_THREADS),y)
 
@@ -133,4 +134,3 @@ PSOURCES-$(USE_FS) += \
 	$(MOSROOT)$(PDFS)/block/block.c \
 	$(MOSROOT)$(PDFS)/block/meta.c  \
 	$(MOSROOT)$(PDFS)/block/alloc.c
-
