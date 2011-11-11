@@ -46,7 +46,7 @@ void recvRadio(void)
 }
 
 void recvSerial(uint8_t length) {
-    PRINTF("%s", serialBuffer);
+    PRINT(serialBuffer);
     if (serialBuffer[length - 1] != '\n') {
         // print newline as well
         PRINT("\n");
