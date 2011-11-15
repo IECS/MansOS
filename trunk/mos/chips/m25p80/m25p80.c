@@ -26,7 +26,7 @@
 //
 
 #include "m25p80.h"
-#include "m25p80_spi_hal.h"
+#include <m25p80_pins.h>
 #include <hil/gpio.h>
 
 #define M25P80_DEBUG 0
