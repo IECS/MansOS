@@ -2,10 +2,9 @@
 #define SAD_COMMON_H
 
 #include "stdmansos.h"
-#include "string.h"
+#include <string.h>
 #include <net/socket.h>
 #include <net/routing.h>
-#include <kernel/expthreads/timing.h>
 #include <lib/codec/crc.h>
 #include <lib/assert.h>
 
