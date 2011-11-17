@@ -29,26 +29,26 @@ typedef struct DataPacket_s DataPacket_t;
 
 // routing information, sent out from base station, forwarded by nodes
 struct SadRoutingInfoPacket_s {
-	uint8_t packetType;        // ROUTING_INFORMATION
-	uint8_t __reserved;
-	MosShortAddr rootAddress;  // address of the base station / gateway
-	uint16_t hopCount;         // distance from root
-	Seqnum_t seqnum;           // sequence number
-	uint32_t rootClock;        // used for time sync to calculate the delta
+    uint8_t packetType;        // ROUTING_INFORMATION
+    uint8_t __reserved;
+    MosShortAddr rootAddress;  // address of the base station / gateway
+    uint16_t hopCount;         // distance from root
+    Seqnum_t seqnum;           // sequence number
+    uint32_t rootClock;        // used for time sync to calculate the delta
 } PACKED;
 
 typedef struct SadRoutingInfoPacket_s SadRoutingInfoPacket_t;
 
 #ifndef MANSOS
 enum {
-	ROUTING_INFORMATION,
-	ROUTING_REQUEST,
+    ROUTING_INFORMATION,
+    ROUTING_REQUEST,
 };
 #endif
 
 typedef struct Neighbors_s {
-	uint16_t addr;
-	uint16_t seqNum;
+    uint16_t addr;
+    uint16_t seqNum;
 } Neighbors_t;
 
 

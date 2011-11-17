@@ -22,7 +22,6 @@
  */
 
 #include "../common.h"
-#include <kernel/expthreads/radio.h>
 #include <hil/i2c_soft.h>
 #include <hil/snum.h>
 #include <hil/extflash.h>
@@ -30,12 +29,11 @@
 #include <lib/assert.h>
 #include <isl29003/isl29003.h>
 #include <apds9300/apds9300.h>
-#include <kernel/expthreads/alarms.h>
+#include <kernel/threads/radio.h>
 
-#define WRITE_TO_FLASH 1
-#define SEND_TO_RADIO  1
-#define ISL_SENSOR     1
-//#define PRINT_PACKET   1
+#define WRITE_TO_FLASH 0
+#define SEND_TO_RADIO  0
+#define PRINT_PACKET   1
 
 bool writeAdsRegister(uint8_t reg, uint16_t val);
 bool readAdsRegister(uint8_t reg, uint16_t *val);
@@ -222,14 +220,10 @@ void readSensors(DataPacket_t *packet)
     packet->timestamp = (uint32_t)(getJiffies() + rootClockDelta);
     packet->sourceAddress = localAddress;
     packet->dataSeqnum = ++mySeqnum;
-#if ISL_SENSOR
     if (!islRead(&packet->islLight, true)) {
         PRINT("islRead failed\n");
         packet->islLight = 0xffff;
     }
-    packet->apdsLight0 = 0xffff;
-    packet->apdsLight1= 0xffff;
-#else
     if (apdsReadWord(COMMAND | DATA0LOW_REG, &packet->apdsLight0) != 0) {
         PRINT("apdsReadWord 0 failed\n");
         packet->apdsLight0 = 0xffff; // error value
@@ -238,8 +232,6 @@ void readSensors(DataPacket_t *packet)
         PRINT("apdsReadWord 1 failed\n");
         packet->apdsLight1 = 0xffff; // error value
     }
-    packet->islLight = 0xffff;
-#endif
     if (!readAdsRegister(ADS_CONVERSION_REGISTER, &packet->sq100Light)) {
         PRINT("readAdsRegister failed\n");
         packet->sq100Light = 0xffff;
@@ -272,6 +264,7 @@ void readSensors(DataPacket_t *packet)
 #if PRINT_PACKET
 void printPacket(DataPacket_t *packet)
 {
+    PRINT("===========================\n");
     PRINTF("dataSeqnum=%#x\n", packet->dataSeqnum);
     PRINTF("islLight=%#x\n", packet->islLight);
     PRINTF("apdsLight=%#x/%#x\n", packet->apdsLight0, packet->apdsLight1);
@@ -312,21 +305,18 @@ void appMain(void)
 #endif
 
     // ------------------------- light sensor
-#if ISL_SENSOR
     islInit();
     islOn();
-//    configureIsl(2, 0, 3, 3);
-#else
+
     apdsInit();
     apdsOn();
     // disable interrupt generation
     apdsCommand(INTERRUPT_REG, DISABLE_INTERRUPT);
     // set normal integration mode (maximal sensitivity)
     apdsCommand(TIMING_REG, INTEGRATION_TIME_NORMAL);
-#endif
 
     // ------------------------- 16 bit ADC
-    // i2cInit(); -- not needed because islInit() or apdsInit() calls this as well
+    // i2cInit(); -- not needed because islInit() and apdsInit() calls this as well
     writeAdsRegister(ADS_CONFIG_REGISTER, 0x8483);
 
     // ------------------------- networking
