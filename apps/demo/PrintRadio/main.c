@@ -34,7 +34,7 @@ void recvRadio(void)
 {
     int16_t len;
 
-    toggleGreenLed();
+    greenLedToggle();
     len = radioRecv(radioBuffer, sizeof(radioBuffer));
     if (len < 0) {
         PRINT("radio receive failed\n");
@@ -66,7 +66,7 @@ void appMain(void)
 
     while (1) {
         radioSend("hello world", sizeof("hello world"));
-        toggleRedLed();
+        redLedToggle();
         mdelay(1000);
     }
 }

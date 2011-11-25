@@ -97,6 +97,13 @@ typedef enum {
 #  include "ledslist.h"
 } leds_t;
 
+
+// Implementation of pin-attached LEDs, defined in ledslist.h
+//----------------------------------------------------------
+#define  LEDS_DEFINE
+#include "ledslist.h"
+
+
 // Count all the LEDs to LEDS_COUNT
 typedef enum { 
    LEDS_COUNT = 0
@@ -104,18 +111,13 @@ typedef enum {
 #  include "ledslist.h"
 } leds_count_t;  // Terminating the LEDS_COUNT construction
 
+
 // Compute a mask for all the LEDs to LEDS_ALL_MASK
 typedef enum { 
    LEDS_ALL_MASK = 0
-#  define DOIT(_led)  + _led##_mask
+#  define DOIT(_led)  | _led##_mask
 #  include "ledslist.h"
 } leds_all_t;    // Terminating the LEDS_ALL_MASK construction
-
-
-// Implementation of pin-attached LEDs, defined in ledslist.h
-//----------------------------------------------------------
-#define  LEDS_DEFINE
-#include "ledslist.h"
 
 
 //----------------------------------------------------------

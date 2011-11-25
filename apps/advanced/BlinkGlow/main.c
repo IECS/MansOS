@@ -43,7 +43,6 @@ void setLedsGlow(int lednew)
     int ledon, ledup, leddn;
     int i0, i1, ii, i3;
     
-    //ledold = getLeds();
     ledup = lednew | ~ledold;
     leddn = ~lednew | ledold;
     ledon = lednew | ledold;
