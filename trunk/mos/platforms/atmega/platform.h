@@ -30,19 +30,6 @@
 
 #include <hil/gpio.h>
 
-#ifndef LEDS_YELLOW_PORT
-#define LEDS_YELLOW_PORT 2
-#endif
-
-#ifndef LEDS_YELLOW_PIN
-#define LEDS_YELLOW_PIN 5
-#endif
-
-// LEDs attached to GND on this platform
-// to turn LED on, corresponding PIN must be set HIGH
-#ifndef LEDS_ON_WITH_HIGH
-#define LEDS_ON_WITH_HIGH 1
-#endif
 
 void initPlatform(void);
 

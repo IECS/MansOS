@@ -51,7 +51,7 @@ void panic(void)
     DISABLE_INTS();
     for (;;)
     {
-        setLeds(x ^= ~0u);
+        ledsSet(x ^= ~0u);
         volatile uint32_t t = 100000;
         while (--t);
     }

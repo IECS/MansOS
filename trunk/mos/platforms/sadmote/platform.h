@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2010 Leo Selavo and the contributors. All rights reserved.
+ * Copyright (c) 2008-2012 Leo Selavo and the contributors. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -42,14 +42,6 @@ void initPlatform(void);
 //===========================================================
 // Data types and constants
 //===========================================================
-
-// On SADmotex LEDs are attached to port 5, pin 4
-#define LEDS_RED_PORT 5
-#define LEDS_RED_PIN 4
-
-// LEDs attached to VCC on this platform
-// to turn LED on, corresponding PIN must be set LOW
-#define LEDS_ON_WITH_HIGH 0
 
 
 #define EXT_FLASH_CHIP FLASH_CHIP_AT25DF

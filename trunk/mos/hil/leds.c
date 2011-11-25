@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2010 Leo Selavo and the contributors. All rights reserved.
+ * Copyright (c) 2008-2012 Leo Selavo and the contributors. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -23,87 +23,34 @@
 
 #include "leds.h"
 
-// Generic functions:
-void ledNrOn(uint_t ledNr)
+//=========================================================
+// Services for multiple LEDs
+// referenced by a bitmask.
+// Each led should support ledMask() function that identifies it
+//=========================================================
+
+
+//----------------------------------------------------------
+void ledsInit()
 {
-    if (ledNr == RED_LED_NR) {
-        redLedOn();
-    } else if (ledNr == GREEN_LED_NR) {
-        greenLedOn();
-    } else if (ledNr == BLUE_LED_NR) {
-        blueLedOn();
-    }
+#  define DOIT(_led) _led##Init();
+#  include "ledslist.h"
 }
 
-void ledNrOff(uint_t ledNr)
+//----------------------------------------------------------
+void ledsSet(uint_t led_bitmask)
 {
-    if (ledNr == RED_LED_NR) {
-        redLedOff();
-    } else if (ledNr == GREEN_LED_NR) {
-        greenLedOff();
-    } else if (ledNr == BLUE_LED_NR) {
-        blueLedOff();
-    }
+   suppressLedOutput(true);
+#  define DOIT(_led) if(_led##_mask & led_bitmask) _led##On(); else _led##Off();
+#  include "ledslist.h"
+   suppressLedOutput(false);
 }
 
-void toggleNrLed(uint_t ledNr)
+//----------------------------------------------------------
+uint_t ledsGet()
 {
-    if (ledNr == RED_LED_NR) {
-        toggleRedLed();
-    } else if (ledNr == GREEN_LED_NR) {
-        toggleGreenLed();
-    } else if (ledNr == BLUE_LED_NR) {
-        toggleBlueLed();
-    }
-}
-
-uint_t ledNrIsOn(uint_t ledNr)
-{
-    if (ledNr == RED_LED_NR) {
-        return isRedLedOn();
-    } else if (ledNr == GREEN_LED_NR) {
-        return isGreenLedOn();
-    } else if (ledNr == BLUE_LED_NR) {
-        return isBlueLedOn();
-    } else {
-        return 0;
-    }
-}
-
-
-// Get and set all LEDs using a bitmask. MAx number of leds depends on
-// bit count in uint_t (register size)
-uint_t getLeds(void) {
-    uint_t l = 0;
-    if (isRedLedOn()) l |= RED_LED_BIT;
-    if (isGreenLedOn()) l |= GREEN_LED_BIT;
-    if (isBlueLedOn()) l |= BLUE_LED_BIT;
-    if (isYellowLedOn()) l |= YELLOW_LED_BIT;
-    return l;
-}
-
-void setLeds(uint_t bitmap) {
-    suppressLedOutput(true);
-
-    if (bitmap & RED_LED_BIT) {
-        redLedOn();
-    } else {
-        redLedOff();
-    }
-    if (bitmap & GREEN_LED_BIT) {
-        greenLedOn();
-    } else {
-        greenLedOff();
-    }
-    if (bitmap & BLUE_LED_BIT) {
-        blueLedOn();
-    } else {
-        blueLedOff();
-    }
-    if (bitmap & YELLOW_LED_BIT) {
-        yellowLedOn();
-    } else {
-        yellowLedOff();
-    }
-    suppressLedOutput(false);
+    uint_t led_bitmask = 0;
+#  define DOIT(_led) if( _led##Get() ) led_bitmask |= _led##_mask;
+#  include "ledslist.h"
+   return led_bitmask;
 }

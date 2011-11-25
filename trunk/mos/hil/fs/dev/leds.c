@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2010 Leo Selavo and the contributors. All rights reserved.
+ * Copyright (c) 2008-2012 Leo Selavo and the contributors. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -63,7 +63,7 @@ static bool ledsOpen(void)
  */
 static ssize_t ledsRead(void *buf, size_t count)
 {
-    uint_t leds = getLeds();
+    uint_t leds = ledsGet();
     size_t i;
     char *b = buf;
 
@@ -89,7 +89,7 @@ static ssize_t ledsRead(void *buf, size_t count)
  */
 static ssize_t ledsWrite(const void *buf, size_t count)
 {
-    uint_t leds = getLeds();
+    uint_t leds = ledsGet();
     size_t i;
     const char *b = buf;
 
@@ -128,7 +128,7 @@ static ssize_t ledsWrite(const void *buf, size_t count)
         }
     }
 
-    setLeds(leds);
+    ledsSet(leds);
     return count;
 }
 
