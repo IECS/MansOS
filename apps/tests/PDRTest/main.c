@@ -26,7 +26,7 @@
 #include <string.h>
 #include <kernel/threads/radio.h>
 
-#define RECV 1
+#define RECV 0
 
 #define TEST_PACKET_SIZE            30
 #define PAUSE_BETWEEN_TESTS_MS      3000 // ms
@@ -39,7 +39,7 @@
 #define NUM_AVG_RUNS_MEDIUM  10
 #define NUM_AVG_RUNS_LARGE   20
 
-#define AVG_BUFFER_SIZE NUM_AVG_RUNS_LARGE
+#define SAMPLE_BUFFER_SIZE  25
 
 void sendCounter(void);
 void recvCounter(void);
@@ -69,8 +69,8 @@ volatile uint16_t currentTestPacketsRx;
 volatile uint16_t prevTestPacketsRx;
 volatile uint16_t rssiSum;
 
-uint16_t avgPDR[NUM_AVG_RUNS_LARGE];
-int16_t avgRssi[NUM_AVG_RUNS_LARGE];
+uint16_t avgPDR[SAMPLE_BUFFER_SIZE];
+int16_t avgRssi[SAMPLE_BUFFER_SIZE];
 
 void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, int8_t rssi)
 {
@@ -78,7 +78,8 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, int8_
 
     static bool calledBefore;
     static int16_t prevPrevTestNumber;
-    int16_t idx = prevTestNumber % AVG_BUFFER_SIZE;
+    int16_t idx = prevTestNumber % SAMPLE_BUFFER_SIZE;
+    int16_t startIdx = idx;
 
     avgPDR[idx] = prevTestPacketsRx;
     avgRssi[idx] = ((int16_t) rssi) + 128;
@@ -91,8 +92,8 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, int8_
     } else if (prevPrevTestNumber < prevTestNumber) {
         prevPrevTestNumber++;
         while (prevPrevTestNumber < prevTestNumber) {
-            avgPDR[prevPrevTestNumber % AVG_BUFFER_SIZE] = 0;
-            avgRssi[prevPrevTestNumber % AVG_BUFFER_SIZE] = 0;
+            avgPDR[prevPrevTestNumber % SAMPLE_BUFFER_SIZE] = 0;
+            avgRssi[prevPrevTestNumber % SAMPLE_BUFFER_SIZE] = 0;
             prevPrevTestNumber++;
         }
     }
@@ -115,36 +116,48 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, int8_
         sumLarge += avgPDR[idx];
         sumRssiLarge += avgRssi[idx];
         numLarge++;
-        if (avgPDR[idx] != 0) {
-            sumLargeNe += avgPDR[idx];
-            sumRssiLargeNe += avgRssi[idx];
-            numLargeNe++;
-        }
         if (i < NUM_AVG_RUNS_MEDIUM) {
             sumMed += avgPDR[idx];
             sumRssiMed += avgRssi[idx];
             numMed++;
+        }
+        if (i < NUM_AVG_RUNS_SMALL) {
+            sumSmall += avgPDR[idx];
+            sumRssiSmall += avgRssi[idx];
+            numSmall++;
+        }
+        if (idx == 0) idx = SAMPLE_BUFFER_SIZE - 1;
+        else idx--;
+    }
+
+    if (numLarge == 0) return;
+
+    idx = startIdx;
+    for (i = 0; i < SAMPLE_BUFFER_SIZE; ++i) {
+        if (avgPDR[idx] == ~0u) break;
+        if (avgPDR[idx] != 0) {
+            sumLargeNe += avgPDR[idx];
+            sumRssiLargeNe += avgRssi[idx];
+            numLargeNe++;
+            if (numLargeNe == NUM_AVG_RUNS_LARGE) break;
+        }
+        if (numMedNe < NUM_AVG_RUNS_MEDIUM) {
             if (avgPDR[idx] != 0) {
                 sumMedNe += avgPDR[idx];
                 sumRssiMedNe += avgRssi[idx];
                 numMedNe++;
             }
         }
-        if (i < NUM_AVG_RUNS_SMALL) {
-            sumSmall += avgPDR[idx];
-            sumRssiSmall += avgRssi[idx];
-            numSmall++;
+        if (numSmallNe < NUM_AVG_RUNS_SMALL) {
             if (avgPDR[idx] != 0) {
                 sumSmallNe += avgPDR[idx];
                 sumRssiSmallNe += avgRssi[idx];
                 numSmallNe++;
             }
         }
-        if (idx == 0) idx = AVG_BUFFER_SIZE - 1;
+        if (idx == 0) idx = SAMPLE_BUFFER_SIZE - 1;
         else idx--;
     }
-
-    if (numLarge == 0) return;
 
     uint16_t s, m, l;
     int16_t s1, m1, l1;
