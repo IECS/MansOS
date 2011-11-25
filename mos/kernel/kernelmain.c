@@ -72,7 +72,7 @@ static void initSystem(void)
 
 #ifdef USE_LEDS
     INIT_PRINTF("init LED(s)...\n");
-    initLeds();
+    ledsInit();
 #endif
 #ifdef USE_ADC
     if (initAdc != NULL) {

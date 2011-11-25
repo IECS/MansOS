@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2010 Leo Selavo and the contributors. All rights reserved.
+ * Copyright (c) 2008-2012 Leo Selavo and the contributors. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -34,7 +34,7 @@
 
 // PC platform uses NO timers
 #define DISABLE_INTS() // nothing
-#define ENABLE_INTS() // nothing
+#define ENABLE_INTS()  // nothing
 
 #define ALARM_TIMER_INTERRUPT() void alarmTimerInterrupt(void)
 #define SLEEP_TIMER_INTERRUPT() void sleepTimerInterrupt(void)
@@ -82,14 +82,6 @@ enum {
 #define atomic_inc(x, c)  atomic(x += c)
 #define atomic_dec(x, c)  atomic(x -= c)
 
-// LEDs (all present!)
-#define RED_LED_PRESENT 1
-#define GREEN_LED_PRESENT 1
-#define BLUE_LED_PRESENT 1
-#define YELLOW_LED_PRESENT 1
-
-#define LED_COUNT 4
-
-#define LEDS_ON_WITH_HIGH 1
+// LEDs: all present! Defined in pc/ledslist.h
 
 #endif

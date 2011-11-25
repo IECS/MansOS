@@ -25,6 +25,7 @@
 #include <kernel/stdtypes.h>
 
 #include "leds.h"
+//#include "leds_hal.h"
 
 #define TERM_ESC "\033"
 #define TERM_DULL "0"
@@ -43,67 +44,75 @@
 #define TERM_CURSOR_BACK(places) TERM_ESC "[" #places "D"
 
 
+// How to display on and off
+#define PC_LED_ON_PREFIX    TERM_YELLOW "+"
+#define PC_LED_ON_POSTFIX  "+" TERM_RESET
+#define PC_LED_OFF_PREFIX   TERM_BLUE "-"
+#define PC_LED_OFF_POSTFIX  "-" TERM_RESET
+
+
 // Local LED states
 typedef struct {
     unsigned id;
     bool isOn;
-    char *color;
     char *name;
     char *upcaseName;
 } PCLed_t;
 
-static PCLed_t ledData[LED_COUNT] = {
-    { RED_LED_NR,    false, TERM_RED,    "red", "RED" },
-    { GREEN_LED_NR,  false, TERM_GREEN,  "grn", "GRN" },
-    { BLUE_LED_NR,   false, TERM_BLUE,   "blu", "BLU" },
-    { YELLOW_LED_NR, false, TERM_YELLOW, "ylw", "YLW" }
+
+static PCLed_t ledData[LEDS_COUNT] = {
+#define DOIT(name) { name##_mask, false, #name,  #name },
+#include "ledslist.h"
 };
 
 bool printingSupressed;
 
-// internal functions
-PCLed_t *getLedStruct(unsigned id); // get local LED structure by its id (nr)
-void togglePcLed(unsigned id); // toggle led by given id (nr)
-void pcLedOn(unsigned id); // turn on led by given id (nr)
-void pcLedOff(unsigned id); // turn off led by given id (nr)
-bool pcIsLedOn(unsigned id); // return true, when led given by id (nr) is on
 
+// Internal functions (id == virtual_pin, led number)
+//PCLed_t *getLedStruct(uint_t id); // get local LED structure by its id (nr)
+//void pcLedOn(uint_t id); // turn on led by given id (nr)
+//void pcLedOff(uint_t id); // turn off led by given id (nr)
+//bool pcIsLedOn(uint_t id); // return true, when led given by id (nr) is on
 
+//----------------------------------------------------------
+PCLed_t *getLedStruct(uint_t id) 
+{
+    if (id >= 0 && id < LEDS_COUNT) {
+        return &ledData[id];
+    }
+    return NULL;
+}
+
+//----------------------------------------------------------
 void printLeds()
 {
     if (printingSupressed) return;
 
     printf("LEDs:");
-    unsigned i;
-    for (i = 0; i < LED_COUNT; ++i) {
-        if (ledData[i].isOn) {
-            printf(" %s+%s+%s", ledData[i].color, ledData[i].upcaseName,
-                    TERM_RESET);
-        } else {
-            printf(" -%s-", ledData[i].name);
+    uint_t i;
+    for (i = 0; i < LEDS_COUNT; i++) {
+        if (ledData[i].isOn) 
+        {
+            printf(" %s%s%s", 
+                   PC_LED_ON_PREFIX, 
+                   ledData[i].upcaseName,
+                   PC_LED_ON_POSTFIX
+                   );
+        } else 
+        {
+            printf(" %s%s%s", 
+                   PC_LED_OFF_PREFIX, 
+                   ledData[i].name,
+                   PC_LED_OFF_POSTFIX
+                   );
         }
     }
     printf("\n");
     fflush(stdout);
 }
 
-PCLed_t *getLedStruct(unsigned id) {
-    unsigned i;
-    for (i = 0; i < LED_COUNT; ++i) {
-        if (ledData[i].id == id) return &ledData[i];
-    }
-    return NULL;
-}
-
-void togglePcLed(unsigned id) {
-    PCLed_t *led = getLedStruct(id);
-    if (led) {
-        led->isOn = !led->isOn;
-        printLeds();
-    }
-}
-
-void pcLedOn(unsigned id) {
+//----------------------------------------------------------
+void pcLedOn(uint_t id) {
     PCLed_t *led = getLedStruct(id);
     if (led) {
         led->isOn = true;
@@ -111,7 +120,8 @@ void pcLedOn(unsigned id) {
     }
 }
 
-void pcLedOff(unsigned id) {
+//----------------------------------------------------------
+void pcLedOff(uint_t id) {
     PCLed_t *led = getLedStruct(id);
     if (led) {
         led->isOn = false;
@@ -119,74 +129,46 @@ void pcLedOff(unsigned id) {
     }
 }
 
-bool pcIsLedOn(unsigned id) {
+//----------------------------------------------------------
+bool pcIsLedOn(uint_t id) {
     PCLed_t *led = getLedStruct(id);
     return led ? led->isOn : false;
 }
 
-// -----------------------------
 
+//----------------------------------------------------------
+//----------------------------------------------------------
 void pinSetPc(int port, int pin)
 {
-    if (port != LED_PORT_PC) return;
-    switch (pin) {
-    case LEDS_RED_PIN:
-        pcLedOn(RED_LED_NR);
-        break;
-    case LEDS_GREEN_PIN:
-        pcLedOn(GREEN_LED_NR);
-        break;
-    case LEDS_BLUE_PIN:
-        pcLedOn(BLUE_LED_NR);
-        break;
-    case LEDS_YELLOW_PIN:
-        pcLedOn(YELLOW_LED_NR);
-        break;
-    }
+    // printf("Set pin %d:%d \n", port, pin);
+
+    if (port != LEDS_PORT) return;
+    pcLedOn(pin);
 }
 
+//----------------------------------------------------------
 void pinClearPc(int port, int pin)
 {
-    if (port != LED_PORT_PC) return;
-    switch (pin) {
-    case LEDS_RED_PIN:
-        pcLedOff(RED_LED_NR);
-        break;
-    case LEDS_GREEN_PIN:
-        pcLedOff(GREEN_LED_NR);
-        break;
-    case LEDS_BLUE_PIN:
-        pcLedOff(BLUE_LED_NR);
-        break;
-    case LEDS_YELLOW_PIN:
-        pcLedOff(YELLOW_LED_NR);
-        break;
-    }
+    // printf("Clr pin %d:%d \n", port, pin);
+ 
+    if (port != LEDS_PORT) return;
+    pcLedOff(pin);
 }
 
+//----------------------------------------------------------
 int pinReadPc(int port, int pin)
 {
-    if (port != LED_PORT_PC) return 0;
-    switch (pin) {
-    case LEDS_RED_PIN:
-        return pcIsLedOn(RED_LED_NR);
-    case LEDS_GREEN_PIN:
-        return pcIsLedOn(GREEN_LED_NR);
-    case LEDS_BLUE_PIN:
-        return pcIsLedOn(BLUE_LED_NR);
-    case LEDS_YELLOW_PIN:
-        return pcIsLedOn(YELLOW_LED_NR);
-    default:
-        return 0;
-    }
+    // printf("Red pin %d:%d \n", port, pin);
+
+    if (port != LEDS_PORT) return 0;
+    return pcIsLedOn(pin);
 }
 
+//----------------------------------------------------------
 void suppressLedOutput(bool yes)
 {
-    if (printingSupressed != yes) {
-        printingSupressed = yes;
-        if (!printingSupressed) {
+    if( !yes && printingSupressed ){
             printLeds();
-        }
     }
+    printingSupressed = yes;
 }

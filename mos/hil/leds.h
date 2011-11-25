@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2010 Leo Selavo and the contributors. All rights reserved.
+ * Copyright (c) 2008-2012 Leo Selavo and the contributors. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,106 +21,130 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MANSOS_LEDS_H_
-#define _MANSOS_LEDS_H_
+#ifndef _LEDS_H_
+#define _LEDS_H_
 
 #include <kernel/defines.h>
-#include "leds_impl.h"
+#include "gpio.h"
+
+// NOTE: a platform must define ledslist.h for listing all the leds 
+//      and implementation specific details. See ledslist.h for the details
+//      The ledslist.h file is included several times: 
+//      once to define LEDs and once or more to iterate through the LEDs.
 
 // -----------------------------------------------------
-
-// common numbering of leds for all platforms
-#define RED_LED_NR 0
-#define GREEN_LED_NR 1
-#define BLUE_LED_NR 2
-#define YELLOW_LED_NR 3
-
-// bits used for leds in bitmask (do not mix with xxx_LED_PIN!)
-#define RED_LED_BIT (1 << RED_LED_NR)
-#define GREEN_LED_BIT (1 << GREEN_LED_NR)
-#define BLUE_LED_BIT (1 << BLUE_LED_NR)
-#define YELLOW_LED_BIT (1 << YELLOW_LED_NR)
-
+// Generic functions for all leds accessed using a bitmask:
 // -----------------------------------------------------
+void ledsInit();                   // Init All leds (kernel uses this)
 
-// Generic functions:
-void ledNrOn(uint_t ledNr);
-void ledNrOff(uint_t ledNr);
-void toggleNrLed(uint_t ledNr);
-uint_t ledNrIsOn(uint_t ledNr);
+void ledsSet(uint_t led_bitmask);  // Set LEDs from a bitmask
+uint_t ledsGet();                  // Which leds are on? Returns a bitmask
 
-// Get and set all LEDs using a bitmask. MAx number of leds depends on
-// bit count in uint_t (register size)
-uint_t getLeds(void);
-void setLeds(uint_t bitmap);
+#define ledsOn(led_bitmask)     ledsSet(  (led_bitmask) | ledsGet() )
+#define ledsOff(led_bitmask)    ledsSet( ~(led_bitmask) & ledsGet() )
+#define ledsToggle(led_bitmask) ledsSet(  (led_bitmask) ^ ledsGet() )
 
 
+//=========================================================
+// LED definition (uses platform dependant ledslist.h)
+//=========================================================
 
-/*
- * Supported LED functions (defined as macros, therefore not declared):
- *
- * // turn on/off/toggle first available led
- * void ledOn();
- * void ledOff();
- * void toggleLed();
- *
- * // turn led on
- * void redLedOn();
- * void greenLedOn();
- * void blueLedOn();
- * void yellowLedOn();
- *
- * // turn led off
- * void redLedOff();
- * void greenLedOff();
- * void blueLedOff();
- * void yellowLedOff();
- *
- * // toggle led
- * void toggleRedLed();
- * void toggleGreenLed();
- * void toggleBlueLed();
- * void toggleYellowLed();
- *
- * uint_t isRedLedOn(); // 1, when led is on, 0 otherwise
- * uint_t isGreenLedOn();
- * uint_t isBlueLedOn();
- * uint_t isYellowLedOn();
- *
- * void initLeds() - for kernel only
- */
+//----------------------------------------------------------
+// LED_DEFINE defines the functions for each individual led.
+// "name" must be the same as used in the leds_t enum declaration.
+// "port" and "pin" determine where the led is attached to the MCU.
+// "valOn" specifies whether to set pin to 1 or 0 to turn the LED on.
+// Note: the defines use double indirection here so that the 
+// parameters that are macros get evaluated.
+//----------------------------------------------------------
 
-#if RED_LED_PRESENT
-// use red as default led
-#define ledOn() redLedOn()
-#define ledOff() redLedOff()
-#define toggleLed() toggleRedLed()
-#elif GREEN_LED_PRESENT
-// use green as default led
-#define ledOn() greenLedOn()
-#define ledOff() greenLedOff()
-#define toggleLed() toggleGreenLed()
-#elif BLUE_LED_PRESENT
-#define ledOn() blueLedOn()
-#define ledOff() blueLedOff()
-#define toggleLed() toggleBlueLed()
-// use blue as default led
-#elif YELLOW_LED_PRESENT
-// use yellow as default led
-#define ledOn() yellowLedOn()
-#define ledOff() yellowLedOff()
-#define toggleLed() toggleYellowLed()
-#else
-// no leds present
+#ifndef LED_DEFINE
+#define LED_DEFINE( name, port, pin, valOn )  LED_DEFINE2( name, port, pin, valOn )
+#define LED_DEFINE2( name, port, pin, valOn )                            \
+    static inline uint_t name##Mask()    { return ((uint_t)(name##_mask)); } \
+    static inline uint_t name##Get()     { return (pinRead(port, pin) ^ (1-valOn)); } \
+    static inline void name##Set( val )  { pinWrite( port, pin, ((1-valOn) ^ val) ); } \
+    static inline void name##On()        { name##Set(1); }              \
+    static inline void name##Off()       { name##Set(0); }              \
+    static inline void name##Toggle()    { pinToggle( port, pin ); }    \
+    static inline void name##Init()      { pinAsOutput( port, pin ); name##Off(); } \
+    
+#endif  // LED_DEFINE
+
+// LED_ALIAS is used to provide aliases to the original led names 
+
+#ifndef LED_ALIAS
+#define LED_ALIAS( alias, name ) LED_ALIAS2( alias, name )
+#define LED_ALIAS2( alias, name )                                       \
+    enum { alias##_mask = name##_mask };                                \
+    static inline uint_t alias##Mask()   { return name##Mask(); }       \
+    static inline uint_t alias##Get()    { return name##Mask(); }       \
+    static inline void alias##Set( val ) { name##Set( val ); }          \
+    static inline void alias##On()       { name##On(); }                \
+    static inline void alias##Off()      { name##Off(); }               \
+    static inline void alias##Toggle()   { name##Toggle(); }            \
+    static inline void alias##Init()     { name##Init(); }              \
+
+#endif // LED_ALIAS     
+
+
+//----------------------------------------------------------
+// Declare all LEDs.
+// Prerequisite: ledslist.h file with the LED names.
+//----------------------------------------------------------
+typedef enum {
+#  define DOIT(_led) _led##_mask  = (1<<( DOIT_COUNTER() )), 
+#  include "ledslist.h"
+} leds_t;
+
+// Count all the LEDs to LEDS_COUNT
+typedef enum { 
+   LEDS_COUNT = 0
+#  define DOIT(_led)  +1
+#  include "ledslist.h"
+} leds_count_t;  // Terminating the LEDS_COUNT construction
+
+// Compute a mask for all the LEDs to LEDS_ALL_MASK
+typedef enum { 
+   LEDS_ALL_MASK = 0
+#  define DOIT(_led)  + _led##_mask
+#  include "ledslist.h"
+} leds_all_t;    // Terminating the LEDS_ALL_MASK construction
+
+
+// Implementation of pin-attached LEDs, defined in ledslist.h
+//----------------------------------------------------------
+#define  LEDS_DEFINE
+#include "ledslist.h"
+
+
+//----------------------------------------------------------
+// The default LED "led" support. 
+// If LED_DEFAULT is not defined in ledslist.h  - (no leds are present),
+// then ignore the led* calls.
+//----------------------------------------------------------
+#ifdef LED_DEFAULT
+LED_ALIAS(led, LED_DEFAULT)
+#else // LED_DEFAULT
+#warning "Default LED not defined !"
+#define ledMask()  0
 #define ledOn()
 #define ledOff()
-#define toggleLed()
+#define ledToggle()
+#define ledSet(_)
+#define ledGet()   0
+#define ledInit()
+#endif // LED_DEFAULT
+
+
+//===============================================================
+// This should be moved to the PC platform.h
+#if PLATFORM_PC
+   void suppressLedOutput(bool yes);
+#else
+#  define suppressLedOutput(_)
 #endif
 
-enum {
-    // When LEDS idx = LEDS_ALL, the operation is applied to all LEDs
-    LEDS_ALL = 0xff,
-};
 
-#endif // _MANSOS_LEDS_H
+#endif // _LEDS_H_
 
