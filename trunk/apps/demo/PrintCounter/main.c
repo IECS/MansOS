@@ -34,7 +34,7 @@ void appMain(void)
     while(1)
     {
         PRINTF("counter = %u\n", counter++);
-        toggleRedLed();
+        redLedToggle();
         mdelay(1000); // delay one second
     }
 }

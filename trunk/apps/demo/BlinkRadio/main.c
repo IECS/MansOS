@@ -95,7 +95,7 @@ void appMain(void)
             else redLedOff();
         }
 
-        toggleGreenLed();
+        greenLedToggle();
         busyWait(getWaitInterval(rssi));
     }
 }

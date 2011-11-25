@@ -25,7 +25,10 @@
 #include <kernel/stdtypes.h>
 
 #include "leds.h"
-//#include "leds_hal.h"
+
+#define DEBUG_PINS(_)
+//#define DEBUG_PINS(name) printf( #name " pin %d:%d \n", port, pin);
+
 
 #define TERM_ESC "\033"
 #define TERM_DULL "0"
@@ -140,7 +143,7 @@ bool pcIsLedOn(uint_t id) {
 //----------------------------------------------------------
 void pinSetPc(int port, int pin)
 {
-    // printf("Set pin %d:%d \n", port, pin);
+    DEBUG_PINS(Set);
 
     if (port != LEDS_PORT) return;
     pcLedOn(pin);
@@ -149,7 +152,7 @@ void pinSetPc(int port, int pin)
 //----------------------------------------------------------
 void pinClearPc(int port, int pin)
 {
-    // printf("Clr pin %d:%d \n", port, pin);
+    DEBUG_PINS(Clr);
  
     if (port != LEDS_PORT) return;
     pcLedOff(pin);
@@ -158,7 +161,7 @@ void pinClearPc(int port, int pin)
 //----------------------------------------------------------
 int pinReadPc(int port, int pin)
 {
-    // printf("Red pin %d:%d \n", port, pin);
+    DEBUG_PINS(Red);
 
     if (port != LEDS_PORT) return 0;
     return pcIsLedOn(pin);
@@ -167,7 +170,7 @@ int pinReadPc(int port, int pin)
 //----------------------------------------------------------
 void suppressLedOutput(bool yes)
 {
-    if( !yes && printingSupressed ){
+    if( yes != printingSupressed ){
             printLeds();
     }
     printingSupressed = yes;

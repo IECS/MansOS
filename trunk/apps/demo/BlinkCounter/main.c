@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2010 Leo Selavo and the contributors. All rights reserved.
+ * Copyright (c) 2008-2012 Leo Selavo and the contributors. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,9 +29,9 @@
 
 void appMain(void)
 {
-    uint8_t counter = 0;
+    uint_t counter = 0;
     while (1) {
-        setLeds(counter++); // display value on LEDs
+        ledsSet(counter++); // display value on LEDs
         msleep(1000);       // sleep one second
     }
 }
