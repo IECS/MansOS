@@ -149,6 +149,8 @@ endif
 
 #===== Tools =====
 
+SADLANG = $(MOSROOT)/tools/sadlang/sadlang
+
 MEMDUMP = $(MOS)/make/scripts/memdump.py
 
 # change this to your MSPsim installation directory
@@ -197,11 +199,15 @@ INCLUDES += -I$(MOS)/arch/$(ARCH)
 INCLUDES += -I$(MOS)/platforms/$(PLATFORM)
 INCLUDES += -I$(MOS)/chips
 
-#===== Sorting out the Objs and Sorces =====
+#=================== SADlang support
+GENERATED_SOURCES = $(SADLANG_SOURCES:%.sl=%.c)
+
+#===== Sorting out the Objs and Sources =====
 
 PSOURCES += $(PSOURCES-y) $(PSOURCES-yes)
 
 APP_OBJS = $(SOURCES:%.c= $(OBJDIR)/%.o)
+APP_OBJS += $(GENERATED_SOURCES:%.c= $(OBJDIR)/%.o)
 
 # add platform sources and objs
 PSRC2 = $(subst $(MOSROOT),$(OUTDIR),$(PSOURCES))
@@ -210,8 +216,10 @@ POBJS = $(PSRC2:%.c= %.o)
 OBJS = $(APP_OBJS) $(POBJS)
 OBJDIRS = $(dir $(OBJS))
 
+
+
 # ===== Targets =====
-.PHONY: all $(PLATFORM_TARGET) build savetarget objs objDirs clean
+.PHONY: all $(PLATFORM_TARGET) build savetarget objDirs clean cleanall
 
 all: build
 
@@ -223,7 +231,7 @@ savetarget:
 	$(_QUIET) @echo "saving Makefile.target"
 	$(_QUIET) @echo >$(PROJDIR)/build/Makefile.target "TARGET = $(TARGET)"
 
-build : $(OUTDIR)/config objDirs $(EXECUTABLE)
+build : $(OUTDIR)/config objDirs $(GENERATED_SOURCES) $(EXECUTABLE)
 
 # This file is reuquired for building. An empty file is created it doesn't exist
 $(PROJDIR)/config:
@@ -235,17 +243,18 @@ $(OUTDIR)/config: $(PROJDIR)/config
 	$(_QUIET) mkdir -p $(OUTDIR)
 	$(_QUIET) cp $(PROJDIR)/config $(OUTDIR)/config
 
-objs: objDirs $(OUTDIR) $(OBJS)
-
 clean: 
 	$(Print) "RM $(OUTDIR)"
 	$(_QUIET) $(Delete) $(OUTDIR) *.stackdump extflash.dat eeprom
+
+cleanall: clean
+	$(_QUIET) $(Delete) $(GENERATED_SOURCES)
 
 # ===== header file dependency tracking =====
 
 _DEPS := $(subst .res,.d,$(subst .o,.d,$(OBJS)))
 
-ifneq ($(MAKECMDGOALS),clean)
+ifneq ("", "$(filter-out clean cleanall, $(MAKECMDGOALS))")
 -include $(_DEPS)
 endif
 
@@ -256,12 +265,16 @@ $(OBJDIR)/%.o : $(MOSROOT)/%.c
 	$(Print) "CC $<"
 	$(_QUIET) $(CC) $(CFLAGS) $(INCLUDES) -MD -MF $(subst .o,.d,$@) -MP -MT $(subst .o,.d,$@) -MT $@ -c $< -o $@
 
+%.c : %.sl
+	$(Print) "SADLANG $<"
+	$(_QUIET) $(SADLANG) $< -o $@
+
 # .c -> .o, user sources
 $(OBJDIR)/%.o : $(PROJDIR)/%.c
 	$(Print) "CC $<"
 	$(_QUIET) $(CC) $(CFLAGS) $(INCLUDES) -MD -MF $(subst .o,.d,$@) -MP -MT $(subst .o,.d,$@) -MT $@ -c $< -o $@
 ifeq ($(USE_REPROGRAMMING),y)
-    # rename ".text" section to ".usertext"
+# rename ".text" section to ".usertext"
 	$(_QUIET) $(OBJCOPY) --rename-section .text=.usertext $@
 endif
 
