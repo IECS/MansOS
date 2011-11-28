@@ -89,8 +89,9 @@ void debugPrintf(char* str, ...)
 #ifdef DEBUG
 #if 1
 // hexdump version #1
-void debugHexdump(uint8_t *data, unsigned len) {
+void debugHexdump(void *data_, unsigned len) {
     static const char digits[] = "0123456789abcdef";
+    uint8_t *data = (uint8_t *) data_;
     unsigned i;
     char line[3 * 16 + 2] = {0};
     char *p = line;
@@ -113,8 +114,9 @@ void debugHexdump(uint8_t *data, unsigned len) {
 }
 #else
 // hexdump version #2
-void debugHexdump(uint8_t *data, unsigned len) {
+void debugHexdump(void *data_, unsigned len) {
     static const char digits[] = "0123456789abcdef";
+    uint8_t *data = (uint8_t *) data_;
     unsigned i;
     char line[5 * 16 + 3] = {0};
     char *p = line;
@@ -142,7 +144,7 @@ void debugHexdump(uint8_t *data, unsigned len) {
 #endif
 
 #else // DEBUG not defined
-void debugHexdump(uint8_t *data, unsigned len)
+void debugHexdump(void *data, unsigned len)
 {
 }
 #endif // DEBUG

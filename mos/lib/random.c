@@ -23,12 +23,11 @@
 
 #include "random.h"
 #include <hil/timers.h>
+#include <hil/snum.h>
 
 #if PLATFORM_PC
 #include <sys/time.h>
 #include <stdlib.h>
-#elif PLATFORM_TELOSB
-#include <hil/snum.h>
 #endif
 
 static uint32_t randomKey;
@@ -38,7 +37,7 @@ void randomInit() {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     randomKey = tv.tv_usec + tv.tv_sec;
-#elif PLATFORM_TELOSB
+#elif PLATFORM_TELOSB || PLATFORM_SADMOTE
     // generate a random key from serial number
     uint32_t snum[2];
     halGetSerialNumber((uint8_t *) snum);

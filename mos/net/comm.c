@@ -27,7 +27,6 @@
 #include "queue.h"
 #include <hil/snum.h>
 #include <lib/dprint.h>
-#include <kernel/config.h>
 #include <net/net-stats.h>
 
 // ---------- place for global net variables

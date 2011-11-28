@@ -28,7 +28,6 @@
 #ifndef MANSOS_ALARMS_SYSTEM_H
 #define MANSOS_ALARMS_SYSTEM_H
 
-#include <lib/list.h>
 // include user API
 #include <hil/alarms.h>
 

@@ -73,14 +73,6 @@ void alarmsProcess(void)
     }
 }
 
-void alarmInit(Alarm_t *alarm, AlarmCallback cb, void *param)
-{
-    SLIST_NEXT(alarm, chain) = NULL;
-    alarm->callback = cb;
-    alarm->data = param;
-    alarm->jiffies = 0;
-}
-
 void alarmSchedule(Alarm_t *alarm, uint32_t milliseconds)
 {
     alarm->jiffies = getJiffies() + ms2jiffies(milliseconds);

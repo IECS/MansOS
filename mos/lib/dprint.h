@@ -102,7 +102,7 @@ void serialPrint( char* str );
 void radioPrint( char* str );
 
 void debugPrintf(char* str, ...);
-void debugHexdump(uint8_t *data, unsigned len);
+void debugHexdump(void *data, unsigned len);
 
 void printInit(void) WEAK_SYMBOL;
 
