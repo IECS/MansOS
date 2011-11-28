@@ -30,10 +30,15 @@ void appMain(void){
     adsInit();
 
   	//adsContiniousConversionMode();    // By default power down single shot converion mode is enabled
-  	  	
+  	uint8_t i = 0;
   	while(1){
+  	    adsSelectInput(i);
   		readAds(&val);
-    	PRINTF("Ads conversion result:%#x\n",val);
+    	PRINTF("Ads conversion result from AIN%d:%#x\n",i, val);
     	sleep(1);
+    	toggleLed();
+    	i++;
+    	if (i>3)
+    	    i = 0;
     }
 }
