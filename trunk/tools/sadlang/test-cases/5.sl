@@ -40,13 +40,13 @@ when System.isDaytime
 end
 
 // send data to serial
-sink Serial;
+sendto Serial;
 
 // also send data to radio
-sink Radio;
+sendto Radio;
 
 // always when the condition is checked print a message (parameters?)
-when 1
-     sink Serial, print "In main loop...";
-     sink Radio, print "param param...";
-end
+// when 1
+//     sink Serial, print "In main loop...";
+//     sink Radio, print "param param...";
+//end

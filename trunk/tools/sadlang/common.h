@@ -15,6 +15,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <assert.h>
+#include <stdint.h>
 #include <iostream>
 #include <string>
 #include <map>
@@ -65,12 +67,45 @@ struct ParameterList_s {
     iterator end() { return iterator(NULL); }
 };
 
+struct Field_s {
+    Field_t *next;
+    const char *name;
+    Value_t* value;
+
+    Field_s() : next(), name(), value() {}
+};
+
+struct FieldList_s {
+    Field_t *first;
+
+    FieldList_s() : first() {}
+
+    struct iterator {
+        Field_t *p;
+        iterator(Field_t *x) : p(x) {}
+
+        void operator ++() {
+            if (p) p = p->next;
+        }
+        operator Field_t *() {
+            return p;
+        }
+        Field_t * operator->() {
+            return p;
+        }
+    };
+
+    iterator begin() { return iterator(first); }
+    iterator end() { return iterator(NULL); }
+};
+
 struct ComponentUseCase_s {
     string name;
     ParameterList_t *params;
+    FieldList_t *fields;
     ComponentUseCase_t *next;
 
-    ComponentUseCase_s() : params(), next() {}
+    ComponentUseCase_s() : params(), fields(), next() {}
 };
 
 struct ComponentUseCaseList_s {

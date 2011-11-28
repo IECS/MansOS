@@ -1,5 +1,7 @@
 #include "common.h"
 
+#define ALLOW_INCOMPLETE_PACKETS 0 // XXX
+
 ObjectCollection objectsUsed;
 vector<Actuator *> actuatorsUsed;
 vector<Sensor *> sensorsUsed;
@@ -11,7 +13,6 @@ extern const char *inputFileName;
 extern const char *outputFileName;
 FILE *outputFile;
 
-
 struct IntTypes {
     const char *name;
     const char *name2;
@@ -19,14 +20,16 @@ struct IntTypes {
     const char *format;
 };
 
-IntTypes uintTypes[4] = {
+IntTypes uintTypes[] = {
+    { "", "", "", "" },
     { "uint8_t", "U8", "0xff", "%u" },
     { "uint16_t", "U16", "0xffff", "%u" },
     { "", "", "", "" },
     { "uint32_t", "U32", "0xffffffff", "%lu" },
 };
 
-IntTypes intTypes[4] = {
+IntTypes intTypes[] = {
+    { "", "", "", "" },
     { "int8_t", "U8", "0xff", "%d" },
     { "int16_t", "U16", "0xffff", "%d" },
     { "", "", "", "" },
@@ -85,7 +88,8 @@ void Object::generateIncludes() {
 
 void generateIncludes(void)
 {
-    fprintf(outputFile, "#include \"stdmansos.h\"\n");
+    fprintf(outputFile, "#include <stdmansos.h>\n");
+    fprintf(outputFile, "#include <lib/codec/crc.h>\n");
     foreach(ObjectCollection, objectsUsed, (*it)->generateIncludes());
     fprintf(outputFile, "\n");
 }
@@ -99,8 +103,10 @@ void generatePacketType(Sink *sink, vector<PacketField> fields)
     } else {
         // use only explicitly specified fields
         foreach (vector<PacketField>, fields,
-                if (has(sink->fields, it->name)) usedFields.push_back(*it));
+                if (has(sink->fields, toUpperCase(it->name))) usedFields.push_back(*it));
     }
+    foreach (vector<PacketField>, sink->constValuedFields,
+            usedFields.push_back(*it));
 
     if (usedFields.empty()) {
         sysError("%sPacket has no fields", sink->getName());
@@ -110,7 +116,8 @@ void generatePacketType(Sink *sink, vector<PacketField> fields)
 
     unsigned packetSize = 0;
     foreach (vector<PacketField>, usedFields,
-            fprintf(outputFile, "    uint%d_t %s;\n", it->size * 8, it->name.c_str());
+            fprintf(outputFile, "    uint%d_t %s;\n", it->size * 8, 
+                    toCamelCase(it->name).c_str());
             packetSize += it->size;
         );
 
@@ -125,9 +132,9 @@ void generatePacketType(Sink *sink, vector<PacketField> fields)
     }
 
     // finish the packet
-    fprintf(outputFile, "} PACKED;\n");
+    fprintf(outputFile, "} PACKED;\n\n");
     // and add a typedef
-    fprintf(outputFile, "typedef struct %sPacket_s %sPacket_t;\n",
+    fprintf(outputFile, "typedef struct %sPacket_s %sPacket_t;\n\n",
             sink->getName(), sink->getName());
 
     sink->usedFields = usedFields;
@@ -184,6 +191,14 @@ bool Object::generateConstants(const UseCase &uc, int num)
     return ret;
 }
 
+bool Object::generateConstants()
+{
+    int i = 1;
+    foreach (CaseVector, useCases,
+            if (generateConstants(*it, i)) i++);
+    return i > 1;
+}
+
 bool Sink::generateConstants()
 {
     bool ret = Object::generateConstants();
@@ -198,17 +213,17 @@ bool Sink::generateConstants()
     return ret;
 }
 
-bool Object::generateConstants()
-{
-    int i = 1;
-    foreach (CaseVector, useCases,
-            if (generateConstants(*it, i)) i++);
-    return i > 1;
+bool Sensor::generateConstants() {
+    fprintf(outputFile, "#define %s_NO_VALUE    %s\n",
+            toUpperCase(getName()).c_str(),
+            uintTypes[getDataSize()].noValue);
+
+    return Object::generateConstants();
 }
 
 bool Condition::generateConstants()
 {
-    if (IS_UNSPECIFIED(number)) return false;
+    if (!numberSpecified) return false;
     if (op == OP_TEST) return false;
     if (componentParameter->type != COND_ALARM_BASED) {
         return false;
@@ -311,7 +326,7 @@ bool Object::generateVariables()
 
 bool Condition::generateVariables()
 {
-    if (IS_SPECIFIED(number)
+    if (numberSpecified
             && op == OP_TEST
             && componentParameter->type == COND_ALARM_BASED) {
         fprintf(outputFile, "Alarm_t condition%dAlarm;\n", id);
@@ -351,7 +366,7 @@ void generateVariables(void)
 
 void generateSerialFunction(const IntTypes &type) {
     fprintf(outputFile, "static inline void serialPrint%s(const char *name, %s value)\n",
-            toUpperCase(type.name).c_str(), type.name);
+            type.name2, type.name);
     fprintf(outputFile, "{\n");
     fprintf(outputFile, "    PRINTF(\"%%s=%%u\\n\", name, value);\n");
     fprintf(outputFile, "}\n\n");
@@ -359,12 +374,12 @@ void generateSerialFunction(const IntTypes &type) {
 
 void generateSerialFunctions(bool useI8, bool useU8, bool useI16, bool useU16, bool useI32, bool useU32)
 {
-    if (useI8) generateSerialFunction(intTypes[0]);
-    if (useU8) generateSerialFunction(uintTypes[0]);
-    if (useI16) generateSerialFunction(intTypes[1]);
-    if (useU16) generateSerialFunction(uintTypes[1]);
-    if (useI32) generateSerialFunction(intTypes[3]);
-    if (useU32) generateSerialFunction(uintTypes[3]);
+    if (useI8) generateSerialFunction(intTypes[1]);
+    if (useU8) generateSerialFunction(uintTypes[1]);
+    if (useI16) generateSerialFunction(intTypes[2]);
+    if (useU16) generateSerialFunction(uintTypes[2]);
+    if (useI32) generateSerialFunction(intTypes[4]);
+    if (useU32) generateSerialFunction(uintTypes[4]);
 }
 
 void SerialSink::generateCode()
@@ -395,14 +410,14 @@ void SerialSink::generateCode()
 
     if (!aggregate) return;
 
-    fprintf(outputFile, "static inline void serialSend(void)\n");
+    fprintf(outputFile, "static inline void serialPacketPrint(void)\n");
     fprintf(outputFile, "{\n");
-    fprintf(outputFile, "    PRINT(\"======================\\n\");");
-        foreach (vector<PacketField>, usedFields,
-                fprintf(outputFile, "    serialPrint%s(\"%s\", serialPacket.%s);",
-                        toUpperCase(uintTypes[it->size].name).c_str(),
-                        it->name.c_str(), it->name.c_str()));
-    fprintf(outputFile, "};\n\n");
+    fprintf(outputFile, "    PRINT(\"======================\\n\");\n");
+    foreach (vector<PacketField>, usedFields,
+            fprintf(outputFile, "    serialPrint%s(\"%s\", serialPacket.%s);\n",
+                    uintTypes[it->size].name2,
+                    it->name.c_str(), toCamelCase(it->name).c_str()));
+    fprintf(outputFile, "}\n\n");
 
     Sink::generateCode();
 }
@@ -414,25 +429,39 @@ void Sink::generateCode()
 
     fprintf(outputFile, "static inline void %sPacketInit(void)\n", ccName.c_str());
     fprintf(outputFile, "{\n");
-    fprintf(outputFile, "    %sPacketNumFieldsFull = 0;\n", ccName.c_str());
+    // count const fields
+    unsigned numConstFields = 0;
     foreach (vector<PacketField>, usedFields,
-            fprintf(outputFile, "    %sPacket.%s = %s_NO_VALUE;\n",
-                    ccName.c_str(), it->name.c_str(),
-                    toUpperCase(it->name).c_str()));
-    fprintf(outputFile, "};\n\n");
+            if (it->isConstant) numConstFields++);
+    fprintf(outputFile, "    %sPacketNumFieldsFull = %d;\n",
+            ccName.c_str(), numConstFields);
+    foreach (vector<PacketField>, usedFields,
+            if (it->isConstant) {
+                fprintf(outputFile, "    %sPacket.%s = %d;\n",
+                        ccName.c_str(), toCamelCase(it->name).c_str(),
+                        it->value);
+            } else {
+                fprintf(outputFile, "    %sPacket.%s = %s_NO_VALUE;\n",
+                        ccName.c_str(), toCamelCase(it->name).c_str(),
+                        toUpperCase(it->name).c_str());
+            });
+    fprintf(outputFile, "}\n\n");
 
     fprintf(outputFile, "static inline void %sPacketSend(void)\n", ccName.c_str());
     fprintf(outputFile, "{\n");
+    if (crc) {
+            fprintf(outputFile, "    %sPacket.crc = crc16((const uint8_t *) &%sPacket, sizeof(%sPacket) - 2);\n",
+                    ccName.c_str(), ccName.c_str(), ccName.c_str());
+    }
     fprintf(outputFile, "    %s;\n", getSendFuntion());
     fprintf(outputFile, "    %sPacketInit();\n", ccName.c_str());
-    fprintf(outputFile, "};\n\n");
+    fprintf(outputFile, "}\n\n");
 
-    fprintf(outputFile, "static inline void %sPacketIsFull(void)\n", ccName.c_str());
+    fprintf(outputFile, "static inline bool %sPacketIsFull(void)\n", ccName.c_str());
     fprintf(outputFile, "{\n");
-    fprintf(outputFile, "    %s;\n", getSendFuntion());
     fprintf(outputFile, "    return %sPacketNumFieldsFull >= %s_PACKET_NUM_FIELDS;\n",
             ccName.c_str(), ucName.c_str());
-    fprintf(outputFile, "};\n\n");
+    fprintf(outputFile, "}\n\n");
 }
 
 void Sink::generateCodeForSensor(Sensor *s)
@@ -445,21 +474,29 @@ void Sink::generateCodeForSensor(Sensor *s)
         // this must be serial, because all other sinks require packets!
         fprintf(outputFile, "    %sPrint%s(\"%s\", %s);\n",
                 ccName.c_str(),
-                toUpperCase(uintTypes[s->getDataSize()].name).c_str(),
+                uintTypes[s->getDataSize()].name2,
                 ccSensorName.c_str(),
                 ccSensorName.c_str());
         return;
     }
 
     // a packet; more complex case
+#if ALLOW_INCOMPLETE_PACKETS
     fprintf(outputFile, "    if (%sPacket.%s != %s_NO_VALUE) {\n",
             ccName.c_str(), ccSensorName.c_str(), ucSensorName.c_str());
     fprintf(outputFile, "        %sPacketSend();\n", ccName.c_str());
+#else
+    fprintf(outputFile, "    if (%sPacket.%s == %s_NO_VALUE) {\n",
+            ccName.c_str(), ccSensorName.c_str(), ucSensorName.c_str());
+    fprintf(outputFile, "        %sPacketNumFieldsFull++;\n", ccName.c_str());
+#endif
     fprintf(outputFile, "    }\n");
 
     fprintf(outputFile, "    %sPacket.%s = %s;\n",
             ccName.c_str(), ccSensorName.c_str(), ccSensorName.c_str());
+#if ALLOW_INCOMPLETE_PACKETS
     fprintf(outputFile, "    %sPacketNumFieldsFull++;\n", ccName.c_str());
+#endif
 
     fprintf(outputFile, "    if (%sPacketIsFull()) {\n", ccName.c_str());
     fprintf(outputFile, "        %sPacketSend();\n", ccName.c_str());
@@ -558,10 +595,16 @@ bool Object::generateAppMainCode(const UseCase &uc, int num)
 
 bool Object::generateAppMainCode()
 {
-    int i = 1;
+    bool any = false;
+    const char *ifunc = getInitFunction();
+    if (ifunc) {
+        any = true;
+        fprintf(outputFile, "    %s();\n", ifunc);
+    }
+
     foreach (CaseVector, useCases,
-            if (generateAppMainCode(*it, i)) i++);
-    return i > 1;
+            if (generateAppMainCode(*it, 1)) any = true);
+    return any;
 }
 
 // ----------------------------------------
@@ -637,9 +680,9 @@ void generateCode(void)
     generateIncludes();
     fprintf(outputFile, SEPARATOR);
     generateTypes();
-    generateConstants();
     generateVariables();
-    //fprintf(outputFile, SEPARATOR);
+    generateConstants();
+    fprintf(outputFile, SEPARATOR);
     generateSinkCode();
     fprintf(outputFile, SEPARATOR);
     generateCallbacks();
@@ -648,4 +691,3 @@ void generateCode(void)
 
     fclose(outputFile);
 }
-
