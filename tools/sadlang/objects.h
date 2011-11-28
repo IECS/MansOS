@@ -49,6 +49,8 @@ struct Object
     virtual const char *getConfigName() const = 0;
     // get additional #include file, if any
     virtual const char *getIncludeFile() const { return NULL; }
+    // get additional one-shot initalization file, if any
+    virtual const char *getInitFunction() const { return NULL; }
 
     // an object can have one of these types
     enum Type {
@@ -149,6 +151,8 @@ struct Sensor : public Object
     static Sensor *createNew(const char *name);
 
     virtual bool addParameter(Parameter_t *, Condition *);
+
+    virtual bool generateConstants();
 };
 
 class LightSens : public Sensor {
@@ -165,6 +169,7 @@ public:
     virtual const char *getConfigName() const { return "HUMIDITY"; }
     virtual const char *getReadFunction() const { return "readHumidity"; }
     virtual unsigned getDataSize() const { return 2; }
+    virtual const char *getInitFunction() const { return "humidityOn"; }
 };
 
 // -----------------------------------
@@ -175,7 +180,12 @@ public:
 struct PacketField {
     string name;
     unsigned size;
-    PacketField(const char *n, unsigned s) : name(n), size(s) {}
+    bool isConstant;
+    int value;
+    PacketField(const char *n, unsigned s) :
+            name(n), size(s), isConstant(false), value(0) {}
+    PacketField(const char *n, unsigned s, int v) :
+            name(n), size(s), isConstant(true), value(v) {}
     static bool compare(const PacketField &x1, const PacketField &x2) {
         return x1.size > x2.size;
     }
@@ -192,6 +202,8 @@ struct Sink : public Object
     unsigned radioChannel;
     // if nonempty: include only these fields in the packet / output
     vector<string> fields;
+    // packet field with constant values, included always
+    vector<PacketField> constValuedFields;
     // fields actually used
     vector<PacketField> usedFields;
 
@@ -212,6 +224,8 @@ struct Sink : public Object
     virtual const char *getSendFuntion() const = 0;
 
     virtual bool addParameter(Parameter_t *, Condition *);
+
+    virtual bool addPacketField(Field_t *);
 };
 
 class SerialSink : public Sink {

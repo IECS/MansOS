@@ -12,6 +12,8 @@
     char *string;
     struct Parameter_s *param;
     struct ParameterList_s *params;
+    struct Field_s *field;
+    struct FieldList_s *fields;
     struct ComponentUseCase_s *component;
     struct ComponentUseCaseList_s *components;
     struct Value_s *value;
@@ -26,12 +28,13 @@
 %token PARAMETER_TOKEN
 %token USE_TOKEN
 %token READ_TOKEN
-%token SINK_TOKEN
+%token SENDTO_TOKEN
 %token WHEN_TOKEN
 %token ELSE_TOKEN
 %token ELSEWHEN_TOKEN
 %token END_TOKEN
 %token CODE_TOKEN
+/* %token CONST_TOKEN */
 %token TRUE_TOKEN FALSE_TOKEN NOT_TOKEN
 %token EQ_TOKEN NEQ_TOKEN GR_TOKEN LE_TOKEN GEQ_TOKEN LEQ_TOKEN
 
@@ -39,6 +42,9 @@
 %type <params> parameter_list
 %type <component> declaration
 %type <components> declaration_list
+%type <fields> packet_field_specifier
+%type <fields> packet_field_list
+%type <field> packet_field
 %type <value> value
 %type <boolean> boolean_value
 %type <integer> qualified_number
@@ -62,8 +68,8 @@ declaration:
                    { $$ = makeComponentUseCase($2, $3); }
         | READ_TOKEN IDENTIFIER_TOKEN parameter_list ';'
                    { $$ = makeComponentUseCase($2, $3); }
-        | SINK_TOKEN IDENTIFIER_TOKEN packet_field_specifier parameter_list ';'
-                   { $$ = makeComponentUseCase($2, $4); }
+        | SENDTO_TOKEN IDENTIFIER_TOKEN packet_field_specifier parameter_list ';'
+                   { $$ = makeComponentUseCaseWithFields($2, $4, $3); }
         | when_block
                    { printf("when block\n"); $$ = NULL; }
         | code_block
@@ -86,12 +92,22 @@ elsewhen_block:
         ;
 
 code_block:
-        CODE_TOKEN IDENTIFIER_TOKEN CODE_BLOCK    { parseCodeBlock($2, $3); }
+        CODE_TOKEN IDENTIFIER_TOKEN CODE_BLOCK            { parseCodeBlock($2, $3); }
         ;
 
 packet_field_specifier:
-        '{' identifier_list '}'
-        |  /* NULL */
+        '{' packet_field_list '}'                         { $$ = $2; }
+        |  /* NULL */                                     { $$ = NULL; }
+        ;
+
+packet_field_list:
+        packet_field_list ',' packet_field                { $$ = fieldListAdd($1, $3); }
+        | packet_field                                    { $$ = fieldListMake($1); }
+        ;
+
+packet_field:
+        IDENTIFIER_TOKEN                                  { $$ = makePacketField($1); }
+        | IDENTIFIER_TOKEN value                          { $$ = makeConstPacketField($1, $2); }
         ;
 
 parameter_list:
@@ -103,11 +119,6 @@ parameter:
         IDENTIFIER_TOKEN                                  { $$ = makeParameter($1, NULL); }
         | IDENTIFIER_TOKEN value                          { $$ = makeParameter($1, $2); }
         | WHEN_TOKEN condition                            { $$ = makeConditionParameter($2); }
-        ;
-
-identifier_list:
-        identifier_list ',' IDENTIFIER_TOKEN
-        | IDENTIFIER_TOKEN
         ;
 
 value:

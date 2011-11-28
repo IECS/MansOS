@@ -2,9 +2,12 @@
 
 ComponentMap allComponents;
 
-#define CHECK_VALUE_INT(p)    // TODO
-#define CHECK_VALUE_BOOL(p)   // TODO
-#define CHECK_VALUE_STRING(p) // TODO
+#define CHECK_VALUE_INT(p)         // TODO
+#define CHECK_VALUE_BOOL(p)        // TODO
+#define CHECK_VALUE_STRING(p)      // TODO
+#define CHECK_VALUE_SAFE_INT(p)    // TODO
+#define CHECK_VALUE_SAFE_BOOL(p)   // TODO
+#define CHECK_VALUE_SAFE_STRING(p) // TODO
 
 void Object::addUseCase(const UseCase &uc)
 {
@@ -12,7 +15,6 @@ void Object::addUseCase(const UseCase &uc)
 
     useCases.push_back(uc);
 }
-
 
 bool Object::addParameter(Parameter_t *p, Condition *condition)
 {
@@ -38,7 +40,6 @@ bool Actuator::addParameter(Parameter_t *p, Condition *condition) {
     }
     if (!strcasecmp(p->name, "on_at")) {
         CHECK_VALUE_INT(p);
-//        onTime = p->value->u.integer;
         UseCase uc(this, condition);
         uc.onTime = p->value->u.integer;
         addUseCase(uc);
@@ -46,7 +47,6 @@ bool Actuator::addParameter(Parameter_t *p, Condition *condition) {
     }
     if (!strcasecmp(p->name, "off_at")) {
         CHECK_VALUE_INT(p);
-//        offTime = p->value->u.integer;
         UseCase uc(this, condition);
         uc.offTime = p->value->u.integer;
         addUseCase(uc);
@@ -72,7 +72,36 @@ bool Sink::addParameter(Parameter_t *p, Condition *condition) {
     if (Object::addParameter(p, condition)) {
         return true;
     }
+    if (!strcasecmp(p->name, "baudrate")) {
+        CHECK_VALUE_INT(p);
+        baudrate = p->value->u.integer;
+        return true;
+    }
+    if (!strcasecmp(p->name, "aggregate")) {
+        CHECK_VALUE_SAFE_BOOL(p);
+        if (p->value) {
+            aggregate = p->value->u.boolean;
+        } else {
+            aggregate = true;
+        }
+        return true;
+    }
     return false;
+}
+
+bool Sink::addPacketField(Field_t *field)
+{
+    assert(field->name);
+    if (field->value == NULL) {
+        fields.push_back(toUpperCase(field->name));
+    } else {
+        CHECK_VALUE_INT(field->value);
+        // TODO: also support boolean. And string (as a variable name)?
+        constValuedFields.push_back(
+                PacketField(field->name, sizeof(uint16_t),
+                        field->value->u.integer));
+    }
+    return true;
 }
 
 // ----------------------------------------------------

@@ -31,6 +31,7 @@ struct Condition
     ComponentParameter *componentParameter;
     Op op;
     int number;
+    bool numberSpecified;
     bool orderReversed;
     bool invert;
 
@@ -41,7 +42,8 @@ struct Condition
     Condition() :
             componentParameter(),
             op(OP_TEST),
-            number(~0u),
+            number(0),
+            numberSpecified(false),
             orderReversed(false),
             invert(false),
             generatedAlarm(false),

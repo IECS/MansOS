@@ -13,6 +13,8 @@ const char *architecture = "telosb";
 extern FILE *yyin;
 extern FILE *yyout;
 
+bool verboseMode;
+
 // -----------------------------------
 
 string toLowerCase(const string &s) {
@@ -81,8 +83,9 @@ void help(bool error)
 void parseOptions(int argc, char *argv[])
 {
     struct option longOptions[] = {
-        {"arch", 0, 0, 'a'},
+        {"arch", 1, 0, 'a'},
         {"version", 0, 0, 'v'},
+        {"verbose", 0, 0, 'V'},
         {"help", 0, 0, 'h'},
         {"output", 1, 0, 'o'},
         {0, 0, 0, 0}
@@ -92,7 +95,7 @@ void parseOptions(int argc, char *argv[])
     bool isError = false;
     for (;;) {
         int index = 0;
-        int c = getopt_long(argc, argv, "a:o:vh", longOptions, &index);
+        int c = getopt_long(argc, argv, "a:o:vVh", longOptions, &index);
         if (c == -1) {
             break;
         }
@@ -104,6 +107,9 @@ void parseOptions(int argc, char *argv[])
         case 'v':
             printf ("Version: %s (built %s)\n", PROGRAM_VERSION, __DATE__);
             exit(0);
+            break;
+        case 'V':
+            verboseMode = true;
             break;
         case 'h':
             showHelp = true;
@@ -160,13 +166,13 @@ int main(int argc, char *argv[])
     }
 
     // generate code
-    printf("generating code...\n");
+    if (verboseMode) printf("generating code...\n");
     generateCode();
-    printf("generating config file...\n");
+    if (verboseMode) printf("generating config file...\n");
     generateConfigFile();
     // printf("generating Makefile...\n");
     // generateMakefile();
     // generateSerialReader(); // TODO
     // generateBaseStation();  // TODO
-    printf("done!\n");
+    if (verboseMode) printf("done!\n");
 }

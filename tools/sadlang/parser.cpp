@@ -1,6 +1,7 @@
 #include "common.h"
 
 static void addParameters(Object *, ParameterList_t *, Condition *condition);
+static void addPacketFields(Object *, FieldList_t *);
 
 extern "C" ParameterList_t *parameterListAdd(ParameterList_t *params, Parameter_t *param)
 {
@@ -54,6 +55,36 @@ extern "C" Value_t *makeSymbolicValue(const char *val)
     return result;
 }
 
+
+extern "C" FieldList_t *fieldListAdd(FieldList_t *params, Field_t *param)
+{
+    param->next = params->first;
+    params->first = param;
+    return params;
+}
+
+extern "C" FieldList_t *fieldListMake(Field_t *field)
+{
+    FieldList_t *result = new FieldList_t();
+    result->first = field;
+    return result;
+}
+
+extern "C" Field_t *makePacketField(const char *name)
+{
+    Field_t *result = new Field_t();
+    result->name = strdup(name);
+    return result;
+}
+
+extern "C" Field_t *makeConstPacketField(const char *name, Value_t *value)
+{
+    Field_t *result = new Field_t();
+    result->name = strdup(name);
+    result->value = value;
+    return result;
+}
+
 // extern "C" void parseUseToken(const char *component, ParameterList_t *params)
 // {
 //     printf("use %s\n", component);
@@ -84,11 +115,23 @@ extern "C" ComponentUseCase_t *makeComponentUseCase(const char *component,
     return cu;
 }
 
+ComponentUseCase_t *makeComponentUseCaseWithFields(const char *component, ParameterList_t *params, FieldList_t *fields)
+{
+    ComponentUseCase_t *cu = new ComponentUseCase_t();
+    cu->name = component;
+    cu->fields = fields;
+    cu->params = params;
+    return cu;
+}
+
 extern "C" void addComponentWithCondition(ComponentUseCase_t *component,
         Condition *cond, bool elseCase)
 {
     Object *o = objectsUsed.findOrCreate(component->name.c_str());
     addParameters(o, component->params, cond);
+    if (component->fields) {
+        addPacketFields(o, component->fields);
+    }
 }
 
 extern "C" void addComponentsWithCondition(ComponentUseCaseList_t *list, Condition *c,
@@ -149,11 +192,20 @@ static void addParameters(Object *object, ParameterList_t *params, Condition *co
 //    std::sort(params->begin(), params->end());
 // check for duplicates
 
-//    object->setActiveCondition(condition);
-
     foreach(ParameterList_t, *params,
             if (!object->addParameter(it, condition)) {
                 userError("Unknown/unsupported parameter %s for component %s",
                         it->name, object->getName());
             });
+}
+
+static void addPacketFields(Object *object, FieldList_t *params)
+{
+    if (object->type != Object::SINK) sysError("Packet fields specified for object %s: not a sink\n", object->getName());
+
+    if (!params) return;
+
+    Sink *sink = (Sink *) object;
+    foreach(FieldList_t, *params,
+            sink->addPacketField(it));
 }
