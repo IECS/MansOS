@@ -75,13 +75,15 @@ static void recvData(Socket_t *socket, uint8_t *data, uint16_t len)
         PRINTF("duplicate!\n");
         return;
     }
-    PRINTF("%u: got packet from 0x%04x, time %lu (local %lu):\n",
-            packet.magicNumber,
-            socket->recvMacInfo->originalSrc.shortAddr,
-            packet.timestamp,
-            getRealTime());
+    PRINTF("got packet from 0x%04x\n",
+            socket->recvMacInfo->originalSrc.shortAddr);
+
+    // PRINTF("got packet from 0x%04x, time %lu (local %lu):\n",
+    //         socket->recvMacInfo->originalSrc.shortAddr,
+    //         packet.timestamp,
+    //         getRealTime());
 #if 1
-    PRINTF("magicNumber=%#x\n", packet.magicNumber);
+    PRINTF("timestamp=%#x\n", packet.timestamp);
     PRINTF("islLight=%#x\n", packet.islLight);
     PRINTF("apdsLight=%#x/%#x\n", packet.apdsLight0, packet.apdsLight1);
     PRINTF("sq100Light=%#x\n", packet.sq100Light);
@@ -108,28 +110,28 @@ static void recvData(Socket_t *socket, uint8_t *data, uint16_t len)
     toggleBlueLed();
 }
 
-void writeTestData(void)
-{
-    Socket_t socket;
-    MacInfo_t mi;
+// void writeTestData(void)
+// {
+//     Socket_t socket;
+//     MacInfo_t mi;
 
-    mi.originalSrc.shortAddr = 0xCACA;
-    socket.recvMacInfo = &mi;
+//     mi.originalSrc.shortAddr = 0xCACA;
+//     socket.recvMacInfo = &mi;
 
-    DataPacket_t packet;
-    packet.timestamp = getRealTime();
-    packet.magicNumber = 0xcafe;
-    packet.islLight = 0x151;
-    packet.apdsLight0 = 0xad1;
-    packet.apdsLight1 = 0xad2;
-    packet.sq100Light = 0x5100;
-    packet.internalVoltage = 4095;
-    packet.internalTemperature = 0x1e1;
-    packet.sht75Temperature = 0x751;
-    packet.sht75Humidity = 0x752;
-    packet.crc = crc16((uint8_t *) &packet, sizeof(packet) - 2);
-    recvData(&socket, (uint8_t *)&packet, sizeof(packet));
-}
+//     DataPacket_t packet;
+//     packet.timestamp = getRealTime();
+//     packet.magicNumber = 0xcafe;
+//     packet.islLight = 0x151;
+//     packet.apdsLight0 = 0xad1;
+//     packet.apdsLight1 = 0xad2;
+//     packet.sq100Light = 0x5100;
+//     packet.internalVoltage = 4095;
+//     packet.internalTemperature = 0x1e1;
+//     packet.sht75Temperature = 0x751;
+//     packet.sht75Humidity = 0x752;
+//     packet.crc = crc16((uint8_t *) &packet, sizeof(packet) - 2);
+//     recvData(&socket, (uint8_t *)&packet, sizeof(packet));
+// }
 
 #define DELIMITER '$'
 
@@ -165,7 +167,7 @@ void onUsartDataRecvd(uint8_t *data) {
 void usartReceive(uint8_t byte) {
     static uint8_t recvBuffer[8];
     static int bytesAfterDelimiter = -1;
-//    PRINTF("usartReceive %#x (%c)\n", byte, byte);
+    // PRINTF("usartReceive %#x (%c)\n", byte, byte);
     if (bytesAfterDelimiter == -1) {
         if (byte == DELIMITER) bytesAfterDelimiter = 0;
         else return;
@@ -186,12 +188,16 @@ void appMain(void)
     socketBind(&dataSocket, DATA_PORT);
 
     // will read router time via serial
-    USARTSetReceiveHandle(PRINTF_USART_ID, usartReceive);
+    // USARTSetReceiveHandle(PRINTF_USART_ID, usartReceive);
 
     for (;;) {
         PRINT("in app main\n");
         toggleRedLed();
         // writeTestData();
         mdelay(3000);
+
+        radioOff();
+        mdelay(100);
+        radioOn();
     }
 }

@@ -29,20 +29,20 @@
 #include <lib/assert.h>
 #include <isl29003/isl29003.h>
 #include <apds9300/apds9300.h>
+#include <ads1115/ads1115.h>
 #include <kernel/threads/radio.h>
 
-#define WRITE_TO_FLASH 0
-#define SEND_TO_RADIO  0
-#define PRINT_PACKET   1
+#define WRITE_TO_FLASH 1
+#define SEND_TO_RADIO  1
+#define PRINT_PACKET   0
 
-bool writeAdsRegister(uint8_t reg, uint16_t val);
-bool readAdsRegister(uint8_t reg, uint16_t *val);
+#define WASPMOTE_BS    0
 
 uint32_t extFlashAddress;
-
 uint16_t mySeqnum;
-
 int32_t rootClockDelta; // from routing/dv.c
+
+Socket_t dataSocket;
 
 // --------------------------------------------
 
@@ -97,6 +97,9 @@ Ieee802_15_4_Packet_t myPacket =
 
 // --------------------------------------------
 
+#if SEND_TO_RADIO
+
+#if WASPMOTE_BS
 void sendDataPacket(DataPacket_t *packet)
 {
     static Ieee802_15_4_Packet_t myPacket = {
@@ -120,6 +123,17 @@ void sendDataPacket(DataPacket_t *packet)
         PRINTF("radioSend failed: %s\n", strerror(-ret));
     }
 }
+#else
+void sendDataPacket(DataPacket_t *packet)
+{
+    PRINT("send sensor data...\n");
+    int ret = socketSend(&dataSocket, &myPacket, sizeof(myPacket));
+    if (ret < 0) {
+        PRINTF("radioSend failed: %s\n", strerror(-ret));
+    }
+}
+#endif
+#endif
 
 // --------------------------------------------
 
@@ -238,8 +252,10 @@ void readSensors(DataPacket_t *packet)
     }
     packet->internalVoltage = adcRead(ADC_INTERNAL_VOLTAGE);
     packet->internalTemperature = adcRead(ADC_INTERNAL_TEMPERATURE);
+    PRINT("read hum\n");
     packet->sht75Humidity = readHumidity();
     packet->sht75Temperature = readHTemperature();
+    PRINT("read done\n");
     packet->crc = crc16((uint8_t *) packet, sizeof(*packet) - 2);
 
 #if WRITE_TO_FLASH
@@ -277,6 +293,12 @@ void printPacket(DataPacket_t *packet)
 #endif
 
 // --------------------------------------------
+
+static void recvData(Socket_t *socket, uint8_t *data, uint16_t len)
+{
+    PRINTF("got %d bytes from 0x%04x\n", len,
+            socket->recvMacInfo->originalSrc.shortAddr);
+}
 
 Alarm_t alarm;
 
@@ -333,6 +355,10 @@ void appMain(void)
     alarmInit(&alarm, alarmCallback, NULL);
     alarmSchedule(&alarm, ALARM_INTERVAL);
 
+#if SEND_TO_RADIO
+    socketOpen(&dataSocket, recvData);
+    socketBind(&dataSocket, DATA_PORT);
+#endif
 
     // ------------------------- main loop
     for (i = 0; i < 6; ++i) {
@@ -341,13 +367,18 @@ void appMain(void)
     }
     ledOff();
 
+    // for humidity sensor
+    mdelay(8000);
+
     uint32_t nextDataReadTime = 0;
     for (;;) {
         // ledOn();
 #if SEND_TO_RADIO
         radioOn();
         yield();
+#if WASPMOTE_BS
         radioTryRx();
+#endif
 #endif
 
         uint32_t now = getRealTime();
@@ -369,7 +400,9 @@ void appMain(void)
 #if SEND_TO_RADIO
         // wait some time for radio rx!
         mdelay(100);
+#if WASPMOTE_BS
         radioTryRx();
+#endif
         radioOff();
 #endif
 

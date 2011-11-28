@@ -19,12 +19,13 @@
 //#define DATA_INTERVAL_JIFFIES         (HZ)
 //#define TIME_SYNC_INTERVAL_JIFFIES  (5ul * HZ)
 
-#define DATA_INTERVAL (1000ul * 60 * 5)  // -- once in every five minutes
+//#define DATA_INTERVAL (1000ul * 60 * 5)  // -- once in every five minutes
+#define DATA_INTERVAL       (5000ul)
 #define DATA_INTERVAL_SMALL (5000ul * 1)
 
 #define EXT_FLASH_RESERVED  (256 * 1024ul) // 256kb
 
-#define ADS_CONVERSION_REGISTER 0
-#define ADS_CONFIG_REGISTER 1
+// #define ADS_CONVERSION_REGISTER 0
+// #define ADS_CONFIG_REGISTER 1
 
 #endif
