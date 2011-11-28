@@ -245,10 +245,9 @@ $(OUTDIR)/config: $(PROJDIR)/config
 
 clean: 
 	$(Print) "RM $(OUTDIR)"
-	$(_QUIET) $(Delete) $(OUTDIR) *.stackdump extflash.dat eeprom
+	$(_QUIET) $(Delete) $(OUTDIR) *.stackdump extflash.dat eeprom $(GENERATED_SOURCES)
 
 cleanall: clean
-	$(_QUIET) $(Delete) $(GENERATED_SOURCES)
 
 # ===== header file dependency tracking =====
 
