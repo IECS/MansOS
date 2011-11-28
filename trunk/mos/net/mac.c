@@ -25,9 +25,10 @@
 #include <lib/assert.h>
 #include <lib/unaligned.h>
 #include <lib/byteorder.h>
+#include <lib/dprint.h>
 #include <stdlib.h>
 #include <hil/errors.h>
-#include <kernel/expthreads/mutex.h>
+#include <kernel/threads/mutex.h>
 
 static Mutex_t macMutex;
 

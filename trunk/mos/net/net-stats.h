@@ -102,6 +102,7 @@ void linqPrintResults();
 #define INC_NETSTAT(code, addr)
 #define PRINT_LINQ()
 #define PRINT_NETSTAT()
+#define TOTAL_NETSTAT 0
 #endif  //USE_NET_STATS
 
 #endif //MANSOS_NET_STATS_H

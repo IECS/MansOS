@@ -25,14 +25,14 @@
 #include "../queue.h"
 #include <hil/radio.h>
 #include <hil/errors.h>
+#include <hil/alarms.h>
 #include <lib/unaligned.h>
 #include <lib/byteorder.h>
 #include <lib/buffer.h>
 #include <lib/dprint.h>
 #include <lib/assert.h>
-#include <kernel/expthreads/radio.h>
-#include <kernel/expthreads/alarms.h>
-#include <kernel/expthreads/timing.h>
+#include <kernel/threads/radio.h>
+#include <kernel/threads/timing.h>
 #include <net/net-stats.h>
 
 #define TEST_FILTERS 1

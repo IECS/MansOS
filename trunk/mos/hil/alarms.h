@@ -45,7 +45,13 @@ typedef struct Alarm_s {
 // User API functions
 // -----------------------------------------------
 
-void alarmInit(Alarm_t *, AlarmCallback cb, void *param);
+static inline void alarmInit(Alarm_t *alarm, AlarmCallback cb, void *param)
+{
+    SLIST_NEXT(alarm, chain) = NULL;
+    alarm->callback = cb;
+    alarm->data = param;
+    alarm->jiffies = 0;
+}
 
 void alarmSchedule(Alarm_t *, uint32_t milliseconds);
 

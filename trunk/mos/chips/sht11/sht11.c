@@ -47,6 +47,7 @@
 
 // wait for operation (measurement) to complete
 // SHT11 signals completion of measurement by pulling data low
+// TODO: should add maximal timeout to this!
 #define SHT11_WAIT() \
     while (SHT11_SDA_GET()) {}
 

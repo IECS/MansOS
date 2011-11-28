@@ -28,8 +28,8 @@
 #include "../mac.h"
 #include "../routing.h"
 #include "../socket.h"
-#include <kernel/expthreads/alarms.h>
-#include <kernel/expthreads/timing.h>
+#include <hil/alarms.h>
+#include <kernel/threads/timing.h>
 #include <lib/dprint.h>
 #include <net/net-stats.h>
 

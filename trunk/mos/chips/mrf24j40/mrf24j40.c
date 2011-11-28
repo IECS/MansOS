@@ -106,7 +106,6 @@ static void resetRx(void)
     SetShortRAMAddr(WRITE_RFCTL, 0x00);
 }
 
-// Note: according to errata, in promisc mode rx must be flushed after each rx interrupt!
 static void flushRx(void)
 {
     SetShortRAMAddr(WRITE_RXFLUSH, 0x01);
@@ -137,14 +136,28 @@ void mrf24j40Init(void)
     flushRx();
     resetRx();
 
+#if 0
     // receive all packets (promisc mode), but not with invalid FCS
-    // SetShortRAMAddr(WRITE_RXMCR, 0x01);
+    SetShortRAMAddr(WRITE_RXMCR, 0x01);
+#else
+    // receive all packets, including those with invalid FCS
     SetShortRAMAddr(WRITE_RXMCR, 0x03);
+#endif
 
     // PACON2 = 0x98, Initialize FFOEN=1 and TXONTS = 0x6
     SetShortRAMAddr(WRITE_PACON2, 0x98);
     // Initialize RFSTBL = 0x9
     SetShortRAMAddr(WRITE_TXSTBL, 0x95);
+
+    // --
+    // wait until the chip is in receive mode
+    uint8_t check;
+    do {
+        check = GetLongRAMAddr(RFSTATE);
+    } while ((check & 0xA0) != 0xA0);
+    SetLongRAMAddr(RFCON0, 0x03); // or three?
+    // --
+
     // Initialize VCOOPT=1
     SetLongRAMAddr(RFCON1, 0x01);
     // Enable PLL
@@ -199,7 +212,7 @@ static void on(void) {
 
     pinSet(MRF24_WAKE_PORT, MRF24_WAKE_PIN);
 
-    mdelay(1); // XXX FIXME?
+    mdelay(1); // XXX?
     resetRx();
 
     ATOMIC_END(h);
@@ -381,8 +394,8 @@ int_t mrf24j40Read(void *buf_, uint16_t bufsize)
     result = len;
 
   flush:
-    // this is needed only if not whole packet is read.
-    // but we never read the FCS, so we always need it.
+    // Note: according to errata, in promisc mode rx must 
+    // be flushed after each rx interrupt!
     flushRx();
     // enable radio to receive next packet
     SetShortRAMAddr(WRITE_BBREG1, 0x00);
@@ -392,10 +405,10 @@ int_t mrf24j40Read(void *buf_, uint16_t bufsize)
 
 void mrf24j40Discard(void)
 {
-    SetShortRAMAddr(WRITE_BBREG1, 0x04);
+//    SetShortRAMAddr(WRITE_BBREG1, 0x04);
     // flush the RX fifo
     flushRx();
-    SetShortRAMAddr(WRITE_BBREG1, 0x00);
+//    SetShortRAMAddr(WRITE_BBREG1, 0x00);
 }
 
 MRF24J40RxHandle mrf24j40SetReceiver(MRF24J40RxHandle newRxCallback)
@@ -487,15 +500,15 @@ bool mrf24j40PollForPacket(void)
     if (intstat.bits.RF_RXIF) {
         RPRINTF("got radio RX int!\n");
 
-#if !USE_EXP_THREADS
-        if (mrf24j40IsOn && rxCallback) {
-            rxCallback();
+#if USE_EXP_THREADS
+        if (mrf24j40IsOn) {
+            process = true;
         } else {
             mrf24j40Discard();
         }
 #else
-        if (mrf24j40IsOn) {
-            process = true;
+        if (mrf24j40IsOn && rxCallback) {
+            rxCallback();
         } else {
             mrf24j40Discard();
         }
