@@ -41,7 +41,7 @@
 // Masks are used to set config register values, 
 // use them in adsConfig function as 2nd parameter,
 // first parameter must be set according to mask, because
-// only bits that are set in mask will be written to ads111x
+// only bits that are set in mask will be written to ads111x config register
 #define ADS_OS_MASK 0x8000		// Operational status bit mask
 #define ADS_MUX_MASK 0x7000		// Input multiplexer configuration bit mask
 #define ADS_PGA_MASK 0xE00		// Programmable gain amplifier configuration bit mask
@@ -56,6 +56,11 @@
 #define ADS_BEGIN_SINGLE_CONVERSION 0x8000
 #define ADS_DEFAULT_CONFIG 0x583
 
+#define ADS_FIRST_INPUT (0x4 << 12)
+#define ADS_SECOND_INPUT (0x5 << 12)
+#define ADS_THIRD_INPUT (0x6 << 12)
+#define ADS_FORTH_INPUT (0x7 << 12)
+
 #define adsConfig(data, mask)	adsActiveConfig &= ~mask;											\
 								adsActiveConfig |= data;											\
 								writeAdsRegister(ADS_CONFIG_REGISTER, adsActiveConfig );			\
@@ -64,6 +69,12 @@
 #define adsPowerDownSingleShotMode() adsConfig(ADS_POWER_DOWN_SINGLE_SHOT_MODE, ADS_MODE_MASK)
 #define adsContiniousConversionMode() adsConfig(0x0, ADS_MODE_MASK)
 #define adsBeginSingleConversion() adsConfig(ADS_BEGIN_SINGLE_CONVERSION, ADS_OS_MASK)
+
+#define adsSelectFirstInput() adsConfig(ADS_FIRST_INPUT, ADS_MUX_MASK)
+#define adsSelectSecondInput() adsConfig(ADS_SECOND_INPUT, ADS_MUX_MASK)
+#define adsSelectThirdInput() adsConfig(ADS_THIRD_INPUT, ADS_MUX_MASK)
+#define adsSelectForthInput() adsConfig(ADS_FORTH_INPUT, ADS_MUX_MASK)
+#define adsSelectInput(input) adsConfig(input + ADS_FIRST_INPUT, ADS_MUX_MASK)
 
 uint16_t adsActiveConfig;
 

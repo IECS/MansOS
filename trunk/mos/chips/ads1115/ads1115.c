@@ -23,9 +23,9 @@
  
 #include "ads1115.h"
 
-// Write ADS1115 register
+// Write ADS1114 register
 bool writeAdsRegister(uint8_t reg, uint16_t val){
-    bool err = false;
+    uint8_t err = false;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
     i2cStart();
@@ -35,12 +35,13 @@ bool writeAdsRegister(uint8_t reg, uint16_t val){
     err |= i2cWriteByte(val & 0xff);
     i2cStop();
     ATOMIC_END(intHandle);
-    return err;
+    //PRINTF("Writed:%#x%x\n",val >> 8,val & 0xff);
+    return err == 0;
 }
 
-// Read ADS1115 register
+// Read ADS1114 register
 bool readAdsRegister(uint8_t reg, uint16_t *val){
-    bool err = false;
+    uint8_t err = false;
     *val = 0;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
@@ -49,11 +50,14 @@ bool readAdsRegister(uint8_t reg, uint16_t *val){
     err |= i2cWriteByte(reg);
     i2cStop();
     i2cStart();
-    err |= i2cWriteByte(ADS_READ_FLAG); 
-    *val = (i2cReadByte(I2C_ACK) << 8) | i2cReadByte(I2C_ACK) ;
+    err |= i2cWriteByte(ADS_READ_FLAG);
+    uint8_t hi = i2cReadByte(I2C_ACK);
+    uint8_t lo = i2cReadByte(I2C_NO_ACK);
+    *val = (hi << 8) | lo ;
     i2cStop();
     ATOMIC_END(intHandle);
-    return err;
+    //PRINTF("recieved %#x%x\n",hi,lo);
+    return err == 0;
 }
 
 ISR(PORT2, ads_interrupt)
@@ -69,6 +73,7 @@ ISR(PORT2, ads_interrupt)
 void adsInit(){
 	i2cInit();
     adsActiveConfig = ADS_DEFAULT_CONFIG;
+    writeAdsRegister(ADS_CONFIG_REGISTER, 0x8483);
     adsPowerDownSingleShotMode();
 }
 
