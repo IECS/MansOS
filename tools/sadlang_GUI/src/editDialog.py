@@ -9,7 +9,7 @@ class editDialog(wx.Dialog):
         self.saveCallback = saveCallback
         self.main = wx.BoxSizer(wx.VERTICAL)
         self.data = wx.GridBagSizer(hgap = 2, vgap = 1)
-        self.main.Add(wx.StaticText(self, label = "Here You can edit parameters for " + name))
+        self.main.Add(wx.StaticText(self, label = "Edit parameters for " + name))
         self.main.AddSpacer((10, 10))
         self.main.Add(self.data, 0)
         self.main.AddSpacer((10, 10))

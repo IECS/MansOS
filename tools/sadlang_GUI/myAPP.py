@@ -45,7 +45,7 @@ class Example(wx.Frame):
 def main():
     API = APIcore.ApiCore()
     ex = wx.App()
-    frame = Example(None, title="My app", size = (1000,-1))
+    frame = Example(None, title="My app", size = (800,500), pos=(100,100))
     frame.addAPI(API)
     tabManager.tabManager(frame, API)
     frame.Show()
