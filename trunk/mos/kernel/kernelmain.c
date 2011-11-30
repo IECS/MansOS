@@ -135,8 +135,6 @@ int main(void)
 {
     initSystem();
 
-    PRINTF("starting...\n");
-
 // ------------------------------------------
 #ifdef USE_EXP_THREADS
     PRAGMA(message "Using threads");
@@ -157,6 +155,8 @@ int main(void)
     coopSchedStart();
 #else
     appMain();
+
+    for (;;); // needed for GCC 4.5+
 #endif // !USE_FIBERS
 
 #endif // !USE_EXP_THREADS

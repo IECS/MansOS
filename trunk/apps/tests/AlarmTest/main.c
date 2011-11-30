@@ -31,7 +31,7 @@ void onTimer1(void *x)
     static uint8_t counter;
 
     PRINTF("onTimer1\n");
-    toggleRedLed();
+    redLedToggle();
 //    if (++counter == 3) {
 //        PRINTF("reregister alarm\n");
 //        removeAlarm(&timer2);
@@ -45,7 +45,7 @@ void onTimer1(void *x)
 void onTimer2(void *x)
 {
     PRINTF("onTimer2\n");
-    toggleBlueLed();
+    blueLedToggle();
 }
 
 void appMain(void)

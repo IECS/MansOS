@@ -26,10 +26,6 @@
 #endif
 #include "alarms_system.h"
 #include <hil/timers.h>
-#include <lib/dprint.h>
-
-// the global list with all alarms
-//static SLIST_HEAD(head, Alarm_s) alarmListHead;
 
 // the global list with all alarms
 AlarmList_t alarmListHead;
