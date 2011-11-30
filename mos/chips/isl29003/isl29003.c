@@ -348,3 +348,12 @@ bool islRead(uint16_t *data, bool checkInterupt){
     }
     return true;
 }
+
+uint16_t islReadSimple(void)
+{
+    uint16_t result;
+    if (!islRead(&result, true)) {
+        result = 0xffff;
+    }
+    return result;
+}
