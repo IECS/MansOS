@@ -72,7 +72,7 @@
 // send read cmd, return result
 uint16_t sht11_cmd(uint_t cmd);
 // send connection reset sequence
-void sht11_conn_reset();
+void sht11_conn_reset(void);
 
 // shortcuts
 #define SHT11_PWR_HI() pinSet(SHT11_PWR_PORT, SHT11_PWR_PIN)

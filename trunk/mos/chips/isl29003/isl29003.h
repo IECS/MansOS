@@ -144,4 +144,6 @@ bool clearIslInterupt();
 // Read ISL29003 sensor data
 bool islRead(uint16_t *data, bool checkInterupt);
 
+uint16_t islReadSimple(void);
+
 #endif
