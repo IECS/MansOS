@@ -37,8 +37,13 @@ IntTypes intTypes[] = {
 };
 
 void outputConfig(Object *o) {
-    const char *configName = o->getConfigName();
-    if (configName) {
+    bool extended = false;
+    const char *configName = o->getConfigName(extended);
+    if (!configName) return;
+
+    if (extended) {
+        fprintf(outputFile, "%s\n", configName);
+    } else {
         fprintf(outputFile, "USE_%s=y\n", configName);
     }
 }
@@ -503,48 +508,66 @@ void Sink::generateCodeForSensor(Sensor *s)
     fprintf(outputFile, "    }\n\n");
 }
 
+// void Object::generateCode(const UseCase &uc, int num)
+// {
+//     if (uc.condition) {
+// //        fprintf(outputFile, "    %s if (condition%dVariable) { \n",
+// //                myType.name, ccName.c_str(), asSensor->getReadFunction());
+//     } else {
+//         // TODO: default condition (but must be last!)
+
+//     }
+// }
+
 void Object::generateCode(const UseCase &uc, int num)
 {
-    if (uc.condition) {
-//        fprintf(outputFile, "    %s if (condition%dVariable) { \n",
-//                myType.name, ccName.c_str(), asSensor->getReadFunction());
-    } else {
-        // TODO: default condition (but must be last!)
-
-    }
-}
-
-// used for actuators and sensors
-void Object::generateCode()
-{
-//    if (IS_UNSPECIFIED(period)) return;
-
     string ucName = toUpperCase(getName());
     string ccName = toCamelCase(getName());
 
-    fprintf(outputFile, "void %sAlarmCallback(void *param)\n", ccName.c_str());
-    fprintf(outputFile, "{\n");
-    if (type == SENSOR) {
-        Sensor *asSensor = (Sensor *) this;
-        IntTypes &myType = uintTypes[asSensor->getDataSize()];
-        fprintf(outputFile, "    %s %s = %s();\n",
-                myType.name, ccName.c_str(), asSensor->getReadFunction());
-        foreach(vector<Sink *>, sinksUsed,
-                (*it)->generateCodeForSensor(asSensor));
-    } else {
-        Actuator *asActuator = (Actuator *) this;
-        fprintf(outputFile, "    %s();\n",
-                asActuator->getToggleFunction());
-    }
-
-    int i = 0;
-    foreach (CaseVector, useCases,
-            generateCode(*it, i++));
-    // TODO: generate "else" code in case there is no default condition!
-
-    fprintf(outputFile, "    alarmSchedule(&%sAlarm, %s_PERIOD);\n",
+    if (IS_SPECIFIED(uc.period)) {
+        fprintf(outputFile, "void %sAlarmCallback(void *param)\n", ccName.c_str());
+        fprintf(outputFile, "{\n");
+        if (type == SENSOR) {
+            Sensor *asSensor = (Sensor *) this;
+            IntTypes &myType = uintTypes[asSensor->getDataSize()];
+            fprintf(outputFile, "    %s %s = %s();\n",
+                    myType.name, ccName.c_str(), asSensor->getReadFunction());
+            foreach(vector<Sink *>, sinksUsed,
+                    (*it)->generateCodeForSensor(asSensor));
+        } else {
+            Actuator *asActuator = (Actuator *) this;
+            fprintf(outputFile, "    %s();\n",
+                    asActuator->getToggleFunction());
+        }
+        // TODO: only reschedule this alarm if conditions hold... 
+        // foreach (CaseVector, useCases,
+        //        generateCode(*it, 1));
+        fprintf(outputFile, "    alarmSchedule(&%sAlarm, %s_PERIOD);\n",
             ccName.c_str(), ucName.c_str());
-    fprintf(outputFile, "}\n\n");
+        fprintf(outputFile, "}\n\n");
+    }
+    if (IS_SPECIFIED(uc.onTime) && type == Object::ACTUATOR) {
+        Actuator *asActuator = (Actuator *) this;
+        fprintf(outputFile, "void %sOnAlarmCallback(void *param)\n", ccName.c_str());
+        fprintf(outputFile, "{\n");
+        fprintf(outputFile, "    %s();\n",
+                asActuator->getOnFunction());
+        fprintf(outputFile, "}\n\n");
+    }
+    if (IS_SPECIFIED(uc.offTime) && type == Object::ACTUATOR) {
+        Actuator *asActuator = (Actuator *) this;
+        fprintf(outputFile, "void %sOffAlarmCallback(void *param)\n", ccName.c_str());
+        fprintf(outputFile, "{\n");
+        fprintf(outputFile, "    %s();\n",
+                asActuator->getOffFunction());
+        fprintf(outputFile, "}\n\n");
+    }
+}
+
+void Object::generateCode()
+{
+    foreach (CaseVector, useCases,
+            generateCode(*it, 1));
 }
 
 bool Condition::generateAppMainCode()

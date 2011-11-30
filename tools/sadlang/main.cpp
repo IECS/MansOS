@@ -73,10 +73,12 @@ void sysError(const char *fmt, ...)
 void help(bool error)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "  -h, --help           Print this help\n");
-    fprintf(stderr, "  -v, --version        Print version\n");
+    fprintf(stderr, "  -a <arch>, --arch    Architecture\n");
     fprintf(stderr, "  -o, --output [FILE]  Output to file (default: %s)\n",
             outputFileName);
+    fprintf(stderr, "  -V, --verbose        Verbose mode\n");
+    fprintf(stderr, "  -v, --version        Print version\n");
+    fprintf(stderr, "  -h, --help           Print this help\n");
     exit(error ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
@@ -84,10 +86,10 @@ void parseOptions(int argc, char *argv[])
 {
     struct option longOptions[] = {
         {"arch", 1, 0, 'a'},
-        {"version", 0, 0, 'v'},
-        {"verbose", 0, 0, 'V'},
         {"help", 0, 0, 'h'},
         {"output", 1, 0, 'o'},
+        {"verbose", 0, 0, 'V'},
+        {"version", 0, 0, 'v'},
         {0, 0, 0, 0}
     };
 
@@ -95,7 +97,7 @@ void parseOptions(int argc, char *argv[])
     bool isError = false;
     for (;;) {
         int index = 0;
-        int c = getopt_long(argc, argv, "a:o:vVh", longOptions, &index);
+        int c = getopt_long(argc, argv, "a:ho:Vv", longOptions, &index);
         if (c == -1) {
             break;
         }

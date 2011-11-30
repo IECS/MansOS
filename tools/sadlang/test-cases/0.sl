@@ -1,1 +1,1 @@
-use RedLed, period 1s, on_at 1500ms, off_at 4500ms;
+use RedLed, period 1s, on_time 1500ms, off_time 4500ms;

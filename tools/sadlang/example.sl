@@ -6,7 +6,7 @@ parameter routingProtocol GPSR;
 use RedLed, period 1000ms;
 
 // turn green led on once the program has started
-use GreenLed, on_at 2000ms;
+use GreenLed, on_time 2000ms;
 
 // blink blue led; faster at the start
 when System.time < 5s:

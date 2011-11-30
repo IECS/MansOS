@@ -38,14 +38,14 @@ bool Actuator::addParameter(Parameter_t *p, Condition *condition) {
     if (Object::addParameter(p, condition)) {
         return true;
     }
-    if (!strcasecmp(p->name, "on_at")) {
+    if (!strcasecmp(p->name, "on_time")) {
         CHECK_VALUE_INT(p);
         UseCase uc(this, condition);
         uc.onTime = p->value->u.integer;
         addUseCase(uc);
         return true;
     }
-    if (!strcasecmp(p->name, "off_at")) {
+    if (!strcasecmp(p->name, "off_time")) {
         CHECK_VALUE_INT(p);
         UseCase uc(this, condition);
         uc.offTime = p->value->u.integer;
