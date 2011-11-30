@@ -32,6 +32,7 @@ ifeq ($(OPTIMIZE),yes)
 endif
 
 GCC_VERSION := $(shell $(CC) -v 2>&1 | grep "gcc version" | cut -b 13)
+GCC_SUBVERSION := $(shell $(CC) -v 2>&1 | grep "gcc version" | cut -b 15)
 
 ifeq ($(USE_REPROGRAMMING),y)
 	OPTIMIZE_SIZE_EXTRA ?= no
@@ -45,8 +46,10 @@ endif
 #endif
 
 ifeq (4,$(GCC_VERSION))
-# enable size optimizations by default on GCC 4
+# enable size optimizations by default on GCC 4.x, where x < 5
+ifeq ("", "$(filter $(GCC_SUBVERSION), 5 6)")
 	OPTIMIZE_SIZE_EXTRA ?= yes
+endif
 endif
 
 ifeq (yes,$(OPTIMIZE_SIZE_EXTRA))
