@@ -122,14 +122,14 @@ parameter:
         ;
 
 value:
-        boolean_value            { $$ = makeBoolValue($1); }
-        | qualified_number       { $$ = makeNumericValue($1); }
-        | IDENTIFIER_TOKEN       { $$ = makeSymbolicValue($1); }
+        boolean_value                                     { $$ = makeBoolValue($1); }
+        | qualified_number                                { $$ = makeNumericValue($1); }
+        | IDENTIFIER_TOKEN                                { $$ = makeSymbolicValue($1); }
         ;
 
 boolean_value:
-        TRUE_TOKEN               { $$ = true; }
-        | FALSE_TOKEN            { $$ = false; }
+        TRUE_TOKEN                                        { $$ = true; }
+        | FALSE_TOKEN                                     { $$ = false; }
         ;
 
 qualified_number:

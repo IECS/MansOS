@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <string.h>
 using namespace std;
 #include "condition.h"
 
@@ -46,7 +47,7 @@ struct Object
     // get name (e.g. for serial printing)
     virtual const char *getName() const = 0;
     // get name for config file, used in USE_xxx=y|n statements
-    virtual const char *getConfigName() const = 0;
+    virtual const char *getConfigName(bool &extended) const = 0;
     // get additional #include file, if any
     virtual const char *getIncludeFile() const { return NULL; }
     // get additional one-shot initalization file, if any
@@ -107,7 +108,7 @@ struct Actuator : public Object
 // default led
 class LedAct : public Actuator {
     virtual const char *getName() const { return "Led"; }
-    virtual const char *getConfigName() const { return "LEDS"; }
+    virtual const char *getConfigName(bool &extended) const { return "LEDS"; }
     virtual const char *getOnFunction() const { return "ledOn"; }
     virtual const char *getOffFunction() const { return "ledOff"; }
     virtual const char *getToggleFunction() const { return "ledToggle"; }
@@ -115,7 +116,7 @@ class LedAct : public Actuator {
 
 class RedLedAct : public Actuator {
     virtual const char *getName() const { return "RedLed"; }
-    virtual const char *getConfigName() const { return "LEDS"; }
+    virtual const char *getConfigName(bool &extended) const { return "LEDS"; }
     virtual const char *getOnFunction() const { return "redLedOn"; }
     virtual const char *getOffFunction() const { return "redLedOff"; }
     virtual const char *getToggleFunction() const { return "redLedToggle"; }
@@ -123,7 +124,7 @@ class RedLedAct : public Actuator {
 
 class GreenLedAct : public Actuator {
     virtual const char *getName() const { return "GreenLed"; }
-    virtual const char *getConfigName() const { return "LEDS"; }
+    virtual const char *getConfigName(bool &extended) const { return "LEDS"; }
     virtual const char *getOnFunction() const { return "greenLedOn"; }
     virtual const char *getOffFunction() const { return "greenLedOff"; }
     virtual const char *getToggleFunction() const { return "greenLedToggle"; }
@@ -131,7 +132,7 @@ class GreenLedAct : public Actuator {
 
 class BlueLedAct : public Actuator {
     virtual const char *getName() const { return "BlueLed"; }
-    virtual const char *getConfigName() const { return "LEDS"; }
+    virtual const char *getConfigName(bool &extended) const { return "LEDS"; }
     virtual const char *getOnFunction() const { return "blueLedOn"; }
     virtual const char *getOffFunction() const { return "blueLedOff"; }
     virtual const char *getToggleFunction() const { return "blueLedToggle"; }
@@ -158,15 +159,38 @@ struct Sensor : public Object
 class LightSens : public Sensor {
 public:
     virtual const char *getName() const { return "Light"; }
-    virtual const char *getConfigName() const { return "ADC"; } // XXX
-    virtual const char *getReadFunction() const { return "readLight"; }
+    virtual const char *getConfigName(bool &extended) const {
+        extern const char *architecture;
+        if (!strcmp(architecture, "sadmote")) {
+            extended= true;
+            return "USE_ISL29003=y\nUSE_APDS9300=y\nUSE_SOFT_I2C=y\n"
+                    "CONST_SDA_PORT=2\nCONST_SDA_PIN=3\n"
+                    "CONST_SCL_PORT=2\nCONST_SCL_PIN=4\n";
+        }
+        extended= false;
+        return "ADC"; // XXX
+    }
+    virtual const char *getReadFunction() const {
+        extern const char *architecture;
+        if (!strcmp(architecture, "sadmote")) {
+            return "islReadSimple";
+        }
+        return "readLight";
+    }
+    virtual const char *getIncludeFile() const {
+        extern const char *architecture;
+        if (!strcmp(architecture, "sadmote")) {
+            return "isl29003/isl29003.h";
+        }
+        return NULL; 
+    }
     virtual unsigned getDataSize() const { return 2; }
 };
 
 class HumiditySens : public Sensor {
 public:
     virtual const char *getName() const { return "Humidity"; }
-    virtual const char *getConfigName() const { return "HUMIDITY"; }
+    virtual const char *getConfigName(bool &extended) const { return "HUMIDITY"; }
     virtual const char *getReadFunction() const { return "readHumidity"; }
     virtual unsigned getDataSize() const { return 2; }
     virtual const char *getInitFunction() const { return "humidityOn"; }
@@ -231,7 +255,7 @@ struct Sink : public Object
 class SerialSink : public Sink {
 public:
     virtual const char *getName() const { return "Serial"; }
-    virtual const char *getConfigName() const { return "SERIAL"; }
+    virtual const char *getConfigName(bool &extended) const { return "SERIAL"; }
     virtual void generateCode();
     virtual const char *getSendFuntion() const { return "serialPacketPrint()"; }
 };
@@ -239,7 +263,7 @@ public:
 class RadioSink : public Sink {
 public:
     virtual const char *getName() const { return "Radio"; }
-    virtual const char *getConfigName() const { return "RADIO"; }
+    virtual const char *getConfigName(bool &extended) const { return "RADIO"; }
     RadioSink() {
         aggregate = true;
         crc = true;
@@ -252,7 +276,7 @@ public:
 class FlashSink : public Sink {
 public:
     virtual const char *getName() const { return "Flash"; }
-    virtual const char *getConfigName() const { return "EXT_FLASH"; }
+    virtual const char *getConfigName(bool &extended) const { return "EXT_FLASH"; }
     virtual const char *getSendFuntion() const {
         return "flashStreamWrite(&flashPacket, sizeof(flashPacket))";
     }

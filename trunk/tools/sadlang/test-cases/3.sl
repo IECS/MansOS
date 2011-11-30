@@ -6,4 +6,4 @@ when System.time < 5s:
 else:
     use GreenLed, period 1000ms;
 // turn on blue led once the program has started
-use BlueLed, on_at 2000ms;
+use BlueLed, on_time 2000ms;
