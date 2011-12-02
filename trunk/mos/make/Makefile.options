@@ -40,4 +40,4 @@ ALLOPTIONS = $(OPT_VERBOSE) $(OPT_QUIET) $(OPT_OPTIMIZE)
 
 PLATFORMS ?= pc pcapp telosb tmote sadmote epic atmega arduino nrf waspmote
 
-ALLTARGETS = build clean upload run testbed memdump mspsim $(PLATFORMS) $(ALLOPTIONS)
+ALLTARGETS = build clean upload run testbed memdump mspsim $(PLATFORMS:%=clean%) $(PLATFORMS) $(ALLOPTIONS)
