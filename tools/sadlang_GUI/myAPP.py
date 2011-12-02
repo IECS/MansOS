@@ -1,5 +1,7 @@
 import wx
 import os
+# Go to real directory for those imports
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
 from src import tabManager
 from src import uploadModule
 from src import listenModule
@@ -9,7 +11,7 @@ class Example(wx.Frame):
     
     def __init__(self,  *args, **kwargs):
         super(Example, self).__init__(*args, **kwargs)
-        self.path = path = os.path.dirname(os.path.realpath(__file__))
+        self.path = os.path.dirname(os.path.realpath(__file__))
         
     def addAPI(self, API):
         self.API = API
