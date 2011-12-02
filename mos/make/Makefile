@@ -226,6 +226,8 @@ all: build
 $(PLATFORM_TARGET): build savetarget
 	$(Print) ""
 
+$(PLATFORMS:%=clean%): clean
+
 savetarget:
 	$(_QUIET) rm -f $(PROJDIR)/build/Makefile.target
 	$(_QUIET) @echo "saving Makefile.target"
