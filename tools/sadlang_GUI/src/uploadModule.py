@@ -2,6 +2,7 @@ import wx
 import subprocess
 import sys
 import os
+import shutil
 
 class UploadModule(wx.Dialog):
     def __init__(self, parent, title, API):
@@ -9,9 +10,10 @@ class UploadModule(wx.Dialog):
             title = title, size = (500, 400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.filename = "SADlang"
         self.API = API
+        self.tmpDir = self.API.path + '/temp/'
         self.haveMote = False
         self.platform = "telosb"
-        self.pathToMansos = "/../.."
+        self.pathToMansos = "/../../.."     # this is path from temp directory
         
         self.main = wx.BoxSizer(wx.VERTICAL)
         self.compileControls = wx.BoxSizer(wx.HORIZONTAL)
@@ -111,7 +113,8 @@ class UploadModule(wx.Dialog):
         try:
             self.updateStatus("Starting compile...")
             self.saveToFile()
-            upload = subprocess.Popen(["../sadlang/sadlang", self.filename], 
+            os.chdir(self.tmpDir)
+            upload = subprocess.Popen([self.API.path + "/../sadlang/sadlang", self.tmpDir + self.filename], 
                                       stderr = subprocess.STDOUT,
                                       stdout = subprocess.PIPE)
             out, err = upload.communicate()
@@ -120,6 +123,8 @@ class UploadModule(wx.Dialog):
                 self.updateStatus(out[haveError:])
             else:
                 self.updateStatus("Compiled successfully!")
+            if event != None:
+                self.removeTmpDir()
         except OSError, e:
             print >>sys.stderr, "execution failed:", e
             self.updateStatus(str(e))
@@ -134,6 +139,7 @@ class UploadModule(wx.Dialog):
             #retcode = subprocess.call(["make", "telosb", "upload-msp430", " > ", "lastCallOutput"], True)
             self.updateStatus("Starting upload...")
             # Realy shpuld call this in new thread
+            os.chdir(self.tmpDir)
             upload = subprocess.Popen(["make", self.platform, "upload"], 
                                       stderr = subprocess.STDOUT,
                                       stdout = subprocess.PIPE)
@@ -148,14 +154,17 @@ class UploadModule(wx.Dialog):
                 self.updateStatus(out)
                 return
             self.updateStatus("Uploaded successfully!")
+            if event != None:
+                self.removeTmpDir()
         except OSError, e:
             print >>sys.stderr, "execution failed:", e
             self.updateStatus(str(e))
         
     def createMakefile(self):
-        if os.path.exists("Makefile") & os.path.isfile("Makefile"):
-            self.updateStatus("Overwriting Makefile.")
-        with open("Makefile", "w") as out:
+        self.checkForTempDir()
+        #if os.path.exists("Makefile") & os.path.isfile("Makefile"):
+        #   self.updateStatus("Overwriting Makefile.")
+        with open(self.tmpDir +"Makefile", "w") as out:
             out.write("""#-*-Makefile-*- vim:syntax=make
 #
 # Copyright (c) 2008-2010 Leo Selavo and the contributors. All rights reserved.
@@ -206,8 +215,18 @@ include ${MOSROOT}/mos/make/Makefile
 """)
     
     def saveToFile(self):
-        if os.path.exists(self.filename) & os.path.isfile(self.filename):
-            self.updateStatus("Overwriting " + self.filename + " file.")
-        with open(self.filename, "w") as out:
+        self.checkForTempDir()
+        #if os.path.exists(self.API.path +"/temp/"+ self.filename) & os.path.isfile(self.filename):
+        #    self.updateStatus("Overwriting " + self.filename + " file.")
+        with open(self.tmpDir + self.filename, "w") as out:
             out.write(self.API.generateAll())
-                
+    
+    def checkForTempDir(self):
+        if not os.path.exists(self.tmpDir):
+            os.makedirs(self.tmpDir)
+
+    def removeTmpDir(self):
+        #os.rmdir(self.tmpDir)
+        shutil.rmtree(self.tmpDir)
+
+

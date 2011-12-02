@@ -123,6 +123,8 @@ class ApiCore:
     
     platforms = ["telosb", "sadmote", "atmega", "waspmote"]
     
+    path = ""
+    
     def getPlatforms(self):
         return self.platforms
     

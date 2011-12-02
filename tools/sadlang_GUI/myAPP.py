@@ -1,4 +1,5 @@
 import wx
+import os
 from src import tabManager
 from src import uploadModule
 from src import listenModule
@@ -7,10 +8,12 @@ from src import APIcore
 class Example(wx.Frame):
     
     def __init__(self,  *args, **kwargs):
-        super(Example, self).__init__(*args, **kwargs) 
+        super(Example, self).__init__(*args, **kwargs)
+        self.path = path = os.path.dirname(os.path.realpath(__file__))
         
     def addAPI(self, API):
         self.API = API
+        self.API.path = self.path
         self.InitUI()
         
     def InitUI(self):
@@ -23,9 +26,9 @@ class Example(wx.Frame):
         menubar.Append(fileMenu, '&File')
         self.SetMenuBar(menubar)
         self.toolbar = self.CreateToolBar()
-        extTool = self.toolbar.AddLabelTool(wx.ID_ANY, 'Quit', wx.Bitmap('src/exit.jpeg'))
-        uplTool = self.toolbar.AddLabelTool(wx.ID_ANY, 'Upload', wx.Bitmap('src/upload.gif'))
-        outputTool = self.toolbar.AddLabelTool(wx.ID_ANY, 'Output', wx.Bitmap('src/output.gif'))
+        extTool = self.toolbar.AddLabelTool(wx.ID_ANY, 'Quit', wx.Bitmap(self.path + '/src/exit.jpeg'))
+        uplTool = self.toolbar.AddLabelTool(wx.ID_ANY, 'Upload', wx.Bitmap(self.path + '/src/upload.gif'))
+        outputTool = self.toolbar.AddLabelTool(wx.ID_ANY, 'Output', wx.Bitmap(self.path + '/src/output.gif'))
         self.toolbar.Realize()
         
         self.Bind(wx.EVT_MENU, self.OnQuit, close)
