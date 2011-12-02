@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import wx
 import os
 # Go to real directory for those imports
