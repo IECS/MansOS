@@ -33,7 +33,7 @@ class MainModule:
     
     def initSink(self):
         print "sinkInit start... "
-        for obj in self.API.getObjects("sendto"):
+        for obj in self.API.getObjects("output"):
             self.sink[obj] = self.graphics.addSink(obj, self.sinkBtnClk)
             print "  Added "+obj
         print "done!"
@@ -79,7 +79,7 @@ class MainModule:
 
         self.dialog = editDialog.editDialog(None, 'Edit ' + 
                                               event.GetEventObject().GetName(), 
-                                              self.API.getParams('sendto'),
+                                              self.API.getParams('output'),
                                               self.sinkSaveDialog,
                                               event.GetEventObject().GetName(),
                                               self.API.sinkObjects[event.GetEventObject().GetName()])
@@ -88,6 +88,6 @@ class MainModule:
         
     def sinkSaveDialog(self, save, data, keyWord):
         if (save == True):
-            self.API.keyWords['sendto']['obj'][keyWord] = data
+            self.API.keyWords['output']['obj'][keyWord] = data
             self.sink[keyWord].SetValue(self.API.generateSinkCmd(keyWord))
         self.dialog.Destroy()

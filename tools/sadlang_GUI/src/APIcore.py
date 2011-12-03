@@ -108,7 +108,7 @@ class ApiCore:
                                 'obj': readObjects,
                                 'param': readParams
                         },
-                        "sendto": {
+                        "output": {
                                 'obj': sinkObjects,
                                 'param': sinkParams
                         },
@@ -190,7 +190,7 @@ class ApiCore:
             return ""
         
     def generateSinkCmd(self, keyWord):
-        cmd = "sendto " + keyWord
+        cmd = "output " + keyWord
         print self.sinkObjects[keyWord]
         for x in self.sinkObjects[keyWord]:
             if self.sinkObjects[keyWord][x] == True:
