@@ -32,12 +32,10 @@
 #define PAUSE_BETWEEN_TESTS_MS      3000 // ms
 #define PACKETS_IN_TEST             100u
 #define SEND_INTERVAL               20
-#define MAX_TEST_TIME               ((SEND_INTERVAL + 10) *  PACKETS_IN_TEST)
+#define MAX_TEST_TIME               ((SEND_INTERVAL + 20) *  PACKETS_IN_TEST)
 
 
-#define NUM_AVG_RUNS_SMALL    5
-#define NUM_AVG_RUNS_MEDIUM  10
-#define NUM_AVG_RUNS_LARGE   20
+#define NUM_AVG_RUNS  10
 
 #define SAMPLE_BUFFER_SIZE  25
 
@@ -68,11 +66,13 @@ volatile uint16_t currentTestNumber;
 volatile uint16_t currentTestPacketsRx;
 volatile uint16_t prevTestPacketsRx;
 volatile uint16_t rssiSum;
+volatile uint16_t lqiSum;
 
 uint16_t avgPDR[SAMPLE_BUFFER_SIZE];
-int16_t avgRssi[SAMPLE_BUFFER_SIZE];
+uint16_t avgRssi[SAMPLE_BUFFER_SIZE];
+uint16_t avgLQI[SAMPLE_BUFFER_SIZE];
 
-void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, int8_t rssi)
+void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, uint8_t rssi, uint8_t lqi)
 {
     int16_t i;
 
@@ -82,104 +82,91 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, int8_
     int16_t startIdx = idx;
 
     avgPDR[idx] = prevTestPacketsRx;
-    avgRssi[idx] = ((int16_t) rssi) + 128;
+    avgRssi[idx] = rssi;
 
     if (!calledBefore) {
         calledBefore = true;
         prevPrevTestNumber = prevTestNumber;
         memset(avgPDR, 0xff, sizeof(avgPDR));
         memset(avgRssi, 0xff, sizeof(avgRssi));
+        memset(avgLQI, 0xff, sizeof(avgLQI));
     } else if (prevPrevTestNumber < prevTestNumber) {
         prevPrevTestNumber++;
         while (prevPrevTestNumber < prevTestNumber) {
             avgPDR[prevPrevTestNumber % SAMPLE_BUFFER_SIZE] = 0;
             avgRssi[prevPrevTestNumber % SAMPLE_BUFFER_SIZE] = 0;
+            avgLQI[prevPrevTestNumber % SAMPLE_BUFFER_SIZE] = 0;
             prevPrevTestNumber++;
         }
     }
 
-    uint16_t numSmall, numMed, numLarge;
-    uint16_t sumSmall, sumMed, sumLarge;
-    int16_t sumRssiSmall, sumRssiMed, sumRssiLarge;
-    uint16_t numSmallNe, numMedNe, numLargeNe;
-    uint16_t sumSmallNe, sumMedNe, sumLargeNe;
-    int16_t sumRssiSmallNe, sumRssiMedNe, sumRssiLargeNe;
-    numSmall = numMed = numLarge = 0;
-    sumSmall = sumMed = sumLarge = 0;
-    sumRssiSmall = sumRssiMed = sumRssiLarge = 0;
-    numSmallNe = numMedNe = numLargeNe = 0;
-    sumSmallNe = sumMedNe = sumLargeNe = 0;
-    sumRssiSmallNe = sumRssiMedNe = sumRssiLargeNe = 0;
+    uint16_t numSamples = 0;
+    uint16_t sumSamples = 0;
+    int16_t sumRssi = 0;
+    uint16_t sumLqi = 0;
 
-    for (i = 0; i < NUM_AVG_RUNS_LARGE; ++i) {
+    uint16_t numSamplesNe = 0;
+    uint16_t sumSamplesNe = 0;
+    int16_t sumRssiNe = 0;
+    uint16_t sumLqiNe = 0;
+
+    for (i = 0; i < NUM_AVG_RUNS; ++i) {
         if (avgPDR[idx] == ~0u) break;
-        sumLarge += avgPDR[idx];
-        sumRssiLarge += avgRssi[idx];
-        numLarge++;
-        if (i < NUM_AVG_RUNS_MEDIUM) {
-            sumMed += avgPDR[idx];
-            sumRssiMed += avgRssi[idx];
-            numMed++;
-        }
-        if (i < NUM_AVG_RUNS_SMALL) {
-            sumSmall += avgPDR[idx];
-            sumRssiSmall += avgRssi[idx];
-            numSmall++;
-        }
+        sumSamples += avgPDR[idx];
+        sumRssi += avgRssi[idx];
+        sumLqi += avgLQI[idx];
+        numSamples++;
         if (idx == 0) idx = SAMPLE_BUFFER_SIZE - 1;
         else idx--;
     }
 
-    if (numLarge == 0) return;
+    if (numSamples == 0) return;
 
     idx = startIdx;
-    for (i = 0; i < SAMPLE_BUFFER_SIZE; ++i) {
+    for (i = 0; i < NUM_AVG_RUNS; ++i) {
         if (avgPDR[idx] == ~0u) break;
-        if (avgPDR[idx] != 0) {
-            sumLargeNe += avgPDR[idx];
-            sumRssiLargeNe += avgRssi[idx];
-            numLargeNe++;
-            if (numLargeNe == NUM_AVG_RUNS_LARGE) break;
-        }
-        if (numMedNe < NUM_AVG_RUNS_MEDIUM) {
-            if (avgPDR[idx] != 0) {
-                sumMedNe += avgPDR[idx];
-                sumRssiMedNe += avgRssi[idx];
-                numMedNe++;
-            }
-        }
-        if (numSmallNe < NUM_AVG_RUNS_SMALL) {
-            if (avgPDR[idx] != 0) {
-                sumSmallNe += avgPDR[idx];
-                sumRssiSmallNe += avgRssi[idx];
-                numSmallNe++;
-            }
-        }
+        sumSamplesNe += avgPDR[idx];
+        sumRssiNe += avgRssi[idx];
+        sumLqiNe += avgLQI[idx];
+        numSamplesNe++;
+        if (numSamplesNe >= NUM_AVG_RUNS) break;
         if (idx == 0) idx = SAMPLE_BUFFER_SIZE - 1;
         else idx--;
     }
 
-    uint16_t s, m, l;
-    int16_t s1, m1, l1;
-    s = sumSmall * 100ul / numSmall + 1;
-    m = sumMed * 100ul / numMed + 1;
-    l = sumLarge * 100ul / numLarge + 1;
-    // s1 = sumRssiSmall * 100ul / numSmall + 1;
-    // m1 = sumRssiMed * 100ul / numMed + 1;
-    // l1 = sumRssiLarge * 100ul / numLarge + 1;
-    PRINTF("avg (%d/%d/%d runs): %d/%d/%d\n",
-            numSmall, numMed, numLarge,
-            s / 100, m / 100, l / 100);
-    s = sumSmallNe * 100ul / numSmallNe + 1;
-    m = sumMedNe * 100ul / numMedNe + 1;
-    l = sumLargeNe * 100ul / numLargeNe + 1;
-    s1 = sumRssiSmallNe * 100ul / numSmallNe + 1;
-    m1 = sumRssiMedNe * 100ul / numMedNe + 1;
-    l1 = sumRssiLargeNe * 100ul / numLargeNe + 1;
-    PRINTF("nonempty avg (%d/%d/%d runs): %d/%d/%d, rssi: %d/%d/%d\n",
-            numSmallNe, numMedNe, numLargeNe,
-            s / 100, m / 100, l / 100,
-            s1 / 100 - 128, m1 / 100 - 128, l1 / 100 - 128);
+    uint16_t samplesAvg, samplesAvgNe;
+    int16_t rssiAvg;
+    uint16_t lqiAvg;
+
+    samplesAvg = (sumSamples + (numSamples / 2)) / numSamples;
+
+    PRINTF("avg (%d runs): %d\n", numSamples, samplesAvg);
+
+    if (numSamplesNe == 0) return;
+
+    samplesAvgNe = (sumSamplesNe + (numSamplesNe / 2)) / numSamplesNe;
+    rssiAvg = (sumRssiNe + (numSamplesNe / 2)) / numSamplesNe;
+    lqiAvg = (sumLqiNe + (numSamplesNe / 2)) / numSamplesNe;
+#if PLATFROM_TELOSB
+    rssiAvg -= 128;
+#endif
+
+    PRINTF("nonempty avg (%d runs): %d, rssi: %d, lqi: %d\n",
+            numSamplesNe, rssiAvg, lqiAvg);
+
+    RadioInfoPacket_t packet;
+    packet.address = localAddress;
+    packet.lastTestNo = prevTestNumber;
+    packet.numTests = numSamples;
+    packet.avgPdr = samplesAvg;
+    packet.numTestsNe = numSamplesNe;
+    packet.avgPdrNe = numSamplesNe;
+    packet.avgRssiNe = rssiAvg;
+    packet.avgLqiNe = lqiAvg;
+
+    radioSetChannel(BS_CHANNEL);
+    radioSend(&packet);
+    radioSetChannel(TEST_CHANNEL);
 }
 
 void endTest(void) {
@@ -197,6 +184,7 @@ void startTest(uint16_t newTestNumber) {
     greenLedOn();
     toggleRedLed();
     rssiSum = 0;
+    lqiSum = 0;
 }
 
 void recvCallback(uint8_t *data, int16_t len)
@@ -223,6 +211,15 @@ void recvCallback(uint8_t *data, int16_t len)
         return;
     }
 
+    uint8_t rssi;
+#if PLATFROM_TELOSB
+    rssi = radioGetLastRSSI() + 128;
+#else
+    rssi = radioGetLastRSSI();
+#endif
+    rssiSum += rssi;
+    lqiSum += lqi;
+
     uint16_t testNum;
     memcpy(&testNum, data, sizeof(uint16_t));
     if (testNum != currentTestNumber) {
@@ -247,8 +244,6 @@ void recvCounter(void)
             // free the buffer as soon as possible
             int16_t recvLen = radioBuffer.receivedLength;
             if (recvLen > 0) {
-                int16_t rssi = radioGetLastRSSI() + 128;
-                rssiSum += (uint16_t) rssi;
                 memcpy(recvBuffer, radioBuffer.buffer, recvLen);
                 radioBufferReset(radioBuffer);
                 recvCallback(recvBuffer, recvLen);
@@ -265,14 +260,15 @@ void recvCounter(void)
         }
         if (testInProgress != prevTestInProgress || prevTestNumber != currentTestNumber) {
             if (prevTestInProgress) {
-                int16_t avgRssi;
+                uint16_t avgRssi, avgLqi;
                 if (prevTestPacketsRx == 0) {
                     avgRssi = 0;
+                    avgLqi = 0;
                 } else {
                     avgRssi = rssiSum / prevTestPacketsRx;
-                    avgRssi -= 128;
+                    avgLqi = lqiSum / prevTestPacketsRx;
                 }
-                PRINTF("Test %u: %d%%, %d avg RSSI\n", prevTestNumber, prevTestPacketsRx, avgRssi);
+                PRINTF("Test %u: %d%%, %d avg RSSI\n", prevTestNumber, prevTestPacketsRx, avgRssi, avgLqi);
                 addAvgStatistics(prevTestNumber, prevTestPacketsRx, avgRssi);
             }
             if (testInProgress) {
