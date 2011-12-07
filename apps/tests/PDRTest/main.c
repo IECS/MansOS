@@ -90,7 +90,7 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, uint8
     avgRssi[idx] = rssi;
 	avgLQI[idx] = lqi;
 
-    if (!calledBefore) {
+    if (!calledBefore || prevPrevTestNumber > prevTestNumber) {
         calledBefore = true;
         prevPrevTestNumber = prevTestNumber;
         memset(avgPDR, 0xff, sizeof(avgPDR));
@@ -181,7 +181,7 @@ void endTest(void) {
     testInProgress = false;
     prevTestPacketsRx = currentTestPacketsRx;
     currentTestPacketsRx = 0;
-    greenLedOff();
+//    greenLedOff();
     redLedToggle();
 }
 
@@ -189,7 +189,7 @@ void startTest(uint16_t newTestNumber) {
     testInProgress = true;
     currentTestNumber = newTestNumber;
     testStartTime = getJiffies();
-    greenLedOn();
+//    greenLedOn();
     redLedToggle();
     rssiSum = 0;
     lqiSum = 0;
