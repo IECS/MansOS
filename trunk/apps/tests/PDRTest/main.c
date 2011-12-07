@@ -22,6 +22,7 @@
  */
 
 #include "stdmansos.h"
+#include "common.h"
 #include <lib/codec/crc.h>
 #include <string.h>
 #include <kernel/threads/radio.h>
@@ -30,8 +31,10 @@
 
 #define TEST_PACKET_SIZE            30
 #define PAUSE_BETWEEN_TESTS_MS      3000 // ms
+//#define PAUSE_BETWEEN_TESTS_MS      0 // ms
 #define PACKETS_IN_TEST             100u
 #define SEND_INTERVAL               20
+//#define SEND_INTERVAL               5
 #define MAX_TEST_TIME               ((SEND_INTERVAL + 20) *  PACKETS_IN_TEST)
 
 
@@ -81,8 +84,11 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, uint8
     int16_t idx = prevTestNumber % SAMPLE_BUFFER_SIZE;
     int16_t startIdx = idx;
 
+	PRINTF("addAvgStatistics: rssi=%d lqi=%d\n", rssi, lqi);
+
     avgPDR[idx] = prevTestPacketsRx;
     avgRssi[idx] = rssi;
+	avgLQI[idx] = lqi;
 
     if (!calledBefore) {
         calledBefore = true;
@@ -123,14 +129,16 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, uint8
     if (numSamples == 0) return;
 
     idx = startIdx;
-    for (i = 0; i < NUM_AVG_RUNS; ++i) {
+    for (i = 0; i < SAMPLE_BUFFER_SIZE; ++i) {
         if (avgPDR[idx] == ~0u) break;
-        sumSamplesNe += avgPDR[idx];
-        sumRssiNe += avgRssi[idx];
-        sumLqiNe += avgLQI[idx];
-        numSamplesNe++;
-        if (numSamplesNe >= NUM_AVG_RUNS) break;
-        if (idx == 0) idx = SAMPLE_BUFFER_SIZE - 1;
+        if (avgPDR[idx] != 0) {
+			sumSamplesNe += avgPDR[idx];
+			sumRssiNe += avgRssi[idx];
+			sumLqiNe += avgLQI[idx];
+			numSamplesNe++;
+			if (numSamplesNe >= NUM_AVG_RUNS) break;
+        }
+		if (idx == 0) idx = SAMPLE_BUFFER_SIZE - 1;
         else idx--;
     }
 
@@ -152,7 +160,7 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, uint8
 #endif
 
     PRINTF("nonempty avg (%d runs): %d, rssi: %d, lqi: %d\n",
-            numSamplesNe, rssiAvg, lqiAvg);
+            numSamplesNe, samplesAvgNe, rssiAvg, lqiAvg);
 
     RadioInfoPacket_t packet;
     packet.address = localAddress;
@@ -165,7 +173,7 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, uint8
     packet.avgLqiNe = lqiAvg;
 
     radioSetChannel(BS_CHANNEL);
-    radioSend(&packet);
+    radioSend(&packet, sizeof(packet));
     radioSetChannel(TEST_CHANNEL);
 }
 
@@ -174,7 +182,7 @@ void endTest(void) {
     prevTestPacketsRx = currentTestPacketsRx;
     currentTestPacketsRx = 0;
     greenLedOff();
-    toggleRedLed();
+    redLedToggle();
 }
 
 void startTest(uint16_t newTestNumber) {
@@ -182,7 +190,7 @@ void startTest(uint16_t newTestNumber) {
     currentTestNumber = newTestNumber;
     testStartTime = getJiffies();
     greenLedOn();
-    toggleRedLed();
+    redLedToggle();
     rssiSum = 0;
     lqiSum = 0;
 }
@@ -218,7 +226,7 @@ void recvCallback(uint8_t *data, int16_t len)
     rssi = radioGetLastRSSI();
 #endif
     rssiSum += rssi;
-    lqiSum += lqi;
+    lqiSum += radioGetLastLQI();
 
     uint16_t testNum;
     memcpy(&testNum, data, sizeof(uint16_t));
@@ -269,7 +277,7 @@ void recvCounter(void)
                     avgLqi = lqiSum / prevTestPacketsRx;
                 }
                 PRINTF("Test %u: %d%%, %d avg RSSI\n", prevTestNumber, prevTestPacketsRx, avgRssi, avgLqi);
-                addAvgStatistics(prevTestNumber, prevTestPacketsRx, avgRssi);
+                addAvgStatistics(prevTestNumber, prevTestPacketsRx, avgRssi, avgLqi);
             }
             if (testInProgress) {
                 // PRINT("\n===================================\n");
