@@ -1,5 +1,5 @@
 #include <stdmansos.h>
-#include "common.h"
+#include "../common.h"
 
 #define MAX_NEIGHBORS 11
 
@@ -16,12 +16,12 @@ bool checkNeighbor(uint16_t addr, RadioInfoPacket_t *packet)
         }
     }
 
-	// If we got so far it means that there's no such neighbor, let's add one
-	if (nbrCount < MAX_NEIGHBORS) {
-        nbrs[nbrCount] = *packet;
-		return true;
-	} 
-	return false;
+    // If we got so far it means that there's no such neighbor, let's add one
+    if (nbrCount < MAX_NEIGHBORS) {
+        nbrs[nbrCount++] = *packet;
+        return true;
+    } 
+    return false;
 }
 
 void recvCallback(void)
@@ -39,6 +39,7 @@ void recvCallback(void)
         PRINT("too small!\n");
         return;
     }
+    // PRINT("radio rx!\n");
     checkNeighbor(packet.address, &packet);
 }
 
@@ -60,6 +61,7 @@ void appMain(void)
     radioOn();
 
     for (;;) {
+        PRINT(".\n");
         DISABLE_INTS();
         dumpNeighbors();
         ENABLE_INTS();
