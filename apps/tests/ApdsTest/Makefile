@@ -1,6 +1,6 @@
 #-*-Makefile-*- vim:syntax=make
 #
-# Copyright (c) 2011 Leo Selavo and the contributors. All rights reserved.
+# Copyright (c) 2008-2010 Leo Selavo and the contributors. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -21,38 +21,27 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+# --------------------------------------------------------------------
+#	Makefile for the sample application
+#
+#  The developer must define at least SOURCES and APPMOD in this file
+#
+#  In addition, PROJDIR and MOSROOT must be defined, before including 
+#  the main Makefile at ${MOSROOT}/mos/make/Makefile
+# --------------------------------------------------------------------
 
-#############################################
-# TelosB compatible motes (Tmote Sky)
-#############################################
+# Sources are all project source files, excluding MansOS files
+SOURCES = main.c
 
-#############################################
-# Define platform variables
+# Module is the name of the main module buit by this makefile
+APPMOD = AdcTest
 
-ARCH = msp430
-MCU_MODEL = msp430x1611
-
-# Upload target specifically for Tmote (without pin inversion)
-UPLOAD_TARGET=upload-tmote
-
-# Default clock speed: 4MHz
-ifeq ($(USE_HARDWARE_TIMERS),y)
-CPU_MHZ ?= 4
-else
-CPU_MHZ ?= 1  # actually the default DCO frequency is around 800 kHz
+# --------------------------------------------------------------------
+# Set the key variables
+PROJDIR = $(CURDIR)
+ifndef MOSROOT
+  MOSROOT = $(PROJDIR)/../../..
 endif
 
-CFLAGS += -DPLATFORM_TELOSB=1
-
-#############################################
-# Define platform-specific sources
-# (excluding architecture-specific sources)
-
-PSOURCES += $(MOS)/platforms/telosb/platform.c
-PSOURCES-$(USE_USER_BUTTON) += $(MOS)/platforms/telosb/user_button.c
-
-PSOURCES-$(USE_RADIO) += $(MOS)/chips/cc2420/cc2420.c
-PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
-PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/m25p80/m25p80.c
-PSOURCES-$(USE_ISL29003) += $(MOS)/chips/isl29003/isl29003.c
-PSOURCES-$(USE_APDS9300) += $(MOS)/chips/apds9300/apds9300.c
+# Include the main makefile
+include ${MOSROOT}/mos/make/Makefile

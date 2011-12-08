@@ -7,6 +7,7 @@ from src import tabManager
 from src import uploadModule
 from src import listenModule
 from src import APIcore 
+from src import sealStruct 
 
 class Example(wx.Frame):
     
@@ -65,6 +66,9 @@ def main():
     frame.addAPI(API)
     tabManager.tabManager(frame, API)
     frame.Show()
+    with open('sampleCode', 'r') as f:
+        read_data = f.read()
+        seal = sealStruct.Seal(read_data)
     ex.MainLoop()
 
 if __name__ == '__main__':
