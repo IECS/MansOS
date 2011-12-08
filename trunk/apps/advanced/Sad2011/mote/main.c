@@ -29,12 +29,12 @@
 #include <lib/assert.h>
 #include <isl29003/isl29003.h>
 #include <apds9300/apds9300.h>
-#include <ads1115/ads1115.h>
+//#include <ads1115/ads1115.h>
 #include <kernel/threads/radio.h>
 
 #define WRITE_TO_FLASH 1
 #define SEND_TO_RADIO  1
-#define PRINT_PACKET   0
+#define PRINT_PACKET   1
 
 #define WASPMOTE_BS    0
 
@@ -234,10 +234,10 @@ void readSensors(DataPacket_t *packet)
     packet->timestamp = (uint32_t)(getJiffies() + rootClockDelta);
     packet->sourceAddress = localAddress;
     packet->dataSeqnum = ++mySeqnum;
-    if (!islRead(&packet->islLight, true)) {
-        PRINT("islRead failed\n");
-        packet->islLight = 0xffff;
-    }
+    //if (!islRead(&packet->islLight, true)) {
+    //    PRINT("islRead failed\n");
+   //     packet->islLight = 0xffff;
+   // }
     if (apdsReadWord(COMMAND | DATA0LOW_REG, &packet->apdsLight0) != 0) {
         PRINT("apdsReadWord 0 failed\n");
         packet->apdsLight0 = 0xffff; // error value
@@ -246,10 +246,10 @@ void readSensors(DataPacket_t *packet)
         PRINT("apdsReadWord 1 failed\n");
         packet->apdsLight1 = 0xffff; // error value
     }
-    if (!readAdsRegister(ADS_CONVERSION_REGISTER, &packet->sq100Light)) {
-        PRINT("readAdsRegister failed\n");
-        packet->sq100Light = 0xffff;
-    }
+    //if (!readAdsRegister(ADS_CONVERSION_REGISTER, &packet->sq100Light)) {
+    //    PRINT("readAdsRegister failed\n");
+    //    packet->sq100Light = 0xffff;
+    //}
     packet->internalVoltage = adcRead(ADC_INTERNAL_VOLTAGE);
     packet->internalTemperature = adcRead(ADC_INTERNAL_TEMPERATURE);
     PRINT("read hum\n");
@@ -259,6 +259,7 @@ void readSensors(DataPacket_t *packet)
     packet->crc = crc16((uint8_t *) packet, sizeof(*packet) - 2);
 
 #if WRITE_TO_FLASH
+    PRINTF("Writing to flash\n");
     radioOff();
     extFlashWrite(extFlashAddress, packet, sizeof(*packet));
     DataPacket_t verifyRecord;
@@ -327,8 +328,8 @@ void appMain(void)
 #endif
 
     // ------------------------- light sensor
-    islInit();
-    islOn();
+    //islInit();
+   // islOn();
 
     apdsInit();
     apdsOn();
@@ -339,7 +340,7 @@ void appMain(void)
 
     // ------------------------- 16 bit ADC
     // i2cInit(); -- not needed because islInit() and apdsInit() calls this as well
-    writeAdsRegister(ADS_CONFIG_REGISTER, 0x8483);
+    //writeAdsRegister(ADS_CONFIG_REGISTER, 0x8483);
 
     // ------------------------- networking
 #if SEND_TO_RADIO
@@ -362,7 +363,7 @@ void appMain(void)
 
     // ------------------------- main loop
     for (i = 0; i < 6; ++i) {
-        toggleRedLed();
+        //toggleRedLed();
         mdelay(100);
     }
     ledOff();
@@ -399,7 +400,7 @@ void appMain(void)
         }
 #if SEND_TO_RADIO
         // wait some time for radio rx!
-        mdelay(100);
+        // mdelay(100);
 #if WASPMOTE_BS
         radioTryRx();
 #endif

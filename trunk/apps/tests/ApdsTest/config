@@ -1,0 +1,18 @@
+#
+# Application specific config file
+#
+USE_RADIO=n
+USE_APDS9300=y
+
+USE_SOFT_I2C=y
+#sadmote
+CONST_SDA_PORT=2
+CONST_SDA_PIN=3
+CONST_SCL_PORT=2
+CONST_SCL_PIN=4
+
+#tmote
+#CONST_SDA_PORT=3
+#CONST_SDA_PIN=5
+#CONST_SCL_PORT=3
+#CONST_SCL_PIN=4

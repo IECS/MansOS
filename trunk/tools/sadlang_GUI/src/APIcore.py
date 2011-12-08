@@ -125,6 +125,7 @@ class ApiCore:
     
     path = ""
     
+    
     def getPlatforms(self):
         return self.platforms
     

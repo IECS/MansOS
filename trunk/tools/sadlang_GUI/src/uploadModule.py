@@ -13,7 +13,7 @@ class UploadModule(wx.Dialog):
         self.tmpDir = self.API.path + '/temp/'
         self.haveMote = False
         self.platform = "telosb"
-        self.pathToMansos = "/../../.."     # this is path from temp directory
+        self.pathToMansos = self.API.path + "/../.."     # this is path from temp directory
         
         self.main = wx.BoxSizer(wx.VERTICAL)
         self.compileControls = wx.BoxSizer(wx.HORIZONTAL)
