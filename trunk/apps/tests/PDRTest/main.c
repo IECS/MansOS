@@ -24,10 +24,15 @@
 #include "stdmansos.h"
 #include "common.h"
 #include <lib/codec/crc.h>
+#include <hil/extflash.h>
 #include <string.h>
 #include <kernel/threads/radio.h>
 
+#define TEST_ID 201
+
 #define RECV 0
+
+#define EXT_FLASH_RESERVED 0
 
 #define TEST_PACKET_SIZE            30
 #define PAUSE_BETWEEN_TESTS_MS      3000 // ms
@@ -42,8 +47,45 @@
 
 #define SAMPLE_BUFFER_SIZE  25
 
+uint16_t testId, currentTestId;
+uint32_t extFlashAddress;
+
 void sendCounter(void);
 void recvCounter(void);
+
+void extFlashPrepare(void)
+{
+    extFlashWake();
+
+    // check if old records exist
+    RadioInfoPacket_t packet;
+//    bool prevMissed = false;
+
+    extFlashAddress = EXT_FLASH_RESERVED;
+    while (extFlashAddress < EXT_FLASH_SIZE) {
+        extFlashRead(extFlashAddress, &packet, sizeof(packet));
+		if (packet.address == 0xffff) break;
+        /* if (packet.crc == crc16((uint8_t *)&packet, sizeof(packet) - sizeof(uint16_t))) { */
+        /*     prevMissed = false; */
+        /* } else { */
+        /*     // XXX: this is supposed to find first non-packet, but it will find first two invalid packets!! */
+        /*     if (!prevMissed) { */
+        /*         prevMissed = true; */
+        /*     } else { */
+        /*         extFlashAddress -= sizeof(packet); */
+        /*         if (extFlashAddress > EXT_FLASH_RESERVED) { */
+        /*             // write special zero packet to mark reboot */
+        /*             memset(&packet, 0, sizeof(packet)); // zero crc */
+        /*             extFlashWrite(extFlashAddress, &packet, sizeof(packet)); */
+        /*             extFlashAddress += sizeof(packet); */
+        /*         } */
+        /*         break; */
+        /*     } */
+        /* } */
+        extFlashAddress += sizeof(packet);
+    }
+    PRINTF("flash packet offset=%lu\n", extFlashAddress - EXT_FLASH_RESERVED);
+}
 
 //-------------------------------------------
 //      Entry point for the application
@@ -54,8 +96,10 @@ void appMain(void)
 //    alarmInit(&alarm, alarmCb, NULL);
 //    alarmSchedule(&alarm, 1000);
     PRINTF("starting recv...\n");
+    extFlashPrepare();
     recvCounter();
 #else
+	testId = TEST_ID;
     radioOn(); // XXX
     sendCounter();
 #endif
@@ -163,6 +207,7 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, uint8
             numSamplesNe, samplesAvgNe, rssiAvg, lqiAvg);
 
     RadioInfoPacket_t packet;
+	packet.testId = testId;
     packet.address = localAddress;
     packet.lastTestNo = prevTestNumber;
     packet.numTests = numSamples;
@@ -171,12 +216,24 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, uint8
     packet.avgPdrNe = samplesAvgNe;
     packet.avgRssiNe = rssiAvg;
     packet.avgLqiNe = lqiAvg;
+	packet.crc = crc16((uint8_t *)&packet, sizeof(packet) - 2);
+//    radioSetChannel(BS_CHANNEL);
+//    mdelay(10);
+//    radioSend(&packet, sizeof(packet));
+//    mdelay(10);
+//    radioSetChannel(TEST_CHANNEL);
 
-    radioSetChannel(BS_CHANNEL);
-    mdelay(10);
-    radioSend(&packet, sizeof(packet));
-    mdelay(10);
-    radioSetChannel(TEST_CHANNEL);
+	radioOff();
+    extFlashWrite(extFlashAddress, &packet, sizeof(packet));
+    RadioInfoPacket_t verifyRecord;
+    memset(&verifyRecord, 0, sizeof(verifyRecord));
+    extFlashRead(extFlashAddress, &verifyRecord, sizeof(verifyRecord));
+    if (memcmp(&packet, &verifyRecord, sizeof(verifyRecord))) {
+        ASSERT("writing in flash failed!" && false);
+    }
+//	PRINT("written!\n");
+	extFlashAddress += sizeof(packet);
+	radioOn();
 }
 
 void endTest(void) {
@@ -233,8 +290,10 @@ void recvCallback(uint8_t *data, int16_t len)
 
     uint16_t testNum;
     memcpy(&testNum, data, sizeof(uint16_t));
-    if (testNum != currentTestNumber) {
-        if (testInProgress) endTest();
+    memcpy(&testId, data + 2, sizeof(uint16_t));
+    if (testNum != currentTestNumber || testId != currentTestId) {
+        currentTestId = testId;
+		if (testInProgress) endTest();
     }
     if (!testInProgress) {
         startTest(testNum);
@@ -311,7 +370,8 @@ void sendCounter(void)
         redLedOn();
         for (i = 0; i < PACKETS_IN_TEST; ++i) {
             memcpy(sendBuffer, &testNumber, sizeof(testNumber));
-            sendBuffer[2] = i;
+            memcpy(sendBuffer + 2, &testId, sizeof(testId));
+            sendBuffer[4] = i;
             crc = crc16(sendBuffer, TEST_PACKET_SIZE - 2);
             memcpy(sendBuffer + TEST_PACKET_SIZE - 2, &crc, sizeof(crc));
 
