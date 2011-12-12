@@ -151,6 +151,7 @@ static void m25p80_pageProgram(uint32_t addr, const uint8_t *buffer,
     M25P80_WR_MANY(buffer, len);
 
     M25P80_SPI_DISABLE();
+    M25P80_WAIT_WHILE_WIP(); // hack
 }
 
 void m25p80_bulkErase()
@@ -186,7 +187,6 @@ void m25p80_write(uint32_t addr, const void *buf, uint16_t len)
 #if M25P80_DEBUG
     PRINTF("m25p80_write(%llu, %u)\n", addr, len);
 #endif
-
 
     if (len > M25P80_PAGE_SIZE) len = M25P80_PAGE_SIZE;
 
