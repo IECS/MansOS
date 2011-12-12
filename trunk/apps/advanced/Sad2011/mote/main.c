@@ -34,7 +34,7 @@
 
 #define WRITE_TO_FLASH 1
 #define SEND_TO_RADIO  1
-#define PRINT_PACKET   1
+#define PRINT_PACKET   0
 
 #define WASPMOTE_BS    0
 
@@ -114,20 +114,20 @@ void sendDataPacket(DataPacket_t *packet)
         .networkAddressOrigin = {0x56, 0x79}, // network address origin (but only in case typeSourceId == 0)
     };
 
-    PRINT("send sensor data...\n");
+    //PRINT("send sensor data...\n");
     memcpy(&myPacket.data, packet, sizeof(DataPacket_t));
     myPacket.seqnum = myPacket.seqnum2 = (uint8_t) mySeqnum;
 
     int ret = radioSend(&myPacket, sizeof(myPacket));
-    if (ret < 0) {
-        PRINTF("radioSend failed: %s\n", strerror(-ret));
-    }
+    //if (ret < 0) {
+        //PRINTF("radioSend failed: %s\n", strerror(-ret));
+    //}
 }
 #else
 void sendDataPacket(DataPacket_t *packet)
 {
     PRINT("send sensor data...\n");
-    int ret = socketSend(&dataSocket, &myPacket, sizeof(myPacket));
+    int ret = radioSend(&myPacket, sizeof(myPacket));
     if (ret < 0) {
         PRINTF("radioSend failed: %s\n", strerror(-ret));
     }
@@ -168,7 +168,7 @@ void prepareExtFlash(void)
         }
         extFlashAddress += sizeof(packet);
     }
-    PRINTF("flash packet offset=%lu\n", extFlashAddress - EXT_FLASH_RESERVED);
+    //PRINTF("flash packet offset=%lu\n", extFlashAddress - EXT_FLASH_RESERVED);
 }
 #endif
 
@@ -179,17 +179,17 @@ void rxRoutingPacket(uint8_t *data)
     RoutingInfoPacket_t ri;
     memcpy(&ri, data, sizeof(ri));
     if (seqnumAfter(myRoutingInfo.seqnum, ri.seqnum) && seqnumAfter(ri.seqnum, myRoutingInfo.seqnum - 5)) {
-        PRINT("Routing info, but already seen!\n");
+        //PRINT("Routing info, but already seen!\n");
         return;
     }
 
-    PRINT("rx routing info:\n");
-    debugHexdump(&ri, sizeof(ri));
+    //PRINT("rx routing info:\n");
+    //debugHexdump(&ri, sizeof(ri));
 
     memcpy(&myRoutingInfo, &ri, sizeof(ri));
     // this is the only parameter we use at the moment
     rootClockDelta = (int32_t)(ri.rootClock - getJiffies());
-    PRINTF("  ri.rootClock=%lu, delta=%ld\n", ri.rootClock, rootClockDelta);
+    //PRINTF("  ri.rootClock=%lu, delta=%ld\n", ri.rootClock, rootClockDelta);
 }
 
 void radioTryRx(void)
@@ -202,8 +202,8 @@ void radioTryRx(void)
         if (len >= sizeof(Ieee802_15_4_Packet_Head_t)) {
             Ieee802_15_4_Packet_Head_t p;
             memcpy(&p, radioPacketBuffer->buffer, sizeof(p));
-            PRINTF("  packet ID=%#x\n", p.packetId);
-            PRINTF("  data length=%d\n", len - sizeof(p));
+           // PRINTF("  packet ID=%#x\n", p.packetId);
+           // PRINTF("  data length=%d\n", len - sizeof(p));
             if (p.packetId == SAD_ROUTING_ID) {
                 rxRoutingPacket(radioPacketBuffer->buffer + len - sizeof(SadRoutingInfoPacket_t));
                 // PRINT("ROUTING!\n");
@@ -213,8 +213,8 @@ void radioTryRx(void)
         }
     }
     else if (isRadioPacketError(*radioPacketBuffer)) {
-        PRINTF("got an error from radio: %s\n",
-                strerror(-radioPacketBuffer->receivedLength));
+       // PRINTF("got an error from radio: %s\n",
+       //         strerror(-radioPacketBuffer->receivedLength));
     }
     radioBufferReset(*radioPacketBuffer);
 }
@@ -239,11 +239,11 @@ void readSensors(DataPacket_t *packet)
    //     packet->islLight = 0xffff;
    // }
     if (apdsReadWord(COMMAND | DATA0LOW_REG, &packet->apdsLight0) != 0) {
-        PRINT("apdsReadWord 0 failed\n");
+       // PRINT("apdsReadWord 0 failed\n");
         packet->apdsLight0 = 0xffff; // error value
     }
     if (apdsReadWord(COMMAND | DATA1LOW_REG, &packet->apdsLight1) != 0) {
-        PRINT("apdsReadWord 1 failed\n");
+        //PRINT("apdsReadWord 1 failed\n");
         packet->apdsLight1 = 0xffff; // error value
     }
     //if (!readAdsRegister(ADS_CONVERSION_REGISTER, &packet->sq100Light)) {
@@ -252,14 +252,14 @@ void readSensors(DataPacket_t *packet)
     //}
     packet->internalVoltage = adcRead(ADC_INTERNAL_VOLTAGE);
     packet->internalTemperature = adcRead(ADC_INTERNAL_TEMPERATURE);
-    PRINT("read hum\n");
+    //PRINT("read hum\n");
     packet->sht75Humidity = readHumidity();
     packet->sht75Temperature = readHTemperature();
-    PRINT("read done\n");
+   // PRINT("read done\n");
     packet->crc = crc16((uint8_t *) packet, sizeof(*packet) - 2);
 
 #if WRITE_TO_FLASH
-    PRINTF("Writing to flash\n");
+    //PRINTF("Writing to flash\n");
     radioOff();
     extFlashWrite(extFlashAddress, packet, sizeof(*packet));
     DataPacket_t verifyRecord;
@@ -297,8 +297,8 @@ void printPacket(DataPacket_t *packet)
 
 static void recvData(Socket_t *socket, uint8_t *data, uint16_t len)
 {
-    PRINTF("got %d bytes from 0x%04x\n", len,
-            socket->recvMacInfo->originalSrc.shortAddr);
+   // PRINTF("got %d bytes from 0x%04x\n", len,
+    //        socket->recvMacInfo->originalSrc.shortAddr);
 }
 
 Alarm_t alarm;
@@ -307,7 +307,7 @@ Alarm_t alarm;
 
 void alarmCallback(void *param)
 {
-    PRINT("alarmCallback\n");
+    //PRINT("alarmCallback\n");
     radioOff();
     mdelay(100);
     radioOn();
@@ -320,7 +320,7 @@ void appMain(void)
     uint16_t i;
 
     // ------------------------- serial number
-    PRINTF("Mote %#04x starting...\n", localAddress);
+   // PRINTF("Mote %#04x starting...\n", localAddress);
 
     // ------------------------- external flash
 #if WRITE_TO_FLASH
