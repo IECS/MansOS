@@ -20,31 +20,39 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 #include "stdmansos.h"
-#include "ads1115/ads1115.h"
 
-// Works for ads1113, ads1114 & ads1115
-void appMain(void){
-    uint16_t val;
-    adsInit();
+#define PACKET_SIZE 30
 
-    radioOff();
+Alarm_t alarm;
 
-  	//adsContiniousConversionMode();    // By default power down single shot converion mode is enabled
-  	uint8_t i = 0;
-	bool b = false;
-  	while(1){
-  	    adsSelectInput(i);
-  		readAds(&val);
-	    	PRINTF("Ads conversion result from AIN%d:%#x\n",i, val);
-	    	sleep(1);
-		if (b) ledOn();
-		else ledOff();
-	    	i++;
-	    	if (i>3) {
-    		    i = 0;
-		    b = !b;
-		}
+void onAlarm(void *p) {
+    redLedToggle();
+    alarmSchedule(&alarm, 1000);
+}
+
+//-------------------------------------------
+//      Entry point for the application
+//-------------------------------------------
+void appMain(void)
+{
+    uint16_t i;
+    uint8_t sendBuffer[RADIO_MAX_PACKET];
+
+    for (i = 0; i < RADIO_MAX_PACKET; ++i) {
+        sendBuffer[i] = i;
+    }
+
+    alarmInit(&alarm, onAlarm, NULL);
+    alarmSchedule(&alarm, 1000);
+
+    i = 0;
+    for (;;) {
+        ++i;
+        radioSend(sendBuffer, PACKET_SIZE);
+        PRINTF("meh.. %d\n", i);
+        mdelay(100);
     }
 }
+

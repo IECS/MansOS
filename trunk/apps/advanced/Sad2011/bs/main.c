@@ -196,8 +196,8 @@ void appMain(void)
         // writeTestData();
         mdelay(3000);
 
-        radioOff();
-        mdelay(100);
-        radioOn();
+//        radioOff();
+//        mdelay(100);
+//        radioOn();
     }
 }

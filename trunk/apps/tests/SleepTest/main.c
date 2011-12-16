@@ -27,15 +27,18 @@
 
 #include "stdmansos.h"
 
-#define PAUSE 1000
+#define PAUSE 2000
 
 //-------------------------------------------
 //      Entry point for the application
 //-------------------------------------------
 void appMain(void) {
+    radioOff();
+//    humidityOff();
+
     while (1) {
-        toggleLed();
+        ledToggle();
         msleep(PAUSE); // sleep PAUSE seconds
+        PRINT("hello world\n");
     }
 }
-

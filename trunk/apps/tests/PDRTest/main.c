@@ -28,18 +28,18 @@
 #include <string.h>
 #include <kernel/threads/radio.h>
 
-#define TEST_ID 201
+#define TEST_ID 01
 
 #define RECV 0
 
 #define EXT_FLASH_RESERVED 0
 
 #define TEST_PACKET_SIZE            30
-#define PAUSE_BETWEEN_TESTS_MS      3000 // ms
-//#define PAUSE_BETWEEN_TESTS_MS      0 // ms
+//#define PAUSE_BETWEEN_TESTS_MS      3000 // ms
+#define PAUSE_BETWEEN_TESTS_MS      0 // ms
 #define PACKETS_IN_TEST             100u
-#define SEND_INTERVAL               20
-//#define SEND_INTERVAL               5
+//#define SEND_INTERVAL               20
+#define SEND_INTERVAL               5
 #define MAX_TEST_TIME               ((SEND_INTERVAL + 20) *  PACKETS_IN_TEST)
 
 
@@ -64,7 +64,7 @@ void extFlashPrepare(void)
     extFlashAddress = EXT_FLASH_RESERVED;
     while (extFlashAddress < EXT_FLASH_SIZE) {
         extFlashRead(extFlashAddress, &packet, sizeof(packet));
-		if (packet.address == 0xffff) break;
+        if (packet.address == 0xffff) break;
         /* if (packet.crc == crc16((uint8_t *)&packet, sizeof(packet) - sizeof(uint16_t))) { */
         /*     prevMissed = false; */
         /* } else { */
@@ -99,7 +99,7 @@ void appMain(void)
     extFlashPrepare();
     recvCounter();
 #else
-	testId = TEST_ID;
+    testId = TEST_ID;
     radioOn(); // XXX
     sendCounter();
 #endif
@@ -119,7 +119,8 @@ uint16_t avgPDR[SAMPLE_BUFFER_SIZE];
 uint16_t avgRssi[SAMPLE_BUFFER_SIZE];
 uint16_t avgLQI[SAMPLE_BUFFER_SIZE];
 
-void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, uint8_t rssi, uint8_t lqi)
+void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx,
+                      uint8_t rssi, uint8_t lqi)
 {
     int16_t i;
 
@@ -128,11 +129,11 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, uint8
     int16_t idx = prevTestNumber % SAMPLE_BUFFER_SIZE;
     int16_t startIdx = idx;
 
-	PRINTF("addAvgStatistics: rssi=%d lqi=%d\n", rssi, lqi);
+    // PRINTF("addAvgStatistics: rssi=%d lqi=%d\n", rssi, lqi);
 
     avgPDR[idx] = prevTestPacketsRx;
     avgRssi[idx] = rssi;
-	avgLQI[idx] = lqi;
+    avgLQI[idx] = lqi;
 
     if (!calledBefore || prevPrevTestNumber > prevTestNumber) {
         calledBefore = true;
@@ -207,7 +208,7 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, uint8
             numSamplesNe, samplesAvgNe, rssiAvg, lqiAvg);
 
     RadioInfoPacket_t packet;
-	packet.testId = testId;
+    packet.testId = testId;
     packet.address = localAddress;
     packet.lastTestNo = prevTestNumber;
     packet.numTests = numSamples;
@@ -216,14 +217,14 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, uint8
     packet.avgPdrNe = samplesAvgNe;
     packet.avgRssiNe = rssiAvg;
     packet.avgLqiNe = lqiAvg;
-	packet.crc = crc16((uint8_t *)&packet, sizeof(packet) - 2);
+    packet.crc = crc16((uint8_t *)&packet, sizeof(packet) - 2);
 //    radioSetChannel(BS_CHANNEL);
 //    mdelay(10);
 //    radioSend(&packet, sizeof(packet));
 //    mdelay(10);
 //    radioSetChannel(TEST_CHANNEL);
 
-	radioOff();
+   radioOff();
     extFlashWrite(extFlashAddress, &packet, sizeof(packet));
     RadioInfoPacket_t verifyRecord;
     memset(&verifyRecord, 0, sizeof(verifyRecord));
@@ -231,9 +232,9 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx, uint8
     if (memcmp(&packet, &verifyRecord, sizeof(verifyRecord))) {
         ASSERT("writing in flash failed!" && false);
     }
-//	PRINT("written!\n");
-	extFlashAddress += sizeof(packet);
-	radioOn();
+//  PRINT("written!\n");
+    extFlashAddress += sizeof(packet);
+    radioOn();
 }
 
 void endTest(void) {
@@ -293,7 +294,7 @@ void recvCallback(uint8_t *data, int16_t len)
     memcpy(&testId, data + 2, sizeof(uint16_t));
     if (testNum != currentTestNumber || testId != currentTestId) {
         currentTestId = testId;
-		if (testInProgress) endTest();
+        if (testInProgress) endTest();
     }
     if (!testInProgress) {
         startTest(testNum);
@@ -328,7 +329,8 @@ void recvCounter(void)
                 endTest();
             }
         }
-        if (testInProgress != prevTestInProgress || prevTestNumber != currentTestNumber) {
+        if (testInProgress != prevTestInProgress
+                || prevTestNumber != currentTestNumber) {
             if (prevTestInProgress) {
                 uint16_t avgRssi, avgLqi;
                 if (prevTestPacketsRx == 0) {
@@ -369,11 +371,11 @@ void sendCounter(void)
         PRINTF("Send test %u packets\n", testNumber);
         redLedOn();
         for (i = 0; i < PACKETS_IN_TEST; ++i) {
-            memcpy(sendBuffer, &testNumber, sizeof(testNumber));
-            memcpy(sendBuffer + 2, &testId, sizeof(testId));
-            sendBuffer[4] = i;
-            crc = crc16(sendBuffer, TEST_PACKET_SIZE - 2);
-            memcpy(sendBuffer + TEST_PACKET_SIZE - 2, &crc, sizeof(crc));
+//            memcpy(sendBuffer, &testNumber, sizeof(testNumber));
+//            memcpy(sendBuffer + 2, &testId, sizeof(testId));
+//            sendBuffer[4] = i;
+//            crc = crc16(sendBuffer, TEST_PACKET_SIZE - 2);
+//            memcpy(sendBuffer + TEST_PACKET_SIZE - 2, &crc, sizeof(crc));
 
             radioSend(sendBuffer, sizeof(sendBuffer));
             mdelay(SEND_INTERVAL);

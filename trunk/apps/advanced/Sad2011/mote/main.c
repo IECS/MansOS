@@ -32,9 +32,10 @@
 //#include <ads1115/ads1115.h>
 #include <kernel/threads/radio.h>
 
-#define WRITE_TO_FLASH 1
+#define WRITE_TO_FLASH 0
 #define SEND_TO_RADIO  1
 #define PRINT_PACKET   0
+#define USE_SOCKETS    0
 
 #define WASPMOTE_BS    0
 
@@ -127,10 +128,18 @@ void sendDataPacket(DataPacket_t *packet)
 void sendDataPacket(DataPacket_t *packet)
 {
     PRINT("send sensor data...\n");
-    int ret = radioSend(&myPacket, sizeof(myPacket));
+#if USE_SOCKETS
+    int ret = socketSend(&dataSocket, packet, sizeof(*packet));
+    if (ret < 0) {
+        PRINTF("socketSend failed: %s\n", strerror(-ret));
+    }
+#else
+    PRINT("radio send!\n");
+    int ret = radioSend(packet, sizeof(*packet));
     if (ret < 0) {
         PRINTF("radioSend failed: %s\n", strerror(-ret));
     }
+#endif
 }
 #endif
 #endif
@@ -255,7 +264,7 @@ void readSensors(DataPacket_t *packet)
     //PRINT("read hum\n");
     packet->sht75Humidity = readHumidity();
     packet->sht75Temperature = readHTemperature();
-   // PRINT("read done\n");
+    // PRINT("read done\n");
     packet->crc = crc16((uint8_t *) packet, sizeof(*packet) - 2);
 
 #if WRITE_TO_FLASH
@@ -356,7 +365,7 @@ void appMain(void)
     alarmInit(&alarm, alarmCallback, NULL);
     alarmSchedule(&alarm, ALARM_INTERVAL);
 
-#if SEND_TO_RADIO
+#if SEND_TO_RADIO && USE_SOCKETS
     socketOpen(&dataSocket, recvData);
     socketBind(&dataSocket, DATA_PORT);
 #endif
@@ -369,7 +378,7 @@ void appMain(void)
     ledOff();
 
     // for humidity sensor
-    mdelay(8000);
+//    mdelay(8000);
 
     uint32_t nextDataReadTime = 0;
     for (;;) {
