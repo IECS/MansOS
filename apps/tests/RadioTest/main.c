@@ -22,7 +22,6 @@
  */
 
 #include "stdmansos.h"
-#include <hil/alarm.h>
 #include <string.h>
 
 void sendCounter(void);
@@ -30,7 +29,7 @@ void recvCounter(void);
 void ccaTest(void);
 
 // #define this to true for CCA tests
-//#define BLAST_PACKETS 1
+// #define BLAST_PACKETS 1
 
 Alarm_t timer;
 
@@ -56,23 +55,23 @@ void onTimer(void *param)
 void appMain(void)
 {
     // ------------- setup radio
-    // parameters
-//    radioSetTxPower(30);
+    // -- parameters
+    // radioSetTxPower(30);
     // radioSetChannel(20);
-    // set packet rx callback
+    // -- set packet rx callback
     radioSetReceiveHandle(recvCounter);
-    // turn listening on
+    // -- turn listening on
     radioOn();
     // -------------
 
-//    alarmInitAndRegister(&timer, onTimer, 5000, true, NULL);
+    // alarmInitAndRegister(&timer, onTimer, 5000, true, NULL);
 
-//    ccaTest();
-    sendCounter();
+    // ccaTest();
+    // sendCounter();
     for (;;) {
         mdelay(500);
-        toggleRedLed();
-//        radioOn();
+        redLedToggle();
+        // radioOn();
 
         // PRINTF("rssi=%d\n", radioGetRSSI());
     }
@@ -84,7 +83,7 @@ void recvCounter(void)
     int16_t len;
     uint8_t *counter = &buffer[0];
 
-    toggleGreenLed();
+    // greenLedToggle();
     len = radioRecv(buffer, sizeof(buffer));
     if (len < 0) {
         PRINTF("radio receive failed\n");
@@ -105,7 +104,7 @@ void sendCounter(void)
     uint8_t *counter = &sendBuffer[0];
     for (;;) {
         PRINTF("sending counter %i\n", *counter);
-        toggleRedLed();
+        redLedToggle();
         radioSend(sendBuffer, sizeof(sendBuffer));
 #if !BLAST_PACKETS
         mdelay(1000);
