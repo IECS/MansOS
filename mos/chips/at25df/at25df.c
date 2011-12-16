@@ -144,7 +144,6 @@ static void at25df_pageProgram(uint32_t addr, const uint8_t *buffer, uint16_t le
     AT25DF_WR_MANY(buffer, len);
     AT25DF_SPI_DISABLE();
     writeDisable();
-    AT25DF_WAIT_UNTIL_DONE(); // hack
     usartBusy[AT25DF_SPI_ID] = false;
 //    ATOMIC_END(h);
 }
