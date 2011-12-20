@@ -39,16 +39,16 @@
 #define PORT_AS_INPUT( portnum )   P##portnum##DIR = 0x00;
 
 #define PIN_AS_OUTPUT( portnum, pinnum )   \
-  { P##portnum##DIR |= (1 << (pinnum)); }
+  (P##portnum##DIR |= (1 << (pinnum)))
 
 #define PIN_AS_INPUT( portnum, pinnum )    \
-  { P##portnum##DIR &= (~(1 << (pinnum))); }
+  (P##portnum##DIR &= (~(1 << (pinnum))))
 
 #define PIN_AS_FUNCTION( portnum, pinnum ) \
-  { P##portnum##SEL |= (1 << (pinnum)); }
+  (P##portnum##SEL |= (1 << (pinnum)))
 
 #define PIN_AS_DATA( portnum, pinnum )     \
-  { P##portnum##SEL &= (~(1 << (pinnum))); }
+  (P##portnum##SEL &= (~(1 << (pinnum))))
 
 
 
