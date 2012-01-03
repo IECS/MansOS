@@ -2,6 +2,9 @@
 # Application specific config file
 #
 
+# only for Arduino?
+RESTRICT_PLATFORM = arduino
+
 #USE_THREADS=y
 USE_ADC = y
 USE_I2C = y

@@ -91,6 +91,11 @@ LED_ALIAS(orangeLed,  led4)
 LED_ALIAS(magentaLed, led5)
 LED_ALIAS(whiteLed,   led6)
 
+#define RED_LED_DEFINED    1
+#define GREEN_LED_DEFINED  1
+#define BLUE_LED_DEFINED   1
+#define YELLOW_LED_DEFINED 1
+
 #endif // LEDS_DEFINE
 
 

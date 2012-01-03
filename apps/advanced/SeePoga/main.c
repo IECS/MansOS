@@ -28,41 +28,29 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "mansos.h"
-#include "leds.h"
-#include "sleep.h"
+#include "stdmansos.h"
 
+// FIXME
 //#include "seepoga.h"
-#include "devmgr.h"
-#include "guiText.h"
+//#include "guiText.h"
 
-#include "dprint.h"
-#define DBG_BUFFER_LEN 400
 
 #define REPEAT_RATE 400
+
+#define TEST_MSG  "Test message"
 
 //-------------------------------------------
 //      Entry point for the application
 //-------------------------------------------
 void appMain(void)
 {
-    static devMgrErr_t ret;
-    
-    devParams_t params;
-    static uint16_t adcVal;
 
-    char * testMsg = "Test message";
+    redLedToggle();
 
-    PRINT_INIT(DBG_BUFFER_LEN);
-
-    // ADC value will be stored in adcVal
-    params.data = testMsg;
-
-    toggleRedLed();
-
-    ret = devCall(DEV_GUI, GUI_TEXT + GUI_WRITE, DMF_READ, &params);
-    PRINTLN( testMsg );
+    // FIXME
+    //ret = devCall(DEV_GUI, GUI_TEXT + GUI_WRITE, DMF_READ, &params);
+    PRINTLN(TEST_MSG);
 
     msleep(REPEAT_RATE);
-    toggleRedLed();
+    redLedToggle();
 }

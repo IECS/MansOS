@@ -2,4 +2,7 @@
 # Application specific config file
 #
 
+# only for telosb
+RESTRICT_PLATFORM=telosb
+
 USE_USER_BUTTON=y

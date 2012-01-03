@@ -30,7 +30,7 @@
 void appMain(void)
 {
     PRINT("in appMain...\n");
-    toggleLed();
+    ledToggle();
     msleep(1000);
-    toggleLed();
+    ledToggle();
 }

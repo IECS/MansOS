@@ -38,7 +38,7 @@ static int ledold=0;
 
 //-------------------------------------------
 //-------------------------------------------
-void setLedsGlow(int lednew)
+void ledsGlow(int lednew)
 {
     int ledon, ledup, leddn;
     int i0, i1, ii, i3;
@@ -52,7 +52,7 @@ void setLedsGlow(int lednew)
             ii = ledon;
             if(i1 <= i0) ii &= ledup;
             else ii &= leddn;
-            setLeds(ii);
+            ledsSet(ii);
             for(i3=0; i3<100; i3++);
         }
     }
@@ -67,7 +67,7 @@ void appMain(void)
     int i = 0;
     while(1){
         if( i >= CNT_LIMIT ) i=0;
-        setLedsGlow(i);
+        ledsGlow(i);
         i++;
         msleep(250);
     }

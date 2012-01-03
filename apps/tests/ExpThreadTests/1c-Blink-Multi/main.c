@@ -32,9 +32,9 @@ void appMain(void)
 
     for (;;) {
         PRINTF("in appMain...\n");
-        toggleRedLed();
+        redLedToggle();
         mdelay(1000);
-	yield();
+        yield();
     }
 }
 
@@ -42,8 +42,8 @@ void secondThreadFunction(void)
 {
     for (;;) {
         PRINTF("in thread...\n");
-        toggleGreenLed();
+        greenLedToggle();
         mdelay(1000);
-	yield();
+        yield();
     }
 }

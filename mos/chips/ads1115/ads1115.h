@@ -61,10 +61,12 @@
 #define ADS_THIRD_INPUT (0x6 << 12)
 #define ADS_FORTH_INPUT (0x7 << 12)
 
-#define adsConfig(data, mask)	adsActiveConfig &= ~mask;											\
-								adsActiveConfig |= data;											\
-								writeAdsRegister(ADS_CONFIG_REGISTER, adsActiveConfig );			\
-								adsActiveConfig &= 0x7FFF;
+#define adsConfig(data, mask) do {                                     \
+        adsActiveConfig &= ~mask;                                      \
+        adsActiveConfig |= data;                                       \
+        writeAdsRegister(ADS_CONFIG_REGISTER, adsActiveConfig );       \
+        adsActiveConfig &= 0x7FFF;                                     \
+    } while (0)
 
 #define adsPowerDownSingleShotMode() adsConfig(ADS_POWER_DOWN_SINGLE_SHOT_MODE, ADS_MODE_MASK)
 #define adsContiniousConversionMode() adsConfig(0x0, ADS_MODE_MASK)
@@ -78,7 +80,8 @@
 
 uint16_t adsActiveConfig;
 
-#endif	//MANSOS_ADS1115_H
+// ----------------------------------------
+// user API
 
 // Write ADS1115 register
 bool writeAdsRegister(uint8_t reg, uint16_t val);
@@ -86,8 +89,10 @@ bool writeAdsRegister(uint8_t reg, uint16_t val);
 // Read ADS1115 register
 bool readAdsRegister(uint8_t reg, uint16_t *val);
 
-ISR(PORT2, ads_interrupt);
+ISR(PORT2, adsInterrupt);
 
-void adsInit();
+void adsInit(void);
 
 bool readAds(uint16_t *val);
+
+#endif //MANSOS_ADS1115_H

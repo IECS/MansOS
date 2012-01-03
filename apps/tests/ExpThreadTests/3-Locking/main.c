@@ -1,6 +1,5 @@
 #include "stdmansos.h"
-#include <kernel/expthreads/alarms.h>
-#include <kernel/expthreads/mutex.h>
+#include <kernel/threads/mutex.h>
 
 Alarm_t alarm;
 #define ALARM_INTERVAL 600
@@ -31,7 +30,7 @@ void appMain(void)
     alarmSchedule(&alarm, ALARM_INTERVAL);
 
     for (;;) {
-        toggleLed();
+        ledToggle();
 
         // lock the mutex in user context
         uint32_t start, end;

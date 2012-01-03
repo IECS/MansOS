@@ -61,6 +61,7 @@ static inline uint32_t getNextAlarmTime(void)
     Alarm_t *first = SLIST_FIRST(&alarmListHead);
     return first ? first->jiffies : getJiffies() + MAX_KERNEL_SLEEP_TIME;
 }
+
 #else // not using threads
 
 // called from interrupt context

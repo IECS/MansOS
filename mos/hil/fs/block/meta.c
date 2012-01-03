@@ -28,13 +28,12 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <hil/alarm.h>
+#include <hil/alarms.h>
 #include <hil/eeprom.h>
 #include <hil/extflash.h>
 #include <hil/fs/common.h>
 #include <hil/fs/types.h>
 #include <kernel/defines.h>
-#include <kernel/mos_sem.h>
 
 #include "alloc.h"
 #include "init.h"
@@ -105,8 +104,7 @@ void fsBlockInit(void)
     mos_mutex_init(&fsBlkTableMutex);
     mos_mutex_init(&fsBlkHandleMutex);
 
-    alarmInit(&fsBlockFlashAlarm, fsBlockAlarmCallback, FS_FLASH_IDLE_TIME,
-              false, NULL);
+    alarmInit(&fsBlockFlashAlarm, fsBlockAlarmCallback, NULL);
 
     /* Initialize the file control block array */
     for (i = 0; i < FS_MAX_OPEN_FILES; i++)

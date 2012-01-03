@@ -2,8 +2,9 @@
 # Application specific config file
 #
 
+RESTRICT_PLATFORM_NOT=arduino atmega
+
 USE_ADC=y
-USE_THREADS=n
 
 # Define LED for MSP430 platform
-CFLAGS += -DLEDS_RED_PORT=5 -DLEDS_RED_PIN=5
+#CFLAGS += -DLEDS_RED_PORT=5 -DLEDS_RED_PIN=5

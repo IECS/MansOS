@@ -48,7 +48,7 @@ static void mark(void)
     counter++;
     PRINTF("Test %2u passed\n", counter);
 #ifndef PLATFORM_PC
-    setLeds(counter);
+    ledsSet(counter);
 #endif
 }
 
@@ -268,7 +268,7 @@ void appMain(void)
         while (true)
         {
             l = ((l << 1) | (l >> 2)) & 0x7;
-            setLeds(l);
+            ledsSet(l);
             msleep(333);
         }
     }

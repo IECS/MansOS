@@ -27,14 +27,17 @@
 //===========================================================================
 
 #include "stdmansos.h"
-#include "scheduler.h"
-#include "devmgr.h"
-#include "drivers/dev_sen_accel3D.h"
-
 #include <string.h>
-#include <stdio.h>
 
-#include "dprint.h"
+//=======================================================================
+//      Types
+//=======================================================================
+
+typedef struct {
+    uint16_t x;
+    uint16_t y;
+    uint16_t z;
+} AccelVector3D_t;
 
 //===========================================
 //  Constants
@@ -59,7 +62,6 @@
 // Precision for displacement - divide displacement by mm
 #define mm 2
 
-
 int delta = 180;
 
 int16_t curX, curY, curZ;
@@ -70,17 +72,10 @@ int16_t curX, curY, curZ;
 //-------------------------------------------
 void appMain(void)
 {
-    static devMgrErr_t ret;
-    //uint16_t xx,yy,zz,stat;
     char *ss;
     uint16_t len, i;
 
-    devParams_t params;
-    accelVector3D_t accel;
-    params.data = (void*) &accel;
-
-    devParams_t adcParams;
-    static uint16_t adcVal;
+    AccelVector3D_t accel;
     
     int16_t ax0, ay0, az0;
     int16_t ax, ay, az;
@@ -107,8 +102,6 @@ void appMain(void)
 
     ssx = ssy = ssz = 0;
     
-    adcParams.data = (char *) &adcVal;
-
     //Turn the Accelerometer on (P4.0=1)!
     PIN_AS_DATA(4,0);
     PIN_AS_OUTPUT(4,0);
@@ -118,18 +111,15 @@ void appMain(void)
     ADC12MCTL2 = SREF_AVCC_AVSS;
 
     for( i=0; i<cnt_warmup; i++){
-        ret = devCall(DEV_ADC, ACC_X_PORT, DMF_READ, &adcParams);
-        accel.x = adcVal;
-        ret = devCall(DEV_ADC, ACC_Y_PORT, DMF_READ, &adcParams);
-        accel.y = adcVal;
-        ret = devCall(DEV_ADC, ACC_Z_PORT, DMF_READ, &adcParams);
-        accel.z = adcVal;
+        accel.x = adcRead(ACC_X_PORT);
+        accel.y = adcRead(ACC_Y_PORT);
+        accel.z = adcRead(ACC_Z_PORT);
         
         ssx += accel.x;
         ssy += accel.y;
         ssz += accel.z;
 
-        threadSleep(10);
+        msleep(10);
     }
     ax0 = ssx / cnt_warmup;
     ay0 = ssy / cnt_warmup;
@@ -138,14 +128,10 @@ void appMain(void)
     ay0 >>= dy0;
     az0 >>= dz0;
 
-    while(1)
-    {
-        ret = devCall(DEV_ADC, ACC_X_PORT, DMF_READ, &adcParams);
-        accel.x = adcVal;
-        ret = devCall(DEV_ADC, ACC_Y_PORT, DMF_READ, &adcParams);
-        accel.y = adcVal;
-        ret = devCall(DEV_ADC, ACC_Z_PORT, DMF_READ, &adcParams);
-        accel.z = adcVal;
+    while(1) {
+        accel.x = adcRead(ACC_X_PORT);
+        accel.y = adcRead(ACC_Y_PORT);
+        accel.z = adcRead(ACC_Z_PORT);
 
         ax = accel.x >> dx0;
         ax = (ax - ax0);
@@ -180,8 +166,8 @@ void appMain(void)
 
         PRINTF("\n");
 
-        toggleRedLed();
-        threadSleep(10);
+        redLedToggle();
+        msleep(10);
     }
 }
 

@@ -91,6 +91,6 @@ void appMain(void)
 
         printPacket(&p);
 
-        while (timeAfter(endTime, getRealTime()));
+        while (timeAfter32(endTime, getRealTime()));
     }
 }

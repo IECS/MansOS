@@ -1,3 +1,5 @@
+RESTRICT_PLATFORM_NOT=arduino atmega
+
 USE_ADC=y
 USE_RADIO=y
 USE_BEEPER=y

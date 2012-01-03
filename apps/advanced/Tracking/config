@@ -1,8 +1,0 @@
-#
-# Application specific config file
-#
-
-USE_ADC = y
-USE_GPS = y
-USE_EXT_FLASH = y
-USE_USER_BUTTON=y

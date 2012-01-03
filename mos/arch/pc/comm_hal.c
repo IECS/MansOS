@@ -30,11 +30,10 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
-#include "mos_sem.h"
-#include "scheduler.h"
 #include <hil/radio.h>
 #include <net/addr.h>
 #include <pthread.h>
+#include "sem_hal.h"
 
 //----------------------------------------------------------
 // constants
@@ -66,7 +65,7 @@ unsigned char mosOutBuf[MAX_PACKET_SIZE];
 unsigned mosOutBufLen = 0;
 unsigned mosOutBufOffset = 0;
 
-mos_mutex_t alarmMutex;
+sem_t alarmMutex;
 
 //----------------------------------------------------------
 // internal functions
@@ -87,11 +86,11 @@ void decAndFireAlarm(); // decrementing alarms timeout and fire if needed
 
 //----------------------------------------------------------
 // function implementation
-//----------------------------------------------------------
+//-----------------------------cd-----------------------------
 static pthread_t intThread;
 
 void initCommHal() {
-    mos_mutex_init(&alarmMutex);
+    mos_sem_init(&alarmMutex, 0);
     // this is a "specific thread", not part of the scheduler
     // create it even, when threads are turned off
     pthread_create(&intThread, NULL, intHandler, NULL);
@@ -275,4 +274,9 @@ void closeSocket(int sock) {
     } else {
         //printf("socket closed\n");
     }
+}
+
+
+void initArchComm(void) {
+    // ?
 }

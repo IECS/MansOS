@@ -24,3 +24,8 @@
 void initCommHal() {
     // TODO
 }
+
+void initArchComm() {
+    // ?
+}
+

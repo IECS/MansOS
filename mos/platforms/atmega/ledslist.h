@@ -60,6 +60,8 @@
 
 LED_DEFINE(yellowLed,   LEDS_PORT, 5, LEDS_ON_PIN_VALUE)
 
+#define YELLOW_LED_DEFINED   1
+
 // Should define the default led here!
 #define LED_DEFAULT yellowLed
 

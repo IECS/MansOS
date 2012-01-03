@@ -27,14 +27,7 @@
 //===========================================================================
 
 #include "stdmansos.h"
-#include "scheduler.h"
-#include "devmgr.h"
-#include "drivers/dev_sen_accel3D.h"
-
 #include <string.h>
-#include <stdio.h>
-
-#include "dprint.h"
 
 //===========================================
 //  Constants
@@ -58,31 +51,31 @@ char *smsg[8] = {
     "7",
 };
 
+//=======================================================================
+//      Types
+//=======================================================================
+
+typedef struct {
+    uint16_t x;
+    uint16_t y;
+    uint16_t z;
+} AccelVector3D_t;
+
 //-------------------------------------------
 //      Entry point for the application
 //-------------------------------------------
 void appMain(void)
 {
-    static devMgrErr_t ret;
     uint16_t threshold = 2048;
     uint16_t dt = delta;
     //uint16_t xx,yy,zz,stat;
     char *ss;
     uint16_t len;
 
-    devParams_t params;
-    accelVector3D_t accel;
-    params.data = (void*) &accel;
-
-    devParams_t adcParams;
-    static uint16_t adcVal;
+    AccelVector3D_t accel;
 
     //code
     radioInit();
-
-    adcParams.data = (char *) &adcVal;
-
-    PRINT_INIT(128);
 
     //Turn the Accelerometer on (P4.0=1)!
     PIN_AS_DATA(4,0);
@@ -92,19 +85,13 @@ void appMain(void)
     adcSetChannel(1);
     ADC12MCTL2 = SREF_AVCC_AVSS;
 
-    while(1)
-    {
-        //ret = devCall(DEV_SEN_ACCEL, 0, DMF_READ, &params);
-
-        ret = devCall(DEV_ADC, ACC_X_PORT, DMF_READ, &adcParams);
-        accel.x = adcVal;
-        threadSleep(10);
-        ret = devCall(DEV_ADC, ACC_Y_PORT, DMF_READ, &adcParams);
-        accel.y = adcVal;
-        threadSleep(10);
-        ret = devCall(DEV_ADC, ACC_Z_PORT, DMF_READ, &adcParams);
-        accel.z = adcVal;
-        threadSleep(10);
+    while(1) {
+        accel.x = adcRead(ACC_X_PORT);
+        msleep(10);
+        accel.y = adcRead(ACC_Y_PORT);
+        msleep(10);
+        accel.z = adcRead(ACC_X_PORT);
+        msleep(10);
 
         if( accel.x > threshold + dt ) ss = smsg[0];
         else if( accel.x < threshold - dt ) ss = smsg[1];
@@ -115,15 +102,15 @@ void appMain(void)
         else ss = smsg[6];
 
         PRINTF("X= %4u  Y= %4u  Z= %4u  msg= %s\n",
-            accel.x, accel.y, accel.z, ss);
+                accel.x, accel.y, accel.z, ss);
 
 
         len = strlen(ss);
         radioSend(ss, len);
 
-        toggleRedLed();
+        redLedToggle();
 
-        threadSleep(10);
+        msleep(10);
     }
 }
 

@@ -31,7 +31,6 @@
 #include <hil/fs/common.h>
 #include <hil/fs/types.h>
 #include <kernel/defines.h>
-#include <kernel/mos_sem.h>
 #include <lib/random.h>
 
 #include "alloc.h"

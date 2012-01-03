@@ -1,6 +1,5 @@
 #include "stdmansos.h"
-#include <kernel/expthreads/alarms.h>
-#include <kernel/expthreads/mutex.h>
+#include <kernel/threads/mutex.h>
 
 Mutex_t testMutex;
 volatile uint8_t controlFlag;
@@ -13,7 +12,7 @@ void appMain(void)
     threadCreate(1, secondThreadFunction);
 
     for (;;) {
-        toggleRedLed();
+        redLedToggle();
         while (controlFlag);
         mutexLock(&testMutex);
         PRINT("in thread #0\n");
@@ -26,7 +25,7 @@ void appMain(void)
 void secondThreadFunction(void)
 {
     for (;;) {
-        toggleBlueLed();
+        blueLedToggle();
         while (!controlFlag);
         mutexLock(&testMutex);
         PRINT("in thread #1\n");

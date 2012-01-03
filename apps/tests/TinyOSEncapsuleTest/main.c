@@ -25,9 +25,7 @@
 //      TinyOS Serial message encapsulation test
 //-------------------------------------------
 
-#include "mansos.h"
-#include "dprint.h"
-#include "scheduler.h"
+#include "stdmansos.h"
 #include "tosmsg.h"
 
 //-------------------------------------------
@@ -90,13 +88,12 @@ void appMain(void)
         largePayload[i] = i + 1;
     }
     
-    while(1)
-        {
-            testEnc(SMALL, SMALL);
-            testEnc(SMALL, LARGE);
-            testEnc(LARGE, SMALL);
-            testEnc(LARGE, LARGE);
-        }
+    while(1) {
+        testEnc(SMALL, SMALL);
+        testEnc(SMALL, LARGE);
+        testEnc(LARGE, SMALL);
+        testEnc(LARGE, LARGE);
+    }
 }
 
 void testEnc(Size_t payload, Size_t buffer) {
@@ -131,5 +128,5 @@ void testEnc(Size_t payload, Size_t buffer) {
         offset += processed;
     } while (paySize && processed);
     PRINTF("\n");
-    threadSleep(SLEEP_TIME);
+    msleep(SLEEP_TIME);
 }

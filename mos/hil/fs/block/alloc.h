@@ -29,7 +29,7 @@
 #include <limits.h>
 
 #include <hil/extflash.h>
-#include <kernel/mos_sem.h>
+//#include <kernel/mos_sem.h>
 
 #include "common.h"
 #include "meta.h"

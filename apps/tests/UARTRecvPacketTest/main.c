@@ -74,6 +74,6 @@ void usartPacketReceived(uint8_t bytes) {
     // get ASCII digit from the first byte
     uint8_t c = buf[0] - '0';
 
-    setLeds(c);
+    ledsSet(c);
     PRINTF("Pong %i %i\n", c, bytes);
 }

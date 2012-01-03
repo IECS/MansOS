@@ -23,10 +23,6 @@
 
 #include "net-stats.h"
 
-inline void linqInit(){
-    linqNeighborCount = 0;
-}
-
 inline uint16_t getIdFromAddress(MosShortAddr addr){
     uint8_t i;
     for (i = 0; i < linqNeighborCount; i++){

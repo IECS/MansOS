@@ -28,7 +28,6 @@
 #include <string.h>
 
 #include <hil/fs.h>
-#include <kernel/mos_sem.h>
 #include <kernel/stdtypes.h>
 
 #include "common.h"

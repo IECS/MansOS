@@ -29,7 +29,6 @@
 //===========================================================================
 
 #include "stdmansos.h"
-#include "dprint.h"
 #include "beeper.h"
 
 //===========================================
@@ -68,12 +67,10 @@ enum {
 //-------------------------------------------
 void appMain(void)
 {
-    PRINT_INIT(128);
     SENSOR_POWER_ON();
 
     hplAdcUseSupplyRef(); // use Supply power as voltage reference
     beeperInit();
-
 
     uint16_t y; // y-axis accelerometer reading
     while(1)

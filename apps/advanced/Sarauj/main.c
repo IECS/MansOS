@@ -26,7 +26,6 @@
 //-------------------------------------------
 
 #include <stdmansos.h>
-#include <dprint.h>
 #include "i2c.h"
 #include "vd_names.h"
 

@@ -37,6 +37,7 @@
 #define INC_NETSTAT(code, addr) incNetstat(code, addr)
 
 #define PRINT_LINQ() linqPrintResults()
+
 #define PRINT_NETSTAT()  do {                                           \
         PRINTF(" PACKETS_SENT \t%lu\n", netstats[NETSTAT_PACKETS_SENT]);         \
         PRINTF(" PACKETS_RTX \t%lu\n", netstats[NETSTAT_PACKETS_RTX]);           \
@@ -49,6 +50,7 @@
         PRINTF(" RADIO_TX \t%lu\n", netstats[NETSTAT_RADIO_TX]);               \
         PRINTF(" RADIO_RX \t%lu\n", netstats[NETSTAT_RADIO_RX]);               \
     } while (0)
+
 #define PRINT_NETSTAT_ALL()   do {    \
         PRINT_NETSTAT();              \
         PRINT_LINQ();                 \
@@ -88,8 +90,6 @@ LinkQuality_t linq[LINQ_MAX_NEIGHBOR_COUNT + 1];
 
 uint8_t linqNeighborCount;
 
-void linqInit();
-
 uint16_t getIdFromAddress(MosShortAddr addr);
 
 uint16_t addNeighbor(MosShortAddr addr);
@@ -102,6 +102,7 @@ void linqPrintResults();
 #define INC_NETSTAT(code, addr)
 #define PRINT_LINQ()
 #define PRINT_NETSTAT()
+#define PRINT_NETSTAT_ALL()
 #define TOTAL_NETSTAT 0
 #endif  //USE_NET_STATS
 

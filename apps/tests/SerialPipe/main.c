@@ -26,12 +26,7 @@
 // Works only on platforms with at least two UARTs
 //-----------------------------------------------------------------------------
 
-#include "mansos.h"
-#include "dprint.h"
-#include "usart.h"
-#include "udelay.h"
-#include "leds.h"
-#include "alarm.h"
+#include "stdmansos.h"
 
 #define BUF_SIZE 128
 #define RECV_TIMEOUT 200
@@ -47,15 +42,15 @@ void usart0Recv(uint8_t b);
 // store bytes received from UART0 in a buffer, set alarm - when no data
 // received for X milliseconds, forward buffer content to UART1
 void usart0Recv(uint8_t b) {
-    toggleGreenLed();
+    greenLedToggle();
     if (bufPos < BUF_SIZE - 1) {
         buf[bufPos++] = b;
-        toggleBlueLed();
+        blueLedToggle();
     }
-    alarmRegister(&printAlarm);
+    alarmSchedule(&printAlarm, RECV_TIMEOUT);
 }
 
-void printBuf(void *userData) {
+void doPrintBuffer(void *userData) {
     if (bufPos > 0) {
         Handle_t h;
         ATOMIC_START(h);
@@ -71,13 +66,9 @@ void printBuf(void *userData) {
 //-------------------------------------------
 void appMain(void)
 {
-    alarmInit(&printAlarm, printBuf, RECV_TIMEOUT, 0, 0);
+    alarmInit(&printAlarm, doPrintBuffer, NULL);
     PRINT_INIT(256); // inits UART1 automatically
     if (USARTInit(0, 115200, 0)) redLedOn();
     if (USARTEnableRX(0)) redLedOn();
     USARTSetReceiveHandle(0, usart0Recv);
-
-    while (1) {
-        // do nothing
-    }
 }

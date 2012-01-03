@@ -26,13 +26,9 @@
 // output on USART1 at 38400
 //-----------------------------------------------------------------------------
 
-#include "mansos.h"
-#include "dprint.h"
-#include "usart.h"
-#include "udelay.h"
-#include "leds.h"
-#include "nmea_stream.h"
-#include "nmea.h"
+#include "stdmansos.h"
+#include "nmea/nmea_stream.h"
+#include "nmea/nmea.h"
 
 static GPSFix_t fix;
 
@@ -44,7 +40,7 @@ static GPSFix_t fix;
 #define GPS_PDN_PIN 6
 
 #define GPS_OFF() pinSet(GPS_PDN_PORT, GPS_PDN_PIN);
-#define GPS_ON() pinClr(GPS_PDN_PORT, GPS_PDN_PIN);
+#define GPS_ON() pinClear(GPS_PDN_PORT, GPS_PDN_PIN);
 
 void printBuf(void *buf)
 {
@@ -67,7 +63,7 @@ void printBuf(void *buf)
     }
 
 void charRecv(uint8_t b) {
-    toggleRedLed();
+    redLedToggle();
 }
 
 

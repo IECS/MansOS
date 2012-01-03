@@ -2,6 +2,8 @@
 # Application specific config file
 #
 
+RESTRICT_PLATFORM=telosb
+
 USE_RADIO=y
 USE_RANDOM=y
 

@@ -26,7 +26,6 @@
 //
 
 #include "stdmansos.h"
-#include "alarm.h"
 #include "dprint.h"
 #include "hil/extflash.h"
 #include "lib/assert.h"
@@ -55,7 +54,9 @@ Alarm_t timer;
 void onTimer(void *x)
 {
     TPRINTF("onTimer\n");
-    toggleBlueLed();
+    blueLedToggle();
+
+    alarmSchedule(&timer, 1000);
 }
 
 // -------------------------------------
@@ -65,7 +66,7 @@ void onTimer(void *x)
 void radioRecvCb()  {
     static uint8_t buffer[128];
     int16_t len;
-    toggleRedLed();
+    redLedToggle();
     len = radioRecv(buffer, sizeof(buffer) - 1);
     if (len <= 0) {
         PRINTF("radio recv failed, len=%d\n", len);
@@ -114,7 +115,8 @@ void appMain(void)
     uint16_t i;
 
     // timers (used to get an extra interrupt context)
-    alarmInitAndRegister(&timer, onTimer, 1000, true, NULL);
+    alarmInit(&timer, onTimer, NULL);
+    alarmSchedule(&timer, 1000);
 
     // radio
     radioSetReceiveHandle(radioRecvCb);
@@ -155,6 +157,6 @@ void appMain(void)
         PRINTF("send smth to radio...\n");
         radioSend("hello world", sizeof("hello world"));
 
-        toggleGreenLed();
+        greenLedToggle();
     }
 }

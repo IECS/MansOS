@@ -21,10 +21,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "mansos.h"
-#include "dprint.h"
-#include "gps.h"
-#include "assert.h"
+#include "stdmansos.h"
+#include <lib/nmea/nmea.h>
+#include <lib/assert.h>
 
 
 void appMain() {

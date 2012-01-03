@@ -31,7 +31,7 @@
 
 
 //----------------------------------------------------------
-void ledsInit()
+void ledsInit(void)
 {
 #  define DOIT(_led) _led##Init();
 #  include "ledslist.h"
@@ -40,17 +40,17 @@ void ledsInit()
 //----------------------------------------------------------
 void ledsSet(uint_t led_bitmask)
 {
-   suppressLedOutput(true);
+    suppressLedOutput(true);
 #  define DOIT(_led) if(_led##_mask & led_bitmask) _led##On(); else _led##Off();
 #  include "ledslist.h"
-   suppressLedOutput(false);
+    suppressLedOutput(false);
 }
 
 //----------------------------------------------------------
-uint_t ledsGet()
+uint_t ledsGet(void)
 {
     uint_t led_bitmask = 0;
 #  define DOIT(_led) if( _led##Get() ) led_bitmask |= _led##_mask;
 #  include "ledslist.h"
-   return led_bitmask;
+    return led_bitmask;
 }

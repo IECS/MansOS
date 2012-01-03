@@ -22,7 +22,7 @@
  */
 
 #include "stdmansos.h"
-#include <kernel/expthreads/threads.h>
+#include <kernel/threads/threads.h>
 
 void recurse(uint16_t i) {
     STACK_GUARD();

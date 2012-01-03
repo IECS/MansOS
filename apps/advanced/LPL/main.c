@@ -38,10 +38,10 @@ void ccaTest(void);
 
 void appMain(void)
 {
-    uint16_t t1 = TAR;
-    mdelay(100);
-    uint16_t t2 = TAR;
-    PRINTF("t1=%u t2=%u\n", t1, t2);
+    // uint16_t t1 = TAR;
+    // mdelay(100);
+    // uint16_t t2 = TAR;
+    // PRINTF("t1=%u t2=%u\n", t1, t2);
 
 #if RECV
     // recvTest();

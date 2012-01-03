@@ -21,15 +21,13 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <kernel/mansos.h>
-#include <kernel/scheduler.h>
-#include <kernel/mos_sem.h>
+#include <stdmansos.h>
 #include <lib/list.h>
 #include <lib/buffer.h>
-#include <lib/mem.h>
-#include <hil/leds.h>
 #include <lib/assert.h>
 #include <lib/algo.h>
+#include <arch_mem.h>
+#include <kernel/threads/mutex.h>
 
 #define BUFFER_SIZE      130
 
@@ -39,7 +37,7 @@ typedef struct QueuedPacket_s {
     int i;
 } QueuedPacket_t;
 
-static QueuedPacket_t *newQpacket() {
+static QueuedPacket_t *newQpacket(void) {
     QueuedPacket_t *ret = memAlloc(sizeof(*ret));
     bufferInit(&ret->buffer, memAlloc(BUFFER_SIZE), BUFFER_SIZE);
     return ret;
@@ -82,11 +80,11 @@ void test1() {
 void test2() {
     STAILQ_HEAD(h, QueuedPacket_s) workQueue, userQueue;
     QueuedPacket_t *p;
-    mos_mutex_t mutex;
+    Mutex_t mutex;
 
     STAILQ_INIT(&workQueue);
     STAILQ_INIT(&userQueue);
-    mos_mutex_init(&mutex);
+    mutexInit(&mutex);
 
     ASSERT(STAILQ_COUNT(&workQueue, chain) == 0);
 
@@ -108,10 +106,10 @@ void test2() {
     // workQueue at the moment contains only old unsent stuff.
     // append contents of userQueue to the end of workQueue
     // and clear userQueue
-    mos_mutex_lock(&mutex);
+    mutexLock(&mutex);
     STAILQ_MERGE(&workQueue, &userQueue);
     STAILQ_INIT(&userQueue);
-    mos_mutex_unlock(&mutex);
+    mutexUnlock(&mutex);
     ASSERT(STAILQ_COUNT(&workQueue, chain) == 5);
 
     // remove some from workQueue (simulate sending)
@@ -145,10 +143,10 @@ void test2() {
     ASSERT(STAILQ_COUNT(&userQueue, chain) == 2);
 
     // merge both queues
-    mos_mutex_lock(&mutex);
+    mutexLock(&mutex);
     STAILQ_MERGE(&workQueue, &userQueue);
     STAILQ_INIT(&userQueue);
-    mos_mutex_unlock(&mutex);
+    mutexUnlock(&mutex);
 
     ASSERT(STAILQ_COUNT(&workQueue, chain) == 4);
 
@@ -188,7 +186,7 @@ void appMain(void)
 
     // ---------------------- signal that all was ok
     for (;;) {
-        threadSleep(1000);
-        toggleRedLed();
+        msleep(1000);
+        redLedToggle();
     }
 }

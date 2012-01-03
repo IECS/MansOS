@@ -38,7 +38,7 @@
   #define lcdInit()
   #define lcdOn()
   #define lcdOff()
-  #define lcdWrite(s)
+  #define lcdPrint(s)
 
 #endif
 

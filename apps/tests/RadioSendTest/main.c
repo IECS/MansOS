@@ -29,6 +29,7 @@
 
 #include "stdmansos.h"
 #include <lib/random.h>
+#include <string.h>
 
 #define RECV 0
 
@@ -58,7 +59,7 @@ void recvCounter()
     uint16_t sender;
     uint8_t counter;
 
-    toggleRedLed();
+    redLedToggle();
     len = radioRecv(buffer, sizeof(buffer));
     if (len < 0) {
         PRINTF("radio recv failed\n");
@@ -71,7 +72,7 @@ void recvCounter()
         memcpy(&sender, buffer + 1, sizeof(sender));
         counter = buffer[0];
         PRINTF("0x%04x: received counter %u\n", sender, counter);
-        setLeds(counter);
+        ledsSet(counter);
     }
 }
 
@@ -81,7 +82,7 @@ void sendCounter() {
     memcpy(sendBuffer + 1, &localAddress, 2);
     while (1) {
         PRINTF("0x%04x: sending counter %i\n", localAddress, *counter);
-        toggleRedLed();
+        redLedToggle();
         radioSend(sendBuffer, sizeof(sendBuffer));
         msleep(3 * 100 + randomRand() % 1000);
         ++(*counter);

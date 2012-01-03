@@ -78,7 +78,7 @@ typedef struct IslConfigure_s{
     enum{
         USE_DIODE1 = 0,
         USE_DIODE2 = 1,
-        USE_BOUTH_DIODES = 2,
+        USE_BOTH_DIODES = 2,
         NO_OPERATION = 3,
         IGNORE_MODE = 4
     } mode;

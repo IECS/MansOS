@@ -196,7 +196,7 @@ bool islInit(){
     // range_gain            -> 62,272
     // integration_cycles    -> 16
     IslConfigure_t conf = {
-        .mode = USE_BOUTH_DIODES,
+        .mode = USE_BOTH_DIODES,
         .clock_cycles = CLOCK_CYCLES_16,
         .range_gain = RANGE_GAIN_62,
         .integration_cycles = INTEGRATION_CYCLES_16,

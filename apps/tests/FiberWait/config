@@ -1,5 +1,0 @@
-#
-# Application specific config file
-#
-
-USE_FIBERS=y

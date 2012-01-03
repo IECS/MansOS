@@ -24,6 +24,8 @@
 #ifndef MANSOS_MUTEX_H
 #define MANSOS_MUTEX_H
 
+#if USE_EXP_THREADS
+
 #include "threads.h"
 
 typedef struct Mutex_s {
@@ -33,8 +35,23 @@ typedef struct Mutex_s {
     Thread_t *waiter;
 } Mutex_t;
 
+static inline void mutexInit(Mutex_t *m)
+{
+    m->locked = false;
+    m->waiter = NULL;
+}
+
 void mutexLock(Mutex_t *m);
 
 void mutexUnlock(Mutex_t *m);
+
+#else
+
+typedef struct Mutex_s { } Mutex_t;
+static inline void mutexInit(Mutex_t *m) {}
+static inline void mutexLock(Mutex_t *m) {}
+static inline void mutexUnlock(Mutex_t *m) {}
+
+#endif // USE_EXP_THREADS
 
 #endif
