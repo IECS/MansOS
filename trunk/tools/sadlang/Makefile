@@ -1,6 +1,6 @@
 # Sensor Application Development/Declarative Language
 
-TARGET=sadlang
+TARGET=seal
 FLEX=flex
 YACC=yacc
 
