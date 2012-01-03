@@ -22,8 +22,7 @@
  */
 
 #include "stdmansos.h"
-#include <kernel/expthreads/threads.h>
-#include <kernel/expthreads/alarms.h>
+#include <kernel/threads/threads.h>
 
 Alarm_t alarm;
 
@@ -49,7 +48,7 @@ void appMain(void)
 
     for (;;) {
         PRINT("in app main...\n");
-        toggleRedLed();
+        redLedToggle();
         msleep(1000);
     }
 }

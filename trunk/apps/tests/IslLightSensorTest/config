@@ -2,6 +2,9 @@
 # Application specific config file
 #
 
+# only for sadmote
+RESTRICT_PLATFORM=sadmote
+
 USE_SOFT_I2C=y
 USE_ISL29003=y
 

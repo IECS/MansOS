@@ -1,6 +1,10 @@
 #
 # Application specific config file
 #
+
+# only for sadmote
+RESTRICT_PLATFORM=sadmote
+
 USE_RADIO=n
 USE_APDS9300=y
 

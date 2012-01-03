@@ -21,67 +21,21 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// BaseStation: forwards light and voltage readings to serial port
-//
+#ifndef _MANSOS_ARCH_MEM_H_
+#define _MANSOS_ARCH_MEM_H_
 
+#include <memory.h>
 
-#include "mansos.h"
-#include "leds.h"
-#include "radio.h"
-#include "usart.h"
-#include "dprint.h"
-#include "../sense.h"
+#define KERNEL_STACK_SIZE 256
 
-void parsePacket(SadPacket_t *p) {
-    PRINTF("%u,",p->address);
-    Measurement_t *data = &p->data;
-    uint16_t i;
-    for (i = 0; i < RETRIES; ++i) {
-        PRINTF("%u,", data->light[i]);
-    }
-    for (i = 0; i < RETRIES; ++i) {
-        PRINTF("%u,", data->psaLight[i]); 
-    }
-    PRINTF("%u\n", p->data.voltage);   
-}
+//--------------------------------------------------------------------------------
+// functions
+//--------------------------------------------------------------------------------
 
-static void bsRecvRadio()
-{
-    static uint8_t buffer[130];
-    uint16_t len;
+#define memInit(region, size) 
+#define memAlloc(size) malloc(size)
+#define memFree(ptr) free(ptr)
 
-    len = radioRecv(buffer, sizeof(buffer));
-    toggleGreenLed();
-    if (len < sizeof(SadPacket_t)) {
-        PRINTF("bsRecvRadio: len = %i\n", len);
-        return;
-    }
-#if 1  // check CRC on base station?
-    {
-        SadPacket_t *p;
-        uint16_t calcCrc;
-        p = (SadPacket_t *) buffer;
-        calcCrc = 0; // XXX
-        if (p->crc != calcCrc) {
-            PRINTF("bsRecvRadio: bad CRC 0x%04x, expected 0x%04x\n",
-                    p->crc, calcCrc);
-            return;
-        }
+// static inline void platformMemInit(void) {}
 
-        parsePacket(p);
-    }
 #endif
-//    debugHexdump(buffer, len);
-
-    // forward to serial...
-    USARTSendData(1, buffer, len);
-}
-
-void appMain(void)
-{
-    radioOn();
-    radioSetReceiveHandle(bsRecvRadio);
-
-    PRINT("Base Station started\n");
-}

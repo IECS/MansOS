@@ -33,8 +33,8 @@ typedef uint8_t TosSerialMsgPayload_t;
 
 typedef struct {
     uint8_t zero;
-    uint16_t dstAddr __attribute__((packed)); 
-    uint16_t srcAddr __attribute__((packed)); 
+    uint8_t dstAddr[2];
+    uint8_t srcAddr[2];
     uint8_t msgLen; 
     uint8_t group;
     uint8_t amType;

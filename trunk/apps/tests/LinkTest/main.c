@@ -29,9 +29,9 @@
 #include "random.h"
 #include "stdmansos.h"
 #include <snum.h>
-#include <net-expthreads/socket.h>
-#include <net-expthreads/routing.h>
-#include <net-expthreads/net-stats.h>
+#include <net/socket.h>
+#include <net/routing.h>
+#include <net/net-stats.h>
 
 //-----------------
 // constants
@@ -57,69 +57,69 @@ enum {
     TEST_FREQUENCY = 10000,
 };
 
-#define ADD_NEIGHBOR(addr) 	getNeighborByAddress(addr, true)
-#define INC_SENT(addr) 		neighbors[getNeighborByAddress(addr, false)].sent++
-#define INC_RECV(addr, seqnum) 	do{																\
-							neighbors[getNeighborByAddress(addr, false)].recv++;						\
-							neighbors[getNeighborByAddress(addr, false)].rssi += radioGetLastRSSI();	\
-							neighbors[getNeighborByAddress(addr, false)].lqi += radioGetLastLQI();		\
-							neighbors[getNeighborByAddress(addr, false)].lastSeqnum = seqnum;			\
-							} while(0)
-#define localSeqnum(addr) 	neighbors[getNeighborByAddress(addr, false)].lastSeqnum						
+#define ADD_NEIGHBOR(addr)  getNeighborByAddress(addr, true)
+#define INC_SENT(addr)      neighbors[getNeighborByAddress(addr, false)].sent++
+#define INC_RECV(addr, seqnum)  do{                                     \
+        neighbors[getNeighborByAddress(addr, false)].recv++;            \
+        neighbors[getNeighborByAddress(addr, false)].rssi += radioGetLastRSSI(); \
+        neighbors[getNeighborByAddress(addr, false)].lqi += radioGetLastLQI(); \
+        neighbors[getNeighborByAddress(addr, false)].lastSeqnum = seqnum; \
+    } while(0)
+#define localSeqnum(addr)   neighbors[getNeighborByAddress(addr, false)].lastSeqnum                     
 #define originAddr socket->recvMacInfo->originalSrc.shortAddr
 #define macSeqnum  socket->recvMacInfo->seqnum
 
 
-bool blocked = 0;	/* We start free of will */
-bool blocker = 0;	
+bool blocked = 0;   /* We start free of will */
+bool blocker = 0;   
 MosShortAddr blockerAddress = 0;
 
 /* Here we store info about our neighbors */
 struct Neighbors{
-	MosShortAddr address;
-	uint32_t sent;
-	uint32_t recv;
-	uint8_t lastSeqnum;
-	int32_t rssi;
-	int32_t lqi;
+    MosShortAddr address;
+    uint32_t sent;
+    uint32_t recv;
+    uint8_t lastSeqnum;
+    int32_t rssi;
+    int32_t lqi;
 }neighbors[MAX_NEIGHBORS + 1];
 
 uint16_t neighborCount = 0;
 
 /* Get's neighbors array id form address, 
-	appends neighbor to list if he's not there. */
+   appends neighbor to list if he's not there. */
 int getNeighborByAddress(MosShortAddr address, bool add){
-	uint16_t counter;
-	for (counter = 0; counter < neighborCount; counter++){
-		if (neighbors[counter].address == address)
-			return counter;
-	}
-	if (add){
-		//PRINTF("\n\nADDING NEIGHBOR %#x\n\n",address);
-		neighbors[counter].address = address;
-		neighbors[counter].sent = 0;
-		neighbors[counter].recv = 0;
-		neighbors[counter].lastSeqnum = 0;
-		neighbors[counter].rssi = 0;
-		neighbors[counter].lqi = 0;
-		neighborCount++;
-		return counter;
-	}
-	return MAX_NEIGHBORS;	// recycle bin :D
+    uint16_t counter;
+    for (counter = 0; counter < neighborCount; counter++){
+        if (neighbors[counter].address == address)
+            return counter;
+    }
+    if (add){
+        //PRINTF("\n\nADDING NEIGHBOR %#x\n\n",address);
+        neighbors[counter].address = address;
+        neighbors[counter].sent = 0;
+        neighbors[counter].recv = 0;
+        neighbors[counter].lastSeqnum = 0;
+        neighbors[counter].rssi = 0;
+        neighbors[counter].lqi = 0;
+        neighborCount++;
+        return counter;
+    }
+    return MAX_NEIGHBORS;   // recycle bin :D
 }
 
 static void recvTest(Socket_t *socket, uint8_t *data, uint16_t len)
-{	
+{   
     uint8_t temp = *data, temp2[REPLY_TEST_BYTE_COUNT] = {REPLY_TEST_BYTE}; 
-   // PRINTF("got %d bytes from 0x%04x (%#x) - recvTest\n", len, originAddr, temp);
+    // PRINTF("got %d bytes from 0x%04x (%#x) - recvTest\n", len, originAddr, temp);
     if (temp == REPLY_TEST_BYTE){
-    	if (blocker){
-    		//if (macSeqnum > localSeqnum(originAddr) || macSeqnum < localSeqnum(originAddr)-5){
-    		if (data[1] > localSeqnum(originAddr) || data[1] < localSeqnum(originAddr)-5){
-		    	INC_RECV(originAddr, data[1]);
-		    } else{
-		    	//PRINTF("wrong recv for neighbor %#x, %d <= %d\n",originAddr, data[1], localSeqnum(originAddr));
-		    }
+        if (blocker){
+            //if (macSeqnum > localSeqnum(originAddr) || macSeqnum < localSeqnum(originAddr)-5){
+            if (data[1] > localSeqnum(originAddr) || data[1] < localSeqnum(originAddr)-5){
+                INC_RECV(originAddr, data[1]);
+            } else{
+                //PRINTF("wrong recv for neighbor %#x, %d <= %d\n",originAddr, data[1], localSeqnum(originAddr));
+            }
         }
     } else if (temp == TEST_BYTE){
         socketSetDstAddress(socket, originAddr);
@@ -127,7 +127,7 @@ static void recvTest(Socket_t *socket, uint8_t *data, uint16_t len)
         if (socketSend(socket, &temp2, sizeof(temp2))) {
             PRINT("socketSend failed\n");
         } else{
-        	//PRINTF("answered test to neighbor %#x, no %d\n",originAddr,data[1]);
+            //PRINTF("answered test to neighbor %#x, no %d\n",originAddr,data[1]);
         }
     } else if (temp == UNBLOCK_BYTE){
         blocked = false;
@@ -135,7 +135,7 @@ static void recvTest(Socket_t *socket, uint8_t *data, uint16_t len)
     } else{
         PRINT("unknow packet, dropping\n");
     }
-    toggleRedLed();
+    redLedToggle();
 }
 
 static void sendTestRequest(Socket_t *socket, MosShortAddr addr)
@@ -145,21 +145,21 @@ static void sendTestRequest(Socket_t *socket, MosShortAddr addr)
     socketSetDstAddress(socket, addr);
     
     for (i = 0; i < TEST_COUNT; i++){
-    	data[1] = i+1;
+        data[1] = i+1;
         if (socketSend(socket, &data, sizeof(data))) {
             PRINT("socketSend failed\n");
         }
         INC_SENT(addr);
-       // PRINTF("INCE'd sent for %#x\n",addr);
-       for (o = 0;o < MAX_WAIT_FOR_REPLY_COUNT; o++){
-       		if (localSeqnum(addr) == i + 1){
-       			//PRINTF("Got it %d\n", i + 1);
-       			o = MAX_WAIT_FOR_REPLY_COUNT;
-       		} else{
-       			//PRINTF("Sleeping, local:%d, sent:%d\n",localSeqnum(addr), i + 1);
-       			mdelay(SLEEP_BETWEEN_SEND + (randomRand() % 4));
-       		}
-       }
+        // PRINTF("INCE'd sent for %#x\n",addr);
+        for (o = 0;o < MAX_WAIT_FOR_REPLY_COUNT; o++){
+            if (localSeqnum(addr) == i + 1){
+                //PRINTF("Got it %d\n", i + 1);
+                o = MAX_WAIT_FOR_REPLY_COUNT;
+            } else{
+                //PRINTF("Sleeping, local:%d, sent:%d\n",localSeqnum(addr), i + 1);
+                mdelay(SLEEP_BETWEEN_SEND + (randomRand() % 4));
+            }
+        }
     }
 }
 
@@ -172,7 +172,7 @@ static void sendAddrRequest(Socket_t *socket)
         if (socketSend(socket, &data, sizeof(data))) {
             PRINT("socketSend failed\n");
         } else{
-           // PRINT("Addr request sent\n");
+            // PRINT("Addr request sent\n");
         }
         mdelay(SLEEP_BETWEEN_SEND + (randomRand() % 128));
     }
@@ -196,7 +196,7 @@ static void recvAddrRequest(Socket_t *socket, uint8_t *data, uint16_t len){
     socketSetDstAddress(socket, originAddr);
     if (temp == REPLY_ADDR_BYTE){
         ADD_NEIGHBOR(originAddr);
-       // PRINTF("Added neighbor %#x\n",originAddr);
+        // PRINTF("Added neighbor %#x\n",originAddr);
     } else if (temp == ADDR_BYTE){
         temp = REPLY_ADDR_BYTE;
         if (socketSend(socket, &temp, sizeof(temp))) {
@@ -209,7 +209,7 @@ static void recvAddrRequest(Socket_t *socket, uint8_t *data, uint16_t len){
     } else{
         PRINT("unknow packet, dropping\n");
     }
-    toggleRedLed();
+    redLedToggle();
 }
 
 void appMain(void)
@@ -217,7 +217,6 @@ void appMain(void)
     uint8_t i;
     Socket_t addrSocket, testSocket;
     
-    linqInit();
     socketOpen(&addrSocket, recvAddrRequest);
     socketBind(&addrSocket, ADDR_PORT);
     
@@ -226,54 +225,53 @@ void appMain(void)
     
     socketSetDstAddress(&addrSocket, MOS_ADDR_BROADCAST);
 
-	PRINT_INIT(128);
-	PRINTF("Local address: %#x\n",localAddress);
-	
-	// Wait for everyone else who might wanna test
-	while(true)
-	{
-		// Wait random time
-		msleep(1000 + (randomRand() % 1024));
-	
-		// Try to be first
-		while (!blocker){
-			if (!blocked){
-				PRINTF("Searching for neighbors...\n");
-				sendAddrRequest(&addrSocket);
-				mdelay(WAIT_FOR_NEIGHBORS);
-				if (neighborCount){
-					blocker = true;
-				}
-			}
-			mdelay(WAIT_FOR_NEIGHBORS);
-		}
-		
-		PRINTF("Got neighbors:\n");
-		for (i = 0; i < neighborCount; i++){
-		    PRINTF("\t%#x\n", neighbors[i].address);
-		}
-		
-		for (i = 0; i < neighborCount; i++){
-			//PRINTF("Starting test for %#x\n", neighbors[i].address);
-		    //socketSetDstAddress(&testSocket, neighbors[i].address);
-		    sendTestRequest(&testSocket,neighbors[i].address);
-		    mdelay(WAIT_FOR_NEIGHBORS);
-		    //PRINTF("Test finished for %#x, sent - %ld, recv - %ld\n", neighbors[i].address, neighbors[i].sent, neighbors[i].recv);
-		}
+    PRINT_INIT(128);
+    PRINTF("Local address: %#x\n",localAddress);
+    
+    // Wait for everyone else who might wanna test
+    while(true) {
+        // Wait random time
+        msleep(1000 + (randomRand() % 1024));
+    
+        // Try to be first
+        while (!blocker){
+            if (!blocked){
+                PRINTF("Searching for neighbors...\n");
+                sendAddrRequest(&addrSocket);
+                mdelay(WAIT_FOR_NEIGHBORS);
+                if (neighborCount){
+                    blocker = true;
+                }
+            }
+            mdelay(WAIT_FOR_NEIGHBORS);
+        }
+        
+        PRINTF("Got neighbors:\n");
+        for (i = 0; i < neighborCount; i++){
+            PRINTF("\t%#x\n", neighbors[i].address);
+        }
+        
+        for (i = 0; i < neighborCount; i++){
+            //PRINTF("Starting test for %#x\n", neighbors[i].address);
+            //socketSetDstAddress(&testSocket, neighbors[i].address);
+            sendTestRequest(&testSocket,neighbors[i].address);
+            mdelay(WAIT_FOR_NEIGHBORS);
+            //PRINTF("Test finished for %#x, sent - %ld, recv - %ld\n", neighbors[i].address, neighbors[i].sent, neighbors[i].recv);
+        }
 
-		sendUnblock(&testSocket);
-		mdelay(WAIT_FOR_NEIGHBORS);	 // in case of DEBUG=y incoming ack spoils output
-		PRINTF("Results:\n");
-		for (i = 0; i < neighborCount; i++){
-			 PRINTF("\t%#x\tsent: %ld\trecv :%ld\t", neighbors[i].address, neighbors[i].sent, neighbors[i].recv);
-			 if (neighbors[i].recv){
-			 	PRINTF("RSSI: %ld\t",neighbors[i].rssi);
-			 	PRINTF("LQI: %ld",neighbors[i].lqi);
-			 }
-			 PRINTF("\n");
-		}
-		PRINT_NETSTAT_ALL();
-		mdelay(TEST_FREQUENCY);
-		toggleRedLed();
-	}
+        sendUnblock(&testSocket);
+        mdelay(WAIT_FOR_NEIGHBORS);  // in case of DEBUG=y incoming ack spoils output
+        PRINTF("Results:\n");
+        for (i = 0; i < neighborCount; i++){
+            PRINTF("\t%#x\tsent: %ld\trecv :%ld\t", neighbors[i].address, neighbors[i].sent, neighbors[i].recv);
+            if (neighbors[i].recv){
+                PRINTF("RSSI: %ld\t",neighbors[i].rssi);
+                PRINTF("LQI: %ld",neighbors[i].lqi);
+            }
+            PRINTF("\n");
+        }
+        PRINT_NETSTAT_ALL();
+        mdelay(TEST_FREQUENCY);
+        redLedToggle();
+    }
 }

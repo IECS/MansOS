@@ -27,7 +27,7 @@
 // no beeper by default
 #define beeperInit()
 #define beeperToggle()
-#define beeperBeep()
-#define beeperBeepEx()
+#define beeperBeep(ms)
+#define beeperBeepEx(ms, frequency)
 
 #endif

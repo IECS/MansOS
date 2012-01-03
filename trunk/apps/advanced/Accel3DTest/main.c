@@ -26,14 +26,7 @@
 //===========================================================================
 
 #include "stdmansos.h"
-#include "scheduler.h"
-#include "devmgr.h"
-#include "drivers/dev_sen_accel3D.h"
-
 #include <string.h>
-#include <stdio.h>
-
-#include "dprint.h"
 
 //===========================================
 //  Constants
@@ -44,23 +37,22 @@
 #define ACC_Y_PORT 1
 #define ACC_Z_PORT 2
 
+//=======================================================================
+//      Types
+//=======================================================================
+
+typedef struct {
+    uint16_t x;
+    uint16_t y;
+    uint16_t z;
+} AccelVector3D_t;
 
 //-------------------------------------------
 //      Entry point for the application
 //-------------------------------------------
 void appMain(void)
 {
-    static devMgrErr_t ret;
-    accelVector3D_t accel;
-
-    devParams_t params;
-    params.data = (void*) &accel;
-
-    devParams_t adcParams;
-    static uint16_t adcVal;
-    adcParams.data = (char *) &adcVal;
-
-    PRINT_INIT(128);
+    AccelVector3D_t accel;
 
     //Turn the Accelerometer on (P4.0=1)!
     PIN_AS_DATA(4,0);
@@ -72,22 +64,17 @@ void appMain(void)
 
     while(1)
     {
-        //ret = devCall(DEV_SEN_ACCEL, 0, DMF_READ, &params);
-
-        ret = devCall(DEV_ADC, ACC_X_PORT, DMF_READ, &adcParams);
-        accel.x = adcVal;
-        threadSleep(10);
-        ret = devCall(DEV_ADC, ACC_Y_PORT, DMF_READ, &adcParams);
-        accel.y = adcVal;
-        threadSleep(10);
-        ret = devCall(DEV_ADC, ACC_Z_PORT, DMF_READ, &adcParams);
-        accel.z = adcVal;
-        threadSleep(10);
+        accel.x = adcRead(ACC_X_PORT);
+        msleep(10);
+        accel.y = adcRead(ACC_Y_PORT);
+        msleep(10);
+        accel.z = adcRead(ACC_Z_PORT);
+        msleep(10);
 
         PRINTF("3D Accel: X= %4u  Y= %4u  Z= %4u \n",
             accel.x, accel.y, accel.z);
 
-        threadSleep(10);
+        msleep(10);
     }
 }
 

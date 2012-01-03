@@ -29,7 +29,7 @@ void appMain(void)
     PRINTF("SSMP demo app (#blue) starting, localAddress=0x%04x...\n", localAddress);
 
     for (;;) {
-        toggleBlueLed();
+        blueLedToggle();
         // PRINTF(".\n");
         mdelay(1000);
     }

@@ -1,4 +1,4 @@
-SADLANG_SOURCES = main.sl
+SEAL_SOURCES = main.sl
 
 APPMOD = Blink
 

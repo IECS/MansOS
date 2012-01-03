@@ -10,7 +10,8 @@ void alarmCallback(void *param)
 {
     uint16_t id = (uint16_t) param;
     // blink green or blue light
-    toggleNrLed(id);
+    if (id == 1) greenLedToggle();
+    else blueLedToggle();
     // print something
     PRINTF("hello from alarm %d, jiffies=%lu\n", id, getJiffies());
     // reschedule the alarm
@@ -31,7 +32,7 @@ void appMain(void)
 
     for (;;) {
         PRINT("in app main...\n");
-        toggleLed();
+        ledToggle();
         msleep(1000);
     }
 }

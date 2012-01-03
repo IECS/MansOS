@@ -64,15 +64,15 @@
 #else
 #define NAKED
 #endif
-#ifndef PLATFORM_PC
+//#ifndef PLATFORM_PC
 # ifdef __APPLE__
 #  define WEAK_SYMBOL  __attribute__ ((weak_import))
 # else // !__APPLE__
 #  define WEAK_SYMBOL  __attribute__ ((weak))
 # endif // __APPLE__
-#else
-# define WEAK_SYMBOL // nothing
-#endif
+//#else
+//# define WEAK_SYMBOL // nothing
+//#endif
 
 #define PRAGMA(x) _Pragma(#x)
 

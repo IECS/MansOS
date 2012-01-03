@@ -127,7 +127,6 @@ include $(MAKEFILE_PLATFORMS)
 include $(MAKEFILE_CONFIG)
 
 # Select and include the makefiles according the target platform
-
 ifneq ($(PLATFORM),)
   # dirty hack: this is needed for cygwin
   PROJDIR = .
@@ -147,9 +146,36 @@ ifneq ($(PLATFORM),)
   include $(MOS)/make/arch/Makefile.$(ARCH)
 endif
 
+# Decide whether to build or to skip this target for this platform
+ifneq ("", "$(RESTRICT_PLATFORM)")
+ifeq ("","$(filter $(PLATFORM), $(RESTRICT_PLATFORM))")
+PLATFORM_ACTION=platform_skip
+endif
+endif
+ifneq ("", "$(RESTRICT_PLATFORM_NOT)")
+ifneq ("","$(filter $(PLATFORM), $(RESTRICT_PLATFORM_NOT))")
+PLATFORM_ACTION=platform_skip
+endif
+endif
+
+# for now, no support for threads on PC
+ifeq ("y", "$(USE_EXP_THREADS)")
+ifeq (pc,$(PLATFORM))
+PLATFORM_ACTION=platform_skip
+endif
+endif
+
+# Decide the correct build action
+ifneq ("","$(SEAL_SOURCES)")
+ifeq ("","$(SEAL_RECURSE)")
+PLATFORM_ACTION ?= platform_build_seal
+endif
+endif
+PLATFORM_ACTION ?= platform_build
+
 #===== Tools =====
 
-SADLANG = $(MOSROOT)/tools/sadlang/sadlang
+SEAL = $(MOSROOT)/tools/seal/seal
 
 MEMDUMP = $(MOS)/make/scripts/memdump.py
 
@@ -199,8 +225,8 @@ INCLUDES += -I$(MOS)/arch/$(ARCH)
 INCLUDES += -I$(MOS)/platforms/$(PLATFORM)
 INCLUDES += -I$(MOS)/chips
 
-#=================== SADlang support
-GENERATED_SOURCES = $(SADLANG_SOURCES:%.sl=%.c)
+#=================== SEAL support
+GENERATED_SOURCES = $(SEAL_SOURCES:%.sl=%.c)
 
 #===== Sorting out the Objs and Sources =====
 
@@ -217,39 +243,77 @@ OBJS = $(APP_OBJS) $(POBJS)
 OBJDIRS = $(dir $(OBJS))
 
 
-
 # ===== Targets =====
-.PHONY: all $(PLATFORM_TARGET) build savetarget objDirs clean cleanall
+.PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs clean cleanall
 
 all: build
 
-$(PLATFORM_TARGET): build savetarget
+#
+# The next three targets are for deciding what to actually do.
+# - platform_build: build the executable and save this target
+# - platform_build_seal: Call make recursively.
+#   Needed because SEAL compiler (re)generates config file
+# - platform_skip: avoid building this project for this platform
+#
+platform_build: build saveplatform
 	$(Print) ""
 
+platform_build_seal: $(GENERATED_SOURCES)
+	$(MAKE) $(TARGET) SEAL_RECURSE=1
+
+platform_skip:
+	$(Print) "Skipping $(PROJDIR)/$(APPMOD) for $(TARGET): not for this platform!"
+	$(Print) ""
+
+#
+# Dispatch the correct platfor_xxx target depending on PLATFORM_ACTION variable
+#
+$(PLATFORM_TARGET): $(PLATFORM_ACTION)
+
+#
+# Generate clean<platform> targets for each platform
+#
 $(PLATFORMS:%=clean%): clean
 
-savetarget:
-	$(_QUIET) rm -f $(PROJDIR)/build/Makefile.target
-	$(_QUIET) @echo "saving Makefile.target"
-	$(_QUIET) @echo >$(PROJDIR)/build/Makefile.target "TARGET = $(TARGET)"
+#
+# Save platform name to a makefile to enable later reuse
+#
+saveplatform:
+	$(_QUIET) rm -f $(PROJDIR)/build/Makefile.platform
+	$(_QUIET) @echo "saving Makefile.platform"
+	$(_QUIET) @echo >$(PROJDIR)/build/Makefile.platform "TARGET = $(TARGET)"
 
-build : $(OUTDIR)/config objDirs $(GENERATED_SOURCES) $(EXECUTABLE)
+build : $(OUTDIR)/config objDirs $(EXECUTABLE)
 
-# This file is reuquired for building. An empty file is created it doesn't exist
+#
+# "config" file is required for building. An empty file is created it doesn't exist
+#
 $(PROJDIR)/config:
 	touch $(PROJDIR)/config
 
-# This logic is used to detect whether config file has changed and to rebuild all if it has
+#
+# Detect whether config file has changed, and rebuild all it has.
+#
 $(OUTDIR)/config: $(PROJDIR)/config
 	$(_QUIET) $(Delete) $(OUTDIR)
 	$(_QUIET) mkdir -p $(OUTDIR)
 	$(_QUIET) cp $(PROJDIR)/config $(OUTDIR)/config
 
+#
+# Remove output files
+#
 clean: 
 	$(Print) "RM $(OUTDIR)"
 	$(_QUIET) $(Delete) $(OUTDIR) *.stackdump extflash.dat eeprom $(GENERATED_SOURCES)
 
+#
+# Remove output files, including generated "config" and .c files
+#
 cleanall: clean
+ifneq ("","$(SEAL_SOURCES)")
+	$(Print) "RM config $(GENERATED_SOURCES)"
+	$(_QUIET) $(Delete) config $(GENERATED_SOURCES)
+endif
 
 # ===== header file dependency tracking =====
 
@@ -266,10 +330,6 @@ $(OBJDIR)/%.o : $(MOSROOT)/%.c
 	$(Print) "CC $<"
 	$(_QUIET) $(CC) $(CFLAGS) $(INCLUDES) -MD -MF $(subst .o,.d,$@) -MP -MT $(subst .o,.d,$@) -MT $@ -c $< -o $@
 
-%.c : %.sl
-	$(Print) "SADLANG $<"
-	$(_QUIET) $(SADLANG) $< -o $@
-
 # .c -> .o, user sources
 $(OBJDIR)/%.o : $(PROJDIR)/%.c
 	$(Print) "CC $<"
@@ -279,9 +339,12 @@ ifeq ($(USE_REPROGRAMMING),y)
 	$(_QUIET) $(OBJCOPY) --rename-section .text=.usertext $@
 endif
 
+# .sl -> .c, SEAL sources
+%.c : %.sl
+	$(Print) "SEAL $<"
+	$(_QUIET) $(SEAL) $< -o $@
 
 # .o -> .elf
-# TODO - what to do for msp430?
 $(OUTDIR)/$(APPMOD).elf : $(OBJS)
 	$(Print) "LD $@"
 	$(_QUIET) $(LINKER_SCRIPT) $(ARCH) $@ "$(CFLAGS) $(LDFLAGS)" "$(APP_OBJS)" "$(POBJS)"
@@ -290,7 +353,6 @@ $(OUTDIR)/$(APPMOD).elf : $(OBJS)
 $(OUTDIR)/$(APPMOD).exe : $(OBJS)
 	$(Print) "LD $@"
 	$(_QUIET) $(LINKER_SCRIPT) "pc" $@ "$(CFLAGS) $(LDFLAGS)" "$(APP_OBJS)" "$(POBJS)"
-
 
 # .c -> .rel
 $(OBJDIR)/%.rel : $(MOSROOT)/%.c 
@@ -311,6 +373,5 @@ $(OUTDIR)/$(APPMOD).ihx : $(subst .o,.rel,$(OBJS))
 $(OUTDIR):
 	$(_QUIET) $(MakeDir) $@
 
-objDirs: 
+objDirs:
 	$(_QUIET) $(MakeDir) $(OBJDIRS)
-

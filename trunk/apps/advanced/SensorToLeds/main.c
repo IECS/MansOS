@@ -36,7 +36,7 @@ void appMain(void)
     while(1)
     {
         uint16_t light = readLight();
-        setLeds(light); // display value on LEDs
+        ledsSet(light); // display value on LEDs
         msleep(1000); // sleep one second
     }
 }

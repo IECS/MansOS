@@ -22,32 +22,34 @@
  */
 
 #include "byteorder.h"
+#include "unaligned.h"
 #include "tosmsg.h"
 #include <string.h>
 
 enum { TOS_SERMSG_META_SIZE = sizeof(TosSerialMsg_t) 
-    - sizeof(TosSerialMsgPayload_t) };
+     - sizeof(TosSerialMsgPayload_t) };
 
 uint16_t tosSerialMsgEnc(void *dataBuf, uint16_t dataSize, 
-    uint16_t dstAddr, uint8_t amType, void *resultBuf, 
-    uint16_t resultSize, uint16_t *bytesWritten) {
+        uint16_t dstAddr, uint8_t amType, void *resultBuf, 
+        uint16_t resultSize, uint16_t *bytesWritten) {
     uint16_t n = dataSize;
     if (n > MAX_TOS_MSG_PAYLOAD) n = MAX_TOS_MSG_PAYLOAD;
     if (n > resultSize - TOS_SERMSG_META_SIZE) n = resultSize - TOS_SERMSG_META_SIZE;
     if (resultSize < TOS_SERMSG_META_SIZE + 1) n = 0;
     
     if (n > 0) {
-    TosSerialMsg_t *msg = (TosSerialMsg_t *) resultBuf;
-    msg->zero = 0;
-    msg->dstAddr = tobe16(dstAddr); 
-    msg->srcAddr = 0;
-    msg->msgLen = n;
-    msg->group = 0;
-    msg->amType = amType;
-    memcpy(&msg->payload, dataBuf, n);
-    if (bytesWritten) *bytesWritten = n + TOS_SERMSG_META_SIZE;
+        TosSerialMsg_t *msg = (TosSerialMsg_t *) resultBuf;
+        msg->zero = 0;
+        putU16Network(&msg->dstAddr, dstAddr);
+        msg->srcAddr[0] = 0;
+        msg->srcAddr[1] = 0;
+        msg->msgLen = n;
+        msg->group = 0;
+        msg->amType = amType;
+        memcpy(&msg->payload, dataBuf, n);
+        if (bytesWritten) *bytesWritten = n + TOS_SERMSG_META_SIZE;
     } else {
-    if (bytesWritten) *bytesWritten = 0;
+        if (bytesWritten) *bytesWritten = 0;
     }
     
     return n;

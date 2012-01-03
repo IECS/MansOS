@@ -235,7 +235,7 @@ void radioReceive(void) {
     static uint8_t buffer[128];
     int16_t length = radioRecv(buffer, sizeof(buffer));
 
-    toggleGreenLed();
+    // greenLedToggle();
 
     if (length < (isBaseStation ? 4 : 6)) {
         // PRINTF("radioRecv: too short!\n");

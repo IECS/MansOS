@@ -31,7 +31,6 @@
 #include <hil/extflash.h>
 #include <hil/fs/types.h>
 #include <kernel/defines.h>
-#include <kernel/mos_sem.h>
 
 /*
  * A block is the minimal addressable unit of data. A segment is the minimal

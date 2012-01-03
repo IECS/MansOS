@@ -28,17 +28,13 @@
 //-------------------------------------------
 
 #include "stdmansos.h"
-#include "dprint.h"
 
 //-------------------------------------------
 //      Entry point for the application
 //-------------------------------------------
 void appMain(void)
 {
-    PRINT_INIT(128);
-
-    while (1)
-    {
+    while (1) {
         uint16_t temp;
         temp = adcRead(ADC_INTERNAL_TEMPERATURE);
         uint16_t tempC = (uint16_t) (((uint32_t) (temp - 1615) * (uint32_t) 704) / (uint32_t) 4095);
@@ -46,10 +42,9 @@ void appMain(void)
 
         uint16_t light;
         light = adcRead(ADC_LIGHT);
-        PRINTF("        light = %u", light);
-        PRINTLN("");
+        PRINTF("        light = %u\n", light);
 
-        toggleRedLed();
+        redLedToggle();
         msleep(1000);
     }
 }

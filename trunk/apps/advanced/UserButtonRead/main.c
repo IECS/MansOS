@@ -28,11 +28,10 @@
 
 #include "stdmansos.h"
 #include "user_button.h"
-#include "dprint.h"
 
 static bool stateChanged;
 
-void printUbState(const ButtonState_t s) {
+void printUserButtonState(const ButtonState_t s) {
     if (s == BUTTON_PRESSED) {
         PRINTLN("Button Pressed");
     } else {
@@ -49,19 +48,17 @@ void buttonStateChanged() {
 //-------------------------------------------
 void appMain(void)
 {
-    PRINT_INIT(128);
     userButtonEnable(buttonStateChanged);
-    printUbState(userButtonGet());
+    printUserButtonState(userButtonGet());
 
-    while(1)
-    {
+    while(1) {
         if (stateChanged) {
-            printUbState(userButtonGet());
+            printUserButtonState(userButtonGet());
             stateChanged = false;
         }
 
         mdelay(100);
-        toggleRedLed();
+        redLedToggle();
     }
 }
 

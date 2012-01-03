@@ -22,7 +22,7 @@
  */
 
 #include "stdmansos.h"
-#include <kernel/expthreads/radio.h>
+#include <kernel/threads/radio.h>
 
 uint8_t data[] = "hello world";
 
@@ -51,7 +51,7 @@ void appMain(void)
         // send out own packet
         radioSend(data, sizeof(data));
 
-        toggleRedLed();
+        redLedToggle();
         mdelay(1000);
     }
 }

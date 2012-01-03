@@ -26,7 +26,7 @@
 #include <hil/radio.h>
 #include <hil/errors.h>
 #include <lib/dprint.h>
-#include <kernel/expthreads/radio.h>
+#include <kernel/threads/radio.h>
 #include <net/net-stats.h>
 
 static void initNullMac(RecvFunction cb);

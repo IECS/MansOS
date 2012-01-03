@@ -35,10 +35,10 @@
 // -----------------------------------------------------
 // Generic functions for all leds accessed using a bitmask:
 // -----------------------------------------------------
-void ledsInit();                   // Init All leds (kernel uses this)
+void ledsInit(void);               // Init All leds (kernel uses this)
 
 void ledsSet(uint_t led_bitmask);  // Set LEDs from a bitmask
-uint_t ledsGet();                  // Which leds are on? Returns a bitmask
+uint_t ledsGet(void);              // Which leds are on? Returns a bitmask
 
 #define ledsOn(led_bitmask)     ledsSet(  (led_bitmask) | ledsGet() )
 #define ledsOff(led_bitmask)    ledsSet( ~(led_bitmask) & ledsGet() )
@@ -138,6 +138,48 @@ LED_ALIAS(led, LED_DEFAULT)
 #define ledInit()
 #endif // LED_DEFAULT
 
+
+//===============================================================
+// Compilation support for some default leds
+#ifndef RED_LED_DEFINED
+#define redLed_mask 0
+#define redLedMask()  0
+#define redLedOn()
+#define redLedOff()
+#define redLedToggle()
+#define redLedSet(_)
+#define redLedGet()   0
+#endif
+
+#ifndef GREEN_LED_DEFINED
+#define greenLed_mask 0
+#define greenLedMask()  0
+#define greenLedOn()
+#define greenLedOff()
+#define greenLedToggle()
+#define greenLedSet(_)
+#define greenLedGet()   0
+#endif
+
+#ifndef BLUE_LED_DEFINED
+#define blueLed_mask 0
+#define blueLedMask()  0
+#define blueLedOn()
+#define blueLedOff()
+#define blueLedToggle()
+#define blueLedSet(_)
+#define blueLedGet()   0
+#endif
+
+#ifndef YELLOW_LED_DEFINED
+#define yellowLed_mask 0
+#define yellowLedMask()  0
+#define yellowLedOn()
+#define yellowLedOff()
+#define yellowLedToggle()
+#define yellowLedSet(_)
+#define yellowLedGet()   0
+#endif
 
 //===============================================================
 // This should be moved to the PC platform.h

@@ -1,3 +1,6 @@
+# only for MSP430 for now
+RESTRICT_PLATFORM = sadmote telosb epic msp430
+
 USE_FLASH = y
 USE_EXT_FLASH = y
 USE_LEDS = y

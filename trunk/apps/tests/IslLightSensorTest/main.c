@@ -30,7 +30,7 @@
 #include <isl29003/isl29003.h>
 
 IslConfigure_t conf = {
-    .mode = USE_BOUTH_DIODES,
+    .mode = USE_BOTH_DIODES,
     .clock_cycles = CLOCK_CYCLES_16,
     .range_gain = RANGE_GAIN_62,
     .integration_cycles = INTEGRATION_CYCLES_16,
@@ -45,7 +45,7 @@ void appMain(void)
     islInit();
     islOn();
     configureIsl(conf);
-    
+
     for (;;){
         // islRead(uint16_t *data, bool waitForInterupt),
         // returns true on success, false on fail.
@@ -54,6 +54,6 @@ void appMain(void)
         } else {
             PRINTF("islLight = %#x\n", islLight);
         }
-        toggleRedLed();
+        redLedToggle();
     }
 }

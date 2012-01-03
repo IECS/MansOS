@@ -31,20 +31,20 @@ void appMain(void){
 
     radioOff();
 
-  	//adsContiniousConversionMode();    // By default power down single shot converion mode is enabled
-  	uint8_t i = 0;
-	bool b = false;
-  	while(1){
-  	    adsSelectInput(i);
-  		readAds(&val);
-	    	PRINTF("Ads conversion result from AIN%d:%#x\n",i, val);
-	    	sleep(1);
-		if (b) ledOn();
-		else ledOff();
-	    	i++;
-	    	if (i>3) {
-    		    i = 0;
-		    b = !b;
-		}
+    //adsContiniousConversionMode();    // By default power down single shot converion mode is enabled
+    uint8_t i = 0;
+    bool b = false;
+    while(1){
+        adsSelectInput(i);
+        readAds(&val);
+        PRINTF("Ads conversion result from AIN%d:%#x\n",i, val);
+        sleep(1);
+        if (b) ledOn();
+        else ledOff();
+        i++;
+        if (i>3) {
+            i = 0;
+            b = !b;
+        }
     }
 }

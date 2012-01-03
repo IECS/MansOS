@@ -43,7 +43,7 @@ void appMain(void)
     // PRINT("FAT init...\n");
     status = fat_initialize();   // Initialise the FAT library.
 
-    initLeds();
+//    initLeds();
 
     PRINTF("status=%d\n", (int) status);
     PRINTF("problem=%d\n", fatGetLastError());

@@ -66,13 +66,10 @@ uint16_t readVoltage(void)
 
 // ---------------------------------------------------------------------------
 
-#define RED      (1 << LEDS_RED_PIN)
-#define GREEN    (1 << LEDS_GREEN_PIN)
-#define BLUE     (1 << LEDS_BLUE_PIN)
-#define ALL_LEDS (RED | GREEN | BLUE)
-
-#define toggleLeds(mask) pinToggleMask(LEDS_RED_PORT, mask)
-#define clearLeds(mask) pinSetMask(LEDS_RED_PORT, mask)
+#define RED       redLed_mask
+#define GREEN     greenLed_mask
+#define BLUE      blueLed_mask
+#define ALL_LEDS  LEDS_ALL_MASK
 
 #define LEDS_BOOTLOADER_START GREEN
 #define LEDS_BOOTLOADER_END   BLUE
@@ -83,9 +80,9 @@ uint16_t readVoltage(void)
 static void flashLeds(uint8_t mask)
 {
     uint_t i;
-    clearLeds(ALL_LEDS);
+    ledsOff(ALL_LEDS);
     for (i = 0; i < 6; ++i) {
-        toggleLeds(mask);
+        ledsToggle(mask);
         mdelay(150);
     }
 }
@@ -99,7 +96,7 @@ int main(void)
 
     msp430WatchdogStop();
 
-    initLeds();
+    ledsInit();
 
     flashLeds(LEDS_BOOTLOADER_START);
 
@@ -149,7 +146,7 @@ int main(void)
 
             if (block.crc != crc16((uint8_t *)&block, sizeof(block) - 2)) {
                 // the best we can do is to reboot now;
-                // after a few tries golden image will be loaded
+                // after a few tries the golden image will be loaded
                 flashLeds(LEDS_CRC_ERROR);
                 // no need to disable all of the interrupts (they already are),
                 // just write in watchdog timer wihout password, it will generate reset.

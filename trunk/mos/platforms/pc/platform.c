@@ -50,9 +50,12 @@ static void loopForever(void) {
 void initPlatform(void)
 {
     mos_sem_init(&sleepSem, 0);
+
+#if USE_ALARMS
     // this is a "specific thread", not part of the scheduler
-    // create it even, when threads are turned off
+    // create it even when threads are turned off
     pthread_create(&alarmThread, NULL, alarmIntHandler, NULL);
+#endif
 
     atexit(loopForever);
 }

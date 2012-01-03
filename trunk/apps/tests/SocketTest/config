@@ -1,7 +1,0 @@
-#
-# Application specific config file
-#
-
-USE_THREADS=y
-USE_NET=y
-USE_FLASH=y

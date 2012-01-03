@@ -5,72 +5,110 @@
 #   (telosb must have all targets, otherwise they will not be cleared)
 #
 
-PLATFORMS = pc telosb epic atmega waspmote
+PLATFORMS = pc telosb sadmote arduino 
 
 DEMO_TARGETS = \
-	Blink \
-	BlinkCounter \
-	BlinkRadio \
-	PrintADC \
-	PrintCounter \
-	PrintEcho \
-	PrintRadio \
-	PrintSensors \
-
-ADVANCED_TARGETS = \
-	GpsProxy \
-	LPL \
-	Sarauj
+	Blink					\
+	BlinkCounter				\
+	BlinkRadio				\
+	PrintADC				\
+	PrintCounter				\
+	PrintEcho				\
+	PrintRadio				\
+	PrintSensors				\
 
 TEST_TARGETS = \
-	AlarmTest \
-	AssertTest \
-	BeeperTest \
-	BlinkTest \
-	ExtFlashTest \
-	FSTest \
-	IntFlashTest \
-	HumidityTest \
-	ListTest \
-	Null \
-	PDRTest \
-	RadioTest \
-	RadioSendTest \
-	RealTimeTest \
-	SemaphoreTest \
-	SerialPrint \
-	SharingTest \
-	SnumTest \
-	SleepTest \
-	SocketTest \
-	TdmaTest \
-	UARTTest \
-	UARTRecvPacketTest \
-	SmpTest/DemoBlueLed \
-	SmpTest/DemoRedLed \
-	ExpThreadTests/0-Lockup \
-	ExpThreadTests/0-Overflow-User \
-	ExpThreadTests/0-Overflow-Kernel \
-	ExpThreadTests/1a-Blink-mdelay \
-	ExpThreadTests/1b-Blink-msleep \
-	ExpThreadTests/1c-Blink-Multi \
-	ExpThreadTests/2-Alarms \
-	ExpThreadTests/3-Locking \
-	ExpThreadTests/3-Locking-Multi \
-	ExpThreadTests/4-Exit \
-	ExpThreadTests/5-Radio \
-	ExpThreadTests/6-MAC \
-	ExpThreadTests/7-Sockets
+	AccelTest				\
+	AdaptiveRate				\
+	AdcTest					\
+	AdsTest					\
+	AlarmTest				\
+	ApdsTest				\
+	AssertTest				\
+	BeeperTest				\
+	BlinkTest				\
+	ExtFlashTest				\
+	FSTest					\
+	GPSParseTest				\
+	HumidityTest				\
+	IntFlashTest				\
+	IslLightSensorTest			\
+	LinkTest				\
+	ListTest				\
+	Null					\
+	PDRTest					\
+	RadioSendTest				\
+	RadioTest				\
+	RealTimeTest				\
+	SdCardTest				\
+	SerialPipe				\
+	SerialPrint				\
+	SharingTest				\
+	SleepTest				\
+	SnumTest				\
+	TinyOSEncapsuleTest			\
+	UARTRecvPacketTest			\
+	UARTTest				\
+	SmpTest/DemoBlueLed			\
+	SmpTest/DemoRedLed			\
+	ExpThreadTests/0-Lockup			\
+	ExpThreadTests/0-Overflow-User		\
+	ExpThreadTests/0-Overflow-Kernel	\
+	ExpThreadTests/1a-Blink-mdelay		\
+	ExpThreadTests/1b-Blink-msleep		\
+	ExpThreadTests/1c-Blink-Multi		\
+	ExpThreadTests/2-Alarms			\
+	ExpThreadTests/3-Locking		\
+	ExpThreadTests/3-Locking-Multi		\
+	ExpThreadTests/4-Exit			\
+	ExpThreadTests/5-Radio			\
+	ExpThreadTests/6-MAC			\
+	ExpThreadTests/7-Sockets		\
+
+ADVANCED_TARGETS = \
+	Accel3DTest				\
+	AccelDice				\
+	AccelMusic				\
+	AccelTrack				\
+	BlinkGlow				\
+	Bootloader				\
+	Calendar				\
+	GPSParsing				\
+	GpsProxy				\
+	IMU					\
+	LPL					\
+	Sarauj					\
+	SeePoga					\
+	SensorToLcd				\
+	SensorToLeds				\
+	TimerSense				\
+	UserButtonRead				\
+
+SEAL_TARGETS = \
+	Blink					\
+	Custom					\
+	Sensors					\
+
+
+#	Blink-waspmote
+#	Sad
+#	Sad2011
+#	GpsProxy \
+#	LPL \
+#	Sarauj
 
 
 COMMON_TARGETS = \
 	$(foreach t,$(DEMO_TARGETS),demo/$(t)) \
 	$(foreach t,$(ADVANCED_TARGETS),advanced/$(t)) \
-	$(foreach t,$(TEST_TARGETS),tests/$(t))
+	$(foreach t,$(TEST_TARGETS),tests/$(t)) \
+	$(foreach t,$(SEAL_TARGETS),seal/$(t))
 
-telosb_TARGETS = $(COMMON_TARGETS)
-telosb_TARGETS += \
-	advanced/Accel3DTest \
+#telosb_TARGETS = $(COMMON_TARGETS)
+
+#telosb_TARGETS += \
+
+#	advanced/Accel3DTest \
 	advanced/AccelDice \
 	advanced/AccelMusic \
 	advanced/AccelTrack \
@@ -82,14 +120,13 @@ telosb_TARGETS += \
 	tests/FSTest \
 	tests/AdcTest \
 
-pc_TARGETS = $(COMMON_TARGETS) \
-	tests/FSTest
+#pc_TARGETS = $(COMMON_TARGETS) \
 
-epic_TARGETS = $(COMMON_TARGETS)
+#	tests/FSTest
 
-atmega_TARGETS = $(COMMON_TARGETS)
-
-waspmote_TARGETS = $(atmega_TARGETS)
+#epic_TARGETS = $(COMMON_TARGETS)
+#atmega_TARGETS = $(COMMON_TARGETS)
+#waspmote_TARGETS = $(atmega_TARGETS)
 
 # -- generic part follows
 
@@ -109,8 +146,10 @@ $$(foreach exe,$$($(1)_EXES),$$(exe)-clean):
 endef
 
 # this generates unique names for platform targets
+#$(foreach platform,$(PLATFORMS),\
+#	$(eval $(platform)_EXES=$(foreach app,$($(platform)_TARGETS),$(app)-$(platform))))
 $(foreach platform,$(PLATFORMS),\
-	$(eval $(platform)_EXES=$(foreach app,$($(platform)_TARGETS),$(app)-$(platform))))
+	$(eval $(platform)_EXES=$(foreach app,$(COMMON_TARGETS),$(app)-$(platform))))
 
 # this generates the actual targets
 $(foreach platform,$(PLATFORMS),\

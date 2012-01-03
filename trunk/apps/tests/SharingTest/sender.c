@@ -33,7 +33,7 @@ char sendBuffer[] = "hello world";
 void radioRecvCb(void)  {
     static uint8_t buffer[128];
     int16_t len;
-    toggleRedLed();
+    redLedToggle();
     len = radioRecv(buffer, sizeof(buffer) - 1);
     if (len <= 0) {
         PRINTF("radio recv failed, len=%d\n", len);
@@ -51,7 +51,7 @@ void appMain(void)
     radioSetReceiveHandle(radioRecvCb);
     radioOn();
     for (;;) {
-        toggleGreenLed();
+        greenLedToggle();
         radioSend(sendBuffer, sizeof(sendBuffer));
         mdelay(600 + randomRand() % 400);
     }

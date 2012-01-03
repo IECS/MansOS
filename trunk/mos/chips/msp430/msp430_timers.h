@@ -136,7 +136,6 @@ enum {
     TBCTL = TBCLR; \
     /* src = ACLK, DIV = 8, INT = enabled, 16bit */ \
     TBCTL = TBSSEL_ACLK | ID_DIV8 | TBIE | CNTL_0; \
-    RESET_LAST_SLEEP_TIME();
 
 extern void msp430TimerBSet(uint16_t ms);
 
@@ -179,15 +178,6 @@ extern void msp430TimerBSet(uint16_t ms);
 
 #define ALARM_TIMER_INTERRUPT() ISR(TIMERA1, alarmTimerInterrupt)
 #define SLEEP_TIMER_INTERRUPT() ISR(TIMERB1, sleepTimerInterrupt)
-
-#ifdef USE_THREADS
-extern uint16_t lastSleepTime; // time the processor was sleeping (msecs)
-#  define RESET_LAST_SLEEP_TIME() lastSleepTime = 0
-#  define SET_ALARM_TIMER_VALUE(value) TAR = value
-
-#else
-#  define RESET_LAST_SLEEP_TIME()
-#endif
 
 #define platformTurnAlarmsOff() DISABLE_ALARM_INTERRUPT()
 #define platformTurnAlarmsOn() ENABLE_ALARM_INTERRUPT()

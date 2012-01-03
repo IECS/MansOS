@@ -24,7 +24,8 @@
 #include "ads1115.h"
 
 // Write ADS1114 register
-bool writeAdsRegister(uint8_t reg, uint16_t val){
+bool writeAdsRegister(uint8_t reg, uint16_t val)
+{
     uint8_t err = false;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
@@ -40,7 +41,8 @@ bool writeAdsRegister(uint8_t reg, uint16_t val){
 }
 
 // Read ADS1114 register
-bool readAdsRegister(uint8_t reg, uint16_t *val){
+bool readAdsRegister(uint8_t reg, uint16_t *val)
+{
     uint8_t err = false;
     *val = 0;
     Handle_t intHandle;
@@ -60,27 +62,29 @@ bool readAdsRegister(uint8_t reg, uint16_t *val){
     return err == 0;
 }
 
-ISR(PORT2, ads_interrupt)
+ISR(PORT2, adsInterrupt)
 {
     if (pinReadIntFlag(ADS_INT_PORT, ADS_INT_PIN)) {
-        PRINTF("got ads interrupt!\n");
+        //PRINTF("got ads interrupt!\n");
         pinClearIntFlag(ADS_INT_PORT, ADS_INT_PIN);
     } else {
-        PRINTF("got some other port2 interrupt!\n");
+        //PRINTF("got some other port2 interrupt!\n");
     }
 }
 
-void adsInit(){
-	i2cInit();
+void adsInit(void)
+{
+    i2cInit();
     adsActiveConfig = ADS_DEFAULT_CONFIG;
     writeAdsRegister(ADS_CONFIG_REGISTER, 0x8483);
     adsPowerDownSingleShotMode();
 }
 
-bool readAds(uint16_t *val){
-	// check for mode, begin conversion if neccesary
-	if (adsActiveConfig & ADS_MODE_MASK){
-		adsBeginSingleConversion();
-	}
-	return readAdsRegister(ADS_CONVERSION_REGISTER,val);
+bool readAds(uint16_t *val)
+{
+    // check for mode, begin conversion if neccesary
+    if (adsActiveConfig & ADS_MODE_MASK){
+        adsBeginSingleConversion();
+    }
+    return readAdsRegister(ADS_CONVERSION_REGISTER,val);
 }

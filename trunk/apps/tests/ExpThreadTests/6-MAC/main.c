@@ -22,8 +22,8 @@
  */
 
 #include "stdmansos.h"
-#include <net-expthreads/mac.h>
-#include <net-expthreads/linkQuality.h>
+#include <net/mac.h>
+#include <net/net-stats.h>
 
 uint8_t sendBuffer[100] = "X hello world";
 
@@ -31,7 +31,7 @@ static void macRecv(MacInfo_t *mi, uint8_t *data, uint16_t len)
 {
     PRINTF("got %d bytes from 0x%04x (0x%02x) \n",
             len, mi->originalSrc.shortAddr, *data);
-    toggleRedLed();
+    redLedToggle();
 }
 
 void appMain(void)
@@ -48,7 +48,7 @@ void appMain(void)
         intToAddr(dst, 0x0236);
     }
     neighbor = addNeighbor(dst.shortAddr);
-    while(true){
+    while (true) {
         for (i=0;i<10;i++) {
             sendBuffer[0] = '0' + counter++;
             if (counter >= 10) counter = 0;
@@ -61,8 +61,11 @@ void appMain(void)
             }
            mdelay(1000);
         }
-        PRINTF("sent:%d akcepted:%d => %d%%\t",linq[neighbor].sent,linq[neighbor].sentAkc,(100*linq[neighbor].sentAkc/linq[neighbor].sent));
-        PRINTF("recv:%d akcepted:%d => %d%%\n",linq[neighbor].recv,linq[neighbor].recvAkc,(100*linq[neighbor].recvAkc/linq[neighbor].recv));
-         
+        PRINTF("sent:%d akcepted:%d => %d%%\t",
+                linq[neighbor].sent, linq[neighbor].sentAck,
+                (100*linq[neighbor].sentAck / linq[neighbor].sent));
+        PRINTF("recv:%d akcepted:%d => %d%%\n",
+                linq[neighbor].recv, linq[neighbor].recvAck,
+                (100*linq[neighbor].recvAck / linq[neighbor].recv));
     }
 }

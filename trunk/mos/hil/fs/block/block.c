@@ -32,7 +32,6 @@
 #include <hil/fs/common.h>
 #include <hil/fs/types.h>
 #include <kernel/defines.h>
-#include <kernel/mos_sem.h>
 #include <kernel/stdtypes.h>
 #include <lib/assert.h>
 #include <lib/codec/crc.h>

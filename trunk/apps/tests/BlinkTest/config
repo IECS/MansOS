@@ -2,5 +2,5 @@
 # Application specific config file
 #
 
-USE_THREADS=y
+#USE_THREADS=y
 

@@ -22,8 +22,8 @@
  */
 
 #include "stdmansos.h"
-#include <net-expthreads/socket.h>
-#include <net-expthreads/routing.h>
+#include <net/socket.h>
+#include <net/routing.h>
 
 //-----------------
 // constants
@@ -37,7 +37,7 @@ static void recvData(Socket_t *socket, uint8_t *data, uint16_t len)
 {
     PRINTF("got %d bytes from 0x%04x (0x%02x) \n",
             len, socket->recvMacInfo->originalSrc.shortAddr, *data);
-    toggleRedLed();
+    redLedToggle();
 }
 
 static void sendData(Socket_t *socket)
@@ -64,7 +64,7 @@ void appMain(void)
     (void) sendData;
     for (;;) {
         // PRINT("in app main\n");
-        toggleRedLed();
+        redLedToggle();
         mdelay(SLEEP_TIME_MS);
     }
 #else

@@ -1,6 +1,0 @@
-#
-# Application specific config file
-#
-
-# Must be present for fibers to work.
-USE_FIBERS=y

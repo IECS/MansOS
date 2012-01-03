@@ -1,8 +1,7 @@
 #include "stdmansos.h"
 #include "smp.h"
 #include <kernel/reprogramming.h>
-#include <kernel/devmgr.h>
-#include <lib/dprint.h>
+#include <hil/snum.h>
 #include <net/addr.h>
 
 bool getMoteType(bool set, uint8_t oidLen, SmpOid_t oid,
@@ -57,13 +56,8 @@ bool getIeeeAddress(bool set, uint8_t oidLen, SmpOid_t oid,
         return false;
     }
 
-    devParams_t params;
-    devMgrErr_t ret;
-
     response->type = ST_UINTEGER64;
-    params.data = (char *) &response->u.uint64;
-    ret = devCall(DEV_SERIAL_NUMBER, 0, DMF_READ, &params);
-    return ret == DME_SUCCESS;
+    return halGetSerialNumber((uint8_t *) &response->u.uint64);
 }
 
 bool processLedCommand(bool set, uint8_t oidLen, SmpOid_t oid,
@@ -77,20 +71,17 @@ bool processLedCommand(bool set, uint8_t oidLen, SmpOid_t oid,
         return false;
     }
 
-    devParams_t params;
     uint8_t led = oid[0];
-    devMgrErr_t ret;
-
     if (set) {
-        params.data = (char *) &arg->u.uint8;
-        ret = devCall(DEV_LEDS, led, DMF_WRITE, &params);
-        if (ret != DME_SUCCESS) return false;
+        if (arg->u.uint8) {
+            ledsOn(1 << led);
+        } else {
+            ledsOff(1 << led);
+        }
     }
-
     response->type = ST_OCTET;
-    params.data = (char *) &response->u.uint8;
-    ret = devCall(DEV_LEDS, led, DMF_READ, &params);
-    return ret == DME_SUCCESS;
+    arg->u.uint8 = ledsGet() & (1 << led);
+    return true;
 }
 
 void ensureHumidityIsOn(void) {

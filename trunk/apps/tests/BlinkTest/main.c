@@ -25,10 +25,8 @@
 //      Blink regression test application.
 //-------------------------------------------
 
-#include "mansos.h"
-#include "leds.h"
-#include "scheduler.h"
-#include "assert.h"
+#include "stdmansos.h"
+#include <lib/assert.h>
 
 #define PAUSE 500
 
@@ -42,97 +40,72 @@ void appMain(void)
         static uint_t i;
         // test 1: counter 0-7
         for (i = 0; i < 8; ++i) {
-            setLeds(i);
-            threadSleep(PAUSE);
+            ledsSet(i);
+            msleep(PAUSE);
         }
 
         // test 2: all off, then red on/off, then green on/off, finally blue on/off
-        setLeds(0);
-        threadSleep(PAUSE);
+        ledsSet(0);
+        msleep(PAUSE);
         redLedOn();
-        threadSleep(PAUSE);
+        msleep(PAUSE);
         redLedOff();
-        threadSleep(PAUSE);
+        msleep(PAUSE);
 
         greenLedOn();
-        threadSleep(PAUSE);
+        msleep(PAUSE);
         greenLedOff();
-        threadSleep(PAUSE);
+        msleep(PAUSE);
 
         blueLedOn();
-        threadSleep(PAUSE);
+        msleep(PAUSE);
         blueLedOff();
-        threadSleep(PAUSE);
+        msleep(PAUSE);
 
         // test 3: all on, then blue off, green off, red off
-        setLeds(7);
-        threadSleep(PAUSE);
+        ledsSet(7);
+        msleep(PAUSE);
         blueLedOff();
-        threadSleep(PAUSE);
+        msleep(PAUSE);
         greenLedOff();
-        threadSleep(PAUSE);
+        msleep(PAUSE);
         redLedOff();
-        threadSleep(PAUSE);
+        msleep(PAUSE);
 
         // test 4: repeat last two tests with toggle
-        toggleRedLed();
-        threadSleep(PAUSE);
-        toggleRedLed();
-        threadSleep(PAUSE);
+        redLedToggle();
+        msleep(PAUSE);
+        redLedToggle();
+        msleep(PAUSE);
 
-        toggleGreenLed();
-        threadSleep(PAUSE);
-        toggleGreenLed();
-        threadSleep(PAUSE);
+        greenLedToggle();
+        msleep(PAUSE);
+        greenLedToggle();
+        msleep(PAUSE);
 
-        toggleBlueLed();
-        threadSleep(PAUSE);
-        toggleBlueLed();
-        threadSleep(PAUSE);
+        blueLedToggle();
+        msleep(PAUSE);
+        blueLedToggle();
+        msleep(PAUSE);
 
-        setLeds(7);
-        threadSleep(PAUSE);
-        toggleBlueLed();
-        threadSleep(PAUSE);
-        toggleGreenLed();
-        threadSleep(PAUSE);
-        toggleRedLed();
-        threadSleep(PAUSE);
+        ledsSet(7);
+        msleep(PAUSE);
+        blueLedToggle();
+        msleep(PAUSE);
+        greenLedToggle();
+        msleep(PAUSE);
+        redLedToggle();
+        msleep(PAUSE);
 
-        // test 5: the same with ledNrOn(nr) and ledOff(nr)
-        ledNrOn(0);
-        threadSleep(PAUSE);
-        ledNrOff(0);
-        threadSleep(PAUSE);
-
-        ledNrOn(1);
-        threadSleep(PAUSE);
-        ledNrOff(1);
-        threadSleep(PAUSE);
-
-        ledNrOn(2);
-        threadSleep(PAUSE);
-        ledNrOff(2);
-        threadSleep(PAUSE);
-
-        setLeds(7);
-        threadSleep(PAUSE);
-        ledNrOff(2);
-        threadSleep(PAUSE);
-        ledNrOff(1);
-        threadSleep(PAUSE);
-        ledNrOff(0);
-        threadSleep(PAUSE);
-
-        // test 6: check that isOn functions work
-        setLeds(0);
-        ASSERT(!isRedLedOn());
-        ASSERT(!isGreenLedOn());
-        ASSERT(!isBlueLedOn());
-        setLeds(7);
-        ASSERT(isRedLedOn());
-        ASSERT(isGreenLedOn());
-        ASSERT(isBlueLedOn());
+        // test 5: check that isOn functions work
+        ledsSet(0);
+        ASSERT(!redLedGet());
+        ASSERT(!greenLedGet());
+        ASSERT(!blueLedGet());
+        ledsSet(7);
+        ASSERT(redLedGet());
+        ASSERT(greenLedGet());
+        ASSERT(blueLedGet());
     } // EOF while (1)
 }
 

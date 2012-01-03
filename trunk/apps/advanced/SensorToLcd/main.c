@@ -38,7 +38,7 @@ void appMain(void)
     lcdInit();
     lcdOn();
     while(1) {
-        toggleRedLed();
+        redLedToggle();
         uint16_t light = readLight();
         // format buf string and print it
         snprintf(buf, sizeof(buf), "l = %i", light);

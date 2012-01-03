@@ -31,7 +31,7 @@
 # --------------------------------------------------------------------
 
 # Sources are all project source files, excluding MansOS files
-SOURCES = main.c ../../../mos/lib/tosmsg.c
+SOURCES = main.c
 
 # Module is the name of the main module buit by this makefile
 APPMOD = TosEncapsuleTest

@@ -2,6 +2,8 @@
 # Application specific config file
 #
 
+RESTRICT_PLATFORM_NOT=arduino atmega
+
 USE_THREADS   = n
 USE_EEPROM    = y
 USE_FLASH     = y

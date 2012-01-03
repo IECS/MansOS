@@ -1,9 +1,0 @@
-#
-# Application specific config file
-#
-
-USE_ADC=y
-USE_THREADS=y
-USE_RADIO=y
-USE_NET=y
-USE_FLASH=y

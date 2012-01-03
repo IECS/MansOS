@@ -29,7 +29,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <hil/alarm.h>
+#include <hil/alarms.h>
 #include <hil/extflash.h>
 #include <hil/fs/types.h>
 
@@ -60,10 +60,12 @@ static inline uint32_t serviceAddr(blk_t block, fsOff_t offset)
 
 extern Alarm_t fsBlockFlashAlarm;
 
+#if 0 // TODO: broken for now with the new alarms
+
 /* Begin working with flash */
 static inline void enableFlash(void)
 {
-    if (!removeAlarm(&fsBlockFlashAlarm))
+    if (!alarmRemove(&fsBlockFlashAlarm))
     {
         /* If the flash has already been put to sleep */
         extFlashWake();
@@ -76,7 +78,7 @@ static inline void disableFlash(void)
     alarmRegister(&fsBlockFlashAlarm);
 }
 
-#if 0 /* Alternative variants */
+#else /* Alternative variants */
 
 static inline void enableFlash(void)
 {
