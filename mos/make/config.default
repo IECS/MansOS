@@ -69,7 +69,6 @@ USE_EXP_THREADS ?= n
 
 #TODO: what are these?
 USE_TELOSB_FLASH ?= n
-USE_TELOSB_HUMIDITY ?= n
 
 #TODO:
 #USE_PRINT_SERIAL ?= y
