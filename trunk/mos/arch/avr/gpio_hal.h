@@ -66,6 +66,19 @@
 #define OPORT11 PORTK
 #define OPORT12 PORTL
 
+#define IPIN1 PINA
+#define IPIN2 PINB
+#define IPIN3 PINC
+#define IPIN4 PIND
+#define IPIN5 PINE
+#define IPIN6 PINF
+#define IPIN7 PING
+#define IPIN8 PINH
+#define IPIN9 NOT_A_PIN
+#define IPIN10 PINJ
+#define IPIN11 PINK
+#define IPIN12 PINL
+
 // Some folks use letters
 #define PORTADIR DDRA
 #define PORTBDIR DDRB
@@ -109,12 +122,12 @@
 #define PIN_AS_DATA( portnum, pinnum )
 
 
-#define PORT_READ( portnum ) OPORT##portnum
+#define PORT_READ( portnum ) IPIN##portnum
 
 #define PORT_WRITE( portnum, val ) OPORT##portnum = val
 
 #define PIN_READ( portnum, pinnum ) \
-    ((OPORT##portnum & (1 << (pinnum))) ? 1 : 0)
+    ((IPIN##portnum & (1 << (pinnum))) ? 1 : 0)
 
 #define PIN_WRITE( portnum, pinnum, val )       \
   OPORT##portnum =                             \
