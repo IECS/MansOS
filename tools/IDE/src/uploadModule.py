@@ -114,7 +114,7 @@ class UploadModule(wx.Dialog):
             self.updateStatus("Starting compile...")
             self.saveToFile()
             os.chdir(self.tmpDir)
-            upload = subprocess.Popen([self.API.path + "/../sadlang/sadlang", self.tmpDir + self.filename], 
+            upload = subprocess.Popen([self.API.path + "/../seal/seal", self.tmpDir + self.filename], 
                                       stderr = subprocess.STDOUT,
                                       stdout = subprocess.PIPE)
             out, err = upload.communicate()

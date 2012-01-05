@@ -1,4 +1,4 @@
-import editDialog
+import editStatement
 
 class ConditionalModule:
     def __init__(self, graphics, API, changeTitle):
@@ -39,7 +39,7 @@ class ConditionalModule:
         self.condition['else'].append([])
         
     def boxClbk(self, event):
-        print event.GetEventObject().GetValue()+" selected!"  
+        #print event.GetEventObject().GetValue()+" selected!"  
         if event.GetEventObject().GetName() == "when":
             # If last row in this section then we add another row
             if self.whenActions[-1][0] == event.GetEventObject():
@@ -54,7 +54,7 @@ class ConditionalModule:
         self.condition[self.editedObjData[3]][self.editedObjData[2]] = [None,event.GetEventObject().GetValue()]
         
     def buttonClbk(self, event):
-        print "Button 'Edit "+event.GetEventObject().GetName()+"' clicked! "  
+        #print "Button 'Edit "+event.GetEventObject().GetName()+"' clicked! "  
         self.editedObjData = self.getActionData(event.GetEventObject())
         if self.editedObjData[1] not in self.API.keyWords:
             print "No action choosed, ignore!"
@@ -72,7 +72,7 @@ class ConditionalModule:
         self.dialog.Destroy()
         
     def fieldClbk(self, event):
-        print "Field '"+event.GetEventObject().GetValue()+"' edited! "
+        #print "Field '"+event.GetEventObject().GetValue()+"' edited! "
 
         self.dialog = editDialog.editDialog(None, 'Edit ' + 
                                               event.GetEventObject().GetName(), 
@@ -83,8 +83,8 @@ class ConditionalModule:
         self.dialog.Destroy()
 
     def dialogSave(self, save, data, name):
-        print data
-        print name
+        #print data
+        #print name
         if (save == True):
             self.condition[self.editedObjData[3]][self.editedObjData[2]][0] = data
             self.editedObjData[0][2].SetValue(self.API.generateCmd(data, self.editedObjData[0][0].GetValue()))
