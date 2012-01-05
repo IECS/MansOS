@@ -3,7 +3,7 @@
 import wx
 import os
 # Go to real directory for those imports
-os.chdir(os.path.dirname(os.path.realpath(__file__.split("/")[-1])))
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
 from src import tabManager
 from src import uploadModule
 from src import listenModule
