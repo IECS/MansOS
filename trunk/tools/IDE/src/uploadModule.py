@@ -7,8 +7,6 @@ import shutil
 
 class UploadModule(wx.Dialog):
     def __init__(self, parent, title, API):
-        wx.MessageBox(API.path, 'Info', 
-            wx.OK | wx.ICON_INFORMATION)
         super(UploadModule, self).__init__(parent = parent, 
             title = title, size = (500, 400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.filename = "SADlang"
@@ -74,6 +72,8 @@ class UploadModule(wx.Dialog):
         self.updateStatus("Changed platform to " + self.platform)
     
     def getMotelist(self, event = None):
+        wx.MessageBox("Motelist start", 'Info', 
+            wx.OK | wx.ICON_INFORMATION)
         motelist = []
         # get motelist output as string... |-(
         process = subprocess.Popen(["motelist"], 
@@ -83,6 +83,8 @@ class UploadModule(wx.Dialog):
         
         # remove table header and split into lines, ("-----") + 6 used to be 
         # sure it's end of header, not random symbol in data
+        wx.MessageBox("Motelist done", 'Info', 
+            wx.OK | wx.ICON_INFORMATION)
         self.ports.Clear()
         if motes.find("No devices found") == False:
             self.haveMote = False
@@ -129,6 +131,8 @@ class UploadModule(wx.Dialog):
             if event != None:
                 self.removeTmpDir()
         except OSError, e:
+            wx.MessageBox("Exception" + str(sys.stderr), 'Info', 
+            wx.OK | wx.ICON_INFORMATION)
             print >>sys.stderr, "execution failed:", e
             self.updateStatus(str(e))
             
