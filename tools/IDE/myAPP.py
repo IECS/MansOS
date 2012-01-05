@@ -52,8 +52,6 @@ class Example(wx.Frame):
         print "Save not suported :("
         
     def OnUpload(self, e):
-        wx.MessageBox(self.path, 'Info', 
-            wx.OK | wx.ICON_INFORMATION)
         dialog = uploadModule.UploadModule(None, 'Upload and compile', self.API)
         dialog.ShowModal()
         dialog.Destroy()
