@@ -76,7 +76,8 @@ class UploadModule(wx.Dialog):
             wx.OK | wx.ICON_INFORMATION)
         motelist = []
         # get motelist output as string... |-(
-        process = subprocess.Popen(["motelist"], 
+        print self.API.path + "../../mos/make/scripts/motelist"
+        process = subprocess.Popen([self.API.path + "/../../mos/make/scripts/motelist"], 
                                       stderr = subprocess.STDOUT,
                                       stdout = subprocess.PIPE)
         motes, err = process.communicate()
