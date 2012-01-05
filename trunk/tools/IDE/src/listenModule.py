@@ -79,7 +79,7 @@ class ListenModule(wx.Dialog):
         while self.listening:
             s = ser.read(1000)
             if len(s) > 0:
-               self.updateStatus(s, False)
+                self.updateStatus(s, False)
             time.sleep(0.5)
             wx.Yield()
         ser.close()
@@ -88,7 +88,7 @@ class ListenModule(wx.Dialog):
     def getMotelist(self, event = None):
         motelist = []
         # get motelist output as string... |-(
-        process = subprocess.Popen(["motelist"], 
+        process = subprocess.Popen([self.API.path + "/../../mos/make/scripts/motelist"], 
                                       stderr = subprocess.STDOUT,
                                       stdout = subprocess.PIPE)
         motes, err = process.communicate()

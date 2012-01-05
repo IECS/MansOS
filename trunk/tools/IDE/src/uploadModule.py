@@ -72,11 +72,8 @@ class UploadModule(wx.Dialog):
         self.updateStatus("Changed platform to " + self.platform)
     
     def getMotelist(self, event = None):
-        wx.MessageBox("Motelist start", 'Info', 
-            wx.OK | wx.ICON_INFORMATION)
         motelist = []
         # get motelist output as string... |-(
-        print self.API.path + "../../mos/make/scripts/motelist"
         process = subprocess.Popen([self.API.path + "/../../mos/make/scripts/motelist"], 
                                       stderr = subprocess.STDOUT,
                                       stdout = subprocess.PIPE)
@@ -84,8 +81,6 @@ class UploadModule(wx.Dialog):
         
         # remove table header and split into lines, ("-----") + 6 used to be 
         # sure it's end of header, not random symbol in data
-        wx.MessageBox("Motelist done", 'Info', 
-            wx.OK | wx.ICON_INFORMATION)
         self.ports.Clear()
         if motes.find("No devices found") == False:
             self.haveMote = False
@@ -132,8 +127,8 @@ class UploadModule(wx.Dialog):
             if event != None:
                 self.removeTmpDir()
         except OSError, e:
-            wx.MessageBox("Exception" + str(sys.stderr), 'Info', 
-            wx.OK | wx.ICON_INFORMATION)
+            wx.MessageBox("Exception" + str(sys.stderr), 'Error', 
+                          wx.OK | wx.ICON_ERROR)
             print >>sys.stderr, "execution failed:", e
             self.updateStatus(str(e))
             
