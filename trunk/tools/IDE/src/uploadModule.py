@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import wx
 import subprocess
 import sys
@@ -6,6 +7,8 @@ import shutil
 
 class UploadModule(wx.Dialog):
     def __init__(self, parent, title, API):
+        wx.MessageBox(API.path, 'Info', 
+            wx.OK | wx.ICON_INFORMATION)
         super(UploadModule, self).__init__(parent = parent, 
             title = title, size = (500, 400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.filename = "SADlang"
