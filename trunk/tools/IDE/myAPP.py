@@ -14,7 +14,7 @@ class Example(wx.Frame):
     
     def __init__(self,  *args, **kwargs):
         super(Example, self).__init__(*args, **kwargs)
-        # Get path, her must use only file name, __file__ sometimes contains more than that
+        # Get path, here must use only file name, __file__ sometimes contains more than that
         self.path = os.path.dirname(os.path.realpath(__file__.split("/")[-1]))
         
     def addAPI(self, API):

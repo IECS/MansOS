@@ -222,7 +222,7 @@ include ${MOSROOT}/mos/make/Makefile
         #if os.path.exists(self.API.path +"/temp/"+ self.filename) & os.path.isfile(self.filename):
         #    self.updateStatus("Overwriting " + self.filename + " file.")
         with open(self.tmpDir + self.filename, "w") as out:
-            out.write(self.API.generateAll())
+            out.write(self.API.getActiveEditor().code.GetText())
     
     def checkForTempDir(self):
         if not os.path.exists(self.tmpDir):
