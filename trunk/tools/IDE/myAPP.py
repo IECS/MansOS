@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 import wx
 import os
 # Go to real directory for those imports
@@ -45,7 +46,7 @@ class Example(wx.Frame):
         
     def OnQuit(self, e):
         self.Close()
-        
+         
     def OnSave(self, e):
         print "Save not suported :("
         
@@ -66,9 +67,7 @@ def main():
     frame.addAPI(API)
     tabManager.tabManager(frame, API)
     frame.Show()
-    with open('sampleCode', 'r') as f:
-        read_data = f.read()
-        seal = sealStruct.Seal(read_data)
+    
     ex.MainLoop()
 
 if __name__ == '__main__':

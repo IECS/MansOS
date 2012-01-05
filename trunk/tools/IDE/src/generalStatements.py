@@ -20,8 +20,6 @@ class MainPanel(scrolled.ScrolledPanel):
         self.main.Add(self.use, 0, flag = wx.EXPAND | wx.RIGHT );
         self.main.Add(self.read, 0, flag = wx.EXPAND | wx.RIGHT )
         self.main.Add(self.sink, 0, flag = wx.EXPAND | wx.RIGHT )
-        
-        
     
     def redrawAll(self):
         #Layout sizers
@@ -44,7 +42,7 @@ class MainPanel(scrolled.ScrolledPanel):
         self.use.Add(inputField, pos = (self.use.GetRows(), 1),
                       flag = wx.EXPAND | wx.RIGHT );
         return inputField
-            
+    
     def addRead(self, keyWord, btnCallback):
         button = wx.Button(self, label = "Edit " + keyWord, size=(150, -1), name = keyWord)
         self.Bind(wx.EVT_BUTTON, btnCallback, button)
@@ -53,9 +51,9 @@ class MainPanel(scrolled.ScrolledPanel):
         self.read.SetRows(self.read.GetRows() + 1)
         self.read.Add(button, (self.read.GetRows(), 0 ))
         self.read.Add(inputField, (self.read.GetRows(), 1),
-                      flag = wx.EXPAND | wx.RIGHT ) 
+                      flag = wx.EXPAND | wx.RIGHT )
         return inputField
-                    
+
     def addSink(self, keyWord, btnCallback):
         button = wx.Button(self, label = "Edit " + keyWord, size=(150, -1), name = keyWord)
         self.Bind(wx.EVT_BUTTON, btnCallback, button)
@@ -64,5 +62,5 @@ class MainPanel(scrolled.ScrolledPanel):
         self.sink.SetRows(self.sink.GetRows() + 1)
         self.sink.Add(button, (self.sink.GetRows(), 0 ))
         self.sink.Add(inputField, (self.sink.GetRows(), 1),
-                      flag = wx.EXPAND | wx.RIGHT ) 
+                      flag = wx.EXPAND | wx.RIGHT )
         return inputField

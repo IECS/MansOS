@@ -1,4 +1,4 @@
-import editDialog
+import editStatement
 
 class MainModule:
     
@@ -15,31 +15,31 @@ class MainModule:
         self.graphics.redrawAll()
         
     def initUse(self):
-        print "useInit start... "
+        #print "useInit start... "
         for obj in self.API.getObjects("use"):
             self.use[obj] = self.graphics.addUse(obj, self.useBtnClk)
-            print "  Added "+obj
-        print "done!"
-        print self.use
+            #print "  Added "+obj
+        #print "done!"
+        #print self.use
         
     
     def initRead(self):
-        print "readInit start... "
+        #print "readInit start... "
         for obj in self.API.getObjects("read"):
             self.read[obj] = self.graphics.addRead(obj, self.readBtnClk)
-            print "  Added "+obj
-        print "done!"
+            #print "  Added "+obj
+        #print "done!"
     
     
     def initSink(self):
-        print "sinkInit start... "
+        #print "sinkInit start... "
         for obj in self.API.getObjects("output"):
             self.sink[obj] = self.graphics.addSink(obj, self.sinkBtnClk)
-            print "  Added "+obj
-        print "done!"
+            #print "  Added "+obj
+        #print "done!"
         
     def useBtnClk(self, event):
-        print "Button 'Edit "+event.GetEventObject().GetName()+"' clicked! "
+        #print "Button 'Edit "+event.GetEventObject().GetName()+"' clicked! "
 
         self.dialog = editDialog.editDialog(None, 'Edit ' + 
                                               event.GetEventObject().GetName(), 
@@ -57,8 +57,8 @@ class MainModule:
         self.dialog.Destroy()
         
     def readBtnClk(self, event):
-        print "Button 'Edit "+event.GetEventObject().GetName()+"' clicked! "
-        print self.API.readObjects
+        #print "Button 'Edit "+event.GetEventObject().GetName()+"' clicked! "
+        #print self.API.readObjects
         self.dialog = editDialog.editDialog(None, 'Edit ' + 
                                               event.GetEventObject().GetName(), 
                                               self.API.getParams('read'),
@@ -75,7 +75,7 @@ class MainModule:
         self.dialog.Destroy()
         
     def sinkBtnClk(self, event):
-        print "Button 'Edit "+event.GetEventObject().GetName()+"' clicked! "
+        #print "Button 'Edit "+event.GetEventObject().GetName()+"' clicked! "
 
         self.dialog = editDialog.editDialog(None, 'Edit ' + 
                                               event.GetEventObject().GetName(), 
