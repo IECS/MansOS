@@ -119,7 +119,12 @@ class Seal():
     def generateStatementObject(self, statement, comment):
         #print statement
         parts = statement.split(",")
-        statementType, statementObject = parts[0].strip().split(" ", 1)
+        statementParts = parts[0].strip().split(" ", 1)
+        statementType = statementParts[0]
+        if len(statementParts) > 1:
+            statementObject = statementParts[1]
+        else:
+            statementObject = ''
         #print statementType, statementObject
         # Create new Statment class object and fill in all values
         # weird, but can't miss [] as parameter and give comment by name, 

@@ -71,8 +71,6 @@ class editDialog(wx.Dialog):
         if (event.GetEventObject().GetName() == "save"):
             result = self.condition.getComments() + 'when ' + self.box.GetValue() + ':\n' + self.whenCode.GetText() + 'else\n' + self.elseCode.GetText() + 'end'
             data = sealStruct.Seal(self.API, result)
-            print result
-            print data.getStruct()
             self.saveCallback(True, data.getStruct()['conditions'][0])
         else:
             self.saveCallback(False, None)
