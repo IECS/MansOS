@@ -10,7 +10,6 @@ import sealStruct
 import editStatement
 import editCondition
 
-debug = True
 class CodeEditor(wx.stc.StyledTextCtrl):
 
     def __init__(self, parent, API):
@@ -52,12 +51,6 @@ class CodeEditor(wx.stc.StyledTextCtrl):
             self.SetMarginWidth(0, self.TextWidth(wx.stc.STC_STYLE_LINENUMBER, (width + 1) * '0'))
         else:
             self.SetMarginWidth(0, 0)
-
-            
-    def doSmtng(self, event):
-        print "did smtng... :)", event.GetEventObject().GetCurLine()
-        print "#", self.GetCharHeight()
-        print event.GetPosition(), event.GetX(), event.GetY()
 
     def on_paint(self, event):
         self.activePoints = []
@@ -103,22 +96,26 @@ class CodeEditor(wx.stc.StyledTextCtrl):
         if self.API.getStatementType(self.GetLine(line)) < self.API.CONDITION_CONTINUE:
             # Get statement and corresponding lines
             statement = self.findAllStatement(line)
+            # Get prefix(whitespaces), so output is correctly tabbed
+            selectedLine = self.GetLine(statement[2])
+            whitespaceCount = len(selectedLine) - len(selectedLine.lstrip())
+            self.spaces = selectedLine[:whitespaceCount]
+            
             self.SetSelection(self.PositionFromLine(statement[1]), self.PositionFromLine(statement[3] + 1))
             # Create new sealStruct instance only for this statement
             seal = sealStruct.Seal(self.API, statement[0])
             data = seal.getStruct()
             if seal.generateAllStatements() == "":
-                print "Condition"
+                #print "Condition"
                 data = data['conditions'][0]
                 self.dialog = editCondition.editDialog(None, self.API, data,self.conditionDialogClbk)
                 self.Disable()
                 self.dialog.ShowModal()
                 self.dialog.Destroy()
             elif seal.generateAllConditions() == "":
-                print "Statement"
+                #print "Statement"
                 data = data['statements'][0]
                 self.dialog = editStatement.editDialog(None, "Edit", self.API, data, self.statementDialogClbk)
-
                 self.dialog.ShowModal()
                 self.dialog.Destroy()
             else:
@@ -128,14 +125,14 @@ class CodeEditor(wx.stc.StyledTextCtrl):
             
     def statementDialogClbk(self, action, statement):
         if action == True:
-            self.ReplaceSelection('\n' + statement.getAll() + '\n')
+            self.ReplaceSelection(self.spaces + statement.getAll() + '\n')
         #print statement.getAll()
         self.dialog.Destroy()
         self.Enable()
     
     def conditionDialogClbk(self, action, statement):
         if action == True:
-            self.ReplaceSelection('\n' + statement.getAll() + '\n')
+            self.ReplaceSelection(statement.getAll(self.spaces) + '\n')
         #print statement.getAll()
         self.dialog.Destroy()
         self.Enable()
@@ -173,7 +170,7 @@ class CodeEditor(wx.stc.StyledTextCtrl):
         endNr = lineNr
         # Search for comments before current line
         while (self.API.getStatementType(self.GetLine(startNr)) == self.API.IGNORE
-              and startNr > -1):
+              and startNr > -1 and self.GetLine(startNr) != '\n'):
             startNr -= 1
         startNr += 1
         

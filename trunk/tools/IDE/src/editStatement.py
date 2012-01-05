@@ -7,7 +7,7 @@ class editDialog(wx.Dialog):
     
     def __init__(self, parent, title, API, statement, saveCallback):
         super(editDialog, self).__init__(parent = parent, 
-            title = "Edit " + statement.getTypeAndObject(), size = (500, 400),
+            size = (500, 400),
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.saveCallback = saveCallback
         self.API = API
@@ -48,6 +48,7 @@ class editDialog(wx.Dialog):
                       wx.ALL,        #   and make border all around
                       1 );         # set border width to 10))
         
+        self.updateTitle()
         self.SetSizer(self.main)
         self.main.Fit(self)
         self.Show()
@@ -80,6 +81,9 @@ class editDialog(wx.Dialog):
         self.actuator.SetValue(statement.getType())
         self.obj = wx.ComboBox(self, choices = self.API.getActuatorInfo(statement.getType())['objects'], 
                                 style = wx.CB_DROPDOWN, name = "object")
+        # Only for title change,
+        self.Bind(wx.EVT_COMBOBOX, self.updateTitle, self.obj)
+        self.Bind(wx.EVT_TEXT, self.updateTitle, self.obj)
         self.obj.SetValue(statement.getObject())
         # Add them to layout
         self.data.Add(self.actuatorText, pos = (0, 0))
@@ -111,18 +115,17 @@ class editDialog(wx.Dialog):
     
     def onActuatorChange(self, event):
         actuator = self.actuator.GetValue()
+        self.updateTitle()
         # Don't clear if this is already selected
         if actuator == self.statement.getType():
             return
         allActuators = self.API.getActuatorInfo(actuator)
         if allActuators != None:
-            print "#", actuator,"$", allActuators
             # Generate new statement
             statement = Statement.Statement(actuator,
                                             self.obj.GetValue(),
                                             [],
                                             self.statement.getComments())
-            print "@",statement.getAll()
             self.statement = statement
             definition = self.API.getActuatorInfo(statement.getType())
             data = definition['parameters']
@@ -148,3 +151,6 @@ class editDialog(wx.Dialog):
         self.objText.Destroy()
         self.obj.Destroy()
         self.data.Clear()
+    
+    def updateTitle(self, event = None):
+        self.SetTitle("Edit \"" + self.actuator.GetValue() +" " + self.obj.GetValue() + "\"")

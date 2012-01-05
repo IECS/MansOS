@@ -47,28 +47,28 @@ class Condition():
         self.__conditionComment = self.__conditionComment.strip()
     
     # Return generated SEAL code from this statement
-    def getCode(self):
-        result = 'when ' + self.getCondition() + ':\n'
+    def getCode(self, prefix = ''):
+        result = prefix + 'when ' + self.getCondition() + ':\n'
         for x in self.__whenStatements:
-            result += "\t" + x.getAll() + '\n'
+            result += prefix + "\t" + x.getAll() + '\n'
         if self.__elseStatements != []:
-            result += "else:\n"
+            result += prefix + "else:\n"
             for x in self.__elseStatements:
-                result += "\t" + x.getAll() + '\n'
-        result += 'end\n'
+                result += prefix + "\t" + x.getAll() + '\n'
+        result += prefix + 'end\n'
         return result
     
     # Return comments associated with this statement
-    def getComments(self):
+    def getComments(self, prefix = ''):
         if self.__conditionComment == '':
             return ''
         else:
-            return self.__conditionComment + '\n'
+            return prefix + self.__conditionComment + '\n'
     
     # Return generated SEAL code from this statement and
     # comments associated with this statement
-    def getAll(self):
-        return self.getComments() + self.getCode()
+    def getAll(self, prefix = ''):
+        return self.getComments(prefix) + self.getCode(prefix)
     
     # Return condition
     def getCondition(self):
