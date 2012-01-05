@@ -3,7 +3,7 @@
 import wx
 import os
 # Go to real directory for those imports
-os.chdir(os.path.dirname(os.path.realpath(__file__)))
+os.chdir(os.path.dirname(os.path.realpath(__file__.split("/")[-1])))
 from src import tabManager
 from src import uploadModule
 from src import listenModule
@@ -52,6 +52,8 @@ class Example(wx.Frame):
         print "Save not suported :("
         
     def OnUpload(self, e):
+        wx.MessageBox(self.path, 'Info', 
+            wx.OK | wx.ICON_INFORMATION)
         dialog = uploadModule.UploadModule(None, 'Upload and compile', self.API)
         dialog.ShowModal()
         dialog.Destroy()
