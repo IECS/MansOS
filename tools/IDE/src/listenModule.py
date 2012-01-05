@@ -126,7 +126,6 @@ class ListenModule(wx.Dialog):
             self.output.SetValue(message + self.output.GetValue())
         
 
-
 def listenSerial():
     global BAUDRATE
     global serialPort
