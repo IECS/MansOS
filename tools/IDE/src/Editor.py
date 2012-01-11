@@ -90,6 +90,9 @@ class CodeEditor(wx.stc.StyledTextCtrl):
     # Hack for really redrawing all window not part of it, which causes circles to be incorrect
     def doRefresh(self, event):
         self.Refresh(True)
+        # Mark that file has changed
+        self.GetParent().saveState = False
+        self.GetParent().GetParent().markAsUnsaved()
         
     def getAction(self, event):
         line = self.LineFromPosition(event.GetPosition())
@@ -164,6 +167,8 @@ class CodeEditor(wx.stc.StyledTextCtrl):
         else:
             # Here we must be on top of text
             self.SetCursor(wx.StockCursor(wx.CURSOR_CHAR))
+        # Allow other functions binded to this event to be called
+        event.Skip(True)
             
     def findAllStatement(self, lineNr):
         startNr = lineNr - 1

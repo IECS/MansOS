@@ -15,14 +15,7 @@ class ApiCore:
         # All defined platforms
         self.__platforms = ["telosb", "sadmote", "atmega", "waspmote"]
         
-        # Active editor number
-        self.__activeEditorNr = 0
-        
-        # All editor pages currently opened
-        self.__editors = []
-        
         # All actuators and other keywords goes here
-        # TODO: change parameters to Parameter objects, so their order is correct
         self.__actuators = {
             'use': {
                 'objects': ['Led', 'RedLed','GreenLed','BlueLed'],
@@ -108,18 +101,3 @@ class ApiCore:
     
     def getPlatforms(self):
         return self.__platforms
-    
-    def addEditor(self, editor):
-        self.__editors.append(editor)
-        
-    def getEditor(self, nr):
-        return self.__editors[nr]
-    
-    def getActiveEditor(self):
-        return self.getEditor(self.getActiveEditorNr())
-    
-    def setActiveEditorNr(self, nr):
-        self.__activeEditorNr = nr
-    
-    def getActiveEditorNr(self):
-        return self.__activeEditorNr

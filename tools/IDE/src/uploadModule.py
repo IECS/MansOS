@@ -219,10 +219,10 @@ include ${MOSROOT}/mos/make/Makefile
     
     def saveToFile(self):
         self.checkForTempDir()
-        #if os.path.exists(self.API.path +"/temp/"+ self.filename) & os.path.isfile(self.filename):
-        #    self.updateStatus("Overwriting " + self.filename + " file.")
         with open(self.tmpDir + self.filename, "w") as out:
-            out.write(self.API.getActiveEditor().code.GetText())
+            # Maybe should try to make this shorter
+            out.write(self.GetParent().tabManager.GetPage(
+                self.GetParent().tabManager.GetSelection()).code.GetText())
     
     def checkForTempDir(self):
         if not os.path.exists(self.tmpDir):
