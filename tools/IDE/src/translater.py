@@ -44,6 +44,8 @@ class Translater:
                 "Options": "Uzstādījumi",
                 "New": "Jauns",
                 "Save": "Saglabāt",
+                "Save as": "Saglabāt kā",
+                "Reload": "Pārlādēt",
                 "Open": "Atvērt",
                 "Upload": "Augšupielādēt",
                 "Read output": "Klausīties",
@@ -63,6 +65,7 @@ class Translater:
                 "before close it?": "pirms to aizvērt?",
                 "Create empty document": "Izveidot tukšu dokumentu",
                 "Save document": "Saglabāt dokumentu",
+                "Save document as": "Saglabāt dokumentu kā",
                 "Open document": "Atvērt dokukmentu",
                 "Open upload window": "Atvērt augšupielādes logu",
                 "Open read output window": "Atvērt klausīšanās logu",
@@ -78,7 +81,9 @@ class Translater:
                 "Uploaded successfully!": "Augšupielādēšana pabeigta veiksmīgi",
                 "Start listening": "Sākt klausīties",
                 "Stop listening": "Beigt klausīties",
-                "Change language": "Nomainīt valodu"
+                "Change language": "Nomainīt valodu",
+                "Add statement": "Pievienot darbību",
+                "Add condition": "Pievienot nosacījumu"
                 }
         }
         

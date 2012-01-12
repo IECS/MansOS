@@ -12,12 +12,14 @@ import editCondition
 
 class CodeEditor(wx.stc.StyledTextCtrl):
 
-    def __init__(self, parent, API):
+    def __init__(self, parent, API, noUpdate = False):
         wx.stc.StyledTextCtrl.__init__(self, parent)
         #self.SetText("\n")
         self.activePoints = []
         self.activeRadius = 0
         self.API = API
+        self.spaces = ''
+        self.noUpdate = noUpdate
         
         # Set scroll bar range
         self.SetEndAtLastLine(True)
@@ -91,8 +93,9 @@ class CodeEditor(wx.stc.StyledTextCtrl):
     def doRefresh(self, event):
         self.Refresh(True)
         # Mark that file has changed
-        self.GetParent().saveState = False
-        self.GetGrandParent().markAsUnsaved()
+        if self.noUpdate == False:
+            self.GetParent().saveState = False
+            self.GetGrandParent().markAsUnsaved()
         
     def getAction(self, event):
         line = self.LineFromPosition(event.GetPosition())
@@ -143,6 +146,20 @@ class CodeEditor(wx.stc.StyledTextCtrl):
         self.dialog.Destroy()
         self.Enable()
         
+    def addStatement(self):
+        self.getPlaceForAdding()
+        self.dialog = editStatement.editDialog(None, 
+                             self.API, '', self.statementDialogClbk)
+        self.dialog.ShowModal()
+        self.dialog.Destroy()
+    
+    def addCondition(self):
+        self.getPlaceForAdding()
+        self.dialog = editCondition.editDialog(None, 
+                            self.API, '', self.statementDialogClbk)
+        self.dialog.ShowModal()
+        self.dialog.Destroy()
+    
     def calcDist(self, point1, point2):
         # Pitagor theorem for distance calculating between two points
         a = abs(point1[0] - point2[0])
@@ -196,3 +213,11 @@ class CodeEditor(wx.stc.StyledTextCtrl):
         for x in range(startNr, endNr + 1):
             statement += self.GetLine(x)
         return (statement, startNr, lineNr,endNr)
+
+    def getPlaceForAdding(self):
+        self.LineEndDisplay()
+        if self.GetCurLine()[0] == '\n':
+            self.AddText("\n")
+        else:
+            self.AddText("\n\n")
+        

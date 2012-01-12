@@ -1,6 +1,7 @@
 import wx
 import Editor
 import sealStruct
+import Condition
 
 class editDialog(wx.Dialog):
     def __init__(self, parent, API, condition, saveCallback):
@@ -12,6 +13,8 @@ class editDialog(wx.Dialog):
         
         self.SetTitle(self.tr("Edit condition"))
         self.saveCallback = saveCallback
+        if condition == '':
+            condition = Condition.Condition()
         self.condition = condition
         # Global sizer for current tab
         self.main = wx.BoxSizer(wx.VERTICAL)
@@ -30,9 +33,9 @@ class editDialog(wx.Dialog):
                       wx.ALL,        #   and make border all around
                       1 );         # set border width to 10))
         
-        self.whenCode = Editor.CodeEditor(self, self.API)
+        self.whenCode = Editor.CodeEditor(self, self.API, True)
         self.whenCode.AddText(condition.getWhenStatementsCode())
-        self.elseCode = Editor.CodeEditor(self, self.API)
+        self.elseCode = Editor.CodeEditor(self, self.API, True)
         self.elseCode.AddText(condition.getElseStatementsCode())
         self.box = self.addStatementField(self.API.getDefaultConditions(), None)
         self.box.SetValue(condition.getCondition())

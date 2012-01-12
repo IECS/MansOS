@@ -87,7 +87,7 @@ class Seal():
                 self.processedObject = None
                 #print "Finished condition "
             else:
-                print "This shouldn't happen"
+                print "This shouldn't happen", role
         elif len(roles) == 2:
             # Find where to split string
             lastIndex = max([statement.find(roles.keys()[0]),statement.find(roles.keys()[1])])

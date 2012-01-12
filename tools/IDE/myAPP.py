@@ -29,15 +29,17 @@ class Example(wx.Frame):
         fileMenu = wx.Menu()        
         new = fileMenu.Append(wx.ID_NEW, '&' + self.tr('New') + '\tCtrl+N', 
                               self.tr('Create empty document'))
-        save = fileMenu.Append(wx.ID_SAVE, '&' + self.tr('Save') + '\tCtrl+N', 
-                              self.tr('Save document'))
-        open = fileMenu.Append(wx.ID_OPEN, '&' + self.tr('Open') + '\tCtrl+N', 
+        open = fileMenu.Append(wx.ID_OPEN, '&' + self.tr('Open') + '\tCtrl+O', 
                               self.tr('Open document'))
-        upload = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Upload') + '\tCtrl+N', 
+        save = fileMenu.Append(wx.ID_SAVE, '&' + self.tr('Save') + '\tCtrl+S', 
+                              self.tr('Save document'))
+        saveAs = fileMenu.Append(wx.ID_SAVEAS, '&' + self.tr('Save as') + '\tCtrl+A', 
+                              self.tr('Save document as'))
+        upload = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Upload') + '\tCtrl+U', 
                               self.tr('Open upload window'))
-        output = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Read output') + '\tCtrl+N', 
+        output = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Read output') + '\tCtrl+R', 
                               self.tr('Open read output window'))
-        close = fileMenu.Append(wx.ID_EXIT, '&' + self.tr('Exit') + '\tCtrl+N', 
+        close = fileMenu.Append(wx.ID_EXIT, '&' + self.tr('Exit') + '\tCtrl+Q', 
                               self.tr('Exit application'))
         
         optionMenu = wx.Menu()
@@ -65,8 +67,9 @@ class Example(wx.Frame):
         
         # First bind to menu
         self.Bind(wx.EVT_MENU, self.OnQuit, close)
-        self.Bind(wx.EVT_MENU, self.OnSave, save)
         self.Bind(wx.EVT_MENU, self.OnOpen, open)
+        self.Bind(wx.EVT_MENU, self.OnSave, save)
+        self.Bind(wx.EVT_MENU, self.OnSaveAs, saveAs)
         self.Bind(wx.EVT_MENU, self.OnUpload, upload)
         self.Bind(wx.EVT_MENU, self.OnOutput, output)
         self.Bind(wx.EVT_MENU, self.OnNew, new)
@@ -87,6 +90,11 @@ class Example(wx.Frame):
         saveTool = self.toolbar.AddLabelTool(wx.ID_SAVE, self.tr('Save'),
                                 wx.Bitmap(self.path + '/src/Icons/save.png'))
         self.toolbar.AddSeparator()
+        addStatementTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Add statement'),
+                                wx.Bitmap(self.path + '/src/Icons/add_statement.png'))
+        addConditionTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Add condition'),
+                                wx.Bitmap(self.path + '/src/Icons/add_condition.png'))
+        self.toolbar.AddSeparator()
         uplTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Upload'),
                                 wx.Bitmap(self.path + '/src/Icons/upload.png'))
         outputTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Read output'),
@@ -100,6 +108,8 @@ class Example(wx.Frame):
         # defined ID already binded from menu, weird side effect.
         self.Bind(wx.EVT_TOOL, self.OnUpload, uplTool)
         self.Bind(wx.EVT_TOOL, self.OnOutput, outputTool)
+        self.Bind(wx.EVT_TOOL, self.OnAddStatement, addStatementTool)
+        self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
         
     def OnQuit(self, e):
         if self.tabManager.onQuitCheck() == True:
@@ -107,6 +117,9 @@ class Example(wx.Frame):
          
     def OnSave(self, e):
         self.tabManager.doPopupSave(None)
+        
+    def OnSaveAs(self, e):
+        self.tabManager.doPopupSaveAs(None)
         
     def OnUpload(self, e):
         dialog = uploadModule.UploadModule(None, 
@@ -132,6 +145,16 @@ class Example(wx.Frame):
         if open.ShowModal() == wx.ID_OK:
             self.tabManager.addPage(open.GetPath())
         open.Destroy()
+    
+    def OnAddStatement(self, event):
+        print "adding statement"
+        self.tabManager.getPageObject().code.addStatement()
+    
+    
+    def OnAddCondition(self, event):
+        print "adding condition"
+        self.tabManager.getPageObject().code.addCondition()
+        
     
     def changeLanguage(self, event):
         for i in self.langs:

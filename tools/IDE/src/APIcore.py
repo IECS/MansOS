@@ -89,7 +89,12 @@ class ApiCore:
     def getActuatorInfo(self, actuator):
         if actuator in self.__actuators:
             return self.__actuators[actuator]
-        return None
+        # Return empty object
+        return {
+                'objects': [],
+                'parameters': [],
+                'role': self.IGNORE
+                }
     
     # Get all actuators, who have role == self.STATEMENT
     def getAllStatementActuators(self):
