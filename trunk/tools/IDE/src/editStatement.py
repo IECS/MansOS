@@ -1,5 +1,4 @@
 import wx
-import translater
 import Parameter
 import Statement
 
@@ -21,6 +20,8 @@ class editDialog(wx.Dialog):
         self.main.AddSpacer((10, 10))
         self.choices = []
         self.text = []
+        if statement == '':
+            statement = Statement.Statement()
         self.statement = statement
         definition = self.API.getActuatorInfo(statement.getType())
         data = definition['parameters']

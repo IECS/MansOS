@@ -22,14 +22,16 @@ class EditorManager(scrolled.ScrolledPanel):
         self.hasAFile = False
         
     def update (self, initFilePath = ''):
+        if initFilePath == '':
+            initFilePath = self.filePath
         if os.path.exists(initFilePath) & os.path.isfile(initFilePath):
+            # Load file into editor
             self.code.LoadFile(initFilePath)
+            # Draw margins
             self.changeCode('', False)
-            self.fileName = initFilePath.split('/')[-1]
+            # Update editor info
+            self.updateInfo(initFilePath, saveState = True, hasAFile = True)
             self.GetParent().titleChange(self.fileName)
-            self.hasAFile = True
-            self.filePath = initFilePath
-            self.saveState = True
         else:
             self.changeCode()
             
@@ -62,3 +64,15 @@ class EditorManager(scrolled.ScrolledPanel):
         self.code.SaveFile(self.filePath)
         self.saveState = True
         self.GetParent().markAsSaved()
+    
+    def updateInfo(self, path = '', fileName = '', saveState = '', hasAFile = ''):
+        if path != '':
+            self.filePath = path
+            self.fileName = path.split("/")[-1]
+        if fileName != '':
+            self.fileName = fileName
+        if saveState != '':
+            self.saveState = saveState
+        if hasAFile != '':
+            self.hasAFile = hasAFile
+        

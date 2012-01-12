@@ -40,11 +40,15 @@ class tabManager(wx.Notebook):
         self.SetSelection(self.HitTest(event.GetPositionTuple())[0])
 
         menu = wx.Menu()
-        self.popupRename = menu.Append(wx.ID_REPLACE, '&Rename\tCtrl+R', "Rename")
-        self.popupSave = menu.Append(wx.ID_SAVE,'&Save\tCtrl+S', "Save")
-        self.popupSaveAs = menu.Append(wx.ID_SAVEAS, '&Save As\tCtrl+A', "Save As")
-        self.popupClose = menu.Append(wx.ID_CLOSE, '&Close\tCtrl+W',"Close")
-        self.Bind(wx.EVT_MENU, self.doPopupRename, self.popupRename)
+        self.popupReload = menu.Append(wx.ID_REPLACE, '&' + self.tr("Reload") + 
+                                       '\tCtrl+R', self.tr("Reload"))
+        self.popupSave = menu.Append(wx.ID_SAVE,'&' + self.tr('Save') + 
+                                     '\tCtrl+S', self.tr("Save"))
+        self.popupSaveAs = menu.Append(wx.ID_SAVEAS, '&' + self.tr("Save as") + 
+                                       '\tCtrl+A', self.tr("Save As"))
+        self.popupClose = menu.Append(wx.ID_CLOSE, '&' + self.tr('Close') + 
+                                      '\tCtrl+W',self.tr("Close"))
+        self.Bind(wx.EVT_MENU, self.doPopupReload, self.popupReload)
         self.Bind(wx.EVT_MENU, self.doPopupSave, self.popupSave)
         self.Bind(wx.EVT_MENU, self.doPopupSaveAs, self.popupSaveAs)
         self.Bind(wx.EVT_MENU, self.doPopupClose, self.popupClose)
@@ -57,33 +61,39 @@ class tabManager(wx.Notebook):
         self.PopupMenu(menu)
         menu.Destroy()
         
-    def doPopupRename(self, event):
-        print "rename"
-    
+    def doPopupReload(self, event):
+        self.getPageObject().update()
+        
     def doPopupSave(self, event):
         if self.getPageObject().hasAFile == True:
             self.getPageObject().save()
         else:
             save = wx.FileDialog(self, 
-                self.tr("Save") + " " + 
-                    str(self.GetPageText(self.GetSelection())),
+                self.tr("Save") + " \""  + 
+                    str(self.GetPageText(self.GetSelection())) + '"',
                 wildcard = 'Seal ' + self.tr('files') + ' (*.sl)|*.sl|' + 
                     self.tr('All files') + '|*',
-                style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+                style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+                defaultFile = self.getPageObject().fileName)
             if save.ShowModal() == wx.ID_OK:
-                self.getPageObject().code.SaveFile(save.GetPath())
-                self.getPageObject().saveState = True
-                self.markAsSaved()
+                self.getPageObject().updateInfo(path = save.GetPath())
+                self.getPageObject().save()
             save.Destroy()
             
     def doPopupSaveAs(self, event):
         save = wx.FileDialog(self, 
-            "Save as " + str(self.GetPageText(self.GetSelection())),
+            self.tr("Save as") + " \"" + 
+            str(self.GetPageText(self.GetSelection())) +'"',
             wildcard = 'Seal ' + self.tr('files') + ' (*.sl)|*.sl|' + 
                     self.tr('All files') + '|*',
-            style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+            style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+            defaultFile = self.getPageObject().fileName)
         if save.ShowModal() == wx.ID_OK:
-            self.getPageObject().code.SaveFile(save.GetPath())
+            if save.GetPath()[-3:] != '.sl':
+                self.getPageObject().updateInfo(path = save.GetPath() + '.sl')
+            else:
+                self.getPageObject().updateInfo(path = save.GetPath())
+            self.getPageObject().save()
         save.Destroy()
             
     def doPopupClose(self, event, checkConsequences = True):
