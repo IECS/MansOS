@@ -3,13 +3,17 @@ import emptyTab
 import editorManager
 
 class tabManager(wx.Notebook):
-    def __init__(self, parent):
+    def __init__(self, parent, API):
         wx.Notebook.__init__(self, parent)
         self.empty = emptyTab.EmptyTab(self)
+        self.API = API
+        # Just a shorter name
+        self.tr = self.API.translater.translate
+        
         # Need to set because next statement uses it
         self.nextPageNr = 1
-        self.AddPage(editorManager.EditorManager(self), 
-                     "Untitled Document " + str(self.nextPageNr))
+        self.AddPage(editorManager.EditorManager(self, self.API), 
+                self.tr("Untitled document") + ' ' + str(self.nextPageNr))
         #self.AddPage(ex, "General statements", True)
         self.AddPage(self.empty, "+")
         self.getPageObject().update('sampleCode')
@@ -20,8 +24,8 @@ class tabManager(wx.Notebook):
     def onPageChanged(self, event):
         sel = self.GetSelection()
         if self.GetPageCount() - 1 == sel:
-            self.AddPage(editorManager.EditorManager(self), 
-                         "Untitled Document " + str(self.nextPageNr))
+            self.AddPage(editorManager.EditorManager(self, self.API), 
+                self.tr("Untitled document") + ' ' + str(self.nextPageNr))
             self.nextPageNr += 1
             self.RemovePage(sel)
             self.AddPage(self.empty, "+")
@@ -61,8 +65,10 @@ class tabManager(wx.Notebook):
             self.getPageObject().save()
         else:
             save = wx.FileDialog(self, 
-                "Save " + str(self.GetPageText(self.GetSelection())),
-                wildcard = 'Seal files (*.sl)|*.sl|All files|*',
+                self.tr("Save") + " " + 
+                    str(self.GetPageText(self.GetSelection())),
+                wildcard = 'Seal ' + self.tr('files') + ' (*.sl)|*.sl|' + 
+                    self.tr('All files') + '|*',
                 style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
             if save.ShowModal() == wx.ID_OK:
                 self.getPageObject().code.SaveFile(save.GetPath())
@@ -73,7 +79,8 @@ class tabManager(wx.Notebook):
     def doPopupSaveAs(self, event):
         save = wx.FileDialog(self, 
             "Save as " + str(self.GetPageText(self.GetSelection())),
-            wildcard = 'Seal files (*.sl)|*.sl|All files|*',
+            wildcard = 'Seal ' + self.tr('files') + ' (*.sl)|*.sl|' + 
+                    self.tr('All files') + '|*',
             style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
         if save.ShowModal() == wx.ID_OK:
             self.getPageObject().code.SaveFile(save.GetPath())
@@ -118,8 +125,11 @@ class tabManager(wx.Notebook):
         if self.getPageObject().saveState == False:
             # Initiate DialogBox
             dialog = wx.MessageDialog(self, 
-                'Save changes to "'+ self.getPageObject().fileName + '" before close it?',
-                'Unsaved document "'+ self.getPageObject().fileName + '"', 
+                self.tr('Save changes to') + ' "' + 
+                    self.getPageObject().fileName + '" ' + 
+                    self.tr('before close it?'),
+                self.tr('Unsaved document') + ' "'+ 
+                    self.getPageObject().fileName + '"', 
                 wx.YES_NO | wx.CANCEL | wx.ICON_EXCLAMATION)
             
             retVal = dialog.ShowModal()

@@ -2,6 +2,7 @@ import re
 import string
 import sealStruct 
 import Parameter
+import translater
 
 class ApiCore:
     def __init__(self):
@@ -11,7 +12,7 @@ class ApiCore:
         self.CONDITION_CONTINUE = 2 # such as else
         self.CONDITION_END = 3 # such as end
         self.IGNORE = 4 # such as comments, empty lines etc.
-        
+
         # All defined platforms
         self.__platforms = ["telosb", "sadmote", "atmega", "waspmote"]
         
@@ -67,6 +68,8 @@ class ApiCore:
         self.__reActuators = re.compile(string.join(self.__actuators.keys(), '|'), re.I)
         
         self.seal = sealStruct.Seal(self)
+        
+        self.translater = translater.Translater()
         
     # Return regex for finding actuators
     def getReActuators(self):

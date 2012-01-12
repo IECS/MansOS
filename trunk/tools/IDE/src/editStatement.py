@@ -5,12 +5,14 @@ import Statement
 
 class editDialog(wx.Dialog):
     
-    def __init__(self, parent, title, API, statement, saveCallback):
+    def __init__(self, parent, API, statement, saveCallback):
         super(editDialog, self).__init__(parent = parent, 
             size = (500, 400),
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.saveCallback = saveCallback
         self.API = API
+        # Just a shorter name
+        self.tr = self.API.translater.translate
         self.main = wx.BoxSizer(wx.VERTICAL)
         self.data = wx.GridBagSizer(hgap = 2, vgap = 1)
         #self.main.Add(wx.StaticText(self, label = "Edit " + statement.getTypeAndObject()))
@@ -28,14 +30,16 @@ class editDialog(wx.Dialog):
         self.generatePatameterSelects(data, statement)
         
         self.buttonPane = wx.BoxSizer(wx.HORIZONTAL)
-        self.save = wx.Button(self, label = "Save", size = (150, -1), name = "save")
+        self.save = wx.Button(self, label = self.tr("Save"),
+                              size = (150, -1), name = "save")
         self.Bind(wx.EVT_BUTTON, self.saveClk, self.save)
         self.buttonPane.Add(self.save,
                       1,            # make vertically stretchable
                       wx.EXPAND |    # make horizontally stretchable
                       wx.ALL,        #   and make border all around
                       1 );         # set border width to 10))
-        self.close = wx.Button(self, label = "Close", size = (150, -1), name = "close")
+        self.close = wx.Button(self, label = self.tr("Close"),
+                               size = (150, -1), name = "close")
         self.Bind(wx.EVT_BUTTON, self.saveClk, self.close)
         self.buttonPane.Add(self.close,
                       0,            # make vertically stretchable
@@ -72,8 +76,8 @@ class editDialog(wx.Dialog):
 
     def generateActuatorSelect(self, statement):
         # Generate all objects
-        self.actuatorText = wx.StaticText(self, label = translater.translate("Edit actuator:"))
-        self.objText = wx.StaticText(self, label = translater.translate("Edit object:"))
+        self.actuatorText = wx.StaticText(self, label = self.tr("Edit actuator:"))
+        self.objText = wx.StaticText(self, label = self.tr("Edit object:"))
         self.actuator = wx.ComboBox(self, choices = self.API.getAllStatementActuators(), 
                                 style = wx.CB_DROPDOWN, name = "actuator")
         self.Bind(wx.EVT_COMBOBOX, self.onActuatorChange, self.actuator)
@@ -96,7 +100,7 @@ class editDialog(wx.Dialog):
     def generatePatameterSelects(self, data, statement):
         # Cycle all parameters and draw according boxes
         for parameter in data:
-            self.text.append(wx.StaticText(self, label = translater.translate(parameter.getName()) + ":"))
+            self.text.append(wx.StaticText(self, label = self.tr(parameter.getName()) + ":"))
             self.data.Add(self.text[-1], pos = (self.row,0))
             if parameter.getValue() != None:
                 self.choices.append(wx.ComboBox(self, choices = parameter.getValue(), 
@@ -153,4 +157,5 @@ class editDialog(wx.Dialog):
         self.data.Clear()
     
     def updateTitle(self, event = None):
-        self.SetTitle("Edit \"" + self.actuator.GetValue() +" " + self.obj.GetValue() + "\"")
+        self.SetTitle(self.tr("Edit") + " \"" + 
+                self.actuator.GetValue() +" " + self.obj.GetValue() + "\"")
