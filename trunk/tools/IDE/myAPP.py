@@ -48,7 +48,7 @@ class Example(wx.Frame):
         for i in self.API.translater.translations.keys():
             self.langs.append(language.Append(wx.ID_ANY, 
                     self.API.translater.translations[i]['langName'], i, kind = wx.ITEM_RADIO))
-            if i == self.API.translater.activeLanguage:
+            if i == self.API.getSetting("activeLanguage"):
                 language.Check(self.langs[-1].GetId(), True)
             self.Bind(wx.EVT_MENU, self.changeLanguage, self.langs[-1])
         
@@ -113,6 +113,7 @@ class Example(wx.Frame):
         
     def OnQuit(self, e):
         if self.tabManager.onQuitCheck() == True:
+            self.API.saveSettings()
             self.Close()
          
     def OnSave(self, e):
@@ -147,19 +148,15 @@ class Example(wx.Frame):
         open.Destroy()
     
     def OnAddStatement(self, event):
-        print "adding statement"
         self.tabManager.getPageObject().code.addStatement()
     
-    
     def OnAddCondition(self, event):
-        print "adding condition"
         self.tabManager.getPageObject().code.addCondition()
         
-    
     def changeLanguage(self, event):
         for i in self.langs:
             if i.IsChecked() == True:
-                self.API.translater.activeLanguage = i.GetHelp()
+                self.API.setSetting("activeLanguage", i.GetHelp())
                 self.InitUI()
 
 def main():
