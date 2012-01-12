@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 class Translater:
-    def __init__(self):
+    def __init__(self, parent):
+        self.parent = parent
         self.translations = { 
             "ENG" :{
                 'langName':"English",
@@ -87,11 +88,9 @@ class Translater:
                 }
         }
         
-        self.activeLanguage = "LV"
-        
     def translate(self, data, lang = ''):
         if lang == '':
-            lang = self.activeLanguage
+            lang = self.parent.getSetting("activeLanguage")
         if data in self.translations[lang]:
             return self.translations[lang][data]
         return data

@@ -3,9 +3,23 @@ import string
 import sealStruct 
 import Parameter
 import translater
+import cPickle
+import os
 
 class ApiCore:
     def __init__(self):
+        # Setting file name
+        self.__settingFile = ".SEAL"
+        if os.path.exists(self.__settingFile) & os.path.isfile(self.__settingFile):
+            f = open(self.__settingFile, 'r')
+            self.__settings = cPickle.load(f)
+            f.close()
+        else:
+            # All variables placed here is saved to configuration file and 
+            # reloaded next run time. See setSetting and getSetting.
+            self.__settings = {
+                   "activeLanguage" : "LV"
+               }
         # Actuator roles
         self.STATEMENT = 0 # such as use, read, output
         self.CONDITION_START = 1 # such as when
@@ -69,7 +83,7 @@ class ApiCore:
         
         self.seal = sealStruct.Seal(self)
         
-        self.translater = translater.Translater()
+        self.translater = translater.Translater(self)
         
     # Return regex for finding actuators
     def getReActuators(self):
@@ -109,3 +123,16 @@ class ApiCore:
     
     def getPlatforms(self):
         return self.__platforms
+    
+    def getSetting(self, setting):
+        if setting in self.__settings:
+            return self.__settings[setting]
+        return ''
+    
+    def setSetting(self, name, value):
+        self.__settings[name] = value
+        
+    def saveSettings(self):
+        f = open(self.__settingFile, 'w')
+        cPickle.dump(self.__settings, f)
+        f.close()
