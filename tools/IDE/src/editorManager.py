@@ -1,22 +1,23 @@
 import wx
 import wx.lib.scrolledpanel as scrolled
 import Editor
-import APIcore
 import os
 
 class EditorManager(scrolled.ScrolledPanel):
-    def __init__(self, parent):
+    def __init__(self, parent, API):
         scrolled.ScrolledPanel.__init__(self, parent)
         
-        self.API = APIcore.ApiCore();
+        self.API = API;
+        # Just a shorter name
+        self.tr = self.API.translater.translate
         self.initUI()
         ### Editor visible variables
         # @ creation we assume document is saved.
         self.saveState = True
         # Filename or untitled document
-        self.fileName = 'Untitled Document ' + str(self.GetParent().nextPageNr)
+        self.fileName = self.tr('Untitled Document') + ' ' + str(self.GetParent().nextPageNr)
         # Filename and full path(relative or absolute)
-        self.filePath = 'Untitled Document ' + str(self.GetParent().nextPageNr)
+        self.filePath = self.tr('Untitled Document') + ' ' + str(self.GetParent().nextPageNr)
         # This marks if document already have a file attached to it
         self.hasAFile = False
         
@@ -61,4 +62,3 @@ class EditorManager(scrolled.ScrolledPanel):
         self.code.SaveFile(self.filePath)
         self.saveState = True
         self.GetParent().markAsSaved()
-        print self.code.GetText()

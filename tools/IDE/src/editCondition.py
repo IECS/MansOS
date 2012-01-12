@@ -5,8 +5,12 @@ import sealStruct
 class editDialog(wx.Dialog):
     def __init__(self, parent, API, condition, saveCallback):
         super(editDialog, self).__init__(parent = parent, 
-            title = "Edit condition", style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+             style = wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.API = API
+        # Just a shorter name
+        self.tr = self.API.translater.translate
+        
+        self.SetTitle(self.tr("Edit condition"))
         self.saveCallback = saveCallback
         self.condition = condition
         # Global sizer for current tab
@@ -34,10 +38,10 @@ class editDialog(wx.Dialog):
         self.box.SetValue(condition.getCondition())
         
         self.buttonPane = wx.BoxSizer(wx.HORIZONTAL)
-        self.save = wx.Button(self, label = "Save", size = (150, -1), name = "save")
+        self.save = wx.Button(self, label = self.tr("Save"), size = (150, -1), name = "save")
         self.Bind(wx.EVT_BUTTON, self.saveClk, self.save)
         self.buttonPane.Add(self.save, 0)
-        self.close = wx.Button(self, label = "Close", size = (150, -1), name = "close")
+        self.close = wx.Button(self, label = self.tr("Close"), size = (150, -1), name = "close")
         self.Bind(wx.EVT_BUTTON, self.saveClk, self.close)
         self.buttonPane.Add(self.close, 0)
         self.main.Add(self.buttonPane, 0)

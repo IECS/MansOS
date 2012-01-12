@@ -92,7 +92,7 @@ class CodeEditor(wx.stc.StyledTextCtrl):
         self.Refresh(True)
         # Mark that file has changed
         self.GetParent().saveState = False
-        self.GetParent().GetParent().markAsUnsaved()
+        self.GetGrandParent().markAsUnsaved()
         
     def getAction(self, event):
         line = self.LineFromPosition(event.GetPosition())
@@ -111,14 +111,17 @@ class CodeEditor(wx.stc.StyledTextCtrl):
             if seal.generateAllStatements() == "":
                 #print "Condition"
                 data = data['conditions'][0]
-                self.dialog = editCondition.editDialog(None, self.API, data,self.conditionDialogClbk)
-                self.Disable()
+                self.disableRedraw = True
+                self.dialog = editCondition.editDialog(self.GetGrandParent(), 
+                                    self.API, data, self.conditionDialogClbk)
                 self.dialog.ShowModal()
                 self.dialog.Destroy()
+                self.disableRedraw = False
             elif seal.generateAllConditions() == "":
                 #print "Statement"
                 data = data['statements'][0]
-                self.dialog = editStatement.editDialog(None, "Edit", self.API, data, self.statementDialogClbk)
+                self.dialog = editStatement.editDialog(None, 
+                                    self.API, data, self.statementDialogClbk)
                 self.dialog.ShowModal()
                 self.dialog.Destroy()
             else:

@@ -7,14 +7,16 @@ import sys
 import threading
 import time
 
-BAUDRATE=38400
-serialPort='/dev/ttyUSB0'
+BAUDRATE = 38400
+serialPort = '/dev/ttyUSB0'
 
 class ListenModule(wx.Dialog):
     def __init__(self, parent, title, API):
         super(ListenModule, self).__init__(parent = parent, 
             title = title, size = (500, 400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.API = API
+        # Just a shorter name
+        self.tr = self.API.translater.translate
         self.haveMote = False
         self.listening = False
 
@@ -26,8 +28,8 @@ class ListenModule(wx.Dialog):
         self.output.SetForegroundColour("White")
         
         self.ports = wx.ComboBox(self, choices = [], size = (300, -1))
-        self.clear = wx.Button(self, label="Start listening")
-        self.refresh = wx.Button(self, label="Refresh")
+        self.clear = wx.Button(self, label=self.tr("Start listening"))
+        self.refresh = wx.Button(self, label=self.tr("Refresh"))
         
         self.listenControls.Add(self.ports)
         self.listenControls.Add(self.refresh)
@@ -60,9 +62,9 @@ class ListenModule(wx.Dialog):
 
         self.listening = not self.listening
         if self.listening:
-            self.clear.label = 'Stop listening'
+            self.clear.label = self.tr('Stop listening')
         else:
-            self.clear.label = 'Start listening'
+            self.clear.label = self.tr('Start listening')
 
         if self.listening:
             while True:
@@ -98,7 +100,7 @@ class ListenModule(wx.Dialog):
         self.ports.Clear()
         if motes.find("No devices found") == False:
             self.haveMote = False
-            self.ports.SetValue("No devices found")
+            self.ports.SetValue(self.tr("No devices found"))
             return None
         
         for x in motes[motes.rfind("-----") + 6: ].split("\n"):
@@ -110,7 +112,7 @@ class ListenModule(wx.Dialog):
             if len(x) > 2:
                 self.ports.Append(x[1]+" - "+ x[2])
         self.haveMote = True
-        self.ports.SetValue("Use default device")
+        self.ports.SetValue(self.tr("Use default device"))
         return motelist
     
     def changeTarget(self, event):
