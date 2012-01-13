@@ -3,7 +3,7 @@
 #
 
 # only for sadmote
-RESTRICT_PLATFORM=sadmote
+PLATFORM_ONLY=sadmote
 
 USE_RADIO=n
 USE_APDS9300=y

@@ -4,12 +4,15 @@ MansOS operating system, credits.
 MansOS operating system has been developed since 2007 
 with the following people contributing to the project at various times:
 
-* Leo Selavo
-* Girts Strazdins
-* Atis Elsts
-* Janis Gengeris
-* Raimonds Samofals
-* Leons Bekkers
+* Leo Selavo (project idea and lead)
+* Girts Strazdins (from 2008)
+* Atis Elsts (from 2008)
+* Janis Judvaitis (from 2011)
+* Andrey Vihrov (from 2011)
+* Viesturs Silins (from 2011)
+* Janis Gengeris (2007-2009)
+* Raimonds Samofals (2007-2009)
+* Leons Bekkers (2007-2008)
 
 
 Certain aspects of MansOS have been influenced by the following other projects:

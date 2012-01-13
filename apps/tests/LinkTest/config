@@ -2,7 +2,7 @@
 # Application specific config file
 #
 
-RESTRICT_PLATFORM_NOT=pc
+PLATFORM_EXCLUDE=pc
 
 USE_EXP_THREADS=y
 USE_RADIO=y

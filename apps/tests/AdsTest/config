@@ -3,7 +3,7 @@
 #
 
 # only for sadmote
-RESTRICT_PLATFORM=sadmote
+PLATFORM_ONLY=sadmote
 
 USE_SOFT_I2C=y
 USE_ADS1115=y

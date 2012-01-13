@@ -3,6 +3,6 @@
 #
 
 # only for telosb
-RESTRICT_PLATFORM=telosb
+PLATFORM_ONLY=telosb
 
 USE_USER_BUTTON=y

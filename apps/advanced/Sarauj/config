@@ -3,7 +3,7 @@
 #
 
 # Only for atmega for now
-RESTRICT_PLATFORM=atmega
+PLATFORM_ONLY=atmega
 
 USE_ADC = y
 USE_I2C = y

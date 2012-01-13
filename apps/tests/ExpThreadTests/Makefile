@@ -1,4 +1,3 @@
-
 all:
 	(cd 0-Lockup; $(MAKE) telosb)
 	(cd 0-Overflow-User; $(MAKE) telosb)
