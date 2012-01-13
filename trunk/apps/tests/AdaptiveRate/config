@@ -2,7 +2,7 @@
 # Application specific config file
 #
 
-RESTRICT_PLATFORM_NOT=arduino atmega
+PLATFORM_EXCLUDE=arduino atmega
 
 USE_THREADS   = n
 USE_EEPROM    = y

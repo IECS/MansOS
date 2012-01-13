@@ -3,7 +3,7 @@
 #
 
 # only for Arduino?
-RESTRICT_PLATFORM = arduino
+PLATFORM_ONLY = arduino
 
 #USE_THREADS=y
 USE_ADC = y

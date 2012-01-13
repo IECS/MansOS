@@ -1,2 +1,2 @@
-RESTRICT_PLATFORM_NOT=arduino atmega
+PLATFORM_EXCLUDE=arduino atmega
 USE_ADC = y

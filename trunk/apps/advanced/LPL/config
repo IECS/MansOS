@@ -2,7 +2,7 @@
 # Application specific config file
 #
 
-RESTRICT_PLATFORM=telosb
+PLATFORM_ONLY=telosb
 
 USE_RADIO=y
 USE_RANDOM=y
