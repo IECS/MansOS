@@ -1,5 +1,5 @@
-use RedLed, period 1s, on_at 1500ms, off_at 4500ms;
----asd
+use RedLed, on_at 1500ms, off_at 4500ms;
+---
 read Light, period 2s;
 
 output Serial, baudrate 38400;

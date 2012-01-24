@@ -3,19 +3,23 @@ import string
 import sealStruct 
 import Parameter
 import translater
-import cPickle
 import os
+from time import gmtime, strftime
+import globals as g
 
 class ApiCore:
     def __init__(self):
-        # Setting file name
-        self.__settingFile = ".SEAL"
-        if os.path.exists(self.__settingFile) & os.path.isfile(self.__settingFile):
-            f = open(self.__settingFile, 'r')
-            self.__settings = cPickle.load(f)
+        if os.path.exists(g.SETTING_FILE) & os.path.isfile(g.SETTING_FILE):
+            f = open(g.SETTING_FILE, 'r')
+            lines = f.readlines()
+            self.__settings = {}
+            for x in lines:
+                if x != '':
+                    key, value = x.split(":")
+                    self.__settings[key] = value.strip()
             f.close()
         else:
-            # All variables placed here is saved to configuration file and 
+            # All variables placed here will be saved to configuration file and 
             # reloaded next run time. See setSetting and getSetting.
             self.__settings = {
                    "activeLanguage" : "LV"
@@ -131,8 +135,29 @@ class ApiCore:
     
     def setSetting(self, name, value):
         self.__settings[name] = value
+        # Make sure, that settings are saved on unexpected exit
+        # XXX: is this correct???
+        self.saveSettings()
         
     def saveSettings(self):
-        f = open(self.__settingFile, 'w')
-        cPickle.dump(self.__settings, f)
+        os.chdir(self.path)
+        f = open(g.SETTING_FILE, 'w')
+        for key in self.__settings:
+            f.write(key + ":" + self.__settings[key] + '\n')
         f.close()
+    
+    def logMsg(self, msgType, msgText):
+        if msgType <= g.LOG:
+            # Generate message
+            dbgMsg = str(strftime("%S:%M:%H %d.%m.%Y", gmtime())) + ": " 
+            dbgMsg += g.LOG_TEXTS[msgType] + " - " + str(msgText) + '\n'
+            if g.LOG_TO_CONSOLE:
+                print dbgMsg
+            if g.LOG_TO_FILE:
+                path = os.getcwd()
+                os.chdir(self.path)
+                # File should be openned @startup and closed @shutdown, performace!
+                f = open(g.LOG_FILE_NAME, "a")
+                f.write(dbgMsg)
+                f.close()
+                os.chdir(path)

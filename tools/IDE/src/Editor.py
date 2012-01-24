@@ -9,6 +9,7 @@ from math import sqrt
 import sealStruct 
 import editStatement
 import editCondition
+import globals as g
 
 class CodeEditor(wx.stc.StyledTextCtrl):
 
@@ -66,28 +67,29 @@ class CodeEditor(wx.stc.StyledTextCtrl):
             lineH = width
         # Adjust margins to current zoom
         self.SetMarginWidth(0, width)
-        self.SetMarginWidth(1, lineH)
-        #print width, lineH
-        # Set x coordinate for Button Margin(1)
-        x = width + lineH/2
-        #print self.GetLineCount()
-        # Cycle each line and add button if necessary
-        for i in range(0, self.GetLineCount()):
-            if self.API.getStatementType(self.GetLine(i)) < self.API.CONDITION_CONTINUE:
-                #print "Added circle"
-                dc.SetPen(wx.Pen("BLACK", 1))
-                #print i,"=>",self.PointFromPosition(self.PositionFromLine(i-1)), self.GetLine(i-1)
-                y = self.PointFromPosition(self.PositionFromLine(i))[1] + lineH/2
-                # Draw Circle
-                dc.DrawCirclePoint((x,y),lineH/3) 
-                # Draw +
-                dc.SetPen(wx.Pen("BLUE", 1))
-                dc.DrawLine(x-lineH/4, y, x + lineH/4, y)
-                dc.DrawLine(x, y-lineH/4, x, y + lineH/4)
-                self.activePoints.append(((x, y), i))
-        self.activeRadius = lineH/2
-        #print lineH
-        #print self.activePoints
+        if self.GetParent().projectType == g.SEAL_PROJECT:
+            self.SetMarginWidth(1, lineH)
+            #print width, lineH
+            # Set x coordinate for Button Margin(1)
+            x = width + lineH/2
+            #print self.GetLineCount()
+            # Cycle each line and add button if necessary
+            for i in range(0, self.GetLineCount()):
+                if self.API.getStatementType(self.GetLine(i)) < self.API.CONDITION_CONTINUE:
+                    #print "Added circle"
+                    dc.SetPen(wx.Pen("BLACK", 1))
+                    #print i,"=>",self.PointFromPosition(self.PositionFromLine(i-1)), self.GetLine(i-1)
+                    y = self.PointFromPosition(self.PositionFromLine(i))[1] + lineH/2
+                    # Draw Circle
+                    dc.DrawCirclePoint((x,y),lineH/3) 
+                    # Draw +
+                    dc.SetPen(wx.Pen("BLUE", 1))
+                    dc.DrawLine(x-lineH/4, y, x + lineH/4, y)
+                    dc.DrawLine(x, y-lineH/4, x, y + lineH/4)
+                    self.activePoints.append(((x, y), i))
+            self.activeRadius = lineH/2
+            #print lineH
+            #print self.activePoints
     
     # Hack for really redrawing all window not part of it, which causes circles to be incorrect
     def doRefresh(self, event):
@@ -112,8 +114,11 @@ class CodeEditor(wx.stc.StyledTextCtrl):
             seal = sealStruct.Seal(self.API, statement[0])
             data = seal.getStruct()
             if seal.generateAllStatements() == "":
-                #print "Condition"
-                data = data['conditions'][0]
+                # Check for empty condition, aka "when" only
+                if len(data['conditions']) == 0:
+                    data = ''
+                else:
+                    data = data['conditions'][0]
                 self.disableRedraw = True
                 self.dialog = editCondition.editDialog(self.GetGrandParent(), 
                                     self.API, data, self.conditionDialogClbk)
@@ -128,7 +133,7 @@ class CodeEditor(wx.stc.StyledTextCtrl):
                 self.dialog.ShowModal()
                 self.dialog.Destroy()
             else:
-                print "Weird..."
+                print "..."
             #print seal.generateAllCode()
             #print data.getAll()
             

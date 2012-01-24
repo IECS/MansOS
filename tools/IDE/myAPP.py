@@ -11,12 +11,12 @@ from src import APIcore
 from src import sealStruct
 
 class Example(wx.Frame):
-    
     def __init__(self, parent, title, size, pos, API):
         super(Example, self).__init__(parent, wx.ID_ANY, title, size = size, pos = pos)
         # Get path, here must use only file name, __file__ sometimes contains more than that
         self.path = os.path.dirname(os.path.realpath(__file__.split("/")[-1]))
-        self.tabManager = tabManager.tabManager(self, API)
+        
+        
         self.API = API
         self.API.path = self.path
         # Just a shorter name
@@ -24,9 +24,10 @@ class Example(wx.Frame):
         self.toolbar = None
         self.menubar = None
         self.InitUI()
+        self.tabManager = tabManager.tabManager(self, API)
         
     def InitUI(self):
-        fileMenu = wx.Menu()        
+        fileMenu = wx.Menu()
         new = fileMenu.Append(wx.ID_NEW, '&' + self.tr('New') + '\tCtrl+N', 
                               self.tr('Create empty document'))
         open = fileMenu.Append(wx.ID_OPEN, '&' + self.tr('Open') + '\tCtrl+O', 
@@ -90,9 +91,10 @@ class Example(wx.Frame):
         saveTool = self.toolbar.AddLabelTool(wx.ID_SAVE, self.tr('Save'),
                                 wx.Bitmap(self.path + '/src/Icons/save.png'))
         self.toolbar.AddSeparator()
-        addStatementTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Add statement'),
+        addStatementTool = self.toolbar.AddLabelTool(wx.ID_ADD, self.tr('Add statement'),
                                 wx.Bitmap(self.path + '/src/Icons/add_statement.png'))
-        addConditionTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Add condition'),
+        # Used ID_APPLY for identification, hope nothing else uses it
+        addConditionTool = self.toolbar.AddLabelTool(wx.ID_APPLY, self.tr('Add condition'),
                                 wx.Bitmap(self.path + '/src/Icons/add_condition.png'))
         self.toolbar.AddSeparator()
         uplTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Upload'),
@@ -100,7 +102,7 @@ class Example(wx.Frame):
         outputTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Read output'),
                                 wx.Bitmap(self.path + '/src/Icons/read.png'))
         self.toolbar.AddSeparator()
-        extTool = self.toolbar.AddLabelTool(wx.ID_EXIT, self.tr('Quit'),
+        extTool = self.toolbar.AddLabelTool(wx.ID_EXIT, self.tr('Exit'),
                                 wx.Bitmap(self.path + '/src/Icons/exit.png'))
         self.toolbar.Realize()
 
@@ -123,10 +125,11 @@ class Example(wx.Frame):
         self.tabManager.doPopupSaveAs(None)
         
     def OnUpload(self, e):
-        dialog = uploadModule.UploadModule(None, 
+        if self.tabManager.doPopupSave(None) == True:
+            dialog = uploadModule.UploadModule(self, 
                                 self.tr('Upload and compile'), self.API)
-        dialog.ShowModal()
-        dialog.Destroy()
+            dialog.ShowModal()
+            dialog.Destroy()
 
     def OnOutput(self, e):
         dialog = listenModule.ListenModule(None, 
@@ -158,7 +161,17 @@ class Example(wx.Frame):
             if i.IsChecked() == True:
                 self.API.setSetting("activeLanguage", i.GetHelp())
                 self.InitUI()
-
+                
+    def disableAdders(self):
+        self.toolbar.EnableTool(wx.ID_ADD, False)
+        self.toolbar.EnableTool(wx.ID_APPLY, False)
+        #print "disabled"
+    
+    def enableAdders(self):
+        self.toolbar.EnableTool(wx.ID_ADD, True)
+        self.toolbar.EnableTool(wx.ID_APPLY, True)
+        #print "enabled"
+    
 def main():
     ex = wx.App()
     frame = Example(None, title="SEAL IDE", 

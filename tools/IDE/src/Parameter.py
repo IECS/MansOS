@@ -19,7 +19,6 @@ class Parameter():
     
     # Set parameter value
     def setValue(self, parameterValue):
-        
         # For check boxes
         if type(parameterValue) is bool:
             self.__parameterValue = parameterValue

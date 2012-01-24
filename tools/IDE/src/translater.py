@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+import globals as g
+
 class Translater:
     def __init__(self, parent):
         self.parent = parent
@@ -77,20 +79,29 @@ class Translater:
                 "No devices found": "Nav atrasta neviena ierīce",
                 "Use default device": "Izmantot noklusēto iecīri",
                 "Starting compile...": "Kompilēšana sākta...",
-                "Compiled successfully!": "Kompilēšana pabeigta veiksmīgi",
+                "Compiled successfully": "Kompilēšana pabeigta veiksmīgi",
                 "Starting upload...": "Augšupielādēšana sākta...",
                 "Uploaded successfully!": "Augšupielādēšana pabeigta veiksmīgi",
                 "Start listening": "Sākt klausīties",
                 "Stop listening": "Beigt klausīties",
                 "Change language": "Nomainīt valodu",
                 "Add statement": "Pievienot darbību",
-                "Add condition": "Pievienot nosacījumu"
+                "Add condition": "Pievienot nosacījumu",
+                "Edit actuator": "Labot darbību",
+                "Edit object": "Labot priekšmetu"
                 }
         }
         
     def translate(self, data, lang = ''):
         if lang == '':
             lang = self.parent.getSetting("activeLanguage")
-        if data in self.translations[lang]:
-            return self.translations[lang][data]
+        # This happens when no language is set
+        if lang != '':
+            if data in self.translations[lang]:
+                return self.translations[lang][data]
+        # Don't log ENG, because it's not ment to be translated
+        if lang != "ENG":
+            print lang
+            self.parent.logMsg(g.WARNING, "No translation for " + 
+                             "'" + lang + "': '" + data + "'")
         return data

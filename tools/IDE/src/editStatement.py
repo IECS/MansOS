@@ -65,7 +65,7 @@ class editDialog(wx.Dialog):
                                             [],
                                             self.statement.getComments())
             for x in self.choices:
-                print x.GetName()
+                #print x.GetName()
                 if x.GetValue() != '':
                     statement.addParameter(Parameter.Parameter(x.GetName(), x.GetValue()))
                 else:
@@ -77,8 +77,8 @@ class editDialog(wx.Dialog):
 
     def generateActuatorSelect(self, statement):
         # Generate all objects
-        self.actuatorText = wx.StaticText(self, label = self.tr("Edit actuator:"))
-        self.objText = wx.StaticText(self, label = self.tr("Edit object:"))
+        self.actuatorText = wx.StaticText(self, label = self.tr("Edit actuator") + ":")
+        self.objText = wx.StaticText(self, label = self.tr("Edit object") + ":")
         self.actuator = wx.ComboBox(self, choices = self.API.getAllStatementActuators(), 
                                 style = wx.CB_DROPDOWN, name = "actuator")
         self.Bind(wx.EVT_COMBOBOX, self.onActuatorChange, self.actuator)
