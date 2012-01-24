@@ -1,6 +1,7 @@
 import wx
 import emptyTab
 import editorManager
+import globals as g
 
 class tabManager(wx.Notebook):
     def __init__(self, parent, API):
@@ -34,6 +35,11 @@ class tabManager(wx.Notebook):
             self.Layout()
         if event != None:
             event.Skip()
+            if self.getPageObject().projectType == g.SEAL_PROJECT:
+                self.GetParent().enableAdders()
+            else:
+                self.GetParent().disableAdders()
+
         
     def showPopupMenu(self, event):
         # Make clicked tab active, so all actions target this tab.
@@ -45,7 +51,7 @@ class tabManager(wx.Notebook):
         self.popupSave = menu.Append(wx.ID_SAVE,'&' + self.tr('Save') + 
                                      '\tCtrl+S', self.tr("Save"))
         self.popupSaveAs = menu.Append(wx.ID_SAVEAS, '&' + self.tr("Save as") + 
-                                       '\tCtrl+A', self.tr("Save As"))
+                                       '\tCtrl+A', self.tr("Save as"))
         self.popupClose = menu.Append(wx.ID_CLOSE, '&' + self.tr('Close') + 
                                       '\tCtrl+W',self.tr("Close"))
         self.Bind(wx.EVT_MENU, self.doPopupReload, self.popupReload)
@@ -79,7 +85,8 @@ class tabManager(wx.Notebook):
                 self.getPageObject().updateInfo(path = save.GetPath())
                 self.getPageObject().save()
             save.Destroy()
-            
+        return self.getPageObject().hasAFile == True
+    
     def doPopupSaveAs(self, event):
         save = wx.FileDialog(self, 
             self.tr("Save as") + " \"" + 
@@ -95,6 +102,7 @@ class tabManager(wx.Notebook):
                 self.getPageObject().updateInfo(path = save.GetPath())
             self.getPageObject().save()
         save.Destroy()
+
             
     def doPopupClose(self, event, checkConsequences = True):
         if self.onCloseCheck() == False:

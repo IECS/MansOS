@@ -2,6 +2,7 @@ import wx
 import wx.lib.scrolledpanel as scrolled
 import Editor
 import os
+import globals
 
 class EditorManager(scrolled.ScrolledPanel):
     def __init__(self, parent, API):
@@ -15,11 +16,13 @@ class EditorManager(scrolled.ScrolledPanel):
         # @ creation we assume document is saved.
         self.saveState = True
         # Filename or untitled document
-        self.fileName = self.tr('Untitled Document') + ' ' + str(self.GetParent().nextPageNr)
+        self.fileName = self.tr('Untitled document') + ' ' + str(self.GetParent().nextPageNr)
         # Filename and full path(relative or absolute)
-        self.filePath = self.tr('Untitled Document') + ' ' + str(self.GetParent().nextPageNr)
+        self.filePath = self.tr('Untitled document') + ' ' + str(self.GetParent().nextPageNr)
         # This marks if document already have a file attached to it
         self.hasAFile = False
+        # Define project type
+        self.projectType = 0
         
     def update (self, initFilePath = ''):
         if initFilePath == '':
@@ -32,6 +35,7 @@ class EditorManager(scrolled.ScrolledPanel):
             # Update editor info
             self.updateInfo(initFilePath, saveState = True, hasAFile = True)
             self.GetParent().titleChange(self.fileName)
+            self.detectSEAL()
         else:
             self.changeCode()
             
@@ -65,7 +69,8 @@ class EditorManager(scrolled.ScrolledPanel):
         self.saveState = True
         self.GetParent().markAsSaved()
     
-    def updateInfo(self, path = '', fileName = '', saveState = '', hasAFile = ''):
+    def updateInfo(self, path = '', fileName = '', saveState = '', 
+                   hasAFile = '', projectType = None):
         if path != '':
             self.filePath = path
             self.fileName = path.split("/")[-1]
@@ -75,4 +80,11 @@ class EditorManager(scrolled.ScrolledPanel):
             self.saveState = saveState
         if hasAFile != '':
             self.hasAFile = hasAFile
-        
+        if projectType != None:
+            self.projectType = projectType
+    
+    def detectSEAL(self):
+        if self.fileName[-2:] == "sl":
+            self.projectType = globals.SEAL_PROJECT
+        else:
+            self.projectType = globals.MANSOS_PROJECT

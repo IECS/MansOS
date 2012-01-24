@@ -4,6 +4,7 @@ import subprocess
 import sys
 import os
 import shutil
+import globals as g
 
 class UploadModule(wx.Dialog):
     def __init__(self, parent, title, API):
@@ -11,6 +12,7 @@ class UploadModule(wx.Dialog):
             title = title, size = (500, 400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.filename = "SEALlang"
         self.API = API
+        self.editorManager = self.GetParent().tabManager.getPageObject()
         # Just a shorter name
         self.tr = self.API.translater.translate
         self.tmpDir = self.API.path + '/temp/'
@@ -72,7 +74,7 @@ class UploadModule(wx.Dialog):
         process = subprocess.Popen([self.API.path + "/../../mos/make/scripts/motelist"], 
                                       stderr = subprocess.STDOUT,
                                       stdout = subprocess.PIPE)
-        motes, err = process.communicate()
+        motes = process.communicate()[0]
         
         # remove table header and split into lines, ("-----") + 6 used to be 
         # sure it's end of header, not random symbol in data
@@ -104,44 +106,61 @@ class UploadModule(wx.Dialog):
             self.output.SetValue(message)
         else:
             self.output.SetValue(message + "\n" + self.output.GetValue())
-        
-    def doCompile(self, event):
+    
+    def doCompile(self, event = None):
+        goodPath = self.editorManager.filePath.rfind('/')
+        if goodPath != -1:
+            os.chdir(self.editorManager.filePath[:goodPath])
+        else:
+            os.chdir(self.API.path)
+        if not os.path.exists("Makefile") or not os.path.isfile("Makefile"):
+            with open("Makefile", "w") as out:
+                if self.editorManager.projectType == g.SEAL_PROJECT:
+                    out.write(self.generateMakefile(self.editorManager.fileName, "SEAL_SOURCES"));
+                else:
+                    out.write(self.generateMakefile(self.editorManager.fileName));
         try:
+            #retcode = subprocess.call(["make", "telosb", "upload-msp430", " > ", "lastCallOutput"], True)
             self.updateStatus(self.tr("Starting compile..."))
-            self.saveToFile()
-            os.chdir(self.tmpDir)
-            upload = subprocess.Popen([self.API.path + "/../seal/seal", self.tmpDir + self.filename], 
+            # Realy should call this in new thread
+            upload = subprocess.Popen(["make", self.platform], 
                                       stderr = subprocess.STDOUT,
                                       stdout = subprocess.PIPE)
-            out, err = upload.communicate()
-            haveError = out.rfind("error in")
-            if haveError != -1:
-                self.updateStatus(out[haveError:])
+            out = upload.communicate()[0]
+            print out
+            successfull = out.rfind("saving Makefile.platform")
+            
+            if event == None:
+                clean = subprocess.Popen(["make", "clean"], 
+                                      stderr = subprocess.STDOUT,
+                                      stdout = subprocess.PIPE)
+                clean.communicate()
+                
+            if successfull != -1:
+                self.updateStatus(self.tr("Compiled successfully"))
+                return True
             else:
-                self.updateStatus(self.tr("Compiled successfully!"))
-            if event != None:
-                self.removeTmpDir()
+                self.updateStatus(out)
+                return False
+            
         except OSError, e:
-            wx.MessageBox(self.tr("Exception") + str(sys.stderr), 'Error', 
-                          wx.OK | wx.ICON_ERROR)
-            #print >>sys.stderr, "execution failed:", e
+            print >>sys.stderr, "execution failed:", e
             self.updateStatus(str(e))
             
     def doUpload(self, event):
         if self.haveMote == False:
             self.updateStatus(self.tr("No devices found"))
             return
-        self.doCompile(None)
-        self.createMakefile()
+        if self.doCompile() == False:
+            return
         try:
             #retcode = subprocess.call(["make", "telosb", "upload-msp430", " > ", "lastCallOutput"], True)
             self.updateStatus(self.tr("Starting upload..."))
-            # Realy shpuld call this in new thread
-            os.chdir(self.tmpDir)
+            # Realy should call this in new thread
             upload = subprocess.Popen(["make", self.platform, "upload"], 
                                       stderr = subprocess.STDOUT,
                                       stdout = subprocess.PIPE)
-            out, err = upload.communicate()
+            out = upload.communicate()[0]
             print out
             haveUploadError = out.rfind("An error occoured")
             if haveUploadError != -1:
@@ -152,18 +171,16 @@ class UploadModule(wx.Dialog):
                 self.updateStatus(out)
                 return
             self.updateStatus(self.tr("Uploaded successfully!"))
-            if event != None:
-                self.removeTmpDir()
+            clean = subprocess.Popen(["make", "clean"], 
+                                      stderr = subprocess.STDOUT,
+                                      stdout = subprocess.PIPE)
+            clean.communicate()
         except OSError, e:
             print >>sys.stderr, "execution failed:", e
             self.updateStatus(str(e))
         
-    def createMakefile(self):
-        self.checkForTempDir()
-        #if os.path.exists("Makefile") & os.path.isfile("Makefile"):
-        #   self.updateStatus("Overwriting Makefile.")
-        with open(self.tmpDir +"Makefile", "w") as out:
-            out.write("""#-*-Makefile-*- vim:syntax=make
+    def generateMakefile(self, fileName='main.c', sourceType = 'SOURCES'):
+        return """#-*-Makefile-*- vim:syntax=make
 #
 # Copyright (c) 2008-2010 Leo Selavo and the contributors. All rights reserved.
 #
@@ -196,28 +213,27 @@ class UploadModule(wx.Dialog):
 # --------------------------------------------------------------------
 
 # Sources are all project source files, excluding MansOS files
-SOURCES = main.c
+""" + sourceType + " = " + fileName + """
 
 # Module is the name of the main module built by this makefile
-APPMOD = Blink
+APPMOD = """ + self.editorManager.fileName + """
 
 # --------------------------------------------------------------------
 # Set the key variables
 PROJDIR = $(CURDIR)
 ifndef MOSROOT
-  MOSROOT = $(PROJDIR)""" + self.pathToMansos + """
+  MOSROOT = """ + self.pathToMansos + """
 endif
 
 # Include the main makefile
 include ${MOSROOT}/mos/make/Makefile
-""")
+"""
     
     def saveToFile(self):
         self.checkForTempDir()
         with open(self.tmpDir + self.filename, "w") as out:
             # Maybe should try to make this shorter
-            out.write(self.GetParent().tabManager.GetPage(
-                self.GetParent().tabManager.GetSelection()).code.GetText())
+            out.write(self.editorManager.code.GetText())
     
     def checkForTempDir(self):
         if not os.path.exists(self.tmpDir):
