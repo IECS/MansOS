@@ -8,10 +8,6 @@
 #include <vector>
 using namespace std;
 
-// TODO: platform (msp430) specific
-#include <hal/platforms/telosb/intflash_hal.h>
-#include <hal/platforms/telosb/extflash_hal.h>
-
 #include <kernel/reprogramming.h>
 #include <smp/smp.h>
 #include <lib/codec/crc.h>
