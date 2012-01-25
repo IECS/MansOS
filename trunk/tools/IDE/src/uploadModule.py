@@ -106,6 +106,7 @@ class UploadModule(wx.Dialog):
             self.output.SetValue(message)
         else:
             self.output.SetValue(message + "\n" + self.output.GetValue())
+        wx.Yield()
     
     def doCompile(self, event = None):
         goodPath = self.editorManager.filePath.rfind('/')

@@ -2,6 +2,10 @@
 # -*- coding: UTF-8 -*-
 import wx
 import os
+from subprocess import Popen, PIPE, STDOUT
+import sys
+import shlex
+from time import sleep
 # Go to real directory for those imports
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 from src import tabManager
@@ -99,6 +103,8 @@ class Example(wx.Frame):
         self.toolbar.AddSeparator()
         uplTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Upload'),
                                 wx.Bitmap(self.path + '/src/Icons/upload.png'))
+        multUplTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Multiple upload'),
+                                wx.Bitmap(self.path + '/src/Icons/upload_multiple.png'))
         outputTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Read output'),
                                 wx.Bitmap(self.path + '/src/Icons/read.png'))
         self.toolbar.AddSeparator()
@@ -109,6 +115,7 @@ class Example(wx.Frame):
         # Second bind to toolbar, but only items with ID_ANY, because all
         # defined ID already binded from menu, weird side effect.
         self.Bind(wx.EVT_TOOL, self.OnUpload, uplTool)
+        self.Bind(wx.EVT_TOOL, self.OnMultipleUpload, multUplTool)
         self.Bind(wx.EVT_TOOL, self.OnOutput, outputTool)
         self.Bind(wx.EVT_TOOL, self.OnAddStatement, addStatementTool)
         self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
@@ -130,7 +137,23 @@ class Example(wx.Frame):
                                 self.tr('Upload and compile'), self.API)
             dialog.ShowModal()
             dialog.Destroy()
+    def OnMultipleUpload(self, e):
+        print "TODO"
+        try:
+            os.chdir("../shell")
+            upload = Popen(["./shell"], stdin = PIPE, 
+                           stderr = STDOUT, stdout = PIPE)
+            out = upload.communicate(input = "ls")[0]
+            print out
+            #sleep(5)
+            upload = Popen(["./shell"], stdin = PIPE, 
+                           stderr = STDOUT, stdout = PIPE)
+            out = upload.communicate(input = "sense")[0]
+            print out
+        except OSError, e:
+            print >>sys.stderr, "execution failed:", e
 
+        
     def OnOutput(self, e):
         dialog = listenModule.ListenModule(None, 
                                 self.tr('Listen to output'), self.API)

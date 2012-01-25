@@ -1,14 +1,7 @@
 import wx
 import subprocess
-import sys
-import os
 import serial
-import sys
-import threading
 import time
-
-BAUDRATE = 38400
-serialPort = '/dev/ttyUSB0'
 
 class ListenModule(wx.Dialog):
     def __init__(self, parent, title, API):
@@ -19,11 +12,13 @@ class ListenModule(wx.Dialog):
         self.tr = self.API.translater.translate
         self.haveMote = False
         self.listening = False
-
+        self.baudrate = 38400
+        self.serialPort = '/dev/ttyUSB0'
+        
         self.main = wx.BoxSizer(wx.VERTICAL)
         self.listenControls = wx.BoxSizer(wx.HORIZONTAL)
         
-        self.output = wx.TextCtrl(self, style = wx.EXPAND | wx.ALL, size = (470, 300))
+        self.output = wx.TextCtrl(self, style = wx.EXPAND | wx.ALL, size = (500, 400))
         self.output.SetBackgroundColour("Black")
         self.output.SetForegroundColour("White")
         
@@ -62,29 +57,36 @@ class ListenModule(wx.Dialog):
 
         self.listening = not self.listening
         if self.listening:
-            self.clear.label = self.tr('Stop listening')
+            self.clear.SetLabel(self.tr('Stop listening'))
         else:
-            self.clear.label = self.tr('Start listening')
-
+            self.clear.SetLabel(self.tr('Start listening'))
+        # Redraw button if size have changed
+        self.clear.SetSize(self.clear.GetEffectiveMinSize())
+        
         if self.listening:
-            while True:
-                self.listenSerialPort(serialPort, BAUDRATE)
+            if self.listenSerialPort() == False:
+                self.updateStatus(self.tr("Error conecting to device")+ '\n', False)
+                self.doClear(None)
 
-    def listenSerialPort(self, port, baudrate):
+
+    def listenSerialPort(self):
         try:
-            ser = serial.Serial(port, baudrate, timeout=0, 
+            ser = serial.Serial(self.serialPort, self.baudrate, timeout=0, 
                                parity=serial.PARITY_NONE, rtscts=1)
+            while self.listening:
+                s = ser.read(1000)
+                if len(s) > 0:
+                    self.updateStatus(s, False)
+                # Keep interface alive, long sleep makes it to delay responses.
+                # Listen once every .2 sec
+                for _ in range(0, 200):
+                    wx.Yield()
+                    time.sleep(0.001)
+            ser.close()
+            return True
         except serial.SerialException, ( msg ):
             print "\nSerial exception:\n\t", msg
-            return
-    
-        while self.listening:
-            s = ser.read(1000)
-            if len(s) > 0:
-                self.updateStatus(s, False)
-            time.sleep(0.5)
-            wx.Yield()
-        ser.close()
+            return False
 
 
     def getMotelist(self, event = None):
@@ -113,6 +115,7 @@ class ListenModule(wx.Dialog):
                 self.ports.Append(x[1]+" - "+ x[2])
         self.haveMote = True
         self.ports.SetValue(self.tr("Use default device"))
+        self.serialPort = motelist[0][1]
         return motelist
     
     def changeTarget(self, event):
@@ -126,35 +129,4 @@ class ListenModule(wx.Dialog):
             self.output.SetValue(message)
         else:
             self.output.SetValue(message + self.output.GetValue())
-        
-
-def listenSerial():
-    global BAUDRATE
-    global serialPort
-    while True:
-        listenSerialPort(serialPort, BAUDRATE)
-
-def listenSerialPort(port, baudrate):
-    global serialPortChanged
-    global lm
-
-    serialPortChanged = False
-    try:
-        ser = serial.Serial(port, baudrate, timeout=0, 
-                            parity=serial.PARITY_NONE, rtscts=1)
-    except serial.SerialException, ( msg ):
-        print "\nSerial exception:\n\t", msg
-        return
-    
-    # print "Listening to serial port: ", ser.portstr, ", rate: ", baudRate
-    
-    while not serialPortChanged:
-        s = ser.read(1000)
-#        if len(s) > 0:
-#            lm.updateStatus(s, False)
-#        lm.updateStatus("aaa", False)
-        lm.updateStatus("aaa", True)
-        sleep(0.5)
-
-    ser.close()
-
+        wx.Yield()
