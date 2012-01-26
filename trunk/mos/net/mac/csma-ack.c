@@ -30,6 +30,7 @@
 #include <lib/byteorder.h>
 #include <lib/buffer.h>
 #include <lib/dprint.h>
+#include <lib/random.h>
 #include <lib/assert.h>
 #include <kernel/threads/radio.h>
 #include <kernel/threads/timing.h>
@@ -70,6 +71,11 @@ static void initCsmaMac(RecvFunction recvCb) {
 
 static int8_t sendCsmaMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     int8_t ret;
+
+#if MAC_FORWARDING_DELAY
+    // TODO...
+#endif
+
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
     if (!(mi->flags & MI_FLAG_ACK_REQUESTED)) {
         // PRINT("send a packet\n");

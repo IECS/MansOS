@@ -89,44 +89,11 @@ SEAL_TARGETS = \
 	Custom					\
 	Sensors					\
 
-
-#	Blink-waspmote
-#	Sad
-#	Sad2011
-#	GpsProxy \
-#	LPL \
-#	Sarauj
-
-
 COMMON_TARGETS = \
 	$(foreach t,$(DEMO_TARGETS),demo/$(t)) \
 	$(foreach t,$(ADVANCED_TARGETS),advanced/$(t)) \
 	$(foreach t,$(TEST_TARGETS),tests/$(t)) \
 	$(foreach t,$(SEAL_TARGETS),seal/$(t))
-
-#telosb_TARGETS = $(COMMON_TARGETS)
-
-#telosb_TARGETS += \
-
-#	advanced/Accel3DTest \
-	advanced/AccelDice \
-	advanced/AccelMusic \
-	advanced/AccelTrack \
-	advanced/Bootloader \
-	advanced/UserButtonRead \
-	tests/TinyOSEncapsuleTest \
-	tests/SdCardTest \
-	tests/AccelTest \
-	tests/FSTest \
-	tests/AdcTest \
-
-#pc_TARGETS = $(COMMON_TARGETS) \
-
-#	tests/FSTest
-
-#epic_TARGETS = $(COMMON_TARGETS)
-#atmega_TARGETS = $(COMMON_TARGETS)
-#waspmote_TARGETS = $(atmega_TARGETS)
 
 # -- generic part follows
 
@@ -146,8 +113,6 @@ $$(foreach exe,$$($(1)_EXES),$$(exe)-clean):
 endef
 
 # this generates unique names for platform targets
-#$(foreach platform,$(PLATFORMS),\
-#	$(eval $(platform)_EXES=$(foreach app,$($(platform)_TARGETS),$(app)-$(platform))))
 $(foreach platform,$(PLATFORMS),\
 	$(eval $(platform)_EXES=$(foreach app,$(COMMON_TARGETS),$(app)-$(platform))))
 

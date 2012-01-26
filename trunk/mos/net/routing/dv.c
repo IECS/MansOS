@@ -138,7 +138,7 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
     uint8_t type = *data;
     if (type == ROUTING_REQUEST) {
         if (!isForwardTimerActive()) {
-            markForwardTimerActive(2);
+            markForwardTimerActive(1);
             alarmSchedule(&roForwardTimer, 1000 + randomRand() % 2000);
         }
         return;
@@ -177,7 +177,7 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         lastSeenSeqnum = ri.seqnum;
         hopCountToRoot = ri.hopCount;
         if (!isForwardTimerActive()) {
-            markForwardTimerActive(3);
+            markForwardTimerActive(1);
             alarmSchedule(&roForwardTimer, 1000 + randomRand() % 2000);
         }
         lastRootMessageTime = getJiffies();

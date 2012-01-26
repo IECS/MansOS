@@ -30,6 +30,7 @@
 #include <lib/byteorder.h>
 #include <lib/buffer.h>
 #include <lib/dprint.h>
+#include <lib/random.h>
 #include <lib/assert.h>
 #include <kernel/threads/radio.h>
 #include <net/net-stats.h>
@@ -72,6 +73,18 @@ static int8_t sendCsmaMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
         alarmRemove(&sendTimer);
         sendTries = 0;
     }
+
+#if MAC_FORWARDING_DELAY
+    if (!IS_LOCAL(mi)) {
+        // add random backoff for forwarded packets
+        ret = queueAddPacket(mi, data, length, true, NULL);
+        if (ret) return ret;
+        alarmSchedule(&sendTimer, randomRand() % MAC_PROTOCOL_MAX_INITIAL_BACKOFF);
+        // do NOT increase send tries, because we are not trying to send!
+        return length;
+    }
+#endif // MAC_FORWARDING_DELAY
+
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
     if (radioSendHeader(mi->macHeader, mi->macHeaderLen, data, length) == 0) {
         return length;

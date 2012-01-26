@@ -39,6 +39,7 @@ void systemMain(void)
         // toggleGreenLed();
 
         // PRINTF("ap = %d\n", (int) processFlags.bits.alarmsProcess);
+        // PRINTF("rp = %d\n", (int) processFlags.bits.radioProcess);
 
         // it works better when radio procssing is first (TODO: order should be irrelevant!)
 #if USE_RADIO

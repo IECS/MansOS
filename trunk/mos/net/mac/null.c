@@ -68,7 +68,6 @@ static void pollNullMac(void) {
         //         radioPacketBuffer->receivedLength,
         //         radioPacketBuffer->buffer[0], radioPacketBuffer->buffer[1],
         //         radioPacketBuffer->buffer[2], radioPacketBuffer->buffer[3]);
-
         if (macProtocol.recvCb) {
             //INC_NETSTAT(NETSTAT_PACKETS_RECV, EMPTY_ADDR);    // done @ dv.c
             // call user callback

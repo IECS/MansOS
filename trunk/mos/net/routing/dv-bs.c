@@ -58,7 +58,7 @@ void initRouting(void) {
 }
 
 static void roOriginateTimerCb(void *x) {
-    // PRINT("originate routing packet\n");
+    // PRINTF("originate routing packet, root=local=%#04x\n", localAddress);
 
     RoutingInfoPacket_t routingInfo;
     routingInfo.packetType = ROUTING_INFORMATION;
@@ -67,7 +67,8 @@ static void roOriginateTimerCb(void *x) {
     routingInfo.hopCount = 1;
     routingInfo.seqnum = ++mySeqnum;
     if (lastRootSyncJiffies) {
-        routingInfo.rootClock = lastRootClockSeconds + (getJiffies() - lastRootSyncJiffies);
+        routingInfo.rootClock = lastRootClockSeconds
+                + (getJiffies() - lastRootSyncJiffies);
     } else {
         routingInfo.rootClock = getJiffies();
     }
@@ -98,8 +99,9 @@ RoutingDecision_e routePacket(MacInfo_t *info) {
     // just sends and receives.
     MosAddr *dst = &info->originalDst;
 
-    //PRINTF("dst address=0x%04x, nexthop=0x%04x\n", dst->shortAddr, info->immedDst.shortAddr);
-    //PRINTF("  localAddress=0x%04x\n", localAddress);
+    // PRINTF("dst address=0x%04x, nexthop=0x%04x\n", dst->shortAddr,
+    //         info->immedDst.shortAddr);
+    // PRINTF("  localAddress=0x%04x\n", localAddress);
 
     if (isLocalAddress(dst)) {
         INC_NETSTAT(NETSTAT_PACKETS_RECV, info->originalSrc.shortAddr);
