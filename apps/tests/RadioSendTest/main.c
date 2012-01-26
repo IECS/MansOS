@@ -31,16 +31,20 @@
 #include <lib/random.h>
 #include <string.h>
 
-#define RECV 0
+#define RECV 1
 
-void sendCounter();
-void recvCounter();
+void sendCounter(void);
+void recvCounter(void);
 
 //-------------------------------------------
 //      Entry point for the application
 //-------------------------------------------
 void appMain(void)
 {
+    // ------------------------- serial number
+    PRINTF("%s %#04x starting...\n",
+            RECV ? "Receiver" : "Sender", localAddress);
+
 #if RECV
     radioSetReceiveHandle(recvCounter);
     radioOn();
@@ -52,7 +56,7 @@ void appMain(void)
 }
 
 // receive counter and display it on leds
-void recvCounter()
+void recvCounter(void)
 {
     static uint8_t buffer[128];
     int16_t len;
@@ -76,7 +80,7 @@ void recvCounter()
     }
 }
 
-void sendCounter() {
+void sendCounter(void) {
     static uint8_t sendBuffer[100];
     uint8_t *counter = &sendBuffer[0];
     memcpy(sendBuffer + 1, &localAddress, 2);

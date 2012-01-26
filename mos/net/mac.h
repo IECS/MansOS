@@ -123,8 +123,16 @@ bool isLocalAddress(MosAddr *addr);
 #define MAC_PROTOCOL_RETRY_TIMEOUT 100 // milliseconds
 #endif
 
+#ifndef MAC_PROTOCOL_MAX_INITIAL_BACKOFF
+#define MAC_PROTOCOL_MAX_INITIAL_BACKOFF 30
+#endif
+
 #ifndef MAC_PROTOCOL_QUEUE_SIZE
 #define MAC_PROTOCOL_QUEUE_SIZE  3
+#endif
+
+#ifndef MAC_FORWARDING_DELAY
+#define MAC_FORWARDING_DELAY 1
 #endif
 
 #endif
