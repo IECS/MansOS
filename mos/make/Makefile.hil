@@ -89,6 +89,10 @@ else
 PSOURCES-$(USE_NET) += $(NET)/routing/dv.c
 endif
 
+ifeq ($(MULTIHOP_FORWARDER),y)
+CFLAGS += -DMULTIHOP_FORWARDER=1
+endif
+
 else #! USE_EXP_THREADS
 
 PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/nothreads/timing.c
