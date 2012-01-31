@@ -33,11 +33,17 @@
 #define const_sfrb(x,x_) sfrb(x,x_)
 #define const_sfrw(x,x_) sfrw(x,x_)
 #endif
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 5 // for msp430-gcc version 4.5+
+#include <msp430.h>
+#else
 #include <msp430x16x.h>
+#endif
 #if !defined(__MSP430_LIBC__) || __MSP430_LIBC__ < 20111008L
 #  define interrupt(x) void __attribute__((interrupt (x)))
 #endif
-#include <isr_compat.h>
+#if __GNUC__ >= 4
+#include <isr_compat.h>  // defines ISR macro
+#endif
 #elif defined MCU_AVR
 #include <avr/io.h>
 #endif
@@ -46,8 +52,9 @@
 #  define BV(x) (1 << (x))
 #endif
 
-// ISR() is defined as:
-// #define ISR(vec, name) interrupt(vec ## _VECTOR) void name(void)
+#ifndef ISR // Interrupt Service Routine syntax
+#define ISR(vec, name) interrupt(vec ## _VECTOR) name(void)
+#endif
 #define ASM_VOLATILE(x) __asm__ __volatile__(x)
 #define RAMFUNC __attribute__ ((section (".data")))
 
