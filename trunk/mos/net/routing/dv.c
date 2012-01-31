@@ -39,7 +39,9 @@ static Socket_t roSocket;
 static Alarm_t roForwardTimer;
 static Alarm_t roRequestTimer;
 
+#if MULTIHOP_FORWARDER
 static void roForwardTimerCb(void *);
+#endif
 static void roRequestTimerCb(void *);
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len);
 
@@ -73,11 +75,14 @@ void initRouting(void)
     socketBind(&roSocket, ROUTING_PROTOCOL_PORT);
     socketSetDstAddress(&roSocket, MOS_ADDR_BROADCAST);
 
+#if MULTIHOP_FORWARDER
     alarmInit(&roForwardTimer, roForwardTimerCb, NULL);
+#endif
     alarmInit(&roRequestTimer, roRequestTimerCb, NULL);
     alarmSchedule(&roRequestTimer, 2000 + randomRand() % 1000);
 }
 
+#if MULTIHOP_FORWARDER
 static void roForwardTimerCb(void *x)
 {
     if (hopCountToRoot >= MAX_HOP_COUNT) return;
@@ -103,6 +108,7 @@ static void roForwardTimerCb(void *x)
         alarmSchedule(&roForwardTimer, 100 + randomRand() % 200);
     }
 }
+#endif
 
 static void roRequestTimerCb(void *x)
 {
@@ -137,10 +143,12 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 
     uint8_t type = *data;
     if (type == ROUTING_REQUEST) {
+#if MULTIHOP_FORWARDER
         if (!isForwardTimerActive()) {
             markForwardTimerActive(1);
             alarmSchedule(&roForwardTimer, 1000 + randomRand() % 2000);
         }
+#endif
         return;
     }
 
@@ -176,10 +184,12 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         nexthopToRoot = s->recvMacInfo->originalSrc.shortAddr;
         lastSeenSeqnum = ri.seqnum;
         hopCountToRoot = ri.hopCount;
+#if MULTIHOP_FORWARDER
         if (!isForwardTimerActive()) {
             markForwardTimerActive(1);
             alarmSchedule(&roForwardTimer, 1000 + randomRand() % 2000);
         }
+#endif
         lastRootMessageTime = getJiffies();
         rootClockDelta = (int32_t)(ri.rootClock - getJiffies());
     }
@@ -225,6 +235,7 @@ RoutingDecision_e routePacket(MacInfo_t *info)
         return RD_DROP;
     }
 
+#if MULTIHOP_FORWARDER
     if (dst->shortAddr == rootAddress) {
         if (isRoutingInfoValid()) {
             //PRINTF("using 0x%04x as nexthop to root\n", nexthopToRoot);
@@ -254,6 +265,7 @@ RoutingDecision_e routePacket(MacInfo_t *info)
             return RD_DROP;
         }
     }
+#endif
 
     if (IS_LOCAL(info)) {
         //INC_NETSTAT(NETSTAT_PACKETS_SENT, dst->shortAddr);        // Done @ comm.c

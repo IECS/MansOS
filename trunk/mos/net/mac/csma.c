@@ -104,8 +104,10 @@ static void sendTimerCb(void *x) {
     QueuedPacket_t *p;
     uint16_t nextTimeout = MAC_PROTOCOL_RETRY_TIMEOUT * (1 << sendTries);
 
+    if (sendTries) {
+        PRINTF("************** retry to send (try %u)\n", sendTries + 1);
+    }
     ++sendTries;
-    PRINTF("************** retry to send (try %u)\n", sendTries);
 
     p = queueHead();
     ASSERT(p);
