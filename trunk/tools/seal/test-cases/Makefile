@@ -5,7 +5,7 @@ APPMOD = Test
 
 PROJDIR = $(CURDIR)
 ifndef MOSROOT
-  MOSROOT = /home/atis/svn/mansos
+  MOSROOT = ../../..
 endif
 
 include ${MOSROOT}/mos/make/Makefile
