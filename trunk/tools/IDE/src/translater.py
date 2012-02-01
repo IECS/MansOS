@@ -16,7 +16,7 @@ class Translater:
                 "turn_on": "Turn on",
                 "blink": "Blink one time",
                 "blinkTwice": "Blink 2 times",
-                "blinkTimes": "Blink following times",
+                "blinkTimes": "Blink number of times",
                 "print": "Print",
                 "aggregate": "Aggregate",
                 "baudrate": "Baudrate",
@@ -69,7 +69,7 @@ class Translater:
                 "Create empty document": "Izveidot tukšu dokumentu",
                 "Save document": "Saglabāt dokumentu",
                 "Save document as": "Saglabāt dokumentu kā",
-                "Open document": "Atvērt dokukmentu",
+                "Open document": "Atvērt dokumentu",
                 "Open upload window": "Atvērt augšupielādes logu",
                 "Open read output window": "Atvērt klausīšanās logu",
                 "Exit application": "Aizvērt lietotni",
@@ -77,7 +77,7 @@ class Translater:
                 "Listen to output": "Klausīties izvadu",
                 "Changed platform to": "Platforma nomainīta uz ",
                 "No devices found": "Nav atrasta neviena ierīce",
-                "Use default device": "Izmantot noklusēto iecīri",
+                "Use default device": "Izmantot ierīci pēc noklusēšanas",
                 "Starting compile...": "Kompilēšana sākta...",
                 "Compiled successfully": "Kompilēšana pabeigta veiksmīgi",
                 "Starting upload...": "Augšupielādēšana sākta...",
@@ -88,7 +88,7 @@ class Translater:
                 "Add statement": "Pievienot darbību",
                 "Add condition": "Pievienot nosacījumu",
                 "Edit actuator": "Labot darbību",
-                "Edit object": "Labot priekšmetu"
+                "Edit object": "Labot objektu"
                 }
         }
         
