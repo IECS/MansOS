@@ -14,11 +14,11 @@
    height="1052.3622047"
    id="svg8304"
    version="1.1"
-   inkscape:version="0.47pre4 r22446"
-   sodipodi:docname="mansos_logo_big.svg"
-   inkscape:export-filename="/home/atis/stuff/mansos_logo_complex.png"
-   inkscape:export-xdpi="90"
-   inkscape:export-ydpi="90">
+   inkscape:version="0.48.2 r9819"
+   sodipodi:docname="mansos_logo.svg"
+   inkscape:export-filename="/home/atis/work/mansos/doc/mansos_logo_web.png"
+   inkscape:export-xdpi="76.300003"
+   inkscape:export-ydpi="76.300003">
   <defs
      id="defs8306">
     <inkscape:perspective
@@ -137,15 +137,15 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.49497475"
-     inkscape:cx="289.9433"
-     inkscape:cy="649.27128"
+     inkscape:zoom="0.9899495"
+     inkscape:cx="425.99386"
+     inkscape:cy="670.54871"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1280"
-     inkscape:window-height="966"
-     inkscape:window-x="-4"
+     inkscape:window-width="1920"
+     inkscape:window-height="1024"
+     inkscape:window-x="-3"
      inkscape:window-y="-3"
      inkscape:window-maximized="1" />
   <metadata
@@ -175,19 +175,19 @@
          id="tspan8193"
          x="162.05638"
          y="151.17566"
-         style="font-size:90px;font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:KacstArt;-inkscape-font-specification:KacstArt Bold Italic">MansOS</tspan></text>
+         style="font-size:90px;font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:DejaVu Serif;-inkscape-font-specification:DejaVu Serif Bold Italic">MansOS</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:90px;font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:KacstArt;-inkscape-font-specification:KacstArt Bold Italic"
-       x="162.05638"
-       y="301.17566"
+       x="164.05638"
+       y="279.17566"
        id="text8191-3"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan8193-1"
-         x="162.05638"
-         y="301.17566"
-         style="font-size:90px;font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:KacstArt;-inkscape-font-specification:KacstArt Bold Italic">MansOS</tspan></text>
+         x="164.05638"
+         y="279.17566"
+         style="font-size:84px;font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:DejaVu Serif;-inkscape-font-specification:DejaVu Serif Bold Italic">MansOS</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:90px;font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:KacstArt;-inkscape-font-specification:KacstArt Bold Italic"
@@ -199,7 +199,7 @@
          id="tspan8193-1-0"
          x="162.05638"
          y="451.17566"
-         style="font-size:90px;font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:KacstArt;-inkscape-font-specification:KacstArt Bold Italic">MansOS</tspan></text>
+         style="font-size:90px;font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:DejaVu Serif;-inkscape-font-specification:DejaVu Serif Bold Italic">MansOS</tspan></text>
     <g
        id="g9170"
        transform="translate(-79.699355,-122.18591)">
@@ -225,7 +225,7 @@
            inkscape:flatsided="false"
            inkscape:rounded="0"
            inkscape:randomized="0"
-           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 -55.16072,-87.56136 z"
+           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 z"
            transform="matrix(0.47703678,0.01825545,-0.01791333,0.46450521,-50.595101,468.08254)" />
       </g>
       <g
@@ -246,7 +246,7 @@
            inkscape:flatsided="false"
            inkscape:rounded="0"
            inkscape:randomized="0"
-           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 -55.16072,-87.56136 z"
+           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 z"
            transform="matrix(0.47703678,0.01825545,-0.01791333,0.46450521,-50.595101,468.08254)" />
       </g>
       <g
@@ -267,7 +267,7 @@
            inkscape:flatsided="false"
            inkscape:rounded="0"
            inkscape:randomized="0"
-           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 -55.16072,-87.56136 z"
+           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 z"
            transform="matrix(0.47703678,0.01825545,-0.01791333,0.46450521,-50.595101,468.08254)" />
       </g>
     </g>
@@ -296,7 +296,7 @@
            inkscape:flatsided="false"
            inkscape:rounded="0"
            inkscape:randomized="0"
-           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 -55.16072,-87.56136 z"
+           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 z"
            transform="matrix(0.47703678,0.01825545,-0.01791333,0.46450521,-50.595101,468.08254)" />
       </g>
       <g
@@ -317,7 +317,7 @@
            inkscape:flatsided="false"
            inkscape:rounded="0"
            inkscape:randomized="0"
-           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 -55.16072,-87.56136 z"
+           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 z"
            transform="matrix(0.47703678,0.01825545,-0.01791333,0.46450521,-50.595101,468.08254)" />
       </g>
       <g
@@ -338,7 +338,7 @@
            inkscape:flatsided="false"
            inkscape:rounded="0"
            inkscape:randomized="0"
-           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 -55.16072,-87.56136 z"
+           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 z"
            transform="matrix(0.47703678,0.01825545,-0.01791333,0.46450521,-50.595101,468.08254)" />
       </g>
     </g>
@@ -367,7 +367,7 @@
            inkscape:flatsided="false"
            inkscape:rounded="0"
            inkscape:randomized="0"
-           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 -55.16072,-87.56136 z"
+           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 z"
            transform="matrix(0.47703678,0.01825545,-0.01791333,0.46450521,-50.595101,468.08254)" />
       </g>
       <g
@@ -388,7 +388,7 @@
            inkscape:flatsided="false"
            inkscape:rounded="0"
            inkscape:randomized="0"
-           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 -55.16072,-87.56136 z"
+           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 z"
            transform="matrix(0.47703678,0.01825545,-0.01791333,0.46450521,-50.595101,468.08254)" />
       </g>
       <g
@@ -409,9 +409,30 @@
            inkscape:flatsided="false"
            inkscape:rounded="0"
            inkscape:randomized="0"
-           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 -55.16072,-87.56136 z"
+           d="m 322.85715,322.36218 103.41071,-3.98991 103.41072,-3.98991 -48.24999,91.55126 -48.25,91.55126 -55.16072,-87.56134 z"
            transform="matrix(0.47703678,0.01825545,-0.01791333,0.46450521,-50.595101,468.08254)" />
       </g>
     </g>
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Saab;-inkscape-font-specification:Saab"
+       x="71.720833"
+       y="588.70215"
+       id="text3030"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3032" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Saab;-inkscape-font-specification:Saab"
+       x="162.58885"
+       y="302.22968"
+       id="text3034"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3036"
+         x="162.58885"
+         y="302.22968"
+         style="font-size:16px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:DejaVu Serif;-inkscape-font-specification:DejaVu Serif Italic">Portable and easy-to-use WSN operating system </tspan></text>
   </g>
 </svg>
