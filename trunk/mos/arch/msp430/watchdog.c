@@ -23,6 +23,7 @@
 
 #include <hil/watchdog.h>
 #include <msp430/msp430_int.h>
+#include <msp430/msp430_usart.h>
 
 void watchdogReboot(void)
 {
