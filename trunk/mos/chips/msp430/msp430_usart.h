@@ -53,6 +53,13 @@
 #define UTXD1_PIN  6
 #define URXD1_PIN  7
 
+// UART1 aliases
+#ifndef U1ME
+#define U1ME              ME2
+#define U1IE              IE2
+#define U1IFG             IFG2
+#endif
+
 // available USART count
 #define USART_COUNT 2
 

@@ -83,6 +83,7 @@ void processRebootCommand(RebootCommandPacket_t *p)
         bootParams.bootRetryCount = 0;
         intFlashErase(BOOT_PARAMS_ADDRESS, sizeof(bootParams));
         intFlashWrite(BOOT_PARAMS_ADDRESS, &bootParams, sizeof(bootParams));
+        (void) bootParams; // make compiler happy
     }
 
     // in any case, reboot the mote
