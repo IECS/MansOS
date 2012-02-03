@@ -35,12 +35,6 @@
 //===========================================================
 // Data types and constants
 //===========================================================
-// UART1 aliases
-#ifndef U1ME
-#define U1ME              ME2
-#define U1IE              IE2
-#define U1IFG             IFG2
-#endif
 
 typedef enum {
     UM_DISABLED,

@@ -49,11 +49,9 @@ ALARM_TIMER_INTERRUPT()
     // We assume it's precisely 1 millisecond per each 1.02 seconds and fix that error here.
     // The precision is improved 255 times. (0.99609375 compared to 1-0.99609375=0.00390625)
     //
-    bool fixed = false;
     if (!((jiffies / 10) % 102)) {  // XXX: division...
         // fix them
         ++jiffies;
-        fixed = true;
     }
 
 #ifdef USE_ALARMS

@@ -91,4 +91,5 @@ void bootParamsInit(void)
     // PRINTF("rewrite boot params\n");
     intFlashErase(BOOT_PARAMS_ADDRESS, sizeof(bootParams));
     intFlashWrite(BOOT_PARAMS_ADDRESS, &bootParams, sizeof(bootParams));
+    (void) bootParams; // make compiler happy
 }

@@ -87,6 +87,8 @@ void smpDebugPrint(const char *format, ...) {
     USARTSendByte(1, len & 0xFF);
     USARTSendData(1, (uint8_t *) buffer, len);
 }
+#else
+void smpDebugPrint(const char *format, ...) {}
 #endif
 
 #if USE_MAC

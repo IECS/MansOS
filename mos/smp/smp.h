@@ -130,13 +130,8 @@ typedef struct {
 
 void smpRecv(uint8_t *data, uint16_t len);
 
-#ifdef DEBUG
+// TODO: make this #define or inline
 void smpDebugPrint(const char *format, ...);
-#else
-static inline void smpDebugPrint(const char *format, ...)
-{
-}
-#endif
 
 #define SERIAL_PACKET_DELIMITER '$'
 
