@@ -17,7 +17,7 @@ class tabManager(wx.Notebook):
                 self.tr("Untitled document") + ' ' + str(self.nextPageNr))
         #self.AddPage(ex, "General statements", True)
         self.AddPage(self.empty, "+")
-        self.getPageObject().update('sampleCode')
+        self.getPageObject().update('sampleCode.sl')
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onPageChanged)
         self.Bind(wx.EVT_RIGHT_DOWN, self.showPopupMenu)
         self.nextPageNr += 1
