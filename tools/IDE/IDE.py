@@ -219,7 +219,7 @@ class Example(wx.Frame):
     
 def main():
     ex = wx.App()
-    frame = Example(None, title="SEAL IDE", 
+    frame = Example(None, title="MansOS IDE", 
                     size = (800,500), pos=(100,100),
                     API = APIcore.ApiCore())
     frame.Show()
