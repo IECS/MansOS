@@ -1,7 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-import wx
+
 import os
+wxModuleOK = True
+serialModuleOK = True
+try:
+	import wx
+except ImportError:
+	wxModuleOK = False
+try:
+	import serial
+except ImportError:
+	serialModuleOK = False
+if not wxModuleOK or not serialModuleOK:
+	if os.name == 'posix': installStr = "Make sure you have installed required modules. Run:\n\tapt-get install"
+	else: installStr = "Make sure you have installed modules:"
+	print "Cannot run MansOS IDE:"
+	if not wxModuleOK:
+		print "\twx module not found"
+		installStr += " python-wxtools"
+	if not serialModuleOK:
+		print "\tserial module not found"
+		installStr += " python-serial"
+	print installStr
+	exit(1)
 from subprocess import Popen, PIPE, STDOUT
 import sys
 import shlex
