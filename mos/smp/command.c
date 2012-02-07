@@ -160,6 +160,7 @@ bool processSmpBinaryPacket(uint8_t oidLen, SmpOid_t oid,
         return false;
     }
     bool ok = true;
+#if USE_REPROGRAMMING
     switch (type) {
     case RPROG_PACKET_START:
         processRSPacket((ReprogrammingStartPacket_t *) arg->u.data);
@@ -171,6 +172,9 @@ bool processSmpBinaryPacket(uint8_t oidLen, SmpOid_t oid,
         processRebootCommand((RebootCommandPacket_t *) arg->u.data);
         break;
     }
+#else
+    ok = false;
+#endif
     response->type = ST_OCTET;
     response->u.uint8 = ok ? 0 : 0xff; // a return code is required
     return true;

@@ -285,7 +285,6 @@ void smpInit(void) {
     mac->init(NULL, false, macBuffer, sizeof(macBuffer));
     mac->recvCb = smpProxyRecv;
 #else
-    radioInit();
     radioSetReceiveHandle(radioReceive);
     radioOn();
 #endif
