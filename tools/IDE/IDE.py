@@ -125,8 +125,8 @@ class Example(wx.Frame):
         self.toolbar.AddSeparator()
         uplTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Upload'),
                                 wx.Bitmap(self.path + '/src/Icons/upload.png'))
-        multUplTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Multiple upload'),
-                                wx.Bitmap(self.path + '/src/Icons/upload_multiple.png'))
+        #multUplTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Multiple upload'),
+        #                        wx.Bitmap(self.path + '/src/Icons/upload_multiple.png'))
         outputTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Read output'),
                                 wx.Bitmap(self.path + '/src/Icons/read.png'))
         self.toolbar.AddSeparator()
@@ -137,7 +137,7 @@ class Example(wx.Frame):
         # Second bind to toolbar, but only items with ID_ANY, because all
         # defined ID already binded from menu, weird side effect.
         self.Bind(wx.EVT_TOOL, self.OnUpload, uplTool)
-        self.Bind(wx.EVT_TOOL, self.OnMultipleUpload, multUplTool)
+        #self.Bind(wx.EVT_TOOL, self.OnMultipleUpload, multUplTool)
         self.Bind(wx.EVT_TOOL, self.OnOutput, outputTool)
         self.Bind(wx.EVT_TOOL, self.OnAddStatement, addStatementTool)
         self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
