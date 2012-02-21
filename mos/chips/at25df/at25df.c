@@ -25,9 +25,12 @@
 #include "at25df_pins.h"
 #include <hil/gpio.h>
 #include <hil/usart.h>
+#include <hil/udelay.h>
 //#include <msp430/msp430_int.h>
 
 #define AT25DF_MANUFACTURER_INFO_COMMAND 0x9f
+#define AT25DF_DEEP_POWER_DOWN_COMMAND 0xB9
+#define AT25DF_RESUME_COMMAND 0xAB
 #define AT25DF_STATUS_READ_COMMAND 0x05
 #define AT25DF_STATUS_WRITE_COMMAND 0x01
 #define AT25DF_CHIP_ERASE_COMMAND 0xc7
@@ -41,6 +44,9 @@
 #define AT25DF_BYTE_PROGRAM 0x02
 
 #define AT25DF_STATUS_DONE_MASK 0x01
+
+#define TIME_RDPD  30  // usec to standby mode
+#define TIME_EDPD  1  // usec to deep power down
 
 // Shortcuts
 #define AT25DF_WR_BYTE(b) \
@@ -102,14 +108,16 @@ static inline uint8_t readStatusRegister()
 
 void at25df_sleep()
 {
-    // TODO: support deep sleep mode
-    // SPI_AT25DF_HOLD();
+    // enter deep sleep mode
+    command(AT25DF_DEEP_POWER_DOWN_COMMAND);
+    udelay(TIME_EDPD);
 }
 
 void at25df_wake()
 {
-    // TODO: support deep sleep mode
-    // SPI_AT25DF_UNHOLD();
+    // exit deep sleep mode
+    command(AT25DF_RESUME_COMMAND);
+    udelay(TIME_RDPD);
 }
 
 void at25df_init() {
@@ -129,6 +137,8 @@ void at25df_init() {
     // pinSet(AT25DF_WP_PORT, AT25DF_WP_PIN);
 
     writeEnableAndUnprotect();
+
+    at25df_sleep();
 }
 
 static void at25df_pageProgram(uint32_t addr, const uint8_t *buffer, uint16_t len)

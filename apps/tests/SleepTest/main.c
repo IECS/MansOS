@@ -26,19 +26,49 @@
 //-------------------------------------------
 
 #include "stdmansos.h"
+#include "extflash.h"
 
 #define PAUSE 2000
+
+#if PLATFORM_SADMOTE
+void ro(void)
+{
+    pinAsOutput(MRF24_CS_PORT, MRF24_CS_PIN);
+    pinAsOutput(MRF24_RESET_PORT, MRF24_RESET_PIN);
+    pinAsOutput(MRF24_WAKE_PORT, MRF24_WAKE_PIN);
+    pinAsInput(MRF24_INT_PORT, MRF24_INT_PIN);
+
+    pinSet(MRF24_CS_PORT, MRF24_CS_PIN);
+    pinClear(MRF24_RESET_PORT, MRF24_RESET_PIN);
+    pinClear(MRF24_WAKE_PORT, MRF24_WAKE_PIN);
+}
+#endif
 
 //-------------------------------------------
 //      Entry point for the application
 //-------------------------------------------
 void appMain(void) {
-    radioOff();
+//    radioOff();
+//    adcOff();
 //    humidityOff();
+
+#if PLATFORM_SADMOTE
+    ro();
+    extFlashSleep();
+#endif
 
     while (1) {
         ledToggle();
         msleep(PAUSE); // sleep PAUSE seconds
         PRINT("hello world\n");
     }
+
+    // ledToggle();
+    // msleep(PAUSE); // sleep PAUSE seconds
+    // PRINT("hello world\n");
+
+    // ledToggle();
+    // DISABLE_INTS();
+    // msleep(PAUSE);
+    // PRINT("hello world 2\n");
 }
