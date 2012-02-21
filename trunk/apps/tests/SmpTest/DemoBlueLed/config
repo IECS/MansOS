@@ -2,7 +2,7 @@
 # Application specific config file
 #
 
-USE_REPROGRAMMING=y
+USE_REPROGRAMMING=n
 
 USE_SMP=y
 USE_HUMIDITY=y
