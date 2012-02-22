@@ -50,6 +50,8 @@
 // set stack pointer
 #define SET_SP(sp)                                  \
     ASM_VOLATILE("mov.w %0, r1" :: "r"(sp) );
+#define SET_SP_IMMED(sp)                            \
+    ASM_VOLATILE("mov.w %0, r1" :: ""(sp) );
 
 // push a 2-byte variable on the stack
 #define PUSH_VAR(var)                               \

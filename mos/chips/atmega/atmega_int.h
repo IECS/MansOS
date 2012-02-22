@@ -41,21 +41,26 @@
     ASM_VOLATILE(                                   \
             "in %A0, __SP_L__\n\t"                  \
             "in %B0, __SP_H__\n\t"                  \
-            : "=r" (sp) : );                        \
+            : "=r" (sp) : );
 
 // set stack pointer
 #define SET_SP(sp)                                  \
     ASM_VOLATILE(                                   \
             "out __SP_H__, %B0\n\t"                 \
             "out __SP_L__, %A0\n\t"                 \
-            :: "r" (sp) );                          \
+            :: "r" (sp) );
+#define SET_SP_IMMED(sp)                            \
+    ASM_VOLATILE(                                   \
+            "out __SP_H__, %B0\n\t"                 \
+            "out __SP_L__, %A0\n\t"                 \
+            :: "" (sp) );
 
 // push a 2-byte variable on the stack
 #define PUSH_VAR(var)                               \
     ASM_VOLATILE(                                   \
             "push %A0\n\t"                          \
             "push %B0\n\t"                          \
-            :: "r" (var) );                         \
+            :: "r" (var) );
 
 //
 // Atomic block start and end
