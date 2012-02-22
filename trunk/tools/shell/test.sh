@@ -1,6 +1,6 @@
 #!/bin/sh
 
-USBPORT=/dev/ttyUSB1
+USBPORT=/dev/ttyUSB0
 
 echo Listing all motes...
 echo ls | ./shell $USBPORT
