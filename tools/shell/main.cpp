@@ -1007,9 +1007,25 @@ int main(int argc, char *argv[]) {
 
     printf("MansOS command shell; version %d.%d (built %s)\n\n",
             VERSION_MAJOR, VERSION_MINOR, __DATE__);
-
-    if (argc >= 2) {
-        serialDevice = argv[1];
+            
+    // Backwards compability
+    if (argc == 2) {
+        serialDevice = *++argv;
+    }
+    else {
+        while (*++argv != NULL) {
+            if  (!strcmp(*argv, "-l")) {
+                handleLoadFileCommand(*++argv);
+            }
+            else if (!strcmp(*argv, "-s")) {
+                 handleSelectAddressCommand(*++argv);
+            }
+            else if (!strcmp(*argv, "-d")) {
+                serialDevice = *++argv;
+            }
+            else
+                printf("Unrecognized parameter: %s\n", *argv);
+        }
     }
     // fprintf(stderr, "using serial port %s\n", serialDevice);
 
