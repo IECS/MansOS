@@ -25,6 +25,8 @@
 // msp430x16x USART
 //
 
+#define USE_USART_RX 1 // XXX
+
 #include <hil/gpio.h>
 #include <hil/usart.h>
 #include <hil/spi.h>
@@ -394,6 +396,8 @@ uint_t USARTDisableRX(uint8_t id) {
 //-----------------------------------------------------------
 //-----------------------------------------------------------
 
+#ifdef USE_USART_RX
+
 ISR(UART0RX, UART0InterruptHandler)
 {
     if (URCTL0 & RXERR) {
@@ -417,6 +421,8 @@ ISR(UART1RX, UART1InterruptHandler)
     uint8_t x = U1RXBUF;
     if (usartRecvCb[1]) usartRecvCb[1](x);
 }
+
+#endif // USE_USART_RX
 
 //===========================================================
 //===========================================================

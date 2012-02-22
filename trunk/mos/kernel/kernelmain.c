@@ -51,6 +51,11 @@
 #define INIT_PRINTF(...) // nothing
 #endif
 
+#define HACK() \
+    asm("nop"); \
+    redLedOn(); \
+    asm("nop");
+
 //----------------------------------------------------------
 //      System initialization
 //----------------------------------------------------------
@@ -156,7 +161,12 @@ int main(void)
 #else
     appMain();
 
-    for (;;); // needed for GCC 4.5+
+    //
+    // Insert explicit infinite loop here.
+    // Needed because when GCC 4.5+ is used, the compiler
+    // disables interrupts after the end of this main() function - bad!
+    //
+    for (;;);
 #endif // !USE_FIBERS
 
 #endif // !USE_EXP_THREADS
