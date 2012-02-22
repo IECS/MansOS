@@ -119,8 +119,6 @@ ifneq ($(USE_NET),y)
 PSOURCES += $(MOS)/net/nonet.c
 endif
 
-PSOURCES-$(USE_FIBERS) += $(MOS)/kernel/coop_scheduler.c
-
 #PSOURCES-$(USE_EXT_FLASH) += $(MOS)/hil/fstream.c
 
 PSOURCES-$(USE_FS) += \

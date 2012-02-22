@@ -38,10 +38,9 @@
 #if USE_FLASH
 #include "boot.h"
 #endif
-#include "coop_scheduler.h"
 #include "alarms_system.h"
 #include <net/comm.h>
-#if USE_EXP_THREADS
+#if USE_THREADS
 #include "threads/threads.h"
 #endif
 
@@ -141,7 +140,7 @@ int main(void)
     initSystem();
 
 // ------------------------------------------
-#ifdef USE_EXP_THREADS
+#ifdef USE_THREADS
     PRAGMA(message "Using threads");
 
     // never returns
@@ -156,9 +155,6 @@ int main(void)
 
     ENABLE_INTS();
 
-#ifdef USE_FIBERS
-    coopSchedStart();
-#else
     appMain();
 
     //
@@ -167,9 +163,8 @@ int main(void)
     // disables interrupts after the end of this main() function - bad!
     //
     for (;;);
-#endif // !USE_FIBERS
 
-#endif // !USE_EXP_THREADS
+#endif // !USE_THREADS
 
     return 0;
 }
