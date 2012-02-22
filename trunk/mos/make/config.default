@@ -37,7 +37,6 @@
 # Use USE_* instead. Defining both would be a bad style.
 
 USE_KERNEL_MAIN ?= y
-USE_FIBERS ?= n
 # XXX: dependent on USE_HARDWARE_TIMERS
 USE_ALARMS ?= y
 USE_LEDS ?= y
