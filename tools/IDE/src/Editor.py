@@ -8,6 +8,7 @@ import wx.stc
 from math import sqrt
 import sealStruct 
 import editStatement
+import Statement
 import editCondition
 import globals as g
 
@@ -104,7 +105,7 @@ class CodeEditor(wx.stc.StyledTextCtrl):
         if self.API.getStatementType(self.GetLine(line)) < self.API.CONDITION_CONTINUE:
             # Get statement and corresponding lines
             statement = self.findAllStatement(line)
-            # Get prefix(whitespaces), so output is correctly tabbed
+            # Get prefix(white spaces), so output is correctly tabed
             selectedLine = self.GetLine(statement[2])
             whitespaceCount = len(selectedLine) - len(selectedLine.lstrip())
             self.spaces = selectedLine[:whitespaceCount]
@@ -112,26 +113,20 @@ class CodeEditor(wx.stc.StyledTextCtrl):
             self.SetSelection(self.PositionFromLine(statement[1]), self.PositionFromLine(statement[3] + 1))
             # Create new sealStruct instance only for this statement
             seal = sealStruct.Seal(self.API, statement[0])
-            data = seal.getStruct()
-            if seal.generateAllStatements() == "":
-                # Check for empty condition, aka "when" only
-                if len(data['conditions']) == 0:
-                    data = ''
-                else:
-                    data = data['conditions'][0]
+            data = seal.getFirstObject()
+            if seal.getPredictedType() == g.STATEMENT:
+                print "Statement"
+                self.dialog = editStatement.editDialog(None, 
+                                    self.API, data, self.statementDialogClbk)
+                self.dialog.ShowModal()
+                self.dialog.Destroy()
+            elif seal.getPredictedType() == g.CONDITION:
                 self.disableRedraw = True
                 self.dialog = editCondition.editDialog(self.GetGrandParent(), 
                                     self.API, data, self.conditionDialogClbk)
                 self.dialog.ShowModal()
                 self.dialog.Destroy()
                 self.disableRedraw = False
-            elif seal.generateAllConditions() == "":
-                #print "Statement"
-                data = data['statements'][0]
-                self.dialog = editStatement.editDialog(None, 
-                                    self.API, data, self.statementDialogClbk)
-                self.dialog.ShowModal()
-                self.dialog.Destroy()
             else:
                 print "..."
             #print seal.generateAllCode()
@@ -139,22 +134,22 @@ class CodeEditor(wx.stc.StyledTextCtrl):
             
     def statementDialogClbk(self, action, statement):
         if action == True:
-            self.ReplaceSelection(self.spaces + statement.getAll() + '\n')
+            self.ReplaceSelection(statement.getCode(self.spaces))
         #print statement.getAll()
         self.dialog.Destroy()
         self.Enable()
     
     def conditionDialogClbk(self, action, statement):
         if action == True:
-            self.ReplaceSelection(statement.getAll(self.spaces) + '\n')
+            self.ReplaceSelection(statement.getCode(self.spaces))
         #print statement.getAll()
         self.dialog.Destroy()
         self.Enable()
         
     def addStatement(self):
         self.getPlaceForAdding()
-        self.dialog = editStatement.editDialog(None, 
-                             self.API, '', self.statementDialogClbk)
+        self.dialog = editStatement.editDialog(None, self.API, 
+                             Statement.Statement(), self.statementDialogClbk)
         self.dialog.ShowModal()
         self.dialog.Destroy()
     
@@ -221,8 +216,5 @@ class CodeEditor(wx.stc.StyledTextCtrl):
 
     def getPlaceForAdding(self):
         self.LineEndDisplay()
-        if self.GetCurLine()[0] == '\n':
-            self.AddText("\n")
-        else:
-            self.AddText("\n\n")
-        
+        self.AddText("\n\n")
+        # Smtng's wrong here...

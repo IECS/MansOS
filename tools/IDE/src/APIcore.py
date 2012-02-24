@@ -9,6 +9,8 @@ import globals as g
 
 class ApiCore:
     def __init__(self):
+        self.path = os.getcwd()
+        # Read settings from file
         if os.path.exists(g.SETTING_FILE) & os.path.isfile(g.SETTING_FILE):
             f = open(g.SETTING_FILE, 'r')
             lines = f.readlines()
@@ -149,8 +151,8 @@ class ApiCore:
     def logMsg(self, msgType, msgText):
         if msgType <= g.LOG:
             # Generate message
-            dbgMsg = str(strftime("%S:%M:%H %d.%m.%Y", gmtime())) + ": " 
-            dbgMsg += g.LOG_TEXTS[msgType] + " - " + str(msgText) + '\n'
+            dbgTime = str(strftime("%H:%M:%S %d.%m.%Y", gmtime())) + ": " 
+            dbgMsg = g.LOG_TEXTS[msgType] + " - " + str(msgText) + '\n'
             if g.LOG_TO_CONSOLE:
                 print dbgMsg
             if g.LOG_TO_FILE:
@@ -158,6 +160,6 @@ class ApiCore:
                 os.chdir(self.path)
                 # File should be openned @startup and closed @shutdown, performace!
                 f = open(g.LOG_FILE_NAME, "a")
-                f.write(dbgMsg)
+                f.write(dbgTime + dbgMsg)
                 f.close()
                 os.chdir(path)

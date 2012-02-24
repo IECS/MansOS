@@ -7,7 +7,7 @@ class editDialog(wx.Dialog):
     def __init__(self, parent, API, statement, saveCallback):
         super(editDialog, self).__init__(parent = parent, 
             size = (500, 400),
-            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+            style = wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.saveCallback = saveCallback
         self.API = API
         # Just a shorter name
@@ -20,15 +20,12 @@ class editDialog(wx.Dialog):
         self.main.AddSpacer((10, 10))
         self.choices = []
         self.text = []
-        if statement == '':
-            statement = Statement.Statement()
-        self.statement = statement
-        definition = self.API.getActuatorInfo(statement.getType())
-        data = definition['parameters']
         
-        # Generate all
-        self.generateActuatorSelect(statement)
-        self.generatePatameterSelects(data, statement)
+        self.statement = statement
+        self.generateActuatorSelect()
+        
+        data = self.API.getActuatorInfo(statement.getMode())['parameters']
+        self.generatePatameterSelects(data)
         
         self.buttonPane = wx.BoxSizer(wx.HORIZONTAL)
         self.save = wx.Button(self, label = self.tr("Save"),
@@ -61,21 +58,16 @@ class editDialog(wx.Dialog):
     def saveClk(self, event):
         if (event.GetEventObject().GetName() == "save"):
             statement = Statement.Statement(self.actuator.GetValue(),
-                                            self.obj.GetValue(),
-                                            [],
-                                            self.statement.getComments())
+                                            self.obj.GetValue())
+            statement.addComment(self.statement.getComment())
             for x in self.choices:
-                #print x.GetName()
-                if x.GetValue() != '':
+                if x.GetValue() != '' and x.GetValue() != False:
                     statement.addParameter(Parameter.Parameter(x.GetName(), x.GetValue()))
-                else:
-                    pass
-                    #print x.GetName()," wasn't selected"
             self.saveCallback(True, statement)
         else:
             self.saveCallback(False, None)
 
-    def generateActuatorSelect(self, statement):
+    def generateActuatorSelect(self):
         # Generate all objects
         self.actuatorText = wx.StaticText(self, label = self.tr("Edit actuator") + ":")
         self.objText = wx.StaticText(self, label = self.tr("Edit object") + ":")
@@ -83,13 +75,13 @@ class editDialog(wx.Dialog):
                                 style = wx.CB_DROPDOWN, name = "actuator")
         self.Bind(wx.EVT_COMBOBOX, self.onActuatorChange, self.actuator)
         self.Bind(wx.EVT_TEXT, self.onActuatorChange, self.actuator)
-        self.actuator.SetValue(statement.getType())
-        self.obj = wx.ComboBox(self, choices = self.API.getActuatorInfo(statement.getType())['objects'], 
+        self.actuator.SetValue(self.statement.getMode())
+        self.obj = wx.ComboBox(self, choices = self.API.getActuatorInfo(self.statement.getMode())['objects'], 
                                 style = wx.CB_DROPDOWN, name = "object")
         # Only for title change,
         self.Bind(wx.EVT_COMBOBOX, self.updateTitle, self.obj)
         self.Bind(wx.EVT_TEXT, self.updateTitle, self.obj)
-        self.obj.SetValue(statement.getObject())
+        self.obj.SetValue(self.statement.getObject())
         # Add them to layout
         self.data.Add(self.actuatorText, pos = (0, 0))
         self.data.Add(self.actuator, pos = (0, 1))
@@ -98,7 +90,7 @@ class editDialog(wx.Dialog):
         # Set used row count
         self.row = 2
     
-    def generatePatameterSelects(self, data, statement):
+    def generatePatameterSelects(self, data):
         # Cycle all parameters and draw according boxes
         for parameter in data:
             self.text.append(wx.StaticText(self, label = self.tr(parameter.getName()) + ":"))
@@ -108,13 +100,9 @@ class editDialog(wx.Dialog):
                                                 style = wx.CB_DROPDOWN, name = parameter.getName()))
             else:
                 self.choices.append(wx.CheckBox(self, name = parameter.getName()))
-            #print values
-            if statement.getParamValueByName(parameter.getName()) != -1:
-                # This should be None not '', can't find why it actually is ''
-                if statement.getParamValueByName(parameter.getName()) == '':
-                    self.choices[-1].SetValue(True)
-                else:
-                    self.choices[-1].SetValue(statement.getParamValueByName(parameter.getName()))
+            paramValue = self.statement.getParamValueByName(parameter.getName())
+            if paramValue != None:
+                self.choices[-1].SetValue(paramValue)
             self.data.Add(self.choices[-1], pos = (self.row, 1))
             self.row += 1
     
@@ -122,22 +110,21 @@ class editDialog(wx.Dialog):
         actuator = self.actuator.GetValue()
         self.updateTitle()
         # Don't clear if this is already selected
-        if actuator == self.statement.getType():
+        if actuator == self.statement.getMode():
             return
         allActuators = self.API.getActuatorInfo(actuator)
         if allActuators != None:
             # Generate new statement
             statement = Statement.Statement(actuator,
-                                            self.obj.GetValue(),
-                                            [],
-                                            self.statement.getComments())
+                                            self.obj.GetValue())
+            statement.addComment(self.statement.getComment())
             self.statement = statement
-            definition = self.API.getActuatorInfo(statement.getType())
+            definition = self.API.getActuatorInfo(statement.getMode())
             data = definition['parameters']
             # Clear All
             self.clearAll()
-            self.generateActuatorSelect(statement)
-            self.generatePatameterSelects(data, statement)
+            self.generateActuatorSelect()
+            self.generatePatameterSelects(data)
             self.data.Layout()
             self.main.Fit(self)
             self.main.Fit(self)
