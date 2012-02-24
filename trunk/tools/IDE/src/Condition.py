@@ -5,92 +5,52 @@ Created on 2011. gada 14. dec.
 '''
 
 class Condition():
-    def __init__(self, condition = '', whenStatements = [], 
-                 elseStatements = [], conditionComment = ''):
-        self.__condition = condition.strip().strip(":")
-        self.__whenStatements = whenStatements
-        self.__elseStatements = elseStatements
-        self.__conditionComment = conditionComment.strip()
+    def __init__(self, mode):
+        # when, elsewhen or else
+        self.__mode = mode
+        # else holds empty condition
+        self.__condition = ''
+        # Statement instances
+        self.__statements = []
+        # Comments
+        self.__comment = ''
+        self.__inlineComment = ''
         
-    # Set statement condition, examples: '1', 'System.time < 5s'
+    def setMode(self, mode):
+        self.__mode = mode
+        
+    def getMode(self):
+        return self.__mode
+    
     def setCondition(self, condition):
-        self.__condition = condition.strip().strip(":")
-    
-    # Add when statement, pass statement class object
-    # Check for similar statements and merge them if found
-    def addWhenStatement(self, whenStatement):
-        for x in self.__whenStatements:
-            if x.getTypeAndObject() == whenStatement.getTypeAndObject():
-                parameters = whenStatement.getStatementParameters()
-                for y in parameters:
-                    x.addParameter(y)
-                x.addComment(whenStatement.getComments())
-                return
-        self.__whenStatements.append(whenStatement)
-    
-    # Add else statement, pass statement class object
-    # Check for similar statements and merge them if found
-    def addElseStatement(self, elseStatement):
-        for x in self.__elseStatements:
-            if x.getTypeAndObject() == elseStatement.getTypeAndObject():
-                parameters = elseStatement.getStatementParameters()
-                for y in parameters:
-                    x.addParameter(y)
-                x.addComment(elseStatement.getComments())
-                return
-        self.__elseStatements.append(elseStatement)
-    
-    # Set statement comment, example: 'This condition rocks!'
-    def addComment(self, conditionComment):
-        self.__conditionComment += '\n' + conditionComment.strip()
-        # If new comment was empty we have too many newlines @ end, so...
-        self.__conditionComment = self.__conditionComment.strip()
-    
-    # Return generated SEAL code from this statement
-    def getCode(self, prefix = ''):
-        result = prefix + 'when ' + self.getCondition() + ':\n'
-        for x in self.__whenStatements:
-            result += prefix + "\t" + x.getAll() + '\n'
-        if self.__elseStatements != []:
-            result += prefix + "else:\n"
-            for x in self.__elseStatements:
-                result += prefix + "\t" + x.getAll() + '\n'
-        result += prefix + 'end\n'
-        return result
-    
-    # Return comments associated with this statement
-    def getComments(self, prefix = ''):
-        if self.__conditionComment == '':
-            return ''
-        else:
-            return prefix + self.__conditionComment + '\n'
-    
-    # Return generated SEAL code from this statement and
-    # comments associated with this statement
-    def getAll(self, prefix = ''):
-        return self.getComments(prefix) + self.getCode(prefix)
-    
-    # Return condition
+        self.__condition = condition
+        
     def getCondition(self):
         return self.__condition
     
-    # Return when statements
-    def getWhenStatements(self):
-        return self.__whenStatements
-    
-    def getWhenStatementsCode(self):
-        result = ''
-        for x in self.__whenStatements:
-            result += x.getAll() + '\n'
-        return result
+    def addStatement(self, statement):
+        self.__statements.append(statement)
         
-    # Return else statements
-    def getElseStatements(self):
-        return self.__elseStatements
+    def getStatements(self):
+        return self.__statements
     
-    def getElseStatementsCode(self):
-        result = ''
-        for x in self.__elseStatements:
-            result += x.getAll() + '\n'
-        return result
+    def addComment(self, comment):
+        self.__comment = (self.__comment + '\n' + comment).strip()
     
+    def getComment(self):
+        return self.__comment
+    
+    def setInlineComment(self, comment):
+        self.__inlineComment = comment.strip()
+    
+    def getInlineComment(self):
+        return self.__inlineComment
+    
+    def getCode(self, prefix):
+        result = (self.getComment() + '\n').replace('\n', '\n' + prefix)
+        result += prefix + self.getMode() + ' ' + self.getCondition() + ': '
+        result += self.getInlineComment() + '\n'
+        for statement in self.getStatements():
+            result +='\t' + statement.getCode(prefix) + '\n'
+        return result.strip()
+        

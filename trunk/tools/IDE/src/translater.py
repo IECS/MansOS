@@ -79,16 +79,20 @@ class Translater:
                 "No devices found": "Nav atrasta neviena ierīce",
                 "Use default device": "Izmantot ierīci pēc noklusēšanas",
                 "Starting compile...": "Kompilēšana sākta...",
-                "Compiled successfully": "Kompilēšana pabeigta veiksmīgi",
-                "Starting upload...": "Augšupielādēšana sākta...",
-                "Uploaded successfully!": "Augšupielādēšana pabeigta veiksmīgi",
+                "Compiled successfully in ": "Kompilēšana pabeigta veiksmīgi, laiks:",
+                "Starting upload on": "Sāku augsupielādēt uz ",
+                "Uploaded successfully in": "Augšupielādēšana pabeigta veiksmīgi, laiks:",
+                "Upload failed with message:": "Augšupielādesana neizdevās, kļūda:",
                 "Start listening": "Sākt klausīties",
                 "Stop listening": "Beigt klausīties",
                 "Change language": "Nomainīt valodu",
                 "Add statement": "Pievienot darbību",
                 "Add condition": "Pievienot nosacījumu",
                 "Edit actuator": "Labot darbību",
-                "Edit object": "Labot objektu"
+                "Edit object": "Labot objektu",
+                "Got": "Atradu",
+                "devices in": "iekārtas, laiks:",
+                "default device": "ierīces pēc noklusēšanas"
                 }
         }
         

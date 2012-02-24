@@ -34,3 +34,14 @@ SETTING_FILE = ".SEAL"
 # Project types
 SEAL_PROJECT = 0
 MANSOS_PROJECT = 1
+
+# Statement types
+STATEMENT = 0
+CONDITION = 1
+STATE = 2
+CONSTANT = 3
+UNKNOWN = 4
+
+# Upload targets
+SHELL = 0
+USB = 1

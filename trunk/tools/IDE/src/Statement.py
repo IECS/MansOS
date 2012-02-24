@@ -4,78 +4,86 @@ Created on 2011. gada 14. dec.
 @author: Janis Judvaitis
 '''
 import Parameter
+import globals as g
 
 class Statement():
-    def __init__(self, statementType = '', statementObject = '', 
-                 statementParameters = [], statementComment = ''):
-        self.__statementType = statementType.strip()
-        self.__statementObject = statementObject.strip()
-        self.__statementParameters = statementParameters
-        self.__statementComment = statementComment.strip()
+    def __init__(self, mode = '', obj = ''):
+        self.__mode = mode.strip()
+        self.__obj = obj.strip()
+        self.__param = []
+        self.__comment = ''
+        self.__inlineComment = ''
+        self.__condition = ''
+        self.__identifier = g.STATEMENT
         
-    # Set statement type, examples: 'use', 'read', 'output'
-    def setType(self, statementType):
-        self.__statementType = statementType.strip()
+    def setMode(self, mode):
+        self.__mode = mode.strip()
     
-    # Set statement object, examples: 'RedLed', 'Light', 'Radio'
-    def setObject(self, statementObject):
-        self.__statementObject = statementObject.strip()
+    def getMode(self):
+        return self.__mode
     
-    # Add statement parameters, example 'Period' -> '100ms', 'turn_on' -> None
-    # This automatically overwrites old parameter with same name, so be careful
-    def addParameterByNameAndValue(self, parameterName, parameterValue):
-        self.addParameter(Parameter.Parameter(parameterName, parameterValue))
+    def setObject(self, obj):
+        self.__obj = obj.strip()
+        
+    def getObject(self):
+        return self.__obj
     
-    # Add statement parameters
+    def getModeAndObject(self):
+        return self.getMode() + " " + self.getObject()
+    
     # This automatically overwrites old parameter with same name, so be careful
     def addParameter(self, parameter):
         name = parameter.getName()
-        for x in self.__statementParameters:
+        # Forbid parameters with no name
+        if name == '':
+            return
+        for x in self.__param:
             if x.getName() == name:
                 x.setValue(parameter.getRealValue())
                 return
-        self.__statementParameters.append(parameter)
+        self.__param.append(parameter)
         
-    # Set statement comment, example: 'This statement rocks!'
-    def addComment(self, statementComment):
-        self.__statementComment += '\n' + statementComment
-        # If new comment was empty we have too many newlines @ end, so...
-        self.__statementComment = self.__statementComment.strip()
+    # This automatically overwrites old parameter with same name, so be careful
+    def addParameterByNameAndValue(self, name, value):
+        self.addParameter(Parameter.Parameter(name, value))
+        
+    def getParam(self):
+        return self.__param
     
-    # Return generated SEAL code from this statement
-    def getCode(self):
-        result = self.getTypeAndObject()
-        for x in self.__statementParameters:
-            if x.getRealValue() != False:
-                result += ', ' + x.getAll()
-        return result + ';'
+    def getParamValueByName(self, name):
+        for x in self.__param:
+            if x.getName() == name:
+                return x.getRealValue()
+        return None
     
-    def getType(self):
-        return self.__statementType
+    def addComment(self, comment):
+        self.__comment = (self.__comment + '\n' + comment).strip()
+        
+    def getComment(self):
+        return self.__comment
     
+    def setInlineComment(self, inlineComment):
+        self.__inlineComment = inlineComment.strip()
     
-    def getObject(self):
-        return self.__statementObject
+    def getInlineComment(self):
+        return self.__inlineComment
     
-    # Return comments associated with this statement
-    def getComments(self):
-        return self.__statementComment
+    def setCondition(self, condition):
+        self.__condition = condition.strip()
+        
+    def getCondition(self):
+        return self.__condition
     
-    # Return generated SEAL code from this statement and
-    # comments associated with this statement
-    def getAll(self):
-        return ('' if self.getComments() == ''  else self.getComments() + '\n') + self.getCode()
+    def getIdentifier(self):
+        return self.__identifier
     
-    # Get concatenation of type and object, example "Use RedLed", "read Light"
-    def getTypeAndObject(self):
-        return self.__statementType + " " + self.__statementObject
+    def getCode(self, prefix):
+        result = (self.getComment() + '\n').replace('\n', '\n' + prefix)
+        result += self.getModeAndObject()
+        for param in self.getParam():
+            result += ', ' + param.getCode()
+        if self.getCondition() != '':
+            result += ', when ' + self.getCondition()
+        result += '; ' + self.getInlineComment() + '\n'
+        return result.strip()
     
-    # Return all statement parameters
-    def getStatementParameters(self):
-        return self.__statementParameters
-    
-    def getParamValueByName(self, parameterName):
-        for x in self.__statementParameters:
-            if x.getName() == parameterName:
-                return x.getValue()
-        return -1

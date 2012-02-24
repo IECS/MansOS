@@ -35,6 +35,7 @@ from src import uploadModule
 from src import listenModule
 from src import APIcore
 from src import sealStruct
+from src import sealParser
 
 class Example(wx.Frame):
     def __init__(self, parent, title, size, pos, API):
@@ -220,8 +221,7 @@ class Example(wx.Frame):
 def main():
     ex = wx.App()
     frame = Example(None, title="MansOS IDE", 
-                    size = (800,500), pos=(100,100),
-                    API = APIcore.ApiCore())
+                    size = (800,500), pos=(100,100), API = APIcore.ApiCore())
     frame.Show()
     
     ex.MainLoop()
