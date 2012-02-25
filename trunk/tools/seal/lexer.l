@@ -20,7 +20,7 @@
 "parameter" { return PARAMETER_TOKEN; }
 "use"       { return USE_TOKEN; }
 "read"      { return READ_TOKEN; }
-"sendto"    { return SENDTO_TOKEN; }
+"output"    { return OUTPUT_TOKEN; }
 "when"      { return WHEN_TOKEN; }
 "else"      { return ELSE_TOKEN; }
 "elsewhen"  { return ELSEWHEN_TOKEN; }

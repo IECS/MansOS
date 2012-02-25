@@ -93,10 +93,21 @@ void Object::generateIncludes() {
 
 void generateIncludes(void)
 {
+#if TARGET_CONTIKI
+    fprintf(outputFile, "#include \"contiki.h\"\n");
+    fprintf(outputFile, "#include \"lib/crc16.h\"\n");
+    fprintf(outputFile, "#include <stdbool.h>\n");
+#else
     fprintf(outputFile, "#include <stdmansos.h>\n");
     fprintf(outputFile, "#include <lib/codec/crc.h>\n");
+#endif
     foreach(ObjectCollection, objectsUsed, (*it)->generateIncludes());
     fprintf(outputFile, "\n");
+
+#if TARGET_CONTIKI
+    fprintf(outputFile, "#define crc16(d, l) crc16_data(d, l, 0)\n");
+    fprintf(outputFile, "\n");
+#endif
 }
 
 void generatePacketType(Sink *sink, vector<PacketField> fields)
@@ -303,6 +314,7 @@ bool Object::generateVariables(const UseCase &uc, int num)
 
     bool ret = false;
 
+#if !TARGET_CONTIKI
     if (IS_SPECIFIED(uc.period)) {
         ret = true;
         fprintf(outputFile, "Alarm_t %s%sAlarm;\n",
@@ -318,6 +330,7 @@ bool Object::generateVariables(const UseCase &uc, int num)
         fprintf(outputFile, "Alarm_t %s%sOffAlarm;\n",
                 toCamelCase(getName()).c_str(), condStr);
     }
+#endif
     return ret;
 }
 
@@ -530,7 +543,7 @@ void Object::generateCode(const UseCase &uc, int num)
         if (type == SENSOR) {
             Sensor *asSensor = (Sensor *) this;
             IntTypes &myType = uintTypes[asSensor->getDataSize()];
-            fprintf(outputFile, "    %s %s = %s();\n",
+            fprintf(outputFile, "    %s %s = %s;\n",
                     myType.name, ccName.c_str(), asSensor->getReadFunction());
             foreach(vector<Sink *>, sinksUsed,
                     (*it)->generateCodeForSensor(asSensor));
@@ -539,11 +552,14 @@ void Object::generateCode(const UseCase &uc, int num)
             fprintf(outputFile, "    %s();\n",
                     asActuator->getToggleFunction());
         }
+
+#if !TARGET_CONTIKI
         // TODO: only reschedule this alarm if conditions hold... 
         // foreach (CaseVector, useCases,
         //        generateCode(*it, 1));
         fprintf(outputFile, "    alarmSchedule(&%sAlarm, %s_PERIOD);\n",
             ccName.c_str(), ucName.c_str());
+#endif
         fprintf(outputFile, "}\n\n");
     }
     if (IS_SPECIFIED(uc.onTime) && type == Object::ACTUATOR) {
@@ -622,7 +638,7 @@ bool Object::generateAppMainCode()
     const char *ifunc = getInitFunction();
     if (ifunc) {
         any = true;
-        fprintf(outputFile, "    %s();\n", ifunc);
+        fprintf(outputFile, "    %s;\n", ifunc);
     }
 
     foreach (CaseVector, useCases,
@@ -634,6 +650,7 @@ bool Object::generateAppMainCode()
 
 void generateSinkCode(void)
 {
+    // cout << "sinksUsed.size = " << sinksUsed.size() << endl;
     foreach(vector<Sink *>, sinksUsed,
             (*it)->generateCode());
 }
@@ -645,6 +662,67 @@ void generateCallbacks(void)
     foreach(vector<Actuator *>, actuatorsUsed,
             (*it)->generateCode());
 }
+
+#if TARGET_CONTIKI
+void generateAppMain(void)
+{
+    fprintf(outputFile, "PROCESS(app_main_process, \"Main process\");\n");
+    fprintf(outputFile, "AUTOSTART_PROCESSES(&app_main_process);\n");
+    fprintf(outputFile, "\n");
+    fprintf(outputFile, "PROCESS_THREAD(app_main_process, ev, data)");
+    fprintf(outputFile, "{\n");
+    fprintf(outputFile, "    PROCESS_BEGIN();\n");
+
+    // packet initialization code
+    bool any = false;
+    foreach(vector<Sink *>, sinksUsed,
+            if ((*it)->aggregate) {
+                any = true;
+                fprintf(outputFile, "    %sPacketInit();\n",
+                        toCamelCase((*it)->getName()).c_str());
+            });
+    if (any) fprintf(outputFile, "\n");
+
+    any = false;
+    foreach(vector<Sensor *>, sensorsUsed,
+            const char *initFunction = (*it)->getInitFunction();
+            if (initFunction) {
+                any = true;
+                fprintf(outputFile, "    %s;\n", initFunction);
+            });
+    if (any) fprintf(outputFile, "\n");
+
+    fprintf(outputFile, "    while (1) {\n");
+
+    foreach(ObjectCollection, objectsUsed,
+            if ((*it)->type == Object::SINK) continue;
+            fprintf(outputFile, "        static struct etimer %sTimer;\n",
+                    toCamelCase((*it)->getName()).c_str());
+            fprintf(outputFile, "        etimer_set(&%sTimer, CLOCK_SECOND * %s_PERIOD / 1000);\n",
+                    toCamelCase((*it)->getName()).c_str(),
+                    toUpperCase((*it)->getName()).c_str());
+        );
+
+    fprintf(outputFile, "\n");
+    fprintf(outputFile, "        PROCESS_WAIT_EVENT();\n");
+    fprintf(outputFile, "\n");
+
+    foreach(ObjectCollection, objectsUsed,
+            if ((*it)->type == Object::SINK) continue;
+            fprintf(outputFile, "        if (etimer_expired(&%sTimer)) {\n",
+                    toCamelCase((*it)->getName()).c_str());
+            fprintf(outputFile, "              %sAlarmCallback(NULL);\n",
+                    toCamelCase((*it)->getName()).c_str());
+            fprintf(outputFile, "        }\n");
+        );
+
+    fprintf(outputFile, "    }\n");
+
+    fprintf(outputFile, "    PROCESS_END();\n");
+    fprintf(outputFile, "}\n");
+}
+
+#else // TARGET_CONTIKI
 
 void generateAppMain(void)
 {
@@ -675,6 +753,7 @@ void generateAppMain(void)
 
     fprintf(outputFile, "}\n");
 }
+#endif // TARGET_CONTIKI
 
 void generateCode(void)
 {
@@ -687,6 +766,7 @@ void generateCode(void)
     outputFile = fopen(outputFileFullName.c_str(), "w");
     if (!outputFile) sysError("failed to write output file %s", outputFileFullName.c_str());
 
+    // cout << "total objects: " << objectsUsed.size() << endl;
     foreach(ObjectCollection, objectsUsed,
             switch ((*it)->type) {
             case Object::ACTUATOR:
@@ -702,14 +782,18 @@ void generateCode(void)
 
     generateIncludes();
     fprintf(outputFile, SEPARATOR);
+    fprintf(outputFile, "// Types, variables & constants\n\n");
     generateTypes();
     generateVariables();
     generateConstants();
     fprintf(outputFile, SEPARATOR);
+    fprintf(outputFile, "// Outputs\n\n");
     generateSinkCode();
     fprintf(outputFile, SEPARATOR);
+    fprintf(outputFile, "// Callbacks\n\n");
     generateCallbacks();
     fprintf(outputFile, SEPARATOR);
+    fprintf(outputFile, "// Main function\n\n");
     generateAppMain();
 
     fclose(outputFile);
