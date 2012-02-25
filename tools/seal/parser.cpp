@@ -127,6 +127,7 @@ ComponentUseCase_t *makeComponentUseCaseWithFields(const char *component, Parame
 extern "C" void addComponentWithCondition(ComponentUseCase_t *component,
         Condition *cond, bool elseCase)
 {
+    // cout << "addComponentWithCondition: " << component->name.c_str() << endl;
     Object *o = objectsUsed.findOrCreate(component->name.c_str());
     addParameters(o, component->params, cond);
     if (component->fields) {

@@ -1,5 +1,5 @@
-#ifndef SADLANG_PARSER_H
-#define SADLANG_PARSER_H
+#ifndef SEAL_PARSER_H
+#define SEAL_PARSER_H
 
 #ifdef __cplusplus
 extern "C" {

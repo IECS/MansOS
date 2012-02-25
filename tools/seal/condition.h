@@ -1,5 +1,5 @@
-#ifndef SADLANG_CONDITION_H
-#define SADLANG_CONDITION_H
+#ifndef SEAL_CONDITION_H
+#define SEAL_CONDITION_H
 
 #include <map>
 #include <string>

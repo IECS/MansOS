@@ -1,5 +1,5 @@
-#ifndef SADLANG_OBJECTS_H
-#define SADLANG_OBJECTS_H
+#ifndef SEAL_OBJECTS_H
+#define SEAL_OBJECTS_H
 
 #include <vector>
 #include <string>
@@ -162,27 +162,42 @@ public:
     virtual const char *getConfigName(bool &extended) const {
         extern const char *architecture;
         if (!strcmp(architecture, "sadmote")) {
-            extended= true;
+            extended = true;
             return "USE_ISL29003=y\nUSE_APDS9300=y\nUSE_SOFT_I2C=y\n"
                     "CONST_SDA_PORT=2\nCONST_SDA_PIN=3\n"
                     "CONST_SCL_PORT=2\nCONST_SCL_PIN=4\n";
         }
-        extended= false;
+        extended = false;
         return "ADC"; // XXX
     }
     virtual const char *getReadFunction() const {
+#if TARGET_CONTIKI
+        return "light_sensor.value(LIGHT_SENSOR_TOTAL_SOLAR)";
+#else
         extern const char *architecture;
         if (!strcmp(architecture, "sadmote")) {
-            return "islReadSimple";
+            return "islReadSimple()";
         }
-        return "readLight";
+        return "readLight()";
+#endif
     }
     virtual const char *getIncludeFile() const {
+#if TARGET_CONTIKI
+        return "dev/light-sensor.h";
+#else
         extern const char *architecture;
         if (!strcmp(architecture, "sadmote")) {
             return "isl29003/isl29003.h";
         }
         return NULL; 
+#endif
+    }
+    virtual const char *getInitFunction(void) const {
+#if TARGET_CONTIKI
+        return "SENSORS_ACTIVATE(light_sensor)";
+#else
+        return NULL;
+#endif
     }
     virtual unsigned getDataSize() const { return 2; }
 };
@@ -191,9 +206,28 @@ class HumiditySens : public Sensor {
 public:
     virtual const char *getName() const { return "Humidity"; }
     virtual const char *getConfigName(bool &extended) const { return "HUMIDITY"; }
-    virtual const char *getReadFunction() const { return "readHumidity"; }
+    virtual const char *getReadFunction() const {
+#if TARGET_CONTIKI
+        return "sht11_sensor.value(SHT11_SENSOR_HUMIDITY)";
+#else
+        return "readHumidity()";
+#endif
+    }
     virtual unsigned getDataSize() const { return 2; }
-    virtual const char *getInitFunction() const { return "humidityOn"; }
+    virtual const char *getInitFunction() const {
+#if TARGET_CONTIKI
+        return "SENSORS_ACTIVATE(sht11_sensor)";
+#else
+        return "humidityOn()";
+#endif
+    }
+    virtual const char *getIncludeFile() const {
+#if TARGET_CONTIKI
+        return "dev/sht11-sensor.h";
+#else
+        return NULL;
+#endif
+    }
 };
 
 // -----------------------------------
@@ -269,7 +303,18 @@ public:
         crc = true;
     }
     virtual const char *getSendFuntion() const {
+#if TARGET_CONTIKI
+        return "NETSTACK_RADIO.send(&radioPacket, sizeof(radioPacket))";
+#else
         return "radioSend(&radioPacket, sizeof(radioPacket))";
+#endif
+    }
+    virtual const char *getIncludeFile() const {
+#if TARGET_CONTIKI
+        return "net/netstack.h";
+#else
+        return NULL;
+#endif
     }
 };
 
@@ -293,6 +338,7 @@ public:
     const_iterator begin() const { return all.begin(); }
     iterator end() { return all.end(); }
     const_iterator end() const { return all.end(); }
+    unsigned size() const { return all.size(); }
 
     // bool alreadyUsed(const char *name) const;
     Object *createNew(const char *name);

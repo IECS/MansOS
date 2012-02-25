@@ -28,7 +28,7 @@
 %token PARAMETER_TOKEN
 %token USE_TOKEN
 %token READ_TOKEN
-%token SENDTO_TOKEN
+%token OUTPUT_TOKEN
 %token WHEN_TOKEN
 %token ELSE_TOKEN
 %token ELSEWHEN_TOKEN
@@ -68,7 +68,7 @@ declaration:
                    { $$ = makeComponentUseCase($2, $3); }
         | READ_TOKEN IDENTIFIER_TOKEN parameter_list ';'
                    { $$ = makeComponentUseCase($2, $3); }
-        | SENDTO_TOKEN IDENTIFIER_TOKEN packet_field_specifier parameter_list ';'
+        | OUTPUT_TOKEN IDENTIFIER_TOKEN packet_field_specifier parameter_list ';'
                    { $$ = makeComponentUseCaseWithFields($2, $4, $3); }
         | when_block
                    { printf("when block\n"); $$ = NULL; }

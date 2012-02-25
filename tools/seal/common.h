@@ -1,5 +1,5 @@
-#ifndef SADLANG_COMMON_H
-#define SADLANG_COMMON_H
+#ifndef SEAL_COMMON_H
+#define SEAL_COMMON_H
 
 #include "y.tab.h"
 #include "algo.h"
@@ -32,7 +32,7 @@ extern "C" int yyparse(void);
 void userError(const char *fmt, ...) __attribute__((noreturn, format (printf, 1, 2)));
 void sysError(const char *fmt, ...) __attribute__((noreturn, format (printf, 1, 2)));
 
-#define SEPARATOR "//-----------------------------\n\n"
+#define SEPARATOR "//-----------------------------\n"
 
 struct Parameter_s {
     Parameter_t *next;

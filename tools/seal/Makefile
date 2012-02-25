@@ -4,7 +4,7 @@ TARGET=seal
 FLEX=flex
 YACC=yacc
 
-CFLAGS=-g -Wall
+CFLAGS=-g -Wall -DTARGET_CONTIKI=1
 LDFLAGS=-lfl
 
 APP_OBJECTS = main.o objects.o parser.o condition.o generator.o
