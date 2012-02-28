@@ -26,6 +26,7 @@
 
 CC = msp430-gcc
 OBJCOPY = msp430-objcopy
+MSPDEBUG = mspdebug
 
 CFLAGS += -mmcu=$(MCU_MODEL) -DMCU_MSP430=1 -g -Wall
 
@@ -87,6 +88,9 @@ upload-tmote:
 
 upload-msp430: 
 	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) -r -e -I -p $(OUTDIRDOS)/image.ihex
+
+upload-launchpad:
+	$(MSPDEBUG) rf2500 "prog $(OUTDIRDOS)/image.ihex"
 
 memdump: build
 	$(MEMDUMP) $(OUTDIR)/$(APPMOD).elf msp430
