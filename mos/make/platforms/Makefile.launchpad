@@ -23,7 +23,7 @@
 #
 
 #############################################
-# TelosB compatible motes (Tmote Sky)
+# LaunchPad compatible motes
 #############################################
 
 #############################################
@@ -32,27 +32,21 @@
 ARCH = msp430
 MCU_MODEL = msp430g2231
 
-# Upload target specifically for Tmote (without pin inversion)
+# Upload target specifically for Launchpad
 UPLOAD_TARGET=upload-launchpad
 
-# Default clock speed: 4MHz
+# Default clock speed: 1MHz
 ifeq ($(USE_HARDWARE_TIMERS),y)
-CPU_MHZ ?= 4
+CPU_MHZ ?= 8
 else
 CPU_MHZ ?= 1  # actually the default DCO frequency is around 800 kHz
 endif
 
-#CFLAGS += -DPLATFORM_TELOSB=1
+CFLAGS += -DPLATFORM_LAUNCHPAD=1 -D__MSP430_2231__ -DCUSTOM_TIMER_INTERRUPT_HANDLERS
 
 #############################################
 # Define platform-specific sources
 # (excluding architecture-specific sources)
 
-PSOURCES += $(MOS)/platforms/telosb/platform.c
-PSOURCES-$(USE_USER_BUTTON) += $(MOS)/platforms/telosb/user_button.c
-
-PSOURCES-$(USE_RADIO) += $(MOS)/chips/cc2420/cc2420.c
-PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
-PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/m25p80/m25p80.c
-PSOURCES-$(USE_ISL29003) += $(MOS)/chips/isl29003/isl29003.c
-PSOURCES-$(USE_APDS9300) += $(MOS)/chips/apds9300/apds9300.c
+PSOURCES += $(MOS)/platforms/launchpad/platform.c
+PSOURCES-$(USE_USER_BUTTON) += $(MOS)/platforms/launchpad/user_button.c
