@@ -24,7 +24,7 @@
 #
 # This is the default config file.
 # Applications can override it in a 'config' file in the project directory.
-# The minimalst people may override in the same project Makefile.
+# The minimalist people may override in the same project Makefile.
 #
 # Note that this file only tells what to compile, not what to link!
 # Linker script can discard even files that were compiled. 
