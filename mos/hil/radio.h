@@ -142,7 +142,11 @@ uint8_t radioGetLastLQI(void);
 // The exact behaviour of these functions is platform- and chip-dependent.
 // For IEEE 802.15.4 compatible radios (such as the CC2420)
 // there are 16 channels available in the 2.4 GHz band
-// in 5 MHz steps, numbered 11 through 26
+// in 5 MHz steps, numbered 11 through 26.
+// They have 2MHz channel bandwidth, and channel separation of 5 MHz.
+// Center frequency Fc in MHz is calculated as:
+//    Fc = 2405 + 5 * (k – 11),
+// where k is channel number.
 //
 void radioSetChannel(int channel);
 

@@ -27,6 +27,7 @@
 
 #include "stdmansos.h"
 #include "extflash.h"
+#include "ads1115/ads1115.h"
 
 #define PAUSE 2000
 
@@ -48,27 +49,13 @@ void ro(void)
 //      Entry point for the application
 //-------------------------------------------
 void appMain(void) {
-//    radioOff();
-//    adcOff();
-//    humidityOff();
-
 #if PLATFORM_SADMOTE
     ro();
-    extFlashSleep();
+    adsInit();
 #endif
 
     while (1) {
-        ledToggle();
         msleep(PAUSE); // sleep PAUSE seconds
         PRINT("hello world\n");
     }
-
-    // ledToggle();
-    // msleep(PAUSE); // sleep PAUSE seconds
-    // PRINT("hello world\n");
-
-    // ledToggle();
-    // DISABLE_INTS();
-    // msleep(PAUSE);
-    // PRINT("hello world 2\n");
 }

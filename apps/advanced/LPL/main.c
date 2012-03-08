@@ -55,30 +55,17 @@ void appMain(void)
 // Sender
 // --------------------------------------------------
 
-static uint8_t lplPreamble[32] = {
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
-};
-
-extern int_t cc2420SendPreamble(void);
+extern void cc2420ContinousWave(bool on);
 
 int16_t lplSend(const uint8_t *data, uint16_t length)
 {
     // -- send preamble
-    uint32_t preambleEndTime = getRealTime() + DUTY_CYCLE_LENGTH; // + 100; // XXX
-    do {
-        int16_t ret = cc2420SendPreamble();
-        //int16_t ret = radioSend(lplPreamble, sizeof(lplPreamble));        
-        if (ret) {
-            PRINTF("send preamble failed: %s\n", strerror(-ret));
-        }
-        mdelay(2); // wait for tx to end
-    } while (!timeAfter32(getRealTime(), preambleEndTime));
+    uint32_t preambleEndTime = getRealTime() + DUTY_CYCLE_LENGTH;
+    cc2420ContinousWave(true);
+    while (!timeAfter32(getRealTime(), preambleEndTime));
+    cc2420ContinousWave(false);
 
     // -- send packet
-//    mdelay(10);
     return radioSend(data, length);
 }
 
