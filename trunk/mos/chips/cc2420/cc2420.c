@@ -82,19 +82,6 @@ static void cc2420SetPanAddr(unsigned pan,
                              unsigned addr,
                              const uint8_t *ieee_addr);
 
-// ------------------------------------
-
-#define FOOTER1_CRC_OK      0x80
-#define FOOTER1_LQI         0x7f
-
-#define AUTOACK (1 << 4)
-#define AUTOCRC (1 << 5)
-#define ADR_DECODE (1 << 11)
-#define RXFIFO_PROTECTION (1 << 9)
-#define CORR_THR(n) (((n) & 0x1f) << 6)
-#define FIFOP_THR(n) ((n) & 0x7f)
-#define RXBPF_LOCUR (1 << 13);
-
 /*---------------------------------------------------------------------------*/
 
 typedef uint16_t rtimer_clock_t;
@@ -225,6 +212,11 @@ void cc2420Init(void)
         pinAsOutput(CC2420_RESET_N_PORT, CC2420_RESET_N_PIN);
         pinAsOutput(CC2420_VREG_EN_PORT, CC2420_VREG_EN_PIN);
 
+        pinAsInput(CC2420_FIFO_P_PORT, CC2420_FIFO_P_PIN);
+        pinAsInput(CC2420_FIFO_PORT, CC2420_FIFO_PIN);
+        pinAsInput(CC2420_CCA_PORT, CC2420_CCA_PIN);
+        pinAsInput(CC2420_SFD_PORT, CC2420_SFD_PIN);
+
         // Unselect radio
         CC2420_SPI_DISABLE();
 
@@ -246,18 +238,16 @@ void cc2420Init(void)
 
     // Turn on/off automatic packet acknowledgment and address decoding
     reg = getreg(CC2420_MDMCTRL0);
-
 #if CC2420_CONF_AUTOACK
-    reg |= AUTOACK | ADR_DECODE;
+    reg |= MDMCTRL0_AUTOACK | MDMCTRL0_ADDR_DECODE;
 #else
-    reg &= ~(AUTOACK | ADR_DECODE);
+    reg &= ~(MDMCTRL0_AUTOACK | MDMCTRL0_ADDR_DECODE);
 #endif // CC2420_CONF_AUTOACK
-
 #if CC2420_CONF_AUTOCRC
     /* Turn on automatic CRC calculation. */
-    reg |= AUTOCRC;
+    reg |= MDMCTRL0_AUTOCRC;
 #else
-    reg &= ~AUTOCRC;
+    reg &= ~MDMCTRL0_AUTOCRC;
 #endif
     setreg(CC2420_MDMCTRL0, reg);
 
@@ -267,19 +257,19 @@ void cc2420Init(void)
     reg &= ~(1 << 13);
     setreg(CC2420_TXCTRL, reg); */
 
-    /* Change default values as recomended in the data sheet, */
-    /* correlation threshold = 20, RX bandpass filter = 1.3uA. */
-    setreg(CC2420_MDMCTRL1, CORR_THR(20));
+    /* Change default values as recommended in the data sheet, */
+    /* correlation threshold = 20, RX bandpass filter = 3uA. */
+    setreg(CC2420_MDMCTRL1, CORR_THRESHOLD_DEFAULT);
     reg = getreg(CC2420_RXCTRL1);
-    reg |= RXBPF_LOCUR;
+    reg |= RXCTRL1_RXBPF_LOCUR;
     setreg(CC2420_RXCTRL1, reg);
 
     /* Set the FIFOP threshold to maximum. */
-    setreg(CC2420_IOCFG0, FIFOP_THR(127));
+    setreg(CC2420_IOCFG0, IOCFG0_FIFOP_THR(CC2420_HW_PACKET_LIMIT));
 
     /* Turn off "Security enable" (page 32). */
     reg = getreg(CC2420_SECCTRL0);
-    reg &= ~RXFIFO_PROTECTION;
+    reg &= ~SECCTRL0_RXFIFO_PROTECTION;
     setreg(CC2420_SECCTRL0, reg);
 
     cc2420SetPanAddr(0xffff, 0x0000, NULL);
@@ -367,74 +357,6 @@ int_t cc2420Send(const void *header, uint16_t headerLen,
     /* If we are using WITH_SEND_CCA, we get here if the packet wasn't
        transmitted because of other channel activity. */
     RPRINTF("cc2420Send(): transmission never started\n");
-    result = -EBUSY;
-  end:
-    // RPRINTF("cc2420: tx done, result=%d\n", result);
-    ATOMIC_END(h);
-    return result;
-}
-
-int_t cc2420SendPreamble(void)
-{
-    int_t result;
-    int i;
-    Handle_t h;
-
-    /* Wait for any previous transmission to finish. */
-    ASSERT(!(status() & BV(CC2420_TX_ACTIVE)));
-
-    // XXX: disable ints?
-    ATOMIC_START(h);
-
-    /* Write packet to TX FIFO. */
-    strobe(CC2420_SFLUSHTX);
-
-    const uint8_t totalLen = CC2420_MAX_PACKET_LEN + AUX_LEN;
-    CC2420_WRITE_FIFO(&totalLen, 1);
-    CC2420_SPI_ENABLE();
-    CC2420_TX_ADDR(CC2420_TXFIFO);
-    for (i = 0; i < CC2420_MAX_PACKET_LEN; ++i) {
-        CC2420_TX_BYTE(0xff);
-    }
-    CC2420_SPI_DISABLE();
-
-    /* The TX FIFO can only hold one packet. Make sure to not overrun
-     * FIFO by waiting for transmission to start here and synchronizing
-     * with the CC2420_TX_ACTIVE check in cc2420_send.
-     *
-     * Note that we may have to wait up to 320 us (20 symbols) before
-     * transmission starts.
-     */
-#if WITH_SEND_CCA
-    strobe(CC2420_SRXON);
-    BUSYWAIT_UNTIL(status() & BV(CC2420_RSSI_VALID), RTIMER_SECOND / 10);
-    strobe(CC2420_STXONCCA);
-#else /* WITH_SEND_CCA */
-    strobe(CC2420_STXON);
-#endif /* WITH_SEND_CCA */
-
-    for (i = LOOP_20_SYMBOLS; i > 0; i--) {
-        if (CC2420_SFD_IS_1) {
-            if (!(status() & BV(CC2420_TX_ACTIVE))) {
-                /* SFD went high but we are not transmitting. This means that
-                   we just started receiving a packet, so we drop the transmission. */
-                result = -EBUSY;
-                goto end;
-            }
-            /* We wait until transmission has ended so that we get an
-               accurate measurement of the transmission time.*/
-            BUSYWAIT_UNTIL(!(status() & BV(CC2420_TX_ACTIVE)), RTIMER_SECOND / 10);
-
-            ASSERT(receive_on);
-
-            result = 0; // success
-            goto end;
-        }
-    }
-
-    /* If we are using WITH_SEND_CCA, we get here if the packet wasn't
-       transmitted because of other channel activity. */
-    RPRINTF("cc2420SendPreamble(): transmission never started\n");
     result = -EBUSY;
   end:
     // RPRINTF("cc2420: tx done, result=%d\n", result);
@@ -671,4 +593,55 @@ bool cc2420IsChannelClear(void)
     BUSYWAIT_UNTIL(status() & BV(CC2420_RSSI_VALID), RTIMER_SECOND / 100);
 
     return CC2420_CCA_IS_1;
+}
+
+//
+// Send continous wave (unmodulated signal carrier)
+//
+void cc2420ContinousWave(bool on)
+{
+    /*
+     CC2420 datasheet:
+     "An unmodulated carrier may be transmitted by setting MDMCTRL1.TX_MODE to 2 or 3,
+     writing 0x1800 to the DACTST register and issue a STXON command strobe. The transmitter
+     is then enabled while the transmitter I/O DACs are overridden to static values. An
+     unmodulated carrier will then be available on the RF output pins."
+    */
+    uint16_t reg = getreg(CC2420_MDMCTRL1);
+    if (on) {
+        reg |= TX_TEST_MODE_CYCLIC;
+    } else {
+        reg &= ~TX_TEST_MODE_MASK;
+    }
+    setreg(CC2420_MDMCTRL1, reg);
+    if (on) {
+        setreg(CC2420_DACTST, DACTST_CONTINUOUS_WAVE);
+        strobe(CC2420_STXON);
+    } else {
+        setreg(CC2420_DACTST, 0);
+        strobe(CC2420_STXON);
+    }
+}
+
+#include "dprint.h"
+//
+// Configure CCA with specific values
+//
+void configureCCA(int8_t threshold, uint8_t mode)
+{
+    uint16_t reg;
+
+    reg = getreg(CC2420_MDMCTRL0);
+    reg &= ~CCA_MODE_MASK;
+    reg |= (mode & CCA_MODE_MASK);
+    setreg(CC2420_MDMCTRL0, reg);
+
+    reg = (uint16_t)threshold << 8;
+    setreg(CC2420_RSSI, reg);
+
+    // if (receive_on) {
+    //     BUSYWAIT_UNTIL(status() & BV(CC2420_RSSI_VALID), RTIMER_SECOND / 100);
+    //     uint8_t on = CC2420_CCA_IS_1;
+    //     PRINTF("CCA = %u\n", on);
+    // }
 }

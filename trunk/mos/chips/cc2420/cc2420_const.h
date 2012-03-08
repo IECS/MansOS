@@ -169,4 +169,75 @@ enum cc2420_secctrl0 {
   CC2420_SECCTRL0_RXFIFO_PROTECTION = 0x0200,
 };
 
+
+// ------------------------------------
+
+#define FOOTER1_CRC_OK      0x80
+#define FOOTER1_LQI         0x7f
+
+// MDMCTRL0 constants
+enum  {
+    MDMCTRL0_ACCEPT_RESERVED_FRAMES = 1 << 13,
+    MDMCTRL0_PAN_COORDINATOR = 1 << 12,
+    MDMCTRL0_ADDR_DECODE = 1 << 11, // (default on)
+    // bits 8 to 10: CCA hysteresis (default 2 dB)
+    // bits 6 to 7: CCA mode
+    //       0: reserved
+    //       1: channel clear if RSSI below threshold-hysteresis 
+    //       2: channel clear if not receiving valid frame
+    //       3: channel clear if both (default)
+    MDMCTRL0_AUTOCRC = 1 << 5,
+    MDMCTRL0_AUTOACK = 1 << 4,
+    // bits 0 to 3: preamble length (in bytes)
+    //       0: 1 byte
+    //       1: 2 bytes
+    //       2: 3 bytes (default), etc.
+};
+
+#define CCA_MODE_RSSI  (1 << 6)
+#define CCA_MODE_FRAME (2 << 6)
+#define CCA_MODE_COMBINED (CCA_MODE_RSSI | CCA_MODE_FRAME)
+#define CCA_MODE_MASK  (3 << 6)
+
+// MDMCTRL1 constants
+enum  {
+    // bits 6 to 10: demodulator correlator threshold (default 20)
+    MDMCTRL1_DEMOD_AVG_MODE = 1 << 5,
+    MDMCTRL1_MODULATION_MODE = 1 << 4, // IEEE 802.14.5 compliant or not
+    // bits 2 to 3: Tx test mode (default 0)
+    // bits 0 to 1: Rx test mode (default 0)
+};
+
+#define CORR_THRESHOLD_DEFAULT  (20 << 6)
+
+#define TX_TEST_MODE_MASK   (3 << 2)
+#define TX_TEST_MODE_NONE   (0 << 2) // normal operation
+#define TX_TEST_MODE_SERIAL (1 << 2)
+#define TX_TEST_MODE_CYCLIC (2 << 2)
+#define TX_TEST_MODE_RANDOM (3 << 2)
+
+#define RX_TEST_MODE_MASK   3
+#define RX_TEST_MODE_NONE   0 // normal operation
+#define RX_TEST_MODE_SERIAL 1
+#define RX_TEST_MODE_CYCLIC 2
+
+// RXCTRL1 constants
+enum  {
+    RXCTRL1_RXBPF_LOCUR = 1 << 13,
+    RXCTRL1_RXBPF_MIDCUR = 1 << 12,
+};
+
+// IOCFG0 constants
+#define IOCFG0_FIFOP_THR(n) ((n) & 0x7f)
+
+// SECCTRL0 constants
+enum {
+    SECCTRL0_RXFIFO_PROTECTION = 1 << 9,
+};
+
+#define CCA_THRESHOLD_DEFAULT  -32  // approximately -77 dBm
+
+#define DACTST_CONTINUOUS_WAVE 0x1800
+
+
 #endif
