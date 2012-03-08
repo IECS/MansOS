@@ -29,7 +29,7 @@
 #define _MSP430_CLOCK_H_
 
 // set low power mode bits in the SR to sleep, and make sure interrupts are enabled as well
-#define ENTER_SLEEP_MODE() _BIS_SR(((LPM0_bits) | GIE))
+#define ENTER_SLEEP_MODE() _BIS_SR(((LPM3_bits) | GIE))
 // Warning: this commands works *only* in interrupt handlers!
 #define EXIT_SLEEP_MODE() LPM3_EXIT
 
