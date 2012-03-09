@@ -36,20 +36,15 @@ class SealParser:
         self.__matches = [
             [re.compile(r"^(?://).*", re.IGNORECASE), 
              self.__queueComment],
-            [re.compile(r"^(?:use|read|output) .*(?:,| )when .*", re.IGNORECASE), 
+            # (stetement), (object), (parameters), (condition), (comments)
+            [re.compile(r"^(use|read|output) (\w*),?(.*)(?:,| )when (.+);(.*)", 
+                        re.IGNORECASE), 
              self.__parseStatementWithWhen],
-            [re.compile(r"^(?:use|read|output) .*", re.IGNORECASE), 
+            [re.compile(r"^(use|read|output) (\w*),?(.*);(.*)", re.IGNORECASE), 
              self.__parseStatement],
-            [re.compile(r"^when (.*):.*\n((?:.\n)*)end", re.IGNORECASE), 
+            [re.compile(r"^when (.*):(.*)\n((?:.*\n)*)end", re.IGNORECASE), 
              self.__parseSimpleWhen]
                          ]
-        # regex for splitting statements in parts
-        self.__statRegex = re.compile(
-                r"^(use|read|output) (\w*),?(.*);", re.IGNORECASE)
-        self.__statWhenRegex = re.compile(
-                r"^((?:use|read|output) .*)(?:,| )when (.*);", re.IGNORECASE)
-        self.__whenRegex = re.compile(
-                r"^when (.*:.*)\n((?:.*\n)*?)((?: *//.*\n)*) *end *(//.*)", re.IGNORECASE)
             #TODO: Add complicated when!!!
         
     def parseCode(self, source):
@@ -65,10 +60,9 @@ class SealParser:
                 res = regex.match(source)
                 # If regex matches, call responsible parser for this chunk
                 if res != None:
-                    obj = parser(source[:res.end()])
+                    obj = parser(res)
                     if obj != None:
                         result.append(obj)
-                    # TODO add returned Statement|Condition to seal struct!!
                     source = source[res.end():].strip("\n ")
                     found = True
                     break
@@ -109,35 +103,30 @@ class SealParser:
             obj.addComment(self.__commentQueue.pop(0))
         return obj
     
-    def __parseStatementWithWhen(self, code):
-        code, comment = self.__findComments(code)
-        res = self.__statWhenRegex.match(code)
-        if res == None:
-            self.API.logMsg(g.WARNING, "Syntax error: \"" + code + "\"")
-            return None
+    def __parseStatementWithWhen(self, regex):
+        # TODO check if comments actually are comments!
+        #code, comment = self.__findComments(regex.group(5))
         # Create simple statement, parsing it without when part
-        newStatement = self.__parseStatement(res.group(1) + ';', True)
+        newStatement = self.__parseStatement(regex, True)
         # Modify created statement with condition and inline comment
-        newStatement.setCondition(res.group(2))
-        newStatement.setInlineComment(comment)
+        newStatement.setCondition(regex.group(4))
+        newStatement.setInlineComment(regex.group(5))
         self.API.logMsg(g.INFO,"Parsed: \n" +  newStatement.getCode(''))
         return newStatement
         
     # localUse means, that errors here shouldn't be reported, because it's 
     # called by other parser, who will report error if needed.
-    def __parseStatement(self, code, localUse = False):
-        code, comment = self.__findComments(code)
-        res = self.__statRegex.match(code)
-        if res == None:
-            if not localUse:
-                self.API.logMsg(g.WARNING, "Syntax error: \"" + code + "\"")
-            return None
+    def __parseStatement(self, regex, localUse = False):
         # If there is no parameters, object is in second group, 
         # else it is in first, and parameters are in second
-        newStatement = Statement.Statement(res.group(1), res.group(2))
+        newStatement = Statement.Statement(regex.group(1), regex.group(2))
         self.__getQueuedComments(newStatement)
-        newStatement.setInlineComment(comment)
-        for pair in res.group(3).split(","):
+        if not localUse:
+            #TODO: fix comment parsing
+            #code, comment = self.__findComments(code)
+            newStatement.setInlineComment(regex.group(4))
+            
+        for pair in regex.group(3).split(","):
             data = pair.strip(" ,").split(" ")
             # We do not check for empty parameter, because it is checked
             # by Statement class
@@ -149,7 +138,16 @@ class SealParser:
             self.API.logMsg(g.INFO,"Parsed: \n" +  newStatement.getCode(''))
         return newStatement
         
-    def __parseSimpleWhen(self, code):
-        print "Simple when\t\t", code
+    def __parseSimpleWhen(self, regex):
+        newCondition = Condition.Condition("when")
+        newCondition.setCondition(regex.group(1))
+        self.__getQueuedComments(newCondition)
+        # TODO: check comment!
+        newCondition.setInlineComment(regex.group(2))
+        for statement in self.parseCode(regex.group(3)):
+            newCondition.addStatement(statement)
+        newCondContainer = condContainer.condContainer()
+        newCondContainer.setWhen(newCondition)
+        newCondContainer.setOneLiner(True)
+        return newCondContainer
     
-        

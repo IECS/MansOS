@@ -22,6 +22,8 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import comment
+
 class Condition():
     def __init__(self, mode):
         # when, elsewhen or else
@@ -31,8 +33,7 @@ class Condition():
         # Statement instances
         self.__statements = []
         # Comments
-        self.__comment = ''
-        self.__inlineComment = ''
+        self.__comment = comment.Comment()
         
     def setMode(self, mode):
         self.__mode = mode
@@ -46,29 +47,32 @@ class Condition():
     def getCondition(self):
         return self.__condition
     
+    def setStatements(self, statements):
+        self.__statements = statements
+        
     def addStatement(self, statement):
         self.__statements.append(statement)
         
     def getStatements(self):
         return self.__statements
     
-    def addComment(self, comment):
-        self.__comment = (self.__comment + '\n' + comment).strip()
+    def getStatementCode(self, prefix):
+        result = ''
+        for statement in self.__statements:
+            result += statement.getCode(prefix) + '\n'
+        return result
     
     def getComment(self):
         return self.__comment
     
-    def setInlineComment(self, comment):
-        self.__inlineComment = comment.strip()
-    
-    def getInlineComment(self):
-        return self.__inlineComment
+    def setComment(self, comment):
+        self.__comment = comment
     
     def getCode(self, prefix):
-        result = (self.getComment() + '\n').replace('\n', '\n' + prefix)
-        result += prefix + self.getMode() + ' ' + self.getCondition() + ': '
-        result += self.getInlineComment() + '\n'
+        result = self.getComment().getPreComments(prefix) + '\n'
+        result += prefix + self.getMode() + (' ' + self.getCondition()).rstrip()
+        result += ': ' +self.getComment().getPostComment(True) + '\n'
         for statement in self.getStatements():
-            result +='\t' + statement.getCode(prefix) + '\n'
-        return result.strip()
+            result +=statement.getCode(prefix + '\t') + '\n'
+        return result.rstrip()
         

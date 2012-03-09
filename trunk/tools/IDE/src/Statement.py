@@ -24,14 +24,14 @@
 
 import Parameter
 import globals as g
+import comment
 
 class Statement():
     def __init__(self, mode = '', obj = ''):
         self.__mode = mode.strip()
         self.__obj = obj.strip()
         self.__param = []
-        self.__comment = ''
-        self.__inlineComment = ''
+        self.__comment = comment.Comment()
         self.__condition = ''
         self.__identifier = g.STATEMENT
         
@@ -49,6 +49,10 @@ class Statement():
     
     def getModeAndObject(self):
         return self.getMode() + " " + self.getObject()
+    
+    # Overwrites all parameters!!
+    def setParameters(self, parameters):
+        self.__param = parameters
     
     # This automatically overwrites old parameter with same name, so be careful
     def addParameter(self, parameter):
@@ -75,17 +79,11 @@ class Statement():
                 return x.getRealValue()
         return None
     
-    def addComment(self, comment):
-        self.__comment = (self.__comment + '\n' + comment).strip()
-        
     def getComment(self):
         return self.__comment
     
-    def setInlineComment(self, inlineComment):
-        self.__inlineComment = inlineComment.strip()
-    
-    def getInlineComment(self):
-        return self.__inlineComment
+    def setComment(self, comment):
+        self.__comment = comment
     
     def setCondition(self, condition):
         self.__condition = condition.strip()
@@ -97,12 +95,12 @@ class Statement():
         return self.__identifier
     
     def getCode(self, prefix):
-        result = (self.getComment() + '\n').replace('\n', '\n' + prefix)
-        result += self.getModeAndObject()
+        result = self.getComment().getPreComments(prefix) + '\n'
+        result += prefix + self.getModeAndObject()
         for param in self.getParam():
             result += ', ' + param.getCode()
         if self.getCondition() != '':
             result += ', when ' + self.getCondition()
-        result += '; ' + self.getInlineComment() + '\n'
-        return result.strip()
+        result += '; ' + self.getComment().getPostComment(True) + '\n'
+        return result.rstrip()
     

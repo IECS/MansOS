@@ -23,8 +23,6 @@
 #
 
 import wx
-import os
-import re
 
 import doCompile
 import doUpload
@@ -37,9 +35,9 @@ class UploadModule(wx.Dialog):
         super(UploadModule, self).__init__(parent = parent, 
             title = title, size = (500, 400), style = wx.DEFAULT_DIALOG_STYLE 
                                                     | wx.RESIZE_BORDER)
-        self.filename = "SEALlang"
         self.API = API
         self.editorManager = self.GetParent().tabManager.getPageObject()
+        self.filename = self.editorManager.fileName
         # Just a shorter name
         self.tr = self.API.translater.translate
         self.tmpDir = self.API.path + '/temp/'
@@ -49,14 +47,10 @@ class UploadModule(wx.Dialog):
         self.pathToMansos = self.API.path + "/../.." 
         self.motes = []
         
-        self.shellMotelistRegex = re.compile(
-                        r"Mote type: \".\" \((.*)\)\n PAN address: \"(.*)\"")
-        
         # Used classes
         self.compiler = doCompile.DoCompile(self.API)
         self.uploader = doUpload.DoUpload(self.pathToMansos)
-        self.motelist = getMotelist.GetMotelist(self.pathToMansos, 
-                                                self.shellMotelistRegex)
+        self.motelist = getMotelist.GetMotelist(self.pathToMansos)
         
         
         self.main = wx.BoxSizer(wx.VERTICAL)
@@ -116,7 +110,7 @@ class UploadModule(wx.Dialog):
         self.updateStatus("")
         self.list.Clear()
         self.motes = []
-        self.list.Insert("Searching devices...", 0)
+        self.list.Insert(self.tr("Searching devices") + "...", 0)
         self.list.Disable()
         source = self.source.GetValue()
         res = []
@@ -136,7 +130,7 @@ class UploadModule(wx.Dialog):
         self.list.Delete(0)
         
         if len(motelist) == 0:
-            self.list.Insert("No devices found!", 0)
+            self.list.Insert(self.tr("No devices found!"), 0)
         else:
             for i in range(0, len (motelist)):
                 self.list.Insert(motelist[i][0] + "(" + motelist[i][2] +
@@ -145,11 +139,11 @@ class UploadModule(wx.Dialog):
             self.list.Enable()
             
     def manageCompile(self, event = None):
-        self.updateStatus(self.tr("Starting compile..."))
+        self.updateStatus(self.tr("Starting compile") + "...")
         res = self.managePopen(self.runCompile)
         self.compiler.clean()
         if res[0] == True:
-            self.updateStatus(self.tr("Compiled successfully in ") + 
+            self.updateStatus(self.tr("Compiled successfully in") + " " + 
                               str(round(res[2], 3)) + " s.")
         else:
             self.updateStatus(self.tr("Compile failed with message:") + 
@@ -165,8 +159,6 @@ class UploadModule(wx.Dialog):
         if not self.haveMote:
             self.updateStatus(self.tr("No devices found!"))
             return
-        
-        os.unsetenv("BSLPORT")
         
         checked = self.list.GetChecked()
         self.targets = []

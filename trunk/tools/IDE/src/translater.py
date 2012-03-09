@@ -101,8 +101,8 @@ class Translater:
                 "Changed platform to": "Platforma nomainīta uz ",
                 "No devices found": "Nav atrasta neviena ierīce",
                 "Use default device": "Izmantot ierīci pēc noklusēšanas",
-                "Starting compile...": "Kompilēšana sākta...",
-                "Compiled successfully in ": "Kompilēšana pabeigta veiksmīgi, laiks:",
+                "Starting compile": "Kompilēšana sākta",
+                "Compiled successfully in": "Kompilēšana pabeigta veiksmīgi, laiks:",
                 "Starting upload on": "Sāku augsupielādēt uz ",
                 "Uploaded successfully in": "Augšupielādēšana pabeigta veiksmīgi, laiks:",
                 "Upload failed with message:": "Augšupielādesana neizdevās, kļūda:",
@@ -115,7 +115,9 @@ class Translater:
                 "Edit object": "Labot objektu",
                 "Got": "Atradu",
                 "devices in": "iekārtas, laiks:",
-                "default device": "ierīces pēc noklusēšanas"
+                "default device": "ierīces pēc noklusēšanas",
+                "Searching devices": "Meklēju ierīces",
+                "No devices found!" : "Ierīces nav atrastas!"
                 }
         }
         
@@ -128,7 +130,6 @@ class Translater:
                 return self.translations[lang][data]
         # Don't log ENG, because it's not ment to be translated
         if lang != "ENG":
-            print lang
             self.parent.logMsg(g.WARNING, "No translation for " + 
                              "'" + lang + "': '" + data + "'")
         return data

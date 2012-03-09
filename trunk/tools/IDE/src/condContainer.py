@@ -23,18 +23,18 @@
 #
 
 import globals as g
+import comment
 
 class condContainer:
     def __init__(self):
-        # When and else hold condition instance who represents condition 
+        # When and else hold Condition instance who represents condition 
         self.__when = None
         self.__else = None
-        # Holds array of condition instances representing elsewhen
+        # Holds array of Condition instances representing elsewhen
         self.__elseWhen = []
         # Describe end statement
-        self.__endComment = ''
-        self.__endInlineComment = ''
-        self.__oneLiner = False
+        self.__endComment = comment.Comment()
+        
         self.__identifier = g.CONDITION
     
     def setWhen(self, when):
@@ -44,7 +44,7 @@ class condContainer:
         return self.__when
     
     def setElse(self, else_):
-        self.__when = else_
+        self.__else = else_
         
     def getElse(self):
         return self.__else
@@ -55,34 +55,30 @@ class condContainer:
     def getElseWhen(self):
         return self.__elseWhen
     
-    def addEndComment(self, comment):
-        self.__endComment = (self.__endComment + '\n' + comment).strip()
-    
+    # From yacc, all conditions in elsewhen arrive in opposite order
+    def fixElseWhenOrder(self):
+        print self.__elseWhen
+        newList = []
+        while len(self.__elseWhen) > 0:
+            newList.append(self.__elseWhen.pop())
+        self.__elseWhen = newList
+        print self.__elseWhen
+        
     def getEndComment(self):
         return self.__endComment
     
-    def setEndInlineComment(self, inlineComment):
-        self.__endInlineComment = inlineComment.strip()
-    
-    def getEndInlineComment(self):
-        return self.__endInlineComment
-    
-    def setOneLiner(self, oneLiner):
-        self.__oneLiner = oneLiner
-        
-    def getOneLiner(self):
-        return self.__oneLiner
+    def setEndComment(self, endComment):
+        self.__endComment = endComment
     
     def getIdentifier(self):
         return self.__identifier
     
     def getCode(self, prefix):
-        if self.getOneLiner() == True:
-            return self.getWhen().getCode(prefix)
         result = self.getWhen().getCode(prefix) + '\n'
         for cond in self.getElseWhen():
             result += cond.getCode(prefix) + '\n'
-        result += self.getElse().getCode(prefix) + '\n'
-        result += (self.getEndComment() + '\n').replace('\n', '\n' + prefix)
-        result += prefix +'end ' + self.getEndInlineComment()
-        return result.strip()
+        if self.getElse() != None:
+            result += self.getElse().getCode(prefix) + '\n'
+        result += self.getEndComment().getPreComments(prefix)
+        result += prefix +'end ' + self.getEndComment().getPostComment(True)
+        return result.rstrip()

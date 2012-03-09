@@ -30,6 +30,7 @@ import translater
 import os
 from time import gmtime, strftime
 import globals as g
+import sealParser_yacc
 
 class ApiCore:
     def __init__(self):
@@ -46,9 +47,9 @@ class ApiCore:
             f.close()
         else:
             # All variables placed here will be saved to configuration file and 
-            # reloaded next run time. See setSetting and getSetting.
+            # reloaded next run time. See setSetting() and getSetting()
             self.__settings = {
-                   "activeLanguage" : "LV"
+                   "activeLanguage" : "ENG"
                }
         # Actuator roles
         self.STATEMENT = 0 # such as use, read, output
@@ -111,6 +112,7 @@ class ApiCore:
         # Compile regex for finding actuators
         self.__reActuators = re.compile(string.join(self.__actuators.keys(), '|'), re.I)
         
+        self.sealParser = sealParser_yacc.SealParser()
         self.seal = sealStruct.Seal(self)
         
         self.translater = translater.Translater(self)

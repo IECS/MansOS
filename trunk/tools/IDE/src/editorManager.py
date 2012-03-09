@@ -26,24 +26,26 @@ import wx
 import wx.lib.scrolledpanel as scrolled
 import Editor
 import os
+import globals as g
 
 class EditorManager(scrolled.ScrolledPanel):
-    def __init__(self, parent, API):
+    def __init__(self, parent, API, emmbeddedMode = False):
         scrolled.ScrolledPanel.__init__(self, parent)
         
         self.API = API;
         # Just a shorter name
         self.tr = self.API.translater.translate
-        self.initUI()
+        self.initUI(emmbeddedMode)
         ### Editor visible variables
-        # @ creation we assume document is saved.
-        self.saveState = True
-        # Filename or untitled document
-        self.fileName = self.tr('Untitled document') + ' ' + str(self.GetParent().nextPageNr)
-        # Filename and full path(relative or absolute)
-        self.filePath = self.tr('Untitled document') + ' ' + str(self.GetParent().nextPageNr)
-        # This marks if document already have a file attached to it
-        self.hasAFile = False
+        if not emmbeddedMode:
+            # @ creation we assume document is saved.
+            self.saveState = True
+            # Filename or untitled document
+            self.fileName = self.tr('Untitled document') + ' ' + str(self.GetParent().nextPageNr)
+            # Filename and full path(relative or absolute)
+            self.filePath = self.tr('Untitled document') + ' ' + str(self.GetParent().nextPageNr)
+            # This marks if document already have a file attached to it
+            self.hasAFile = False
         # Define project type
         self.projectType = 0
         
@@ -62,10 +64,10 @@ class EditorManager(scrolled.ScrolledPanel):
         else:
             self.changeCode()
             
-    def initUI(self):
+    def initUI(self, emmbeddedMode):
         self.main = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.code = Editor.CodeEditor(self, self.API)
+        self.code = Editor.CodeEditor(self, self.API, emmbeddedMode)
         self.main.Add(self.code, 
                       1,            # make vertically stretchable
                       wx.EXPAND |    # make horizontally stretchable
@@ -76,7 +78,6 @@ class EditorManager(scrolled.ScrolledPanel):
         #Layout sizers
         self.SetSizer(self.main)
         self.SetAutoLayout(1)
-        #self.actionButtons.L
         self.main.Fit(self)
         self.SetupScrolling()
         self.Show()
@@ -108,6 +109,7 @@ class EditorManager(scrolled.ScrolledPanel):
     
     def detectSEAL(self):
         if self.fileName[-2:] == "sl":
-            self.projectType = globals.SEAL_PROJECT
+            self.projectType = g.SEAL_PROJECT
         else:
-            self.projectType = globals.MANSOS_PROJECT
+            self.projectType = g.MANSOS_PROJECT
+            

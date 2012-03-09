@@ -22,29 +22,34 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-class Seal():
-    def __init__(self, API, initCode = None, parser = None):
-        self.API = API
-        if parser == None:
-            self.sealParser = self.API.sealParser
-        self.__parsedCode = self.sealParser.run(initCode)
+class Comment(object):
+    def __init__(self, preComments = [], postComment = ''):
+        self.__preComments = preComments
+        self.__postComment = postComment
+    
+    def setPreComments(self, preComments):
+        self.__preComments = preComments
+    
+    def addPreComment(self, preComments):
+        self.__preComments.append(preComments.strip())
         
+    def getPreComments(self, prefix = False):
+        
+        if prefix != False:
+            result = ''
+            for comment in self.__preComments:
+                if comment != '':
+                    result += prefix + "// " + comment + '\n'
+            print "#",result,"#"
+            return result.rstrip("\n")
+        else:
+            return self.__preComments
     
-    def getFirstObject(self):
-        if self.__parsedCode == []:
-            return ''
-        return self.__parsedCode[0]
-    
-    def getPredictedType(self):
-        if self.__parsedCode == []:
-            return ''
-        return self.getFirstObject().getIdentifier()
-    
-    def getData(self):
-        return self.__parsedCode
-    
-    def getCode(self):
-        result = ''
-        for obj in self.getData():
-            result += obj.getCode('') + '\n'
-        return result
+    def setPostComment(self, postComment):
+        self.__postComment = postComment.strip()
+        
+    def getPostComment(self, nice = True):
+        if nice and self.__postComment != '':
+            return "// " + self.__postComment
+        else:
+            return self.__postComment

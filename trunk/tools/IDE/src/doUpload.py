@@ -40,6 +40,7 @@ class DoUpload():
         if targetType == g.SHELL:
             return self.shellUpload(targets, platform)
         else:
+            os.unsetenv("BSLPORT")
             return self.usbUpload(targets, platform)
         
     def usbUpload(self, targets, platform):
