@@ -50,12 +50,8 @@ class editDialog(wx.Dialog):
         self.whenSizer = wx.BoxSizer(wx.VERTICAL)
         self.elseWhenSizer = wx.BoxSizer(wx.VERTICAL)
         self.elseSizer = wx.BoxSizer(wx.VERTICAL)
-        self.main.Add(self.whenSizer,
-                      1,            # make vertically stretchable
-                      wx.EXPAND |    # make horizontally stretchable
-                      wx.ALL,        #   and make border all around
-                      1 );         # set border width to 10))
-                      
+        self.main.Add(self.whenSizer, 1, wx.EXPAND | wx.ALL, 1);
+        
         self.whenCode = editorManager.EditorManager(self, self.API, True)
         code = ''
         for statement in condition.getWhen().getStatements():
@@ -86,25 +82,13 @@ class editDialog(wx.Dialog):
             for statement in x.getStatements():
                 code += statement.getCode('') + "\n"
             self.elseWhenCode[-1].changeCode(code, True)
-            self.elseWhenSizer.Add(sizer,
-                      1,            # make vertically stretchable
-                      wx.EXPAND |    # make horizontally stretchable
-                      wx.ALL,        #   and make border all around
-                      1 );         # set border width to 10))
+            self.elseWhenSizer.Add(sizer, 1, wx.EXPAND | wx.ALL, 1);
         if not noElseWhen:
-            self.main.Add(self.elseWhenSizer,
-                      1,            # make vertically stretchable
-                      wx.EXPAND |    # make horizontally stretchable
-                      wx.ALL,        #   and make border all around
-                      1 );         # set border width to 10))
-                      
-        self.main.Add(self.elseSizer,
-                      1,            # make vertically stretchable
-                      wx.EXPAND |    # make horizontally stretchable
-                      wx.ALL,        #   and make border all around
-                      1 );         # set border width to 10))
-        self.box.append(self.addStatementField(None, 
-                                               "else", self.elseSizer, 
+            self.main.Add(self.elseWhenSizer, 1, wx.EXPAND | wx.ALL, 1);
+            
+        self.main.Add(self.elseSizer, 1, wx.EXPAND | wx.ALL, 1);
+        
+        self.box.append(self.addStatementField(None, "else", self.elseSizer, 
                                                self.elseCode, None))
                       
         self.buttonPane = wx.BoxSizer(wx.HORIZONTAL)
@@ -129,11 +113,7 @@ class editDialog(wx.Dialog):
             box = None
         sizer.Add(wx.StaticText(self, label = ":"))
         contSizer.Add(sizer)
-        contSizer.Add(editor,
-                      1,            # make vertically stretchable
-                      wx.EXPAND |    # make horizontally stretchable
-                      wx.ALL,        #   and make border all around
-                      5 );         # set border width to 10))
+        contSizer.Add(editor, 1, wx.EXPAND | wx.ALL, 5);
         return box
     
     def saveClk(self, event):

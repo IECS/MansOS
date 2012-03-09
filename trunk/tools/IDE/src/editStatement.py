@@ -58,24 +58,12 @@ class editDialog(wx.Dialog):
         self.save = wx.Button(self, label = self.tr("Save"),
                               size = (150, -1), name = "save")
         self.Bind(wx.EVT_BUTTON, self.saveClk, self.save)
-        self.buttonPane.Add(self.save,
-                      1,            # make vertically stretchable
-                      wx.EXPAND |    # make horizontally stretchable
-                      wx.ALL,        #   and make border all around
-                      1 );         # set border width to 10))
+        self.buttonPane.Add(self.save, 1, wx.EXPAND | wx.ALL, 1);
         self.close = wx.Button(self, label = self.tr("Close"),
                                size = (150, -1), name = "close")
         self.Bind(wx.EVT_BUTTON, self.saveClk, self.close)
-        self.buttonPane.Add(self.close,
-                      0,            # make vertically stretchable
-                      wx.EXPAND |    # make horizontally stretchable
-                      wx.ALL,        #   and make border all around
-                      1 );         # set border width to 10))
-        self.main.Add(self.buttonPane,
-                      0,            # make vertically stretchable
-                      wx.EXPAND |    # make horizontally stretchable
-                      wx.ALL,        #   and make border all around
-                      1 );         # set border width to 10))
+        self.buttonPane.Add(self.close, 1, wx.EXPAND | wx.ALL, 1);
+        self.main.Add(self.buttonPane, 1, wx.EXPAND | wx.ALL, 1);
         
         self.updateTitle()
         self.SetSizer(self.main)
@@ -204,3 +192,4 @@ class editDialog(wx.Dialog):
     def updateTitle(self, event = None):
         self.SetTitle(self.tr("Edit") + " \"" + 
                 self.actuator.GetValue() +" " + self.obj.GetValue() + "\"")
+        
