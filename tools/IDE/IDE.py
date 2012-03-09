@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright (c) 2008-2012 the MansOS team. All rights reserved.
 #
@@ -24,8 +24,9 @@
 #
 
 import os
-wxModuleOK = True
-serialModuleOK = True
+wxModuleOK = True      # wx widgets
+serialModuleOK = True  # serial port communication
+plyModuleOK = True     # Python Lex Yacc - for compilation
 try:
 	import wx
 except ImportError:
@@ -34,6 +35,10 @@ try:
 	import serial
 except ImportError:
 	serialModuleOK = False
+try:
+	import ply
+except ImportError:
+	plyModuleOK = False
 if not wxModuleOK or not serialModuleOK:
 	if os.name == 'posix': installStr = "Make sure you have installed required modules. Run:\n\tapt-get install"
 	else: installStr = "Make sure you have installed modules:"
@@ -44,6 +49,9 @@ if not wxModuleOK or not serialModuleOK:
 	if not serialModuleOK:
 		print "\tserial module not found"
 		installStr += " python-serial"
+	if not plyModuleOK:
+		print "\tPLY module not found"
+		installStr += " python-ply"
 	print installStr
 	exit(1)
 from subprocess import Popen, PIPE, STDOUT

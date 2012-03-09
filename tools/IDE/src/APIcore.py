@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright (c) 2008-2012 the MansOS team. All rights reserved.
 #
@@ -36,7 +36,7 @@ class ApiCore:
     def __init__(self):
         self.path = os.getcwd()
         # Read settings from file
-        if os.path.exists(g.SETTING_FILE) & os.path.isfile(g.SETTING_FILE):
+        if os.path.exists(g.SETTING_FILE) and os.path.isfile(g.SETTING_FILE):
             f = open(g.SETTING_FILE, 'r')
             lines = f.readlines()
             self.__settings = {}
