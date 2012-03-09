@@ -171,8 +171,6 @@ class SealParser():
             #comment_list
             else:
                 self.commentStack.append(p[1][0])
-                print "Comment stack len =", len(self.commentStack)
-                print self.commentStack
         else:
             p[0] = Statement.Statement(p[1], p[2])
             # use & read
@@ -196,7 +194,8 @@ class SealParser():
             newCond.setCondition(p[2])
             newCond.setStatements(p[5])
             self.queueComment(p[4])
-            self.queueComment(self.commentStack.pop(-2), True)
+            if len(self.commentStack) > 1:
+                self.queueComment(self.commentStack.pop(-2), True)
             newCond.setComment(self.getQueuedComment())
             #self.queueComment(p[8], True) # this comment raises conflicts!!! -> comment_list
             # maybe we need to add non empty declaration list!!
@@ -211,15 +210,15 @@ class SealParser():
                           | ELSE_TOKEN ":" comment declaration_list
                           | 
         '''
-        p[0] = []
+        p[0] = condContainer.condContainer()
         # else
         if len(p) == 5:
             newCond = Condition.Condition("else")
             newCond.setStatements(p[4])
             self.queueComment(p[3])
-            self.queueComment(self.commentStack.pop(-2), True)
+            if len(self.commentStack) > 1:
+                self.queueComment(self.commentStack.pop(-2), True)
             newCond.setComment(self.getQueuedComment())
-            p[0] = condContainer.condContainer()
             p[0].setElse(newCond)
         # elsewhen
         elif len(p) == 7:
@@ -231,7 +230,7 @@ class SealParser():
             self.queueComment(self.commentStack.pop(), True)
             newCond.setComment(self.getQueuedComment())
             p[0].addElseWhen(newCond)
-        print "###", p[0]
+            
     def p_code_block(self, p):
         '''code_block : CODE_TOKEN IDENTIFIER_TOKEN CODE_BLOCK
         '''
@@ -350,11 +349,8 @@ class SealParser():
         if pre:
             if isinstance(comment, list):
                 for x in comment:
-                    print "added", x
                     self.commentQueue.addPreComment(x)
             else:
-                
-                print "added", comment
                 self.commentQueue.setPreComments(comment)
         else:
             self.commentQueue.setPostComment(comment)

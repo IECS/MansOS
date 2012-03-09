@@ -25,6 +25,7 @@
 import wx
 import editorManager
 import globals as g
+import condContainer
 import Condition
 
 class editDialog(wx.Dialog):
@@ -40,7 +41,8 @@ class editDialog(wx.Dialog):
         self.SetTitle(self.tr("Edit condition"))
         self.saveCallback = saveCallback
         if condition == '':
-            condition = Condition.Condition()
+            condition = condContainer.condContainer()
+            condition.setWhen(Condition.Condition("when"))
         self.condition = condition
         # Global sizer for current tab
         self.main = wx.BoxSizer(wx.VERTICAL)
@@ -136,10 +138,11 @@ class editDialog(wx.Dialog):
     
     def saveClk(self, event):
         if (event.GetEventObject().GetName() == "save"):
-            # Prepare input for parsing, tabs etc. are important here!
-            result = self.condition.getWhen().getComment().getPreComments("")
+            # Prepare input for parsing, tabs etc. are not important here!
+            whenComment = self.condition.getWhen().getComment()
+            result = whenComment.getPreComments("")
             result += '\nwhen ' + self.box[0].GetValue() + ': ' 
-            result += self.condition.getWhen().getComment().getPostComment(True)
+            result += whenComment.getPostComment(True)
             result += '\n' + self.whenCode.code.GetText()
             
             elseWhen = self.condition.getElseWhen()
@@ -148,20 +151,23 @@ class editDialog(wx.Dialog):
                 result += "elsewhen " + self.box[x + 1].GetValue() + ': '
                 result += elseWhen[x].getComment().getPostComment(True) + '\n'
                 result += self.elseWhenCode[x].code.GetText()
-                
-            if self.elseCode.code.GetText() != "":
-                if self.condition.getElse() != None:
-                    result += self.condition.getElse().getComment().getPreComments("")
+            elseText = self.elseCode.code.GetText()
+            if  elseText!= "":
+                else_ = self.condition.getElse()
+                if else_ != None:
+                    result += else_.getComment().getPreComments("")
                 result += '\nelse: ' 
                 if self.condition.getElse() != None:
-                    result += self.condition.getElse().getComment().getPostComment(True) + '\n'
-                result += self.elseCode.code.GetText()
+                    result += else_.getComment().getPostComment(True) + '\n'
+                result += elseText
             
-            result += self.condition.getEndComment().getPreComments("") + '\nend '
-            result += self.condition.getEndComment().getPostComment(True)
+            endComment = self.condition.getEndComment()
+            result += endComment.getPreComments("") + '\nend '
+            result += endComment.getPostComment(True)
 
             data = self.API.sealParser.run(result)
             
+            # returning [0] because parser should only return one element
             if len(data) == 1:
                 self.saveCallback(True, data[0])
             else:

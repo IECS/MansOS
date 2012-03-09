@@ -81,4 +81,4 @@ class condContainer:
             result += self.getElse().getCode(prefix) + '\n'
         result += self.getEndComment().getPreComments(prefix) + '\n'
         result += prefix +'end ' + self.getEndComment().getPostComment(True)
-        return result.rstrip()
+        return result.strip("\n").replace("\n\n","\n")
