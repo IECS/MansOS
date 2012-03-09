@@ -153,7 +153,7 @@ class CodeEditor(wx.stc.StyledTextCtrl):
     
     def conditionDialogClbk(self, action, statement):
         if action == True:
-            self.ReplaceSelection(statement.getCode(self.spaces))
+            self.ReplaceSelection(statement.getCode(self.spaces) + '\n')
         self.dialog.Destroy()
         self.Enable()
         
@@ -213,6 +213,7 @@ class CodeEditor(wx.stc.StyledTextCtrl):
         if self.API.getStatementType(self.GetLine(lineNr)) == self.API.STATEMENT:
             endNr = lineNr
         else:
+            endNr += 1
             # We have to search for end, noting that there might be other when's
             whens = 1
             ends = 0
@@ -223,12 +224,15 @@ class CodeEditor(wx.stc.StyledTextCtrl):
                 elif(self.API.getStatementType(self.GetLine(endNr)) 
                         == self.API.CONDITION_START):
                     whens += 1
+                    
+                print whens,":",ends, "@", self.GetLine(endNr)
                 endNr += 1
+            endNr -= 1
         # Get all lines between start and end
         statement = ""
         for x in range(startNr, endNr + 1):
             statement += self.GetLine(x)
-        return (statement, startNr, lineNr,endNr)
+        return (statement, startNr, lineNr, endNr)
 
     def getPlaceForAdding(self):
         self.LineEndDisplay()

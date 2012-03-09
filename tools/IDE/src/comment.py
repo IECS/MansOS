@@ -22,7 +22,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-class Comment(object):
+class Comment():
     def __init__(self, preComments = [], postComment = ''):
         self.__preComments = preComments
         self.__postComment = postComment

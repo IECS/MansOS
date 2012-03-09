@@ -154,10 +154,10 @@ class editDialog(wx.Dialog):
                     result += self.condition.getElse().getComment().getPreComments("")
                 result += '\nelse: ' 
                 if self.condition.getElse() != None:
-                    result += self.condition.getElse().getComment().getPreComments("")
+                    result += self.condition.getElse().getComment().getPostComment(True) + '\n'
                 result += self.elseCode.code.GetText()
             
-            result += self.condition.getEndComment().getPreComments("") + '\nend'
+            result += self.condition.getEndComment().getPreComments("") + '\nend '
             result += self.condition.getEndComment().getPostComment(True)
 
             data = self.API.sealParser.run(result)
