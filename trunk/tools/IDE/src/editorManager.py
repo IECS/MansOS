@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright (c) 2008-2012 the MansOS team. All rights reserved.
 #
@@ -52,7 +52,7 @@ class EditorManager(scrolled.ScrolledPanel):
     def update (self, initFilePath = ''):
         if initFilePath == '':
             initFilePath = self.filePath
-        if os.path.exists(initFilePath) & os.path.isfile(initFilePath):
+        if os.path.exists(initFilePath) and os.path.isfile(initFilePath):
             # Load file into editor
             self.code.LoadFile(initFilePath)
             # Draw margins
