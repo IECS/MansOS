@@ -79,6 +79,6 @@ class condContainer:
             result += cond.getCode(prefix) + '\n'
         if self.getElse() != None:
             result += self.getElse().getCode(prefix) + '\n'
-        result += self.getEndComment().getPreComments(prefix)
+        result += self.getEndComment().getPreComments(prefix) + '\n'
         result += prefix +'end ' + self.getEndComment().getPostComment(True)
         return result.rstrip()

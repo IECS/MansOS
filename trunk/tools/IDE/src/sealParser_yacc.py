@@ -23,7 +23,8 @@
 #'
 
 import time
-from ply import *
+import ply.lex as lex
+import ply.yacc as yacc
 
 import Parameter
 import Statement
@@ -35,10 +36,11 @@ class SealParser():
     def __init__(self):
         
         self.commentQueue = comment.Comment()
+        self.commentStack = []
         
         self.lex = lex.lex(module = self, debug = True)
         
-        yacc.yacc(module = self, debug = True)
+        self.yacc = yacc.yacc(module = self, debug = True)
         
         print "Lex & Yacc init done!"
 
@@ -48,7 +50,7 @@ class SealParser():
             print s
             start = time.time()
             # \n added cus needed! helps resolving conflicts
-            yacc.parse(s + '\n')
+            self.yacc.parse('\n' + s + '\n')
             print "Parsing done in %.4f s" % (time.time()-start)
         
         for x in self.result:
@@ -150,82 +152,86 @@ class SealParser():
         if len(p) == 1:
             p[0] = []
         elif len(p) == 3:
-            p[1].append(p[2])
+            if p[2] != None:
+                p[1].append(p[2])
             p[0] = p[1]
-        elif len(p) == 2:
-            p[0] = []
     
     def p_declaration(self, p):
-        '''declaration : comment_list USE_TOKEN IDENTIFIER_TOKEN parameter_list ';' comment
-                       | comment_list READ_TOKEN IDENTIFIER_TOKEN parameter_list ';' comment
-                       | comment_list SENDTO_TOKEN IDENTIFIER_TOKEN packet_field_specifier parameter_list ';' comment
+        '''declaration : USE_TOKEN IDENTIFIER_TOKEN parameter_list ';' comment
+                       | READ_TOKEN IDENTIFIER_TOKEN parameter_list ';' comment
+                       | SENDTO_TOKEN IDENTIFIER_TOKEN packet_field_specifier parameter_list ';' comment
                        | when_block
                        | code_block
+                       | comment_list
         '''
-        # code_block, when_block
         if len(p) == 2:
-            p[0] = p[1]
+            # code_block, when_block
+            if not isinstance(p[1], tuple):
+                p[0] = p[1]
+            #comment_list
+            else:
+                self.commentStack.append(p[1][0])
+                print "Comment stack len =", len(self.commentStack)
+                print self.commentStack
         else:
-            p[0] = Statement.Statement(p[2], p[3])
-            self.queueComment(p[1], True)
+            p[0] = Statement.Statement(p[1], p[2])
             # use & read
             if len(p) == 6:
-                self.queueComment(p[6])
+                self.queueComment(p[5])
                 p[0].setParameters(p[3])
             # send_to
             elif len(p) == 7:
                 self.queueComment(p[6])
                 p[0].setParameters(p[4])
                 # TODO: parse packet_field
+            self.queueComment(self.commentStack.pop(), True)
             p[0].setComment(self.getQueuedComment())
         
     def p_when_block(self, p):
-        '''when_block : comment_list WHEN_TOKEN condition ":" comment declaration_list elsewhen_block END_TOKEN comment
+        '''when_block : WHEN_TOKEN condition ":" comment declaration_list elsewhen_block END_TOKEN comment
         '''
-        if len(p) == 10:
-            p[0] = p[7]
+        if len(p) == 9:
+            p[0] = p[6]
             newCond = Condition.Condition("when")
-            newCond.setCondition(p[3])
-            newCond.setStatements(p[6])
-            self.queueComment(p[1], True)
-            self.queueComment(p[5])
+            newCond.setCondition(p[2])
+            newCond.setStatements(p[5])
+            self.queueComment(p[4])
+            self.queueComment(self.commentStack.pop(-2), True)
             newCond.setComment(self.getQueuedComment())
             #self.queueComment(p[8], True) # this comment raises conflicts!!! -> comment_list
             # maybe we need to add non empty declaration list!!
-            self.queueComment(p[9])
+            self.queueComment(p[8])
+            self.queueComment(self.commentStack.pop(), True)
             p[0].setEndComment(self.getQueuedComment())
             p[0].setWhen(newCond)
             p[0].fixElseWhenOrder()
     
     def p_elsewhen_block(self, p):
-        '''elsewhen_block : comment_list ELSEWHEN_TOKEN condition ":" comment declaration_list elsewhen_block
-                          | comment_list ELSE_TOKEN ":" comment declaration_list
+        '''elsewhen_block : ELSEWHEN_TOKEN condition ":" comment declaration_list elsewhen_block
+                          | ELSE_TOKEN ":" comment declaration_list
                           | 
         '''
-        if len(p) == 1:
-            p[1] = []
-        elif len(p) == 2:
-            p[0] = condContainer.condContainer()
+        p[0] = []
         # else
-        elif len(p) == 6:
+        if len(p) == 5:
             newCond = Condition.Condition("else")
-            newCond.setStatements(p[5])
-            self.queueComment(p[1], True)
-            self.queueComment(p[4])
+            newCond.setStatements(p[4])
+            self.queueComment(p[3])
+            self.queueComment(self.commentStack.pop(-2), True)
             newCond.setComment(self.getQueuedComment())
             p[0] = condContainer.condContainer()
             p[0].setElse(newCond)
         # elsewhen
-        elif len(p) == 8:
-            p[0] = p[7]
+        elif len(p) == 7:
+            p[0] = p[6]
             newCond = Condition.Condition("elsewhen")
-            newCond.setCondition(p[3])
-            newCond.setStatements(p[6])
-            self.queueComment(p[1], True)
-            self.queueComment(p[5])
+            newCond.setCondition(p[2])
+            newCond.setStatements(p[5])
+            self.queueComment(p[4])
+            self.queueComment(self.commentStack.pop(), True)
             newCond.setComment(self.getQueuedComment())
             p[0].addElseWhen(newCond)
-        
+        print "###", p[0]
     def p_code_block(self, p):
         '''code_block : CODE_TOKEN IDENTIFIER_TOKEN CODE_BLOCK
         '''
@@ -244,30 +250,31 @@ class SealParser():
         '''packet_field : IDENTIFIER_TOKEN
                         | IDENTIFIER_TOKEN value
         '''
-    
-    def p_comment_list(self, p):
-        '''comment_list : comment_list comment
-                        | comment
-        '''
-        if len(p) == 2:
-            p[0] = [p[1]]
-        elif len(p) == 3:
-            p[1].append(p[2])
-            p[0] = p[1]
-    
     def p_comment(self, p):
-        '''comment : COMMENT_TOKEN newline
-                   | newline
+        '''comment : COMMENT_TOKEN
+                   |
         '''
         if len(p) == 2:
-            p[1] = ''
-        p[0] = p[1]
-    
+            p[0] = p[1]
+        else:
+            p[0] = ''
+        
+    def p_comment_list(self, p):
+        '''comment_list : comment_list COMMENT_TOKEN newline
+                        | newline
+        '''
+        # True added so this can be recognized later as tuple
+        if len(p) == 2:
+            p[0] = ([], True)
+        elif len(p) == 4:
+            p[1][0].append(p[2])
+            p[0] = (p[1][0], True)
+            
     def p_parameter_list(self, p):
         '''parameter_list : parameter_list "," parameter
                           |'''
         if len(p) == 1:
-            p[0] = ''
+            p[0] = []
         elif len(p) == 4:
             p[1].append(p[3])
             p[0] = p[1]
@@ -341,12 +348,19 @@ class SealParser():
 
     def queueComment(self, comment, pre = False):
         if pre:
-            self.commentQueue.setPreComments(comment)
+            if isinstance(comment, list):
+                for x in comment:
+                    print "added", x
+                    self.commentQueue.addPreComment(x)
+            else:
+                
+                print "added", comment
+                self.commentQueue.setPreComments(comment)
         else:
             self.commentQueue.setPostComment(comment)
             
     def getQueuedComment(self):
         queuedComment = self.commentQueue
-        self.commentQueue = comment.Comment()
+        self.commentQueue = comment.Comment([], '')
         return queuedComment
     
