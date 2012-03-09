@@ -34,13 +34,11 @@ class Comment():
         self.__preComments.append(preComments.strip())
         
     def getPreComments(self, prefix = False):
-        
         if prefix != False:
             result = ''
             for comment in self.__preComments:
                 if comment != '':
                     result += prefix + "// " + comment + '\n'
-            print "#",result,"#"
             return result.rstrip("\n")
         else:
             return self.__preComments

@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright (c) 2008-2012 the MansOS team. All rights reserved.
 #
@@ -73,7 +73,6 @@ class Condition():
         result += prefix + self.getMode() + (' ' + self.getCondition()).rstrip()
         result += ': ' +self.getComment().getPostComment(True) + '\n'
         for statement in self.getStatements():
-            if statement != None:
-                result +=statement.getCode(prefix + '\t') + '\n'
+            result +=statement.getCode(prefix + '\t') + '\n'
         return result.rstrip()
         
