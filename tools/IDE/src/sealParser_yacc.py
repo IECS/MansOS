@@ -43,15 +43,16 @@ class SealParser():
         self.yacc = yacc.yacc(module = self, debug = True)
         
         print "Lex & Yacc init done!"
+        print "Remember! Cache is used, so warnings are showed only at first compilation!"
 
     def run(self, s):
         self.result = []
         if s != None:
             print s
             start = time.time()
-            # \n added cus needed! helps resolving conflicts
+            # \n added because needed! helps resolving conflicts
             self.yacc.parse('\n' + s + '\n')
-            print "Parsing done in %.4f s" % (time.time()-start)
+            print "Parsing done in %.4f s" % (time.time() - start)
         
         for x in self.result:
             print x
@@ -63,14 +64,12 @@ class SealParser():
 
     # Tokens
     reserved = {
-      "parameter": "PARAMETER_TOKEN",
       "use": "USE_TOKEN",
       "read": "READ_TOKEN",
       "sendto": "SENDTO_TOKEN",
       "when": "WHEN_TOKEN",
       "else": "ELSE_TOKEN",
       "elsewhen": "ELSEWHEN_TOKEN",
-      "begin": "BEGIN_TOKEN",
       "end": "END_TOKEN",
       "code": "CODE_TOKEN",
       "true": "TRUE_TOKEN",
@@ -92,7 +91,7 @@ class SealParser():
         'MILISECONDS_TOKEN', 'INTEGER_TOKEN', 'COMMENT_TOKEN', 'newline'
         ] + list(reserved.values())
 
-    literals = ['.',',',':',';','{','}']
+    literals = ['.', ',', ':', ';', '{', '}']
     
     def t_IDENTIFIER_TOKEN(self, t):
         r'[a-zA-Z_][0-9a-zA-Z_]*'
@@ -166,11 +165,11 @@ class SealParser():
         '''
         if len(p) == 2:
             # code_block, when_block
-            if not isinstance(p[1], tuple):
+            if not isinstance(p[1], list):
                 p[0] = p[1]
             #comment_list
             else:
-                self.commentStack.append(p[1][0])
+                self.commentStack.append(p[1])
         else:
             p[0] = Statement.Statement(p[1], p[2])
             # use & read
@@ -197,12 +196,12 @@ class SealParser():
             if len(self.commentStack) > 1:
                 self.queueComment(self.commentStack.pop(-2), True)
             newCond.setComment(self.getQueuedComment())
-            #self.queueComment(p[8], True) # this comment raises conflicts!!! -> comment_list
-            # maybe we need to add non empty declaration list!!
+            
             self.queueComment(p[8])
             self.queueComment(self.commentStack.pop(), True)
             p[0].setEndComment(self.getQueuedComment())
             p[0].setWhen(newCond)
+            # Needed because elsewhen's arrive in reverse order
             p[0].fixElseWhenOrder()
     
     def p_elsewhen_block(self, p):
@@ -249,6 +248,8 @@ class SealParser():
         '''packet_field : IDENTIFIER_TOKEN
                         | IDENTIFIER_TOKEN value
         '''
+    
+    # Comments at end of line AFTER code, doesn't include newline on purpose.
     def p_comment(self, p):
         '''comment : COMMENT_TOKEN
                    |
@@ -257,17 +258,22 @@ class SealParser():
             p[0] = p[1]
         else:
             p[0] = ''
-        
+    
+    # comment_list is the only token who accepts newlines, that means that at
+    # each line there is one comment_list, it may be empty, but this assumption 
+    # allows comment stack to work properly and grammar to be conflict free.
+    # Conflict rises when declaration_list and comment_list both can be empty! 
+    # This is reason why code must start and end with newline.
     def p_comment_list(self, p):
         '''comment_list : comment_list COMMENT_TOKEN newline
                         | newline
         '''
         # True added so this can be recognized later as tuple
         if len(p) == 2:
-            p[0] = ([], True)
+            p[0] = []
         elif len(p) == 4:
-            p[1][0].append(p[2])
-            p[0] = (p[1][0], True)
+            p[1].append(p[2])
+            p[0] = p[1]
             
     def p_parameter_list(self, p):
         '''parameter_list : parameter_list "," parameter
@@ -286,6 +292,8 @@ class SealParser():
         if len(p) == 2:
             p[0] = Parameter.Parameter(p[1], True)
         # Works for both cases, in condition case parameter's name is when :)
+        # Idea is that if when exist will always be last parameter, but
+        # maybe we can allow it to be any parameter.
         elif len(p) == 3:
             p[0] = Parameter.Parameter(p[1], p[2])
 

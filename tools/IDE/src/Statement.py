@@ -102,5 +102,5 @@ class Statement():
         if self.getCondition() != '':
             result += ', when ' + self.getCondition()
         result += '; ' + self.getComment().getPostComment(True) + '\n'
-        return result.rstrip()
+        return result.strip("\n").replace("\n\n","\n")
     
