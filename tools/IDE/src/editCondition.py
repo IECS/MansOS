@@ -23,8 +23,8 @@
 #
 
 import wx
-import Editor
-import sealStruct
+import editorManager
+import globals as g
 import Condition
 
 class editDialog(wx.Dialog):
@@ -35,6 +35,8 @@ class editDialog(wx.Dialog):
         # Just a shorter name
         self.tr = self.API.translater.translate
         
+        self.box = []
+        self.elseWhenCode = []
         self.SetTitle(self.tr("Edit condition"))
         self.saveCallback = saveCallback
         if condition == '':
@@ -42,28 +44,67 @@ class editDialog(wx.Dialog):
         self.condition = condition
         # Global sizer for current tab
         self.main = wx.BoxSizer(wx.VERTICAL)
-        self.main.AddSpacer((0,20))
+        self.main.AddSpacer((0,10))
         self.whenSizer = wx.BoxSizer(wx.VERTICAL)
+        self.elseWhenSizer = wx.BoxSizer(wx.VERTICAL)
         self.elseSizer = wx.BoxSizer(wx.VERTICAL)
-        self.elseSizer.Add(wx.StaticText(self, label = "Else:"))
         self.main.Add(self.whenSizer,
                       1,            # make vertically stretchable
                       wx.EXPAND |    # make horizontally stretchable
                       wx.ALL,        #   and make border all around
                       1 );         # set border width to 10))
+                      
+        self.whenCode = editorManager.EditorManager(self, self.API, True)
+        code = ''
+        for statement in condition.getWhen().getStatements():
+            code += statement.getCode('') + "\n"
+        self.whenCode.changeCode(code, True)
+        
+        self.elseCode = editorManager.EditorManager(self, self.API, True)
+        if condition.getElse() == None:
+            self.elseCode.changeCode("", True)
+        else:
+            self.elseCode.changeCode(condition.getElse().getStatementCode(''), True)
+        
+        self.box.append(self.addStatementField(self.API.getDefaultConditions(), 
+                                               "When", self.whenSizer, 
+                                               self.whenCode, None))
+        self.box[0].SetValue(condition.getWhen().getCondition())
+        
+        noElseWhen = True
+        for x in condition.getElseWhen():
+            noElseWhen = False
+            sizer = wx.BoxSizer(wx.VERTICAL)
+            self.elseWhenCode.append(editorManager.EditorManager(self, self.API, True))
+            self.box.append(self.addStatementField(self.API.getDefaultConditions(), 
+                                               "elsewhen", sizer, 
+                                               self.elseWhenCode[-1], None))
+            self.box[-1].SetValue(x.getCondition())
+            code = ''
+            for statement in x.getStatements():
+                code += statement.getCode('') + "\n"
+            self.elseWhenCode[-1].changeCode(code, True)
+            self.elseWhenSizer.Add(sizer,
+                      1,            # make vertically stretchable
+                      wx.EXPAND |    # make horizontally stretchable
+                      wx.ALL,        #   and make border all around
+                      1 );         # set border width to 10))
+        if not noElseWhen:
+            self.main.Add(self.elseWhenSizer,
+                      1,            # make vertically stretchable
+                      wx.EXPAND |    # make horizontally stretchable
+                      wx.ALL,        #   and make border all around
+                      1 );         # set border width to 10))
+                      
         self.main.Add(self.elseSizer,
                       1,            # make vertically stretchable
                       wx.EXPAND |    # make horizontally stretchable
                       wx.ALL,        #   and make border all around
                       1 );         # set border width to 10))
-        
-        self.whenCode = Editor.CodeEditor(self, self.API, True)
-        self.whenCode.AddText(condition.getWhenStatementsCode())
-        self.elseCode = Editor.CodeEditor(self, self.API, True)
-        self.elseCode.AddText(condition.getElseStatementsCode())
-        self.box = self.addStatementField(self.API.getDefaultConditions(), None)
-        self.box.SetValue(condition.getCondition())
-        
+        self.box.append(self.addStatementField(None, 
+                                               "else", self.elseSizer, 
+                                               self.elseCode, None))
+                      
         self.buttonPane = wx.BoxSizer(wx.HORIZONTAL)
         self.save = wx.Button(self, label = self.tr("Save"), size = (150, -1), name = "save")
         self.Bind(wx.EVT_BUTTON, self.saveClk, self.save)
@@ -74,34 +115,56 @@ class editDialog(wx.Dialog):
         self.main.Add(self.buttonPane, 0)
         
         self.SetSizer(self.main)
-        #self.main.Fit(self)
         self.Show()
 
-    def addStatementField(self, choices, callback):
+    def addStatementField(self, choices, label, contSizer, editor, callback):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        box = wx.ComboBox(self, choices = choices, style = wx.CB_DROPDOWN)
-        #self.Bind(wx.EVT_TEXT_ENTER, callback, box)
-        #self.Bind(wx.EVT_COMBOBOX, callback, box)
-        sizer.Add(wx.StaticText(self, label = "When "))
-        sizer.Add(box)
+        sizer.Add(wx.StaticText(self, label = label + " "))
+        if choices != None:
+            box = wx.ComboBox(self, choices = choices, style = wx.CB_DROPDOWN)
+            sizer.Add(box)
+        else:
+            box = None
         sizer.Add(wx.StaticText(self, label = ":"))
-        self.whenSizer.Add(sizer)
-        self.whenSizer.Add(self.whenCode,
+        contSizer.Add(sizer)
+        contSizer.Add(editor,
                       1,            # make vertically stretchable
                       wx.EXPAND |    # make horizontally stretchable
                       wx.ALL,        #   and make border all around
-                      10 );         # set border width to 10))
-        self.elseSizer.Add(self.elseCode, 
-                      1,            # make vertically stretchable
-                      wx.EXPAND |    # make horizontally stretchable
-                      wx.ALL,        #   and make border all around
-                      10 );         # set border width to 10))
+                      5 );         # set border width to 10))
         return box
     
     def saveClk(self, event):
         if (event.GetEventObject().GetName() == "save"):
-            result = self.condition.getComments() + 'when ' + self.box.GetValue() + ':\n' + self.whenCode.GetText() + 'else\n' + self.elseCode.GetText() + 'end'
-            data = sealStruct.Seal(self.API, result)
-            self.saveCallback(True, data.getStruct()['conditions'][0])
+            # Prepare input for parsing, tabs etc. are important here!
+            result = self.condition.getWhen().getComment().getPreComments("")
+            result += '\nwhen ' + self.box[0].GetValue() + ': ' 
+            result += self.condition.getWhen().getComment().getPostComment(True)
+            result += '\n' + self.whenCode.code.GetText()
+            
+            elseWhen = self.condition.getElseWhen()
+            for x in range(0, len(self.elseWhenCode)):
+                result += elseWhen[x].getComment().getPreComments("") + '\n'
+                result += "elsewhen " + self.box[x + 1].GetValue() + ': '
+                result += elseWhen[x].getComment().getPostComment(True) + '\n'
+                result += self.elseWhenCode[x].code.GetText()
+                
+            if self.elseCode.code.GetText() != "":
+                if self.condition.getElse() != None:
+                    result += self.condition.getElse().getComment().getPreComments("")
+                result += '\nelse: ' 
+                if self.condition.getElse() != None:
+                    result += self.condition.getElse().getComment().getPreComments("")
+                result += self.elseCode.code.GetText()
+            
+            result += self.condition.getEndComment().getPreComments("") + '\nend'
+            result += self.condition.getEndComment().getPostComment(True)
+
+            data = self.API.sealParser.run(result)
+            
+            if len(data) == 1:
+                self.saveCallback(True, data[0])
+            else:
+                self.API.logMsg(g.ERROR, "Parsing error in:\n" + result)
         else:
             self.saveCallback(False, None)

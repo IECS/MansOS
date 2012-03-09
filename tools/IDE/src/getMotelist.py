@@ -24,13 +24,15 @@
 
 
 import os
+from re import compile
 from subprocess import Popen, PIPE, STDOUT
 
 class GetMotelist(object):
 
-    def __init__(self, pathToMansos, shellRegex):
+    def __init__(self, pathToMansos):
         self.pathToMansos = pathToMansos
-        self.shellRegex = shellRegex
+        self.shellRegex = compile(
+                        r"Mote type: \".\" \((.*)\)\n PAN address: \"(.*)\"")
         
     def getShellMotelist(self):
         motelist = []

@@ -57,14 +57,12 @@ from src import uploadModule
 from src import listenModule
 from src import APIcore
 from src import sealStruct
-from src import sealParser
 
 class Example(wx.Frame):
     def __init__(self, parent, title, size, pos, API):
         super(Example, self).__init__(parent, wx.ID_ANY, title, size = size, pos = pos)
         # Get path, here must use only file name, __file__ sometimes contains more than that
         self.path = os.path.dirname(os.path.realpath(__file__.split("/")[-1]))
-        
         
         self.API = API
         self.API.path = self.path
@@ -104,7 +102,7 @@ class Example(wx.Frame):
         
         optionMenu.AppendMenu(wx.ID_ANY, self.tr('Change language'), language)
         
-        # Check if we need to update existing menubar(for rerun)
+        # Check if we need to update existing menubar(for translate)
         if self.menubar == None:
             self.menubar = wx.MenuBar()
         else:
@@ -127,7 +125,7 @@ class Example(wx.Frame):
         # Check if we need to update existing toolbar(for rerun)
         if self.toolbar == None:
             self.toolbar = self.CreateToolBar()
-            self.toolbar.SetToolBitmapSize((32,32))
+            self.toolbar.SetToolBitmapSize((32, 32))
         else:
             self.toolbar.ClearTools()
             
@@ -148,8 +146,6 @@ class Example(wx.Frame):
         self.toolbar.AddSeparator()
         uplTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Upload'),
                                 wx.Bitmap(self.path + '/src/Icons/upload.png'))
-        #multUplTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Multiple upload'),
-        #                        wx.Bitmap(self.path + '/src/Icons/upload_multiple.png'))
         outputTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Read output'),
                                 wx.Bitmap(self.path + '/src/Icons/read.png'))
         self.toolbar.AddSeparator()
@@ -160,7 +156,6 @@ class Example(wx.Frame):
         # Second bind to toolbar, but only items with ID_ANY, because all
         # defined ID already binded from menu, weird side effect.
         self.Bind(wx.EVT_TOOL, self.OnUpload, uplTool)
-        #self.Bind(wx.EVT_TOOL, self.OnMultipleUpload, multUplTool)
         self.Bind(wx.EVT_TOOL, self.OnOutput, outputTool)
         self.Bind(wx.EVT_TOOL, self.OnAddStatement, addStatementTool)
         self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
@@ -182,6 +177,7 @@ class Example(wx.Frame):
                                 self.tr('Upload and compile'), self.API)
             dialog.ShowModal()
             dialog.Destroy()
+            
     def OnMultipleUpload(self, e):
         print "TODO"
         try:
@@ -233,17 +229,16 @@ class Example(wx.Frame):
     def disableAdders(self):
         self.toolbar.EnableTool(wx.ID_ADD, False)
         self.toolbar.EnableTool(wx.ID_APPLY, False)
-        #print "disabled"
     
     def enableAdders(self):
         self.toolbar.EnableTool(wx.ID_ADD, True)
         self.toolbar.EnableTool(wx.ID_APPLY, True)
-        #print "enabled"
     
 def main():
     ex = wx.App()
-    frame = Example(None, title="MansOS IDE", 
-                    size = (800,500), pos=(100,100), API = APIcore.ApiCore())
+   
+    frame = Example(None, title = "MansOS IDE", 
+                    size = (800, 500), pos = (100, 100), API = APIcore.ApiCore())
     frame.Show()
     
     ex.MainLoop()
