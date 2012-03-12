@@ -36,6 +36,7 @@ class EditorManager(scrolled.ScrolledPanel):
         # Just a shorter name
         self.tr = self.API.translater.translate
         self.initUI(emmbeddedMode)
+        self.emmbeddedMode = emmbeddedMode
         ### Editor visible variables
         if not emmbeddedMode:
             # @ creation we assume document is saved.
@@ -47,7 +48,7 @@ class EditorManager(scrolled.ScrolledPanel):
             # This marks if document already have a file attached to it
             self.hasAFile = False
         # Define project type
-        self.projectType = 0
+        self.projectType = g.SEAL_PROJECT
         
     def update (self, initFilePath = ''):
         if initFilePath == '':

@@ -31,6 +31,7 @@ import os
 from time import gmtime, strftime
 import globals as g
 import sealParser_yacc
+import outputArea
 
 class ApiCore:
     def __init__(self):
@@ -112,9 +113,6 @@ class ApiCore:
         # Compile regex for finding actuators
         self.__reActuators = re.compile(string.join(self.__actuators.keys(), '|'), re.I)
         
-        self.sealParser = sealParser_yacc.SealParser()
-        self.seal = sealStruct.Seal(self)
-        
         self.translater = translater.Translater(self)
         
     # Return regex for finding actuators
@@ -181,6 +179,7 @@ class ApiCore:
             dbgMsg = g.LOG_TEXTS[msgType] + " - " + str(msgText) + '\n'
             if g.LOG_TO_CONSOLE:
                 print dbgMsg
+                self.printLine(dbgMsg)
             if g.LOG_TO_FILE:
                 path = os.getcwd()
                 os.chdir(self.path)
@@ -189,3 +188,18 @@ class ApiCore:
                 f.write(dbgTime + dbgMsg)
                 f.close()
                 os.chdir(path)
+    
+    def initOutputArea(self, parent):
+        self.outputArea = outputArea.outputArea(parent)
+
+        self.outputArea = self.outputArea
+        self.printLine = self.outputArea.printLine
+        
+        self.sealParser = sealParser_yacc.SealParser(self.printLine)
+        
+        self.seal = sealStruct.Seal(self)
+        
+        return self.outputArea
+        
+    def clearOutputArea(self):
+        self.outputArea.clear()

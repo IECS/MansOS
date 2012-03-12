@@ -45,8 +45,17 @@ class Frame(wx.Frame):
         self.toolbar = None
         self.menubar = None
         self.InitUI()
-        self.tabManager = tabManager.tabManager(self, API)
         
+        self.splitter = wx.SplitterWindow(self)
+        self.splitter.SetMinimumPaneSize(50)
+        self.outputArea = self.API.initOutputArea(self.splitter)
+        self.tabManager = tabManager.tabManager(self.splitter, API)
+        
+        self.splitter.SplitHorizontally(self.tabManager, self.outputArea, -100)
+        
+        # Makes outputArea to maintain it's height when whole window is resized
+        self.splitter.SetSashGravity(1)
+
     def InitUI(self):
         fileMenu = wx.Menu()
         new = fileMenu.Append(wx.ID_NEW, '&' + self.tr('New') + '\tCtrl+N', 
