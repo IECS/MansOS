@@ -60,9 +60,9 @@ class tabManager(wx.Notebook):
         if event != None:
             event.Skip()
             if self.getPageObject().projectType == g.SEAL_PROJECT:
-                self.GetParent().enableAdders()
+                self.GetGrandParent().enableAdders()
             else:
-                self.GetParent().disableAdders()
+                self.GetGrandParent().disableAdders()
 
         
     def showPopupMenu(self, event):

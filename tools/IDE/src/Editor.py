@@ -40,6 +40,7 @@ class CodeEditor(wx.stc.StyledTextCtrl):
         self.API = API
         self.spaces = ''
         self.noUpdate = noUpdate
+        self.lastText = ''
         
         # Set scroll bar range
         self.SetEndAtLastLine(True)
@@ -58,6 +59,7 @@ class CodeEditor(wx.stc.StyledTextCtrl):
         # Hack for really redrawing all window not part of it, 
         # which causes circles to be incorrect
         self.Bind(wx.stc.EVT_STC_CHANGE, self.doRefresh)
+        self.Bind(wx.stc.EVT_STC_MODIFIED, self.doGrammarCheck)
         # Bind button clicks
         self.Bind(wx.stc.EVT_STC_MARGINCLICK, self.getAction)
         self.Bind(wx.EVT_MOTION, self.manageMouse)
@@ -115,6 +117,19 @@ class CodeEditor(wx.stc.StyledTextCtrl):
         if self.noUpdate == False:
             self.GetParent().saveState = False
             self.GetGrandParent().markAsUnsaved()
+            
+    def doGrammarCheck(self, evt):
+        if self.GetParent().emmbeddedMode == False:
+            if self.GetParent().projectType == g.SEAL_PROJECT:
+                if self.lastText != self.GetText():
+                    self.lastText = self.GetText()
+                    self.API.sealParser.run(self.lastText)
+                else:
+                    self.API.clearOutputArea()
+            else:
+                self.API.clearOutputArea()
+
+        
         
     def getAction(self, event):
         line = self.LineFromPosition(event.GetPosition())

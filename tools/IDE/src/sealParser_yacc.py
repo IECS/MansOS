@@ -33,10 +33,11 @@ import Condition
 import comment
 
 class SealParser():
-    def __init__(self):
+    def __init__(self, printMsg):
         
         self.commentQueue = comment.Comment()
         self.commentStack = []
+        self.printMsg = printMsg
         
         self.lex = lex.lex(module = self, debug = True)
         
@@ -48,11 +49,13 @@ class SealParser():
     def run(self, s):
         self.result = []
         if s != None:
+            self.currLine = 0
             print s
             start = time.time()
             # \n added because needed! helps resolving conflicts
             self.yacc.parse('\n' + s + '\n')
             print "Parsing done in %.4f s" % (time.time() - start)
+            
         
         for x in self.result:
             print x
@@ -128,13 +131,15 @@ class SealParser():
     t_ignore = " \t"
     
     def t_newline(self, t):
-        r'\n+'
+        r'\n'
         print "newline", t.lexer.lineno
         t.lexer.lineno += t.value.count("\n")
+        self.currLine += 1
         return t
     
     def t_error(self, t):
-        print("Illegal character '%s'" % t.value[0])
+        self.printMsg("Line '%d': Illegal character '%s'" % 
+                      (self.currLine, t.value[0]))
         t.lexer.skip(1)
 
 ### YACC
@@ -347,9 +352,9 @@ class SealParser():
 
     def p_error(self, p):
         if p:
-            print("Syntax error at '%s'" % p.value)
+            self.printMsg("Line '%d': Syntax error at '%s'" % (self.currLine, p.value))
         else:
-            print("Syntax error at EOF")
+            self.printMsg("Line '%d': Syntax error at EOF"% self.currLine)
 
 ### Helpers
 
