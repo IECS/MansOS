@@ -91,7 +91,7 @@ class SealParser():
     
     tokens = [
         'CODE_BLOCK', 'IDENTIFIER_TOKEN', 'SECONDS_TOKEN',
-        'MILISECONDS_TOKEN', 'INTEGER_TOKEN', 'COMMENT_TOKEN', 'newline'
+        'MILISECONDS_TOKEN', 'INTEGER_TOKEN', 'COMMENT_TOKEN' #, 'newline'
         ] + list(reserved.values())
 
     literals = ['.', ',', ':', ';', '{', '}']
@@ -119,6 +119,7 @@ class SealParser():
     def t_COMMENT_TOKEN(self, t):
         r'''//.*'''
         t.value = t.value.strip("/ ")
+        print 'comment:', t.value
         return t
     
     # Needed for OP :)
@@ -128,14 +129,14 @@ class SealParser():
         t.type = self.reserved.get(t.value, "HELP_TOKEN")
         return t
     
-    t_ignore = " \t"
+    t_ignore = " \t\r\n"
     
-    def t_newline(self, t):
-        r'\n'
-        print "newline", t.lexer.lineno
-        t.lexer.lineno += t.value.count("\n")
-        self.currLine += 1
-        return t
+#    def t_newline(self, t):
+#        r'\n'
+#        print "newline", t.lexer.lineno
+#        t.lexer.lineno += t.value.count("\n")
+#        self.currLine += 1
+#        return t
     
     def t_error(self, t):
         self.printMsg("Line '%d': Illegal character '%s'" % 
@@ -159,18 +160,33 @@ class SealParser():
             if p[2] != None:
                 p[1].append(p[2])
             p[0] = p[1]
-    
+
+    def p_USE_TOKEN_C(self, p):
+        '''USE_TOKEN_C : USE_TOKEN
+                         | USE_TOKEN COMMENT_TOKEN '''
+        p[0] = p[1]
+
+    def p_READ_TOKEN_C(self, p):
+        '''READ_TOKEN_C : READ_TOKEN
+                          | READ_TOKEN COMMENT_TOKEN '''
+        p[0] = p[1]
+
+    def p_SENDTO_TOKEN_C(self, p):
+        '''SENDTO_TOKEN_C : SENDTO_TOKEN
+                            | SENDTO_TOKEN COMMENT_TOKEN '''
+        p[0] = p[1]
+
     def p_declaration(self, p):
-        '''declaration : USE_TOKEN IDENTIFIER_TOKEN parameter_list ';' comment
-                       | READ_TOKEN IDENTIFIER_TOKEN parameter_list ';' comment
-                       | SENDTO_TOKEN IDENTIFIER_TOKEN packet_field_specifier parameter_list ';' comment
+        '''declaration : USE_TOKEN_C IDENTIFIER_TOKEN parameter_list ';'
+                       | READ_TOKEN_C IDENTIFIER_TOKEN parameter_list ';'
+                       | SENDTO_TOKEN_C IDENTIFIER_TOKEN packet_field_specifier parameter_list ';'
                        | when_block
                        | code_block
-                       | comment_list
+                       | COMMENT_TOKEN
         '''
         if len(p) == 2:
             # code_block, when_block
-            if not isinstance(p[1], list):
+            if not isinstance(p[1], str):
                 p[0] = p[1]
             #comment_list
             else:
@@ -178,61 +194,68 @@ class SealParser():
         else:
             p[0] = Statement.Statement(p[1], p[2])
             # use & read
-            if len(p) == 6:
-                self.queueComment(p[5])
-                p[0].setParameters(p[3])
-            # send_to
-            elif len(p) == 7:
-                self.queueComment(p[6])
-                p[0].setParameters(p[4])
+#            if len(p) == 6:
+#                self.queueComment(p[5])
+#                p[0].setParameters(p[3])
+#            # send_to
+#            elif len(p) == 7:
+#                self.queueComment(p[6])
+#                p[0].setParameters(p[4])
                 # TODO: parse packet_field
-            self.queueComment(self.commentStack.pop(), True)
+            if p[1] == 'use' or p[1] == 'read':
+#                self.queueComment(p[2])
+                p[0].setParameters(p[3])
+            else: # sendto
+#                self.queueComment(p[2])
+#                self.queueComment(p[4])
+                p[0].setParameters(p[4])
+#            self.queueComment(self.commentStack.pop(), True)
             p[0].setComment(self.getQueuedComment())
-        
+
     def p_when_block(self, p):
-        '''when_block : WHEN_TOKEN condition ":" comment declaration_list elsewhen_block END_TOKEN comment
+        '''when_block : WHEN_TOKEN condition ":" declaration_list elsewhen_block END_TOKEN
         '''
-        if len(p) == 9:
-            p[0] = p[6]
-            newCond = Condition.Condition("when")
-            newCond.setCondition(p[2])
-            newCond.setStatements(p[5])
-            self.queueComment(p[4])
-            if len(self.commentStack) > 1:
-                self.queueComment(self.commentStack.pop(-2), True)
-            newCond.setComment(self.getQueuedComment())
+        p[0] = p[5]
+        newCond = Condition.Condition("when")
+        newCond.setCondition(p[2])
+        newCond.setStatements(p[4])
+#        self.queueComment(p[4])
+#        if len(self.commentStack) > 1:
+#            self.queueComment(self.commentStack.pop(-2), True)
+#        newCond.setComment(self.getQueuedComment())
             
-            self.queueComment(p[8])
-            self.queueComment(self.commentStack.pop(), True)
-            p[0].setEndComment(self.getQueuedComment())
-            p[0].setWhen(newCond)
-            # Needed because elsewhen's arrive in reverse order
-            p[0].fixElseWhenOrder()
+#        self.queueComment(p[2])
+#        self.queueComment(p[4])
+        self.queueComment(self.commentStack.pop(), True)
+        #p[0].setEndComment(self.getQueuedComment())
+        p[0].setWhen(newCond)
+        # Needed because elsewhen's arrive in reverse order
+        p[0].fixElseWhenOrder()
     
     def p_elsewhen_block(self, p):
-        '''elsewhen_block : ELSEWHEN_TOKEN condition ":" comment declaration_list elsewhen_block
-                          | ELSE_TOKEN ":" comment declaration_list
+        '''elsewhen_block : ELSEWHEN_TOKEN condition ":" declaration_list elsewhen_block
+                          | ELSE_TOKEN ":" declaration_list
                           | 
         '''
         p[0] = condContainer.condContainer()
         # else
-        if len(p) == 5:
+        if len(p) == 4:
             newCond = Condition.Condition("else")
             newCond.setStatements(p[4])
-            self.queueComment(p[3])
-            if len(self.commentStack) > 1:
-                self.queueComment(self.commentStack.pop(-2), True)
+#            self.queueComment(p[3])
+#            if len(self.commentStack) > 1:
+#                self.queueComment(self.commentStack.pop(-2), True)
             newCond.setComment(self.getQueuedComment())
             p[0].setElse(newCond)
         # elsewhen
-        elif len(p) == 7:
-            p[0] = p[6]
+        elif len(p) == 6:
+            p[0] = p[5]
             newCond = Condition.Condition("elsewhen")
             newCond.setCondition(p[2])
-            newCond.setStatements(p[5])
-            self.queueComment(p[4])
-            self.queueComment(self.commentStack.pop(), True)
-            newCond.setComment(self.getQueuedComment())
+            newCond.setStatements(p[4])
+#            self.queueComment(p[4])
+#            self.queueComment(self.commentStack.pop(), True)
+#            newCond.setComment(self.getQueuedComment())
             p[0].addElseWhen(newCond)
             
     def p_code_block(self, p):
@@ -255,33 +278,57 @@ class SealParser():
         '''
     
     # Comments at end of line AFTER code, doesn't include newline on purpose.
-    def p_comment(self, p):
-        '''comment : COMMENT_TOKEN
-                   |
-        '''
-        if len(p) == 2:
-            p[0] = p[1]
-        else:
-            p[0] = ''
+#    def p_comment(self, p):
+#        '''comment : COMMENT_TOKEN
+#                   |
+#        '''
+#        if len(p) == 2:
+#            p[0] = p[1]
+#        else:
+#            p[0] = ''
     
     # comment_list is the only token who accepts newlines, that means that at
     # each line there is one comment_list, it may be empty, but this assumption 
     # allows comment stack to work properly and grammar to be conflict free.
     # Conflict rises when declaration_list and comment_list both can be empty! 
     # This is reason why code must start and end with newline.
+#    def p_comment_list(self, p):
+#        '''comment_list : comment_list COMMENT_TOKEN newline
+#                        | newline
+#        '''
+#        # True added so this can be recognized later as tuple
+#        if len(p) == 2:
+#            p[0] = []
+#        elif len(p) == 4:
+#            p[1].append(p[2])
+#            p[0] = p[1]
+
+#    def p_comment_list(self, p):
+#        '''comment_list : comment_list COMMENT_TOKEN
+#                        |
+#        '''
+#        if len(p) == 2:
+#            # so this can be recognized later as tuple
+#            p[0] = []
+#        else:
+#            p[1].append(p[2])
+#            p[0] = p[1]
+
     def p_comment_list(self, p):
-        '''comment_list : comment_list COMMENT_TOKEN newline
-                        | newline
+        '''comment_list : comment_list COMMENT_TOKEN
+                        | COMMENT_TOKEN
         '''
-        # True added so this can be recognized later as tuple
-        if len(p) == 2:
-            p[0] = []
-        elif len(p) == 4:
-            p[1].append(p[2])
-            p[0] = p[1]
-            
+        pass # TODO
+       
+    def p_COMMA_C(self, p):
+        '''COMMA_C : ',' comment_list
+                     | ','
+        '''
+        pass
+       
+     
     def p_parameter_list(self, p):
-        '''parameter_list : parameter_list "," parameter
+        '''parameter_list : parameter_list COMMA_C parameter
                           |'''
         if len(p) == 1:
             p[0] = []

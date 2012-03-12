@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+import os, sys
+
+inputFileName = 'tests/91-comments.sl'
+
 def importsOk():
     plyModuleOK = True     # Python Lex Yacc - for compilation
     
@@ -29,24 +33,32 @@ def printLine(line):
     print line
 
 
+def parseCommandLine(argv):
+    global inputFileName
+    if len(argv) > 1:
+        inputFileName = argv[-1]
+    # TODO
+
 def main():
     if not importsOk():
         exit(1)
-    
-    # Go to real directory for import to work
-    import os
-    import sys
 
+    parseCommandLine(sys.argv)
+
+    # read file to-be-parsed
+    with open(inputFileName, 'r') as inputFile:
+        contents = inputFile.read()
+    if contents == None:
+        print 'Failed to read file', inputFileName
+        exit(1)
+
+    # import pathname where seal package is located
     sys.path.append('..')
-#    os.chdir("..")
-#    os.chdir("/home/atis/work/mansos/tools")
-#    print os.path.dirname(os.path.realpath(__file__))
-#    os.chdir(os.path.dirname(os.path.realpath(__file__)))
     from seal import sealParser_yacc
 
-    s = "use Foobar, param1 1000, param2 1s, param3 1500ms;"
+    # parse the file
     parser = sealParser_yacc.SealParser(printLine)
-    parser.run(s)
+    parser.run(contents)
 
 
 if __name__ == '__main__':
