@@ -62,8 +62,8 @@ def importsOk():
         import ply
     except ImportError:
         plyModuleOK = False
-        
-    if not wxModuleOK or not serialModuleOK:
+
+    if not (wxModuleOK and serialModuleOK and plyModuleOK):
         if os.name == 'posix': 
             installStr = "Make sure you have installed required modules. Run:\n\tapt-get install"
         else: 
