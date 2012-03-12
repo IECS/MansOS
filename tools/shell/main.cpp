@@ -177,7 +177,7 @@ void writeSerialPort(const void *data, uint16_t len, uint16_t dstAddress) {
     // fprintf(stderr, "shell: writeSerialPort %d bytes to 0x%04x\n", len, dstAddress);
     // hexdump((uint8_t *)data, len);
 
-    len += 2; // inlude destination address as well
+    len += 2; // include destination address as well
 
     uint8_t header[5];
     header[0] = SERIAL_PACKET_DELIMITER; // always start with this symbol
