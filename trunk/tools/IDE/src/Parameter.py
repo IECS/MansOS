@@ -37,6 +37,8 @@ class Parameter():
         # For check boxes
         if type(value) is bool:
             self.__value = value
+        elif type(value) is int:
+            self.__value = value
         # For select boxes
         else:
             self.__value = None if value == None else value.strip()
@@ -57,6 +59,8 @@ class Parameter():
                 return self.getName()
             else:
                 return ''
+        if type(self.__value) is int:
+            return (self.getName() + ' ' +str(self.getValue())).strip()
         return (self.getName() + ' ' +self.getValue()).strip()
     
 # Class for parameter definitions, differs from parameter class, 
