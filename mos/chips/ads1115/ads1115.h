@@ -89,8 +89,6 @@ bool writeAdsRegister(uint8_t reg, uint16_t val);
 // Read ADS1115 register
 bool readAdsRegister(uint8_t reg, uint16_t *val);
 
-ISR(PORT2, adsInterrupt);
-
 void adsInit(void);
 
 bool readAds(uint16_t *val);

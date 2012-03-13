@@ -34,4 +34,8 @@ static inline void hw_spiBusOn(uint8_t busId) {
 static inline void hw_spiBusOff(uint8_t busId) {
 }
 
+static inline uint8_t hw_spiExchByte(uint8_t busId, uint8_t b) {
+    return 0;
+}
+
 #endif

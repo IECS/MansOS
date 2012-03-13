@@ -32,8 +32,8 @@ NET       = $(MOS)/net
 #===== Sources =====
 
 PSOURCES += $(MOS)/hil/mem.c
-PSOURCES += $(MOS)/hil/spi.c
 PSOURCES += $(MOS)/hil/errors.c
+PSOURCES-$(USE_SPI) += $(MOS)/hil/spi.c
 PSOURCES-$(USE_SERIAL) += $(MOS)/hil/usart.c
 PSOURCES-$(USE_ADC) += $(MOS)/hil/adc.c
 PSOURCES-$(USE_LEDS) += $(MOS)/hil/leds.c
@@ -116,7 +116,7 @@ PSOURCES-$(USE_SMP) += $(MOS)/smp/codec.c
 PSOURCES-$(USE_SMP) += $(MOS)/smp/command.c
 
 ifneq ($(USE_NET),y)
-PSOURCES += $(MOS)/net/nonet.c
+PSOURCES-$(USE_ADDRESSING) += $(MOS)/net/nonet.c
 endif
 
 #PSOURCES-$(USE_EXT_FLASH) += $(MOS)/hil/fstream.c

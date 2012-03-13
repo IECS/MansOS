@@ -78,15 +78,15 @@ def get_symbols(file):
     lines = output.split('\n')
     for line in lines:
         # exported functions
-        m = re.search('\sg\s*F\s.*\s([a-zA-Z0-9_]*)$', line)
+        m = re.search('\sg\s*F\s.*\s([a-zA-Z0-9_]+)\s*$', line)
         if not m is None:
             exported.append(m.group(1))
         # exported variables
-        m = re.search('\sO\s.*\s([a-zA-Z0-9_]*)$', line)
+        m = re.search('\sO\s.*\s([a-zA-Z0-9_]+)\s*$', line)
         if not m is None:
             exported.append(m.group(1))
         # unresolved symbols
-        m = re.search('^[0-9a-fA-F]*\s*\*UND\*\s.*\s([a-zA-Z0-9_]*)$', line)
+        m = re.search('^[0-9a-fA-F]*\s*\*UND\*\s.*\s([a-zA-Z0-9_]+)\s*$', line)
         if not m is None:
             s = m.group(1)
             if s[0:2] != '__':
@@ -168,7 +168,13 @@ def find_needed_objects(app_o, system_o):
 
     return result
 
-used_objects = find_needed_objects(app_objects, system_objects)
+if arch == 'pc':
+    # use all
+    used_objects = app_objects
+    for o in system_objects: used_objects.append(o)
+else:
+    # filter out
+    used_objects = find_needed_objects(app_objects, system_objects)
 
 arglist = [cc, string.join(used_objects), '-o', target, flags]
 

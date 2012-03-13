@@ -34,8 +34,6 @@
 // must be processed
 sem_t sleepSem;
 
-static pthread_t alarmThread;
-
 void *alarmIntHandler(void *);
 
 static void loopForever(void) {
@@ -54,6 +52,7 @@ void initPlatform(void)
 #if USE_ALARMS
     // this is a "specific thread", not part of the scheduler
     // create it even when threads are turned off
+    static pthread_t alarmThread;
     pthread_create(&alarmThread, NULL, alarmIntHandler, NULL);
 #endif
 
