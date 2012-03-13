@@ -24,11 +24,8 @@
 #
 
 import os
-from subprocess import Popen, PIPE, STDOUT
-import sys
 import wx
 
-import tabManager
 import uploadModule
 import listenModule
 
@@ -41,17 +38,19 @@ class Frame(wx.Frame):
         self.API = API
         self.API.path = self.path
         # Just a shorter name
-        self.tr = self.API.translater.translate
+        self.tr = self.API.tr
         self.toolbar = None
         self.menubar = None
         self.InitUI()
-        
+        self.SetBackgroundColour("white")
         self.splitter = wx.SplitterWindow(self)
-        self.splitter.SetMinimumPaneSize(50)
-        self.outputArea = self.API.initOutputArea(self.splitter)
-        self.tabManager = tabManager.tabManager(self.splitter, API)
+        self.API.outputTools.Reparent(self.splitter)
+        self.API.tabManager.Reparent(self.splitter)
+        self.tabManager = self.API.tabManager
         
-        self.splitter.SplitHorizontally(self.tabManager, self.outputArea, -100)
+        self.splitter.SetMinimumPaneSize(100)
+        self.splitter.SetBackgroundColour("white")
+        self.splitter.SplitHorizontally(self.tabManager, self.API.outputTools, -200)
         
         # Makes outputArea to maintain it's height when whole window is resized
         self.splitter.SetSashGravity(1)
@@ -156,33 +155,18 @@ class Frame(wx.Frame):
         
     def OnUpload(self, e):
         if self.tabManager.doPopupSave(None) == True:
-            dialog = uploadModule.UploadModule(self, 
-                                self.tr('Upload and compile'), self.API)
+            self.API.uploadCore.manageUpload()
+            
+    def OnOutput(self, e):
+        if self.tabManager.doPopupSave(None) == True:
+            
+            dialog = wx.Dialog(self, wx.ID_ANY, self.tr('Configure upload and compile'), 
+                style = wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+            
+            uploadModule.UploadModule(dialog, self.API)
+            dialog.Fit()
             dialog.ShowModal()
             dialog.Destroy()
-            
-    def OnMultipleUpload(self, e):
-        print "TODO"
-        try:
-            os.chdir("../shell")
-            upload = Popen(["./shell"], stdin = PIPE, 
-                           stderr = STDOUT, stdout = PIPE)
-            out = upload.communicate(input = "ls")[0]
-            print out
-            #sleep(5)
-            upload = Popen(["./shell"], stdin = PIPE, 
-                           stderr = STDOUT, stdout = PIPE)
-            out = upload.communicate(input = "sense")[0]
-            print out
-        except OSError, e:
-            print >>sys.stderr, "execution failed:", e
-
-        
-    def OnOutput(self, e):
-        dialog = listenModule.ListenModule(None, 
-                                self.tr('Listen to output'), self.API)
-        dialog.ShowModal()
-        dialog.Destroy()
     
     def OnNew(self, e):
         self.tabManager.addPage()

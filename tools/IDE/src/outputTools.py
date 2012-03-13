@@ -24,28 +24,14 @@
 
 import wx
 
-class outputArea(wx.Panel):
-    def __init__(self, parent, API, nr):
-        wx.Panel.__init__(self, parent)
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
+class outputTools(wx.Notebook):
+    def __init__(self, parent, API):
+        wx.Notebook.__init__(self, parent)
         self.API = API
-        self.nr = nr
-        self.outputArea = wx.TextCtrl(self, style = wx.TE_MULTILINE)
-        self.outputArea.SetBackgroundColour("black")
-        self.outputArea.SetForegroundColour("white")
         
-        sizer.Add(self.outputArea, 2, wx.EXPAND |wx.ALL, 5)
-        self.SetBackgroundColour("white")
-        self.SetSizerAndFit(sizer)
-        self.SetAutoLayout(1)
+    def addTools(self):
+        self.API.infoArea.Reparent(self)
+        self.AddPage(self.API.infoArea, self.API.tr("Information"))
+        self.API.listenModule.Reparent(self)
+        self.AddPage(self.API.listenModule, self.API.tr("Listen"))
 
-    def printLine(self, text, clear = False):
-        self.API.outputTools.SetSelection(self.nr)
-        if clear:
-            self.clear()
-        self.outputArea.AppendText(text.strip() + '\n\n')
-        self.outputArea.ScrollLines(1)
-        wx.Yield()
-    
-    def clear(self):
-        self.outputArea.Clear()

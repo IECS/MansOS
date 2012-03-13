@@ -32,8 +32,9 @@ class tabManager(wx.Notebook):
         wx.Notebook.__init__(self, parent)
         self.empty = emptyTab.EmptyTab(self)
         self.API = API
+        self.API.tabManager = self
         # Just a shorter name
-        self.tr = self.API.translater.translate
+        self.tr = self.API.tr
         
         # Need to set because next statement uses it
         self.nextPageNr = 1

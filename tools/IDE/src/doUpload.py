@@ -36,7 +36,7 @@ class DoUpload():
     def doUpload(self, targets, compiler, targetType, platform):
         res = compiler()
         if res[0] == False:
-            return [False, '']
+            return res
         if targetType == g.SHELL:
             return self.shellUpload(targets, platform)
         else:
