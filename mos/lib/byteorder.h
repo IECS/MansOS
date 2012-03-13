@@ -24,12 +24,16 @@
 #ifndef MOS_BYTEORDER_H
 #define MOS_BYTEORDER_H
 
-#define bswap_32(x) ((x >> 24) | ((x >> 8) & 0xff00) | ((x & 0xff00) << 8) | (x << 24))
-#define bswap_16(x) ((x >> 8) | ((x & 0xff) << 8))
 
 #ifdef PLATFORM_PC
 
+#include <byteswap.h>
 #include <arpa/inet.h>
+
+#ifndef bswap_32 // in case defined as functions
+#define bswap_32 bswap_32
+#define bswap_16 bswap_16
+#endif
 
 #if __BYTE_ORDER == __BIG_ENDIAN
 #define tobe16(x)       (x) 
@@ -74,6 +78,10 @@
 
 #endif // PLATFORM_PC
 
+#ifndef bswap_32 // check one more time
+#define bswap_32(x) ((x >> 24) | ((x >> 8) & 0xff00) | ((x & 0xff00) << 8) | (x << 24))
+#define bswap_16(x) ((x >> 8) | ((x & 0xff) << 8))
+#endif
 
 // data reading & writing
 
