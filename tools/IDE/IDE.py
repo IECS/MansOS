@@ -35,7 +35,7 @@ def main():
     from src import APIcore
     import wx
     
-    ex = wx.App()
+    ex = wx.App(redirect=False)
    
     frame = Frame.Frame(None, title = "MansOS IDE",size = (800, 500), 
                         pos = (100, 100), API = APIcore.ApiCore())
