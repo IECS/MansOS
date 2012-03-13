@@ -69,8 +69,10 @@ static void initSystem(void)
     // basic, platform-specific initialization: timers, platform-specific drivers (?)
     initPlatform();
 
+#ifdef USE_PRINT
     // init printing to serial (makes sense only after clock has been calibrated)
     if (printInit != NULL) printInit();
+#endif
 
     INIT_PRINTF("starting MansOS...\n");
 
