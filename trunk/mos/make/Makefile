@@ -187,16 +187,23 @@ JAVA_CLASSPATH=$(MSPSIMDIR):$(MSPSIMDIR)/lib/jfreechart-1.0.11.jar:$(MSPSIMDIR)/
 JAVA_CLASS=se.sics.mspsim.platform.sky.SkyNode
 
 ifeq ($(UNAME),Darwin)
-# apple wants special handling...
-MOTELIST=$(MOS)/make/scripts/motelist.apple
+  # apple wants special handling...
+  MOTELIST = $(MOS)/make/scripts/motelist.apple
 else
 ifeq ($(SHORT_UNAME),CYGWIN)
-# cygwin too
-MOTELIST=motelist
-CFLAGS+=-DCYGWIN=1
+  # cygwin too
+  MOTELIST = $(MOS)/make/scripts/motelist.exe
+  CFLAGS + =-DCYGWIN=1
 else
-# the normal case 
-MOTELIST=$(MOS)/make/scripts/motelist
+ifeq ($(SHORT_UNAME),MINGW3)
+  # mingw
+  MOTELIST=$(MOS)/make/scripts/motelist.exe
+  CFLAGS += -DCYGWIN=1
+  BSLPORT ?= "$(shell $(MOTELIST) -c | cut -f2 -d, )"
+else
+  # the normal case 
+  MOTELIST=$(MOS)/make/scripts/motelist
+endif
 endif
 endif
 

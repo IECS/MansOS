@@ -27,13 +27,17 @@
 CC = gcc
 OBJCOPY = @true  # nothing
 CFLAGS += -g -Wall
-LDFLAGS += -pthread
+LDFLAGS += -lpthread
 
 include $(MAKEFILE_GCC)
 
 ifeq ($(UNAME),Darwin)
 CFLAGS += -m32
 LDFLAGS += -L/Developer/SDKs/MacOSX10.6.sdk/usr/lib -undefined dynamic_lookup -arch i386
+endif
+
+ifeq ($(SHORT_UNAME),MINGW3)
+LDFLAGS += -lwsock32
 endif
 
 #===== Additional includes =====

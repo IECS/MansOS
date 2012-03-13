@@ -25,11 +25,15 @@
 // PC USART
 //
 
+#ifdef WIN32
+#include <winsock.h>
+#endif
 #include <hil/usart.h>
 #include <string.h>
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include "usart_hal.h"
 
 //===========================================================
@@ -134,4 +138,5 @@ static void *rxHandler(void *arg)
         }        
     }
     pthread_exit(NULL);
+    return NULL; // make gcc happy
 }

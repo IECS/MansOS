@@ -42,8 +42,8 @@
 
 // DOIT_COUNTER(): starts with 1 and increments for each line
 #ifndef DOIT_COUNTER 
-#define DOIT_COUNTER() ( __COUNTER__ )
-//#define DOIT_COUNTER() ( __LINE__ - DOIT_FIRST_LINE )
+//#define DOIT_COUNTER() ( __COUNTER__ )  // only for gcc 4.3+
+#define DOIT_COUNTER() ( __LINE__ - DOIT_FIRST_LINE )
 #endif  // DOIT_COUNTER 
 
 
