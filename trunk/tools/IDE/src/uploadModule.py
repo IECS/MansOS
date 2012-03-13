@@ -24,19 +24,12 @@
 
 import wx
 
-import doCompile
-import doUpload
-import getMotelist
-import threadRunner
-import globals as g
-
-class UploadModule(wx.Dialog):
-    def __init__(self, parent, title, API):
-        super(UploadModule, self).__init__(parent = parent, 
-            title = title, size = (500, 400), style = wx.DEFAULT_DIALOG_STYLE 
-                                                    | wx.RESIZE_BORDER)
+class UploadModule(wx.Panel):
+    def __init__(self, parent, API, printLine = None):
+        super(UploadModule, self).__init__(parent = parent)
+        
         self.API = API
-        self.editorManager = self.GetParent().tabManager.getPageObject()
+        self.editorManager = self.API.tabManager.getPageObject()
         self.filename = self.editorManager.fileName
         # Just a shorter name
         self.tr = self.API.translater.translate
@@ -47,166 +40,70 @@ class UploadModule(wx.Dialog):
         self.pathToMansos = self.API.path + "/../.." 
         self.motes = []
         
-        # Used classes
-        self.compiler = doCompile.DoCompile(self.API)
-        self.uploader = doUpload.DoUpload(self.pathToMansos)
-        self.motelist = getMotelist.GetMotelist(self.pathToMansos)
-        
-        
         self.main = wx.BoxSizer(wx.VERTICAL)
-        self.controls = wx.GridBagSizer(10,10)
-        
-        self.output = wx.TextCtrl(self, style = wx.EXPAND | wx.ALL, 
-                                  size = (470, 300))
-        self.output.SetBackgroundColour("Black")
-        self.output.SetForegroundColour("White")
+        self.controls = wx.GridBagSizer(10, 10)
         
         self.source = wx.ComboBox(self, choices = ["USB", "Shell"])
         self.source.SetValue("USB")
         self.platforms = wx.ComboBox(self, choices = self.API.getPlatforms())
         self.platforms.SetValue(self.API.getPlatforms()[0])
-        self.compile = wx.Button(self, label=self.tr("Compile"))
-        self.upload = wx.Button(self, label=self.tr("Upload"))
-        self.refresh = wx.Button(self, label=self.tr("Refresh"))
+        self.compile = wx.Button(self, label = self.tr("Compile"))
+        self.upload = wx.Button(self, label = self.tr("Upload"))
+        self.refresh = wx.Button(self, label = self.tr("Refresh"))
         
-        self.controls.Add(self.compile, (0,0), flag = wx.EXPAND | wx.ALL)
-        self.controls.Add(self.platforms, (0,1),flag = wx.EXPAND | wx.ALL)
-        self.controls.Add(self.upload, (0,2), span = (2,2),flag = wx.EXPAND | wx.ALL)
+        self.controls.Add(self.compile, (0, 0), flag = wx.EXPAND | wx.ALL)
+        self.controls.Add(self.platforms, (0, 1), flag = wx.EXPAND | wx.ALL)
+        self.controls.Add(self.upload, (0, 2), span = (2, 2), 
+                          flag = wx.EXPAND | wx.ALL)
         
-        self.controls.Add(self.source, (1,1), flag = wx.EXPAND | wx.ALL)
-        self.controls.Add(self.refresh, (1,0), flag = wx.EXPAND | wx.ALL)
+        self.controls.Add(self.source, (1, 1), flag = wx.EXPAND | wx.ALL)
+        self.controls.Add(self.refresh, (1, 0), flag = wx.EXPAND | wx.ALL)
         
         self.list = wx.CheckListBox(self, wx.ID_ANY, style=wx.MULTIPLE)
         
-        self.main.Add(self.controls, 
-                      0,            # make vertically unstretchable
-                      wx.EXPAND |    # make horizontally stretchable
-                      wx.ALL,        #   and make border all around
-                      3 );
-        self.main.Add(self.list, 
-                      0,            # make vertically unstretchable
-                      wx.EXPAND |    # make horizontally stretchable
-                      wx.ALL,        #   and make border all around
-                      3 );
-        self.main.Add(self.output, 
-                      1,            # make vertically stretchable
-                      wx.EXPAND |    # make horizontally stretchable
-                      wx.ALL,        #   and make border all around
-                      10 );         # set border width to 10)
+        self.main.Add(self.controls, 0, wx.EXPAND | wx.ALL, 3);
+        self.main.Add(self.list, 0, wx.EXPAND | wx.ALL, 3);
         
-        self.Bind(wx.EVT_BUTTON, self.manageCompile, self.compile)
-        self.Bind(wx.EVT_BUTTON, self.manageUpload, self.upload)
+        self.Bind(wx.EVT_BUTTON, self.API.uploadCore.manageCompile, self.compile)
+        self.Bind(wx.EVT_BUTTON, self.API.uploadCore.manageUpload, self.upload)
         self.Bind(wx.EVT_BUTTON, self.populateMotelist, self.refresh)
         self.Bind(wx.EVT_COMBOBOX, self.populateMotelist, self.source)
-        self.Bind(wx.EVT_COMBOBOX, self.changePlatform, self.platforms)
+        self.Bind(wx.EVT_COMBOBOX, self.API.uploadCore.changePlatform, self.platforms)
+        self.Bind(wx.EVT_CHECKLISTBOX, self.modifyTargets, self.list)
         
-        self.SetSizer(self.main)
-        self.main.Fit(self)
+        self.SetSizerAndFit(self.main)
+        self.SetAutoLayout(1)
         self.Show()
         
         self.populateMotelist()
         
-    def populateMotelist(self, event = None):
-        self.updateStatus("")
+    def populateMotelist(self, evt = None):
         self.list.Clear()
-        self.motes = []
         self.list.Insert(self.tr("Searching devices") + "...", 0)
         self.list.Disable()
-        source = self.source.GetValue()
-        res = []
-        if source == 'Shell':
-            res = self.managePopen(self.motelist.getShellMotelist)
-            self.targetType = g.SHELL
-            
-        else:
-            res = self.managePopen(self.motelist.getMotelist)
-            self.targetType = g.USB
 
-        motelist = res[1]
-        self.haveMote = res[0]
+        motelist = self.API.uploadCore.populateMotelist(None, self.source.GetValue())
         
-        self.updateStatus(self.tr("Got") + " " + str(len(motelist)) + " " +
-                    self.tr("devices in") + " " + str(round(res[2], 3)) + " s.")
-        self.list.Delete(0)
-        
+        self.list.Clear()
+
         if len(motelist) == 0:
             self.list.Insert(self.tr("No devices found!"), 0)
         else:
             for i in range(0, len (motelist)):
                 self.list.Insert(motelist[i][0] + "(" + motelist[i][2] +
                                  ") @ " + motelist[i][1], i, motelist[i])
-                self.motes.append(motelist[i][self.targetType])
             self.list.Enable()
-            
-    def manageCompile(self, event = None):
-        self.updateStatus(self.tr("Starting compile") + "...")
-        res = self.managePopen(self.runCompile)
-        self.compiler.clean()
-        if res[0] == True:
-            self.updateStatus(self.tr("Compiled successfully in") + " " + 
-                              str(round(res[2], 3)) + " s.")
-        else:
-            self.updateStatus(self.tr("Compile failed with message:") + 
-                              "\n" + res[1])
     
-    # Wrapping for compiler function to run in new thread
-    def runCompile(self):
-        return self.compiler.doCompile(self.editorManager.fileName, 
-                                self.platform, self.editorManager.filePath, 
-                                self.editorManager.projectType, False)
-        
-    def manageUpload(self, event = None):
-        if not self.haveMote:
-            self.updateStatus(self.tr("No devices found!"))
-            return
-        
+    def modifyTargets(self, evt):
         checked = self.list.GetChecked()
-        self.targets = []
+        targets = []
         targetText = ''
         for x in checked:
-            self.targets.append(self.motes[x])
-        if self.targets == []:
-            self.targets = [None]
+            targets.append(self.API.uploadCore.motes[x])
+        if targets == []:
+            targets = [None]
             targetText = self.tr('default device')
         else:
-            targetText = str(self.targets)
-        
-        self.updateStatus(self.tr("Starting upload on") + " " + targetText)
-        
-        res = self.managePopen(self.runUpload)
-        self.compiler.clean()
-        if res[0] == True:
-            self.updateStatus(self.tr("Uploaded successfully in") + 
-                              " " + str(round(res[2], 3)) + " s.")
-        else:
-            self.updateStatus(self.tr("Upload failed with message:") + 
-                              "\n" + res[1])
-    
-    # Wrapping for compiler function to run in new thread
-    def runUpload(self):
-        return self.uploader.doUpload(self.targets, self.runCompile, 
-                                      self.targetType, self.platform)
-        
-    def managePopen(self, funct):
-        # Must be list, here returned values will be stored
-        data = []
-        newThread = threadRunner.threadRunner(funct, data, self.API)
-        newThread.start()
-        # Wait for thread to finish and yield, so UI doesn't die
-        # TODO: add indicator that working now
-        while newThread.isAlive():
-            wx.YieldIfNeeded()
-            newThread.join(0.001)
-        return data
-
-    def changePlatform(self, event):
-        self.platform = event.GetEventObject().GetValue()
-        self.updateStatus(self.tr("Changed platform to") + " "  + self.platform)
-    
-    def updateStatus(self, message, overwrite = True):
-        if overwrite:
-            self.output.SetValue(message)
-        else:
-            self.output.SetValue(message + "\n" + self.output.GetValue())
-        wx.YieldIfNeeded()
+            targetText = str(targets)
+        self.API.uploadTargets = (targets, targetText)
 

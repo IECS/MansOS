@@ -24,6 +24,8 @@
 
 import re
 import string
+import wx
+
 import sealStruct 
 import Parameter
 import translater
@@ -32,6 +34,10 @@ from time import gmtime, strftime
 import globals as g
 import sealParser_yacc
 import outputArea
+import tabManager
+import uploadCore
+import outputTools
+import listenModule
 
 class ApiCore:
     def __init__(self):
@@ -110,10 +116,50 @@ class ApiCore:
                 'role': self.CONDITION_END
             }
         }
+
+### Shortcuts etc
+
+# Visual objects here can be used in forms only after they have been re-parented 
+# using their Reparent() function, else they won't be visible!
+
+        self.emptyFrame = wx.Frame(None)
         # Compile regex for finding actuators
         self.__reActuators = re.compile(string.join(self.__actuators.keys(), '|'), re.I)
         
+        # Init translation module
         self.translater = translater.Translater(self)
+        self.tr = self.translater.translate
+        
+        # Init outputTools
+        self.outputTools = outputTools.outputTools(self.emptyFrame, self)
+        
+        # Init outputArea for info, 1st tab
+        self.infoArea = outputArea.outputArea(self.emptyFrame, self, 0)
+        self.printInfo = self.infoArea.printLine
+        self.clearInfoArea = self.infoArea.clear
+        
+        # Init outputArea for output, 2nd tab
+        self.outputArea = outputArea.outputArea(self.emptyFrame, self, 1)
+        self.printOutput = self.outputArea.printLine
+        self.clearOutputArea = self.outputArea.clear
+        
+        # Init listenModule
+        self.listenModule = listenModule.ListenModule(self.emptyFrame, self)
+        
+        # Init seal parser
+        self.sealParser = sealParser_yacc.SealParser(self.printInfo)
+        self.seal = sealStruct.Seal(self)
+        
+        # Init tab manager
+        self.tabManager = tabManager.tabManager(self.emptyFrame, self)
+        
+        self.uploadCore = uploadCore.UploadCore(self, self.printInfo)
+        self.uploadTargets = ([], self.tr('default device'))
+        
+        self.outputTools.addTools()
+        
+        print "List of virtual parentless objects:"
+        print str(self.emptyFrame.GetChildren()).replace(", ","\n").strip("wxWindowList: []")
         
     # Return regex for finding actuators
     def getReActuators(self):
@@ -179,7 +225,7 @@ class ApiCore:
             dbgMsg = g.LOG_TEXTS[msgType] + " - " + str(msgText) + '\n'
             if g.LOG_TO_CONSOLE:
                 print dbgMsg
-                self.printLine(dbgMsg)
+                self.printInfo(dbgMsg)
             if g.LOG_TO_FILE:
                 path = os.getcwd()
                 os.chdir(self.path)
@@ -188,18 +234,3 @@ class ApiCore:
                 f.write(dbgTime + dbgMsg)
                 f.close()
                 os.chdir(path)
-    
-    def initOutputArea(self, parent):
-        self.outputArea = outputArea.outputArea(parent)
-
-        self.outputArea = self.outputArea
-        self.printLine = self.outputArea.printLine
-        
-        self.sealParser = sealParser_yacc.SealParser(self.printLine)
-        
-        self.seal = sealStruct.Seal(self)
-        
-        return self.outputArea
-        
-    def clearOutputArea(self):
-        self.outputArea.clear()

@@ -33,6 +33,7 @@ def main():
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     from src import Frame
     from src import APIcore
+    import wx
     
     ex = wx.App()
    
