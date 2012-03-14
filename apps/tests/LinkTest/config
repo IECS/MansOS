@@ -2,7 +2,7 @@
 # Application specific config file
 #
 
-PLATFORM_EXCLUDE=pc
+PLATFORM_EXCLUDE=pc farmmote
 
 USE_EXP_THREADS=y
 USE_RADIO=y

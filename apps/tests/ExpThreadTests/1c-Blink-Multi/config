@@ -9,4 +9,7 @@ USE_EXP_THREADS=y
 # allow more than on user thread
 CONST_NUM_USER_THREADS=3
 
+# to fit on farmmote
+CONST_PRINT_BUFFER_SIZE=20
+
 #DEBUG=y

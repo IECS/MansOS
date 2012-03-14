@@ -1,5 +1,6 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2011, Institute of Electronics and Computer Science
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -19,26 +20,37 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * flash.h -- Internal flash memory constants
  */
 
-#ifndef RADIO_HAL_H
-#define RADIO_HAL_H
+#ifndef _PLATFORM_TELOSB_FLASH_H_
+#define _PLATFORM_TELOSB_FLASH_H_
 
-// let the platform define the chip it uses
-#include <platform.h>
+//
+// On MSP430-F1611 (e.g. TelosB) 48kb internal flash memory is present.
+//
+#define MSP430_FLASH_START 0x4000
+#define MSP430_FLASH_END   0xFFE0 // End of the flash memory: interrupt vector start
+#define MSP430_FLASH_SIZE  (0xFFFF - MSP430_FLASH_START + 1)
 
-// #ifndef RADIO_CHIP
-// #define RADIO_CHIP RADIO_CHIP_CC2420
-// #endif
+//
+// Flash segment size (this is the minimal flash area that can be erased)
+//
+#define MSP430_FLASH_SEGMENT_SIZE  512
+//
+// Flash block size (this is the maximal flash area that can be written at once)
+//
+#define MSP430_FLASH_BLOCK_SIZE    64
 
-#if RADIO_CHIP == RADIO_CHIP_CC2420
-#include <radio_hal_cc2420.h>
-#elif RADIO_CHIP == RADIO_CHIP_MRF24J40
-#include <radio_hal_mrf.h>
-#elif RADIO_CHIP == RADIO_CHIP_CC1101
-#include <radio_hal_cc1101.h>
-#else
-#error Radio chip not defined for this platform!
-#endif
+//
+// Flash Information Memory range: 256 bytes in two 128-byte segments
+//
+#define MSP430_FLASH_INFOMEM_START 0x1000
+#define MSP430_FLASH_INFOMEM_END   0x10FF
+//
+// Flash Information Memory segment size
+//
+#define MSP430_FLASH_INFOMEM_SEGMENT_SIZE  128
 
-#endif
+#endif /* _PLATFORM_TELOSB_FLASH_H_ */

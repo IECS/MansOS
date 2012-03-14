@@ -21,24 +21,31 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RADIO_HAL_H
-#define RADIO_HAL_H
+/*
+ * SPI bus configuration for the MSP430 x1xx
+ */
 
-// let the platform define the chip it uses
-#include <platform.h>
+#include "arch_spi_x1xx.h"
 
-// #ifndef RADIO_CHIP
-// #define RADIO_CHIP RADIO_CHIP_CC2420
-// #endif
-
-#if RADIO_CHIP == RADIO_CHIP_CC2420
-#include <radio_hal_cc2420.h>
-#elif RADIO_CHIP == RADIO_CHIP_MRF24J40
-#include <radio_hal_mrf.h>
-#elif RADIO_CHIP == RADIO_CHIP_CC1101
-#include <radio_hal_cc1101.h>
-#else
-#error Radio chip not defined for this platform!
-#endif
-
-#endif
+/**
+ * Exchange byte with a slave: write a byte to SPI and returns response,
+ * received from the slave in full-duplex mode
+ * Does not change any Slave-Select pin!
+ *
+ * @param   busId   SPI bus ID
+ * @param   b       byte to transmit
+ * @return          byte received from the slave
+ */
+uint8_t hw_spiExchByte(uint8_t busId, uint8_t b) {
+    if (busId == 0) {
+        U0TXBUF = b;
+        while ((U0TCTL & TXEPT) == 0);
+        while ((IFG1 & URXIFG0) == 0);
+        return U0RXBUF;
+    } else {
+        U1TXBUF = b;
+        while ((U1TCTL & TXEPT) == 0);
+        while ((IFG2 & URXIFG1) == 0);
+        return U1RXBUF;
+    }
+}

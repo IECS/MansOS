@@ -1,6 +1,10 @@
 #
 # Application specific config file
 #
+
+# hopeless to fit this on farmmote
+PLATFORM_EXCLUDE=farmmote
+
 #MCU_MODEL=msp430x1612
 USE_EXP_THREADS=y
 USE_RADIO=y

@@ -1,4 +1,4 @@
-PLATFORM_EXCLUDE=arduino atmega
+PLATFORM_EXCLUDE=arduino atmega farmmote
 
 USE_ADC=y
 USE_RADIO=y

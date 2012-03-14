@@ -64,7 +64,14 @@
 #define extFlashEraseSector(addr) at25df_eraseSector(addr)
 
 #else
-#error External flash chip not defined for this platform!
+#warning External flash chip not defined for this platform!
+#define extFlashInit()
+#define extFlashSleep()
+#define extFlashWake()
+#define extFlashRead(addr, buf, len) (0)
+#define extFlashWrite(addr, buf, len)
+#define extFlashBulkErase()
+#define extFlashEraseSector(addr)
 #endif
 
 

@@ -36,7 +36,7 @@
 enum
 {
     ACLK_CALIB_PERIOD = 8,
-    ACLK_KHZ = 32,
+    ACLK_KHZ = ACLK_SPEED / 1000,
     TARGET_DCO_KHZ = CPU_MHZ * 1024, // prescribe the cpu clock rate in kHz
     TARGET_DCO_DELTA = (TARGET_DCO_KHZ / ACLK_KHZ) * ACLK_CALIB_PERIOD,
 };
@@ -120,6 +120,14 @@ void msp430InitClocks()
     // .DIVS = 2; set the divisor of SCLK to 4
     // .DCOR = 0; select internal resistor for DCO
     BCSCTL2 = DIVS1;
+
+#ifdef __msp430x22x4
+    /*
+     * TODO: Until we know more about the hardware, source ACLK from VLOCLK,
+     * which should be present (but imprecise).
+     */
+    BCSCTL3 = (BCSCTL3 & ~(LFXT1S0 | LFXT1S1)) | LFXT1S_2;
+#endif
 
     // no need to disable oscillator fault interrupt: LFXT1 was configured in LF mode
 

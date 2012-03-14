@@ -31,16 +31,30 @@
 #include <hil/sleep.h>
 #include <hil/alarms.h>
 #include <hil/gpio.h>
+#ifdef USE_ADC
 #include <hil/adc.h>
-#include <hil/light.h>
-#include <hil/humidity.h>
+#endif
+#ifdef USE_LEDS
 #include <hil/leds.h>
+#endif
+#ifdef USE_RADIO
 #include <hil/radio.h>
+#endif
+#ifdef USE_SERIAL
 #include <hil/usart.h>
+#endif
 #include <hil/udelay.h>
 #include <hil/timers.h>
 #include <hil/errors.h>
+#ifdef USE_PRINT
 #include <lib/dprint.h>
+#endif
+#ifdef USE_ADDRESSING
 #include <net/addr.h>
+#endif
+#ifdef USE_HUMIDITY
+#include <hil/humidity.h>
+#endif
+#include <hil/light.h>
 
 #endif

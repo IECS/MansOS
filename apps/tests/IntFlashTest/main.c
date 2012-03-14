@@ -27,6 +27,12 @@
 
 #define START_ADDRESS  0x6000
 
+#if PLATFORM_FARMMOTE
+// XXX: redefine this to smaller, so it will fit in RAM
+#undef INT_FLASH_SEGMENT_SIZE
+#define INT_FLASH_SEGMENT_SIZE 128
+#endif
+
 uint8_t buffer[INT_FLASH_SEGMENT_SIZE];
 
 #define NUM_SEGMENTS 1
@@ -36,7 +42,6 @@ void test(uint8_t value)
     FlashAddress_t address;
     int i;
 
-    PRINT_INIT(INT_FLASH_SEGMENT_SIZE);
     redLedOn();
 
     for (i = 0; i < INT_FLASH_SEGMENT_SIZE; ++i) {

@@ -304,7 +304,6 @@ void recvCallback(uint8_t *data, int16_t len)
 
 void recvCounter(void)
 {
-    static uint8_t recvBuffer[RADIO_MAX_PACKET];
     RADIO_PACKET_BUFFER(radioBuffer, RADIO_MAX_PACKET);
     radioOn();
 
@@ -315,13 +314,11 @@ void recvCounter(void)
             // free the buffer as soon as possible
             int16_t recvLen = radioBuffer.receivedLength;
             if (recvLen > 0) {
-                memcpy(recvBuffer, radioBuffer.buffer, recvLen);
-                radioBufferReset(radioBuffer);
-                recvCallback(recvBuffer, recvLen);
+                recvCallback(radioBuffer.buffer, recvLen);
             } else {
                 PRINTF("radio rx error: %s\n", strerror(-recvLen));
-                radioBufferReset(radioBuffer);
             }
+            radioBufferReset(radioBuffer);
         }
 
         if (testInProgress) {

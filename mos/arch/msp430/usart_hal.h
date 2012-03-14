@@ -24,6 +24,12 @@
 #ifndef MOS_USART_HAL_H
 #define MOS_USART_HAL_H
 
-#include <msp430/msp430_usart.h>
+#include <kernel/defines.h>
+
+#if defined(__msp430x22x4) || defined(__msp430x22x2)
+#  include <msp430/msp430_usci.h>
+#else /* F1611 assumed */
+#  include <msp430/msp430_usart.h>
+#endif
 
 #endif
