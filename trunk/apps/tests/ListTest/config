@@ -2,6 +2,8 @@
 # Application specific config file
 #
 
+PLATFORM_EXCLUDE=farmmote
+
 USE_EXP_THREADS=y
 USE_NET=y
 USE_FLASH=y

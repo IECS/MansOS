@@ -29,7 +29,7 @@ Alarm_t alarm;
 void alarmCallback(void *param)
 {
     uint16_t i = (uint16_t) param;
-    PRINTF("alarm %d at jiffies=%lu\n", i, getJiffies());
+//    PRINTF("alarm %d at jiffies=%lu\n", i, getJiffies());
     alarm.data = (void *) (i + 1);
     // reschedule the alarm
     alarmSchedule(&alarm, 10);
@@ -44,7 +44,7 @@ void appMain(void)
     alarmSchedule(&alarm, 10);
 
     for (;;) {
-        PRINT("in app main...\n");
+//        PRINT("in app main...\n");
         redLedToggle();
 #if 1 // will get different error messages depending on whether in mdelay or in msleep
         msleep(1000);

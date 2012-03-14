@@ -29,30 +29,9 @@
 
 //
 // MSP430 internal flash memory (ROM) driver.
-// On MSP430-F1611 (e.g. TelosB) 48kb internal flash memory is present.
 //
-#define MSP430_FLASH_START 0x4000
-#define MSP430_FLASH_END   0xFFE0 // End of the flash memory: interrupt vector start
-#define MSP430_FLASH_SIZE  (0xFFFF - MSP430_FLASH_START + 1)
 
-//
-// Flash segment size (this is the minimal flash area that can be erased)
-//
-#define MSP430_FLASH_SEGMENT_SIZE  512
-//
-// Flash block size (this is the maximal flash area that can be written at once)
-//
-#define MSP430_FLASH_BLOCK_SIZE    64
-
-//
-// Flash Information Memory range: 256 bytes in two 128-byte segments
-//
-#define MSP430_FLASH_INFOMEM_START 0x1000
-#define MSP430_FLASH_INFOMEM_END   0x10FF
-//
-// Flash Information Memory segment size
-//
-#define MSP430_FLASH_INFOMEM_SEGMENT_SIZE  128
+#include "flash.h" // platform-specific constants
 
 typedef uint16_t FlashAddress_t;
 

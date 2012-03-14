@@ -51,7 +51,12 @@
 
 #else
 
-#error Serial number chip not defined for this platform!
+#warning Serial number chip not defined for this platform!
+
+#define SERIAL_NUMBER_SIZE 1
+#define halGetSerialNumber(buf) (*(buf) = 0)
+#define halSerialNumberMatches(snum) (1)
+#define halSerialNumberInit()
 
 #endif
 

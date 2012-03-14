@@ -50,7 +50,9 @@
 #define SSEL_SMCLK    SSEL_2
 #endif // TASSEL_ACLK
 
+#ifndef ACLK_SPEED
 #define ACLK_SPEED 32768
+#endif
 
 // use ACLK by default
 #define JIFFY_CLOCK_USE_ACLK 1

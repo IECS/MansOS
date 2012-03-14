@@ -1,17 +1,19 @@
+TARGET ?= telosb
+
 all:
-	(cd 0-Lockup; $(MAKE) telosb)
-	(cd 0-Overflow-User; $(MAKE) telosb)
-	(cd 0-Overflow-Kernel; $(MAKE) telosb)
-	(cd 1a-Blink-mdelay; $(MAKE) telosb)
-	(cd 1b-Blink-msleep; $(MAKE) telosb)
-	(cd 1c-Blink-Multi; $(MAKE) telosb)
-	(cd 2-Alarms; $(MAKE) telosb)
-	(cd 3-Locking; $(MAKE) telosb)
-	(cd 3-Locking-Multi; $(MAKE) telosb)
-	(cd 4-Exit; $(MAKE) telosb)
-	(cd 5-Radio; $(MAKE) telosb)
-	(cd 6-MAC; $(MAKE) telosb)
-	(cd 7-Sockets; $(MAKE) telosb)
+	(cd 0-Lockup; $(MAKE) $(TARGET))
+	(cd 0-Overflow-User; $(MAKE) $(TARGET))
+	(cd 0-Overflow-Kernel; $(MAKE) $(TARGET))
+	(cd 1a-Blink-mdelay; $(MAKE) $(TARGET))
+	(cd 1b-Blink-msleep; $(MAKE) $(TARGET))
+	(cd 1c-Blink-Multi; $(MAKE) $(TARGET))
+	(cd 2-Alarms; $(MAKE) $(TARGET))
+	(cd 3-Locking; $(MAKE) $(TARGET))
+	(cd 3-Locking-Multi; $(MAKE) $(TARGET))
+	(cd 4-Exit; $(MAKE) $(TARGET))
+	(cd 5-Radio; $(MAKE) $(TARGET))
+	(cd 6-MAC; $(MAKE) $(TARGET))
+	(cd 7-Sockets; $(MAKE) $(TARGET))
 
 
 clean:

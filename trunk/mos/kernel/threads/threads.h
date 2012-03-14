@@ -37,9 +37,11 @@
 // it's the last one
 #define KERNEL_THREAD_INDEX (NUM_THREADS - 1)
 
-//#define THREAD_STACK_SIZE 128
-//#define THREAD_STACK_SIZE 256
+#if PLATFORM_FARMMOTE
+#define THREAD_STACK_SIZE 128
+#else
 #define THREAD_STACK_SIZE 512
+#endif
 
 #if DEBUG
 #define DEBUG_THREADS 1

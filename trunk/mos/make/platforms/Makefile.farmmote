@@ -1,6 +1,7 @@
 #-*-Makefile-*- vim:syntax=make
 #
-# Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+# Copyright (c) 2011, Institute of Electronics and Computer Science
+# All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -21,37 +22,29 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	GCC compiler related options, used by many but not all platforms
-#
 
-ifeq ($(OPTIMIZE),yes)
-# cannot use -Os because of "compiler bugs"
-# (see TinyOS ML discussions for details)
-	CFLAGS += -O
-endif
+# FarmOS motes
 
-GCC_VERSION := $(shell $(CC) -v 2>&1 | grep "gcc version" | cut -b 13)
-GCC_SUBVERSION := $(shell $(CC) -v 2>&1 | grep "gcc version" | cut -b 15)
+#############################################
+# Define platform variables
 
-ifeq ($(USE_REPROGRAMMING),y)
-	OPTIMIZE_SIZE_EXTRA ?= no
-endif
-ifeq ($(PLATFORM),pc)
-	OPTIMIZE_SIZE_EXTRA ?= no
-endif
-#ifeq ($(UNAME),Darwin)
-# --gc-sections not available on MacOSX GCC   /really?/
-#	OPTIMIZE_SIZE_EXTRA ?= no
-#endif
+ARCH = msp430
+MCU_MODEL = msp430f2252
 
-ifeq (4,$(GCC_VERSION))
-# enable size optimizations by default on GCC 4.x, where x >= 5
-ifeq ("", "$(filter $(GCC_SUBVERSION), 5 6)")
-	OPTIMIZE_SIZE_EXTRA ?= yes
-endif
-endif
+UPLOAD_TARGET=upload-msp430
 
-ifeq (yes,$(OPTIMIZE_SIZE_EXTRA))
-	CFLAGS += -fdata-sections -ffunction-sections
-	LDFLAGS += -Wl,--gc-sections
-endif
+CPU_MHZ ?= 1
+
+CFLAGS += -DPLATFORM_FARMMOTE=1 -DACLK_SPEED=12288
+
+#############################################
+# Define platform-specific sources
+# (excluding architecture-specific sources)
+
+PSOURCES += $(MOS)/platforms/farmmote/platform.c
+
+PSOURCES-$(USE_RADIO) += $(MOS)/chips/cc1101/cc1101.c
+
+PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
+PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
+PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c

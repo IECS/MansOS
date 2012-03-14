@@ -1,5 +1,6 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2011, Institute of Electronics and Computer Science
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -19,26 +20,41 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * cc1101.h -- CC1101 radio driver
  */
 
-#ifndef RADIO_HAL_H
-#define RADIO_HAL_H
+#ifndef _CHIPS_CC1101_H_
+#define _CHIPS_CC1101_H_
 
-// let the platform define the chip it uses
-#include <platform.h>
+#define CC1101_MAX_PACKET_LEN  62
+#define CC1101_SYNC_WORD       0xAAAAU
+#define CC1101_DEFAULT_CHANNEL 0
+#define CC1101_TX_POWER        0x50 /* 0 dBm at 868 MHz */
+#define CC1101_TX_POWER_MIN    0x03
+#define CC1101_TX_POWER_MAX    0xC0
 
-// #ifndef RADIO_CHIP
-// #define RADIO_CHIP RADIO_CHIP_CC2420
-// #endif
+typedef void (*cc1101Callback_t)(void);
 
-#if RADIO_CHIP == RADIO_CHIP_CC2420
-#include <radio_hal_cc2420.h>
-#elif RADIO_CHIP == RADIO_CHIP_MRF24J40
-#include <radio_hal_mrf.h>
-#elif RADIO_CHIP == RADIO_CHIP_CC1101
-#include <radio_hal_cc1101.h>
-#else
-#error Radio chip not defined for this platform!
-#endif
+void cc1101Init(void);
 
-#endif
+void cc1101On(void);
+void cc1101Off(void);
+
+void cc1101SetChannel(int channel);
+void cc1101SetTxPower(uint8_t power);
+void cc1101SetAddress(uint8_t addr);
+void cc1101SetRecvCallback(cc1101Callback_t func);
+
+int8_t cc1101GetRSSI(void);
+int8_t cc1101GetLastRSSI(void);
+uint8_t cc1101GetLastLQI(void);
+
+int8_t cc1101Send(const uint8_t *header, uint8_t hlen,
+                  const uint8_t *data,   uint8_t dlen);
+int8_t cc1101Read(uint8_t *buf, uint8_t buflen);
+void cc1101Discard(void);
+
+bool cc1101IsChannelClear(void);
+
+#endif /* _CHIPS_CC1101_H_ */

@@ -1,5 +1,6 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2011, Institute of Electronics and Computer Science
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -19,26 +20,28 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * cc1101_pins.h -- CC1101 radio hardware configuration
  */
 
-#ifndef RADIO_HAL_H
-#define RADIO_HAL_H
+#ifndef _CC1101_PINS_H_
+#define _CC1101_PINS_H_
 
-// let the platform define the chip it uses
-#include <platform.h>
+#define CC1101_SPI_ID    0
 
-// #ifndef RADIO_CHIP
-// #define RADIO_CHIP RADIO_CHIP_CC2420
-// #endif
+/* Chip select pin */
+#define CC1101_CSN_PORT  1
+#define CC1101_CSN_PIN   0
 
-#if RADIO_CHIP == RADIO_CHIP_CC2420
-#include <radio_hal_cc2420.h>
-#elif RADIO_CHIP == RADIO_CHIP_MRF24J40
-#include <radio_hal_mrf.h>
-#elif RADIO_CHIP == RADIO_CHIP_CC1101
-#include <radio_hal_cc1101.h>
-#else
-#error Radio chip not defined for this platform!
-#endif
+/* SPI SO pin */
+#define CC1101_SO_PORT   1
+#define CC1101_SO_PIN    0
 
-#endif
+/* Number of the GDO pin used for receive interrupts */
+#define CC1101_GDO_INTR  0
+
+/* The same pin on the MCU side */
+#define CC1101_INTR_PORT 1
+#define CC1101_INTR_PIN  0
+
+#endif /* _CC1101_PINS_H_ */

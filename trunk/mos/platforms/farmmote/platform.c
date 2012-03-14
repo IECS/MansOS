@@ -1,5 +1,6 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2011, Institute of Electronics and Computer Science
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,54 +22,22 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MSP430_SPI_H
-#define MSP430_SPI_H
+//----------------------------------------------------------
+//      Platform code
+//----------------------------------------------------------
+#include "platform.h"
+#include <hil/snum.h>
 
-#include <hil/gpio.h>
-#include <msp430/msp430_usart.h>
-
-/*
- * SPI bus configuration for the MSP430
- */
-
-/**
- * Initializes SPI bus in either master or slave mode
- * Does not change any Slave-Select pins!
-
- * @param   busId   SPI bus ID
- * @param   mode    SPI bus mode: either master or slave
- * @return  0       on success, -1 on error
- */
-static inline int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode) {
-    return msp430USARTInitSPI(busId, spiBusMode);
-}
-
-/**
- * Turn on the SPI bus, provide bus ID (starting from 0)
- * On MSP430, USART TX/RX is used for SPI TX/RX
- * @param   busId   SPI bus ID
- */
-static inline void hw_spiBusOn(uint8_t busId) {
-    // enable tx and rx
-    if (busId == 0) {
-        U0ME |= (UTXE0 | URXE0);
-    } else {
-        U1ME |= (UTXE1 | URXE1);
-    }
-}
-
-/**
- * Turn off the SPI bus, provide bus ID (starting from 0)
- * On MSP430, USART TX/RX is used for SPI TX/RX
- * @param   busId   SPI bus ID
- */
-static inline void hw_spiBusOff(uint8_t busId) {
-    // disable tx and rx
-    if (busId == 0) {
-        U0ME &= ~(UTXE0 | URXE0);
-    } else {
-        U1ME &= ~(UTXE1 | URXE1);
-    }
-}
-
+//----------------------------------------------------------
+//      Init the platform as if on cold reset
+//----------------------------------------------------------
+void initPlatform(void)
+{
+#if USE_HARDWARE_TIMERS
+    msp430InitClocks();
 #endif
+#if USE_SERIAL_NUMBER
+    halSerialNumberInit();
+#endif
+}
+

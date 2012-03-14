@@ -32,6 +32,7 @@ void ccaTest(void);
 // #define BLAST_PACKETS 1
 
 Alarm_t timer;
+uint8_t buffer[RADIO_MAX_PACKET];
 
 void onTimer(void *param)
 {
@@ -79,7 +80,6 @@ void appMain(void)
 
 void recvCounter(void)
 {
-    static uint8_t buffer[RADIO_MAX_PACKET];
     int16_t len;
     uint8_t *counter = &buffer[0];
 
@@ -100,16 +100,16 @@ void recvCounter(void)
 
 void sendCounter(void)
 {
-    static uint8_t sendBuffer[RADIO_MAX_PACKET];
-    uint8_t *counter = &sendBuffer[0];
+    uint8_t counter = 0;
     for (;;) {
-        PRINTF("sending counter %i\n", *counter);
+        PRINTF("sending counter %i\n", counter);
         redLedToggle();
-        radioSend(sendBuffer, sizeof(sendBuffer));
+        buffer[0] = counter;
+        radioSend(buffer, sizeof(buffer));
 #if !BLAST_PACKETS
         mdelay(1000);
 #endif
-        ++(*counter);
+        counter++;
 
         // int rssi = radioGetRSSI();
         // bool ccaOk = radioIsChannelClear();

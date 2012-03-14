@@ -21,24 +21,54 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RADIO_HAL_H
-#define RADIO_HAL_H
+#ifndef MSP430_SPI_X1XX_H
+#define MSP430_SPI_X1XX_H
 
-// let the platform define the chip it uses
-#include <platform.h>
+#include <hil/gpio.h>
+#include <msp430/msp430_usart.h>
 
-// #ifndef RADIO_CHIP
-// #define RADIO_CHIP RADIO_CHIP_CC2420
-// #endif
+/*
+ * SPI bus configuration for the MSP430 x1xx
+ */
 
-#if RADIO_CHIP == RADIO_CHIP_CC2420
-#include <radio_hal_cc2420.h>
-#elif RADIO_CHIP == RADIO_CHIP_MRF24J40
-#include <radio_hal_mrf.h>
-#elif RADIO_CHIP == RADIO_CHIP_CC1101
-#include <radio_hal_cc1101.h>
-#else
-#error Radio chip not defined for this platform!
-#endif
+/**
+ * Initializes SPI bus in either master or slave mode
+ * Does not change any Slave-Select pins!
+
+ * @param   busId   SPI bus ID
+ * @param   mode    SPI bus mode: either master or slave
+ * @return  0       on success, -1 on error
+ */
+static inline int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode) {
+    return msp430USARTInitSPI(busId, spiBusMode);
+}
+
+/**
+ * Turn on the SPI bus, provide bus ID (starting from 0)
+ * On MSP430, USART TX/RX is used for SPI TX/RX
+ * @param   busId   SPI bus ID
+ */
+static inline void hw_spiBusOn(uint8_t busId) {
+    // enable tx and rx
+    if (busId == 0) {
+        U0ME |= (UTXE0 | URXE0);
+    } else {
+        U1ME |= (UTXE1 | URXE1);
+    }
+}
+
+/**
+ * Turn off the SPI bus, provide bus ID (starting from 0)
+ * On MSP430, USART TX/RX is used for SPI TX/RX
+ * @param   busId   SPI bus ID
+ */
+static inline void hw_spiBusOff(uint8_t busId) {
+    // disable tx and rx
+    if (busId == 0) {
+        U0ME &= ~(UTXE0 | URXE0);
+    } else {
+        U1ME &= ~(UTXE1 | URXE1);
+    }
+}
 
 #endif

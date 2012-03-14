@@ -5,7 +5,7 @@
 #   (telosb must have all targets, otherwise they will not be cleared)
 #
 
-PLATFORMS = pc telosb sadmote arduino 
+PLATFORMS = pc telosb sadmote farmmote arduino 
 
 DEMO_TARGETS = \
 	Blink					\

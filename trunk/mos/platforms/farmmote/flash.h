@@ -1,5 +1,6 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2011, Institute of Electronics and Computer Science
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -19,33 +20,31 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * SPI bus configuration for the MSP430
- */
-
-#include "arch_spi.h"
-
-/**
- * Exchange byte with a slave: write a byte to SPI and returns response,
- * received from the slave in full-duplex mode
- * Does not change any Slave-Select pin!
  *
- * @param   busId   SPI bus ID
- * @param   b       byte to transmit
- * @return          byte received from the slave
+ * flash.h -- Internal flash memory constants
  */
-uint8_t hw_spiExchByte(uint8_t busId, uint8_t b) {
-    if (busId == 0) {
-        U0TXBUF = b;
-        while ((U0TCTL & TXEPT) == 0);
-        while ((IFG1 & URXIFG0) == 0);
-        return U0RXBUF;
-    } else {
-        U1TXBUF = b;
-        while ((U1TCTL & TXEPT) == 0);
-        while ((IFG2 & URXIFG1) == 0);
-        return U1RXBUF;
-    }
-}
+
+#ifndef _PLATFORM_FARMMOTE_FLASH_H_
+#define _PLATFORM_FARMMOTE_FLASH_H_
+
+/* The values correspond to the MSP430 F2252 MCU */
+
+/* Flash memory location and size */
+#define MSP430_FLASH_START 0xC000
+#define MSP430_FLASH_END   0xFFDE
+#define MSP430_FLASH_SIZE  (0xFFFF - MSP430_FLASH_START + 1)
+
+/* Flash segment (minimal erasable unit) size */
+#define MSP430_FLASH_SEGMENT_SIZE  512
+
+/* Flash block (maximal writable-at-once unit) size */
+#define MSP430_FLASH_BLOCK_SIZE    64
+
+/* Information memory: four segments of 64 bytes each */
+#define MSP430_FLASH_INFOMEM_START 0x1000
+#define MSP430_FLASH_INFOMEM_END   0x10FF
+
+/* Information memory segment size */
+#define MSP430_FLASH_INFOMEM_SEGMENT_SIZE  64
+
+#endif /* _PLATFORM_FARMMOTE_FLASH_H_ */
