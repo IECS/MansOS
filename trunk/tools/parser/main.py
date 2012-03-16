@@ -3,6 +3,8 @@
 import os, sys
 
 inputFileName = 'tests/91-comments.sl'
+outputFileName = 'main.c'
+architecture = 'test'
 
 def importsOk():
     plyModuleOK = True     # Python Lex Yacc - for compilation
@@ -54,12 +56,20 @@ def main():
 
     # import pathname where seal package is located
     sys.path.append('..')
-    from seal import sealParser_yacc
+    sys.path.append('../seal/components')
+    from seal import parser, codegen, structures
 
-    # parse the file
-    parser = sealParser_yacc.SealParser(printLine)
+    # load available components
+    structures.componentRegister.load(architecture)
+    # parse input file (SEAL code)
+    parser = parser.SealParser(printLine)
     parser.run(contents)
-
+    # generate C code to an output file
+    if outputFileName is None:
+        codegen.generate(sys.stdout)
+    else:
+        with open(outputFileName, 'w') as outputFile:
+            codegen.generate(outputFile)
 
 if __name__ == '__main__':
     main()

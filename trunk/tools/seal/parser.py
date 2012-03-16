@@ -9,95 +9,8 @@ import re, string
 #import Condition
 #import comment
 
-import globals
-
-class UseCase(object):
-    condition = None
-    parameters = []
-    def __init__(self, condition, parameters):
-        self.condition = condition
-        self.parameters = parameters
-
-class Component(object):
-    name = ""
-    useCases = []
-
-    def __init__(self, name):
-        self.name = name
-
-    def addUseCase(self, condition, parameters):
-        for p in parameters:
-            addParameter(self, p) # XXX
-        useCases.append(UseCase(condition, parameters))
-        return None # TODO: error string, if any
-
-    def addParameter(self, parameter):
-        pass # TODO
-
-    def clear(self):
-        self.useCases = []
-
-class Actuator(Component):
-    def __init__(self, name):
-        super(Actuator,self).__init__(name)
-
-class Sensor(Component):
-    def __init__(self, name):
-        super(Sensor,self).__init__(name)
-
-class Output(Component):
-    def __init__(self, name):
-        super(Output,self).__init__(name)
-
-class ComponentRegister(object):
-    actuators = {}
-    sensors = {}
-    outputs = {}
-    module = None
-
-    def __init__(self):
-        pass
-
-    # load all components for this platform from a file
-    def load(self, sourceFile):
-        # import the module
-        module = __import__(sourceFile)
-        # construct the objects
-        # (TODO: check for duplicates!)
-        for n in module.actuators:
-            actuators[n.lower()] = Actuator(n)
-        for n in module.sensors:
-            sensors[n.lower()]  = Sensor(n)
-        for n in module.outputs:
-            outputs[n.lower()] = Output(n)
-
-    def findComponent(self, type, name):
-        o = None
-        if type == "read":
-            o = sensors.get(name, None)
-        elif type == "use":
-            o = actuators.get(name, None)
-        elif type == "output":
-            o = outputs.get(name, None)
-        return o
-
-    def useComponent(self, type, name, parameters, condition):
-        o = self.findComponent(type, name)
-        if o == None:
-            errorStr = "component %s not found" % name
-            return errorStr
-        return o.addUseCase(condition, parameters)
-
-class Value(object):
-    value = None
-    suffix = None
-    def __init__(self):
-        pass
-    def getCode():
-        s = "{0}".format(self.value)
-        if not (suffix is None):
-            s += suffix
-        return s
+#import globals
+from structures import *
 
 ###################################################
 #class ComponentRegister(object):
@@ -119,7 +32,6 @@ class Value(object):
 #        return None
 
 #componentSpecification = ComponentSpecification()
-componentRegister = ComponentRegister()
 
 ###################################################
 
@@ -205,9 +117,8 @@ class SealParser():
       ">": "GR_TOKEN",
       }
  
-    tokens = ['IDENTIFIER_TOKEN'
-              + 'QUALIFIED_INTEGER_TOKEN']
-              + list(reserved.values())
+    tokens = ['IDENTIFIER_TOKEN',
+              'QUALIFIED_INTEGER_TOKEN', 'newline'] + list(reserved.values())
 
 #    tokens = [
 #        'CODE_BLOCK', 'IDENTIFIER_TOKEN', 'SECONDS_TOKEN',
@@ -221,7 +132,7 @@ class SealParser():
         # This checks if no reserved token is met!!
         t.type = self.reserved.get(t.value, "IDENTIFIER_TOKEN")
         return t
-    
+
 #    def t_SECONDS_TOKEN(self, t):
 #        r'[0-9]+s'
 #        return t
@@ -245,10 +156,11 @@ class SealParser():
         t.value = (int(prefix), suffix)
         return t
 
-#    def t_COMMENT_TOKEN(self, t):
-#        r'''//.*'''
-#        t.value = t.value.strip("/ ")
+    def t_COMMENT_TOKEN(self, t):
+        r'''//.*'''
+        t.value = t.value.strip("/ ")
 #        print 'comment:', t.value
+#        print 't', t
 #        return t
 
     # Needed for OP :)
@@ -258,12 +170,12 @@ class SealParser():
 #        t.type = self.reserved.get(t.value, "HELP_TOKEN")
 #        return t
 
-    t_ignore = " \t\r\n"
+    t_ignore = " \t\r"
 
-#    def t_newline(self, t):
-#        r'\n'
-#        print "newline", t.lexer.lineno
-#        t.lexer.lineno += t.value.count("\n")
+    def t_newline(self, t):
+        r'\n+'
+        print "newline", t.lexer.lineno
+        t.lexer.lineno += t.value.count("\n")
 #        self.currLine += 1
 #        return t
 
@@ -290,22 +202,27 @@ class SealParser():
             p[0] = p[1]
 
     def p_declaration(self, p):
-        '''declaration : USE_TOKEN_C IDENTIFIER_TOKEN parameter_list ';'
-                       | READ_TOKEN_C IDENTIFIER_TOKEN parameter_list ';'
-                       | SENDTO_TOKEN_C IDENTIFIER_TOKEN parameter_list ';'
+        '''declaration : USE_TOKEN IDENTIFIER_TOKEN parameter_list ';'
+                       | READ_TOKEN IDENTIFIER_TOKEN parameter_list ';'
+                       | SENDTO_TOKEN IDENTIFIER_TOKEN parameter_list ';'
                        | when_block
         '''
         if p[1].lower() == 'use' or p[1].lower() == 'read' or p[1].lower() == 'sendto':
             # add component with condition and parameters
-            error = componentRegister.useComponent(p[1].lower(), p[2].lower(), p[3], self.currentCondition)
+            error = componentRegister.useComponent(
+                p[1].lower(), p[2].lower(), p[3], self.currentCondition)
             if error != None:
                 self.errorMsg(p, error)
         else:
             pass # TODO - conditions
 
-        p[0] = [] # TODO
-    
-     
+        p[0] = [] # TODO JJ
+
+    def p_when_block(self, p):
+        '''when_block : WHEN_TOKEN IDENTIFIER_TOKEN parameter_list ';' 
+        '''
+        p[0] = p[1] # TODO
+
     def p_parameter_list(self, p):
         '''parameter_list : parameter_list ',' parameter
                           |'''
@@ -314,23 +231,18 @@ class SealParser():
         elif len(p) == 4:
             p[1].append(p[3])
             p[0] = p[1]
-        
+
+    # returns pair (string, Value) or (string, Condition)
     def p_parameter(self, p):
         '''parameter : IDENTIFIER_TOKEN
                      | IDENTIFIER_TOKEN value
                      | WHEN_TOKEN condition
         '''
-        if p[1] == "when":
-            pass # TODO
-        elif len(p) == 2:
-            p[0] = Parameter.Parameter(p[1], None)
+        if len(p) == 2:
+            p[0] = (p[1], None)
         else:
-            p[0] = Parameter.Parameter(p[1], p[2])
-#        # Works for both cases, in condition case parameter's name is when :)
-#        # Idea is that if when exist will always be last parameter, but
-#        # maybe we can allow it to be any parameter.
-#        elif len(p) == 3:
-#            p[0] = Parameter.Parameter(p[1], p[2])
+            # Works for both cases, in condition case parameter's name is "when" :)
+            p[0] = (p[1], p[2])
 
     def p_boolean_value(self, p):
         '''boolean_value : TRUE_TOKEN
@@ -350,7 +262,7 @@ class SealParser():
         v.value = p[1][0]
         v.suffix = p[1][1]
         p[0] = v
-        
+
     def p_identifier(self, p):
         '''identifier : IDENTIFIER_TOKEN'''
         v = Value()
@@ -402,12 +314,16 @@ class SealParser():
 
     def p_error(self, p):
         if p:
-            self.printMsg("Line '%d': Syntax error at '%s'" % (p.lineno(1), p.value))
+            print p
+            print p.__dict__
+            self.printMsg("Line '%d': Syntax error at '%s'" % (p.lineno, p.value))
         else:
             self.printMsg("Syntax error at EOF")
 
     def errorMsg(self, p, msg):
-        self.printMsg("Line '%d': Syntax error at '%s'" % (p.lineno(1), p.value))
+        print p
+        print p.__dict__
+        self.printMsg("Line '%d': Syntax error at..." % (p.lineno(1)))
         self.printMsg(msg)
 
 ### Helpers
