@@ -25,16 +25,14 @@
 
 import os
 import wx
-
 import uploadModule
-import listenModule
 
 class Frame(wx.Frame):
     def __init__(self, parent, title, size, pos, API):
         super(Frame, self).__init__(parent, wx.ID_ANY, title, size = size, pos = pos)
         # Get path, here must use only file name, __file__ sometimes contains more than that
         self.path = os.path.dirname(os.path.realpath(__file__.split("/")[-1]))
-        
+
         self.API = API
         self.API.path = self.path
         # Just a shorter name
@@ -47,54 +45,54 @@ class Frame(wx.Frame):
         self.API.outputTools.Reparent(self.splitter)
         self.API.tabManager.Reparent(self.splitter)
         self.tabManager = self.API.tabManager
-        
+
         self.splitter.SetMinimumPaneSize(100)
         self.splitter.SetBackgroundColour("white")
         self.splitter.SplitHorizontally(self.tabManager, self.API.outputTools, -200)
-        
+
         # Makes outputArea to maintain it's height when whole window is resized
         self.splitter.SetSashGravity(1)
 
     def InitUI(self):
         fileMenu = wx.Menu()
-        new = fileMenu.Append(wx.ID_NEW, '&' + self.tr('New') + '\tCtrl+N', 
+        new = fileMenu.Append(wx.ID_NEW, '&' + self.tr('New') + '\tCtrl+N',
                               self.tr('Create empty document'))
-        open_ = fileMenu.Append(wx.ID_OPEN, '&' + self.tr('Open') + '\tCtrl+O', 
+        open_ = fileMenu.Append(wx.ID_OPEN, '&' + self.tr('Open') + '\tCtrl+O',
                               self.tr('Open document'))
-        save = fileMenu.Append(wx.ID_SAVE, '&' + self.tr('Save') + '\tCtrl+S', 
+        save = fileMenu.Append(wx.ID_SAVE, '&' + self.tr('Save') + '\tCtrl+S',
                               self.tr('Save document'))
-        saveAs = fileMenu.Append(wx.ID_SAVEAS, '&' + self.tr('Save as') + '\tCtrl+A', 
+        saveAs = fileMenu.Append(wx.ID_SAVEAS, '&' + self.tr('Save as') + '\tCtrl+A',
                               self.tr('Save document as'))
-        upload = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Upload') + '\tCtrl+U', 
+        upload = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Upload') + '\tCtrl+U',
                               self.tr('Open upload window'))
-        output = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Read output') + '\tCtrl+R', 
+        output = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Read output') + '\tCtrl+R',
                               self.tr('Open read output window'))
-        close = fileMenu.Append(wx.ID_EXIT, '&' + self.tr('Exit') + '\tCtrl+Q', 
+        close = fileMenu.Append(wx.ID_EXIT, '&' + self.tr('Exit') + '\tCtrl+Q',
                               self.tr('Exit application'))
-        
+
         optionMenu = wx.Menu()
         language = wx.Menu()
         self.langs = []
         for i in self.API.translater.translations.keys():
-            self.langs.append(language.Append(wx.ID_ANY, 
+            self.langs.append(language.Append(wx.ID_ANY,
                     self.API.translater.translations[i]['langName'], i, kind = wx.ITEM_RADIO))
             if i == self.API.getSetting("activeLanguage"):
                 language.Check(self.langs[-1].GetId(), True)
             self.Bind(wx.EVT_MENU, self.changeLanguage, self.langs[-1])
-        
+
         optionMenu.AppendMenu(wx.ID_ANY, self.tr('Change language'), language)
-        
+
         # Check if we need to update existing menubar(for translate)
         if self.menubar == None:
             self.menubar = wx.MenuBar()
         else:
             for i in range(0, self.menubar.GetMenuCount()):
                 self.menubar.Remove(0)
-            
+
         self.menubar.Append(fileMenu, '&' + self.tr('File'))
         self.menubar.Append(optionMenu, '&' + self.tr('Options'))
         self.SetMenuBar(self.menubar)
-        
+
         # First bind to menu
         self.Bind(wx.EVT_MENU, self.OnQuit, close)
         self.Bind(wx.EVT_MENU, self.OnOpen, open_)
@@ -103,14 +101,14 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnUpload, upload)
         self.Bind(wx.EVT_MENU, self.OnOutput, output)
         self.Bind(wx.EVT_MENU, self.OnNew, new)
-        
+
         # Check if we need to update existing toolbar(for rerun)
         if self.toolbar == None:
             self.toolbar = self.CreateToolBar()
             self.toolbar.SetToolBitmapSize((32, 32))
         else:
             self.toolbar.ClearTools()
-            
+
         # Note that all icons must be 32x32, so they look good :)
         self.toolbar.AddLabelTool(wx.ID_NEW, self.tr('New'),
                                 wx.Bitmap(self.path + '/src/Icons/new.png'))
@@ -141,62 +139,65 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_TOOL, self.OnOutput, outputTool)
         self.Bind(wx.EVT_TOOL, self.OnAddStatement, addStatementTool)
         self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
-        
+
     def OnQuit(self, e):
         if self.tabManager.onQuitCheck() == True:
+            # TODO: Doesn't work, still throws error if listening while quitting
+            if self.API.listenModule.listening:
+                self.API.listenModule.doClear(None)
             self.API.saveSettings()
             self.Close()
-         
+
     def OnSave(self, e):
         self.tabManager.doPopupSave(None)
-        
+
     def OnSaveAs(self, e):
         self.tabManager.doPopupSaveAs(None)
-        
+
     def OnUpload(self, e):
         if self.tabManager.doPopupSave(None) == True:
             self.API.uploadCore.manageUpload()
-            
+
     def OnOutput(self, e):
         if self.tabManager.doPopupSave(None) == True:
-            
-            dialog = wx.Dialog(self, wx.ID_ANY, self.tr('Configure upload and compile'), 
+
+            dialog = wx.Dialog(self, wx.ID_ANY, self.tr('Configure upload and compile'),
                 style = wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
-            
+
             uploadModule.UploadModule(dialog, self.API)
             dialog.Fit()
             dialog.ShowModal()
             dialog.Destroy()
-    
+
     def OnNew(self, e):
         self.tabManager.addPage()
-    
+
     def OnOpen(self, e):
-        open_ = wx.FileDialog(self, 
+        open_ = wx.FileDialog(self,
             self.tr("Open new document"),
-            wildcard = 'Seal ' + self.tr('files') + ' (*.sl)|*.sl|' + 
+            wildcard = 'Seal ' + self.tr('files') + ' (*.sl)|*.sl|' +
                     self.tr('All files') + '|*',
             style = wx.FD_OPEN)
         if open_.ShowModal() == wx.ID_OK:
             self.tabManager.addPage(open_.GetPath())
         open_.Destroy()
-    
+
     def OnAddStatement(self, event):
         self.tabManager.getPageObject().code.addStatement()
-    
+
     def OnAddCondition(self, event):
         self.tabManager.getPageObject().code.addCondition()
-        
+
     def changeLanguage(self, event):
         for i in self.langs:
             if i.IsChecked() == True:
                 self.API.setSetting("activeLanguage", i.GetHelp())
                 self.InitUI()
-                
+
     def disableAdders(self):
         self.toolbar.EnableTool(wx.ID_ADD, False)
         self.toolbar.EnableTool(wx.ID_APPLY, False)
-    
+
     def enableAdders(self):
         self.toolbar.EnableTool(wx.ID_ADD, True)
         self.toolbar.EnableTool(wx.ID_APPLY, True)
