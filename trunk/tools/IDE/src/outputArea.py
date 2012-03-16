@@ -33,8 +33,8 @@ class outputArea(wx.Panel):
         self.outputArea = wx.TextCtrl(self, style = wx.TE_MULTILINE)
         self.outputArea.SetBackgroundColour("black")
         self.outputArea.SetForegroundColour("white")
-        
-        sizer.Add(self.outputArea, 2, wx.EXPAND |wx.ALL, 5)
+
+        sizer.Add(self.outputArea, 2, wx.EXPAND | wx.ALL, 5)
         self.SetBackgroundColour("white")
         self.SetSizerAndFit(sizer)
         self.SetAutoLayout(1)
@@ -46,6 +46,6 @@ class outputArea(wx.Panel):
         self.outputArea.AppendText(text.strip() + '\n\n')
         self.outputArea.ScrollLines(1)
         wx.Yield()
-    
+
     def clear(self):
         self.outputArea.Clear()

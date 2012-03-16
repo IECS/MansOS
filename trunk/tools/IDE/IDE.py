@@ -28,61 +28,61 @@ import os
 def main():
     if not importsOk():
         exit(1)
- 
+
     # Go to real directory for import to work
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     from src import Frame
     from src import APIcore
     import wx
-    
+
     ex = wx.App(redirect=False)
-   
-    frame = Frame.Frame(None, title = "MansOS IDE",size = (800, 500), 
+
+    frame = Frame.Frame(None, title = "MansOS IDE", size = (800, 500),
                         pos = (100, 100), API = APIcore.ApiCore())
     frame.Show()
-    
+
     ex.MainLoop()
 
 def importsOk():
     wxModuleOK = True      # wx widgets
     serialModuleOK = True  # serial port communication
     plyModuleOK = True     # Python Lex Yacc - for compilation
-    
+
     try:
         import wx
     except ImportError:
         wxModuleOK = False
-        
+
     try:
         import serial
     except ImportError:
         serialModuleOK = False
-        
+
     try:
         import ply
     except ImportError:
         plyModuleOK = False
 
     if not (wxModuleOK and serialModuleOK and plyModuleOK):
-        if os.name == 'posix': 
+        if os.name == 'posix':
             installStr = "Make sure you have installed required modules. Run:\n\tapt-get install"
-        else: 
+        else:
             installStr = "Make sure you have installed modules:"
-            
+
         print "Cannot run MansOS IDE:"
-        
+
         if not wxModuleOK:
             print "\twx module not found"
             installStr += " python-wxtools"
-            
+
         if not serialModuleOK:
             print "\tserial module not found"
             installStr += " python-serial"
-            
+
         if not plyModuleOK:
             print "\tPLY module not found"
             installStr += " python-ply"
-            
+
         print installStr
         return False
     return True

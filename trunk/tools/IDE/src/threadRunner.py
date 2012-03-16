@@ -26,21 +26,22 @@ import threading
 import time
 import globals as g
 
-class threadRunner ( threading.Thread ):
-    def __init__(self, function, data, API):
+class threadRunner (threading.Thread):
+    def __init__(self, function, dataIn, dataOut, API):
         threading.Thread.__init__(self)
         self.function = function
         # If mutable value passed it works as reference, so we can pass values back
-        self.data = data
+        self.dataIn = dataIn
+        self.dataOut = dataOut
         self.API = API
-              
+
     def run (self):
         locTime = time.time()
         try:
-            self.data += self.function()
+            self.dataOut += self.function(self.dataIn)
         except TypeError:
-            self.API.logMsg(g.WARNING, "In thread running "+ str(self.function) + "type mismatch happened!")
-            self.data += [False, "Type error!"]
-            print self.function()
-        self.data += [time.time() - locTime]
-        
+            self.API.logMsg(g.WARNING, "In thread running " + str(self.function) + "type mismatch happened!")
+            self.dataOut += [False, "Type error!"]
+            print self.function(self.dataIn)
+        self.dataOut += [time.time() - locTime]
+

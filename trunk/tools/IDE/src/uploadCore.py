@@ -32,7 +32,7 @@ import globals as g
 
 class UploadCore():
     def __init__(self, API, printLine):
-        
+
         self.API = API
         self.editorManager = self.API.tabManager.getPageObject()
         self.filename = self.editorManager.fileName
@@ -42,97 +42,99 @@ class UploadCore():
         self.haveMote = False
         self.platform = "telosb"
         self.printMsg = printLine
-        
+
         # this is path from /mansos/tools/IDE
-        self.pathToMansos = self.API.path + "/../.." 
+        self.pathToMansos = self.API.path + "/../.."
         self.motes = []
-        
+
         # Used classes
         self.compiler = doCompile.DoCompile(self.API)
         self.uploader = doUpload.DoUpload(self.pathToMansos)
         self.motelist = getMotelist.GetMotelist(self.pathToMansos)
-        
-    def populateMotelist(self, event = None, source = None):
+
+    def populateMotelist(self, event = None, source = None, quiet = False):
         self.motes = []
         res = []
         if source == 'Shell':
             res = self.managePopen(self.motelist.getShellMotelist)
             self.targetType = g.SHELL
-            
+
         else:
             res = self.managePopen(self.motelist.getMotelist)
             self.targetType = g.USB
 
         motelist = res[1]
         self.haveMote = res[0]
-        
-        self.updateStatus(self.tr("Got") + " " + str(len(motelist)) + " " +
+
+        if not quiet:
+            self.updateStatus(self.tr("Got") + " " + str(len(motelist)) + " " +
                     self.tr("devices in") + " " + str(round(res[2], 3)) + " s.")
-        
+
         if len(motelist) != 0:
             for i in range(0, len (motelist)):
                 self.motes.append(motelist[i][self.targetType])
         return motelist
-    
+
     def manageCompile(self, event = None):
         self.updateStatus(self.tr("Starting compile") + "...")
         res = self.managePopen(self.runCompile)
         self.compiler.clean()
         if res[0] == True:
-            self.updateStatus(self.tr("Compiled successfully in") + " " + 
+            self.updateStatus(self.tr("Compiled successfully in") + " " +
                               str(round(res[2], 3)) + " s.")
         else:
-            self.updateStatus(self.tr("Compile failed with message:") + 
+            self.updateStatus(self.tr("Compile failed with message:") +
                               "\n" + res[1])
-    
+
     # Wrapping for compiler function to run in new thread
     def runCompile(self):
-        return self.compiler.doCompile(self.editorManager.fileName, 
-                                self.platform, self.editorManager.filePath, 
+        return self.compiler.doCompile(self.editorManager.fileName,
+                                self.platform, self.editorManager.filePath,
                                 self.editorManager.projectType, False)
-        
+
     def manageUpload(self, event = None):
         self.populateMotelist(None, self.platform)
-        
+
         if not self.haveMote:
             self.updateStatus(self.tr("No devices found!"))
             return
-        
+
         self.targets, targetText = self.API.uploadTargets
-        
+
         self.updateStatus(self.tr("Starting upload on") + " " + targetText)
-        
+
         res = self.managePopen(self.runUpload)
         self.compiler.clean()
-        
+
         if res[0] == True:
-            self.updateStatus(self.tr("Uploaded successfully in") + 
+            self.updateStatus(self.tr("Uploaded successfully in") +
                               " " + str(round(res[2], 3)) + " s.")
         else:
-            self.updateStatus(self.tr("Upload failed with message:") + 
+            self.updateStatus(self.tr("Upload failed with message:") +
                               "\n" + res[1])
-    
-    # Wrapping for compiler function to run in new thread
+
+    # Wrapping for upload function to run in new thread
     def runUpload(self):
-        return self.uploader.doUpload(self.targets, self.runCompile, 
+        return self.uploader.doUpload(self.targets, self.runCompile,
                                       self.targetType, self.platform)
-        
+
     def managePopen(self, funct):
         # Must be list, here returned values will be stored
-        data = []
-        newThread = threadRunner.threadRunner(funct, data, self.API)
+        dataOut = []
+        dataIn = []
+        newThread = threadRunner.threadRunner(funct, dataIn, dataOut, self.API)
         newThread.start()
         # Wait for thread to finish and yield, so UI doesn't die
         # TODO: add indicator that working now
         while newThread.isAlive():
             wx.YieldIfNeeded()
             newThread.join(0.001)
-        return data
+        return dataOut
 
     def changePlatform(self, event):
         self.platform = event.GetEventObject().GetValue()
-        self.updateStatus(self.tr("Changed platform to") + " "  + self.platform)
-    
+        self.updateStatus(self.tr("Changed platform to") + " " + self.platform)
+
     def updateStatus(self, message):
         self.printMsg(message)
 
