@@ -89,6 +89,15 @@ class Value(object):
 
 class Condition(object):
     left, right, op = None, None, None
+    def getCode():
+        if op == '&':
+            return left.getCode() + " and " + right.getCode()
+        if op == '|':
+            return left.getCode() + " or " + right.getCode()
+        if op == '!':
+            return "not (" + right.getCode() + ")"
+        return right
+
 
 #################################################
 componentRegister = ComponentRegister()

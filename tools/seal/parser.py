@@ -108,6 +108,8 @@ class SealParser():
       "true": "TRUE_TOKEN",
       "false": "FALSE_TOKEN",
       "not": "NOT_TOKEN",
+      "and": "AND_TOKEN",
+      "or": "OR_TOKEN",
       "==": "EQ_TOKEN",
       "!=": "NEQ_TOKEN",
       ">": "GR_TOKEN",
@@ -125,7 +127,7 @@ class SealParser():
 #        'MILISECONDS_TOKEN', 'INTEGER_TOKEN', 'COMMENT_TOKEN' #, 'newline'
 #        ] + list(reserved.values())
 
-    literals = ['.', ',', ':', ';', '{', '}']
+    literals = ['.', ',', ':', ';', '{', '}', '(', ')']
 
     def t_IDENTIFIER_TOKEN(self, t):
         r'[a-zA-Z_][0-9a-zA-Z_]*'
@@ -206,7 +208,9 @@ class SealParser():
                        | READ_TOKEN IDENTIFIER_TOKEN parameter_list ';'
                        | SENDTO_TOKEN IDENTIFIER_TOKEN parameter_list ';'
                        | when_block
+                       | ';'
         '''
+        print "parse declaration", p[1]
         if p[1].lower() == 'use' or p[1].lower() == 'read' or p[1].lower() == 'sendto':
             # add component with condition and parameters
             error = componentRegister.useComponent(
@@ -219,9 +223,12 @@ class SealParser():
         p[0] = [] # TODO JJ
 
     def p_when_block(self, p):
-        '''when_block : WHEN_TOKEN IDENTIFIER_TOKEN parameter_list ';' 
+        '''when_block : WHEN_TOKEN condition ':' declaration_list END_TOKEN 
         '''
-        p[0] = p[1] # TODO
+        print "parse when block, condition", p[2]
+        # TODO: add to condition stack!
+        self.currentCondition = p[2]
+        p[0] = [] # TODO JJ
 
     def p_parameter_list(self, p):
         '''parameter_list : parameter_list ',' parameter
@@ -283,14 +290,34 @@ class SealParser():
 #        '''
 #        p[0] = p[1]
 
+#    '''expression : expression PLUS term
+#                  | expression MINUS term
+#       term       : term TIMES factor
+#                  | term DIVIDE factor'''
+
     def p_condition(self, p):
-        '''condition : value
+        '''condition : logical_statement
                      | NOT_TOKEN condition
-                     | condition op condition
+                     | condition OR_TOKEN condition_term
+          condition_term : condition_term AND_TOKEN logical_statement
         '''
-        p[0] = p[1]
-        for x in range(2, len(p)):
-            p[0] += ' ' + p[x]
+        c = Condition()
+        if len(p) == 2:
+            c.right = p[1]
+        elif len(p) == 3:
+            c.op = '!'
+            c.right = p[2]
+        else:
+            if p[2].lower() == "and":
+                c.op = '&'
+            else:
+                c.op = '|'
+            c.left = p[1]
+            c.right = p[3]
+
+#        p[0] = p[1]
+#        for x in range(2, len(p)):
+#            p[0] += ' ' + p[x]
 
 #    def p_class_parameter(self, p):
 #        '''class_parameter : IDENTIFIER_TOKEN
@@ -302,15 +329,34 @@ class SealParser():
 #        '''
 #        p[0] = p[1] + "." + p[3]
 
-    def p_op(self, p):
-        ''' op : EQ_TOKEN
-               | NEQ_TOKEN
-               | GR_TOKEN
-               | LE_TOKEN
-               | GEQ_TOKEN
-               | LEQ_TOKEN
-        '''
-        p[0] = p[1]
+#    def p_op(self, p):
+#        ''' op : EQ_TOKEN
+#               | NEQ_TOKEN
+#               | GR_TOKEN
+#               | LE_TOKEN
+#               | GEQ_TOKEN
+#               | LEQ_TOKEN
+#        '''
+#        p[0] = p[1]
+
+    # returns string (at the moment no further analysuis is done)
+    def p_logical_statement(self, p):
+      ''' logical_statement : value
+               | '(' logical_statement ')'
+               | logical_statement EQ_TOKEN logical_statement
+               | logical_statement NEQ_TOKEN logical_statement
+               | logical_statement GR_TOKEN logical_statement
+               | logical_statement LE_TOKEN logical_statement
+               | logical_statement GEQ_TOKEN logical_statement
+               | logical_statement LEQ_TOKEN logical_statement
+      '''
+      if len(p) == 2:
+          p[0] = p[1].getCode()
+      else:
+          if p[1] == '(':
+              p[0] = p[2]
+          else:
+              p[0] = p[1] + " " + p[2] + " " + p[3]
 
     def p_error(self, p):
         if p:
