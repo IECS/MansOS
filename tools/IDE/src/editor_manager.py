@@ -24,14 +24,14 @@
 
 import wx
 import wx.lib.scrolledpanel as scrolled
-import Editor
+import editor
 import os
 import globals as g
 
 class EditorManager(scrolled.ScrolledPanel):
     def __init__(self, parent, API, emmbeddedMode = False):
         scrolled.ScrolledPanel.__init__(self, parent)
-        
+
         self.API = API;
         # Just a shorter name
         self.tr = self.API.translater.translate
@@ -49,7 +49,7 @@ class EditorManager(scrolled.ScrolledPanel):
             self.hasAFile = False
         # Define project type
         self.projectType = g.SEAL_PROJECT
-        
+
     def update (self, initFilePath = ''):
         if initFilePath == '':
             initFilePath = self.filePath
@@ -64,17 +64,17 @@ class EditorManager(scrolled.ScrolledPanel):
             self.detectSEAL()
         else:
             self.changeCode()
-            
+
     def initUI(self, emmbeddedMode):
         self.main = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.code = Editor.CodeEditor(self, self.API, emmbeddedMode)
-        self.main.Add(self.code, 
-                      1,            # make vertically stretchable
-                      wx.EXPAND |    # make horizontally stretchable
-                      wx.ALL,        # and make border all around
-                      10 );         # set border width to 10)
-                      
+        self.code = editor.CodeEditor(self, self.API, emmbeddedMode)
+        self.main.Add(self.code,
+                      1, # make vertically stretchable
+                      wx.EXPAND | # make horizontally stretchable
+                      wx.ALL, # and make border all around
+                      10);         # set border width to 10)
+
     def redrawAll(self):
         #Layout sizers
         self.SetSizer(self.main)
@@ -82,19 +82,19 @@ class EditorManager(scrolled.ScrolledPanel):
         self.main.Fit(self)
         self.SetupScrolling()
         self.Show()
-        
+
     def changeCode(self, newCode = '', overwrite = True):
         if overwrite == True:
             self.code.AddText(newCode)
         self.code.setLineNumbers()
         self.redrawAll()
-    
+
     def save(self):
         self.code.SaveFile(self.filePath)
         self.saveState = True
         self.GetParent().markAsSaved()
-    
-    def updateInfo(self, path = '', fileName = '', saveState = '', 
+
+    def updateInfo(self, path = '', fileName = '', saveState = '',
                    hasAFile = '', projectType = None):
         if path != '':
             self.filePath = path
@@ -107,10 +107,10 @@ class EditorManager(scrolled.ScrolledPanel):
             self.hasAFile = hasAFile
         if projectType != None:
             self.projectType = projectType
-    
+
     def detectSEAL(self):
         if self.fileName[-2:] == "sl":
             self.projectType = g.SEAL_PROJECT
         else:
             self.projectType = g.MANSOS_PROJECT
-            
+

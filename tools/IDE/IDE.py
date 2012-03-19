@@ -31,15 +31,13 @@ def main():
 
     # Go to real directory for import to work
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
-    from src import Frame
-    from src import APIcore
+    from src import api_core
     import wx
 
-    ex = wx.App(redirect=False)
+    ex = wx.App(redirect = False)
 
-    frame = Frame.Frame(None, title = "MansOS IDE", size = (800, 500),
-                        pos = (100, 100), API = APIcore.ApiCore())
-    frame.Show()
+    API = api_core.ApiCore()
+    API.frame.Show()
 
     ex.MainLoop()
 

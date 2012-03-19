@@ -25,7 +25,7 @@
 import globals as g
 import comment
 
-class condContainer:
+class ConditionContainer:
     def __init__(self):
         # When and else hold Condition instance who represents condition 
         self.__when = None
@@ -34,27 +34,27 @@ class condContainer:
         self.__elseWhen = []
         # Describe end statement
         self.__endComment = comment.Comment()
-        
+
         self.__identifier = g.CONDITION
-    
+
     def setWhen(self, when):
         self.__when = when
-        
+
     def getWhen(self):
         return self.__when
-    
+
     def setElse(self, else_):
         self.__else = else_
-        
+
     def getElse(self):
         return self.__else
-    
+
     def addElseWhen(self, elseWhen):
         self.__elseWhen.append(elseWhen)
-        
+
     def getElseWhen(self):
         return self.__elseWhen
-    
+
     # From yacc, all conditions in elsewhen arrive in opposite order
     def fixElseWhenOrder(self):
         print self.__elseWhen
@@ -63,16 +63,16 @@ class condContainer:
             newList.append(self.__elseWhen.pop())
         self.__elseWhen = newList
         print self.__elseWhen
-        
+
     def getEndComment(self):
         return self.__endComment
-    
+
     def setEndComment(self, endComment):
         self.__endComment = endComment
-    
+
     def getIdentifier(self):
         return self.__identifier
-    
+
     def getCode(self, prefix):
         result = self.getWhen().getCode(prefix) + '\n'
         for cond in self.getElseWhen():
@@ -80,5 +80,5 @@ class condContainer:
         if self.getElse() != None:
             result += self.getElse().getCode(prefix) + '\n'
         result += self.getEndComment().getPreComments(prefix) + '\n'
-        result += prefix +'end ' + self.getEndComment().getPostComment(True)
-        return result.strip("\n").replace("\n\n","\n")
+        result += prefix + 'end ' + self.getEndComment().getPostComment(True)
+        return result.strip("\n").replace("\n\n", "\n")

@@ -25,9 +25,9 @@
 import wx
 
 class UploadModule(wx.Panel):
-    def __init__(self, parent, API, printLine = None):
+    def __init__(self, parent, API):
         super(UploadModule, self).__init__(parent = parent)
-        
+
         self.API = API
         self.editorManager = self.API.tabManager.getPageObject()
         self.filename = self.editorManager.fileName
@@ -37,12 +37,12 @@ class UploadModule(wx.Panel):
         self.haveMote = False
         self.platform = "telosb"
         # this is path from /mansos/tools/IDE
-        self.pathToMansos = self.API.path + "/../.." 
+        self.pathToMansos = self.API.path + "/../.."
         self.motes = []
-        
+
         self.main = wx.BoxSizer(wx.VERTICAL)
         self.controls = wx.GridBagSizer(10, 10)
-        
+
         self.source = wx.ComboBox(self, choices = ["USB", "Shell"])
         self.source.SetValue("USB")
         self.platforms = wx.ComboBox(self, choices = self.API.getPlatforms())
@@ -50,40 +50,42 @@ class UploadModule(wx.Panel):
         self.compile = wx.Button(self, label = self.tr("Compile"))
         self.upload = wx.Button(self, label = self.tr("Upload"))
         self.refresh = wx.Button(self, label = self.tr("Refresh"))
-        
+
         self.controls.Add(self.compile, (0, 0), flag = wx.EXPAND | wx.ALL)
         self.controls.Add(self.platforms, (0, 1), flag = wx.EXPAND | wx.ALL)
-        self.controls.Add(self.upload, (0, 2), span = (2, 2), 
+        self.controls.Add(self.upload, (0, 2), span = (2, 2),
                           flag = wx.EXPAND | wx.ALL)
-        
+
         self.controls.Add(self.source, (1, 1), flag = wx.EXPAND | wx.ALL)
         self.controls.Add(self.refresh, (1, 0), flag = wx.EXPAND | wx.ALL)
-        
-        self.list = wx.CheckListBox(self, wx.ID_ANY, style=wx.MULTIPLE)
-        
+
+        self.list = wx.CheckListBox(self, wx.ID_ANY, style = wx.MULTIPLE)
+
         self.main.Add(self.controls, 0, wx.EXPAND | wx.ALL, 3);
         self.main.Add(self.list, 0, wx.EXPAND | wx.ALL, 3);
-        
+
         self.Bind(wx.EVT_BUTTON, self.API.uploadCore.manageCompile, self.compile)
         self.Bind(wx.EVT_BUTTON, self.API.uploadCore.manageUpload, self.upload)
         self.Bind(wx.EVT_BUTTON, self.populateMotelist, self.refresh)
         self.Bind(wx.EVT_COMBOBOX, self.populateMotelist, self.source)
         self.Bind(wx.EVT_COMBOBOX, self.API.uploadCore.changePlatform, self.platforms)
         self.Bind(wx.EVT_CHECKLISTBOX, self.modifyTargets, self.list)
-        
+
         self.SetSizerAndFit(self.main)
         self.SetAutoLayout(1)
         self.Show()
-        
+
         self.populateMotelist()
-        
-    def populateMotelist(self, evt = None):
+
+    def populateMotelist(self, event = None):
+        if event != None:
+            wx.Yield()
         self.list.Clear()
         self.list.Insert(self.tr("Searching devices") + "...", 0)
         self.list.Disable()
 
         motelist = self.API.uploadCore.populateMotelist(None, self.source.GetValue())
-        
+
         self.list.Clear()
 
         if len(motelist) == 0:
@@ -93,8 +95,10 @@ class UploadModule(wx.Panel):
                 self.list.Insert(motelist[i][0] + "(" + motelist[i][2] +
                                  ") @ " + motelist[i][1], i, motelist[i])
             self.list.Enable()
-    
-    def modifyTargets(self, evt):
+
+    def modifyTargets(self, event):
+        if event != None:
+            wx.Yield()
         checked = self.list.GetChecked()
         targets = []
         targetText = ''

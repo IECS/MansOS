@@ -29,7 +29,7 @@
 ALL = 4
 INFO = 3
 WARNING = 2
-ERROR  = 1
+ERROR = 1
 NO_LOGGING = 0
 # Log texts
 LOG_TEXTS = {
@@ -59,6 +59,7 @@ CONDITION = 1
 STATE = 2
 CONSTANT = 3
 UNKNOWN = 4
+END = 5
 
 # Upload targets
 SHELL = 0

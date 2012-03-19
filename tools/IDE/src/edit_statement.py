@@ -23,14 +23,14 @@
 #
 
 import wx
-import Parameter
-import Statement
+import parameter
+import statement
 import comment
 
-class editDialog(wx.Dialog):
-    
+class EditStatement(wx.Dialog):
+
     def __init__(self, parent, API, statement, saveCallback):
-        super(editDialog, self).__init__(parent = parent, 
+        super(EditStatement, self).__init__(parent = parent,
             size = (500, 400),
             style = wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.saveCallback = saveCallback
@@ -45,15 +45,15 @@ class editDialog(wx.Dialog):
         self.choices = []
         self.text = []
         self.comments = []
-        
+
         self.statement = statement
         self.generateActuatorSelect()
-        
+
         data = self.API.getActuatorInfo(statement.getMode())['parameters']
         self.generatePatameterSelects(data)
-        
+
         self.generateComments()
-        
+
         self.buttonPane = wx.BoxSizer(wx.HORIZONTAL)
         self.save = wx.Button(self, label = self.tr("Save"),
                               size = (150, -1), name = "save")
@@ -64,25 +64,25 @@ class editDialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.saveClk, self.close)
         self.buttonPane.Add(self.close, 1, wx.EXPAND | wx.ALL, 1);
         self.main.Add(self.buttonPane, 1, wx.EXPAND | wx.ALL, 1);
-        
+
         self.updateTitle()
         self.SetSizer(self.main)
         self.main.Fit(self)
         self.Show()
-    
+
     def saveClk(self, event):
         if (event.GetEventObject().GetName() == "save"):
-            statement = Statement.Statement(self.actuator.GetValue(),
+            statement = statement.Statement(self.actuator.GetValue(),
                                             self.obj.GetValue())
             preComments = []
             for x in self.comments[0].GetValue().split("\n"):
                 preComments.append(x.lstrip("/"))
             comm = comment.Comment(preComments, self.comments[1].GetValue())
             statement.setComment(comm)
-            
+
             for x in self.choices:
                 if x.GetValue() != '' and x.GetValue() != False:
-                    statement.addParameter(Parameter.Parameter(x.GetName(), x.GetValue()))
+                    statement.addParameter(parameter.Parameter(x.GetName(), x.GetValue()))
             self.saveCallback(True, statement)
         else:
             self.saveCallback(False, None)
@@ -91,12 +91,12 @@ class editDialog(wx.Dialog):
         # Generate all objects
         self.actuatorText = wx.StaticText(self, label = self.tr("Edit actuator") + ":")
         self.objText = wx.StaticText(self, label = self.tr("Edit object") + ":")
-        self.actuator = wx.ComboBox(self, choices = self.API.getAllStatementActuators(), 
+        self.actuator = wx.ComboBox(self, choices = self.API.getAllStatementActuators(),
                                 style = wx.CB_DROPDOWN, name = "actuator")
         self.Bind(wx.EVT_COMBOBOX, self.onActuatorChange, self.actuator)
         self.Bind(wx.EVT_TEXT, self.onActuatorChange, self.actuator)
         self.actuator.SetValue(self.statement.getMode())
-        self.obj = wx.ComboBox(self, choices = self.API.getActuatorInfo(self.statement.getMode())['objects'], 
+        self.obj = wx.ComboBox(self, choices = self.API.getActuatorInfo(self.statement.getMode())['objects'],
                                 style = wx.CB_DROPDOWN, name = "object")
         # Only for title change
         self.Bind(wx.EVT_COMBOBOX, self.updateTitle, self.obj)
@@ -109,14 +109,14 @@ class editDialog(wx.Dialog):
         self.data.Add(self.obj, pos = (1, 1))
         # Set used row count
         self.row = 2
-    
+
     def generatePatameterSelects(self, data):
         # Cycle all parameters and draw according boxes
         for parameter in data:
             self.text.append(wx.StaticText(self, label = self.tr(parameter.getName()) + ":"))
-            self.data.Add(self.text[-1], pos = (self.row,0))
+            self.data.Add(self.text[-1], pos = (self.row, 0))
             if parameter.getValue() != None:
-                self.choices.append(wx.ComboBox(self, choices = parameter.getValue(), 
+                self.choices.append(wx.ComboBox(self, choices = parameter.getValue(),
                                                 style = wx.CB_DROPDOWN, name = parameter.getName()))
             else:
                 self.choices.append(wx.CheckBox(self, name = parameter.getName()))
@@ -125,20 +125,20 @@ class editDialog(wx.Dialog):
                 self.choices[-1].SetValue(paramValue)
             self.data.Add(self.choices[-1], pos = (self.row, 1))
             self.row += 1
-    
+
     def generateComments(self):
         self.text.append(wx.StaticText(self, label = self.tr("Edit pre comment") + ":"))
         self.data.Add(self.text[-1], pos = (self.row, 0))
         newVal = ''
         for x in self.statement.getComment().getPreComments():
             newVal += x + '\n'
-        self.comments.append(wx.TextCtrl(self, value = newVal.strip(), 
-                                    style = wx.TE_MULTILINE, 
-                                    size=(90, 55))) # This is bad :( but works!
-        self.data.Add(self.comments[-1], pos = (self.row , 1), 
+        self.comments.append(wx.TextCtrl(self, value = newVal.strip(),
+                                    style = wx.TE_MULTILINE,
+                                    size = (90, 55))) # This is bad :( but works!
+        self.data.Add(self.comments[-1], pos = (self.row , 1),
                       flag = wx.EXPAND | wx.ALL)
         self.row += 1
-        
+
         self.text.append(wx.StaticText(self, label = self.tr("Edit post comment") + ":"))
         self.data.Add(self.text[-1], pos = (self.row, 0))
         newVal = self.statement.getComment().getPostComment(False)
@@ -147,8 +147,10 @@ class editDialog(wx.Dialog):
                       pos = (self.row, 1),
                       flag = wx.EXPAND | wx.ALL)
         self.row += 1
-        
+
     def onActuatorChange(self, event):
+        if event != None:
+            wx.Yield()
         actuator = self.actuator.GetValue()
         self.updateTitle()
         # Don't clear if this is already selected
@@ -157,7 +159,7 @@ class editDialog(wx.Dialog):
         allActuators = self.API.getActuatorInfo(actuator)
         if allActuators != None:
             # Generate new statement
-            statement = Statement.Statement(actuator,
+            statement = statement.Statement(actuator,
                                             self.obj.GetValue())
             statement.setComment(self.statement.getComment())
             self.statement = statement
@@ -172,7 +174,7 @@ class editDialog(wx.Dialog):
             self.main.Fit(self)
             self.main.Fit(self)
             self.main.Layout()
-    
+
     def clearAll(self):
         # Can't use for loop because it sometimes causes 
         # return of pointer to already destroyed object, because of rule that 
@@ -188,8 +190,9 @@ class editDialog(wx.Dialog):
         self.objText.Destroy()
         self.obj.Destroy()
         self.data.Clear()
-    
+
     def updateTitle(self, event = None):
-        self.SetTitle(self.tr("Edit") + " \"" + 
-                self.actuator.GetValue() +" " + self.obj.GetValue() + "\"")
-        
+        self.SetTitle(self.tr("Edit") + " \"" +
+                self.actuator.GetValue() + " " + self.obj.GetValue() + "\"")
+        if event != None:
+            wx.Yield()

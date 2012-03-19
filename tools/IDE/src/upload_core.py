@@ -24,10 +24,10 @@
 
 import wx
 
-import doCompile
-import doUpload
-import getMotelist
-import threadRunner
+import do_compile
+import do_upload
+import get_motelist
+import thread_runner
 import globals as g
 
 class UploadCore():
@@ -48,11 +48,13 @@ class UploadCore():
         self.motes = []
 
         # Used classes
-        self.compiler = doCompile.DoCompile(self.API)
-        self.uploader = doUpload.DoUpload(self.pathToMansos)
-        self.motelist = getMotelist.GetMotelist(self.pathToMansos)
+        self.compiler = do_compile.DoCompile(self.API)
+        self.uploader = do_upload.DoUpload(self.pathToMansos)
+        self.motelist = get_motelist.GetMotelist(self.pathToMansos)
 
     def populateMotelist(self, event = None, source = None, quiet = False):
+        if event != None:
+            wx.Yield()
         self.motes = []
         res = []
         if source == 'Shell':
@@ -76,6 +78,8 @@ class UploadCore():
         return motelist
 
     def manageCompile(self, event = None):
+        if event != None:
+            wx.Yield()
         self.updateStatus(self.tr("Starting compile") + "...")
         res = self.managePopen(self.runCompile)
         self.compiler.clean()
@@ -93,6 +97,8 @@ class UploadCore():
                                 self.editorManager.projectType, False)
 
     def manageUpload(self, event = None):
+        if event != None:
+            wx.Yield()
         self.populateMotelist(None, self.platform)
 
         if not self.haveMote:
@@ -122,7 +128,7 @@ class UploadCore():
         # Must be list, here returned values will be stored
         dataOut = []
         dataIn = []
-        newThread = threadRunner.threadRunner(funct, dataIn, dataOut, self.API)
+        newThread = thread_runner.ThreadRunner(funct, dataIn, dataOut, self.API)
         newThread.start()
         # Wait for thread to finish and yield, so UI doesn't die
         # TODO: add indicator that working now

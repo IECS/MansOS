@@ -34,7 +34,7 @@ class GetMotelist(object):
         self.shellRegex = compile(
                         r"Mote type: \".\" \((.*)\)\n PAN address: \"(.*)\"")
 
-    def getShellMotelist(self, data):
+    def getShellMotelist(self):
         motelist = []
         oldPath = os.getcwd()
         try:

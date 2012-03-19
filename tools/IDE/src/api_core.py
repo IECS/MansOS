@@ -25,19 +25,20 @@
 import re
 import string
 import wx
-
-import sealStruct
-import Parameter
-import translater
 import os
 from time import gmtime, strftime
+
+import frame
+import seal_struct
+import seal_syntax
+import translater
 import globals as g
-import sealParser_yacc
-import outputArea
-import tabManager
-import uploadCore
-import outputTools
-import listenModule
+import seal_parser
+import output_area
+import tab_manager
+import upload_core
+import output_tools
+import listen_module
 
 class ApiCore:
     def __init__(self):
@@ -56,66 +57,18 @@ class ApiCore:
             # All variables placed here will be saved to configuration file and 
             # reloaded next run time. See setSetting() and getSetting()
             self.__settings = {
-                   "activeLanguage" : "ENG"
+                   "activeLanguage" : "LV"
                }
-        # Actuator roles
-        self.STATEMENT = 0 # such as use, read, output
-        self.CONDITION_START = 1 # such as when
-        self.CONDITION_CONTINUE = 2 # such as else
-        self.CONDITION_END = 3 # such as end
-        self.IGNORE = 4 # such as comments, empty lines etc.
+        # All functions here will be called upon exit
+        self.onExit = [self.saveSettings]
 
-        # All defined platforms
-        self.__platforms = ["telosb", "sadmote", "atmega", "waspmote"]
 
-        # All actuators and other keywords goes here
-        self.__actuators = {
-            'use': {
-                'objects': ['Led', 'RedLed', 'GreenLed', 'BlueLed'],
-                'parameters': [
-                    Parameter.ParameterDefinition('period', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s']),
-                    Parameter.ParameterDefinition('on_at', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s']),
-                    Parameter.ParameterDefinition('off_at', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s']),
-                    Parameter.ParameterDefinition('blinkTimes', ['', '1', '2', '3', '5', '10', '25']),
-                    Parameter.ParameterDefinition('blink', None),
-                    Parameter.ParameterDefinition('blinkTwice', None),
-                    Parameter.ParameterDefinition('turn_on', None),
-                    Parameter.ParameterDefinition('turn_off', None),
-                ],
-                'role': self.STATEMENT
-            },
-            'read': {
-                'objects': ['temperature', 'humidity'],
-                'parameters': [
-                    Parameter.ParameterDefinition('period', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s'])
-                ],
-                'role': self.STATEMENT
-            },
-            'output': {
-                'objects': ['serial', 'radio'],
-                'parameters': [
-                    Parameter.ParameterDefinition('aggregate', None),
-                    Parameter.ParameterDefinition('crc', None),
-                    Parameter.ParameterDefinition('baudrate', ['', '2400', '4800', '9600', '19200', '38400', '57600', '115200']),
-                ],
-                'role': self.STATEMENT
-            },
-            'when': {
-                'objects': ["System.time < 5s", "System.isDaytime"],
-                'parameters': [],
-                'role': self.CONDITION_START
-            },
-            'else': {
-                'objects': [],
-                'parameters': [],
-                'role': self.CONDITION_CONTINUE
-            },
-            'end': {
-                'objects': [],
-                'parameters': [],
-                'role': self.CONDITION_END
-            }
-        }
+        if g.LOG_TO_FILE:
+            path = os.getcwd()
+            os.chdir(self.path)
+            self.logFile = open(g.LOG_FILE_NAME, "a")
+            os.chdir(path)
+            self.onExit.append(self.logFile.close)
 
 ### Shortcuts etc
 
@@ -123,42 +76,50 @@ class ApiCore:
 # using their Reparent() function, else they won't be visible!
 
         self.emptyFrame = wx.Frame(None)
+
+        # Defines seal syntax
+        self.sealSyntax = seal_syntax.SealSyntax()
+
         # Compile regex for finding actuators
-        self.__reActuators = re.compile(string.join(self.__actuators.keys(), '|'), re.I)
+        self.__reActuators = re.compile(string.join(self.sealSyntax.actuators.keys(), '|'), re.I)
 
         # Init translation module
         self.translater = translater.Translater(self)
         self.tr = self.translater.translate
 
-        # Init outputTools
-        self.outputTools = outputTools.outputTools(self.emptyFrame, self)
+        # Init output_tools
+        self.outputTools = output_tools.OutputTools(self.emptyFrame, self)
 
         # Init outputArea for info, 1st tab
-        self.infoArea = outputArea.outputArea(self.emptyFrame, self, 0)
+        self.infoArea = output_area.OutputArea(self.emptyFrame, self, 0)
         self.printInfo = self.infoArea.printLine
         self.clearInfoArea = self.infoArea.clear
 
         # Init outputArea for output, 2nd tab
-        self.outputArea = outputArea.outputArea(self.emptyFrame, self, 1)
+        self.outputArea = output_area.OutputArea(self.emptyFrame, self, 1)
         self.printOutput = self.outputArea.printLine
         self.clearOutputArea = self.outputArea.clear
 
         # Init seal parser
-        self.sealParser = sealParser_yacc.SealParser(self.printInfo)
-        self.seal = sealStruct.Seal(self)
+        self.sealParser = seal_parser.SealParser(self.printInfo)
+        self.seal = seal_struct.SealStruct(self)
 
-        # Init tab manager
-        self.tabManager = tabManager.tabManager(self.emptyFrame, self)
+        # Init tab manager 
+        self.tabManager = tab_manager.TabManager(self.emptyFrame, self)
 
-        self.uploadCore = uploadCore.UploadCore(self, self.printInfo)
+        self.uploadCore = upload_core.UploadCore(self, self.printInfo)
         self.uploadTargets = ([], self.tr('default device'))
 
         # Init listenModule
-        self.listenModule = listenModule.ListenModule(self.emptyFrame, self)
+        self.listenModule = listen_module.ListenModule(self.emptyFrame, self)
 
         self.outputTools.addTools()
 
-        print "List of virtual parentless objects:"
+        self.frame = frame.Frame(None, "MansOS IDE", (800, 500), (100, 100), self)
+        self.onExit.append(self.frame.Close)
+
+
+        print "List of parentless objects(empty list is good!):"
         print str(self.emptyFrame.GetChildren()).replace(", ", "\n").strip("wxWindowList: []")
 
     # Return regex for finding actuators
@@ -166,39 +127,38 @@ class ApiCore:
         return self.__reActuators
 
     def getRole(self, actuator):
-        return self.__actuators[actuator]['role']
+        return self.sealSyntax.actuators[actuator]['role']
 
     def getStatementType(self, line):
-
         actuator = line.split(None, 1)
         if actuator != []:
-            if actuator[0] in self.__actuators:
-                return self.__actuators[actuator[0]]['role']
-        return self.IGNORE
+            if actuator[0] in self.sealSyntax.actuators:
+                return self.sealSyntax.actuators[actuator[0]]['role']
+        return g.UNKNOWN
 
     def getActuatorInfo(self, actuator):
-        if actuator in self.__actuators:
-            return self.__actuators[actuator]
+        if actuator in self.sealSyntax.actuators:
+            return self.sealSyntax.actuators[actuator]
         # Return empty object
         return {
                 'objects': [],
                 'parameters': [],
-                'role': self.IGNORE
+                'role': g.UNKNOWN
                 }
 
     # Get all actuators, who have role == self.STATEMENT
     def getAllStatementActuators(self):
         result = []
-        for x in self.__actuators.keys():
-            if self.__actuators[x]['role'] == self.STATEMENT:
+        for x in self.sealSyntax.actuators.keys():
+            if self.sealSyntax.actuators[x]['role'] == g.STATEMENT:
                 result.append(x)
         return result
 
     def getDefaultConditions(self):
-        return self.__actuators['when']['objects']
+        return self.sealSyntax.actuators['when']['objects']
 
     def getPlatforms(self):
-        return self.__platforms
+        return self.sealSyntax.platforms
 
     def getSetting(self, setting):
         if setting in self.__settings:
@@ -227,10 +187,10 @@ class ApiCore:
                 print dbgMsg
                 self.printInfo(dbgMsg)
             if g.LOG_TO_FILE:
-                path = os.getcwd()
-                os.chdir(self.path)
-                # File should be openned @startup and closed @shutdown, performace!
-                f = open(g.LOG_FILE_NAME, "a")
-                f.write(dbgTime + dbgMsg)
-                f.close()
-                os.chdir(path)
+                self.logFile.write(dbgTime + dbgMsg)
+
+    def performExit(self):
+        print "Prepering to exit:"
+        for function in self.onExit:
+            print "    Calling ", function
+            function()

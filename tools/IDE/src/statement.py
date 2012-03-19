@@ -22,7 +22,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import Parameter
+import parameter
 import globals as g
 import comment
 
@@ -34,26 +34,26 @@ class Statement():
         self.__comment = comment.Comment()
         self.__condition = ''
         self.__identifier = g.STATEMENT
-        
+
     def setMode(self, mode):
         self.__mode = mode.strip()
-    
+
     def getMode(self):
         return self.__mode
-    
+
     def setObject(self, obj):
         self.__obj = obj.strip()
-        
+
     def getObject(self):
         return self.__obj
-    
+
     def getModeAndObject(self):
         return self.getMode() + " " + self.getObject()
-    
+
     # Overwrites all parameters!!
     def setParameters(self, parameters):
         self.__param = parameters
-    
+
     # This automatically overwrites old parameter with same name, so be careful
     def addParameter(self, parameter):
         name = parameter.getName()
@@ -65,35 +65,35 @@ class Statement():
                 x.setValue(parameter.getRealValue())
                 return
         self.__param.append(parameter)
-        
+
     # This automatically overwrites old parameter with same name, so be careful
     def addParameterByNameAndValue(self, name, value):
-        self.addParameter(Parameter.Parameter(name, value))
-        
+        self.addParameter(parameter.Parameter(name, value))
+
     def getParam(self):
         return self.__param
-    
+
     def getParamValueByName(self, name):
         for x in self.__param:
             if x.getName() == name:
                 return x.getRealValue()
         return None
-    
+
     def getComment(self):
         return self.__comment
-    
+
     def setComment(self, comment):
         self.__comment = comment
-    
+
     def setCondition(self, condition):
         self.__condition = condition.strip()
-        
+
     def getCondition(self):
         return self.__condition
-    
+
     def getIdentifier(self):
         return self.__identifier
-    
+
     def getCode(self, prefix):
         result = self.getComment().getPreComments(prefix) + '\n'
         result += prefix + self.getModeAndObject()
@@ -102,5 +102,5 @@ class Statement():
         if self.getCondition() != '':
             result += ', when ' + self.getCondition()
         result += '; ' + self.getComment().getPostComment(True) + '\n'
-        return result.strip("\n").replace("\n\n","\n")
-    
+        return result.strip("\n").replace("\n\n", "\n")
+

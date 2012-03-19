@@ -53,7 +53,8 @@ class ListenModule(wx.Panel):
         self.listenControls.Add(self.refresh)
         self.listenControls.Add(self.clear)
 
-        self.main.Add(self.listenControls, 0, wx.EXPAND | wx.ALL, 5);
+        self.main.Add(self.listenControls, 0,
+                      wx.EXPAND | wx.wx.TOP | wx.LEFT | wx.RIGHT, 10);
         self.main.Add(self.API.outputArea, 1, wx.EXPAND | wx.ALL, 5);
 
         self.getMotelist()
@@ -72,8 +73,10 @@ class ListenModule(wx.Panel):
         self.listening = not self.listening
         if self.listening:
             self.clear.SetLabel(self.tr('Stop listening'))
+            #self.API.onExit.insert(0, self.doClear)
         else:
             self.clear.SetLabel(self.tr('Start listening'))
+            #self.API.onExit.remove(self.doClear)
         # Redraw button if size have changed
         self.clear.SetSize(self.clear.GetEffectiveMinSize())
 
@@ -106,7 +109,9 @@ class ListenModule(wx.Panel):
             print "\nSerial exception:\n\t", msg
             return False
 
-    def getMotelist(self, evt = None):
+    def getMotelist(self, event = None):
+        if event != None:
+            wx.Yield()
         self.ports.Clear()
         self.ports.Append(self.tr("Searching devices") + "...", 0)
         self.ports.Disable()
