@@ -1,0 +1,11 @@
+when 10 < 2: end;
+when 10 > 2: end;
+when 10 <= 2: end;
+when 10 >= 2: end;
+when 10 = 2: end;
+when 10 == 2: end;
+when 10 != 2: end;
+when 10 <> 2: end;
+when 10: end;
+when 10s: end;
+when True: end;

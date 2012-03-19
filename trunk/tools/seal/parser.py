@@ -3,94 +3,35 @@ import ply.lex as lex
 import ply.yacc as yacc
 import re, string
 
-#import Parameter
-#import Statement
-#import condContainer
-#import Condition
-#import comment
-
-#import globals
 from structures import *
-
-###################################################
-#class ComponentRegister(object):
-#    allComponents = []
-#    def __init__(self):
-#        pass
-#    def useComponent(type, name, parameters, condition):
-#        o = componentSpecification.findComponent(type, name)
-#        if o == None:
-#            errorStr = "component %s not found" % name
-#            return errorStr
-#        c = None
-#        if type == "read":
-#            c = Sensor(name)
-#        elif type == "use":
-#            c = Actuator(name)
-#        elif type == "output":
-#            c = Output(name)
-#        return None
-
-#componentSpecification = ComponentSpecification()
-
-###################################################
-
-#class SealObject(object):
-#    pass
-
-#class Component(object):
-#    name = None
-
-#class Condition(object):
-#    text = None
-#    index = None
-
-#def addComponentWithCondition(component, condition)
-
-#class Program(object):
-#    declaration_list = []
-##    def generateObjects(self):
-#        for d in declaration_list:
-#            addComponentWithCondition(d, None)
-#    def __init__(self, declaration_list):
-#        self.declaration_list = declaration_list
-#    def getCode(self):
-#        code = ""
-#        for d in declaration_list:
-#            code += d.getCode()
-#        return code
-
-#class Declaration(object):
+from components import *
 
 ###################################################
 
 class SealParser():
-    def __init__(self, printMsg):
+    def __init__(self, printMsg, verboseMode):
         # Lex & yacc
-        self.lex = lex.lex(module = self, debug = True, reflags=re.IGNORECASE)
-        self.yacc = yacc.yacc(module = self, debug = True)
+        self.lex = lex.lex(module = self, debug = verboseMode, reflags=re.IGNORECASE)
+        self.yacc = yacc.yacc(module = self, debug = verboseMode)
         # current condtion (for context)
         self.currentCondition = None
-        # printing function
+        # save parameters
         self.printMsg = printMsg
+        self.verboseMode = verboseMode
         # initialization done!
-        print "Lex & Yacc init done!"
-        print "Note: cache is used, so warnings are shown only at first-time compilation!"
+        if verboseMode:
+            print "Lex & Yacc init done!"
+            print "Note: cache is used, so warnings are shown only at first-time compilation!"
 
     def run(self, s):
         self.result = []
         if s != None:
-            print s
+            if self.verboseMode:
+                print s
             start = time.time()
             # \n added because needed! helps resolving conflicts
             self.yacc.parse('\n' + s + '\n')
             print "Parsing done in %.4f s" % (time.time() - start)
-            
-        
-#        for x in self.result:
-#            print x
-#            if x != None:
-#                print x.getCode("") + '\n'
         return self.result
 
 ### Lex
@@ -104,7 +45,6 @@ class SealParser():
       "else": "ELSE_TOKEN",
       "elsewhen": "ELSEWHEN_TOKEN",
       "end": "END_TOKEN",
-      "code": "CODE_TOKEN",
       "true": "TRUE_TOKEN",
       "false": "FALSE_TOKEN",
       "not": "NOT_TOKEN",
@@ -112,37 +52,25 @@ class SealParser():
       "or": "OR_TOKEN",
       "==": "EQ_TOKEN",
       "!=": "NEQ_TOKEN",
-      ">": "GR_TOKEN",
-      "<": "LE_TOKEN",
       ">=": "GEQ_TOKEN",
-      "<=": "LEQ_TOKEN",
-      ">": "GR_TOKEN",
-      }
+      "<=": "LEQ_TOKEN"}
  
-    tokens = ['IDENTIFIER_TOKEN',
-              'QUALIFIED_INTEGER_TOKEN', 'newline'] + list(reserved.values())
+    tokens = reserved.values() + ["IDENTIFIER_TOKEN",
+                                  "QUALIFIED_INTEGER_TOKEN"]
+    t_EQ_TOKEN = r'==?'     # alternative spellings: '==' or '='
+    t_NEQ_TOKEN = r'!=|<>'  # alternative spellings: '!=' or '<>'
+    t_GEQ_TOKEN = r'>='
+    t_LEQ_TOKEN = r'<='
 
-#    tokens = [
-#        'CODE_BLOCK', 'IDENTIFIER_TOKEN', 'SECONDS_TOKEN',
-#        'MILISECONDS_TOKEN', 'INTEGER_TOKEN', 'COMMENT_TOKEN' #, 'newline'
-#        ] + list(reserved.values())
+    literals = ['.', ',', ':', ';', '{', '}', '(', ')', '[', ']', '+', '-', '/', '*', '>', '<']
 
-    literals = ['.', ',', ':', ';', '{', '}', '(', ')']
+    t_ignore = " \t\r"
 
     def t_IDENTIFIER_TOKEN(self, t):
         r'[a-zA-Z_][0-9a-zA-Z_]*'
         # This checks if no reserved token is met!!
         t.type = self.reserved.get(t.value, "IDENTIFIER_TOKEN")
         return t
-
-#    def t_SECONDS_TOKEN(self, t):
-#        r'[0-9]+s'
-#        return t
-    
-#    def t_MILISECONDS_TOKEN(self, t):
-#        r'[0-9]+ms'
-#        #t.value = int(t.value[:-2])
-#        return t
 
     def t_QUALIFIED_INTEGER_TOKEN(self, t):
         r'[0-9]+[a-zA-Z_]*'
@@ -158,32 +86,17 @@ class SealParser():
         t.value = (int(prefix), suffix)
         return t
 
+    def t_newline(self, t):
+        r'\n+'
+        t.lexer.lineno += t.value.count("\n")
+
     def t_COMMENT_TOKEN(self, t):
         r'''//.*'''
         t.value = t.value.strip("/ ")
-#        print 'comment:', t.value
-#        print 't', t
-#        return t
-
-    # Needed for OP :)
-#    def t_HELP_TOKEN(self, t):
-#        r'[=<>!][=]?'
-#        # This checks if no reserved token is met!!
-#        t.type = self.reserved.get(t.value, "HELP_TOKEN")
-#        return t
-
-    t_ignore = " \t\r"
-
-    def t_newline(self, t):
-        r'\n+'
-        print "newline", t.lexer.lineno
-        t.lexer.lineno += t.value.count("\n")
-#        self.currLine += 1
-#        return t
 
     def t_error(self, t):
         self.printMsg("Line '%d': Illegal character '%s'" % 
-                      (self.lineNumber, t.value[0]))
+                      (t.lexer.lineno, t.value[0]))
         t.lexer.skip(1)
 
 ### YACC
@@ -211,6 +124,8 @@ class SealParser():
                        | ';'
         '''
         print "parse declaration", p[1]
+        if p[1] == []:
+            return
         if p[1].lower() == 'use' or p[1].lower() == 'read' or p[1].lower() == 'sendto':
             # add component with condition and parameters
             error = componentRegister.useComponent(
@@ -223,12 +138,84 @@ class SealParser():
         p[0] = [] # TODO JJ
 
     def p_when_block(self, p):
-        '''when_block : WHEN_TOKEN condition ':' declaration_list END_TOKEN 
+        '''when_block : WHEN_TOKEN condition ':' declaration_list elsewhen_block END_TOKEN
         '''
         print "parse when block, condition", p[2]
         # TODO: add to condition stack!
         self.currentCondition = p[2]
         p[0] = [] # TODO JJ
+
+    def p_elsewhen_block(self, p):
+        '''elsewhen_block : ELSEWHEN_TOKEN condition ':' declaration_list elsewhen_block
+                          | ELSE_TOKEN ':' declaration_list
+                          |
+        '''
+        p[0] = []
+
+    def p_condition(self, p):
+        '''condition : condition_term
+                     | NOT_TOKEN condition
+                     | condition OR_TOKEN condition_term
+           condition_term : condition_term AND_TOKEN logical_statement
+                     | logical_statement
+        '''
+        if len(p) == 2: # logical_statement
+            p[0] = p[1]
+        elif len(p) == 3: # NOT condition
+            p[0] = Expression(None, p[1], p[2])
+        else:
+            p[0] = Expression(p[1], p[2], p[3])
+
+    def p_logical_statement(self, p):
+      ''' logical_statement : arithmetic_expression
+               | '(' condition ')'
+               | arithmetic_expression EQ_TOKEN arithmetic_expression
+               | arithmetic_expression NEQ_TOKEN arithmetic_expression
+               | arithmetic_expression '>' arithmetic_expression
+               | arithmetic_expression '<' arithmetic_expression
+               | arithmetic_expression GEQ_TOKEN arithmetic_expression
+               | arithmetic_expression LEQ_TOKEN arithmetic_expression
+      '''
+      if len(p) == 2 or p[1] == '(':
+          p[0] = p[1]
+      else:
+          p[0] = Expression(p[1], p[2], p[3])
+
+    def p_arithmetic_expression(self, p):
+        '''arithmetic_expression : arithmetic_expression '+' arithmetic_term
+                | arithmetic_expression '-' arithmetic_term
+                | arithmetic_term
+           arithmetic_term : arithmetic_term '*' arithmetic_factor
+                | arithmetic_term '/' arithmetic_factor
+                | arithmetic_factor
+        '''
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = Expression(p[1], p[2], p[3])
+
+    def p_arithmetic_factor(self, p):
+        '''arithmetic_factor : value
+                             | '(' arithmetic_expression ')'
+        '''
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[1] = p[2]
+
+    # returns pair (string, Value) or (string, Condition)
+    def p_parameter(self, p):
+        '''parameter : IDENTIFIER_TOKEN
+                     | IDENTIFIER_TOKEN value
+        '''
+# TODO:
+#                     | WHEN_TOKEN condition
+# TODO: also support this: "filter >100"
+        if len(p) == 2:
+            p[0] = (p[1], None)
+        else:
+            # Works for both cases, in condition case parameter's name is "when" :)
+            p[0] = (p[1], p[2])
 
     def p_parameter_list(self, p):
         '''parameter_list : parameter_list ',' parameter
@@ -238,18 +225,6 @@ class SealParser():
         elif len(p) == 4:
             p[1].append(p[3])
             p[0] = p[1]
-
-    # returns pair (string, Value) or (string, Condition)
-    def p_parameter(self, p):
-        '''parameter : IDENTIFIER_TOKEN
-                     | IDENTIFIER_TOKEN value
-                     | WHEN_TOKEN condition
-        '''
-        if len(p) == 2:
-            p[0] = (p[1], None)
-        else:
-            # Works for both cases, in condition case parameter's name is "when" :)
-            p[0] = (p[1], p[2])
 
     def p_boolean_value(self, p):
         '''boolean_value : TRUE_TOKEN
@@ -279,113 +254,17 @@ class SealParser():
     def p_value(self, p):
         '''value : boolean_value
                  | integer_value
-                 | IDENTIFIER_TOKEN
+                 | identifier
         '''
         p[0] = p[1]
 
-#    def p_qualified_number(self, p):
-#        '''qualified_number : INTEGER_TOKEN
-#                            | SECONDS_TOKEN
-#                            | MILISECONDS_TOKEN
-#        '''
-#        p[0] = p[1]
-
-#    '''expression : expression PLUS term
-#                  | expression MINUS term
-#       term       : term TIMES factor
-#                  | term DIVIDE factor'''
-
-    def p_condition(self, p):
-        '''condition : logical_statement
-                     | NOT_TOKEN condition
-                     | condition OR_TOKEN condition_term
-          condition_term : condition_term AND_TOKEN logical_statement
-        '''
-        c = Condition()
-        if len(p) == 2:
-            c.right = p[1]
-        elif len(p) == 3:
-            c.op = '!'
-            c.right = p[2]
-        else:
-            if p[2].lower() == "and":
-                c.op = '&'
-            else:
-                c.op = '|'
-            c.left = p[1]
-            c.right = p[3]
-
-#        p[0] = p[1]
-#        for x in range(2, len(p)):
-#            p[0] += ' ' + p[x]
-
-#    def p_class_parameter(self, p):
-#        '''class_parameter : IDENTIFIER_TOKEN
-#        '''
-#        p[0] = p[1]
-
-#    def p_class_parameter(self, p):
-#        '''class_parameter : IDENTIFIER_TOKEN "." IDENTIFIER_TOKEN
-#        '''
-#        p[0] = p[1] + "." + p[3]
-
-#    def p_op(self, p):
-#        ''' op : EQ_TOKEN
-#               | NEQ_TOKEN
-#               | GR_TOKEN
-#               | LE_TOKEN
-#               | GEQ_TOKEN
-#               | LEQ_TOKEN
-#        '''
-#        p[0] = p[1]
-
-    # returns string (at the moment no further analysuis is done)
-    def p_logical_statement(self, p):
-      ''' logical_statement : value
-               | '(' logical_statement ')'
-               | logical_statement EQ_TOKEN logical_statement
-               | logical_statement NEQ_TOKEN logical_statement
-               | logical_statement GR_TOKEN logical_statement
-               | logical_statement LE_TOKEN logical_statement
-               | logical_statement GEQ_TOKEN logical_statement
-               | logical_statement LEQ_TOKEN logical_statement
-      '''
-      if len(p) == 2:
-          p[0] = p[1].getCode()
-      else:
-          if p[1] == '(':
-              p[0] = p[2]
-          else:
-              p[0] = p[1] + " " + p[2] + " " + p[3]
-
     def p_error(self, p):
         if p:
-            print p
-            print p.__dict__
+            # TODO: print better message!
             self.printMsg("Line '%d': Syntax error at '%s'" % (p.lineno, p.value))
         else:
             self.printMsg("Syntax error at EOF")
 
     def errorMsg(self, p, msg):
-        print p
-        print p.__dict__
         self.printMsg("Line '%d': Syntax error at..." % (p.lineno(1)))
         self.printMsg(msg)
-
-### Helpers
-
-#    def queueComment(self, comment, pre = False):
-#        if pre:
-#            if isinstance(comment, list):
-#                for x in comment:
-#                    self.commentQueue.addPreComment(x)
-#            else:
-#                self.commentQueue.setPreComments(comment)
-#        else:
-#            self.commentQueue.setPostComment(comment)
-#            
-#    def getQueuedComment(self):
-#        queuedComment = self.commentQueue
-#        self.commentQueue = comment.Comment([], '')
-#        return queuedComment
-    
