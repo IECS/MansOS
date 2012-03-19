@@ -1,5 +1,7 @@
 import structures
+import components
 
 def generate(outputFile):
-    
-    outputFile.write("%s %s" % ("hello", "world"))
+    pass
+
+#    outputFile.write("%s %s" % ("hello", "world"))
