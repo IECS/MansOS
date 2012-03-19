@@ -24,6 +24,7 @@
 
 import globals as g
 from os import path
+
 class GenerateMakefile():
     '''
     classdocs
@@ -34,8 +35,8 @@ class GenerateMakefile():
         '''
         Constructor
         '''
-        
-    def generate(self, fileName='main.c', projectType = g.MANSOS_PROJECT, pathToMansos = '', appName=''):
+
+    def generate(self, fileName = 'main.c', projectType = g.MANSOS_PROJECT, pathToMansos = '', appName = ''):
         if not path.exists("Makefile") or not path.isfile("Makefile"):
             if projectType == g.SEAL_PROJECT:
                 sourceType = "SEAL_SOURCES"
@@ -43,7 +44,7 @@ class GenerateMakefile():
             else:
                 sourceType = "SOURCES"
                 if appName == '': appName = 'CApp'
-                
+
             with open("Makefile", "w") as out:
                 out.write("""#-*-Makefile-*- vim:syntax=make
 #

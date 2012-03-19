@@ -25,10 +25,10 @@
 import wx.stc
 from math import sqrt
 
-import sealStruct 
-import editStatement
-import Statement
-import editCondition
+import seal_struct
+import edit_statement
+import statement
+import edit_condition
 import globals as g
 
 class CodeEditor(wx.stc.StyledTextCtrl):
@@ -41,18 +41,18 @@ class CodeEditor(wx.stc.StyledTextCtrl):
         self.spaces = ''
         self.noUpdate = noUpdate
         self.lastText = ''
-        
+
         # Set scroll bar range
         self.SetEndAtLastLine(True)
-        
+
         # Set style
         font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
         self.StyleSetSpec(wx.stc.STC_STYLE_DEFAULT, "face:%s,size:10" % font.GetFaceName())
         self.StyleSetSpec(wx.stc.STC_STYLE_LINENUMBER, "back:green,face:%s,size:10" % font.GetFaceName())
-        
+
         # Set captured events
         self.SetModEventMask(wx.stc.STC_PERFORMED_UNDO | wx.stc.STC_PERFORMED_REDO | wx.stc.STC_MOD_DELETETEXT | wx.stc.STC_MOD_INSERTTEXT | wx.stc.STC_LEXER_START)
-        
+
         self.SetUseAntiAliasing(True)
         # On each repaint we add buttons on left side
         self.Bind(wx.stc.EVT_STC_PAINTED, self.on_paint)
@@ -64,27 +64,29 @@ class CodeEditor(wx.stc.StyledTextCtrl):
         self.Bind(wx.stc.EVT_STC_MARGINCLICK, self.getAction)
         self.Bind(wx.EVT_MOTION, self.manageMouse)
         # Add margin for buttons
-        self.SetMarginType(1, wx.stc.STC_MARGIN_SYMBOL )
+        self.SetMarginType(1, wx.stc.STC_MARGIN_SYMBOL)
         self.SetMarginWidth(1, 10)
         self.SetMarginSensitive(1, True)     #this one needs to be mouse-aware
-        
+
     def setLineNumbers(self, enable = True):
         if enable:
             width = len(str(self.GetLineCount()))
-            self.SetMarginType(0, wx.stc.STC_MARGIN_NUMBER )
-            self.SetMarginWidth(0, self.TextWidth(wx.stc.STC_STYLE_LINENUMBER, 
+            self.SetMarginType(0, wx.stc.STC_MARGIN_NUMBER)
+            self.SetMarginWidth(0, self.TextWidth(wx.stc.STC_STYLE_LINENUMBER,
                                                   (width + 1) * '0'))
         else:
             self.SetMarginWidth(0, 0)
 
     def on_paint(self, event):
+        if event != None:
+            wx.Yield()
         self.activePoints = []
         dc = wx.PaintDC(self)
         # Get line number max width in pixels
         width = self.TextWidth(wx.stc.STC_STYLE_LINENUMBER,
-                               (len(str(self.GetLineCount()))+ 1) * '0')
+                               (len(str(self.GetLineCount())) + 1) * '0')
         # Get line height in pixels
-        lineH = (self.PointFromPosition(self.PositionFromLine(1)) - 
+        lineH = (self.PointFromPosition(self.PositionFromLine(1)) -
                  self.PointFromPosition(self.PositionFromLine(0)))[1]
         # Fix for empty document not adding second margin
         if lineH == 0:
@@ -94,31 +96,35 @@ class CodeEditor(wx.stc.StyledTextCtrl):
         if self.GetParent().projectType == g.SEAL_PROJECT:
             self.SetMarginWidth(1, lineH)
             # Set x coordinate for Button Margin(1)
-            x = width + lineH/2
+            x = width + lineH / 2
             # Cycle each line and add button if necessary
             for i in range(0, self.GetLineCount()):
-                if self.API.getStatementType(self.GetLine(i)) < self.API.CONDITION_CONTINUE:
+                if self.API.getStatementType(self.GetLine(i)) <= g.CONDITION:
                     dc.SetPen(wx.Pen("BLACK", 1))
-                    y = self.PointFromPosition(self.PositionFromLine(i))[1] + lineH/2
+                    y = self.PointFromPosition(self.PositionFromLine(i))[1] + lineH / 2
                     # Draw Circle
-                    dc.DrawCirclePoint((x,y),lineH/3) 
+                    dc.DrawCirclePoint((x, y), lineH / 3)
                     # Draw +
                     dc.SetPen(wx.Pen("BLUE", 1))
-                    dc.DrawLine(x-lineH/4, y, x + lineH/4, y)
-                    dc.DrawLine(x, y - lineH/4, x, y + lineH/4)
+                    dc.DrawLine(x - lineH / 4, y, x + lineH / 4, y)
+                    dc.DrawLine(x, y - lineH / 4, x, y + lineH / 4)
                     self.activePoints.append(((x, y), i))
-            self.activeRadius = lineH/2
-    
+            self.activeRadius = lineH / 2
+
     # Hack for really redrawing all window not part of it, 
     # which causes circles to be incorrect
     def doRefresh(self, event):
+        if event != None:
+            wx.Yield()
         self.Refresh(True)
         # Mark that file has changed
         if self.noUpdate == False:
             self.GetParent().saveState = False
             self.GetGrandParent().markAsUnsaved()
-            
-    def doGrammarCheck(self, evt):
+
+    def doGrammarCheck(self, event):
+        if event != None:
+            wx.Yield()
         if self.GetParent().emmbeddedMode == False:
             if self.GetParent().projectType == g.SEAL_PROJECT:
                 if self.lastText != self.GetText():
@@ -129,70 +135,70 @@ class CodeEditor(wx.stc.StyledTextCtrl):
             else:
                 self.API.clearOutputArea()
 
-        
-        
+
+
     def getAction(self, event):
         line = self.LineFromPosition(event.GetPosition())
-        if self.API.getStatementType(self.GetLine(line)) < self.API.CONDITION_CONTINUE:
+        if self.API.getStatementType(self.GetLine(line)) <= g.CONDITION:
             # Get statement and corresponding lines
             statement = self.findAllStatement(line)
             # Get prefix(white spaces), so output is correctly tabed
             selectedLine = self.GetLine(statement[2])
             whitespaceCount = len(selectedLine) - len(selectedLine.lstrip())
             self.spaces = selectedLine[:whitespaceCount]
-            
+
             self.SetSelection(self.PositionFromLine(statement[1]), self.PositionFromLine(statement[3] + 1))
             # Create new sealStruct instance only for this statement
-            seal = sealStruct.Seal(self.API, statement[0])
+            seal = seal_struct.SealStruct(self.API, statement[0])
             data = seal.getFirstObject()
             if seal.getPredictedType() == g.STATEMENT:
-                self.dialog = editStatement.editDialog(None, 
+                self.dialog = edit_statement.EditStatement(None,
                                     self.API, data, self.statementDialogClbk)
                 self.dialog.ShowModal()
                 self.dialog.Destroy()
             elif seal.getPredictedType() == g.CONDITION:
                 self.disableRedraw = True
-                self.dialog = editCondition.editDialog(self.GetGrandParent(), 
+                self.dialog = edit_condition.EditCondition(self.GetGrandParent(),
                                     self.API, data, self.conditionDialogClbk)
                 self.dialog.ShowModal()
                 self.dialog.Destroy()
                 self.disableRedraw = False
             else:
                 self.API.logMsg(g.ERROR, "Unrecognized statement: \n" + seal.getCode())
-            
+
     def statementDialogClbk(self, action, statement):
         if action == True:
             self.ReplaceSelection(statement.getCode(self.spaces) + '\n')
         self.dialog.Destroy()
         self.Enable()
-    
+
     def conditionDialogClbk(self, action, statement):
         if action == True:
             self.ReplaceSelection(statement.getCode(self.spaces) + '\n')
         self.dialog.Destroy()
         self.Enable()
-        
+
     def addStatement(self):
         self.getPlaceForAdding()
-        self.dialog = editStatement.editDialog(None, self.API, 
-                             Statement.Statement(), self.statementDialogClbk)
+        self.dialog = edit_statement.EditStatement(None, self.API,
+                             statement.Statement(), self.statementDialogClbk)
         self.dialog.ShowModal()
         self.dialog.Destroy()
-    
+
     def addCondition(self):
         self.getPlaceForAdding()
-        self.dialog = editCondition.editDialog(None, 
+        self.dialog = edit_condition.EditCondition(None,
                             self.API, '', self.statementDialogClbk)
         self.dialog.ShowModal()
         self.dialog.Destroy()
-    
+
     def calcDist(self, point1, point2):
         # Pitagor theorem for distance calculating between two points
         a = abs(point1[0] - point2[0])
         b = abs(point1[1] - point2[1])
         c = sqrt(a ** 2 + b ** 2)
         return c
-    
+
     def manageMouse(self, event):
         x = event.GetPositionTuple()[0]
         # Guess we have to do this manually if we wan't to change something
@@ -213,19 +219,19 @@ class CodeEditor(wx.stc.StyledTextCtrl):
             self.SetCursor(wx.StockCursor(wx.CURSOR_CHAR))
         # Allow other functions binded to this event to be called
         event.Skip(True)
-            
+
     def findAllStatement(self, lineNr):
         startNr = lineNr - 1
         endNr = lineNr
         # Search for comments before current line
-        while (self.API.getStatementType(self.GetLine(startNr)) == self.API.IGNORE
+        while (self.API.getStatementType(self.GetLine(startNr)) == g.UNKNOWN
               and startNr > -1 and self.GetLine(startNr) != '\n'):
             startNr -= 1
         startNr += 1
-        
+
         # Search for end of statement
         # If this is simple statement, then end is @ this line
-        if self.API.getStatementType(self.GetLine(lineNr)) == self.API.STATEMENT:
+        if self.API.getStatementType(self.GetLine(lineNr)) == g.STATEMENT:
             endNr = lineNr
         else:
             endNr += 1
@@ -233,14 +239,14 @@ class CodeEditor(wx.stc.StyledTextCtrl):
             whens = 1
             ends = 0
             while whens != ends and endNr < self.GetLineCount():
-                if (self.API.getStatementType(self.GetLine(endNr)) 
-                        == self.API.CONDITION_END) :
+                if (self.API.getStatementType(self.GetLine(endNr))
+                        == g.END) :
                     ends += 1
-                elif(self.API.getStatementType(self.GetLine(endNr)) 
-                        == self.API.CONDITION_START):
+                elif(self.API.getStatementType(self.GetLine(endNr))
+                        == g.CONDITION):
                     whens += 1
-                    
-                print whens,":",ends, "@", self.GetLine(endNr)
+
+                print whens, ":", ends, "@", self.GetLine(endNr)
                 endNr += 1
             endNr -= 1
         # Get all lines between start and end

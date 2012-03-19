@@ -23,9 +23,15 @@
 #
 
 import wx
-import globals as g
 
-class EmptyTab(wx.Panel):
-    def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
-        self.projectType = g.SEAL_PROJECT
+class OutputTools(wx.Notebook):
+    def __init__(self, parent, API):
+        wx.Notebook.__init__(self, parent)
+        self.API = API
+
+    def addTools(self):
+        self.API.infoArea.Reparent(self)
+        self.AddPage(self.API.infoArea, self.API.tr("Information"))
+        self.API.listenModule.Reparent(self)
+        self.AddPage(self.API.listenModule, self.API.tr("Listen"))
+

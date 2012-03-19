@@ -22,29 +22,26 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-class Seal():
-    def __init__(self, API, initCode = None, parser = None):
+import threading
+import time
+import globals as g
+
+class ThreadRunner (threading.Thread):
+    def __init__(self, function, dataIn, dataOut, API):
+        threading.Thread.__init__(self)
+        self.function = function
+        # If mutable value passed it works as reference, so we can pass values back
+        self.dataIn = dataIn
+        self.dataOut = dataOut
         self.API = API
-        if parser == None:
-            self.sealParser = self.API.sealParser
-        self.__parsedCode = self.sealParser.run(initCode)
-        
-    
-    def getFirstObject(self):
-        if self.__parsedCode == []:
-            return ''
-        return self.__parsedCode[0]
-    
-    def getPredictedType(self):
-        if self.__parsedCode == []:
-            return ''
-        return self.getFirstObject().getIdentifier()
-    
-    def getData(self):
-        return self.__parsedCode
-    
-    def getCode(self):
-        result = ''
-        for obj in self.getData():
-            result += obj.getCode('') + '\n'
-        return result
+
+    def run (self):
+        locTime = time.time()
+        try:
+            self.dataOut += self.function(self.dataIn)
+        except TypeError:
+            self.API.logMsg(g.WARNING, "In thread running " + str(self.function) + "type mismatch happened!")
+            self.dataOut += [False, "Type error!"]
+            print self.function(self.dataIn)
+        self.dataOut += [time.time() - locTime]
+

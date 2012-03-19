@@ -26,23 +26,23 @@ import time
 import ply.lex as lex
 import ply.yacc as yacc
 
-import Parameter
-import Statement
-import condContainer
-import Condition
+import parameter
+import statement
+import condition_container
+import condition
 import comment
 
 class SealParser():
     def __init__(self, printMsg):
-        
+
         self.commentQueue = comment.Comment()
         self.commentStack = []
         self.printMsg = printMsg
-        
+
         self.lex = lex.lex(module = self, debug = True)
-        
+
         self.yacc = yacc.yacc(module = self, debug = True)
-        
+
         print "Lex & Yacc init done!"
         print "Remember! Cache is used, so warnings are showed only at first compilation!"
 
@@ -55,8 +55,8 @@ class SealParser():
             # \n added because needed! helps resolving conflicts
             self.yacc.parse('\n' + s + '\n')
             print "Parsing done in %.4f s" % (time.time() - start)
-            
-        
+
+
         for x in self.result:
             print x
             if x != None:
@@ -86,60 +86,60 @@ class SealParser():
       "<=": "LEQ_TOKEN",
       ">": "GR_TOKEN",
       }
-    
+
     t_CODE_BLOCK = r'\"\"\".*\"\"\"'
-    
+
     tokens = [
         'CODE_BLOCK', 'IDENTIFIER_TOKEN', 'SECONDS_TOKEN',
         'MILISECONDS_TOKEN', 'INTEGER_TOKEN', 'COMMENT_TOKEN' #, 'newline'
         ] + list(reserved.values())
 
     literals = ['.', ',', ':', ';', '{', '}']
-    
+
     def t_IDENTIFIER_TOKEN(self, t):
         r'[a-zA-Z_][0-9a-zA-Z_]*'
         # This checks if no reserved token is met!!
         t.type = self.reserved.get(t.value, "IDENTIFIER_TOKEN")
         return t
-    
+
     def t_SECONDS_TOKEN(self, t):
         r'[0-9]+s'
         return t
-    
+
     def t_MILISECONDS_TOKEN(self, t):
         r'[0-9]+ms'
         #t.value = int(t.value[:-2])
         return t
-        
+
     def t_INTEGER_TOKEN(self, t):
         r'[0-9]+'
         t.value = int(t.value)
         return t
-        
+
     def t_COMMENT_TOKEN(self, t):
         r'''//.*'''
         t.value = t.value.strip("/ ")
         print 'comment:', t.value
         return t
-    
+
     # Needed for OP :)
     def t_HELP_TOKEN(self, t):
         r'[=<>!][=]?'
         # This checks if no reserved token is met!!
         t.type = self.reserved.get(t.value, "HELP_TOKEN")
         return t
-    
+
     t_ignore = " \t\r\n"
-    
+
 #    def t_newline(self, t):
 #        r'\n'
 #        print "newline", t.lexer.lineno
 #        t.lexer.lineno += t.value.count("\n")
 #        self.currLine += 1
 #        return t
-    
+
     def t_error(self, t):
-        self.printMsg("Line '%d': Illegal character '%s'" % 
+        self.printMsg("Line '%d': Illegal character '%s'" %
                       (self.currLine, t.value[0]))
         t.lexer.skip(1)
 
@@ -149,7 +149,7 @@ class SealParser():
         '''program : declaration_list
         '''
         self.result = p[1]
-        
+
     def p_declaration_list(self, p):
         '''declaration_list : declaration_list declaration
                             |
@@ -192,7 +192,7 @@ class SealParser():
             else:
                 self.commentStack.append(p[1])
         else:
-            p[0] = Statement.Statement(p[1], p[2])
+            p[0] = statement.Statement(p[1], p[2])
             # use & read
 #            if len(p) == 6:
 #                self.queueComment(p[5])
@@ -216,32 +216,32 @@ class SealParser():
         '''when_block : WHEN_TOKEN condition ":" declaration_list elsewhen_block END_TOKEN
         '''
         p[0] = p[5]
-        newCond = Condition.Condition("when")
+        newCond = condition.Condition("when")
         newCond.setCondition(p[2])
         newCond.setStatements(p[4])
 #        self.queueComment(p[4])
 #        if len(self.commentStack) > 1:
 #            self.queueComment(self.commentStack.pop(-2), True)
 #        newCond.setComment(self.getQueuedComment())
-            
+
 #        self.queueComment(p[2])
 #        self.queueComment(p[4])
-        self.queueComment(self.commentStack.pop(), True)
+        #self.queueComment(self.commentStack.pop(), True)
         #p[0].setEndComment(self.getQueuedComment())
         p[0].setWhen(newCond)
         # Needed because elsewhen's arrive in reverse order
         p[0].fixElseWhenOrder()
-    
+
     def p_elsewhen_block(self, p):
         '''elsewhen_block : ELSEWHEN_TOKEN condition ":" declaration_list elsewhen_block
                           | ELSE_TOKEN ":" declaration_list
                           | 
         '''
-        p[0] = condContainer.condContainer()
+        p[0] = condition_container.ConditionContainer()
         # else
         if len(p) == 4:
-            newCond = Condition.Condition("else")
-            newCond.setStatements(p[4])
+            newCond = condition.Condition("else")
+            newCond.setStatements(p[3])
 #            self.queueComment(p[3])
 #            if len(self.commentStack) > 1:
 #                self.queueComment(self.commentStack.pop(-2), True)
@@ -250,14 +250,14 @@ class SealParser():
         # elsewhen
         elif len(p) == 6:
             p[0] = p[5]
-            newCond = Condition.Condition("elsewhen")
+            newCond = condition.Condition("elsewhen")
             newCond.setCondition(p[2])
             newCond.setStatements(p[4])
 #            self.queueComment(p[4])
 #            self.queueComment(self.commentStack.pop(), True)
 #            newCond.setComment(self.getQueuedComment())
             p[0].addElseWhen(newCond)
-            
+
     def p_code_block(self, p):
         '''code_block : CODE_TOKEN IDENTIFIER_TOKEN CODE_BLOCK
         '''
@@ -266,7 +266,7 @@ class SealParser():
     def p_packet_field_specifier(self, p):
         '''packet_field_specifier : "{" packet_field_list "}"
         '''
-    
+
     def p_packet_field_list(self, p):
         '''packet_field_list : packet_field_list "," packet_field
                              | packet_field
@@ -276,7 +276,7 @@ class SealParser():
         '''packet_field : IDENTIFIER_TOKEN
                         | IDENTIFIER_TOKEN value
         '''
-    
+
     # Comments at end of line AFTER code, doesn't include newline on purpose.
 #    def p_comment(self, p):
 #        '''comment : COMMENT_TOKEN
@@ -286,7 +286,7 @@ class SealParser():
 #            p[0] = p[1]
 #        else:
 #            p[0] = ''
-    
+
     # comment_list is the only token who accepts newlines, that means that at
     # each line there is one comment_list, it may be empty, but this assumption 
     # allows comment stack to work properly and grammar to be conflict free.
@@ -319,14 +319,14 @@ class SealParser():
                         | COMMENT_TOKEN
         '''
         pass # TODO
-       
+
     def p_COMMA_C(self, p):
         '''COMMA_C : ',' comment_list
                      | ','
         '''
         pass
-       
-     
+
+
     def p_parameter_list(self, p):
         '''parameter_list : parameter_list COMMA_C parameter
                           |'''
@@ -335,19 +335,19 @@ class SealParser():
         elif len(p) == 4:
             p[1].append(p[3])
             p[0] = p[1]
-        
+
     def p_parameter(self, p):
         '''parameter : IDENTIFIER_TOKEN
                      | IDENTIFIER_TOKEN value
                      | WHEN_TOKEN condition
         '''
         if len(p) == 2:
-            p[0] = Parameter.Parameter(p[1], True)
+            p[0] = parameter.Parameter(p[1], True)
         # Works for both cases, in condition case parameter's name is when :)
         # Idea is that if when exist will always be last parameter, but
         # maybe we can allow it to be any parameter.
         elif len(p) == 3:
-            p[0] = Parameter.Parameter(p[1], p[2])
+            p[0] = parameter.Parameter(p[1], p[2])
 
     def p_value(self, p):
         '''value : boolean_value
@@ -355,13 +355,13 @@ class SealParser():
                  | IDENTIFIER_TOKEN
         '''
         p[0] = p[1]
-    
+
     def p_boolean_value(self, p):
         '''boolean_value : TRUE_TOKEN
                          | FALSE_TOKEN
         '''
         p[0] = p[1]
-        
+
     def p_qualified_number(self, p):
         '''qualified_number : INTEGER_TOKEN
                             | SECONDS_TOKEN
@@ -381,12 +381,12 @@ class SealParser():
         p[0] = p[1]
         for x in range(2, len(p)):
             p[0] += ' ' + p[x]
-         
+
     def p_class_parameter(self, p):
         '''class_parameter : IDENTIFIER_TOKEN "." IDENTIFIER_TOKEN
         '''
         p[0] = p[1] + "." + p[3]
-        
+
     def p_op(self, p):
         ''' op : EQ_TOKEN
                | NEQ_TOKEN
@@ -401,7 +401,7 @@ class SealParser():
         if p:
             self.printMsg("Line '%d': Syntax error at '%s'" % (self.currLine, p.value))
         else:
-            self.printMsg("Line '%d': Syntax error at EOF"% self.currLine)
+            self.printMsg("Line '%d': Syntax error at EOF" % self.currLine)
 
 ### Helpers
 
@@ -414,9 +414,9 @@ class SealParser():
                 self.commentQueue.setPreComments(comment)
         else:
             self.commentQueue.setPostComment(comment)
-            
+
     def getQueuedComment(self):
         queuedComment = self.commentQueue
         self.commentQueue = comment.Comment([], '')
         return queuedComment
-    
+

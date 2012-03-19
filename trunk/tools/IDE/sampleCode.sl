@@ -8,5 +8,5 @@ when System.isDaytime:
 	use RedLed;
 else:
 	use BlueLed;
-end cc
+end
 

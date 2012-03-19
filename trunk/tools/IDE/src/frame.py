@@ -25,7 +25,7 @@
 
 import os
 import wx
-import uploadModule
+import upload_module
 
 class Frame(wx.Frame):
     def __init__(self, parent, title, size, pos, API):
@@ -140,39 +140,49 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_TOOL, self.OnAddStatement, addStatementTool)
         self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
 
-    def OnQuit(self, e):
+    def OnQuit(self, event):
+        if event != None:
+            wx.Yield()
         if self.tabManager.onQuitCheck() == True:
-            # TODO: Doesn't work, still throws error if listening while quitting
-            if self.API.listenModule.listening:
-                self.API.listenModule.doClear(None)
-            self.API.saveSettings()
-            self.Close()
+            self.API.performExit()
 
-    def OnSave(self, e):
+    def OnSave(self, event):
+        if event != None:
+            wx.Yield()
         self.tabManager.doPopupSave(None)
 
-    def OnSaveAs(self, e):
+    def OnSaveAs(self, event):
+        if event != None:
+            wx.Yield()
         self.tabManager.doPopupSaveAs(None)
 
-    def OnUpload(self, e):
+    def OnUpload(self, event):
+        if event != None:
+            wx.Yield()
         if self.tabManager.doPopupSave(None) == True:
             self.API.uploadCore.manageUpload()
 
-    def OnOutput(self, e):
+    def OnOutput(self, event):
+        if event != None:
+            wx.Yield()
         if self.tabManager.doPopupSave(None) == True:
 
             dialog = wx.Dialog(self, wx.ID_ANY, self.tr('Configure upload and compile'),
                 style = wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 
-            uploadModule.UploadModule(dialog, self.API)
+            upload_module.UploadModule(dialog, self.API)
             dialog.Fit()
             dialog.ShowModal()
             dialog.Destroy()
 
-    def OnNew(self, e):
+    def OnNew(self, event):
+        if event != None:
+            wx.Yield()
         self.tabManager.addPage()
 
-    def OnOpen(self, e):
+    def OnOpen(self, event):
+        if event != None:
+            wx.Yield()
         open_ = wx.FileDialog(self,
             self.tr("Open new document"),
             wildcard = 'Seal ' + self.tr('files') + ' (*.sl)|*.sl|' +
@@ -183,12 +193,18 @@ class Frame(wx.Frame):
         open_.Destroy()
 
     def OnAddStatement(self, event):
+        if event != None:
+            wx.Yield()
         self.tabManager.getPageObject().code.addStatement()
 
     def OnAddCondition(self, event):
+        if event != None:
+            wx.Yield()
         self.tabManager.getPageObject().code.addCondition()
 
     def changeLanguage(self, event):
+        if event != None:
+            wx.Yield()
         for i in self.langs:
             if i.IsChecked() == True:
                 self.API.setSetting("activeLanguage", i.GetHelp())

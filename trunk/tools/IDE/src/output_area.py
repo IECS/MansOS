@@ -24,7 +24,7 @@
 
 import wx
 
-class outputArea(wx.Panel):
+class OutputArea(wx.Panel):
     def __init__(self, parent, API, nr):
         wx.Panel.__init__(self, parent)
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -33,14 +33,15 @@ class outputArea(wx.Panel):
         self.outputArea = wx.TextCtrl(self, style = wx.TE_MULTILINE)
         self.outputArea.SetBackgroundColour("black")
         self.outputArea.SetForegroundColour("white")
-
+        self.outputArea.Disable()
         sizer.Add(self.outputArea, 2, wx.EXPAND | wx.ALL, 5)
         self.SetBackgroundColour("white")
         self.SetSizerAndFit(sizer)
         self.SetAutoLayout(1)
 
     def printLine(self, text, clear = False):
-        self.API.outputTools.SetSelection(self.nr)
+        # TODO moves cursor to output area, away from editor if cursor was there!
+        #self.API.outputTools.SetSelection(self.nr)
         if clear:
             self.clear()
         self.outputArea.AppendText(text.strip() + '\n\n')
