@@ -40,7 +40,7 @@ class SealParser():
     reserved = {
       "use": "USE_TOKEN",
       "read": "READ_TOKEN",
-      "sendto": "SENDTO_TOKEN",
+      "output": "OUTPUT_TOKEN",
       "when": "WHEN_TOKEN",
       "else": "ELSE_TOKEN",
       "elsewhen": "ELSEWHEN_TOKEN",
@@ -57,8 +57,10 @@ class SealParser():
  
     tokens = reserved.values() + ["IDENTIFIER_TOKEN",
                                   "QUALIFIED_INTEGER_TOKEN"]
-    t_EQ_TOKEN = r'==?'     # alternative spellings: '==' or '='
-    t_NEQ_TOKEN = r'!=|<>'  # alternative spellings: '!=' or '<>'
+
+    # rules for all tokens that are not keywords (i.e. alphanumeric)
+    t_EQ_TOKEN = r'==?'     # two alternative spellings: '==' or '='
+    t_NEQ_TOKEN = r'!=|<>'  # two alternative spellings: '!=' or '<>'
     t_GEQ_TOKEN = r'>='
     t_LEQ_TOKEN = r'<='
 
@@ -68,7 +70,7 @@ class SealParser():
 
     def t_IDENTIFIER_TOKEN(self, t):
         r'[a-zA-Z_][0-9a-zA-Z_]*'
-        # This checks if no reserved token is met!!
+        # This checks if reserved token is met.
         t.type = self.reserved.get(t.value, "IDENTIFIER_TOKEN")
         return t
 
@@ -104,60 +106,57 @@ class SealParser():
     def p_program(self, p):
         '''program : declaration_list
         '''
-        self.result = p[1]
+        self.result = CodeBlock(CODE_BlOCK_TYPE_WHEN, None, p[1], None)
 
     def p_declaration_list(self, p):
         '''declaration_list : declaration_list declaration
-                            |
+                            | empty
         '''
-        if len(p) == 1:
+        if len(p) == 2:
             p[0] = []
         elif len(p) == 3:
-            p[1].append(p[2])
+            if p[2] != ';':
+                p[1].append(p[2])
             p[0] = p[1]
 
     def p_declaration(self, p):
         '''declaration : USE_TOKEN IDENTIFIER_TOKEN parameter_list ';'
                        | READ_TOKEN IDENTIFIER_TOKEN parameter_list ';'
-                       | SENDTO_TOKEN IDENTIFIER_TOKEN parameter_list ';'
+                       | OUTPUT_TOKEN IDENTIFIER_TOKEN parameter_list ';'
                        | when_block
                        | ';'
         '''
-        print "parse declaration", p[1]
-        if p[1] == []:
-            return
-        if p[1].lower() == 'use' or p[1].lower() == 'read' or p[1].lower() == 'sendto':
-            # add component with condition and parameters
-            error = componentRegister.useComponent(
-                p[1].lower(), p[2].lower(), p[3], self.currentCondition)
-            if error != None:
-                self.errorMsg(p, error)
+        if len(p) == 5:
+            p[0] = Declaration(ComponentUseCase(p[1], p[2], p[3]), None)
+        elif p[1] != ';':
+            p[0] = Declaration(None, p[1])
         else:
-            pass # TODO - conditions
-
-        p[0] = [] # TODO JJ
+            p[0] = p[1]
 
     def p_when_block(self, p):
         '''when_block : WHEN_TOKEN condition ':' declaration_list elsewhen_block END_TOKEN
         '''
-        print "parse when block, condition", p[2]
-        # TODO: add to condition stack!
-        self.currentCondition = p[2]
-        p[0] = [] # TODO JJ
+        p[0] = CodeBlock(CODE_BlOCK_TYPE_WHEN, p[2], p[4], p[5])
 
     def p_elsewhen_block(self, p):
         '''elsewhen_block : ELSEWHEN_TOKEN condition ':' declaration_list elsewhen_block
                           | ELSE_TOKEN ':' declaration_list
-                          |
+                          | empty
         '''
-        p[0] = []
+        if len(p) == 2:   # empty
+            p[0] = None
+        elif len(p) == 4: # else block
+            p[0] = CodeBlock(CODE_BlOCK_TYPE_ELSE, None, p[3], None)
+        else:             # elsewhen block
+            p[0] = CodeBlock(CODE_BlOCK_TYPE_ELSEWHEN, p[2], p[4], p[5])
 
     def p_condition(self, p):
         '''condition : condition_term
-                     | NOT_TOKEN condition
                      | condition OR_TOKEN condition_term
-           condition_term : condition_term AND_TOKEN logical_statement
-                     | logical_statement
+           condition_term : condition_factor
+                     | condition_term AND_TOKEN logical_statement
+           condition_factor : logical_statement
+                     | NOT_TOKEN condition_factor
         '''
         if len(p) == 2: # logical_statement
             p[0] = p[1]
@@ -203,28 +202,36 @@ class SealParser():
         else:
             p[1] = p[2]
 
+    def p_parameter_list(self, p):
+        '''parameter_list : parameter_list ',' parameter
+                          | empty
+        '''
+        if len(p) == 2:
+            p[0] = []
+        elif len(p) == 4:
+            p[1].append(p[3])
+            p[0] = p[1]
+
     # returns pair (string, Value) or (string, Condition)
     def p_parameter(self, p):
         '''parameter : IDENTIFIER_TOKEN
                      | IDENTIFIER_TOKEN value
         '''
-# TODO:
+# TODO?:
 #                     | WHEN_TOKEN condition
-# TODO: also support this: "filter >100"
+# TODO JJ: also support this: "filter >100"
         if len(p) == 2:
             p[0] = (p[1], None)
         else:
             # Works for both cases, in condition case parameter's name is "when" :)
             p[0] = (p[1], p[2])
 
-    def p_parameter_list(self, p):
-        '''parameter_list : parameter_list ',' parameter
-                          |'''
-        if len(p) == 1:
-            p[0] = []
-        elif len(p) == 4:
-            p[1].append(p[3])
-            p[0] = p[1]
+    def p_value(self, p):
+        '''value : boolean_value
+                 | integer_value
+                 | identifier
+        '''
+        p[0] = p[1]
 
     def p_boolean_value(self, p):
         '''boolean_value : TRUE_TOKEN
@@ -238,8 +245,7 @@ class SealParser():
         p[0] = v
 
     def p_integer_value(self, p):
-        '''integer_value : QUALIFIED_INTEGER_TOKEN
-        '''
+        '''integer_value : QUALIFIED_INTEGER_TOKEN'''
         v = Value()
         v.value = p[1][0]
         v.suffix = p[1][1]
@@ -251,12 +257,9 @@ class SealParser():
         v.value = p[1]
         p[0] = v
 
-    def p_value(self, p):
-        '''value : boolean_value
-                 | integer_value
-                 | identifier
-        '''
-        p[0] = p[1]
+    def p_empty(self, p):
+        '''empty :'''
+        pass
 
     def p_error(self, p):
         if p:
