@@ -23,9 +23,10 @@
 #
 
 import wx
-import globals as g
+
+from globals import * #@UnusedWildImport
 
 class EmptyTab(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
-        self.projectType = g.SEAL_PROJECT
+        self.projectType = SEAL_PROJECT

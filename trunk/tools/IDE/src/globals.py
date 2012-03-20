@@ -26,19 +26,19 @@
 # Note that this file is included in every project file.
 
 # logging levels
-ALL = 4
-INFO = 3
-WARNING = 2
-ERROR = 1
-NO_LOGGING = 0
+LOG_ALL = 4
+LOG_INFO = 3
+LOG_WARNING = 2
+LOG_ERROR = 1
+LOG_OFF = 0
 # Log texts
 LOG_TEXTS = {
-    INFO: "Info",
-    WARNING: "Warning",
-    ERROR: "Error"
+    LOG_INFO: "Info",
+    LOG_WARNING: "Warning",
+    LOG_ERROR: "Error"
 }
 # Set log level
-LOG = ALL
+LOG = LOG_ALL
 # Allow log output to file
 LOG_TO_FILE = True
 # File name for log output

@@ -28,7 +28,6 @@ import os
 def main():
     if not importsOk():
         exit(1)
-
     # Go to real directory for import to work
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     from src import api_core

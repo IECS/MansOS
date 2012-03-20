@@ -22,15 +22,15 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import globals as g
+from globals import * #@UnusedWildImport
 
 class Translater:
     def __init__(self, parent):
         self.parent = parent
-        self.translations = { 
+        self.translations = {
             "ENG" :{
                 'langName':"English",
-                
+
                 # SEAL SPECIFIC PART
                 "period": "Period",
                 "on_at": "Turn on at",
@@ -39,7 +39,7 @@ class Translater:
                 "turn_on": "Turn on",
                 "blink": "Blink one time",
                 "blinkTwice": "Blink 2 times",
-                "blinkTimes": "Blink number of times",
+                "blinkTimes": "Blink n times",
                 "print": "Print",
                 "aggregate": "Aggregate",
                 "baudrate": "Baudrate",
@@ -47,10 +47,10 @@ class Translater:
                 # APLICATION SPECIFIC PART
                 # is usually written in English, so no need to translate
                 },
-                        
+
             "LV" :{
                 'langName':"Latviešu",
-                
+
                 # SEAL SPECIFIC PART
                 "period": "Periods",
                 "on_at": "Ieslēgt pēc",
@@ -64,7 +64,7 @@ class Translater:
                 "aggregate": "Apvienot",
                 "baudrate": "Baudrate",
                 "crc": "Kontrolsumma",
-                
+
                 # APLICATION SPECIFIC PART
                 "File": "Izvēlne",
                 "Options": "Uzstādījumi",
@@ -120,7 +120,7 @@ class Translater:
                 "No devices found!" : "Ierīces nav atrastas!"
                 }
         }
-        
+
     def translate(self, data, lang = ''):
         if lang == '':
             lang = self.parent.getSetting("activeLanguage")
@@ -130,6 +130,6 @@ class Translater:
                 return self.translations[lang][data]
         # Don't log ENG, because it's not ment to be translated
         if lang != "ENG":
-            self.parent.logMsg(g.WARNING, "No translation for " + 
+            self.parent.logMsg(LOG_WARNING, "No translation for " +
                              "'" + lang + "': '" + data + "'")
         return data

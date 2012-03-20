@@ -22,7 +22,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import comment
+from comment import Comment
 
 class Condition():
     def __init__(self, mode):
@@ -33,46 +33,45 @@ class Condition():
         # Statement instances
         self.__statements = []
         # Comments
-        self.__comment = comment.Comment()
-        
+        self.__comment = Comment()
+
     def setMode(self, mode):
         self.__mode = mode
-        
+
     def getMode(self):
         return self.__mode
-    
+
     def setCondition(self, condition):
         self.__condition = condition
-        
+
     def getCondition(self):
         return self.__condition
-    
+
     def setStatements(self, statements):
         self.__statements = statements
-        
+
     def addStatement(self, statement):
         self.__statements.append(statement)
-        
+
     def getStatements(self):
         return self.__statements
-    
+
     def getStatementCode(self, prefix):
         result = ''
         for statement in self.__statements:
             result += statement.getCode(prefix) + '\n'
         return result
-    
+
     def getComment(self):
         return self.__comment
-    
+
     def setComment(self, comment):
         self.__comment = comment
-    
+
     def getCode(self, prefix):
         result = self.getComment().getPreComments(prefix) + '\n'
         result += prefix + self.getMode() + (' ' + self.getCondition()).rstrip()
-        result += ': ' +self.getComment().getPostComment(True) + '\n'
+        result += ': ' + self.getComment().getPostComment(True) + '\n'
         for statement in self.getStatements():
-            result +=statement.getCode(prefix + '\t') + '\n'
+            result += statement.getCode(prefix + '\t') + '\n'
         return result.rstrip()
-        
