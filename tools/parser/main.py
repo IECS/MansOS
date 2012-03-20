@@ -117,12 +117,15 @@ def main():
     # parse input file (SEAL code)
     parser = parser.SealParser(printLine, verboseMode)
     parser.run(contents)
+
+    print parser.result.getCode(0)
+
     # generate C code to an output file
-    if outputFileName is None:
-        codegen.generate(sys.stdout)
-    else:
-        with open(outputFileName, 'w') as outputFile:
-            codegen.generate(outputFile)
+#    if outputFileName is None:
+#        codegen.generate(sys.stdout)
+#    else:
+#        with open(outputFileName, 'w') as outputFile:
+#            codegen.generate(outputFile)
 
 if __name__ == '__main__':
     main()
