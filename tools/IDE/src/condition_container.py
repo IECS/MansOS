@@ -22,8 +22,8 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import globals as g
-import comment
+from globals import * #@UnusedWildImport
+from comment import Comment
 
 class ConditionContainer:
     def __init__(self):
@@ -33,9 +33,9 @@ class ConditionContainer:
         # Holds array of Condition instances representing elsewhen
         self.__elseWhen = []
         # Describe end statement
-        self.__endComment = comment.Comment()
+        self.__endComment = Comment()
 
-        self.__identifier = g.CONDITION
+        self.__identifier = CONDITION
 
     def setWhen(self, when):
         self.__when = when
@@ -57,12 +57,10 @@ class ConditionContainer:
 
     # From yacc, all conditions in elsewhen arrive in opposite order
     def fixElseWhenOrder(self):
-        print self.__elseWhen
         newList = []
         while len(self.__elseWhen) > 0:
             newList.append(self.__elseWhen.pop())
         self.__elseWhen = newList
-        print self.__elseWhen
 
     def getEndComment(self):
         return self.__endComment

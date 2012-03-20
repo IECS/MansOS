@@ -25,12 +25,12 @@
 from os import chdir
 from subprocess import Popen, PIPE, STDOUT
 
-import generate_makefile
+from generate_makefile import GenerateMakefile
 
 class DoCompile():
     def __init__(self, API):
         self.API = API
-        self.generateMakefile = generate_makefile.GenerateMakefile()
+        self.generateMakefile = GenerateMakefile()
 
     def doCompile(self, sourceFileName, platform, path, projectType,
                   cleanAfter = True):

@@ -22,18 +22,18 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import parameter
-import globals as g
-import comment
+from globals import * #@UnusedWildImport
+from parameter import Parameter
+from comment import Comment
 
 class Statement():
     def __init__(self, mode = '', obj = ''):
         self.__mode = mode.strip()
         self.__obj = obj.strip()
         self.__param = []
-        self.__comment = comment.Comment()
+        self.__comment = Comment()
         self.__condition = ''
-        self.__identifier = g.STATEMENT
+        self.__identifier = STATEMENT
 
     def setMode(self, mode):
         self.__mode = mode.strip()
@@ -68,7 +68,7 @@ class Statement():
 
     # This automatically overwrites old parameter with same name, so be careful
     def addParameterByNameAndValue(self, name, value):
-        self.addParameter(parameter.Parameter(name, value))
+        self.addParameter(Parameter(name, value))
 
     def getParam(self):
         return self.__param

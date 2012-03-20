@@ -26,16 +26,16 @@ import time
 import ply.lex as lex
 import ply.yacc as yacc
 
-import parameter
-import statement
-import condition_container
-import condition
-import comment
+from parameter import Parameter
+from statement import Statement
+from condition_container import ConditionContainer
+from condition import Condition
+from comment import Comment
 
 class SealParser():
     def __init__(self, printMsg):
 
-        self.commentQueue = comment.Comment()
+        self.commentQueue = Comment()
         self.commentStack = []
         self.printMsg = printMsg
 
@@ -46,21 +46,23 @@ class SealParser():
         print "Lex & Yacc init done!"
         print "Remember! Cache is used, so warnings are showed only at first compilation!"
 
-    def run(self, s):
+    def run(self, s, silent = False):
         self.result = []
+        self.silent = silent
         if s != None:
             self.currLine = 0
-            print s
             start = time.time()
             # \n added because needed! helps resolving conflicts
             self.yacc.parse('\n' + s + '\n')
-            print "Parsing done in %.4f s" % (time.time() - start)
+            if not self.silent:
+                print "Parsing done in %.4f s" % (time.time() - start)
 
-
-        for x in self.result:
-            print x
-            if x != None:
-                print x.getCode("") + '\n'
+        #=======================================================================
+        # for x in self.result:
+        #    print x
+        #    if x != None:
+        #        print x.getCode("") + '\n'
+        #=======================================================================
         return self.result
 
 ### Lex
@@ -139,7 +141,8 @@ class SealParser():
 #        return t
 
     def t_error(self, t):
-        self.printMsg("Line '%d': Illegal character '%s'" %
+        if not self.silent:
+            self.printMsg("Line '%d': Illegal character '%s'" %
                       (self.currLine, t.value[0]))
         t.lexer.skip(1)
 
@@ -192,7 +195,7 @@ class SealParser():
             else:
                 self.commentStack.append(p[1])
         else:
-            p[0] = statement.Statement(p[1], p[2])
+            p[0] = Statement(p[1], p[2])
             # use & read
 #            if len(p) == 6:
 #                self.queueComment(p[5])
@@ -216,7 +219,7 @@ class SealParser():
         '''when_block : WHEN_TOKEN condition ":" declaration_list elsewhen_block END_TOKEN
         '''
         p[0] = p[5]
-        newCond = condition.Condition("when")
+        newCond = Condition("when")
         newCond.setCondition(p[2])
         newCond.setStatements(p[4])
 #        self.queueComment(p[4])
@@ -237,10 +240,10 @@ class SealParser():
                           | ELSE_TOKEN ":" declaration_list
                           | 
         '''
-        p[0] = condition_container.ConditionContainer()
+        p[0] = ConditionContainer()
         # else
         if len(p) == 4:
-            newCond = condition.Condition("else")
+            newCond = Condition("else")
             newCond.setStatements(p[3])
 #            self.queueComment(p[3])
 #            if len(self.commentStack) > 1:
@@ -250,7 +253,7 @@ class SealParser():
         # elsewhen
         elif len(p) == 6:
             p[0] = p[5]
-            newCond = condition.Condition("elsewhen")
+            newCond = Condition("elsewhen")
             newCond.setCondition(p[2])
             newCond.setStatements(p[4])
 #            self.queueComment(p[4])
@@ -342,12 +345,12 @@ class SealParser():
                      | WHEN_TOKEN condition
         '''
         if len(p) == 2:
-            p[0] = parameter.Parameter(p[1], True)
+            p[0] = Parameter(p[1], True)
         # Works for both cases, in condition case parameter's name is when :)
         # Idea is that if when exist will always be last parameter, but
         # maybe we can allow it to be any parameter.
         elif len(p) == 3:
-            p[0] = parameter.Parameter(p[1], p[2])
+            p[0] = Parameter(p[1], p[2])
 
     def p_value(self, p):
         '''value : boolean_value
@@ -398,10 +401,11 @@ class SealParser():
         p[0] = p[1]
 
     def p_error(self, p):
-        if p:
-            self.printMsg("Line '%d': Syntax error at '%s'" % (self.currLine, p.value))
-        else:
-            self.printMsg("Line '%d': Syntax error at EOF" % self.currLine)
+        if not self.silent:
+            if p:
+                self.printMsg("Line '%d': Syntax error at '%s'" % (self.currLine, p.value))
+            else:
+                self.printMsg("Line '%d': Syntax error at EOF" % self.currLine)
 
 ### Helpers
 
@@ -417,6 +421,6 @@ class SealParser():
 
     def getQueuedComment(self):
         queuedComment = self.commentQueue
-        self.commentQueue = comment.Comment([], '')
+        self.commentQueue = Comment([], '')
         return queuedComment
 

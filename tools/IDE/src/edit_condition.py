@@ -23,133 +23,77 @@
 #
 
 import wx
-import editor_manager
-import globals as g
-import condition_container
+import wx.lib.scrolledpanel as scrolled
 
-class EditCondition(wx.Dialog):
+from globals import * #@UnusedWildImport
+
+class EditCondition(scrolled.ScrolledPanel):
     def __init__(self, parent, API, condition, saveCallback):
-        super(EditCondition, self).__init__(parent = parent,
-             style = wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        super(EditCondition, self).__init__(parent, style = wx.RAISED_BORDER)
+        self.saveCallback = saveCallback
         self.API = API
         # Just a shorter name
         self.tr = self.API.translater.translate
-
-        self.box = []
-        self.elseWhenCode = []
-        self.SetTitle(self.tr("Edit condition"))
-        self.saveCallback = saveCallback
-        if condition == '':
-            condition = condition_container.ConditionContainer()
-            condition.setWhen(condition.Condition("when"))
-        self.condition = condition
-        # Global sizer for current tab
         self.main = wx.BoxSizer(wx.VERTICAL)
-        self.main.AddSpacer((0, 10))
-        self.whenSizer = wx.BoxSizer(wx.VERTICAL)
-        self.elseWhenSizer = wx.BoxSizer(wx.VERTICAL)
-        self.elseSizer = wx.BoxSizer(wx.VERTICAL)
-        self.main.Add(self.whenSizer, 1, wx.EXPAND | wx.ALL, 1);
+        self.data = wx.GridBagSizer(hgap = 2, vgap = 1)
+        self.main.Add(self.data, 1, wx.EXPAND | wx.ALL, 5)
 
-        self.whenCode = editor_manager.EditorManager(self, self.API, True)
-        code = ''
-        for statement in condition.getWhen().getStatements():
-            code += statement.getCode('') + "\n"
-        self.whenCode.changeCode(code, True)
+        self.choices = []
+        self.oldValues = {}
+        self.text = []
 
-        self.elseCode = editor_manager.EditorManager(self, self.API, True)
-        if condition.getElse() == None:
-            self.elseCode.changeCode("", True)
-        else:
-            self.elseCode.changeCode(condition.getElse().getStatementCode(''), True)
+        self.condition = condition
+        self.generateWhenSelect()
 
-        self.box.append(self.addStatementField(self.API.getDefaultConditions(),
-                                               "When", self.whenSizer,
-                                               self.whenCode))
-        self.box[0].SetValue(condition.getWhen().getCondition())
+        data = self.condition.getElseWhen()
+        self.generateElseWhenSelects(data)
 
-        noElseWhen = True
-        for x in condition.getElseWhen():
-            noElseWhen = False
-            sizer = wx.BoxSizer(wx.VERTICAL)
-            self.elseWhenCode.append(editor_manager.EditorManager(self, self.API, True))
-            self.box.append(self.addStatementField(self.API.getDefaultConditions(),
-                                               "elsewhen", sizer,
-                                               self.elseWhenCode[-1], None))
-            self.box[-1].SetValue(x.getCondition())
-            code = ''
-            for statement in x.getStatements():
-                code += statement.getCode('') + "\n"
-            self.elseWhenCode[-1].changeCode(code, True)
-            self.elseWhenSizer.Add(sizer, 1, wx.EXPAND | wx.ALL, 1);
-        if not noElseWhen:
-            self.main.Add(self.elseWhenSizer, 1, wx.EXPAND | wx.ALL, 1);
-
-        self.main.Add(self.elseSizer, 1, wx.EXPAND | wx.ALL, 1);
-
-        self.box.append(self.addStatementField(None, "else", self.elseSizer,
-                                               self.elseCode))
-
-        self.buttonPane = wx.BoxSizer(wx.HORIZONTAL)
-        self.save = wx.Button(self, label = self.tr("Save"), size = (150, -1), name = "save")
-        self.Bind(wx.EVT_BUTTON, self.saveClk, self.save)
-        self.buttonPane.Add(self.save, 0)
-        self.close = wx.Button(self, label = self.tr("Close"), size = (150, -1), name = "close")
-        self.Bind(wx.EVT_BUTTON, self.saveClk, self.close)
-        self.buttonPane.Add(self.close, 0)
-        self.main.Add(self.buttonPane, 0)
+        self.SetBackgroundColour("black")
 
         self.SetSizer(self.main)
+        self.SetAutoLayout(1)
+        self.main.Fit(self)
+        self.SetupScrolling()
         self.Show()
 
-    def addStatementField(self, choices, label, contSizer, editor):
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(wx.StaticText(self, label = label + " "))
-        if choices != None:
-            box = wx.ComboBox(self, choices = choices, style = wx.CB_DROPDOWN)
-            sizer.Add(box)
-        else:
-            box = None
-        sizer.Add(wx.StaticText(self, label = ":"))
-        contSizer.Add(sizer)
-        contSizer.Add(editor, 1, wx.EXPAND | wx.ALL, 5);
-        return box
+    def generateWhenSelect(self):
+        # Generate all objects
+        self.whenText = wx.StaticText(self, label = self.tr("When") + ":")
+        self.when = wx.ComboBox(self, choices = self.API.getDefaultConditions(),
+                                style = wx.CB_DROPDOWN, name = "when",
+                                size = (200, 25))
+        self.when.SetValue(self.condition.getWhen().getCondition())
+        self.oldValues['when'] = self.condition.getWhen().getCondition()
 
-    def saveClk(self, event):
-        if (event.GetEventObject().GetName() == "save"):
-            # Prepare input for parsing, tabs etc. are not important here!
-            whenComment = self.condition.getWhen().getComment()
-            result = whenComment.getPreComments("")
-            result += '\nwhen ' + self.box[0].GetValue() + ': '
-            result += whenComment.getPostComment(True)
-            result += '\n' + self.whenCode.code.GetText()
+        self.Bind(wx.EVT_COMBOBOX, self.updateOriginal, self.when)
+        self.Bind(wx.EVT_TEXT, self.updateOriginal, self.when)
 
-            elseWhen = self.condition.getElseWhen()
-            for x in range(0, len(self.elseWhenCode)):
-                result += elseWhen[x].getComment().getPreComments("") + '\n'
-                result += "elsewhen " + self.box[x + 1].GetValue() + ': '
-                result += elseWhen[x].getComment().getPostComment(True) + '\n'
-                result += self.elseWhenCode[x].code.GetText()
-            elseText = self.elseCode.code.GetText()
-            if  elseText != "":
-                else_ = self.condition.getElse()
-                if else_ != None:
-                    result += else_.getComment().getPreComments("")
-                result += '\nelse: '
-                if self.condition.getElse() != None:
-                    result += else_.getComment().getPostComment(True) + '\n'
-                result += elseText
+        # Add them to layout
+        self.data.Add(self.whenText, pos = (0, 0))
+        self.data.Add(self.when, pos = (0, 1))
+        # Set used row count
+        self.row = 1
 
-            endComment = self.condition.getEndComment()
-            result += endComment.getPreComments("") + '\nend '
-            result += endComment.getPostComment(True)
+    def generateElseWhenSelects(self, data):
+        # Cycle all parameters and draw according boxes
+        for condition in data:
+            self.text.append(wx.StaticText(self, label = self.tr("Elsewhen") + ":"))
+            self.data.Add(self.text[-1], pos = (self.row, 0))
+            self.choices.append(wx.ComboBox(self, style = wx.CB_DROPDOWN,
+                            choices = self.API.getDefaultConditions(),
+                            name = str(self.row), size = (200, 25)))
+            self.Bind(wx.EVT_COMBOBOX, self.updateOriginal, self.choices[-1])
 
-            data = self.API.sealParser.run(result)
+            self.choices[-1].SetValue(condition.getCondition())
+            self.oldValues[str(self.row)] = str(condition.getCondition())
 
-            # returning [0] because parser should only return one element
-            if len(data) == 1:
-                self.saveCallback(True, data[0])
-            else:
-                self.API.logMsg(g.ERROR, "Parsing error in:\n" + result)
-        else:
-            self.saveCallback(False, None)
+            self.data.Add(self.choices[-1], pos = (self.row, 1))
+            self.row += 1
+
+    def updateOriginal(self, event = None):
+        obj = event.GetEventObject()
+        oldVal = ''
+        if obj.GetName() in self.oldValues:
+            oldVal = self.oldValues[obj.GetName()]
+        self.oldValues[obj.GetName()] = obj.GetValue()
+        self.saveCallback(obj.GetName(), obj.GetValue(), oldVal)

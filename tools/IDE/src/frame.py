@@ -25,7 +25,8 @@
 
 import os
 import wx
-import upload_module
+
+from upload_module import UploadModule
 
 class Frame(wx.Frame):
     def __init__(self, parent, title, size, pos, API):
@@ -35,23 +36,36 @@ class Frame(wx.Frame):
 
         self.API = API
         self.API.path = self.path
+        self.lastPanel = None
+
         # Just a shorter name
         self.tr = self.API.tr
         self.toolbar = None
         self.menubar = None
         self.InitUI()
         self.SetBackgroundColour("white")
-        self.splitter = wx.SplitterWindow(self)
-        self.API.outputTools.Reparent(self.splitter)
-        self.API.tabManager.Reparent(self.splitter)
-        self.tabManager = self.API.tabManager
 
-        self.splitter.SetMinimumPaneSize(100)
-        self.splitter.SetBackgroundColour("white")
-        self.splitter.SplitHorizontally(self.tabManager, self.API.outputTools, -200)
+        self.split1 = wx.SplitterWindow(self, style = wx.SP_LIVE_UPDATE)
+
+        self.API.editorSplitter.Reparent(self.split1)
+        self.API.outputTools.Reparent(self.split1)
+
+        self.split1.SplitHorizontally(self.API.editorSplitter,
+                                      self.API.outputTools, -100)
+        self.split1.SetMinimumPaneSize(100)
+
+        self.API.tabManager.Reparent(self.API.editorSplitter)
+        self.API.editPanel.Reparent(self.API.editorSplitter)
+        self.tabManager = self.API.tabManager
+        self.API.editorSplitter.SetBackgroundColour("white")
+        self.API.editorSplitter.doSplit = self.splitEditor
+
+        # Must show&hide to init
+        self.API.editorSplitter.doSplit(self.API.editPanel)
+        self.API.editorSplitter.Unsplit()
 
         # Makes outputArea to maintain it's height when whole window is resized
-        self.splitter.SetSashGravity(1)
+        self.split1.SetSashGravity(1)
 
     def InitUI(self):
         fileMenu = wx.Menu()
@@ -170,7 +184,7 @@ class Frame(wx.Frame):
             dialog = wx.Dialog(self, wx.ID_ANY, self.tr('Configure upload and compile'),
                 style = wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 
-            upload_module.UploadModule(dialog, self.API)
+            UploadModule(dialog, self.API)
             dialog.Fit()
             dialog.ShowModal()
             dialog.Destroy()
@@ -217,3 +231,13 @@ class Frame(wx.Frame):
     def enableAdders(self):
         self.toolbar.EnableTool(wx.ID_ADD, True)
         self.toolbar.EnableTool(wx.ID_APPLY, True)
+
+    def splitEditor(self, editPanel):
+        if self.lastPanel != None:
+            self.API.editorSplitter.Unsplit()
+            self.lastPanel.Destroy()
+        self.lastPanel = editPanel
+        if editPanel != None:
+            self.API.editorSplitter.SplitVertically(self.API.tabManager,
+                                                editPanel, -305)
+

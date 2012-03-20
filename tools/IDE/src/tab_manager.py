@@ -23,14 +23,15 @@
 #
 
 import wx
-import empty_tab
-import editor_manager
-import globals as g
+
+from globals import * #@UnusedWildImports
+from empty_tab import EmptyTab
+from editor_manager import EditorManager
 
 class TabManager(wx.Notebook):
     def __init__(self, parent, API):
         wx.Notebook.__init__(self, parent)
-        self.empty = empty_tab.EmptyTab(self)
+        self.empty = EmptyTab(self)
         self.API = API
         self.API.tabManager = self
         # Just a shorter name
@@ -38,7 +39,7 @@ class TabManager(wx.Notebook):
 
         # Need to set because next statement uses it
         self.nextPageNr = 1
-        self.AddPage(editor_manager.EditorManager(self, self.API),
+        self.AddPage(EditorManager(self, self.API),
                 self.tr("Untitled document") + ' ' + str(self.nextPageNr))
         #self.AddPage(ex, "General statements", True)
         self.AddPage(self.empty, "+")
@@ -50,7 +51,7 @@ class TabManager(wx.Notebook):
     def onPageChanged(self, event):
         sel = self.GetSelection()
         if self.GetPageCount() - 1 == sel:
-            self.AddPage(editor_manager.EditorManager(self, self.API),
+            self.AddPage(EditorManager(self, self.API),
                 self.tr("Untitled document") + ' ' + str(self.nextPageNr))
             self.nextPageNr += 1
             self.RemovePage(sel)
@@ -60,10 +61,10 @@ class TabManager(wx.Notebook):
             self.Layout()
         if event != None:
             event.Skip()
-            if self.getPageObject().projectType == g.SEAL_PROJECT:
-                self.GetGrandParent().enableAdders()
+            if self.getPageObject().projectType == SEAL_PROJECT:
+                self.API.frame.enableAdders()
             else:
-                self.GetGrandParent().disableAdders()
+                self.API.frameAPI.frame.disableAdders()
 
 
     def showPopupMenu(self, event):

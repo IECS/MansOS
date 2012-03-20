@@ -25,7 +25,7 @@
 import os
 from subprocess import Popen, PIPE, STDOUT
 
-import globals as g
+from globals import * #@UnusedWildImport
 
 class DoUpload():
     def __init__(self, pathToMansos):
@@ -35,7 +35,7 @@ class DoUpload():
         res = compiler()
         if res[0] == False:
             return res
-        if targetType == g.SHELL:
+        if targetType == SHELL:
             return self.shellUpload(targets, platform)
         else:
             os.unsetenv("BSLPORT")

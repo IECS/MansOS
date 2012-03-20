@@ -28,24 +28,24 @@ import wx
 import os
 from time import gmtime, strftime
 
-import frame
-import seal_struct
-import seal_syntax
-import translater
-import globals as g
-import seal_parser
-import output_area
-import tab_manager
-import upload_core
-import output_tools
-import listen_module
+from frame import Frame
+from seal_struct import SealStruct
+from seal_syntax import SealSyntax
+from translater import Translater
+from seal_parser import SealParser
+from output_area import OutputArea
+from tab_manager import TabManager
+from upload_core import UploadCore
+from output_tools import OutputTools
+from listen_module import ListenModule
+from globals import * #@UnusedWildImport
 
 class ApiCore:
     def __init__(self):
         self.path = os.getcwd()
         # Read settings from file
-        if os.path.exists(g.SETTING_FILE) and os.path.isfile(g.SETTING_FILE):
-            f = open(g.SETTING_FILE, 'r')
+        if os.path.exists(SETTING_FILE) and os.path.isfile(SETTING_FILE):
+            f = open(SETTING_FILE, 'r')
             lines = f.readlines()
             self.__settings = {}
             for x in lines:
@@ -63,10 +63,10 @@ class ApiCore:
         self.onExit = [self.saveSettings]
 
 
-        if g.LOG_TO_FILE:
+        if LOG_TO_FILE:
             path = os.getcwd()
             os.chdir(self.path)
-            self.logFile = open(g.LOG_FILE_NAME, "a")
+            self.logFile = open(LOG_FILE_NAME, "a")
             os.chdir(path)
             self.onExit.append(self.logFile.close)
 
@@ -78,46 +78,53 @@ class ApiCore:
         self.emptyFrame = wx.Frame(None)
 
         # Defines seal syntax
-        self.sealSyntax = seal_syntax.SealSyntax()
+        self.sealSyntax = SealSyntax()
 
         # Compile regex for finding actuators
         self.__reActuators = re.compile(string.join(self.sealSyntax.actuators.keys(), '|'), re.I)
 
         # Init translation module
-        self.translater = translater.Translater(self)
+        self.translater = Translater(self)
         self.tr = self.translater.translate
 
         # Init output_tools
-        self.outputTools = output_tools.OutputTools(self.emptyFrame, self)
+        self.outputTools = OutputTools(self.emptyFrame, self)
 
         # Init outputArea for info, 1st tab
-        self.infoArea = output_area.OutputArea(self.emptyFrame, self, 0)
+        self.infoArea = OutputArea(self.emptyFrame, self, 0)
         self.printInfo = self.infoArea.printLine
         self.clearInfoArea = self.infoArea.clear
 
         # Init outputArea for output, 2nd tab
-        self.outputArea = output_area.OutputArea(self.emptyFrame, self, 1)
+        self.outputArea = OutputArea(self.emptyFrame, self, 1)
         self.printOutput = self.outputArea.printLine
         self.clearOutputArea = self.outputArea.clear
 
         # Init seal parser
-        self.sealParser = seal_parser.SealParser(self.printInfo)
-        self.seal = seal_struct.SealStruct(self)
+        self.sealParser = SealParser(self.printInfo)
+        self.seal = SealStruct(self)
+
+        self.editorSplitter = wx.SplitterWindow(self.emptyFrame,
+                                                style = wx.SP_LIVE_UPDATE)
+        self.editorSplitter.doSplit = None
+        self.editorSplitter.SetMinimumPaneSize(305)
+        self.editorSplitter.SetSashGravity(1)
 
         # Init tab manager 
-        self.tabManager = tab_manager.TabManager(self.emptyFrame, self)
+        self.tabManager = TabManager(self.emptyFrame, self)
 
-        self.uploadCore = upload_core.UploadCore(self, self.printInfo)
+        self.uploadCore = UploadCore(self, self.printInfo)
         self.uploadTargets = ([], self.tr('default device'))
 
         # Init listenModule
-        self.listenModule = listen_module.ListenModule(self.emptyFrame, self)
+        self.listenModule = ListenModule(self.emptyFrame, self)
 
         self.outputTools.addTools()
 
-        self.frame = frame.Frame(None, "MansOS IDE", (800, 500), (100, 100), self)
-        self.onExit.append(self.frame.Close)
+        self.editPanel = wx.Panel(self.emptyFrame)
 
+        self.frame = Frame(None, "MansOS IDE", (800, 500), (100, 100), self)
+        self.onExit.append(self.frame.Close)
 
         print "List of parentless objects(empty list is good!):"
         print str(self.emptyFrame.GetChildren()).replace(", ", "\n").strip("wxWindowList: []")
@@ -134,7 +141,7 @@ class ApiCore:
         if actuator != []:
             if actuator[0] in self.sealSyntax.actuators:
                 return self.sealSyntax.actuators[actuator[0]]['role']
-        return g.UNKNOWN
+        return UNKNOWN
 
     def getActuatorInfo(self, actuator):
         if actuator in self.sealSyntax.actuators:
@@ -143,14 +150,14 @@ class ApiCore:
         return {
                 'objects': [],
                 'parameters': [],
-                'role': g.UNKNOWN
+                'role': UNKNOWN
                 }
 
     # Get all actuators, who have role == self.STATEMENT
     def getAllStatementActuators(self):
         result = []
         for x in self.sealSyntax.actuators.keys():
-            if self.sealSyntax.actuators[x]['role'] == g.STATEMENT:
+            if self.sealSyntax.actuators[x]['role'] == STATEMENT:
                 result.append(x)
         return result
 
@@ -173,20 +180,20 @@ class ApiCore:
 
     def saveSettings(self):
         os.chdir(self.path)
-        f = open(g.SETTING_FILE, 'w')
+        f = open(SETTING_FILE, 'w')
         for key in self.__settings:
             f.write(key + ":" + self.__settings[key] + '\n')
         f.close()
 
     def logMsg(self, msgType, msgText):
-        if msgType <= g.LOG:
+        if msgType <= LOG:
             # Generate message
             dbgTime = str(strftime("%H:%M:%S %d.%m.%Y", gmtime())) + ": "
-            dbgMsg = g.LOG_TEXTS[msgType] + " - " + str(msgText) + '\n'
-            if g.LOG_TO_CONSOLE:
+            dbgMsg = LOG_TEXTS[msgType] + " - " + str(msgText) + '\n'
+            if LOG_TO_CONSOLE:
                 print dbgMsg
                 self.printInfo(dbgMsg)
-            if g.LOG_TO_FILE:
+            if LOG_TO_FILE:
                 self.logFile.write(dbgTime + dbgMsg)
 
     def performExit(self):

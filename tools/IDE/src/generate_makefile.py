@@ -22,23 +22,18 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import globals as g
 from os import path
 
+from globals import * #@UnusedWildImport
+
 class GenerateMakefile():
-    '''
-    classdocs
-    '''
-
-
     def __init__(self):
-        '''
-        Constructor
-        '''
+        pass
 
-    def generate(self, fileName = 'main.c', projectType = g.MANSOS_PROJECT, pathToMansos = '', appName = ''):
+    def generate(self, fileName = 'main.c', projectType = MANSOS_PROJECT,
+                 pathToMansos = '', appName = ''):
         if not path.exists("Makefile") or not path.isfile("Makefile"):
-            if projectType == g.SEAL_PROJECT:
+            if projectType == SEAL_PROJECT:
                 sourceType = "SEAL_SOURCES"
                 if appName == '': appName = 'SealApp'
             else:

@@ -24,7 +24,8 @@
 
 import threading
 import time
-import globals as g
+
+from globals import * #@UnusedWildImport
 
 class ThreadRunner (threading.Thread):
     def __init__(self, function, dataIn, dataOut, API):
@@ -40,7 +41,7 @@ class ThreadRunner (threading.Thread):
         try:
             self.dataOut += self.function(self.dataIn)
         except TypeError:
-            self.API.logMsg(g.WARNING, "In thread running " + str(self.function) + "type mismatch happened!")
+            self.API.logMsg(LOG_WARNING, "In thread running " + str(self.function) + "type mismatch happened!")
             self.dataOut += [False, "Type error!"]
             print self.function(self.dataIn)
         self.dataOut += [time.time() - locTime]

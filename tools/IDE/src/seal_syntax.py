@@ -22,8 +22,8 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import parameter
-import globals as g
+from globals import * #@UnusedWildImport
+from parameter import ParameterDefinition
 
 class SealSyntax():
     def __init__(self):
@@ -35,46 +35,51 @@ class SealSyntax():
             'use': {
                 'objects': ['Led', 'RedLed', 'GreenLed', 'BlueLed'],
                 'parameters': [
-                    parameter.ParameterDefinition('period', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s']),
-                    parameter.ParameterDefinition('on_at', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s']),
-                    parameter.ParameterDefinition('off_at', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s']),
-                    parameter.ParameterDefinition('blinkTimes', ['', '1', '2', '3', '5', '10', '25']),
-                    parameter.ParameterDefinition('blink', None),
-                    parameter.ParameterDefinition('blinkTwice', None),
-                    parameter.ParameterDefinition('turn_on', None),
-                    parameter.ParameterDefinition('turn_off', None),
+                    ParameterDefinition('period', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s']),
+                    ParameterDefinition('on_at', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s']),
+                    ParameterDefinition('off_at', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s']),
+                    ParameterDefinition('blinkTimes', ['', '1', '2', '3', '5', '10', '25']),
+                    ParameterDefinition('blink', None),
+                    ParameterDefinition('blinkTwice', None),
+                    ParameterDefinition('turn_on', None),
+                    ParameterDefinition('turn_off', None),
                 ],
-                'role': g.STATEMENT
+                'role': STATEMENT
             },
             'read': {
                 'objects': ['temperature', 'humidity'],
                 'parameters': [
-                    parameter.ParameterDefinition('period', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s'])
+                    ParameterDefinition('period', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s'])
                 ],
-                'role': g.STATEMENT
+                'role': STATEMENT
             },
             'output': {
                 'objects': ['serial', 'radio'],
                 'parameters': [
-                    parameter.ParameterDefinition('aggregate', None),
-                    parameter.ParameterDefinition('crc', None),
-                    parameter.ParameterDefinition('baudrate', ['', '2400', '4800', '9600', '19200', '38400', '57600', '115200']),
+                    ParameterDefinition('aggregate', None),
+                    ParameterDefinition('crc', None),
+                    ParameterDefinition('baudrate', ['', '2400', '4800', '9600', '19200', '38400', '57600', '115200']),
                 ],
-                'role': g.STATEMENT
+                'role': STATEMENT
             },
             'when': {
                 'objects': ["System.time < 5s", "System.isDaytime"],
                 'parameters': [],
-                'role': g.CONDITION
+                'role': CONDITION
+            },
+            'elsewhen': {
+                'objects': [],
+                'parameters': [],
+                'role': CONDITION
             },
             'else': {
                 'objects': [],
                 'parameters': [],
-                'role': g.CONDITION
+                'role': CONDITION
             },
             'end': {
                 'objects': [],
                 'parameters': [],
-                'role': g.END
+                'role': END
             }
         }

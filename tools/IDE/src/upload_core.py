@@ -24,11 +24,11 @@
 
 import wx
 
-import do_compile
-import do_upload
-import get_motelist
-import thread_runner
-import globals as g
+from globals import * #@UnusedWildImport
+from do_compile import DoCompile
+from do_upload import DoUpload
+from get_motelist import GetMotelist
+from thread_runner import ThreadRunner
 
 class UploadCore():
     def __init__(self, API, printLine):
@@ -48,9 +48,9 @@ class UploadCore():
         self.motes = []
 
         # Used classes
-        self.compiler = do_compile.DoCompile(self.API)
-        self.uploader = do_upload.DoUpload(self.pathToMansos)
-        self.motelist = get_motelist.GetMotelist(self.pathToMansos)
+        self.compiler = DoCompile(self.API)
+        self.uploader = DoUpload(self.pathToMansos)
+        self.motelist = GetMotelist(self.pathToMansos)
 
     def populateMotelist(self, event = None, source = None, quiet = False):
         if event != None:
@@ -59,11 +59,11 @@ class UploadCore():
         res = []
         if source == 'Shell':
             res = self.managePopen(self.motelist.getShellMotelist)
-            self.targetType = g.SHELL
+            self.targetType = SHELL
 
         else:
             res = self.managePopen(self.motelist.getMotelist)
-            self.targetType = g.USB
+            self.targetType = USB
 
         motelist = res[1]
         self.haveMote = res[0]
@@ -128,7 +128,7 @@ class UploadCore():
         # Must be list, here returned values will be stored
         dataOut = []
         dataIn = []
-        newThread = thread_runner.ThreadRunner(funct, dataIn, dataOut, self.API)
+        newThread = ThreadRunner(funct, dataIn, dataOut, self.API)
         newThread.start()
         # Wait for thread to finish and yield, so UI doesn't die
         # TODO: add indicator that working now

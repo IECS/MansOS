@@ -23,12 +23,11 @@
 #
 
 class SealStruct():
-    def __init__(self, API, initCode = None, parser = None):
+    def __init__(self, API, initCode = None, parser = None, silent = False):
         self.API = API
         if parser == None:
             self.sealParser = self.API.sealParser
-        self.__parsedCode = self.sealParser.run(initCode)
-
+        self.__parsedCode = self.sealParser.run(initCode, silent)
 
     def getFirstObject(self):
         if self.__parsedCode == []:
