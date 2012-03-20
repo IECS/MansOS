@@ -1,21 +1,58 @@
+from components import *
+
+class ConditionCollection(object):
+    def reset(self):
+        self.conditionStack = []
+        self.conditionList = []
+        self.branchNumber = 0
+        self.branchChanged = False
+
+    def add(self, condition):
+        currentConditionNumber = len(self.conditionList)
+        self.conditionList.append(condition)
+        self.conditionStack.append(currentConditionNumber)
+        self.branchChanged = True
+
+    def invertLast(self):
+        last = self.conditionStack.pop()
+        self.conditionStack.append(-last)
+        self.branchChanged = True
+
+    def size(self):
+        return len(self.conditionStack)
+
+    def totalConditions(self):
+        return len(self.conditionList)
+
+    def pop(self, n):
+        while n > 0:
+            self.conditionStack.pop()
+            n -= 1
+
+    def generateCode(self, outputFile):
+        for i in range(len(self.conditionList)):
+            generateCodeForCondition(self, c, outputFile)
+
+    def generateCodeForCondition(self, condition, outputFile):
+        outputFile.write("bool condition{0}Check(void) {\n".format())
+        outputFile.write("    return {0}\n".format(condition.getCode()))
+        outputFile.write("}\n")
+
+conditionCollection =  ConditionCollection()
 
 ########################################################
 
 INDENT_STRING = "  "  # indent new code level with two spaces
 
 def getIndent(indent):
-    result = ""
-    i = indent
-    while i > 0:
-        result += INDENT_STRING
-        i -= 1
-    return result
+    # take indent string n times
+    return INDENT_STRING * indent
 
 ########################################################
 class Value(object):
     def __init__(self, value=None, suffix=None):
         self.value = value
-        self.suffix = value
+        self.suffix = suffix
     def getCode(self):
         s = "{0}".format(self.value)
         if not (self.suffix is None):
@@ -46,56 +83,55 @@ class ComponentUseCase(object):
         self.parameters = parameters
 
     def getCode(self, indent):
-        result = self.type + " " + self.name + " "
+        result = self.type + " " + self.name
         for p in self.parameters:
+            result += " "
             result += p[0]
             if p[1] != None:
                 result += " "
                 result += p[1].getCode()
-            result += ", "
-        result = result[:-2]
+            result += ","
+        if self.parameters != []:
+            result = result[:-1] # remove last comma
         result += ';'
         return result
 
-########################################################
-class Declaration(object):
-    def __init__(self, componentUseCase, whenBlock):
-        self.componentUseCase = componentUseCase
-        self.whenBlock = whenBlock
-
-    def getCode(self, indent):
-        if self.componentUseCase != None:
-            return getIndent(indent) + self.componentUseCase.getCode(indent)
-        else:
-            return getIndent(indent) + self.whenBlock.getCode(indent)
+    def addComponents(self):
+        if conditionCollection.branchChanged:
+            conditionCollection.branchNumber += 1
+            conditionCollection.branchChanged = False
+        componentRegister.useComponent(self.type, self.name,
+                                       self.parameters,
+                                       conditionCollection.conditionStack,
+                                       conditionCollection.branchNumber)
 
 ########################################################
+CODE_BlOCK_TYPE_PROGRAM = 0
 CODE_BlOCK_TYPE_WHEN = 1
 CODE_BlOCK_TYPE_ELSEWHEN = 2
 CODE_BlOCK_TYPE_ELSE = 3
 
 class CodeBlock(object):
-    def __init__(self, blockType, condition, declarations, next):
+    def __init__(self, blockType, condition, declarations, next_):
         self.blockType = blockType
         self.condition = condition
         self.declarations = declarations
-        self.next = next
+        self.next = next_
 
     def getCode(self, indent):
-        result = ""
+        result = getIndent(indent)
         if self.blockType == CODE_BlOCK_TYPE_WHEN:
-            if self.condition != None:  # unless top level block...
-                result = "when"
-                result += " " + self.condition.getCode() + " "
-                result = ":\n"
-                indent += 1
+            result += "when"
+            result += " " + self.condition.getCode()
+            result += ":\n"
+            indent += 1
         elif self.blockType == CODE_BlOCK_TYPE_ELSEWHEN:
-            result = "elsewhen"
-            result += " " + self.condition.getCode() + " "
-            result = ":\n"
+            result += "elsewhen"
+            result += " " + self.condition.getCode()
+            result += ":\n"
             indent += 1
         elif self.blockType == CODE_BlOCK_TYPE_ELSE:
-            result = "else:\n"
+            result += "else:\n"
             indent += 1
  
         for d in self.declarations:
@@ -103,11 +139,47 @@ class CodeBlock(object):
             result += d.getCode(indent)
             result += "\n"
 
+        # recursive call
         if self.next != None:
             assert indent > 0
             indent -= 1
             result += getIndent(indent)
             result += self.next.getCode(indent)
             result += "\n"
+        elif self.blockType != CODE_BlOCK_TYPE_PROGRAM:
+            result += "end\n"
 
         return result
+
+    def addComponents(self):
+        if self.blockType == CODE_BlOCK_TYPE_PROGRAM:
+            # reset all
+            conditionCollection.reset()
+        elif self.blockType == CODE_BlOCK_TYPE_WHEN:
+            stackStartSize = conditionCollection.size()
+            # append new
+            conditionCollection.add(self.condition)
+        elif self.blockType == CODE_BlOCK_TYPE_ELSEWHEN:
+            # invert previous...
+            conditionCollection.invertLast()
+            # ..and append new
+            conditionCollection.add(self.condition)
+        elif self.blockType == CODE_BlOCK_TYPE_ELSE:
+            # just invert previous
+            conditionCollection.invertLast()
+
+        # add components - use cases always first, "when ..." blocks afterwards!
+        for d in self.declarations:
+            if type(d) is ComponentUseCase:
+                d.addComponents()
+        for d in self.declarations:
+            if type(d) is not ComponentUseCase:
+                d.addComponents()
+
+        # recursive call
+        if self.next != None:
+            self.next.addComponents()
+
+        if self.blockType == CODE_BlOCK_TYPE_WHEN:
+            # pop all conditions from this code block
+            conditionCollection.pop(conditionCollection.size() - stackStartSize)

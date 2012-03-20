@@ -56,7 +56,8 @@ class SealParser():
       "<=": "LEQ_TOKEN"}
  
     tokens = reserved.values() + ["IDENTIFIER_TOKEN",
-                                  "QUALIFIED_INTEGER_TOKEN"]
+                                  "INTEGER_LITERAL",
+                                  "STRING_LITERAL"]
 
     # rules for all tokens that are not keywords (i.e. alphanumeric)
     t_EQ_TOKEN = r'==?'     # two alternative spellings: '==' or '='
@@ -74,7 +75,7 @@ class SealParser():
         t.type = self.reserved.get(t.value, "IDENTIFIER_TOKEN")
         return t
 
-    def t_QUALIFIED_INTEGER_TOKEN(self, t):
+    def t_INTEGER_LITERAL(self, t):
         r'[0-9]+[a-zA-Z_]*'
         prefix, suffix = '', ''
         parsingPrefix = True
@@ -87,6 +88,8 @@ class SealParser():
             suffix += c
         t.value = (int(prefix), suffix)
         return t
+
+    t_STRING_LITERAL = r'"[^"\n]*"'
 
     def t_newline(self, t):
         r'\n+'
@@ -106,7 +109,7 @@ class SealParser():
     def p_program(self, p):
         '''program : declaration_list
         '''
-        self.result = CodeBlock(CODE_BlOCK_TYPE_WHEN, None, p[1], None)
+        self.result = CodeBlock(CODE_BlOCK_TYPE_PROGRAM, None, p[1], None)
 
     def p_declaration_list(self, p):
         '''declaration_list : declaration_list declaration
@@ -127,9 +130,13 @@ class SealParser():
                        | ';'
         '''
         if len(p) == 5:
-            p[0] = Declaration(ComponentUseCase(p[1], p[2], p[3]), None)
+            if componentRegister.hasComponent(p[1], p[2]):
+                p[0] = ComponentUseCase(p[1], p[2], p[3])  # component use
+            else:
+                self.errorMsg(p, "Component {0} not known or not supported for this architecture ({1})".format(
+                        p[2], componentRegister.architecture))
         elif p[1] != ';':
-            p[0] = Declaration(None, p[1])
+            p[0] = p[1] # when block
         else:
             p[0] = p[1]
 
@@ -227,35 +234,29 @@ class SealParser():
             p[0] = (p[1], p[2])
 
     def p_value(self, p):
-        '''value : boolean_value
-                 | integer_value
+        '''value : boolean_literal
+                 | integer_literal
+                 | string_literal
                  | identifier
         '''
         p[0] = p[1]
 
-    def p_boolean_value(self, p):
-        '''boolean_value : TRUE_TOKEN
-                         | FALSE_TOKEN
-        '''
-        v = Value()
-        if string.lower(p[1]) == 't':
-            v.value = True
-        else:
-            v.value = False
-        p[0] = v
+    def p_boolean_literal(self, p):
+        '''boolean_literal : TRUE_TOKEN
+                           | FALSE_TOKEN'''
+        p[0] = Value(string.lower(p[1]) == 't')
 
-    def p_integer_value(self, p):
-        '''integer_value : QUALIFIED_INTEGER_TOKEN'''
-        v = Value()
-        v.value = p[1][0]
-        v.suffix = p[1][1]
-        p[0] = v
+    def p_integer_literal(self, p):
+        '''integer_literal : INTEGER_LITERAL'''
+        p[0] = Value(p[1][0], p[1][1])
+
+    def p_string_literal(self, p):
+        '''string_literal : STRING_LITERAL'''
+        p[0] = Value(p[1])
 
     def p_identifier(self, p):
         '''identifier : IDENTIFIER_TOKEN'''
-        v = Value()
-        v.value = p[1]
-        p[0] = v
+        p[0] = Value(p[1]) # FIXME TODO: at the moment same as string literal!
 
     def p_empty(self, p):
         '''empty :'''
@@ -264,10 +265,10 @@ class SealParser():
     def p_error(self, p):
         if p:
             # TODO: print better message!
-            self.printMsg("Line '%d': Syntax error at '%s'" % (p.lineno, p.value))
+            self.printMsg("Line '{0}': Syntax error at '{1}'".format(p.lineno, p.value))
         else:
             self.printMsg("Syntax error at EOF")
 
     def errorMsg(self, p, msg):
-        self.printMsg("Line '%d': Syntax error at..." % (p.lineno(1)))
+        self.printMsg("Line '{0}':".format(p.lineno(1)))
         self.printMsg(msg)
