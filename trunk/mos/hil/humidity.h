@@ -49,4 +49,6 @@
 // some humidity sensors (SHT11) also provide temperature reading
 // uint16_t readHTemperature();  // read temperature value from humidity sensor
 
+#define humidityRead readHumidity
+
 #endif
