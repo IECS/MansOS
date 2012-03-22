@@ -96,7 +96,7 @@ def main():
     # import pathname where seal package is located
     sys.path.append('..')
     sys.path.append('../seal/components')
-    from seal import parser, generator, components
+    from seal import generator
 
     parseCommandLine(sys.argv)
 
@@ -108,9 +108,9 @@ def main():
         exit(1)
 
     # load available components
-    components.componentRegister.load(architecture)
+    generator.componentRegister.load(architecture)
     # parse input file (SEAL code)
-    parser = parser.SealParser(printLine, verboseMode)
+    parser = generator.SealParser(printLine, verboseMode)
     parser.run(contents)
 
     # print parser.result.getCode(0)
@@ -126,10 +126,10 @@ def main():
         g.generate(sys.stdout)
     else:
         outputDirName = os.path.dirname(outputFileName)
-        if len(outputDirName): outputDirName += '/'
-
-        if not os.path.exists(outputDirName):
-            os.makedirs(outputDirName)
+        if len(outputDirName):
+            outputDirName += '/'
+            if not os.path.exists(outputDirName):
+                os.makedirs(outputDirName)
         with open(outputFileName, 'w') as outputFile:
             g.generate(outputFile)
         with open(outputDirName + "Makefile", 'w') as outputFile:

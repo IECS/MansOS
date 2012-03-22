@@ -4,7 +4,6 @@ import ply.yacc as yacc
 import re, string
 
 from structures import *
-from components import *
 
 ###################################################
 

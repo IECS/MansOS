@@ -2,17 +2,16 @@
 # Tmote-specific components
 #
 
-actuators = []
-sensors = []
-outputs = []
+from component_def import *
 
-actuators.append("Foobar")
-actuators.append("Foobar1")
-actuators.append("Foobar2")
-actuators.append("Foobar3")
+commonParameters = [("param1", None), ("param2", None), ("param3", None)]
 
+foobar = ComponentSpecification(TYPE_ACTUATOR, 'Foobar', commonParameters)
+foobar1 = ComponentSpecification(TYPE_ACTUATOR, 'Foobar1', commonParameters)
+foobar2 = ComponentSpecification(TYPE_ACTUATOR, 'Foobar2', commonParameters)
+foobar3 = ComponentSpecification(TYPE_ACTUATOR, 'Foobar3', commonParameters)
 
-sensors.append("Foobar")
-sensors.append("Foobar1")
-sensors.append("Foobar2")
-sensors.append("Foobar3")
+sfoobar = ComponentSpecification(TYPE_SENSOR, 'Foobar', commonParameters)
+sfoobar1 = ComponentSpecification(TYPE_SENSOR, 'Foobar1', commonParameters)
+sfoobar2 = ComponentSpecification(TYPE_SENSOR, 'Foobar2', commonParameters)
+sfoobar3 = ComponentSpecification(TYPE_SENSOR, 'Foobar3', commonParameters)
