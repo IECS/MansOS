@@ -12,6 +12,31 @@ def toMilliseconds(x):
         sys.stderr.write("Unknown suffix {0} for time value\n".format(x.suffix))
     return value
 
+def isConstantField(f):
+    return False # TODO
+
+def toCamelCase(s):
+    if s == '': return ''
+    return string.tolower(s[0]) + s[1:]
+
+# TODO: make simpler
+#intTypes = {
+#    "u8" : ["uint8_t", "U8", "0xff", "%u"],
+#    "u16" : ["uint16_t", "U16", "0xffff", "%u"],
+#    "u32" : ["uint32_t", "U32", "0xffffffff", "%lu"],
+#    "i8" : ["int8_t", "U8", "0xff", "%d"],
+#    "i16" : ["int16_t", "U16", "0xffff", "%d"],
+#    "i32" : ["int32_t", "U32", "0xffffffff", "%ld"]
+#}
+
+def generateSerialFunctions(intSizes):
+    for size in intSizes:
+        outputFile.write, "static inline void serialPrintU{0}(const char *name, uint{0}_t value)\n".format(
+            size * 8)
+        outputFile.write("{\n")
+        outputFile.write('    PRINTF("%s=%u\n", name, value);' + "\n")
+        outputFile.write("}\n\n")
+
 ######################################################
 class BranchCollection(object):
     branches = {}
@@ -68,7 +93,17 @@ branchCollection = BranchCollection()
 class UseCase(object):
     def __init__(self, component, parameters, conditions, branchNumber):
         self.component = component
-        self.parameters = dict(parameters)
+        self.parameters = component.parameters   # use component's parameters as defaults
+        for p in parameters:
+            if p[0] not in self.parameters:
+                sys.stderr.write("Parameter {0} not known for component {1}".format(p[0], component.name))
+                continue
+            # update parameters with user's value, if given. If no value given, only name, treat it as 'True',
+            # because value 'None' means that the parameter is supported, but not specified by user
+            if p[1] is not None: 
+                self.parameters[p[0]] = p[1]
+            else:
+                self.parameters[p[0]] = True
         self.conditions = conditions
         self.branchNumber = branchNumber
         self.period = None
@@ -128,8 +163,9 @@ void {0}Callback(void *__unused)
 
 ######################################################
 class Component(object):
-    def __init__(self, name):
+    def __init__(self, name, parameters):
         self.name = name
+        self.parameters = dict(parameters)
         self.useCases = []
 
     def getNameUC(self):
@@ -144,6 +180,11 @@ class Component(object):
 
     def addUseCase(self, parameters, conditions, branchNumber):
         self.useCases.append(UseCase(self, parameters, conditions, branchNumber))
+
+    def generateIncludes(self, outputFile):
+        includes = getParameterValue(self, "includeFiles")
+        if includes is not None:
+            outputFile.write("{0}\n", includes)
 
     def generateConstants(self, outputFile):
         for uc in self.useCases:
@@ -161,17 +202,167 @@ class Component(object):
         for uc in self.useCases:
             uc.generateAppMainCode(outputFile)
 
+    def generateConfigFile(self, outputFile):
+        config = getParameterValue(self, "config")
+        if config is not None:
+            outputFile.write("{0}\n", config)
+
+    def getParameterValue(self, parameter):
+        value = None
+        if parameter in self.parameters:
+            value = self.parameters[parameter]
+        return value
+
 class Actuator(Component):
-    def __init__(self, name):
-        super(Actuator,self).__init__(name)
+    def __init__(self, name, parameters):
+        super(Actuator, self).__init__(name, parameters)
 
 class Sensor(Component):
-    def __init__(self, name):
-        super(Sensor,self).__init__(name)
+    def __init__(self, name, parameters):
+        super(Sensor, self).__init__(name, parameters)
+
+    def getDataSize(self):
+        size = getParameterValue("dataSize")
+        if size is None:
+            size = 2 # TODO: issue warning
+        return size
+
+#    def getDataType(self):
+#        return "uint{0}_t".format(getDataSize() * 8)
+
+    def getNoValue(self):
+        return "0x" + "ff" * getDataSize()
+
+    def generateConstants(self, outputFile):
+        super(Sensor, self).generateConstants()
+        if len(self.useCases):
+            outputFile.write("#define {0}_NO_VALUE    {1}\n".format(self.getNameUC(), self.getNoValue()))
 
 class Output(Component):
-    def __init__(self, name):
-        super(Output,self).__init__(name)
+    def __init__(self, name, parameters):
+        super(Output, self).__init__(name, parameters)
+        self.isAggregateCached = None
+        self.usedFields = None
+
+    def isAggregate(self):
+        if self.isAggregateCached is None:
+            self.isAggregateCached = False
+            if len(self.useCases) != 0 and "aggregate" in self.useCases[0].parameters:
+                self.isAggregateCached = self.useCases[0].parameters["aggregate"]
+            elif getParameterValue("aggregate"):
+                self.isAggregateCached = True
+        return self.isAggregateCached
+
+    def cachePacketType(self, packetFields):
+        is not self.isAggregate(): return
+
+        self.usedFields = packetFields
+
+        # TODO: use only explicitly specified fields
+
+        # TODO: use constant fields
+
+        if len(self.usedFields) == 0:
+            # TODO: userError("{0}Packet has no fields".format(name))
+            return
+
+    def generateConstants(self, outputFile):
+        super(Output, self).generateConstants()
+        if len(self.usedFields):
+            outputFile.write("#define {0}_PACKET_NUM_FIELDS    {1}\n".format(
+                    self.getNameUC(), len(self.usedFields)))
+
+    def generatePacketType(self, outputFile):
+        if len(self.usedFields) == 0: return
+
+        outputFile.write("struct {0}Packet_s {\n".format(name))
+
+        packetSize = 0
+        for f in self.usedFields:
+            outputFile.write("    uint{0}_t {1};\n".format(f[0] * 8, toCamelCase(f[1])))
+            packetSize += f[0]
+
+        if self.getParameterValue("crc"):
+            # 2-byte crc
+            if packetSize & 0x1:
+                # add padding field
+                outputFile.write("    uint8_t __reserved;\n");
+                packetSize += 1
+           outputFile.write("    uint16_t crc;\n");
+
+         # finish the packet
+        outputFile.write("} PACKED;\n\n");
+        # and add a typedef
+        outputFile.write("typedef struct {0}Packet_s {0}Packet_t;\n\n".format(self.name))
+
+    def generateSerialOutputCode(self, outputFile, sensorsUsed):
+        useByDefault = False # TODO
+        if len(self.useCases) == 0 and not useByDefault:
+            return # this output is not used
+
+        usedSizes = set()
+        if self.isAggregate():
+            for f in self.usedFields:
+                usedSizes.add(f[0])
+        else:
+            for s in sensorsUsed:
+                usedSize.add(s.getDataSize())
+        generateSerialFunctions(usedSizes)
+
+        if self.isAggregate():
+            outputFile.write("static inline void serialPacketPrint(void)\n")
+            outputFile.write("{\n")
+            outputFile.write("    PRINT(\"======================\\n\");\n")
+            for f in self.usedFields:
+                outputFile.write("    serialPrintU{0}(\"{1}\", serialPacket.{2});\n".format(
+                        f[0] * 8,
+                        f[1], toCamelCase(f[1])))
+            outputFile.write("}\n\n")
+
+    def generateOutputCode(self, outputFile, sensorsUsed):
+        if self.name.lower() == "serial":
+            # special code for serial sink
+            generateSerialOutputCode(outputFile, sensorsUsed)
+            if not self.isAggregate():
+                return
+
+        outputFile.write("static inline void {0}PacketInit(void)\n".format(self.getNameCC()))
+        outputFile.write("{\n")
+
+        # count const fields
+        numConstFields = 0
+        for f in self.usedFields:
+            if isConstantField(f) numConstFields += 1
+        outputFile.write("    {0}PacketNumFieldsFull = {1};\n".format(
+                self.getNameCC(), numConstFields))
+                             
+        for f in self.usedFields:
+            if isConstantField(f):
+                outputFile.write("    {0}Packet.{1} = {2};\n".format(
+                        self.getNameCC(), toCamelCase(f.name), f.value))
+            else:
+                outputFile.write("    {0}Packet.{1} = {2}_NO_VALUE;\n".format(
+                        self.getNameCC(), toCamelCase(f[1]), self.getNameUC()))
+
+        outputFile.write("}\n\n")
+
+        outputFile.write("static inline void {0}PacketSend(void)\n".format(self.getNameCC()))
+        outputFile.write("{\n")
+
+        if self.getParameterValue("crc"):
+            outputFile.write("    {0}Packet.crc = crc16((const uint8_t *) &{0}Packet, sizeof({0}Packet) - 2);\n".format(
+                    self.getNameCC()))
+
+
+        outputFile.write("    {0};\n".format(self.getParameterValue("sendFunction")))
+        outputFile.write("    {0}PacketInit();\n".format(self.getNameCC()))
+        outputFile.write("}\n\n")
+
+        outputFile.write("static inline bool {0}PacketIsFull(void)\n".format(self.getNameCC()))
+        outputFile.write("{\n")
+        outputFile.write("    return {0}PacketNumFieldsFull >= {1}_PACKET_NUM_FIELDS;\n".format(
+                self.getNameCC(), self.getNameUC()))
+        outputFile.write("}\n\n")
 
 ######################################################
 class ComponentRegister(object):
@@ -192,13 +383,26 @@ class ComponentRegister(object):
         sourceFile = architecture + '_comp'
         module = __import__(sourceFile)
         # construct empty components from descriptions
-        # (TODO: check for duplicates!)
-        for n in module.actuators:
-            self.actuators[n.lower()] = Actuator(n)
-        for n in module.sensors:
-            self.sensors[n.lower()]  = Sensor(n)
-        for n in module.outputs:
-            self.outputs[n.lower()] = Output(n)
+        for n in module.components:
+            isDuplicate = False
+            if n.typeCode == module.TYPE_ACTUATOR:
+                if n.name.lower() in self.actuators:
+                    isDuplicate = True
+                else:
+                    self.actuators[n.name.lower()] = Actuator(n.name, n.parameters)
+            elif n.typeCode == module.TYPE_SENSORS:
+                if n.name.lower() in self.sensors:
+                    isDuplicate = True
+                else:
+                    self.sensors[n.name.lower()] = Sensor(n.name, n.parameters)
+            elif n.typeCode == module.TYPE_OUTPUTS:
+                if n.name.lower() in self.outputs:
+                    isDuplicate = True
+                else:
+                    self.outputs[n.name.lower()] = Output(n.name, n.parameters)
+            if isDuplicate:
+                sys.stderr.write("Component {0} duplicated for platform {1}, ignoring".format(
+                        n.name, architecture))
 
     def findComponent(self, keyword, name):
         o = None
