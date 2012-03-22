@@ -128,17 +128,25 @@ class SealParser():
                        | OUTPUT_TOKEN IDENTIFIER_TOKEN parameter_list ';'
                        | when_block
                        | ';'
+                       | error ';'
+                       | error END_TOKEN
         '''
+        # component use case
         if len(p) == 5:
             if componentRegister.hasComponent(p[1], p[2]):
-                p[0] = ComponentUseCase(p[1], p[2], p[3])  # component use
+                p[0] = ComponentUseCase(p[1], p[2], p[3])
             else:
                 self.errorMsg(p, "Component {0} not known or not supported for this architecture ({1})".format(
                         p[2], componentRegister.architecture))
-        elif p[1] != ';':
-            p[0] = p[1] # when block
-        else:
-            p[0] = p[1]
+        # when block or empty statement
+        elif len(p) == 2:
+            if p[1] != ';':
+                p[0] = p[1]
+            else:
+                p[0] = p[1]
+        # error token
+        elif len(p) == 3:
+            self.errorMsg(p, "Trying to continue...")
 
     def p_when_block(self, p):
         '''when_block : WHEN_TOKEN condition ':' declaration_list elsewhen_block END_TOKEN

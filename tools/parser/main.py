@@ -99,12 +99,6 @@ def main():
     from seal import parser, generator, components
 
     parseCommandLine(sys.argv)
-#    print "##################### cmd line processing done"
-#    print "input=", inputFileName
-#    print "output=", outputFileName
-#    print "arch=", architecture
-#    print "verbose=", verboseMode
-#    exit(0)
 
     # read file to-be-parsed
     with open(inputFileName, 'r') as inputFile:
@@ -126,12 +120,22 @@ def main():
     g = generator.createGenerator(targetOS)
     if g is None:
         sys.stderr.write('Failed to find code generator for target OS {0}'.format(targetOS))
+        exit(1)
 
     if outputFileName is None:
         g.generate(sys.stdout)
     else:
+        outputDirName = os.path.dirname(outputFileName)
+        if len(outputDirName): outputDirName += '/'
+
+        if not os.path.exists(outputDirName):
+            os.makedirs(outputDirName)
         with open(outputFileName, 'w') as outputFile:
             g.generate(outputFile)
+        with open(outputDirName + "Makefile", 'w') as outputFile:
+            g.generateMakefile(outputFile, outputFileName)
+        with open(outputDirName + "config", 'w') as outputFile:
+            g.generateConfigFile(outputFile)
 
 if __name__ == '__main__':
     main()
