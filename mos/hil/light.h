@@ -41,5 +41,6 @@
 
 // Note: light sensor may not support on/off
 
+#define lightRead readLight
 
 #endif
