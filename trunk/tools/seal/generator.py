@@ -1,25 +1,26 @@
-from structures import *
-from components import *
+from parser import *
 
 SEPARATOR = "// -----------------------------\n"
 
 def formatCondition(condition, isNew):
     if isNew:
-        return "newConditionStatus[{0}]".format(abs(condition))
-    return "conditionStatus[{0}]".format(abs(condition))
+        prefix = "new"
+    else:
+        prefix = "old"
+    return prefix + "ConditionStatus[{0}]".format(abs(condition))
 
 def formatConditions(conditions, isNew):
     result = ""
     # all except last one
     for c in conditions[:-1]:
         if c < 0:
-            result += "not "
+            result += "! "
         result += formatCondition(c, isNew)
-        result += " "
+        result += " && "
     # last one
-    if conditions[:-1] < 0:
-        result += "not "
-    result + formatCondition(conditions[-1], isNew)
+    if conditions[-1] < 0:
+        result += "! "
+    result += formatCondition(conditions[-1], isNew)
     # got it
     return result
 
@@ -37,47 +38,44 @@ class Generator(object):
         self.outputFile.write("\n")
         for c in self.components:
             c.generateConstants(self.outputFile)
-            self.outputFile.write("\n")
+#            self.outputFile.write("\n")
 
     def cacheTypes(self):
         # use packet types iff there is least one aggregated output
-        usePackets = reduce(lambda x, y: x or (type(y) is Output and y.isAggregate()), self.components, False)
+        usePackets = reduce(lambda x, y: x or y.isAggregate(), self.outputs, False)
         if not usePackets: return
 
         # sensors are used iff there is at least one use case declared
-        anySensorsUsed = reduce(lambda x, y: x or (type(y) is Sensor and len(y.useCases)), self.components, False)
-        if not anySensorsUsed: return
+        #anySensorsUsed = reduce(lambda x, y: x or (type(y) is Sensor and len(y.useCases)), self.components, False)
+        #if not anySensorsUsed: return
+        if len(self.sensors) == 0: return
 
         packetFields = []
-        for c in self.components:
-            if type(c) is Sensor:
-                packetFields.append((c.getDataLength(), c.name))
-       packetFields = list(set(packetFields)) # uniquify
-       packetFields.sort()
-       packetFields.reverse()
+        for c in self.sensors:
+            packetFields.append((c.getDataLength(), c.name))
+        packetFields = list(set(packetFields)) # uniquify
+        packetFields.sort()
+        packetFields.reverse()
 
-       for c in self.components:
-           if type(c) is Output:
-               c.cachePacketType(packetFields)
+        for c in self.outputs:
+            c.cachePacketType(packetFields)
 
     def generateTypes(self):
-       for c in self.components:
-           if type(c) is Output:
-               c.generatePacketType(self.outputFile)
+       for c in self.outputs:
+           c.generatePacketType(self.outputFile)
 
     def generateVariables(self):
-        self.outputFile.write("bool conditionStatus[NUM_CONDITIONS + 1];\n")
+        self.outputFile.write("bool oldConditionStatus[NUM_CONDITIONS + 1];\n")
         for c in self.components:
             c.generateVariables(self.outputFile)
 
     def generateOutputCode(self):
-        for c in self.components:
-            if type(c) is Output:
-                c.generateOutputCode(self.outputFile)
+        for c in self.outputs:
+            c.generateOutputCode(self.outputFile, self.sensors)
 
     def generateCallbacks(self):
         for c in self.components:
-            c.generateCallbacks(self.outputFile)
+            c.generateCallbacks(self.outputFile, self.outputs)
 
     def generateConditionCode(self):
         conditionCollection.generateCode(self.outputFile)
@@ -102,14 +100,15 @@ class Generator(object):
             self.outputFile.write("        newConditionStatus[{0}] = condition{0}Check();\n".format(i + 1))
         self.outputFile.write("\n")
 
-        self.outputFile.write("        bool branch0OldStatus = conditionStatus[DEFAULT_CONDITION];\n")
+        self.outputFile.write("        bool branch0OldStatus = oldConditionStatus[DEFAULT_CONDITION];\n")
         for i in range(1, branchCollection.getNumBranches()):
-            conditions = branchCollection.getConditions(branchCollection.branches[i])
+            conditions = list(branchCollection.getConditions(i))
             self.outputFile.write("        bool branch{0}OldStatus = {1};\n".format(i, formatConditions(conditions, False)))
+        self.outputFile.write("\n")
 
         self.outputFile.write("        bool branch0NewStatus = newConditionStatus[DEFAULT_CONDITION];\n")
         for i in range(1, branchCollection.getNumBranches()):
-            conditions = branchCollection.getConditions(branchCollection.branches[i])
+            conditions = list(branchCollection.getConditions(i))
             self.outputFile.write("        bool branch{0}NewStatus = {1};\n".format(i, formatConditions(conditions, True)))
 
         for i in range(branchCollection.getNumBranches()):
@@ -121,19 +120,28 @@ class Generator(object):
             self.outputFile.write(s.format(i, '{', '}'))
 
         self.outputFile.write('''
-        memcpy(conditionStatus, newConditionStatus, sizeof(conditionStatus));
+        memcpy(oldConditionStatus, newConditionStatus, sizeof(oldConditionStatus));
 
         uint32_t now = getRealTime();
         if (timeAfter32(iterationEndTime, now)) {
             msleep(iterationEndTime - now);
-        }''')
+        }\n''')
         self.outputFile.write("    }\n")
         self.outputFile.write("}\n")
 
     def generate(self, outputFile):
-        self.components = componentRegister.getAllComponents()
         self.outputFile = outputFile
-
+        self.components = componentRegister.getAllComponents()
+        self.outputs = []
+        self.sensors = []
+        self.actuators = []
+        for c in self.components:
+            if type(c) is Output and len(c.useCases):
+               self.outputs.append(c)
+            elif type(c) is Sensor and len(c.useCases):
+               self.sensors.append(c)
+            elif type(c) is Actuator and len(c.useCases):
+               self.actuators.append(c)
         self.cacheTypes()
 
         self.generateIncludes()
@@ -165,16 +173,15 @@ class Generator(object):
             c.generateConfig(outputFile)
 
     def generateMakefile(self, outputFile, outputFileName):
-        fileTemplate = '''
-SOURCES = {0}
+        outputFile.write("SOURCES = " + outputFileName)
+        outputFile.write('''
 APPMOD = App
 PROJDIR = $(CURDIR)
 ifndef MOSROOT
   MOSROOT = $(PROJDIR)/../..
 endif
 include ${MOSROOT}/mos/make/Makefile
-'''
-        outputFile.write(fileTemplate.format(outputFileName))
+''')
 
 ###############################################
 class MansOSGenerator(Generator):

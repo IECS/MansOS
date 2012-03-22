@@ -8,8 +8,8 @@ class ConditionCollection(object):
         self.branchChanged = False
 
     def add(self, condition):
-        currentConditionNumber = len(self.conditionList)
         self.conditionList.append(condition)
+        currentConditionNumber = len(self.conditionList)
         self.conditionStack.append(currentConditionNumber)
         self.branchChanged = True
 
@@ -31,11 +31,15 @@ class ConditionCollection(object):
 
     def generateCode(self, outputFile):
         for i in range(len(self.conditionList)):
-            generateCodeForCondition(self, c, outputFile)
+            self.generateCodeForCondition(i, outputFile)
 
-    def generateCodeForCondition(self, condition, outputFile):
-        outputFile.write("bool condition{0}Check(void) {\n".format())
-        outputFile.write("    return {0}\n".format(condition.getCode()))
+    def generateCodeForCondition(self, i, outputFile):
+        outputFile.write("bool condition{0}Check(void) {1}\n".format(i + 1, '{'))
+        outputFile.write("    return {0};\n".format(
+                string.replace(string.replace(string.replace(self.conditionList[i].getCode(), " and ", " && "),
+                               " or ", " || "),
+                               " not ", " ! ")))
+                
         outputFile.write("}\n")
 
 conditionCollection =  ConditionCollection()
@@ -173,7 +177,7 @@ class CodeBlock(object):
             if type(d) is ComponentUseCase:
                 d.addComponents()
         for d in self.declarations:
-            if type(d) is not ComponentUseCase:
+            if type(d) is CodeBlock:
                 d.addComponents()
 
         # recursive call
