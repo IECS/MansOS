@@ -2,12 +2,12 @@
 
 import os, sys, getopt
 
-#inputFileName = 'tests/91-comments.sl'
-inputFileName = 'tests/00-use.sl'
+inputFileName = 'test.sl'
 outputFileName = 'main.c'
 #architecture = 'test'
 architecture = 'telosb'
 targetOS = 'mansos'
+pathToOS = '../..'
 verboseMode = False
 
 def importsOk():
@@ -34,15 +34,15 @@ def importsOk():
         return False
     return True
 
-
 def printLine(line):
-    print line
+    sys.stderr.write(line)
 
 def help(isError):
     sys.stderr.write("Usage:\n")
     sys.stderr.write("  -a <arch>, --arch     Target architecture (e.g. 'telosb')\n")
     sys.stderr.write("  -t <target>, --target Target OS (e.g. 'mansos')\n")
-    sys.stderr.write("  -o, --output [FILE]   Output to file (default: {0})\n".format(outputFileName))
+    sys.stderr.write("  -o, --output <file>   Output to file (default: {0}, - for stdout)\n".format(outputFileName))
+    sys.stderr.write("  -p, --path <path>     PAth to the target OS folder (default: {0})\n".format(pathToOS))
     sys.stderr.write("  -V, --verbose         Verbose mode\n")
     sys.stderr.write("  -v, --version         Print version\n")
     sys.stderr.write("  -h, --help            Print this help\n")
@@ -55,7 +55,8 @@ def parseCommandLine(argv):
     global verboseMode
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "a:ho:t:Vv", ["arch=", "help", "output=", "target=" "verbose", "version"])
+        opts, args = getopt.getopt(sys.argv[1:], "a:ho:p:t:Vv",
+                                   ["arch=", "help", "output=", "path=", "target=" "verbose", "version"])
     except getopt.GetoptError, err:
         # print help information and exit:
         print str(err) # will print something like "option -a not recognized"
@@ -78,6 +79,8 @@ def parseCommandLine(argv):
             showHelp = True
         elif o in ("-o", "--output"):
             outputFileName = a
+        elif o in ("-p", "--path"):
+            pathToOS = a
 
     if len(args):
         inputFileName = args[0]
@@ -107,14 +110,9 @@ def main():
         sys.stderr.write('Failed to read file {0}'.format(inputFileName))
         exit(1)
 
-    # load available components
-    generator.componentRegister.load(architecture)
     # parse input file (SEAL code)
-    parser = generator.SealParser(printLine, verboseMode)
+    parser = generator.SealParser(architecture, printLine, verboseMode)
     parser.run(contents)
-
-    # print parser.result.getCode(0)
-    parser.result.addComponents()
 
     # generate C code to an output file
     g = generator.createGenerator(targetOS)
@@ -122,7 +120,7 @@ def main():
         sys.stderr.write('Failed to find code generator for target OS {0}'.format(targetOS))
         exit(1)
 
-    if outputFileName is None:
+    if outputFileName == '-':
         g.generate(sys.stdout)
     else:
         outputDirName = os.path.dirname(outputFileName)
@@ -133,7 +131,7 @@ def main():
         with open(outputFileName, 'w') as outputFile:
             g.generate(outputFile)
         with open(outputDirName + "Makefile", 'w') as outputFile:
-            g.generateMakefile(outputFile, outputFileName)
+            g.generateMakefile(outputFile, outputFileName, pathToOS)
         with open(outputDirName + "config", 'w') as outputFile:
             g.generateConfigFile(outputFile)
 

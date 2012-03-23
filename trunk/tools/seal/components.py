@@ -1,31 +1,18 @@
 import sys, string
+from structures import *
 
 ######################################################
-
-def toMilliseconds(x):
-    value = x.value
-    if x.suffix is None or x.suffix == '' or x.suffix == "ms":
-        pass
-    elif x.suffix == "s" or x.suffix == "sec":
-        value *= 1000
-    else:
-        sys.stderr.write("Unknown suffix {0} for time value\n".format(x.suffix))
-    return value
 
 def isConstantField(f):
     return False # TODO
 
-def toCamelCase(s):
-    if s == '': return ''
-    return string.tolower(s[0]) + s[1:]
-
-def generateSerialFunctions(intSizes):
+def generateSerialFunctions(intSizes, outputFile):
     for size in intSizes:
-        outputFile.write, "static inline void serialPrintU{0}(const char *name, uint{0}_t value)\n".format(
-            size * 8)
+        outputFile.write("static inline void serialPrintU{0}(const char *name, uint{0}_t value)\n".format(
+            size * 8))
         outputFile.write("{\n")
-        outputFile.write('    PRINTF("%s=%u\n", name, value);' + "\n")
-        outputFile.write("}\\n")
+        outputFile.write('    PRINTF("%s=%u\\n", name, value);' + "\n")
+        outputFile.write("}\n")
 
 ######################################################
 class BranchCollection(object):
@@ -47,8 +34,9 @@ class BranchCollection(object):
         else:
             branchCallbackName = "Branch{0}".format(number)
         for uc in useCases:
-            outputFile.write("    {0}{1}Callback(NULL);\n".format(
-                    uc[0].component.getNameCC(), branchCallbackName))
+            if type(uc.component) is not Output and uc.period:
+                outputFile.write("    {0}{1}{2}Callback(NULL);\n".format(
+                        uc.component.getNameCC(), branchCallbackName, uc.numInBranch))
         outputFile.write("}\n")
         outputFile.write("\n")
 
@@ -62,8 +50,9 @@ class BranchCollection(object):
         else:
             branchCallbackName = "Branch{0}".format(number)
         for uc in useCases:
-            outputFile.write("    alarmRemove(&{0}{1}Alarm);\n".format(
-                    uc[0].component.getNameCC(), branchCallbackName))
+            if type(uc.component) is not Output and uc.period:
+                outputFile.write("    alarmRemove(&{0}{1}Alarm{2});\n".format(
+                        uc.component.getNameCC(), branchCallbackName, uc.numInBranch))
         outputFile.write("}\n")
         outputFile.write("\n")
 
@@ -71,37 +60,39 @@ class BranchCollection(object):
     # * number N > 0: condition N must be true
     # * number N < 0: condition abs(N) must be false
     def getConditions(self, branchNumber):
-        # print "getConditions, branchNumber=", branchNumber
         branchUseCases = self.branches[branchNumber]
-        # print "branchUseCases[0]=", branchUseCases[0]
         assert len(branchUseCases)
-        # TODO WTF: assert len(branchUseCases[0][0].conditions)
-        assert len(branchUseCases[0][1])
-        return branchUseCases[0][1]
-                             
+        assert len(branchUseCases[0].conditions)
+        return branchUseCases[0].conditions
+
     def getNumBranches(self):
         return len(self.branches)
-                    
-
-branchCollection = BranchCollection()
 
 ######################################################
 class UseCase(object):
-    def __init__(self, component, parameters, conditions, branchNumber):
+    def __init__(self, component, parameters, conditions, branchNumber, numInBranch):
         self.component = component
-        self.parameters = component.parameters   # use component's parameters as defaults
+        self.parameters = {}
+        # use component's parameters as defaults
+        for p in component.parameters:
+            self.parameters[p[0]] = Value(p[1])
+        # add user's parameters
         for p in parameters:
-            if p[0] not in self.parameters:
-                sys.stderr.write("Parameter {0} not known for component {1}".format(p[0], component.name))
+            if p[0] not in component.parameters:
+                userError("Parameter {0} not known for component {1}\n".format(p[0], component.name))
                 continue
             # update parameters with user's value, if given. If no value given, only name, treat it as 'True',
             # because value 'None' means that the parameter is supported, but not specified by user
-            if p[1] is not None: 
+            if p[1] is not None:
                 self.parameters[p[0]] = p[1]
             else:
-                self.parameters[p[0]] = True
-        self.conditions = conditions
+                self.parameters[p[0]] = Value(True)
+        self.conditions = list(conditions)
         self.branchNumber = branchNumber
+        if numInBranch == 0:
+            self.numInBranch = ''
+        else:
+            self.numInBranch = "{0}".format(numInBranch)
         #print "add use case, conditions =", self.conditions
         #print "  branchNumber=", self.branchNumber
         self.period = None
@@ -110,9 +101,9 @@ class UseCase(object):
         else:
             self.branchName = ''
         if branchNumber in branchCollection.branches:
-            branchCollection.branches[branchNumber].append((self, set(conditions)))
+            branchCollection.branches[branchNumber].append(self)
         else:
-            branchCollection.branches[branchNumber] = [(self, set(conditions))]
+            branchCollection.branches[branchNumber] = [self]
 
         #print "after conditions =", branchCollection.branches[branchNumber][0][0].conditions
         #print "after conditions[1] =", branchCollection.branches[branchNumber][0][1]
@@ -125,14 +116,14 @@ class UseCase(object):
             if self.branchNumber != 0:
                 ucname += self.branchName.upper()
             outputFile.write(
-                "#define {0}_PERIOD    {1}\n".format(
-                    ucname, self.period))
+                "#define {0}_PERIOD{1}    {2}\n".format(
+                    ucname, self.numInBranch, self.period))
 
     def generateVariables(self, outputFile):
         if self.period:
             outputFile.write(
-                "Alarm_t {0}{1}Alarm;\n".format(
-                    self.component.getNameCC(), self.branchName))
+                "Alarm_t {0}{1}Alarm{2};\n".format(
+                    self.component.getNameCC(), self.branchName, self.numInBranch))
 
     def generateCallbacks(self, outputFile, outputs):
         ccname = self.component.getNameCC()
@@ -144,24 +135,41 @@ class UseCase(object):
             self.component.getNameCC())
 
         if self.period:
-            outputFile.write("void {0}Callback(void *__unused)\n".format(ccname))
+            outputFile.write("void {0}{1}Callback(void *__unused)\n".format(ccname, self.numInBranch))
             outputFile.write("{\n")
             if type(self.component) is Actuator:
-                outputFile.write("    {0};\n".format(useFunction))
+                if self.component.name.lower() == "print":
+                    # special handling for print statements
+                    formatString = self.getParameterValue("format", "")
+                    outputFile.write("    PRINTF(\"{0}\"".format(formatString.strip('"')))
+                    for i in range(100):
+                        param = self.getParameterValue("arg{0}".format(i))
+                        if param:
+                            outputFile.write(", {0}".format(param))
+                    outputFile.write(");\n")
+                else:
+                    outputFile.write("    {0};\n".format(useFunction))
             elif type(self.component) is Sensor:
                 intTypeName = "uint{0}_t".format(self.component.getDataSize() * 8)
                 outputFile.write("    {0} {1} = {2};\n".format(intTypeName, self.component.getNameCC(), useFunction))
                 for o in outputs:
                     o.generateCallbackCode(self.component, outputFile)
 
-            outputFile.write("    alarmSchedule(&{0}Alarm, {1}_PERIOD);\n".format(ccname, ucname))
+            outputFile.write("    alarmSchedule(&{0}Alarm{1}, {2}_PERIOD{1});\n".format(
+                    ccname, self.numInBranch, ucname))
             outputFile.write("}\n")
 
     def generateAppMainCode(self, outputFile):
         ccname = self.component.getNameCC()
         ccname += self.branchName
         if self.period:
-            outputFile.write("    alarmInit(&{0}Alarm, {0}Callback, NULL);\n".format(ccname))
+            outputFile.write("    alarmInit(&{0}Alarm{1}, {0}{1}Callback, NULL);\n".format(
+                    ccname, self.numInBranch))
+
+    def getParameterValue(self, parameter, defaultValue=None):
+        if parameter in self.parameters:
+            return self.parameters[parameter].getCode()
+        return self.component.getParameterValue(parameter, defaultValue)
 
 ######################################################
 class Component(object):
@@ -184,7 +192,11 @@ class Component(object):
         return string.lower(self.name[0]) + self.name[1:]
 
     def addUseCase(self, parameters, conditions, branchNumber):
-        self.useCases.append(UseCase(self, parameters, conditions, branchNumber))
+        numInBranch = 0
+        for uc in self.useCases:
+            if uc.branchNumber == branchNumber:
+                numInBranch += 1
+        self.useCases.append(UseCase(self, parameters, conditions, branchNumber, numInBranch))
 
     def generateIncludes(self, outputFile):
         if self.isUsed():
@@ -216,10 +228,10 @@ class Component(object):
                 outputFile.write("{0}\n".format(config))
 
     def getParameterValue(self, parameter, defaultValue=None):
-        value = defaultValue
         if parameter in self.parameters:
             value = self.parameters[parameter]
-        return value
+            if value is not None: return value
+        return defaultValue
 
 class Actuator(Component):
     def __init__(self, name, parameters):
@@ -258,6 +270,11 @@ class Output(Component):
                 self.isAggregateCached = True
         return self.isAggregateCached
 
+    def generateVariables(self, outputFile):
+        if self.isAggregate() and len(self.usedFields) != 0:
+            outputFile.write("{0}Packet_t {1}Packet;\n".format(self.name, self.getNameCC()))
+            outputFile.write("uint_t {0}PacketNumFieldsFull;\n".format(self.getNameCC()))
+
     def cachePacketType(self, packetFields):
         if not self.isAggregate(): return
 
@@ -268,7 +285,7 @@ class Output(Component):
         # TODO: use constant fields
 
         if len(self.usedFields) == 0:
-            # TODO: userError("{0}Packet has no fields".format(name))
+            userError("{0}Packet has no fields\n".format(name))
             return
 
     def generateConstants(self, outputFile):
@@ -280,7 +297,7 @@ class Output(Component):
     def generatePacketType(self, outputFile):
         if len(self.usedFields) == 0: return
 
-        outputFile.write("struct {0}Packet_s {1}\n".format(name, '{'))
+        outputFile.write("struct {0}Packet_s {1}\n".format(self.name, '{'))
 
         packetSize = 0
         for f in self.usedFields:
@@ -311,8 +328,8 @@ class Output(Component):
                 usedSizes.add(f[0])
         else:
             for s in sensorsUsed:
-                usedSize.add(s.getDataSize())
-        generateSerialFunctions(usedSizes)
+                usedSizes.add(s.getDataSize())
+        generateSerialFunctions(usedSizes, outputFile)
 
         if self.isAggregate():
             outputFile.write("static inline void serialPacketPrint(void)\n")
@@ -327,7 +344,7 @@ class Output(Component):
     def generateOutputCode(self, outputFile, sensorsUsed):
         if self.name.lower() == "serial":
             # special code for serial sink
-            generateSerialOutputCode(outputFile, sensorsUsed)
+            self.generateSerialOutputCode(outputFile, sensorsUsed)
             if not self.isAggregate():
                 return
 
@@ -347,7 +364,7 @@ class Output(Component):
                         self.getNameCC(), toCamelCase(f.name), f.value))
             else:
                 outputFile.write("    {0}Packet.{1} = {2}_NO_VALUE;\n".format(
-                        self.getNameCC(), toCamelCase(f[1]), self.getNameUC()))
+                        self.getNameCC(), toCamelCase(f[1]), f[1].upper()))
 
         outputFile.write("}\n\n")
 
@@ -358,7 +375,7 @@ class Output(Component):
             outputFile.write("    {0}Packet.crc = crc16((const uint8_t *) &{0}Packet, sizeof({0}Packet) - 2);\n".format(
                     self.getNameCC()))
 
-        outputFile.write("    {0};\n".format(self.getParameterValue("sendFunction")))
+        outputFile.write("    {0};\n".format(self.getParameterValue("sendFunction", "")))
         outputFile.write("    {0}PacketInit();\n".format(self.getNameCC()))
         outputFile.write("}\n\n")
 
@@ -392,14 +409,25 @@ class Output(Component):
 
 ######################################################
 class ComponentRegister(object):
-    architecture = ''
-    actuators = {}
-    sensors = {}
-    outputs = {}
-    module = None
+#    architecture = ''
+#    actuators = {}
+#    sensors = {}
+#    outputs = {}
+#    module = None
 
     # load all componentsi for this platform from a file
     def load(self, architecture):
+        # reset global variabnles
+#        global componentRegister
+#        global branchCollection
+#        global conditionCollection
+#        global allSystemParams
+#        print "before:", structures.allSystemParams
+#        componentRegister = ComponentRegister()
+#        branchCollection = BranchCollection()
+#        conditionCollection = structures.ConditionCollection()
+#        allSystemParams = None
+#        print "after:", allSystemParams
         # reset components
         self.actuators = {}
         self.sensors = {}
@@ -411,6 +439,7 @@ class ComponentRegister(object):
         # construct empty components from descriptions
         for n in module.components:
             isDuplicate = False
+            # print "load", n.name.lower()
             if n.typeCode == module.TYPE_ACTUATOR:
                 if n.name.lower() in self.actuators:
                     isDuplicate = True
@@ -427,7 +456,7 @@ class ComponentRegister(object):
                 else:
                     self.outputs[n.name.lower()] = Output(n.name, n.parameters)
             if isDuplicate:
-                sys.stderr.write("Component {0} duplicated for platform {1}, ignoring".format(
+                userError("Component {0} duplicated for platform {1}, ignoring\n".format(
                         n.name, architecture))
 
     def findComponent(self, keyword, name):
@@ -454,4 +483,7 @@ class ComponentRegister(object):
         return set(self.actuators.values()).union(set(self.sensors.values())).union(set(self.outputs.values()))
 
 ######################################################
+# global variables
 componentRegister = ComponentRegister()
+branchCollection = BranchCollection()
+conditionCollection = ConditionCollection()

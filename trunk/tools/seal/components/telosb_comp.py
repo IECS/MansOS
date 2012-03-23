@@ -16,6 +16,3 @@ sensorParameters = commonParameters + [("dataSize", 2), ("useFunction", "{0}Read
 lightsensor = ComponentSpecification(TYPE_SENSOR, "Light", sensorParameters)
 humiditysensor = ComponentSpecification(TYPE_SENSOR, "Humidity",
    sensorParameters + [("config", "USE_HUMIDITY=y"), ("includeFiles", "#include <hil/humidity.h>")])
-
-includes = ("includeFiles", "#include \"foobar.h\"\n#include \"baz.h\"")
-cooltestcomponent = ComponentSpecification(TYPE_SENSOR, "CoolTestComponent", sensorParameters + [includes])
