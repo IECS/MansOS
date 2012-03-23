@@ -1,5 +1,32 @@
-from components import *
+import string, sys
 
+########################################################
+
+INDENT_STRING = "  "  # indent new code level with two spaces
+def getIndent(indent):
+    # take indent string n times
+    return INDENT_STRING * indent
+
+def userError(msg):
+    # TODO JJ - redirect to IDE
+    sys.stderr.write(msg)
+
+def toMilliseconds(x):
+    if type(x) is int: return x
+    value = x.value
+    if x.suffix is None or x.suffix == '' or x.suffix == "ms":
+        pass
+    elif x.suffix == "s" or x.suffix == "sec":
+        value *= 1000
+    else:
+        userError("Unknown suffix {0} for time value\n".format(x.suffix))
+    return value
+
+def toCamelCase(s):
+    if s == '': return ''
+    return string.lower(s[0]) + s[1:]
+
+########################################################
 class ConditionCollection(object):
     def reset(self):
         self.conditionStack = []
@@ -42,22 +69,13 @@ class ConditionCollection(object):
                 
         outputFile.write("}\n")
 
-conditionCollection =  ConditionCollection()
-
-########################################################
-
-INDENT_STRING = "  "  # indent new code level with two spaces
-
-def getIndent(indent):
-    # take indent string n times
-    return INDENT_STRING * indent
-
 ########################################################
 class Value(object):
     def __init__(self, value=None, suffix=None):
         self.value = value
         self.suffix = suffix
     def getCode(self):
+        if self.value is None: return None
         s = "{0}".format(self.value)
         if not (self.suffix is None):
             s += self.suffix
@@ -80,6 +98,24 @@ class Expression(object):
         return self.right
 
 ########################################################
+class SystemParameter(object):
+    def __init__(self, name, value):
+        self.name = name.lower()
+        self.value = value
+#        if self.name in allSystemParams:
+#            print allSystemParams
+#            userError("Parameter {0} already specified, ignoring\n".format(name))
+#            return
+#        allSystemParams[self.name] = self
+#        global allSystemParams
+#        print "new system param, old=", allSystemParams
+#        if allSystemParams is None: allSystemParams = []
+#        allSystemParams.append(self)
+
+    def getCode(self, indent):
+        return "parameter " + self.name + " " + self.value.getCode()
+
+########################################################
 class ComponentUseCase(object):
     def __init__(self, type, name, parameters):
         self.type = type.lower()
@@ -100,7 +136,7 @@ class ComponentUseCase(object):
         result += ';'
         return result
 
-    def addComponents(self):
+    def addComponents(self, componentRegister, conditionCollection):
         if conditionCollection.branchChanged:
             conditionCollection.branchNumber += 1
             conditionCollection.branchChanged = False
@@ -155,10 +191,11 @@ class CodeBlock(object):
 
         return result
 
-    def addComponents(self):
+    def addComponents(self, componentRegister, conditionCollection):
         if self.blockType == CODE_BlOCK_TYPE_PROGRAM:
             # reset all
             conditionCollection.reset()
+            # TODO: system parameters!
         elif self.blockType == CODE_BlOCK_TYPE_WHEN:
             stackStartSize = conditionCollection.size()
             # append new
@@ -175,14 +212,14 @@ class CodeBlock(object):
         # add components - use cases always first, "when ..." blocks afterwards!
         for d in self.declarations:
             if type(d) is ComponentUseCase:
-                d.addComponents()
+                d.addComponents(componentRegister, conditionCollection)
         for d in self.declarations:
             if type(d) is CodeBlock:
-                d.addComponents()
+                d.addComponents(componentRegister, conditionCollection)
 
         # recursive call
         if self.next != None:
-            self.next.addComponents()
+            self.next.addComponents(componentRegister, conditionCollection)
 
         if self.blockType == CODE_BlOCK_TYPE_WHEN:
             # pop all conditions from this code block

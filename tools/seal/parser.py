@@ -4,11 +4,12 @@ import ply.yacc as yacc
 import re, string
 
 from structures import *
+import components
 
 ###################################################
 
 class SealParser():
-    def __init__(self, printMsg, verboseMode):
+    def __init__(self, architecture, printMsg, verboseMode):
         # Lex & yacc
         self.lex = lex.lex(module = self, debug = verboseMode, reflags=re.IGNORECASE)
         self.yacc = yacc.yacc(module = self, debug = verboseMode)
@@ -21,16 +22,21 @@ class SealParser():
         if verboseMode:
             print "Lex & Yacc init done!"
             print "Note: cache is used, so warnings are shown only at first-time compilation!"
+        # load available components
+        components.componentRegister.load(architecture)
 
     def run(self, s):
-        self.result = []
-        if s != None:
-            if self.verboseMode:
-                print s
-            start = time.time()
-            # \n added because needed! helps resolving conflicts
-            self.yacc.parse('\n' + s + '\n')
-            print "Parsing done in %.4f s" % (time.time() - start)
+        if self.verboseMode:
+            print s
+        if s == None: return
+        self.result = None
+        start = time.time()
+        # \n added because needed! helps resolving conflicts
+        self.yacc.parse('\n' + s + '\n')
+        print "Parsing done in %.4f s" % (time.time() - start)
+        if self.result:
+            self.result.addComponents(components.componentRegister,
+                                      components.conditionCollection)
         return self.result
 
 ### Lex
@@ -40,6 +46,7 @@ class SealParser():
       "use": "USE_TOKEN",
       "read": "READ_TOKEN",
       "output": "OUTPUT_TOKEN",
+      "parameter": "PARAMETER_TOKEN",
       "when": "WHEN_TOKEN",
       "else": "ELSE_TOKEN",
       "elsewhen": "ELSEWHEN_TOKEN",
@@ -55,7 +62,8 @@ class SealParser():
       "<=": "LEQ_TOKEN"}
  
     tokens = reserved.values() + ["IDENTIFIER_TOKEN",
-                                  "INTEGER_LITERAL",
+                                  "HEX_INTEGER_LITERAL",
+                                  "DECIMAL_INTEGER_LITERAL",
                                   "STRING_LITERAL"]
 
     # rules for all tokens that are not keywords (i.e. alphanumeric)
@@ -70,11 +78,17 @@ class SealParser():
 
     def t_IDENTIFIER_TOKEN(self, t):
         r'[a-zA-Z_][0-9a-zA-Z_]*'
+        t.value = t.value.lower()
         # This checks if reserved token is met.
         t.type = self.reserved.get(t.value, "IDENTIFIER_TOKEN")
         return t
 
-    def t_INTEGER_LITERAL(self, t):
+    def t_HEX_INTEGER_LITERAL(self, t):
+        r'0x[0-9a-fA-F]+'
+        t.value = (int(t.value, 16), '')
+        return t
+
+    def t_DECIMAL_INTEGER_LITERAL(self, t):
         r'[0-9]+[a-zA-Z_]*'
         prefix, suffix = '', ''
         parsingPrefix = True
@@ -125,18 +139,21 @@ class SealParser():
         '''declaration : USE_TOKEN IDENTIFIER_TOKEN parameter_list ';'
                        | READ_TOKEN IDENTIFIER_TOKEN parameter_list ';'
                        | OUTPUT_TOKEN IDENTIFIER_TOKEN parameter_list ';'
+                       | PARAMETER_TOKEN IDENTIFIER_TOKEN value ';'
                        | when_block
                        | ';'
                        | error ';'
                        | error END_TOKEN
         '''
-        # component use case
+        # component use case or system parameter
         if len(p) == 5:
-            if componentRegister.hasComponent(p[1], p[2]):
+            if p[1].lower() == "parameter":
+                p[0] = SystemParameter(p[2], p[3])
+            elif components.componentRegister.hasComponent(p[1], p[2]):
                 p[0] = ComponentUseCase(p[1], p[2], p[3])
             else:
                 self.errorMsg(p, "Component {0} not known or not supported for this architecture ({1})".format(
-                        p[2], componentRegister.architecture))
+                        p[2], components.componentRegister.architecture))
         # when block or empty statement
         elif len(p) == 2:
             if p[1] != ';':
@@ -145,7 +162,7 @@ class SealParser():
                 p[0] = p[1]
         # error token
         elif len(p) == 3:
-            self.errorMsg(p, "Trying to continue...")
+            self.printMsg("Trying to continue...\n")
 
     def p_when_block(self, p):
         '''when_block : WHEN_TOKEN condition ':' declaration_list elsewhen_block END_TOKEN
@@ -189,8 +206,10 @@ class SealParser():
                | arithmetic_expression GEQ_TOKEN arithmetic_expression
                | arithmetic_expression LEQ_TOKEN arithmetic_expression
       '''
-      if len(p) == 2 or p[1] == '(':
+      if len(p) == 2:
           p[0] = p[1]
+      elif p[1] == '(':
+          p[0] = p[2]
       else:
           p[0] = Expression(p[1], p[2], p[3])
 
@@ -254,7 +273,8 @@ class SealParser():
         p[0] = Value(string.lower(p[1]) == 't')
 
     def p_integer_literal(self, p):
-        '''integer_literal : INTEGER_LITERAL'''
+        '''integer_literal : DECIMAL_INTEGER_LITERAL
+                           | HEX_INTEGER_LITERAL'''
         p[0] = Value(p[1][0], p[1][1])
 
     def p_string_literal(self, p):
@@ -272,10 +292,10 @@ class SealParser():
     def p_error(self, p):
         if p:
             # TODO: print better message!
-            self.printMsg("Line '{0}': Syntax error at '{1}'".format(p.lineno, p.value))
+            self.printMsg("Syntax error at line {0}: {1}\n".format(p.lineno, p.value))
         else:
-            self.printMsg("Syntax error at EOF")
+            self.printMsg("Syntax error at EOF\n")
 
     def errorMsg(self, p, msg):
-        self.printMsg("Line '{0}':".format(p.lineno(1)))
-        self.printMsg(msg)
+        self.printMsg("Syntax error at line {0}: {1}\n".format(p.lineno(1), msg))
+

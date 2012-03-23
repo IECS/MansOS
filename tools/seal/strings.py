@@ -8,4 +8,4 @@ def toUpperCase(s):
 
 def toCamelCase(s):
     if s == '': return ''
-    return string.tolower(s[0]) + s[1:]
+    return string.lower(s[0]) + s[1:]
