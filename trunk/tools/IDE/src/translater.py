@@ -64,6 +64,7 @@ class Translater:
                 "aggregate": "Apvienot",
                 "baudrate": "Baudrate",
                 "crc": "Kontrolsumma",
+                "When": "When",
 
                 # APLICATION SPECIFIC PART
                 "File": "Izvēlne",

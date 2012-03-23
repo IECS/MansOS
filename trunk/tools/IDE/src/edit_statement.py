@@ -41,6 +41,7 @@ class EditStatement(scrolled.ScrolledPanel):
         self.choices = []
         self.oldValues = {}
         self.text = []
+        self.newMode = False
 
         self.statement = statement
         self.generateActuatorSelect()
@@ -83,6 +84,10 @@ class EditStatement(scrolled.ScrolledPanel):
         self.data.Add(self.obj, pos = (1, 1))
         # Set used row count
         self.row = 2
+        if self.statement.getMode() == '':
+            self.obj.Hide()
+            self.objText.Hide()
+            self.newMode = True
 
     def generatePatameterSelects(self, data):
         # Cycle all parameters and draw according boxes
@@ -95,6 +100,7 @@ class EditStatement(scrolled.ScrolledPanel):
                                                 name = parameter.getName(),
                                                 size = (150, 25)))
                 self.Bind(wx.EVT_COMBOBOX, self.updateOriginal, self.choices[-1])
+                self.Bind(wx.EVT_TEXT, self.updateOriginal, self.choices[-1])
             else:
                 self.choices.append(wx.CheckBox(self, name = parameter.getName()))
                 self.Bind(wx.EVT_CHECKBOX, self.updateOriginal, self.choices[-1])
@@ -149,6 +155,12 @@ class EditStatement(scrolled.ScrolledPanel):
         self.data.Clear()
 
     def updateOriginal(self, event = None):
+        if self.newMode and self.obj.GetValue() == '':
+            return
+        elif self.newMode:
+            self.saveCallback(self.actuator.GetValue(), self.obj.GetValue(), '')
+            self.newMode = False
+            return
         obj = event.GetEventObject()
         oldVal = ''
         if obj.GetName() in self.oldValues:

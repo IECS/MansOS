@@ -108,6 +108,9 @@ class ListenModule(wx.Panel):
         except serial.SerialException, msg:
             print "\nSerial exception:\n\t", msg
             return False
+        # Hides error if Exit is pressed while listening!
+        except wx._core.PyDeadObjectError:
+            pass
 
     def getMotelist(self, event = None):
         if event != None:
