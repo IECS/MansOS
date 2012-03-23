@@ -62,8 +62,9 @@ class EditCondition(scrolled.ScrolledPanel):
         self.when = wx.ComboBox(self, choices = self.API.getDefaultConditions(),
                                 style = wx.CB_DROPDOWN, name = "when",
                                 size = (200, 25))
-        self.when.SetValue(self.condition.getWhen().getCondition())
-        self.oldValues['when'] = self.condition.getWhen().getCondition()
+        if self.condition.getWhen() is not None:
+            self.when.SetValue(self.condition.getWhen().getCondition())
+            self.oldValues['when'] = self.condition.getWhen().getCondition()
 
         self.Bind(wx.EVT_COMBOBOX, self.updateOriginal, self.when)
         self.Bind(wx.EVT_TEXT, self.updateOriginal, self.when)
@@ -83,6 +84,7 @@ class EditCondition(scrolled.ScrolledPanel):
                             choices = self.API.getDefaultConditions(),
                             name = str(self.row), size = (200, 25)))
             self.Bind(wx.EVT_COMBOBOX, self.updateOriginal, self.choices[-1])
+            self.Bind(wx.EVT_TEXT, self.updateOriginal, self.choices[-1])
 
             self.choices[-1].SetValue(condition.getCondition())
             self.oldValues[str(self.row)] = str(condition.getCondition())

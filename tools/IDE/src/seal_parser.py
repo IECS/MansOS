@@ -50,7 +50,7 @@ class SealParser():
         self.result = []
         self.silent = silent
         if s != None:
-            self.currLine = 0
+            self.currLine = 1
             start = time.time()
             # \n added because needed! helps resolving conflicts
             self.yacc.parse('\n' + s + '\n')

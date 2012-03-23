@@ -28,6 +28,7 @@ import time
 from seal_struct import SealStruct
 from edit_statement import EditStatement
 from statement import Statement
+from condition_container import ConditionContainer
 from edit_condition import EditCondition
 from globals import * #@UnusedWildImport
 
@@ -41,6 +42,7 @@ class Editor(wx.stc.StyledTextCtrl):
         self.noUpdate = noUpdate
         self.lastText = ''
         self.lastAutoEdit = 0
+        self.newMode = False
 
         # Set scroll bar range
         self.SetEndAtLastLine(True)
@@ -117,68 +119,81 @@ class Editor(wx.stc.StyledTextCtrl):
         self.API.editorSplitter.doSplit(dialog)
 
     def statementUpdateClbk(self, name, value, oldValue = None):
-        row = self.lastEdit[0].rstrip()
-
-        start = row.find(name)
-        end = row[start:].find(",")
-        if end == -1:
-            end = row[start:].find(";")
-
-        if name == 'actuator' or name == 'object':
-            row = row.replace(oldValue, value)
-        elif value == '' or value == False:
-            row = row[:start].strip(" ,") + row[start + end:]
-        elif value == True:
-            row = row.rstrip("; ") + ", " + name + ";"
-        elif start == -1:
-            row = row.rstrip("; ") + ", " + name + " " + value + ";"
+        if self.newMode:
+            self.SetTargetStart(self.GetCurrentPos())
+            self.SetTargetEnd(self.GetCurrentPos())
+            self.ReplaceTarget(name + ' ' + value + ';')
+            self.lastEdit = self.findAllStatement(self.GetCurrentLine())
+            self.newMode = False
         else:
-            newPart = row[start:start + end].replace(oldValue, value)
-            row = row[:start] + newPart + row[start + end:]
+            row = self.lastEdit[0].rstrip()
 
+            start = row.find(name)
+            end = row[start:].find(",")
+            if end == -1:
+                end = row[start:].find(";")
+
+            if name == 'actuator' or name == 'object':
+                row = row.replace(oldValue, value)
+            elif value == '' or value == False:
+                row = row[:start].strip(" ,") + row[start + end:]
+            elif value == True:
+                row = row.rstrip("; ") + ", " + name + ";"
+            elif start == -1:
+                row = row.rstrip("; ") + ", " + name + " " + value + ";"
+            else:
+                newPart = row[start:start + end].replace(oldValue, value)
+                row = row[:start] + newPart + row[start + end:]
+
+            self.SetTargetStart(self.PositionFromLine(self.lastEdit[1]))
+            self.SetTargetEnd(self.PositionFromLine(self.lastEdit[3] + 1) - 1)
+            self.ReplaceTarget(row)
+            self.lastEdit = self.findAllStatement(self.lastEdit[2])
         self.lastAutoEdit = time.time()
-        self.SetTargetStart(self.PositionFromLine(self.lastEdit[1]))
-        self.SetTargetEnd(self.PositionFromLine(self.lastEdit[3] + 1) - 1)
-        self.ReplaceTarget(row)
-        self.lastEdit = self.findAllStatement(self.lastEdit[2])
 
     def conditionUpdateClbk(self, name, value, oldValue = None):
-        row = self.lastEdit[0].rstrip()
-        print row
-        if name == 'when':
-            start = row.find(name)
-            end = row[start:].find(":")
+        if self.newMode:
+            self.AddText("when " + value + ":\n\nend")
+            self.lastEdit = self.findAllStatement(self.GetCurrentLine())
+            self.newMode = False
         else:
-            name = int(name)
-            start = 0
-            while name > 0:
-                start += row[start:].find("elsewhen") + len("elsewhen")
-                name -= 1
-                print start, name
-            end = row[start:].find(":")
+            row = self.lastEdit[0].rstrip()
+            if name == 'when':
+                start = row.find(name)
+                end = row[start:].find(":")
+            else:
+                name = int(name)
+                start = 0
+                while name > 0:
+                    start += row[start:].find("elsewhen") + len("elsewhen")
+                    name -= 1
+                    print start, name
+                end = row[start:].find(":")
 
             newPart = row[start:start + end].replace(oldValue, value)
             row = row[:start] + newPart + row[start + end:]
 
+            self.SetTargetStart(self.PositionFromLine(self.lastEdit[1]))
+            self.SetTargetEnd(self.PositionFromLine(self.lastEdit[3] + 1) - 1)
+            self.ReplaceTarget(row)
+            self.lastEdit = self.findAllStatement(self.lastEdit[2])
         self.lastAutoEdit = time.time()
-        self.SetTargetStart(self.PositionFromLine(self.lastEdit[1]))
-        self.SetTargetEnd(self.PositionFromLine(self.lastEdit[3] + 1) - 1)
-        self.ReplaceTarget(row)
-        self.lastEdit = self.findAllStatement(self.lastEdit[2])
 
     def addStatement(self):
         self.getPlaceForAdding()
-        self.dialog = EditStatement(None, self.API,
-                             Statement(), self.statementDialogClbk)
-        self.dialog.ShowModal()
-        self.dialog.Destroy()
+        self.lastAutoEdit = time.time()
+        dialog = EditStatement(self.API.editorSplitter,
+                            self.API, Statement(), self.statementUpdateClbk)
+        self.API.editorSplitter.doSplit(dialog)
+        self.newMode = True
 
     def addCondition(self):
         self.getPlaceForAdding()
-        self.dialog = EditCondition(None, self.API, '',
-                                                   self.statementDialogClbk)
-        self.dialog.ShowModal()
-        self.dialog.Destroy()
+        self.lastAutoEdit = time.time()
+        dialog = EditCondition(self.API.editorSplitter,
+                            self.API, ConditionContainer(), self.conditionUpdateClbk)
+        self.API.editorSplitter.doSplit(dialog)
+        self.newMode = True
 
     def findAllStatement(self, lineNr):
         startNr = lineNr - 1
