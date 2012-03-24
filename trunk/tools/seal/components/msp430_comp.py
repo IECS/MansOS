@@ -4,7 +4,7 @@
 
 from component_def import *
 
-commonParameters = [("period", 1000)]
+commonParameters = [("period", 1000), ("pattern", None)]
 
 serialParameters = commonParameters + [("sendFunction", "serialPacketPrint()"), ("aggregate", False), ("baudrate", 38400)]
 radioParameters = commonParameters + [("aggregate", True),

@@ -1,3 +1,3 @@
 when 1 < 2:
-   output Outbar;
+   output Foobar;
 end

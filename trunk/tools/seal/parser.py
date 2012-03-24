@@ -10,6 +10,7 @@ import components
 
 class SealParser():
     def __init__(self, architecture, printMsg, verboseMode):
+        self.isError = False
         # Lex & yacc
         self.lex = lex.lex(module = self, debug = verboseMode, reflags=re.IGNORECASE)
         self.yacc = yacc.yacc(module = self, debug = verboseMode)
@@ -46,11 +47,14 @@ class SealParser():
       "use": "USE_TOKEN",
       "read": "READ_TOKEN",
       "output": "OUTPUT_TOKEN",
-      "parameter": "PARAMETER_TOKEN",
       "when": "WHEN_TOKEN",
       "else": "ELSE_TOKEN",
       "elsewhen": "ELSEWHEN_TOKEN",
       "end": "END_TOKEN",
+      "parameter": "PARAMETER_TOKEN",
+      "define": "DEFINE_TOKEN",
+      "set": "SET_TOKEN",
+      "pattern": "PATTERN_TOKEN",
       "true": "TRUE_TOKEN",
       "false": "FALSE_TOKEN",
       "not": "NOT_TOKEN",
@@ -136,33 +140,53 @@ class SealParser():
             p[0] = p[1]
 
     def p_declaration(self, p):
-        '''declaration : USE_TOKEN IDENTIFIER_TOKEN parameter_list ';'
-                       | READ_TOKEN IDENTIFIER_TOKEN parameter_list ';'
-                       | OUTPUT_TOKEN IDENTIFIER_TOKEN parameter_list ';'
-                       | PARAMETER_TOKEN IDENTIFIER_TOKEN value ';'
+        '''declaration : component_use_case
                        | when_block
+                       | system_parameter_declaration
+                       | pattern_declaration
+                       | set_statement
+                       | define_statement
                        | ';'
-                       | error ';'
                        | error END_TOKEN
+                       | error ';'
         '''
-        # component use case or system parameter
-        if len(p) == 5:
-            if p[1].lower() == "parameter":
-                p[0] = SystemParameter(p[2], p[3])
-            elif components.componentRegister.hasComponent(p[1], p[2]):
-                p[0] = ComponentUseCase(p[1], p[2], p[3])
-            else:
-                self.errorMsg(p, "Component {0} not known or not supported for this architecture ({1})".format(
-                        p[2], components.componentRegister.architecture))
-        # when block or empty statement
-        elif len(p) == 2:
-            if p[1] != ';':
-                p[0] = p[1]
-            else:
-                p[0] = p[1]
+        # use case, when block, parameter, "set" statement, or empty statement
+        if len(p) == 2:
+            p[0] = p[1]
         # error token
         elif len(p) == 3:
             self.printMsg("Trying to continue...\n")
+
+    def p_component_use_case(self, p):
+        '''component_use_case : USE_TOKEN IDENTIFIER_TOKEN parameter_list ';'
+                              | READ_TOKEN IDENTIFIER_TOKEN parameter_list ';'
+                              | OUTPUT_TOKEN IDENTIFIER_TOKEN parameter_list ';'
+        '''
+        if components.componentRegister.hasComponent(p[1], p[2]):
+            p[0] = ComponentUseCase(p[1], p[2], p[3])
+        else:
+            self.errorMsg(p, "Component {0} not known or not supported for this architecture ({1})".format(
+                    p[2], components.componentRegister.architecture))
+
+    def p_system_parameter_declaration(self, p):
+        '''system_parameter_declaration : PARAMETER_TOKEN IDENTIFIER_TOKEN value ';'
+        '''
+        p[0] = SystemParameter(p[2], p[3])
+
+    def p_pattern_declaration(self, p):
+        '''pattern_declaration : PATTERN_TOKEN IDENTIFIER_TOKEN '[' value_list ']' ';'
+        '''
+        p[0] = PatternDeclaration(p[2], p[4])
+
+    def p_set_statement(self, p):
+        '''set_statement : SET_TOKEN IDENTIFIER_TOKEN value ';'
+        '''
+        p[0] = SetStatement(p[2], p[3])
+
+    def p_define_statement(self, p):
+        '''define_statement : DEFINE_TOKEN IDENTIFIER_TOKEN parameter_list ';'
+        '''
+        p[0] = DefineStatement(p[2], p[3])
 
     def p_when_block(self, p):
         '''when_block : WHEN_TOKEN condition ':' declaration_list elsewhen_block END_TOKEN
@@ -249,6 +273,7 @@ class SealParser():
     def p_parameter(self, p):
         '''parameter : IDENTIFIER_TOKEN
                      | IDENTIFIER_TOKEN value
+                     | PATTERN_TOKEN value
         '''
 # TODO?:
 #                     | WHEN_TOKEN condition
@@ -258,6 +283,16 @@ class SealParser():
         else:
             # Works for both cases, in condition case parameter's name is "when" :)
             p[0] = (p[1], p[2])
+
+    def p_value_list(self, p):
+        '''value_list : value_list ',' value
+                      | value
+        '''
+        if len(p) == 2:
+            p[0] = [p[1]]
+        else:
+            p[0] = p[1]
+            p[0].append(p[3])
 
     def p_value(self, p):
         '''value : boolean_literal
@@ -290,6 +325,7 @@ class SealParser():
         pass
 
     def p_error(self, p):
+        self.isError = True
         if p:
             # TODO: print better message!
             self.printMsg("Syntax error at line {0}: {1}\n".format(p.lineno, p.value))
@@ -297,5 +333,6 @@ class SealParser():
             self.printMsg("Syntax error at EOF\n")
 
     def errorMsg(self, p, msg):
+        self.isError = True
         self.printMsg("Syntax error at line {0}: {1}\n".format(p.lineno(1), msg))
 

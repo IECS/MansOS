@@ -1,2 +1,2 @@
-state meh false;
-state s 13;
+set meh false;
+set s 13;
