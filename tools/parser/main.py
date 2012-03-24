@@ -113,6 +113,8 @@ def main():
     # parse input file (SEAL code)
     parser = generator.SealParser(architecture, printLine, verboseMode)
     parser.run(contents)
+    if parser.isError:
+        exit(1) # do not generate output file in this case
 
     # generate C code to an output file
     g = generator.createGenerator(targetOS)
@@ -134,6 +136,11 @@ def main():
             g.generateMakefile(outputFile, outputFileName, pathToOS)
         with open(outputDirName + "config", 'w') as outputFile:
             g.generateConfigFile(outputFile)
+        if parser.isError:
+            # cleanup
+            os.remove(outputFileName)
+            os.remove(outputDirName + "Makefile")
+            os.remove(outputDirName + "config")
 
 if __name__ == '__main__':
     main()

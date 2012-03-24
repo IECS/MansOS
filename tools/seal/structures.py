@@ -10,6 +10,8 @@ def getIndent(indent):
 def userError(msg):
     # TODO JJ - redirect to IDE
     sys.stderr.write(msg)
+    # TODO
+    # parser.isError = True
 
 def toMilliseconds(x):
     if type(x) is int: return x
@@ -28,6 +30,9 @@ def toCamelCase(s):
 
 ########################################################
 class ConditionCollection(object):
+    def __init__(self):
+        self.reset()
+
     def reset(self):
         self.conditionStack = []
         self.conditionList = []
@@ -80,6 +85,15 @@ class Value(object):
         if not (self.suffix is None):
             s += self.suffix
         return s
+    def getType(self):
+        if type(self.value) is bool:
+            return "bool"
+        return "int_t"
+    def asString(self):
+        if type(self.value) is bool:
+            return str(self.value).lower()
+        # TODO: convert time values to milliseconds?
+        return str(self.value)
 
 ########################################################
 class Expression(object):
@@ -102,18 +116,83 @@ class SystemParameter(object):
     def __init__(self, name, value):
         self.name = name.lower()
         self.value = value
-#        if self.name in allSystemParams:
-#            print allSystemParams
-#            userError("Parameter {0} already specified, ignoring\n".format(name))
-#            return
-#        allSystemParams[self.name] = self
-#        global allSystemParams
-#        print "new system param, old=", allSystemParams
-#        if allSystemParams is None: allSystemParams = []
-#        allSystemParams.append(self)
+
+    def addComponents(self, componentRegister, conditionCollection):
+        if self.name in componentRegister.systemParams:
+            userError("Parameter {0} already specified, ignoring\n".format(self.name))
+            return
+        componentRegister.systemParams[self.name] = self
 
     def getCode(self, indent):
-        return "parameter " + self.name + " " + self.value.getCode()
+        return "parameter " + self.name + " " + self.value.getCode() + ';'
+
+########################################################
+class PatternDeclaration(object):
+    def __init__(self, name, values):
+        self.name = name.lower()
+        self.values = values
+
+    def addComponents(self, componentRegister, conditionCollection):
+        if self.name in componentRegister.patterns:
+            userError("Pattern {0} already specified, ignoring\n".format(self.name))
+            return
+        componentRegister.patterns[self.name] = self
+
+    def getCode(self, indent):
+        result = "pattern " + self.name + " ["
+        assert len(self.values)
+        for v in self.values[:-1]:
+            result += v.getCode() + ', '
+        result += self.values[-1].getCode()
+        result += '];'
+        return result
+
+    def generateVariables(self, outputFile):
+        outputFile.write("int_t __pattern_{0}[] = {1}\n".format(self.name, '{'));
+        for v in self.values[:-1]:
+            outputFile.write("    {0},\n".format(v.asString()))
+        outputFile.write("    {0}\n".format(self.values[-1].asString()))
+        outputFile.write("};\n");
+        outputFile.write("uint_t __pattern_{0}Cursor = 0;\n".format(self.name));
+
+########################################################
+class SetStatement(object):
+    def __init__(self, name, value):
+        self.name = name.lower()
+        self.value = value
+
+    def addComponents(self, componentRegister, conditionCollection):
+        componentRegister.setState(self.name, self.value,
+                                   conditionCollection.conditionStack,
+                                   conditionCollection.branchNumber)
+
+    def getCode(self, indent):
+        return "set " + self.name + " " + self.value.getCode() + ';'
+
+class DefineStatement(object):
+    def __init__(self, name, parameters):
+        self.name = name.lower()
+        self.parameters = parameters
+
+    def getCode(self, indent):
+        result = self.name
+        for p in self.parameters:
+            result += " "
+            result += p[0]
+            if p[1] != None:
+                result += " "
+                result += p[1].getCode()
+            result += ","
+        if self.parameters != []:
+            result = result[:-1] # remove last comma
+        result += ';'
+        return result
+
+    def addComponents(self, componentRegister, conditionCollection):
+        if self.name in componentRegister.defines:
+            userError("Define {0} already specified, ignoring\n".format(self.name))
+            return
+        componentRegister.defines[self.name] = self
 
 ########################################################
 class ComponentUseCase(object):
@@ -137,9 +216,6 @@ class ComponentUseCase(object):
         return result
 
     def addComponents(self, componentRegister, conditionCollection):
-        if conditionCollection.branchChanged:
-            conditionCollection.branchNumber += 1
-            conditionCollection.branchChanged = False
         componentRegister.useComponent(self.type, self.name,
                                        self.parameters,
                                        conditionCollection.conditionStack,
@@ -209,7 +285,28 @@ class CodeBlock(object):
             # just invert previous
             conditionCollection.invertLast()
 
+        # if there are some declarations present for this code branch,
+        # make sure it gets unique number
+        if conditionCollection.branchChanged and len(self.declarations):
+            conditionCollection.branchNumber += 1
+            conditionCollection.branchChanged = False
+
         # add components - use cases always first, "when ..." blocks afterwards!
+        for d in self.declarations:
+            if type(d) is SystemParameter:
+                if self.blockType != CODE_BlOCK_TYPE_PROGRAM:
+                    userError("Parameter declarations supported only in top level, ignoring parameter {0}\n".format(
+                            d.name))
+                else:
+                    d.addComponents(componentRegister, conditionCollection)
+            if type(d) is PatternDeclaration:
+                if self.blockType != CODE_BlOCK_TYPE_PROGRAM:
+                    userError("Pattern declarations supported only in top level, ignoring pattern {0}\n".format(
+                            d.name))
+                else:
+                    d.addComponents(componentRegister, conditionCollection)
+            if type(d) is SetStatement or type(d) is DefineStatement:
+                d.addComponents(componentRegister, conditionCollection)
         for d in self.declarations:
             if type(d) is ComponentUseCase:
                 d.addComponents(componentRegister, conditionCollection)

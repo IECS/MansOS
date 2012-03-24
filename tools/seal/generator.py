@@ -68,6 +68,7 @@ class Generator(object):
 
     def generateVariables(self):
         self.outputFile.write("bool oldConditionStatus[NUM_CONDITIONS + 1];\n")
+        components.componentRegister.generateVariables(self.outputFile)
         for c in self.components:
             c.generateVariables(self.outputFile)
 

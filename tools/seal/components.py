@@ -29,14 +29,12 @@ class BranchCollection(object):
         useCases = b[1]
         outputFile.write("void branch{0}Start(void)\n".format(number))
         outputFile.write("{\n")
-        if number == 0:
-            branchCallbackName = ''
-        else:
-            branchCallbackName = "Branch{0}".format(number)
+#        if number == 0:
+#            branchCallbackName = ''
+#        else:
+#            branchCallbackName = "Branch{0}".format(number)
         for uc in useCases:
-            if type(uc.component) is not Output and uc.period:
-                outputFile.write("    {0}{1}{2}Callback(NULL);\n".format(
-                        uc.component.getNameCC(), branchCallbackName, uc.numInBranch))
+            uc.generateBranchEnterCode(outputFile)
         outputFile.write("}\n")
         outputFile.write("\n")
 
@@ -45,14 +43,12 @@ class BranchCollection(object):
         useCases = b[1]
         outputFile.write("void branch{0}Stop(void)\n".format(number))
         outputFile.write("{\n")
-        if number == 0:
-            branchCallbackName = ''
-        else:
-            branchCallbackName = "Branch{0}".format(number)
+#        if number == 0:
+#            branchCallbackName = ''
+#        else:
+#            branchCallbackName = "Branch{0}".format(number)
         for uc in useCases:
-            if type(uc.component) is not Output and uc.period:
-                outputFile.write("    alarmRemove(&{0}{1}Alarm{2});\n".format(
-                        uc.component.getNameCC(), branchCallbackName, uc.numInBranch))
+            uc.generateBranchExitCode(outputFile)
         outputFile.write("}\n")
         outputFile.write("\n")
 
@@ -95,7 +91,19 @@ class UseCase(object):
             self.numInBranch = "{0}".format(numInBranch)
         #print "add use case, conditions =", self.conditions
         #print "  branchNumber=", self.branchNumber
-        self.period = None
+        p = self.parameters.get("period")
+        if p:
+            self.period = toMilliseconds(p)
+        else:
+            self.period = None
+        p = self.parameters.get("pattern")
+        if p:
+            self.pattern = p.asString()
+        else:
+            self.pattern= None
+        if self.period and self.pattern:
+            userError("Both period and pattern specified for component {0} use case\n".format(component.name))
+
         if branchNumber != 0:
             self.branchName = "Branch{0}".format(branchNumber)
         else:
@@ -109,9 +117,7 @@ class UseCase(object):
         #print "after conditions[1] =", branchCollection.branches[branchNumber][0][1]
 
     def generateConstants(self, outputFile):
-        x = self.parameters.get("period")
-        if x:
-            self.period = toMilliseconds(x)
+        if self.period:
             ucname = self.component.getNameUC()
             if self.branchNumber != 0:
                 ucname += self.branchName.upper()
@@ -120,7 +126,7 @@ class UseCase(object):
                     ucname, self.numInBranch, self.period))
 
     def generateVariables(self, outputFile):
-        if self.period:
+        if self.period or self.pattern:
             outputFile.write(
                 "Alarm_t {0}{1}Alarm{2};\n".format(
                     self.component.getNameCC(), self.branchName, self.numInBranch))
@@ -134,7 +140,7 @@ class UseCase(object):
         useFunction = self.component.getParameterValue("useFunction", "{0}Use()").format(
             self.component.getNameCC())
 
-        if self.period:
+        if self.period or self.pattern:
             outputFile.write("void {0}{1}Callback(void *__unused)\n".format(ccname, self.numInBranch))
             outputFile.write("{\n")
             if type(self.component) is Actuator:
@@ -155,16 +161,36 @@ class UseCase(object):
                 for o in outputs:
                     o.generateCallbackCode(self.component, outputFile)
 
-            outputFile.write("    alarmSchedule(&{0}Alarm{1}, {2}_PERIOD{1});\n".format(
-                    ccname, self.numInBranch, ucname))
+            if self.period:
+                outputFile.write("    alarmSchedule(&{0}Alarm{1}, {2}_PERIOD{1});\n".format(
+                        ccname, self.numInBranch, ucname))
+            elif self.pattern:
+                outputFile.write("    alarmSchedule(&{0}Alarm{1}, __pattern_{2}[__pattern_{2}Cursor]);\n".format(
+                        ccname, self.numInBranch, self.pattern))
+                outputFile.write("    __pattern_{0}Cursor++;\n".format(self.pattern))
+                outputFile.write("    __pattern_{0}Cursor %= sizeof(__pattern_{0}) / sizeof(*__pattern_{0});\n".format(
+                        self.pattern))
             outputFile.write("}\n")
 
     def generateAppMainCode(self, outputFile):
         ccname = self.component.getNameCC()
         ccname += self.branchName
-        if self.period:
+        if self.period or self.pattern:
             outputFile.write("    alarmInit(&{0}Alarm{1}, {0}{1}Callback, NULL);\n".format(
                     ccname, self.numInBranch))
+
+    def generateBranchEnterCode(self, outputFile):
+        if type(self.component) is not Output and (self.period or self.pattern):
+            outputFile.write("    {0}{1}{2}Callback(NULL);\n".format(
+                    self.component.getNameCC(), self.branchName, self.numInBranch))
+
+    def generateBranchExitCode(self, outputFile):
+        if type(self.component) is not Output and (self.period or self.pattern):
+            outputFile.write("    alarmRemove(&{0}{1}Alarm{2});\n".format(
+                    self.component.getNameCC(), self.branchName, self.numInBranch))
+            if self.pattern:
+                # reset cursor position (TODO XXX: really?)
+                outputFile.write("    __pattern_{0}Cursor = 0;\n".format(self.pattern))
 
     def getParameterValue(self, parameter, defaultValue=None):
         if parameter in self.parameters:
@@ -196,7 +222,27 @@ class Component(object):
         for uc in self.useCases:
             if uc.branchNumber == branchNumber:
                 numInBranch += 1
-        self.useCases.append(UseCase(self, parameters, conditions, branchNumber, numInBranch))
+        finalParameters = {}
+        for p in parameters:
+            if p[0].lower() == "parameters":
+                #print "p[1] = ", p[1].asString()
+                #print "componentRegister = ", componentRegister.defines.keys()
+                d = componentRegister.defines.get(p[1].asString())
+                if d is None:
+                    userError("No define with name '{0}' is present (for component {1})\n".format(
+                            p[1].asString(), self.name))
+                else:
+                    for pd in d.parameters:
+                        if pd[0] in finalParameters:
+                            userError("Parameter '{0}' already specified for component {1}\n".format(pd[0], self.name))
+                        else:
+                            finalParameters[pd[0]] = pd[1]
+            else:
+                if p[0] in finalParameters:
+                    userError("Parameter '{0}' already specified for component {1}\n".format(pd[0], self.name))
+                else:
+                    finalParameters[p[0]] = p[1]
+        self.useCases.append(UseCase(self, list(finalParameters.iteritems()), conditions, branchNumber, numInBranch))
 
     def generateIncludes(self, outputFile):
         if self.isUsed():
@@ -408,6 +454,26 @@ class Output(Component):
         outputFile.write("    }\n\n")
 
 ######################################################
+class StateUseCase(object):
+    def __init__(self, name, value, conditions, branchNumber):
+        self.name = name
+        self.value = value
+        self.conditions = list(conditions)
+        if branchNumber in branchCollection.branches:
+            branchCollection.branches[branchNumber].append(self)
+        else:
+            branchCollection.branches[branchNumber] = [self]
+
+    def generateVariables(self, outputFile):
+        outputFile.write("{0} {1} = {2};\n".format(self.value.getType(), self.name, self.value.asString()))
+
+    def generateBranchEnterCode(self, outputFile):
+        outputFile.write("    {0} = {1};\n".format(self.name, self.value.asString()))
+
+    def generateBranchExitCode(self, outputFile):
+        pass
+
+######################################################
 class ComponentRegister(object):
 #    architecture = ''
 #    actuators = {}
@@ -432,6 +498,10 @@ class ComponentRegister(object):
         self.actuators = {}
         self.sensors = {}
         self.outputs = {}
+        self.systemParams = {}
+        self.systemStates = {}
+        self.defines = {}
+        self.patterns = {}
         self.architecture = architecture
         # import the module
         sourceFile = architecture + '_comp'
@@ -478,6 +548,17 @@ class ComponentRegister(object):
         o = self.findComponent(keyword.lower(), name.lower())
         assert o != None
         o.addUseCase(parameters, conditions, branchNumber)
+
+    def setState(self, name, value, conditions, branchNumber):
+        if name not in self.systemStates:
+            self.systemStates[name] = []
+        self.systemStates[name].append(StateUseCase(name, value, conditions, branchNumber))
+
+    def generateVariables(self, outputFile):
+        for s in self.systemStates.itervalues():
+            s[0].generateVariables(outputFile)
+        for p in self.patterns.itervalues():
+            p.generateVariables(outputFile)
 
     def getAllComponents(self):
         return set(self.actuators.values()).union(set(self.sensors.values())).union(set(self.outputs.values()))
