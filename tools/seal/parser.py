@@ -12,10 +12,11 @@ class SealParser():
     def __init__(self, architecture, printMsg, verboseMode):
         self.isError = False
         # Lex & yacc
-        self.lex = lex.lex(module = self, debug = verboseMode, reflags=re.IGNORECASE)
+        self.lex = lex.lex(module = self, debug = verboseMode, reflags = re.IGNORECASE)
         self.yacc = yacc.yacc(module = self, debug = verboseMode)
         # current condtion (for context)
         self.currentCondition = None
+        self.newCode = True
         # save parameters
         self.printMsg = printMsg
         self.verboseMode = verboseMode
@@ -30,10 +31,11 @@ class SealParser():
         if self.verboseMode:
             print s
         if s == None: return
+        self.newCode = True
         self.result = None
         start = time.time()
-        # \n added because needed! helps resolving conflicts
-        self.yacc.parse('\n' + s + '\n')
+        # \n added because guarantees, that lineNr is correct!
+        self.yacc.parse('\n' + s)
         print "Parsing done in %.4f s" % (time.time() - start)
         if self.result:
             self.result.addComponents(components.componentRegister,
@@ -64,7 +66,7 @@ class SealParser():
       "!=": "NEQ_TOKEN",
       ">=": "GEQ_TOKEN",
       "<=": "LEQ_TOKEN"}
- 
+
     tokens = reserved.values() + ["IDENTIFIER_TOKEN",
                                   "HEX_INTEGER_LITERAL",
                                   "DECIMAL_INTEGER_LITERAL",
@@ -110,6 +112,9 @@ class SealParser():
 
     def t_newline(self, t):
         r'\n+'
+        if self.newCode:
+            self.newCode = False
+            t.lexer.lineno = 0
         t.lexer.lineno += t.value.count("\n")
 
     def t_COMMENT_TOKEN(self, t):
@@ -117,7 +122,7 @@ class SealParser():
         t.value = t.value.strip("/ ")
 
     def t_error(self, t):
-        self.printMsg("Line '%d': Illegal character '%s'" % 
+        self.printMsg("Line '%d': Illegal character '%s'" %
                       (t.lexer.lineno, t.value[0]))
         t.lexer.skip(1)
 
