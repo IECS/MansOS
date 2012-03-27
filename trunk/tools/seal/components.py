@@ -100,7 +100,7 @@ class UseCase(object):
         if p:
             self.pattern = p.asString()
         else:
-            self.pattern= None
+            self.pattern = None
         if self.period and self.pattern:
             userError("Both period and pattern specified for component {0} use case\n".format(component.name))
 
@@ -192,7 +192,7 @@ class UseCase(object):
                 # reset cursor position (TODO XXX: really?)
                 outputFile.write("    __pattern_{0}Cursor = 0;\n".format(self.pattern))
 
-    def getParameterValue(self, parameter, defaultValue=None):
+    def getParameterValue(self, parameter, defaultValue = None):
         if parameter in self.parameters:
             return self.parameters[parameter].getCode()
         return self.component.getParameterValue(parameter, defaultValue)
@@ -203,7 +203,7 @@ class Component(object):
         self.name = name
         self.parameters = dict(parameters)
         self.useCases = []
-        
+
     def isUsed(self):
         return bool(len(self.useCases))
 
@@ -239,7 +239,7 @@ class Component(object):
                             finalParameters[pd[0]] = pd[1]
             else:
                 if p[0] in finalParameters:
-                    userError("Parameter '{0}' already specified for component {1}\n".format(pd[0], self.name))
+                    userError("Parameter '{0}' already specified for component {1}\n".format(p[0], self.name))
                 else:
                     finalParameters[p[0]] = p[1]
         self.useCases.append(UseCase(self, list(finalParameters.iteritems()), conditions, branchNumber, numInBranch))
@@ -273,7 +273,7 @@ class Component(object):
             if config is not None:
                 outputFile.write("{0}\n".format(config))
 
-    def getParameterValue(self, parameter, defaultValue=None):
+    def getParameterValue(self, parameter, defaultValue = None):
         if parameter in self.parameters:
             value = self.parameters[parameter]
             if value is not None: return value
@@ -403,7 +403,7 @@ class Output(Component):
             if isConstantField(f): numConstFields += 1
         outputFile.write("    {0}PacketNumFieldsFull = {1};\n".format(
                 self.getNameCC(), numConstFields))
-                             
+
         for f in self.usedFields:
             if isConstantField(f):
                 outputFile.write("    {0}Packet.{1} = {2};\n".format(
