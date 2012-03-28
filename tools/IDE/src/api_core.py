@@ -32,13 +32,15 @@ from frame import Frame
 from seal_struct import SealStruct
 from seal_syntax import SealSyntax
 from translater import Translater
-from seal_parser import SealParser
+#from seal_parser import SealParser
 from output_area import OutputArea
 from tab_manager import TabManager
 from upload_core import UploadCore
 from output_tools import OutputTools
 from listen_module import ListenModule
 from globals import * #@UnusedWildImport
+
+from parser import SealParser
 
 class ApiCore:
     def __init__(self):
@@ -61,7 +63,6 @@ class ApiCore:
                }
         # All functions here will be called upon exit
         self.onExit = [self.saveSettings]
-
 
         if LOG_TO_FILE:
             path = os.getcwd()
@@ -101,7 +102,7 @@ class ApiCore:
         self.clearOutputArea = self.outputArea.clear
 
         # Init seal parser
-        self.sealParser = SealParser(self.printInfo)
+        self.sealParser = SealParser("test", self.printInfo, False)
         self.seal = SealStruct(self)
 
         self.editorSplitter = wx.SplitterWindow(self.emptyFrame,

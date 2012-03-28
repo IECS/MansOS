@@ -21,29 +21,61 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+from structures import ComponentUseCase, CodeBlock
+from globals import * #@UnusedWildImport
 
 class SealStruct():
-    def __init__(self, API, initCode = None, parser = None, silent = False):
+    def __init__(self, API, initCode = None, parser = None):
         self.API = API
+        self.next = None
         if parser == None:
             self.sealParser = self.API.sealParser
-        self.__parsedCode = self.sealParser.run(initCode, silent)
-
-    def getFirstObject(self):
-        if self.__parsedCode == []:
-            return ''
-        return self.__parsedCode[0]
+        self.__parsedCode = self.sealParser.run(initCode)
 
     def getPredictedType(self):
-        if self.__parsedCode == []:
-            return ''
-        return self.getFirstObject().getIdentifier()
+        if type(self.__parsedCode.declarations[0]) == ComponentUseCase:
+            return STATEMENT
+        elif type(self.__parsedCode.declarations[0]) == CodeBlock:
+            return CONDITION
+        else:
+            return UNKNOWN
 
-    def getData(self):
-        return self.__parsedCode
+    def getMode(self):
+        if self.getPredictedType() == STATEMENT:
+            return self.__parsedCode.declarations[0].type
+        return ''
+
+    def getObject(self):
+        if self.getPredictedType() == STATEMENT:
+            return self.__parsedCode.declarations[0].name
+        return ''
+
+    def getParamValueByName(self, name):
+        if self.getPredictedType() == STATEMENT:
+            for x in self.__parsedCode.declarations[0].parameters:
+                if x[0].lower() == name.lower():
+                    if x[1] == None:
+                        return True
+                    else:
+                        return x[1].getCode()
+        return None
+
+    def getCondition(self):
+        print self.__parsedCode.declarations
+        if self.getPredictedType() == CONDITION:
+            return self.__parsedCode.declarations[0].condition.getCode()
+        return ''
+
+    def getNextCondition(self):
+        if self.next == None:
+            self.next = self.__parsedCode.declarations[0].next
+        else:
+            self.next = self.next.next
+
+        if self.next.condition is not None:
+            return self.next.condition.getCode()
+        else:
+            return None
 
     def getCode(self):
-        result = ''
-        for obj in self.getData():
-            result += obj.getCode('') + '\n'
-        return result
+        return self.__parsedCode.getCode(0)

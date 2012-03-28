@@ -94,6 +94,7 @@ class EditStatement(scrolled.ScrolledPanel):
         for parameter in data:
             self.text.append(wx.StaticText(self, label = self.tr(parameter.getName()) + ":"))
             self.data.Add(self.text[-1], pos = (self.row, 0))
+            paramValue = self.statement.getParamValueByName(parameter.getName())
             if parameter.getValue() != None:
                 self.choices.append(wx.ComboBox(self, choices = parameter.getValue(),
                                                 style = wx.CB_DROPDOWN,
@@ -101,19 +102,16 @@ class EditStatement(scrolled.ScrolledPanel):
                                                 size = (150, 25)))
                 self.Bind(wx.EVT_COMBOBOX, self.updateOriginal, self.choices[-1])
                 self.Bind(wx.EVT_TEXT, self.updateOriginal, self.choices[-1])
+                if paramValue != None:
+                    self.choices[-1].SetValue(str(paramValue))
+                    self.oldValues[parameter.getName()] = str(paramValue)
             else:
                 self.choices.append(wx.CheckBox(self, name = parameter.getName()))
                 self.Bind(wx.EVT_CHECKBOX, self.updateOriginal, self.choices[-1])
-
-            paramValue = self.statement.getParamValueByName(parameter.getName())
-
-            if paramValue != None:
-                if type(paramValue) == bool:
+                if paramValue != None:
                     self.choices[-1].SetValue(paramValue)
-                    self.oldValues[parameter.getName()] = paramValue
-                else:
-                    self.choices[-1].SetValue(str(paramValue))
-                    self.oldValues[parameter.getName()] = str(paramValue)
+                self.oldValues[parameter.getName()] = paramValue
+
             self.data.Add(self.choices[-1], pos = (self.row, 1))
             self.row += 1
 
@@ -161,9 +159,11 @@ class EditStatement(scrolled.ScrolledPanel):
             self.saveCallback(self.actuator.GetValue(), self.obj.GetValue(), '')
             self.newMode = False
             return
-        obj = event.GetEventObject()
-        oldVal = ''
-        if obj.GetName() in self.oldValues:
-            oldVal = self.oldValues[obj.GetName()]
-        self.oldValues[obj.GetName()] = obj.GetValue()
-        self.saveCallback(obj.GetName(), obj.GetValue(), oldVal)
+        name = event.GetEventObject().GetName()
+        value = event.GetEventObject().GetValue().replace(",", "")
+        event.GetEventObject().SetValue(value)
+        oldVal = None
+        if name in self.oldValues:
+            oldVal = self.oldValues[name]
+        self.oldValues[name] = value
+        self.saveCallback(name, value, oldVal)
