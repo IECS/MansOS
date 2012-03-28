@@ -24,12 +24,14 @@
 #
 
 import os
+from sys import path
 
 def main():
     if not importsOk():
         exit(1)
     # Go to real directory for import to work
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
     from src import api_core
     import wx
 
@@ -44,6 +46,7 @@ def importsOk():
     wxModuleOK = True      # wx widgets
     serialModuleOK = True  # serial port communication
     plyModuleOK = True     # Python Lex Yacc - for compilation
+    sealParserOK = True    # SEAL parser
 
     try:
         import wx
@@ -60,7 +63,17 @@ def importsOk():
     except ImportError:
         plyModuleOK = False
 
-    if not (wxModuleOK and serialModuleOK and plyModuleOK):
+    try:
+        # Add SEAL parser to python path
+        path.append('..')
+        path.append('../seal/components')
+        import parser
+    except ImportError:
+        sealParserOK = False
+    except OSError:
+        sealParserOK = False
+
+    if not (wxModuleOK and serialModuleOK and plyModuleOK and sealParserOK):
         if os.name == 'posix':
             installStr = "Make sure you have installed required modules. Run:\n\tapt-get install"
         else:
@@ -79,6 +92,9 @@ def importsOk():
         if not plyModuleOK:
             print "\tPLY module not found"
             installStr += " python-ply"
+
+        if not plyModuleOK:
+            print "\tSEAL parser not found!"
 
         print installStr
         return False

@@ -45,8 +45,8 @@ class EditCondition(scrolled.ScrolledPanel):
         self.condition = condition
         self.generateWhenSelect()
 
-        data = self.condition.getElseWhen()
-        self.generateElseWhenSelects(data)
+        #data = self.condition.getElseWhen()
+        self.generateElseWhenSelects()
 
         self.SetBackgroundColour("black")
 
@@ -62,9 +62,10 @@ class EditCondition(scrolled.ScrolledPanel):
         self.when = wx.ComboBox(self, choices = self.API.getDefaultConditions(),
                                 style = wx.CB_DROPDOWN, name = "when",
                                 size = (200, 25))
-        if self.condition.getWhen() is not None:
-            self.when.SetValue(self.condition.getWhen().getCondition())
-            self.oldValues['when'] = self.condition.getWhen().getCondition()
+        if self.condition.getCondition() is not None:
+            print self.condition.getCondition()
+            self.when.SetValue(self.condition.getCondition())
+            self.oldValues['when'] = self.condition.getCondition()
 
         self.Bind(wx.EVT_COMBOBOX, self.updateOriginal, self.when)
         self.Bind(wx.EVT_TEXT, self.updateOriginal, self.when)
@@ -75,9 +76,10 @@ class EditCondition(scrolled.ScrolledPanel):
         # Set used row count
         self.row = 1
 
-    def generateElseWhenSelects(self, data):
+    def generateElseWhenSelects(self):
         # Cycle all parameters and draw according boxes
-        for condition in data:
+        condition = self.condition.getNextCondition()
+        while condition is not None:
             self.text.append(wx.StaticText(self, label = self.tr("Elsewhen") + ":"))
             self.data.Add(self.text[-1], pos = (self.row, 0))
             self.choices.append(wx.ComboBox(self, style = wx.CB_DROPDOWN,
@@ -86,11 +88,12 @@ class EditCondition(scrolled.ScrolledPanel):
             self.Bind(wx.EVT_COMBOBOX, self.updateOriginal, self.choices[-1])
             self.Bind(wx.EVT_TEXT, self.updateOriginal, self.choices[-1])
 
-            self.choices[-1].SetValue(condition.getCondition())
-            self.oldValues[str(self.row)] = str(condition.getCondition())
+            self.choices[-1].SetValue(condition)
+            self.oldValues[str(self.row)] = str(condition)
 
             self.data.Add(self.choices[-1], pos = (self.row, 1))
             self.row += 1
+            condition = self.condition.getNextCondition()
 
     def updateOriginal(self, event = None):
         obj = event.GetEventObject()

@@ -24,6 +24,7 @@
 
 import wx.stc
 import time
+import re
 
 from seal_struct import SealStruct
 from edit_statement import EditStatement
@@ -98,7 +99,6 @@ class Editor(wx.stc.StyledTextCtrl):
             return
         if self.API.editorSplitter.doSplit == None:
             return
-
         line = self.GetCurrentLine()
         dialog = None
         if self.API.getStatementType(self.GetLine(line)) <= CONDITION:
@@ -106,19 +106,18 @@ class Editor(wx.stc.StyledTextCtrl):
             self.lastEdit = self.findAllStatement(line)
 
             # Create new sealStruct instance only for this statement
-            seal = SealStruct(self.API, self.lastEdit[0], None, True)
-            data = seal.getFirstObject()
-
+            seal = SealStruct(self.API, self.lastEdit[0], None)
             predictedType = seal.getPredictedType()
             if predictedType == STATEMENT:
                 dialog = EditStatement(self.API.editorSplitter,
-                                    self.API, data, self.statementUpdateClbk)
+                                    self.API, seal, self.statementUpdateClbk)
             elif predictedType == CONDITION:
                 dialog = EditCondition(self.API.editorSplitter,
-                                    self.API, data, self.conditionUpdateClbk)
+                                    self.API, seal, self.conditionUpdateClbk)
         self.API.editorSplitter.doSplit(dialog)
 
     def statementUpdateClbk(self, name, value, oldValue = None):
+        self.lastAutoEdit = time.time()
         if self.newMode:
             self.SetTargetStart(self.GetCurrentPos())
             self.SetTargetEnd(self.GetCurrentPos())
@@ -127,31 +126,28 @@ class Editor(wx.stc.StyledTextCtrl):
             self.newMode = False
         else:
             row = self.lastEdit[0].rstrip()
-
-            start = row.find(name)
-            end = row[start:].find(",")
-            if end == -1:
-                end = row[start:].find(";")
-
             if name == 'actuator' or name == 'object':
-                row = row.replace(oldValue, value)
-            elif value == '' or value == False:
-                row = row[:start].strip(" ,") + row[start + end:]
+                row = re.sub("(?i){0}".format(oldValue), value, row)
+            elif value == '':
+                row = re.sub("(?i), ?{0} {1}".format(name, oldValue), '', row)
+            elif value == False:
+                row = re.sub("(?i), ?{0}".format(name), '', row)
             elif value == True:
-                row = row.rstrip("; ") + ", " + name + ";"
-            elif start == -1:
-                row = row.rstrip("; ") + ", " + name + " " + value + ";"
+                row = "{0}, {1};".format(row.rstrip("; "), name)
+            elif oldValue == None:
+                row = "{0}, {1} {2};".format(row.rstrip("; "), name, value)
             else:
-                newPart = row[start:start + end].replace(oldValue, value)
-                row = row[:start] + newPart + row[start + end:]
+                row = re.sub("(?i){0} {1}".format(name, oldValue),
+                             "{0} {1}".format(name, value), row)
 
             self.SetTargetStart(self.PositionFromLine(self.lastEdit[1]))
             self.SetTargetEnd(self.PositionFromLine(self.lastEdit[3] + 1) - 1)
             self.ReplaceTarget(row)
             self.lastEdit = self.findAllStatement(self.lastEdit[2])
-        self.lastAutoEdit = time.time()
+        print "#####################################"
 
     def conditionUpdateClbk(self, name, value, oldValue = None):
+        self.lastAutoEdit = time.time()
         if self.newMode:
             self.AddText("when " + value + ":\n\nend")
             self.lastEdit = self.findAllStatement(self.GetCurrentLine())
@@ -174,10 +170,9 @@ class Editor(wx.stc.StyledTextCtrl):
             row = row[:start] + newPart + row[start + end:]
 
             self.SetTargetStart(self.PositionFromLine(self.lastEdit[1]))
-            self.SetTargetEnd(self.PositionFromLine(self.lastEdit[3] + 1) - 1)
+            self.SetTargetEnd(self.PositionFromLine(self.lastEdit[3] + 1))
             self.ReplaceTarget(row)
             self.lastEdit = self.findAllStatement(self.lastEdit[2])
-        self.lastAutoEdit = time.time()
 
     def addStatement(self):
         self.getPlaceForAdding()
@@ -219,7 +214,6 @@ class Editor(wx.stc.StyledTextCtrl):
                 elif(self.API.getStatementType(self.GetLine(endNr)) == CONDITION):
                     whens += 1
 
-                #print whens, ":", ends, "@", self.GetLine(endNr)
                 endNr += 1
             endNr -= 1
         # Get all lines between start and end
