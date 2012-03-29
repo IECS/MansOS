@@ -202,7 +202,7 @@ class ComponentUseCase(object):
         self.parameters = parameters
 
     def getCode(self, indent):
-        result = self.type + " " + self.name
+        result = self.type + " " + self.name + ","
         for p in self.parameters:
             result += " "
             result += p[0]
