@@ -202,16 +202,13 @@ class ComponentUseCase(object):
         self.parameters = parameters
 
     def getCode(self, indent):
-        result = self.type + " " + self.name + ","
+        result = self.type + " " + self.name
         for p in self.parameters:
-            result += " "
+            result += ", "
             result += p[0]
             if p[1] != None:
                 result += " "
                 result += p[1].getCode()
-            result += ","
-        if self.parameters != []:
-            result = result[:-1] # remove last comma
         result += ';'
         return result
 
