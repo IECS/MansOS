@@ -9,7 +9,7 @@ import components
 ###################################################
 
 class SealParser():
-    def __init__(self, architecture, printMsg, verboseMode):
+    def __init__(self, architecture, printMsg, verboseMode, debugMode = False):
         self.isError = False
         # Lex & yacc
         self.lex = lex.lex(module = self, debug = verboseMode, reflags = re.IGNORECASE)
@@ -21,6 +21,7 @@ class SealParser():
         # save parameters
         self.printMsg = printMsg
         self.verboseMode = verboseMode
+        self.debugMode = debugMode
         # initialization done!
         if verboseMode:
             print "Lex & Yacc init done!"
@@ -169,7 +170,7 @@ class SealParser():
                               | READ_TOKEN IDENTIFIER_TOKEN parameter_list ';'
                               | OUTPUT_TOKEN IDENTIFIER_TOKEN parameter_list ';'
         '''
-        if components.componentRegister.hasComponent(p[1], p[2]):
+        if components.componentRegister.hasComponent(p[1], p[2]) or self.debugMode:
             p[0] = ComponentUseCase(p[1], p[2], p[3])
         else:
             self.errorMsg(p, "Component {0} not known or not supported for this architecture ({1})".format(
