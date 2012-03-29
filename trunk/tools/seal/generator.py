@@ -1,4 +1,4 @@
-from parser import *
+from seal_parser import *
 #import components
 import os
 
