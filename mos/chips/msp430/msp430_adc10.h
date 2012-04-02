@@ -32,10 +32,8 @@
 #define ADC_CHANNEL_COUNT   16
 
 /* Predefined ADC channels */
-enum {
-    ADC_INTERNAL_TEMPERATURE = 10,
-    ADC_INTERNAL_VOLTAGE     = 11
-};
+#define ADC_INTERNAL_TEMPERATURE 10
+#define ADC_INTERNAL_VOLTAGE     11
 
 /* Initialize ADC */
 static inline void hplAdcInit(void)
