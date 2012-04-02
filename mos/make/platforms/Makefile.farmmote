@@ -35,7 +35,7 @@ UPLOAD_TARGET=upload-msp430
 
 CPU_MHZ ?= 1
 
-CFLAGS += -DPLATFORM_FARMMOTE=1 -DACLK_SPEED=12288
+CFLAGS += -DPLATFORM_FARMMOTE=1 -DACLK_SPEED=32768
 
 #############################################
 # Define platform-specific sources

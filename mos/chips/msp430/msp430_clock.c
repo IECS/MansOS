@@ -121,14 +121,6 @@ void msp430InitClocks()
     // .DCOR = 0; select internal resistor for DCO
     BCSCTL2 = DIVS1;
 
-#ifdef __msp430x22x4
-    /*
-     * TODO: Until we know more about the hardware, source ACLK from VLOCLK,
-     * which should be present (but imprecise).
-     */
-    BCSCTL3 = (BCSCTL3 & ~(LFXT1S0 | LFXT1S1)) | LFXT1S_2;
-#endif
-
     // no need to disable oscillator fault interrupt: LFXT1 was configured in LF mode
 
     msp430InitTimerA();
