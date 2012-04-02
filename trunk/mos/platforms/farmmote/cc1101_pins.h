@@ -30,18 +30,18 @@
 #define CC1101_SPI_ID    0
 
 /* Chip select pin */
-#define CC1101_CSN_PORT  1
+#define CC1101_CSN_PORT  3
 #define CC1101_CSN_PIN   0
 
 /* SPI SO pin */
-#define CC1101_SO_PORT   1
-#define CC1101_SO_PIN    0
+#define CC1101_SO_PORT   3
+#define CC1101_SO_PIN    2
 
 /* Number of the GDO pin used for receive interrupts */
 #define CC1101_GDO_INTR  0
 
 /* The same pin on the MCU side */
 #define CC1101_INTR_PORT 1
-#define CC1101_INTR_PIN  0
+#define CC1101_INTR_PIN  2
 
 #endif /* _CC1101_PINS_H_ */
