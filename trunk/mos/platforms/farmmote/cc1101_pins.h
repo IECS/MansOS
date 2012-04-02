@@ -27,7 +27,7 @@
 #ifndef _CC1101_PINS_H_
 #define _CC1101_PINS_H_
 
-#define CC1101_SPI_ID    0
+#define CC1101_SPI_ID    1
 
 /* Chip select pin */
 #define CC1101_CSN_PORT  3
