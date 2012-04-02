@@ -296,7 +296,7 @@ static const uint8_t rfConfig[][2] = {
     { REG_MDMCFG1,  0x22 }, // Modem Configuration
     { REG_MDMCFG0,  0xF8 }, // Modem Configuration
     { REG_DEVIATN,  0x15 }, // Modem Deviation Setting
-    { REG_MCSM0,    0x10 }, // Main Radio Control State Machine Configuration
+    { REG_MCSM0,    0x18 }, // Main Radio Control State Machine Configuration
     { REG_FOCCFG,   0x16 }, // Frequency Offset Compensation Configuration
     { REG_BSCFG,    0x6C }, // Bit Synchronization Configuration
     { REG_AGCCTRL2, 0x03 }, // AGC Control

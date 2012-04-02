@@ -33,15 +33,14 @@
 /* Initialization */
 int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
 {
-    /* SPI mode: master, LSB first, 8-bit, 3-pin */
-#define SPI_MODE  (UCMST | UCMODE_0 | UCSYNC)
+    /* SPI mode: master, MSB first, 8-bit, 3-pin */
+#define SPI_MODE  (UCCKPH | UCMSB | UCMST | UCMODE_0 | UCSYNC)
 #define SPI_SPEED (CPU_HZ / 2)
 
 #define SETUP_SPI_PINS(id) ( \
     pinAsFunction(USCI_PORT, UC##id##SIMO_PIN), \
     pinAsFunction(USCI_PORT, UC##id##SOMI_PIN), \
-    pinAsFunction(USCI_PORT, UC##id##CLK_PIN),  \
-    pinAsFunction(USCI_PORT, UC##id##STE_PIN))
+    pinAsFunction(USCI_PORT, UC##id##CLK_PIN) )
 #define SETUP_USCI(id) ( \
     UC##id##CTL1 = UCSWRST,             /* Hold the module in reset state */   \
     UC##id##CTL1 |= UCSSEL_2,           /* SMCLK clock source */               \
