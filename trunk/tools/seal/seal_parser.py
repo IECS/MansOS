@@ -225,7 +225,7 @@ class SealParser():
         '''condition : condition_term
                      | condition OR_TOKEN condition_term
            condition_term : condition_factor
-                     | condition_term AND_TOKEN logical_statement
+                     | condition_term AND_TOKEN condition_factor
            condition_factor : logical_statement
                      | NOT_TOKEN condition_factor
         '''

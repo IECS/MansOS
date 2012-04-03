@@ -3,7 +3,11 @@
 //use RedLed, pattern P;
 //use Bar, pattern Q;
 
-define Params, param1 1000, param2 1s, param3 1500ms;
-use Foobar, parameters Params;
+//define Params, param1 1000, param2 1s, param3 1500ms;
+//use Foobar, parameters Params;
+//a;
 
-a;
+read Light, period 2s;
+read Humidity, period 3s;
+output Serial, baudrate 38400, aggregate;
+output Radio;
