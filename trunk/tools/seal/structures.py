@@ -61,14 +61,16 @@ class ConditionCollection(object):
             self.conditionStack.pop()
             n -= 1
 
-    def generateCode(self, outputFile):
+    def generateCode(self, outputFile, componentRegister):
         for i in range(len(self.conditionList)):
-            self.generateCodeForCondition(i, outputFile)
+            self.generateCodeForCondition(i, outputFile, componentRegister)
 
-    def generateCodeForCondition(self, i, outputFile):
+    def generateCodeForCondition(self, i, outputFile, componentRegister):
         outputFile.write("bool condition{0}Check(void) {1}\n".format(i + 1, '{'))
         outputFile.write("    return {0};\n".format(
-                string.replace(string.replace(string.replace(self.conditionList[i].getCode(), " and ", " && "),
+                string.replace(string.replace(string.replace(
+                            self.conditionList[i].getCodeForGenerator(componentRegister),
+                               " and ", " && "),
                                " or ", " || "),
                                " not ", " ! ")))
                 
@@ -79,21 +81,56 @@ class Value(object):
     def __init__(self, value=None, suffix=None):
         self.value = value
         self.suffix = suffix
+
     def getCode(self):
-        if self.value is None: return None
+        if self.value is None:
+            return None
+        if type(self.value) is SealValue:
+            return self.value.getCode()
+        if type(self.value) is str:
+            return '"' + self.value + '"'
+        # integer or boolean
         s = "{0}".format(self.value)
         if not (self.suffix is None):
             s += self.suffix
         return s
+
+    def getCodeForGenerator(self, componentRegister):
+        if type(self.value) is SealValue:
+            return self.value.getCodeForGenerator(componentRegister)
+        return self.getCode()
+
     def getType(self):
+        if type(self.value) is str:
+            return "const char *"
         if type(self.value) is bool:
             return "bool"
         return "int_t"
     def asString(self):
-        if type(self.value) is bool:
-            return str(self.value).lower()
-        # TODO: convert time values to milliseconds?
-        return str(self.value)
+        return self.getCode()
+#        if type(self.value) is bool:
+#            return str(self.value).lower()
+#        # TODO: convert time values to milliseconds?
+#        return str(self.value)
+
+########################################################
+class SealValue(object):
+    def __init__(self, firstPart, secondPart=None):
+        self.firstPart = firstPart
+        self.secondPart = secondPart
+
+    def getCode(self):
+        result = self.firstPart
+        if self.secondPart:
+            result += '.'
+            result += self.secondPart
+        return result
+
+    def getCodeForGenerator(self, componentRegister):
+        sp = self.secondPart
+        if sp is None:
+            sp = "value"
+        return componentRegister.replaceCode(self.firstPart, sp)
 
 ########################################################
 class Expression(object):
@@ -109,6 +146,18 @@ class Expression(object):
             return self.op + " " + self.right.getCode()
         if type(self.right) is Expression:
             return "(" + self.right.getCode() + ")"
+        return self.right
+
+    def getCodeForGenerator(self, componentRegister):
+        if self.left != None and self.right != None:
+            result = self.left.getCodeForGenerator(componentRegister)
+            result += " " + self.op + " "
+            result += self.right.getCodeForGenerator(componentRegister)
+            return result
+        if self.op != None:
+            return self.op + " " + self.right.getCodeForGenerator(componentRegister)
+        if type(self.right) is Expression:
+            return "(" + self.right.getCodeForGenerator(componentRegister) + ")"
         return self.right
 
 ########################################################

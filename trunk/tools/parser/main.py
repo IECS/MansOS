@@ -4,11 +4,18 @@ import os, sys, getopt
 
 inputFileName = 'test.sl'
 outputFileName = 'main.c'
-#architecture = 'test'
+#architecture = 'testarch'
 architecture = 'telosb'
 targetOS = 'mansos'
 pathToOS = '../..'
 verboseMode = False
+testMode = False
+
+def exitProgram(code):
+    if not testMode:
+        exit(code)
+    print "Exit code " + str(code)
+    raise Exception
 
 def importsOk():
     plyModuleOK = True     # Python Lex Yacc - for compilation
@@ -19,7 +26,7 @@ def importsOk():
         plyModuleOK = False
 
     if not plyModuleOK:
-        if os.name == 'posix': 
+        if os.name == 'posix':
             installStr = "Make sure you have installed required modules. Run:\n\tapt-get install"
         else: 
             installStr = "Make sure you have installed modules:"
@@ -45,6 +52,7 @@ def help(isError):
     sys.stderr.write("  -p, --path <path>     PAth to the target OS folder (default: {0})\n".format(pathToOS))
     sys.stderr.write("  -V, --verbose         Verbose mode\n")
     sys.stderr.write("  -v, --version         Print version\n")
+    sys.stderr.write("  -e, --errors          Test mode (ignore errors)\n")
     sys.stderr.write("  -h, --help            Print this help\n")
     sys.exit(int(isError))
 
@@ -53,10 +61,11 @@ def parseCommandLine(argv):
     global outputFileName
     global architecture
     global verboseMode
+    global testMode
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "a:ho:p:t:Vv",
-                                   ["arch=", "help", "output=", "path=", "target=" "verbose", "version"])
+        opts, args = getopt.getopt(sys.argv[1:], "a:eho:p:t:Vv",
+                                   ["arch=", "errors", "help", "output=", "path=", "target=" "verbose", "version"])
     except getopt.GetoptError, err:
         # print help information and exit:
         print str(err) # will print something like "option -a not recognized"
@@ -81,6 +90,8 @@ def parseCommandLine(argv):
             outputFileName = a
         elif o in ("-p", "--path"):
             pathToOS = a
+        elif o in ("-e", "--errors"):
+            testMode = True
 
     if len(args):
         inputFileName = args[0]
@@ -108,19 +119,19 @@ def main():
         contents = inputFile.read()
     if contents == None:
         sys.stderr.write('Failed to read file {0}'.format(inputFileName))
-        exit(1)
+        exitProgram(1)
 
     # parse input file (SEAL code)
     parser = generator.SealParser(architecture, printLine, verboseMode)
     parser.run(contents)
     if parser.isError:
-        exit(1) # do not generate output file in this case
+        exitProgram(1) # do not generate output file in this case
 
     # generate C code to an output file
     g = generator.createGenerator(targetOS)
     if g is None:
         sys.stderr.write('Failed to find code generator for target OS {0}'.format(targetOS))
-        exit(1)
+        exitProgram(1)
 
     if outputFileName == '-':
         g.generate(sys.stdout)
