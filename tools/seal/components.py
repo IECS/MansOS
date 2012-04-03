@@ -29,10 +29,6 @@ class BranchCollection(object):
         useCases = b[1]
         outputFile.write("void branch{0}Start(void)\n".format(number))
         outputFile.write("{\n")
-#        if number == 0:
-#            branchCallbackName = ''
-#        else:
-#            branchCallbackName = "Branch{0}".format(number)
         for uc in useCases:
             uc.generateBranchEnterCode(outputFile)
         outputFile.write("}\n")
@@ -43,10 +39,6 @@ class BranchCollection(object):
         useCases = b[1]
         outputFile.write("void branch{0}Stop(void)\n".format(number))
         outputFile.write("{\n")
-#        if number == 0:
-#            branchCallbackName = ''
-#        else:
-#            branchCallbackName = "Branch{0}".format(number)
         for uc in useCases:
             uc.generateBranchExitCode(outputFile)
         outputFile.write("}\n")
@@ -199,9 +191,13 @@ class UseCase(object):
 
 ######################################################
 class Component(object):
-    def __init__(self, name, parameters):
-        self.name = name
-        self.parameters = dict(parameters)
+    def __init__(self, specification):
+        self.name = specification.name
+        # self.parameters = dict(parameters)
+        self.parameters = {}
+        for p in dir(specification):
+            if type(specification.__getattribute__(p)) is componentModule.SealParameter:
+                self.parameters[p] = specification.__getattribute__(p)
         self.useCases = []
 
     def isUsed(self):
@@ -280,12 +276,12 @@ class Component(object):
         return defaultValue
 
 class Actuator(Component):
-    def __init__(self, name, parameters):
-        super(Actuator, self).__init__(name, parameters)
+    def __init__(self, specification):
+        super(Actuator, self).__init__(specification)
 
 class Sensor(Component):
-    def __init__(self, name, parameters):
-        super(Sensor, self).__init__(name, parameters)
+    def __init__(self, specification):
+        super(Sensor, self).__init__(specification)
 
     def getDataSize(self):
         size = self.getParameterValue("dataSize")
@@ -302,8 +298,8 @@ class Sensor(Component):
             outputFile.write("#define {0}_NO_VALUE    {1}\n".format(self.getNameUC(), self.getNoValue()))
 
 class Output(Component):
-    def __init__(self, name, parameters):
-        super(Output, self).__init__(name, parameters)
+    def __init__(self, specification):
+        super(Output, self).__init__(specification)
         self.isAggregateCached = None
         self.usedFields = []
 
@@ -483,7 +479,9 @@ class ComponentRegister(object):
 
     # load all componentsi for this platform from a file
     def load(self, architecture):
-        # reset global variabnles
+        # reset global variables
+        global componentModule
+
 #        global componentRegister
 #        global branchCollection
 #        global conditionCollection
@@ -503,28 +501,27 @@ class ComponentRegister(object):
         self.defines = {}
         self.patterns = {}
         self.architecture = architecture
-        # import the module
-        sourceFile = architecture + '_comp'
-        module = __import__(sourceFile)
+        # import the module (residing in "components" directory and named "<architecture>.py")
+        componentModule = __import__(architecture)
         # construct empty components from descriptions
-        for n in module.components:
+        for n in componentModule.components:
             isDuplicate = False
             # print "load", n.name.lower()
-            if n.typeCode == module.TYPE_ACTUATOR:
+            if n.typeCode == componentModule.TYPE_ACTUATOR:
                 if n.name.lower() in self.actuators:
                     isDuplicate = True
                 else:
-                    self.actuators[n.name.lower()] = Actuator(n.name, n.parameters)
-            elif n.typeCode == module.TYPE_SENSOR:
+                    self.actuators[n.name.lower()] = Actuator(n)
+            elif n.typeCode == componentModule.TYPE_SENSOR:
                 if n.name.lower() in self.sensors:
                     isDuplicate = True
                 else:
-                    self.sensors[n.name.lower()] = Sensor(n.name, n.parameters)
-            elif n.typeCode == module.TYPE_OUTPUT:
+                    self.sensors[n.name.lower()] = Sensor(n)
+            elif n.typeCode == componentModule.TYPE_OUTPUT:
                 if n.name.lower() in self.outputs:
                     isDuplicate = True
                 else:
-                    self.outputs[n.name.lower()] = Output(n.name, n.parameters)
+                    self.outputs[n.name.lower()] = Output(n)
             if isDuplicate:
                 userError("Component {0} duplicated for platform {1}, ignoring\n".format(
                         n.name, architecture))
@@ -568,3 +565,4 @@ class ComponentRegister(object):
 componentRegister = ComponentRegister()
 branchCollection = BranchCollection()
 conditionCollection = ConditionCollection()
+componentModule = None
