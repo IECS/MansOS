@@ -115,7 +115,7 @@ uint16_t sht11_cmd(uint_t cmd) {
     sht11_send_byte(cmd);
 
     if (!sht11_recv_ack()) {
-        return 0xfffe;
+        return 0xffff;
     }
 
     uint16_t res = 0;

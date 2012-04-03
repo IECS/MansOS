@@ -36,7 +36,7 @@ def importsOk():
         if not plyModuleOK:
             print "\tPLY module not found"
             installStr += " python-ply"
-            
+
         print installStr
         return False
     return True
