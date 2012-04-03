@@ -197,7 +197,7 @@ class Component(object):
         self.parameters = {}
         for p in dir(specification):
             if type(specification.__getattribute__(p)) is componentModule.SealParameter:
-                self.parameters[p] = specification.__getattribute__(p)
+                self.parameters[p] = specification.__getattribute__(p).value
         self.useCases = []
 
     def isUsed(self):
@@ -242,7 +242,7 @@ class Component(object):
 
     def generateIncludes(self, outputFile):
         if self.isUsed():
-            includes = self.getParameterValue("includeFiles")
+            includes = self.getParameterValue("extraIncludes")
             if includes is not None:
                 outputFile.write("{0}\n".format(includes))
 
@@ -265,7 +265,7 @@ class Component(object):
 
     def generateConfig(self, outputFile):
         if self.isUsed():
-            config = self.getParameterValue("config")
+            config = self.getParameterValue("extraConfig")
             if config is not None:
                 outputFile.write("{0}\n".format(config))
 
