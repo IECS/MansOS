@@ -30,5 +30,6 @@
 #define humidityOff()
 #define readHumidity() (0)
 #define readHTemperature() (0)
+#define humidityIsError() (0)
 
 #endif // !MANSOS_HUMIDITY_HAL_H

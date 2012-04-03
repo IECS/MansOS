@@ -44,6 +44,7 @@
 // void humidityOn();        // turn on humidity sensor
 // void humidityOff();       // turn off humidity sensor
 // uint16_t readHumidity();  // read humidity value
+// bool humidityIsError(void);
 
 // Optional part
 // some humidity sensors (SHT11) also provide temperature reading
