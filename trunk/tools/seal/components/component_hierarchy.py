@@ -15,9 +15,9 @@ class SealComponent(object):
     def __init__(self, typeCode, name):
         self.typeCode = typeCode
         self.name = name
-        self.extraConfig = None  # config file line(s)
-        self.extraInclude = None # #include<> line(s)
         # parameters
+        self.extraConfig = SealParameter(None)  # config file line(s)
+        self.extraIncludes = SealParameter(None) # #include<> line(s)
         self.period = SealParameter(1000, [100, 200, 500, 1000, 2000])
         self.pattern = SealParameter(None)
         components.append(self)
@@ -38,8 +38,8 @@ class Humidity(SealSensor):
     def __init__(self):
         super(Humidity, self).__init__("Humidity")
         self.readFunction = "humidityRead()"
-        self.extraConfig = "USE_HUMIDITY=y"
-        self.extraIncludes = "#include <hil/humidity.h>"
+        self.extraConfig = SealParameter("USE_HUMIDITY=y")
+        self.extraIncludes = SealParameter("#include <hil/humidity.h>")
 
 #######################################################
 class SealActuator(SealComponent):
