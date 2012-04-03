@@ -6,6 +6,6 @@ from component_hierarchy import *
 
 serial = Serial()
 radio = Radio()
-ifflash = InternalFlash()
+internalFlash = InternalFlash()
 
 printing = Print()

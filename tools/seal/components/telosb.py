@@ -9,5 +9,5 @@ redLed = RedLed()
 blueled = BlueLed()
 greenled = GreenLed()
 
-lightsensor = Light()
-humiditysensor = Humidity()
+light = Light()
+humidity = Humidity()

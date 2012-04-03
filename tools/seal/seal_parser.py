@@ -17,7 +17,7 @@ class SealParser():
         # current condtion (for context)
         self.currentCondition = None
         self.newCode = True
-        self.lineTracking = {"Cond": [], "Statment": []}
+        self.lineTracking = {"Condition": [], "Statement": []}
         # save parameters
         self.printMsg = printMsg
         self.verboseMode = verboseMode
@@ -173,7 +173,7 @@ class SealParser():
         if components.componentRegister.hasComponent(p[1], p[2]) or self.debugMode:
             p[0] = ComponentUseCase(p[1], p[2], p[3])
         else:
-            self.errorMsg(p, "Component {0} not known or not supported for this architecture ({1})".format(
+            self.errorMsg(p, "Component '{0}' not known or not supported for this architecture ({1})".format(
                     p[2], components.componentRegister.architecture))
         #print "Statement start:", p.lineno(1)
         #print "Statement end:", p.lineno(4)
@@ -250,7 +250,7 @@ class SealParser():
       if len(p) == 2:
           p[0] = p[1]
       elif p[1] == '(':
-          p[0] = p[2]
+          p[0] = p[2] # TODO: will not be able to generate code correctly!
       else:
           p[0] = Expression(p[1], p[2], p[3])
 
@@ -274,7 +274,7 @@ class SealParser():
         if len(p) == 2:
             p[0] = p[1]
         else:
-            p[1] = p[2]
+            p[1] = p[2] # TODO: will not be able to generate code correctly!
 
     def p_parameter_list(self, p):
         '''parameter_list : parameter_list ',' parameter
@@ -334,8 +334,13 @@ class SealParser():
         p[0] = Value(p[1])
 
     def p_identifier(self, p):
-        '''identifier : IDENTIFIER_TOKEN'''
-        p[0] = Value(p[1]) # FIXME TODO: at the moment same as string literal!
+        '''identifier : IDENTIFIER_TOKEN
+                      | IDENTIFIER_TOKEN '.' IDENTIFIER_TOKEN
+        '''
+        if len(p) == 2:
+            p[0] = Value(SealValue(p[1]))
+        else:
+            p[0] = Value(SealValue(p[1], p[3]))
 
     def p_empty(self, p):
         '''empty :'''

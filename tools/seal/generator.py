@@ -81,7 +81,7 @@ class Generator(object):
             c.generateCallbacks(self.outputFile, self.outputs)
 
     def generateConditionCode(self):
-        components.conditionCollection.generateCode(self.outputFile)
+        components.conditionCollection.generateCode(self.outputFile, components.componentRegister)
 
     def generateBranchCode(self):
         components.branchCollection.generateCode(self.outputFile)

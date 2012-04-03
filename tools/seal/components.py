@@ -67,7 +67,7 @@ class UseCase(object):
         # add user's parameters
         for p in parameters:
             if p[0] not in component.parameters:
-                userError("Parameter {0} not known for component {1}\n".format(p[0], component.name))
+                userError("Parameter '{0}' not known for component {1}\n".format(p[0], component.name))
                 continue
             # update parameters with user's value, if given. If no value given, only name, treat it as 'True',
             # because value 'None' means that the parameter is supported, but not specified by user
@@ -83,6 +83,8 @@ class UseCase(object):
             self.numInBranch = "{0}".format(numInBranch)
         #print "add use case, conditions =", self.conditions
         #print "  branchNumber=", self.branchNumber
+
+        # TODO: automate this using reflection!
         p = self.parameters.get("period")
         if p:
             self.period = toMilliseconds(p)
@@ -93,8 +95,17 @@ class UseCase(object):
             self.pattern = p.asString()
         else:
             self.pattern = None
-        if self.period and self.pattern:
-            userError("Both period and pattern specified for component {0} use case\n".format(component.name))
+        p = self.parameters.get("once")
+        if p:
+            self.once = bool(p.value)
+        else:
+            self.once = None
+        if self.period and self.pattern or self.period and self.once or self.pattern and self.once:
+            if self.period and self.pattern:
+                userError("Both period and pattern specified for component '{0}' use case\n".format(component.name))
+            else:
+                userError("Both once and period or pattern specified for component '{0}' use case\n".format(component.name))
+        self.generateAlarm = self.once or self.pattern or self.period
 
         if branchNumber != 0:
             self.branchName = "Branch{0}".format(branchNumber)
@@ -118,7 +129,7 @@ class UseCase(object):
                     ucname, self.numInBranch, self.period))
 
     def generateVariables(self, outputFile):
-        if self.period or self.pattern:
+        if self.generateAlarm:
             outputFile.write(
                 "Alarm_t {0}{1}Alarm{2};\n".format(
                     self.component.getNameCC(), self.branchName, self.numInBranch))
@@ -132,7 +143,7 @@ class UseCase(object):
         useFunction = self.component.getParameterValue("useFunction", "{0}Use()").format(
             self.component.getNameCC())
 
-        if self.period or self.pattern:
+        if self.generateAlarm:
             outputFile.write("void {0}{1}Callback(void *__unused)\n".format(ccname, self.numInBranch))
             outputFile.write("{\n")
             if type(self.component) is Actuator:
@@ -162,22 +173,24 @@ class UseCase(object):
                 outputFile.write("    __pattern_{0}Cursor++;\n".format(self.pattern))
                 outputFile.write("    __pattern_{0}Cursor %= sizeof(__pattern_{0}) / sizeof(*__pattern_{0});\n".format(
                         self.pattern))
+            else: # once
+                pass
             outputFile.write("}\n")
 
     def generateAppMainCode(self, outputFile):
         ccname = self.component.getNameCC()
         ccname += self.branchName
-        if self.period or self.pattern:
+        if self.generateAlarm:
             outputFile.write("    alarmInit(&{0}Alarm{1}, {0}{1}Callback, NULL);\n".format(
                     ccname, self.numInBranch))
 
     def generateBranchEnterCode(self, outputFile):
-        if type(self.component) is not Output and (self.period or self.pattern):
+        if type(self.component) is not Output and self.generateAlarm:
             outputFile.write("    {0}{1}{2}Callback(NULL);\n".format(
                     self.component.getNameCC(), self.branchName, self.numInBranch))
 
     def generateBranchExitCode(self, outputFile):
-        if type(self.component) is not Output and (self.period or self.pattern):
+        if type(self.component) is not Output and self.generateAlarm:
             outputFile.write("    alarmRemove(&{0}{1}Alarm{2});\n".format(
                     self.component.getNameCC(), self.branchName, self.numInBranch))
             if self.pattern:
@@ -186,22 +199,26 @@ class UseCase(object):
 
     def getParameterValue(self, parameter, defaultValue = None):
         if parameter in self.parameters:
-            return self.parameters[parameter].getCode()
+            return self.parameters[parameter].getCodeForGenerator(componentRegister)
         return self.component.getParameterValue(parameter, defaultValue)
 
 ######################################################
 class Component(object):
     def __init__(self, specification):
         self.name = specification.name
-        # self.parameters = dict(parameters)
+        # create dictionary for parameters
         self.parameters = {}
         for p in dir(specification):
             if type(specification.__getattribute__(p)) is componentModule.SealParameter:
                 self.parameters[p] = specification.__getattribute__(p).value
         self.useCases = []
+        self.markedAsUsed = False
+
+    def markAsUsed(self):
+        self.markedAsUsed = True
 
     def isUsed(self):
-        return bool(len(self.useCases))
+        return self.markedAsUsed or bool(len(self.useCases))
 
     def getNameUC(self):
         return self.name.upper()
@@ -225,23 +242,23 @@ class Component(object):
                 #print "componentRegister = ", componentRegister.defines.keys()
                 d = componentRegister.defines.get(p[1].asString())
                 if d is None:
-                    userError("No define with name '{0}' is present (for component {1})\n".format(
+                    userError("No define with name '{0}' is present (for component '{1}')\n".format(
                             p[1].asString(), self.name))
                 else:
                     for pd in d.parameters:
                         if pd[0] in finalParameters:
-                            userError("Parameter '{0}' already specified for component {1}\n".format(pd[0], self.name))
+                            userError("Parameter '{0}' already specified for component '{1}'\n".format(pd[0], self.name))
                         else:
                             finalParameters[pd[0]] = pd[1]
             else:
                 if p[0] in finalParameters:
-                    userError("Parameter '{0}' already specified for component {1}\n".format(p[0], self.name))
+                    userError("Parameter '{0}' already specified for component '{1}'\n".format(p[0], self.name))
                 else:
                     finalParameters[p[0]] = p[1]
         self.useCases.append(UseCase(self, list(finalParameters.iteritems()), conditions, branchNumber, numInBranch))
 
     def generateIncludes(self, outputFile):
-        if self.isUsed():
+#  TODO?  if self.isUsed():
             includes = self.getParameterValue("extraIncludes")
             if includes is not None:
                 outputFile.write("{0}\n".format(includes))
@@ -303,13 +320,14 @@ class Output(Component):
         self.isAggregateCached = None
         self.usedFields = []
 
+    def getParameterValue(self, parameter, defaultValue = None):
+        if len(self.useCases) != 0 and parameter in self.useCases[0].parameters:
+            return self.useCases[0].parameters[parameter]
+        return super(Output, self).getParameterValue(parameter, defaultValue)
+
     def isAggregate(self):
         if self.isAggregateCached is None:
-            self.isAggregateCached = False
-            if len(self.useCases) != 0 and "aggregate" in self.useCases[0].parameters:
-                self.isAggregateCached = self.useCases[0].parameters["aggregate"]
-            elif self.getParameterValue("aggregate"):
-                self.isAggregateCached = True
+            self.isAggregateCached = self.getParameterValue("aggregate", False)
         return self.isAggregateCached
 
     def generateVariables(self, outputFile):
@@ -417,7 +435,7 @@ class Output(Component):
             outputFile.write("    {0}Packet.crc = crc16((const uint8_t *) &{0}Packet, sizeof({0}Packet) - 2);\n".format(
                     self.getNameCC()))
 
-        outputFile.write("    {0};\n".format(self.getParameterValue("sendFunction", "")))
+        outputFile.write("    {0};\n".format(self.getParameterValue("useFunction", "")))
         outputFile.write("    {0}PacketInit();\n".format(self.getNameCC()))
         outputFile.write("}\n\n")
 
@@ -479,19 +497,7 @@ class ComponentRegister(object):
 
     # load all componentsi for this platform from a file
     def load(self, architecture):
-        # reset global variables
         global componentModule
-
-#        global componentRegister
-#        global branchCollection
-#        global conditionCollection
-#        global allSystemParams
-#        print "before:", structures.allSystemParams
-#        componentRegister = ComponentRegister()
-#        branchCollection = BranchCollection()
-#        conditionCollection = structures.ConditionCollection()
-#        allSystemParams = None
-#        print "after:", allSystemParams
         # reset components
         self.actuators = {}
         self.sensors = {}
@@ -506,24 +512,25 @@ class ComponentRegister(object):
         # construct empty components from descriptions
         for n in componentModule.components:
             isDuplicate = False
-            # print "load", n.name.lower()
+            name = n.name.lower()
+            # print "load", name
             if n.typeCode == componentModule.TYPE_ACTUATOR:
-                if n.name.lower() in self.actuators:
+                if name in self.actuators:
                     isDuplicate = True
                 else:
-                    self.actuators[n.name.lower()] = Actuator(n)
+                    self.actuators[name] = Actuator(n)
             elif n.typeCode == componentModule.TYPE_SENSOR:
-                if n.name.lower() in self.sensors:
+                if name in self.sensors:
                     isDuplicate = True
                 else:
-                    self.sensors[n.name.lower()] = Sensor(n)
+                    self.sensors[name] = Sensor(n)
             elif n.typeCode == componentModule.TYPE_OUTPUT:
-                if n.name.lower() in self.outputs:
+                if name in self.outputs:
                     isDuplicate = True
                 else:
-                    self.outputs[n.name.lower()] = Output(n)
+                    self.outputs[name] = Output(n)
             if isDuplicate:
-                userError("Component {0} duplicated for platform {1}, ignoring\n".format(
+                userError("Component '{0}' duplicated for platform '{1}', ignoring\n".format(
                         n.name, architecture))
 
     def findComponent(self, keyword, name):
@@ -538,7 +545,7 @@ class ComponentRegister(object):
         return o
 
     def hasComponent(self, keyword, name):
-        # print "hasComponent? '" + keyword + "' '" + name + "'"
+        #print "hasComponent? '" + keyword + "' '" + name + "'"
         return bool(self.findComponent(keyword.lower(), name.lower()))
 
     def useComponent(self, keyword, name, parameters, conditions, branchNumber):
@@ -559,6 +566,42 @@ class ComponentRegister(object):
 
     def getAllComponents(self):
         return set(self.actuators.values()).union(set(self.sensors.values())).union(set(self.outputs.values()))
+
+    def replaceCode(self, componentName, parameterName):
+        c = self.sensors.get(componentName, None)
+        if c == None:
+            c = self.actuators.get(componentName, None)
+        if c == None:
+            c = self.outputs.get(componentName, None)
+        # not found?
+        if c == None:
+            if parameterName == 'ispresent':
+                return "false"
+            else:
+                userError("Component '{0}' not known\n".format(componentName))
+                return "false"
+        # found
+        if parameterName == 'ispresent':
+            return "true"
+        if parameterName == 'iserror':
+            errorFunction = c.getParameterValue("errorFunction", None)
+            if errorFunction:
+                c.markAsUsed()
+                return errorFunction
+            else:
+                userError("Parameter '{0}' for component '{1} has no error attribute!'\n".format(parameterName, componentName))
+                return "false"
+        if parameterName == 'value':
+            # TODO: otherwise unused component might become usable because of this!
+            readFunction = c.getParameterValue("readFunction", None)
+            if readFunction:
+                c.markAsUsed()
+                return readFunction
+            else:
+                userError("Parameter '{0}' for component '{1} is not readable!'\n".format(parameterName, componentName))
+                return "false"
+        userError("Unknown parameter '{0}' for component '{1}'\n".format(parameterName, componentName))
+        return "false"
 
 ######################################################
 # global variables

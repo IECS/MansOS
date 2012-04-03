@@ -3,7 +3,7 @@
 import main, sys, os
 
 testFileDir = 'tests'
-architecture = 'test'
+architecture = 'testarch'
 #architecture = 'telosb'
 targetOS = 'mansos'
 outputDirName = "build"
@@ -14,9 +14,12 @@ def runTest(sourceFileName):
 
     outputFileName = outputDirName + '/' + os.path.basename(sourceFileName[:-2]) + 'c'
 
-    sys.argv = ["./main.py", "-a", architecture, "-t", targetOS, "-o", outputFileName, sourceFileName]
+    sys.argv = ["./main.py", "-e", "-a", architecture, "-t", targetOS, "-o", outputFileName, sourceFileName]
 
-    main.main()
+    try:
+        main.main()
+    except Exception:
+        pass
 
     # prepend output with the test script
     with open(outputFileName, 'r+') as outputFile:
