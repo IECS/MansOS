@@ -1,5 +1,6 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2011, Institute of Electronics and Computer Science
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -19,69 +20,85 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * radio_hal_cc1101.h -- CC1101 radio driver glue
  */
 
-#ifndef RADIO_HAL_MRF_H
-#define RADIO_HAL_MRF_H
+#ifndef PLATFORM_RADIO_H
+#define PLATFORM_RADIO_H
 
-#include <mrf24j40/mrf24j40.h>
+#include <cc1101/cc1101.h>
 
-static inline void radioInit(void) {
-    if (mrf24j40Init) mrf24j40Init();
+#define RADIO_MAX_PACKET    CC1101_MAX_PACKET_LEN
+#define RADIO_TX_POWER_MIN  CC1101_TX_POWER_MIN
+#define RADIO_TX_POWER_MAX  CC1101_TX_POWER_MAX
+
+static inline void radioInit(void)
+{
+    cc1101Init();
 }
 
 static inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
-                                     const void *data, uint16_t dataLength) {
-    return mrf24j40Send(header, headerLength, data, dataLength);
+                                     const void *data,   uint16_t dataLength)
+{
+    return cc1101Send(header, headerLength, data, dataLength);
 }
 
-static inline int16_t radioRecv(void *buffer, uint16_t bufferLength) {
-    return mrf24j40Read(buffer, bufferLength);
+static inline int16_t radioRecv(void *buffer, uint16_t bufferLength)
+{
+    return cc1101Read(buffer, bufferLength);
 }
 
-static inline void radioDiscard(void) {
-    mrf24j40Discard();
+static inline void radioDiscard(void)
+{
+    cc1101Discard();
 }
 
 static inline RadioRecvFunction radioSetReceiveHandle(
-        RadioRecvFunction functionHandle) {
-    return mrf24j40SetReceiver(functionHandle);
+    RadioRecvFunction functionHandle)
+{
+    cc1101SetRecvCallback(functionHandle);
+    return NULL;
 }
 
-static inline void radioOn(void) {
-    mrf24j40On();
+static inline void radioOn(void)
+{
+    cc1101On();
 }
 
-static inline void radioOff(void) {
-    mrf24j40Off();
+static inline void radioOff(void)
+{
+    cc1101Off();
 }
 
-static inline int radioGetRSSI(void) {
-    return mrf24j40GetRSSI();
+static inline int radioGetRSSI(void)
+{
+    return cc1101GetRSSI();
 }
 
-static inline int8_t radioGetLastRSSI(void) {
-    return mrf24j40GetLastRSSI();
+static inline int8_t radioGetLastRSSI(void)
+{
+    return cc1101GetLastRSSI();
 }
 
-static inline uint8_t radioGetLastLQI(void) {
-    return mrf24j40GetLastLQI();
+static inline uint8_t radioGetLastLQI(void)
+{
+    return cc1101GetLastLQI();
 }
 
-static inline void radioSetChannel(int channel) {
-    mrf24j40SetChannel(channel);
+static inline void radioSetChannel(int channel)
+{
+    cc1101SetChannel(channel);
 }
 
-static inline void radioSetTxPower(uint8_t power) {
-    mrf24j40SetTxPower(power);
+static inline void radioSetTxPower(uint8_t power)
+{
+    cc1101SetTxPower(power);
 }
 
-static inline bool radioIsChannelClear(void) {
-    return mrf24j40IsChannelClear();
+static inline bool radioIsChannelClear(void)
+{
+    return cc1101IsChannelClear();
 }
-
-#define RADIO_MAX_PACKET          MRF24J40_MAX_PACKET_LEN
-#define RADIO_TX_POWER_MIN        MRF24J40_TX_POWER_MIN
-#define RADIO_TX_POWER_MAX        MRF24J40_TX_POWER_MAX
 
 #endif

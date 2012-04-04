@@ -24,8 +24,8 @@
  * flash.h -- Internal flash memory constants
  */
 
-#ifndef _PLATFORM_TELOSB_FLASH_H_
-#define _PLATFORM_TELOSB_FLASH_H_
+#ifndef _PLATFORM_FLASH_H_
+#define _PLATFORM_FLASH_H_
 
 //
 // On MSP430-F1611 (e.g. TelosB) 48kb internal flash memory is present.
@@ -53,4 +53,4 @@
 //
 #define MSP430_FLASH_INFOMEM_SEGMENT_SIZE  128
 
-#endif /* _PLATFORM_TELOSB_FLASH_H_ */
+#endif

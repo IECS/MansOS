@@ -41,8 +41,6 @@ uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf)
      */
 #define UART_MODE 0
 
-    uint16_t n;
-
     (void)id; (void)conf;
 
     pinAsFunction(USCI_PORT, UCA0TX_PIN);
@@ -65,7 +63,7 @@ uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf)
         UCA0MCTL = ((CPU_HZ * 8 / speed) & 0x7) << 1;
     }
     UCA0CTL0 = UART_MODE;
-    IE2 |= UCA0RXIE;       /* Enable receive interrupt */
+    UC0IE |= UCA0RXIE;       /* Enable receive interrupt */
     UCA0CTL1 &= ~UCSWRST;  /* Release hold */
         
     return 0;
@@ -79,7 +77,7 @@ uint_t USARTSendByte(uint8_t id, uint8_t data)
 {
     (void)id;
     
-    while (!(IFG2 & UCA0TXIFG))
+    while (!(UC0IFG & UCA0TXIFG))
         /* nop */;
 
     /* Send data */
@@ -89,7 +87,11 @@ uint_t USARTSendByte(uint8_t id, uint8_t data)
 }
 
 /* UART mode receive handler */
+#if defined(__msp430x54xA)
+ISR(USCI_A0, USCIAInterruptHandler)
+#else
 ISR(USCIAB0RX, USCIAInterruptHandler)
+#endif
 {
     uint8_t data;
     bool    error;

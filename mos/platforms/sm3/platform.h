@@ -21,20 +21,31 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RADIO_HAL_H
-#define RADIO_HAL_H
+#ifndef _PLATFORM_SADMOTE3_H_
+#define _PLATFORM_SADMOTE3_H_
 
-// let the platform define the chip it uses
-#include <platform.h>
+#include <msp430/msp430_clock.h>
+#include <msp430/msp430_timers.h>
+#include <msp430/msp430_int.h>
+#include <msp430/msp430_adc.h>
 
-// #ifndef RADIO_CHIP
-// #define RADIO_CHIP RADIO_CHIP_CC2420
-// #endif
+#include "amb8420_pins.h"
+#include "sht_pins.h"
 
-#include <platform_radio.h> // in platform's directory
+//===========================================================
+// Functions
+//===========================================================
 
-#ifndef RADIO_CHIP
-#error Radio chip not defined for this platform!
-#endif
+void initPlatform(void);
+
+//===========================================================
+// Data types and constants
+//===========================================================
+
+//#define EXT_FLASH_CHIP FLASH_CHIP_AT25DF
+
+#define RADIO_CHIP RADIO_CHIP_AMB8420
+
+#define SNUM_CHIP SNUM_DS2401
 
 #endif

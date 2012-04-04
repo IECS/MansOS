@@ -21,67 +21,67 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RADIO_HAL_CC2420_H
-#define RADIO_HAL_CC2420_H
+#ifndef PLATFORM_RADIO_H
+#define PLATFORM_RADIO_H
 
-#include <cc2420/cc2420.h>
+#include <mrf24j40/mrf24j40.h>
 
 static inline void radioInit(void) {
-    if (cc2420Init) cc2420Init();
+    if (mrf24j40Init) mrf24j40Init();
 }
 
 static inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
                                      const void *data, uint16_t dataLength) {
-    return cc2420Send(header, headerLength, data, dataLength);
+    return mrf24j40Send(header, headerLength, data, dataLength);
 }
 
 static inline int16_t radioRecv(void *buffer, uint16_t bufferLength) {
-    return cc2420Read(buffer, bufferLength);
+    return mrf24j40Read(buffer, bufferLength);
 }
 
 static inline void radioDiscard(void) {
-    cc2420Discard();
+    mrf24j40Discard();
 }
 
 static inline RadioRecvFunction radioSetReceiveHandle(
         RadioRecvFunction functionHandle) {
-    return cc2420SetReceiver(functionHandle);
+    return mrf24j40SetReceiver(functionHandle);
 }
 
 static inline void radioOn(void) {
-    cc2420On();
+    mrf24j40On();
 }
 
 static inline void radioOff(void) {
-    cc2420Off();
+    mrf24j40Off();
 }
 
 static inline int radioGetRSSI(void) {
-    return cc2420GetRSSI();
+    return mrf24j40GetRSSI();
 }
 
 static inline int8_t radioGetLastRSSI(void) {
-    return cc2420GetLastRSSI();
+    return mrf24j40GetLastRSSI();
 }
 
 static inline uint8_t radioGetLastLQI(void) {
-    return cc2420GetLastLQI();
+    return mrf24j40GetLastLQI();
 }
 
 static inline void radioSetChannel(int channel) {
-    cc2420SetChannel(channel);
+    mrf24j40SetChannel(channel);
 }
 
 static inline void radioSetTxPower(uint8_t power) {
-    cc2420SetTxPower(power);
+    mrf24j40SetTxPower(power);
 }
 
 static inline bool radioIsChannelClear(void) {
-    return cc2420IsChannelClear();
+    return mrf24j40IsChannelClear();
 }
 
-#define RADIO_MAX_PACKET          CC2420_MAX_PACKET_LEN
-#define RADIO_TX_POWER_MIN        CC2420_TX_POWER_MIN
-#define RADIO_TX_POWER_MAX        CC2420_TX_POWER_MAX
+#define RADIO_MAX_PACKET          MRF24J40_MAX_PACKET_LEN
+#define RADIO_TX_POWER_MIN        MRF24J40_TX_POWER_MIN
+#define RADIO_TX_POWER_MAX        MRF24J40_TX_POWER_MAX
 
 #endif

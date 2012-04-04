@@ -1,5 +1,6 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2011, Institute of Electronics and Computer Science
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -19,22 +20,41 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * flash.h -- Internal flash memory constants
  */
 
-#ifndef RADIO_HAL_H
-#define RADIO_HAL_H
+#ifndef _PLATFORM_FLASH_H_
+#define _PLATFORM_FLASH_H_
 
-// let the platform define the chip it uses
-#include <platform.h>
+//
+// On MSP430F5438 256kb internal flash memory is present (including extended memory)
+//
+#define MSP430_FLASH_START 0x5c00
+#define MSP430_FLASH_END   0xFFE0 // End of the flash memory: interrupt vector start
+#define MSP430_FLASH_SIZE  (0xFFFF - MSP430_FLASH_START + 1)
 
-// #ifndef RADIO_CHIP
-// #define RADIO_CHIP RADIO_CHIP_CC2420
-// #endif
+// TODO: extended memory!
 
-#include <platform_radio.h> // in platform's directory
+//
+// Flash segment size (this is the minimal flash area that can be erased)
+//
+#define MSP430_FLASH_SEGMENT_SIZE  512
+//
+// Flash block size (this is the maximal flash area that can be written at once)
+//
+#define MSP430_FLASH_BLOCK_SIZE    64
 
-#ifndef RADIO_CHIP
-#error Radio chip not defined for this platform!
-#endif
+//
+// Flash Information Memory range: 512 bytes in four 128-byte segments
+//
+#define MSP430_FLASH_INFOMEM_START 0x1800
+#define MSP430_FLASH_INFOMEM_END   0x19FF
+//
+// Flash Information Memory segment size
+//
+#define MSP430_FLASH_INFOMEM_SEGMENT_SIZE  128
+
+// TODO: BSL memory - from 0x1000 to 0x17FF in four 128 byte segments!
 
 #endif

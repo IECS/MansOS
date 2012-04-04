@@ -21,20 +21,16 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RADIO_HAL_H
-#define RADIO_HAL_H
+#ifndef SHT_PINS_H
+#define SHT_PINS_H
 
-// let the platform define the chip it uses
-#include <platform.h>
+// SADmote platform uses SHT75 humidity sensor
 
-// #ifndef RADIO_CHIP
-// #define RADIO_CHIP RADIO_CHIP_CC2420
-// #endif
-
-#include <platform_radio.h> // in platform's directory
-
-#ifndef RADIO_CHIP
-#error Radio chip not defined for this platform!
-#endif
+#define SHT11_SDA_PORT 2
+#define SHT11_SDA_PIN  3
+#define SHT11_SCL_PORT 2
+#define SHT11_SCL_PIN  4
+#define SHT11_PWR_PORT 1
+#define SHT11_PWR_PIN  7
 
 #endif

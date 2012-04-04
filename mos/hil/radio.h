@@ -40,6 +40,7 @@
 #define RADIO_CHIP_CC2420    1
 #define RADIO_CHIP_MRF24J40  2
 #define RADIO_CHIP_CC1101    3
+#define RADIO_CHIP_AMB8420   4
 
 typedef void (*RadioRecvFunction)(void);
 

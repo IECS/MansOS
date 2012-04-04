@@ -21,20 +21,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RADIO_HAL_H
-#define RADIO_HAL_H
+#ifndef AMB8420_SPI_HAL_H
+#define AMB8420_SPI_HAL_H
 
-// let the platform define the chip it uses
-#include <platform.h>
+#include <hil/gpio.h>
 
-// #ifndef RADIO_CHIP
-// #define RADIO_CHIP RADIO_CHIP_CC2420
-// #endif
-
-#include <platform_radio.h> // in platform's directory
-
-#ifndef RADIO_CHIP
-#error Radio chip not defined for this platform!
-#endif
+// TODO
 
 #endif
