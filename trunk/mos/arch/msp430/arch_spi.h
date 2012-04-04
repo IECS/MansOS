@@ -27,9 +27,9 @@
 
 #include <kernel/defines.h>
 
-#if defined(__msp430x22x4) || defined(__msp430x22x2)
+#if defined(__msp430x22x4) || defined(__msp430x22x2) || defined(__msp430x54xA)
 #  include <msp430/msp430_usci.h>
-#else /* Assume F1611 */
+#else /* Assume x1xx */
 #  include <arch_spi_x1xx.h>
 #endif
 

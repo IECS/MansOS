@@ -209,7 +209,7 @@ class Component(object):
         # create dictionary for parameters
         self.parameters = {}
         for p in dir(specification):
-            if type(specification.__getattribute__(p)) is componentModule.SealParameter:
+            if type(specification.__getattribute__(p)) is componentRegister.module.SealParameter:
                 self.parameters[p] = specification.__getattribute__(p).value
         self.useCases = []
         self.markedAsUsed = False
@@ -489,15 +489,10 @@ class StateUseCase(object):
 
 ######################################################
 class ComponentRegister(object):
-#    architecture = ''
-#    actuators = {}
-#    sensors = {}
-#    outputs = {}
-#    module = None
+  module = None
 
-    # load all componentsi for this platform from a file
+  # load all componentsi for this platform from a file
     def load(self, architecture):
-        global componentModule
         # reset components
         self.actuators = {}
         self.sensors = {}
@@ -508,23 +503,23 @@ class ComponentRegister(object):
         self.patterns = {}
         self.architecture = architecture
         # import the module (residing in "components" directory and named "<architecture>.py")
-        componentModule = __import__(architecture)
+        self.module = __import__(architecture)
         # construct empty components from descriptions
-        for n in componentModule.components:
+        for n in self.module.components:
             isDuplicate = False
             name = n.name.lower()
             # print "load", name
-            if n.typeCode == componentModule.TYPE_ACTUATOR:
+            if n.typeCode == self.module.TYPE_ACTUATOR:
                 if name in self.actuators:
                     isDuplicate = True
                 else:
                     self.actuators[name] = Actuator(n)
-            elif n.typeCode == componentModule.TYPE_SENSOR:
+            elif n.typeCode == self.module.TYPE_SENSOR:
                 if name in self.sensors:
                     isDuplicate = True
                 else:
                     self.sensors[name] = Sensor(n)
-            elif n.typeCode == componentModule.TYPE_OUTPUT:
+            elif n.typeCode == self.module.TYPE_OUTPUT:
                 if name in self.outputs:
                     isDuplicate = True
                 else:
@@ -608,4 +603,3 @@ class ComponentRegister(object):
 componentRegister = ComponentRegister()
 branchCollection = BranchCollection()
 conditionCollection = ConditionCollection()
-componentModule = None

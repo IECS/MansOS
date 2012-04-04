@@ -45,6 +45,22 @@ enum
 // Procedures
 //===========================================================
 
+#if defined(__msp430x54xA)
+
+void msp430InitClocks(void)
+{
+    msp430InitTimerA();
+    msp430InitTimerB();
+
+    // msp430CalibrateDCO();
+
+    // calibration changes timer config, restore it
+    msp430InitTimerA();
+    msp430InitTimerB();
+}
+
+#else
+
 static uint16_t test_calib_busywait_delta(uint16_t calib)
 {
     int8_t aclk_count = 2;
@@ -104,7 +120,7 @@ static void msp430CalibrateDCO(void)
     DCOCTL = calib & 0xff;
 }
 
-void msp430InitClocks()
+void msp430InitClocks(void)
 {
     // BCSCTL1
     // .XT2OFF = 1; disable the external oscillator for SCLK and MCLK
@@ -132,3 +148,5 @@ void msp430InitClocks()
     msp430InitTimerA();
     msp430InitTimerB();
 }
+
+#endif

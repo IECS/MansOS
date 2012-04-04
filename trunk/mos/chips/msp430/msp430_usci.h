@@ -64,4 +64,17 @@ static inline uint_t USARTDisableRX(uint8_t id) { return 0; }
 static inline void hw_spiBusOn(uint8_t busId) { }
 static inline void hw_spiBusOff(uint8_t busId) { }
 
+#if defined(__msp430x54xA)
+#define UC0IE     UCA0IE
+#define UC0IFG    UCA0IFG
+#define UCA0RXIE  UCRXIE
+#define UCA0TXIE  UCTXIE
+#define UCA0RXIFG UCRXIFG
+#define UCA0TXIFG UCTXIFG
+#define UCB0RXIE  UCRXIE
+#define UCB0TXIE  UCTXIE
+#define UCB0RXIFG UCRXIFG
+#define UCB0TXIFG UCTXIFG
+#endif
+
 #endif /* _MSP430_USCI_H_ */

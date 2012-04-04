@@ -21,20 +21,21 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RADIO_HAL_H
-#define RADIO_HAL_H
+//----------------------------------------------------------
+//      Platform code
+//----------------------------------------------------------
+#include "platform.h"
+#include <hil/snum.h>
 
-// let the platform define the chip it uses
-#include <platform.h>
-
-// #ifndef RADIO_CHIP
-// #define RADIO_CHIP RADIO_CHIP_CC2420
-// #endif
-
-#include <platform_radio.h> // in platform's directory
-
-#ifndef RADIO_CHIP
-#error Radio chip not defined for this platform!
+//----------------------------------------------------------
+//      Init the platform as if on cold reset
+//----------------------------------------------------------
+void initPlatform(void)
+{
+#if USE_HARDWARE_TIMERS
+    msp430InitClocks();
 #endif
-
+#if USE_SERIAL_NUMBER
+    halSerialNumberInit();
 #endif
+}

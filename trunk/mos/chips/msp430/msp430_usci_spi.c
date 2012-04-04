@@ -47,7 +47,7 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
     UC##id##BR0 = (CPU_HZ / SPI_SPEED) & 0xFF, /* Clock divider, lower part */ \
     UC##id##BR1 = (CPU_HZ / SPI_SPEED) >> 8, /* Clock divider, higher part */  \
     UC##id##CTL0 = SPI_MODE,            /* Set specified mode */               \
-    IE2 &= ~UC##id##RXIE,               /* Disable receive interrupt */        \
+    UC0IE &= ~UC##id##RXIE,             /* Disable receive interrupt */        \
     UC##id##CTL1 &= ~UCSWRST)           /* Release hold */
 
     if (busId == 0)
@@ -68,9 +68,9 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
 uint8_t hw_spiExchByte(uint8_t busId, uint8_t b)
 {
 #define SPI_EXCH_BYTE(id) { \
-    while (!(IFG2 & UC##id##TXIFG)); /* Wait for ready */ \
-    UC##id##TXBUF = b;               /* Send data */      \
-    while (!(IFG2 & UC##id##RXIFG)); /* Wait for reply */ \
+    while (!(UC0IFG & UC##id##TXIFG)); /* Wait for ready */ \
+    UC##id##TXBUF = b;               /* Send data */        \
+    while (!(UC0IFG & UC##id##RXIFG)); /* Wait for reply */ \
     return UC##id##RXBUF; }          /* Return reply */
 
     if (busId == 0)

@@ -21,15 +21,64 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MOS_USART_HAL_H
-#define MOS_USART_HAL_H
+#ifndef MANSOS_AMB8420_H
+#define MANSOS_AMB8420_H
 
 #include <kernel/defines.h>
 
-#if defined(__msp430x22x4) || defined(__msp430x22x2) || defined(__msp430x54xA)
-#  include <msp430/msp430_usci.h>
-#else /* x1xx assumed */
-#  include <msp430/msp430_usart.h>
+//
+// Configuration constants
+//
+#define WITH_SEND_CCA 1
+#define AMB8420_CONF_CHECKSUM 0
+#define AMB8420_CONF_AUTOACK 0
+#define AMB8420_CONF_AUTOCRC 1
+
+#if AMB8420_CONF_CHECKSUM
+#define CHECKSUM_LEN 2
+#else
+#define CHECKSUM_LEN 0
 #endif
+
+#define FOOTER_LEN 2
+#define AUX_LEN (CHECKSUM_LEN + FOOTER_LEN)
+
+#define AMB8420_MAX_PACKET_LEN      (62 - AUX_LEN)
+
+#define AMB8420_TX_POWER_MIN        0  // -38.75 dBm
+#define AMB8420_TX_POWER_MAX        31 // 0 dBm
+
+void amb8420Init(void) WEAK_SYMBOL;
+
+void amb8420On(void);
+void amb8420Off(void);
+
+int amb8420Read(void *buf, uint16_t bufsize);
+int amb8420Send(const void *header, uint16_t headerLen,
+                 const void *data, uint16_t dataLen);
+
+void amb8420Discard(void);
+
+// set receive callback
+typedef void (*AMB8420RxHandle)(void);
+AMB8420RxHandle amb8420SetReceiver(AMB8420RxHandle);
+
+// radio channel control
+void amb8420SetChannel(int channel);
+
+// transmit power control (0..31)
+void amb8420SetTxPower(uint8_t power);
+
+// get RSSI (Received Signal Strength Indication) of the last received packet
+int8_t amb8420GetLastRSSI(void);
+
+// get LQI (Link Quality Indication) of the last received packet. Return value is in [0..127]
+uint8_t amb8420GetLastLQI(void);
+
+// measure the current RSSI on air
+int amb8420GetRSSI(void);
+
+// returns true if CCA fails to detect radio interference
+bool amb8420IsChannelClear(void);
 
 #endif

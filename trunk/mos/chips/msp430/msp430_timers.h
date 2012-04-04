@@ -100,12 +100,23 @@ enum {
 // Macros
 //===========================================================
 
-// count up to CCR0 continuously
-#if USE_EXP_THREADS
-#define msp430StartTimerA() TACTL |= MC_UPTO_CCR0 // MC_CONT
-#else
-#define msp430StartTimerA() TACTL |= MC_UPTO_CCR0
+#if defined(__msp430x54xA)
+#define TACTL TA0CTL
+#define TACCTL0 TA0CCTL0
+#define TACCTL1 TA0CCTL1
+#define TACCTL2 TA0CCTL2
+#define TACCTL3 TA0CCTL3
+#define TACCTL5 TA0CCTL5
+#define TAR TA0R
+#define TACCR0 TA0CCR0
+#define TACCR1 TA0CCR1
+#define TACCR2 TA0CCR2
+#define TACCR3 TA0CCR3
+#define TAIV TA0IV
 #endif
+
+// count up to CCR0 continuously
+#define msp430StartTimerA() TACTL |= MC_UPTO_CCR0
 #define msp430StopTimerA() TACTL &= ~(MC_3)
 
 #define msp430StartTimerB() TBCTL |= MC_UPTO_CCR0
@@ -178,7 +189,11 @@ extern void msp430TimerBSet(uint16_t ms);
 #define ENABLE_SLEEP_INTERRUPT() TBCTL |= TBIE
 #define DISABLE_SLEEP_INTERRUPT() TBCTL &= ~(TBIE)
 
+#ifdef TIMERA1_VECTOR
 #define ALARM_TIMER_INTERRUPT() ISR(TIMERA1, alarmTimerInterrupt)
+#else // for MSP430F5438
+#define ALARM_TIMER_INTERRUPT() ISR(TIMER0_A1, alarmTimerInterrupt)
+#endif
 #define SLEEP_TIMER_INTERRUPT() ISR(TIMERB1, sleepTimerInterrupt)
 
 #define platformTurnAlarmsOff() DISABLE_ALARM_INTERRUPT()

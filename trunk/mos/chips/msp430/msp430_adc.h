@@ -53,6 +53,24 @@
 #define SREF_VREF_AVSS SREF_1
 #endif // !SREF_VREF_AVSS
 
+#ifndef SHT0_0
+#define SHT0_0 ADC12SHT00
+#define SHT0_1 ADC12SHT01
+#define SHT0_2 ADC12SHT02
+#define SHT0_3 ADC12SHT03
+#define SHT1_0 ADC12SHT10
+#define SHT1_1 ADC12SHT11
+#define SHT1_2 ADC12SHT12
+#define SHT1_3 ADC12SHT13
+#endif
+
+#ifndef ENC
+#define ENC         ADC12ENC
+#define SHP         ADC12SHP
+#define CSTARTADD_2 ADC12CSTARTADD2
+#define SREF_1      ADC12SREF_1
+#endif
+
 // pin to which ADC0 is connected. Used for external VRef
 #define ADC0_PORT 6
 #define ADC0_PIN 0
@@ -78,7 +96,7 @@
     ADC12CTL1 = SHP;                            \
     ADC12CTL1 |= ADC12SSEL_ACLK;                \
     ADC12CTL1 |= CSTARTADD_2;                   \
-    ADC12MCTL2 = SREF_VREF_AVSS;
+    ADC12MCTL2 = SREF_VREF_AVSS
 
 // Use VeREF
 #define hplAdcUseExtVRef() \
@@ -101,7 +119,7 @@
     /* turn on ADC12 */                         \
     ADC12CTL0 |= ADC12ON;                       \
     /* enable conversion to take place */       \
-   ADC12CTL0 |= ENC;
+    ADC12CTL0 |= ENC
 
 #define hplAdcOff()    \
     /* turn off conversions */          \
@@ -109,7 +127,7 @@
     /* turn off reference voltage */    \
     ADC12CTL0 &= ~REFON;                \
     /* turn off adc core */             \
-    ADC12CTL0 &= ~ADC12ON;
+    ADC12CTL0 &= ~ADC12ON
 
 #define ADC_INT_HEADER() interrupt (ADC_VECTOR) adcInt()
 
@@ -119,11 +137,11 @@
 #define adcGetChannelCount() (16)
 
 // channel held in four smallest bits
-#define hplAdcSetChannel(ch) ADC12MCTL2 = (ADC12MCTL2 & 0xf0) | ch;
+#define hplAdcSetChannel(ch) ADC12MCTL2 = (ADC12MCTL2 & 0xf0) | (ch)
 
 // enable/disable interrupt for mem area 2
-#define hplAdcEnableInterrupt() ADC12IE |= (1 << 2);
-#define hplAdcDisableInterrupt() ADC12IE &= ~(1 << 2);
+#define hplAdcEnableInterrupt() ADC12IE |= (1 << 2)
+#define hplAdcDisableInterrupt() ADC12IE &= ~(1 << 2)
 
 #define hplAdcIntsUsed() (ADC12IE & (1 << 2))
 

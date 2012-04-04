@@ -78,7 +78,7 @@ uint8_t i2cWrite(uint8_t addr, const void *buf, uint8_t len)
                 ret = I2C_ACK_ERROR;
                 goto end;
             }
-            else if (IFG2 & UCB0TXIFG)
+            else if (UC0IFG & UCB0TXIFG)
                 break;
         }
 
@@ -110,7 +110,7 @@ uint8_t i2cRead(uint8_t addr, void *buf, uint8_t len)
         {
             if (UCB0STAT & UCNACKIFG) /* No ack */
                 goto end;
-            else if (IFG2 & UCB0RXIFG)
+            else if (UC0IFG & UCB0RXIFG)
                 break;
         }
 

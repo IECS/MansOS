@@ -118,7 +118,9 @@
 typedef struct Msp430InterruptContext {
     Handle_t interruptBit;
     int watchdogStatus;
+#ifdef IE1
     int ie1, ie2;
+#endif
 } Msp430InterruptContext_t;
 
 static inline void msp430ClearAllInterrupts(Msp430InterruptContext_t *interruptContext)
@@ -132,25 +134,31 @@ static inline void msp430ClearAllInterrupts(Msp430InterruptContext_t *interruptC
     interruptContext->watchdogStatus ^= (WDTRPW ^ WDTPW);
     WDTCTL = WDTPW | WDTHOLD;
     // Disable nonmaskable interrupts
+#ifdef IE1
     interruptContext->ie1 = IE1;
     IE1 = 0;
     interruptContext->ie2 = IE2;
     IE2 = 0;
+#endif
 }
 
 static inline void msp430ClearAllInterruptsNosave(void)
 {
     DISABLE_INTS();
     WDTCTL = WDTPW | WDTHOLD;
+#ifdef IE1
     IE1 = 0;
     IE2 = 0;
+#endif
 }
 
 static inline void msp430ClearAllInterruptsBeforeReboot(void)
 {
     DISABLE_INTS();
+#ifdef IE1
     IE1 = 0; IFG1 = 0;
     IE2 = 0; IFG2 = 0;
+#endif
     P1IE = 0; P1IFG = 0;
     P2IE = 0; P2IFG = 0;
     // TODO portability: uncomment this code for those models of MSP430
@@ -166,8 +174,10 @@ static inline void msp430ClearAllInterruptsBeforeReboot(void)
 static inline void msp430RestoreAllInterrupts(Msp430InterruptContext_t *interruptContext)
 {
     // Restore interrupts
+#ifdef IE1
     IE2 = interruptContext->ie2;
     IE1 = interruptContext->ie1;
+#endif
     WDTCTL = interruptContext->watchdogStatus;
     SET_INTERRUPT_STATUS(interruptContext->interruptBit);
 }

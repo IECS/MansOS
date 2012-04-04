@@ -20,24 +20,45 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-#
-# Defines options for make, used as make targets in addition
-# to the main target. Overrides the related options in the config file.
-#
-# Invoked from the main Makefile and the Makefile.top.
 #
 
-#--- Supported options
+#############################################
+# SADmote v3
+#############################################
 
-OPT_VERBOSE = verbose
-OPT_QUIET = quiet
-OPT_OPTIMIZE = optimize
+#############################################
+# Define platform variables
 
-ALLOPTIONS = $(OPT_VERBOSE) $(OPT_QUIET) $(OPT_OPTIMIZE)
+ARCH = msp430
+MCU_MODEL = msp430f5438a
 
-#--- Supported platforms
+# Upload target
+UPLOAD_TARGET=upload-msp430
 
-PLATFORMS ?= pc pcapp telosb tmote sadmote sm3 atmega arduino nrf waspmote launchpad farmmote
+INTERRUPT_VECTOR_COUNT=64
 
-ALLTARGETS = build clean upload run testbed memdump mspsim $(PLATFORMS:%=clean%) $(PLATFORMS) $(ALLOPTIONS)
+# Default clock speed: 8MHz
+ifeq ($(USE_HARDWARE_TIMERS),y)
+CPU_MHZ ?= 8
+else
+CPU_MHZ ?= 1  # TODO?
+endif
+
+CFLAGS += -DPLATFORM_SADMOTE=1 -DPLATFORM_SADMOTE3=1 -mivcnt=$(INTERRUPT_VECTOR_COUNT)
+
+#############################################
+# Define platform-specific sources
+# (excluding architecture-specific sources)
+
+PSOURCES += $(MOS)/platforms/sm3/platform.c
+
+#PSOURCES-$(USE_RADIO) += $(MOS)/chips/mrf24j40/mrf24j40.c
+#PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/at25df/at25df.c
+PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2401/ds2401.c
+PSOURCES-$(USE_ISL29003) += $(MOS)/chips/isl29003/isl29003.c
+PSOURCES-$(USE_APDS9300) += $(MOS)/chips/apds9300/apds9300.c
+PSOURCES-$(USE_ADS1115) += $(MOS)/chips/ads1115/ads1115.c
+
+PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
+PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
+PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c
