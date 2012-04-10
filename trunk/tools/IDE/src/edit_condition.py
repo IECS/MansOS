@@ -25,6 +25,7 @@
 import wx
 import wx.lib.scrolledpanel as scrolled
 
+from structures import Expression, CodeBlock
 from globals import * #@UnusedWildImport
 
 class EditCondition(scrolled.ScrolledPanel):
@@ -38,14 +39,21 @@ class EditCondition(scrolled.ScrolledPanel):
         self.data = wx.GridBagSizer(hgap = 2, vgap = 1)
         self.main.Add(self.data, 1, wx.EXPAND | wx.ALL, 5)
 
+        self.next = None
         self.choices = []
         self.oldValues = {}
         self.text = []
 
-        self.condition = condition
+        if condition == None:
+            self.condition = (CodeBlock(CONDITION, Expression(None, None, ''), [], None), 0, 0, 0, 0)
+            self.newMode = 2
+        else:
+            self.condition = condition
+            self.newMode = 0
         self.generateWhenSelect()
 
-        #data = self.condition.getElseWhen()
+        assert type(self.condition[0]) is CodeBlock, "Wrong type passed"
+
         self.generateElseWhenSelects()
 
         self.SetBackgroundColour("black")
@@ -62,10 +70,9 @@ class EditCondition(scrolled.ScrolledPanel):
         self.when = wx.ComboBox(self, choices = self.API.getDefaultConditions(),
                                 style = wx.CB_DROPDOWN, name = "when",
                                 size = (200, 25))
-        if self.condition.getCondition() is not None:
-            print self.condition.getCondition()
-            self.when.SetValue(self.condition.getCondition())
-            self.oldValues['when'] = self.condition.getCondition()
+        if self.condition[0].condition is not None:
+            self.when.SetValue(self.condition[0].condition.getCode())
+            self.oldValues['when'] = self.condition[0].condition.getCode()
 
         self.Bind(wx.EVT_COMBOBOX, self.updateOriginal, self.when)
         self.Bind(wx.EVT_TEXT, self.updateOriginal, self.when)
@@ -78,8 +85,8 @@ class EditCondition(scrolled.ScrolledPanel):
 
     def generateElseWhenSelects(self):
         # Cycle all parameters and draw according boxes
-        condition = self.condition.getNextCondition()
-        while condition is not None:
+        nextCond, condition = self.getNextCondition(self.condition[0].next)
+        while nextCond is not None:
             self.text.append(wx.StaticText(self, label = self.tr("Elsewhen") + ":"))
             self.data.Add(self.text[-1], pos = (self.row, 0))
             self.choices.append(wx.ComboBox(self, style = wx.CB_DROPDOWN,
@@ -93,7 +100,14 @@ class EditCondition(scrolled.ScrolledPanel):
 
             self.data.Add(self.choices[-1], pos = (self.row, 1))
             self.row += 1
-            condition = self.condition.getNextCondition()
+            nextCond, condition = self.getNextCondition(nextCond)
+
+    def getNextCondition(self, condition):
+        if condition == None:
+            return (None, '')
+        if condition.next == None:
+            return (None, '')
+        return (condition.next, condition.condition.getCode())
 
     def updateOriginal(self, event = None):
         obj = event.GetEventObject()

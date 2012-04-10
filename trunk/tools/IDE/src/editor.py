@@ -24,26 +24,23 @@
 
 import wx.stc
 import time
-import re
 
-from seal_struct import SealStruct
 from edit_statement import EditStatement
-from statement import Statement
-from condition_container import ConditionContainer
 from edit_condition import EditCondition
+from structures import ComponentUseCase
 from globals import * #@UnusedWildImport
 
 class Editor(wx.stc.StyledTextCtrl):
-    def __init__(self, parent, API, noUpdate = False):
+    def __init__(self, parent, API):
         wx.stc.StyledTextCtrl.__init__(self, parent)
-        self.activePoints = []
-        self.activeRadius = 0
         self.API = API
-        self.spaces = ''
-        self.noUpdate = noUpdate
         self.lastText = ''
         self.lastAutoEdit = 0
+        self.lastPanel = None
         self.newMode = False
+
+        self.last = dict()
+        self.lastCount = 0
 
         # Set scroll bar range
         self.SetEndAtLastLine(True)
@@ -59,8 +56,7 @@ class Editor(wx.stc.StyledTextCtrl):
 
         self.SetUseAntiAliasing(True)
 
-        self.Bind(wx.stc.EVT_STC_MODIFIED, self.doGrammarCheck)
-        self.Bind(wx.stc.EVT_STC_UPDATEUI, self.getAction)
+        self.Bind(wx.stc.EVT_STC_UPDATEUI, self.doGrammarCheck)
 
     def setLineNumbers(self, enable = True):
         if enable:
@@ -76,84 +72,82 @@ class Editor(wx.stc.StyledTextCtrl):
     def doGrammarCheck(self, event):
         if event != None:
             wx.Yield()
-        if self.GetParent().emmbeddedMode == False:
-            # Mark that file has changed
-            # TODO: fix undo not reverting this
-            if not self.noUpdate:
-                self.GetParent().saveState = False
-                self.API.tabManager.markAsUnsaved()
-            if self.GetParent().projectType == SEAL_PROJECT:
-                if self.lastText != self.GetText():
-                    self.lastText = self.GetText()
-                    self.API.sealParser.run(self.lastText)
-                else:
-                    self.API.clearInfoArea()
-            else:
-                self.API.clearInfoArea()
+        # Mark that file has possibly changed
+        self.GetParent().yieldChanges()
+        self.API.clearInfoArea()
+
+        if self.GetParent().projectType == SEAL_PROJECT:
+            if self.lastText != self.GetText():
+                self.lastText = self.GetText()
+                self.API.sealParser.run(self.lastText)
+                self.lineTracking = self.API.sealParser.lineTracking
+            self.getAction(event)
 
     def getAction(self, event):
+
         if event != None:
             wx.Yield()
         # Filter unneccessary triggering
         if time.time() - self.lastAutoEdit < 1:
             return
-        if self.API.editorSplitter.doSplit == None:
-            return
-        line = self.GetCurrentLine()
+
         dialog = None
-        if self.API.getStatementType(self.GetLine(line)) <= CONDITION:
-            # Get statement and corresponding lines
-            self.lastEdit = self.findAllStatement(line)
-
-            # Create new sealStruct instance only for this statement
-            seal = SealStruct(self.API, self.lastEdit[0], None)
-            predictedType = seal.getPredictedType()
-            if predictedType == STATEMENT:
+        # Get statement and corresponding lines
+        self.lastEdit = self.findAllStatement(self.GetCurrentLine())
+        if self.lastEdit[0] != None:
+            if self.lastEdit[4] == STATEMENT:
                 dialog = EditStatement(self.API.editorSplitter,
-                                    self.API, seal, self.statementUpdateClbk)
-            elif predictedType == CONDITION:
+                        self.API, self.lastEdit, self.statementUpdateClbk)
+            elif self.lastEdit[4] == CONDITION:
                 dialog = EditCondition(self.API.editorSplitter,
-                                    self.API, seal, self.conditionUpdateClbk)
-        self.API.editorSplitter.doSplit(dialog)
+                        self.API, self.lastEdit, self.conditionUpdateClbk)
+        # Show or hide splash window
+        self.splitEditor(dialog)
+        wx.Yield()
 
-    def statementUpdateClbk(self, name, value, oldValue = None):
-        self.lastAutoEdit = time.time()
+
+    def splitEditor(self, editPanel):
+        self.API.editorSplitter.Unsplit()
+        if self.lastPanel != None:
+            self.lastPanel.DissociateHandle()
+            self.lastPanel.DestroyChildren()
+            self.lastPanel.Destroy()
+        self.lastPanel = editPanel
+        if editPanel != None:
+            self.API.editorSplitter.SplitVertically(self.API.tabManager,
+                                                editPanel, -305)
+
+    def statementUpdateClbk(self, newStatement):
+
         if self.newMode:
             self.SetTargetStart(self.GetCurrentPos())
             self.SetTargetEnd(self.GetCurrentPos())
-            self.ReplaceTarget(name + ' ' + value + ';')
+            self.ReplaceTarget(newStatement[0].getCode(0))
             self.lastEdit = self.findAllStatement(self.GetCurrentLine())
+            self.getAction(None)
             self.newMode = False
         else:
-            row = self.lastEdit[0].rstrip()
-            if name == 'actuator' or name == 'object':
-                row = re.sub("(?i){0}".format(oldValue), value, row)
-            elif value == '':
-                row = re.sub("(?i), ?{0} {1}".format(name, oldValue), '', row)
-            elif value == False:
-                row = re.sub("(?i), ?{0}".format(name), '', row)
-            elif value == True:
-                row = "{0}, {1};".format(row.rstrip("; "), name)
-            elif oldValue == None:
-                row = "{0}, {1} {2};".format(row.rstrip("; "), name, value)
+            self.lastAutoEdit = time.time()
+            self.SetTargetStart(self.PositionFromLine(newStatement[1]))
+            endPos = self.PositionFromLine(newStatement[3] + 1)
+            if self.GetCharAt(endPos) == '\n':
+                self.SetTargetEnd(endPos - 1)
+                self.ReplaceTarget(newStatement[0].getCode(0))
             else:
-                row = re.sub("(?i){0} {1}".format(name, oldValue),
-                             "{0} {1}".format(name, value), row)
+                self.SetTargetEnd(endPos)
+                self.ReplaceTarget(newStatement[0].getCode(0) + '\n')
 
-            self.SetTargetStart(self.PositionFromLine(self.lastEdit[1]))
-            self.SetTargetEnd(self.PositionFromLine(self.lastEdit[3] + 1) - 1)
-            self.ReplaceTarget(row)
-            self.lastEdit = self.findAllStatement(self.lastEdit[2])
-        print "#####################################"
+            self.lastEdit = self.findAllStatement(newStatement[2])
 
     def conditionUpdateClbk(self, name, value, oldValue = None):
         self.lastAutoEdit = time.time()
         if self.newMode:
             self.AddText("when " + value + ":\n\nend")
+            self.doGrammarCheck(None)
             self.lastEdit = self.findAllStatement(self.GetCurrentLine())
             self.newMode = False
         else:
-            row = self.lastEdit[0].rstrip()
+            row = self.lastEdit[0].getCode(0).rstrip()
             if name == 'when':
                 start = row.find(name)
                 end = row[start:].find(":")
@@ -163,22 +157,22 @@ class Editor(wx.stc.StyledTextCtrl):
                 while name > 0:
                     start += row[start:].find("elsewhen") + len("elsewhen")
                     name -= 1
-                    print start, name
                 end = row[start:].find(":")
 
             newPart = row[start:start + end].replace(oldValue, value)
             row = row[:start] + newPart + row[start + end:]
 
             self.SetTargetStart(self.PositionFromLine(self.lastEdit[1]))
-            self.SetTargetEnd(self.PositionFromLine(self.lastEdit[3] + 1))
+            self.SetTargetEnd(self.PositionFromLine(self.lastEdit[3]))
             self.ReplaceTarget(row)
+            self.doGrammarCheck(None)
             self.lastEdit = self.findAllStatement(self.lastEdit[2])
 
     def addStatement(self):
         self.getPlaceForAdding()
         self.lastAutoEdit = time.time()
         dialog = EditStatement(self.API.editorSplitter,
-                            self.API, Statement(), self.statementUpdateClbk)
+                               self.API, None, self.statementUpdateClbk)
         self.API.editorSplitter.doSplit(dialog)
         self.newMode = True
 
@@ -186,41 +180,33 @@ class Editor(wx.stc.StyledTextCtrl):
         self.getPlaceForAdding()
         self.lastAutoEdit = time.time()
         dialog = EditCondition(self.API.editorSplitter,
-                            self.API, ConditionContainer(), self.conditionUpdateClbk)
+                               self.API, None, self.conditionUpdateClbk)
         self.API.editorSplitter.doSplit(dialog)
         self.newMode = True
 
     def findAllStatement(self, lineNr):
-        startNr = lineNr - 1
-        endNr = lineNr
-        # Search for comments before current line
-        while (self.API.getStatementType(self.GetLine(startNr)) == UNKNOWN
-              and startNr > -1 and self.GetLine(startNr) != '\n'):
-            startNr -= 1
-        startNr += 1
+        # Check for empty line
+        line = self.GetLine(lineNr).strip()
+        if line == '':
+            return (None, -1, lineNr, -1)
 
-        # Search for end of statement
-        # If this is simple statement, then end is @ this line
-        if self.API.getStatementType(self.GetLine(lineNr)) == STATEMENT:
-            endNr = lineNr
-        else:
-            endNr += 1
-            # We have to search for end, noting that there might be other when's
-            whens = 1
-            ends = 0
-            while whens != ends and endNr < self.GetLineCount():
-                if (self.API.getStatementType(self.GetLine(endNr)) == END) :
-                    ends += 1
-                elif(self.API.getStatementType(self.GetLine(endNr)) == CONDITION):
-                    whens += 1
+        # Try find statement in this line
+        for x in self.lineTracking["Statement"]:
+            if lineNr + 1 >= x[0] and lineNr + 1 <= x[1]:
+                return (x[2], x[0] - 1, lineNr, x[1] - 1, STATEMENT)
 
-                endNr += 1
-            endNr -= 1
-        # Get all lines between start and end
-        statement = ""
-        for x in range(startNr, endNr + 1):
-            statement += self.GetLine(x)
-        return (statement, startNr, lineNr, endNr)
+        # If no component error is throwed we dont get so far :(
+        statementType, actuator, obj = self.API.getStatementType(line)
+
+        if statementType == STATEMENT:
+            return(ComponentUseCase(actuator, obj, []), lineNr,
+                   lineNr, lineNr, STATEMENT)
+
+        for x in self.lineTracking["Condition"]:
+            if lineNr + 1 >= x[0] and lineNr + 1 <= x[1]:
+                return (x[2], x[0] - 1, lineNr, x[1], CONDITION)
+
+        return (None, -1, lineNr, -1)
 
     def getPlaceForAdding(self):
         self.LineEndDisplay()

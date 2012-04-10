@@ -23,63 +23,82 @@
 #
 
 from globals import * #@UnusedWildImport
-from parameter import ParameterDefinition
+
+import component_hierarchy
 
 class SealSyntax():
-    def __init__(self):
-        # All defined platforms
-        self.platforms = ["telosb", "sadmote", "atmega", "waspmote"]
+    def __init__(self, API):
+        self.API = API
 
-        # All actuators and other keywords goes here
-        self.actuators = {
-            'use': {
-                'objects': ['Led', 'RedLed', 'GreenLed', 'BlueLed'],
-                'parameters': [
-                    ParameterDefinition('period', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s']),
-                    ParameterDefinition('on_at', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s']),
-                    ParameterDefinition('off_at', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s']),
-                    ParameterDefinition('blinkTimes', ['', '1', '2', '3', '5', '10', '25']),
-                    ParameterDefinition('blink', None),
-                    ParameterDefinition('blinkTwice', None),
-                    ParameterDefinition('turn_on', None),
-                    ParameterDefinition('turn_off', None),
-                ],
-                'role': STATEMENT
-            },
-            'read': {
-                'objects': ['temperature', 'humidity'],
-                'parameters': [
-                    ParameterDefinition('period', ['', '100ms', '200ms', '500ms', '1s', '2s', '5s'])
-                ],
-                'role': STATEMENT
-            },
-            'output': {
-                'objects': ['serial', 'radio'],
-                'parameters': [
-                    ParameterDefinition('aggregate', None),
-                    ParameterDefinition('crc', None),
-                    ParameterDefinition('baudrate', ['', '2400', '4800', '9600', '19200', '38400', '57600', '115200']),
-                ],
-                'role': STATEMENT
-            },
-            'when': {
-                'objects': ["System.time < 5s", "System.isDaytime"],
-                'parameters': [],
-                'role': CONDITION
-            },
-            'elsewhen': {
-                'objects': [],
-                'parameters': [],
-                'role': CONDITION
-            },
-            'else': {
-                'objects': [],
-                'parameters': [],
-                'role': CONDITION
-            },
-            'end': {
-                'objects': [],
-                'parameters': [],
-                'role': END
-            }
-        }
+        self.predefinedConditions = [
+            "True"
+            "False"
+            "isDayTime"
+            "time < 5s"
+            "Cat's eat apples"
+            ]
+
+        platform = self.API.getSetting("platform")
+        assert platform in self.API.platforms, \
+            "Unknown platform defined: {0}".format(platform)
+
+        __import__(platform)
+
+        self.syntax = [
+            ["use", "read", "output"],
+            [[]], # use
+            [[]], # read
+            [[]]  # output
+        ]
+
+        for x in component_hierarchy.components:
+            if x.name not in self.syntax[x.typeCode][0]:
+                # Create a new object entry
+                self.syntax[x.typeCode][0].append(x.name)
+                self.syntax[x.typeCode].append(list())
+            for p in dir(x):
+                # Fill object entry with keywords
+                if type(x.__getattribute__(p)) is component_hierarchy.SealParameter:
+                    self.syntax[x.typeCode][-1].insert(0, (p, x.__getattribute__(p).valueList))
+
+        #self.printAllSyntax()
+
+    def printAllSyntax(self):
+        # Just for pure understanding of used structure
+        for x in range(len(self.syntax[0])):
+            print self.syntax[0][x]
+            for y in range(len(self.syntax[x + 1][0])):
+                print " "*4, self.syntax[x + 1][0][y]
+                for z in self.syntax[x + 1][y + 1]:
+                    print " "*8, z[0], ":", z[1]
+
+    def getKeywords(self, target1 = None, target2 = None):
+        if target1 == None:
+            return self.syntax[0]
+        target1Nr = self.findRealIndex(self.syntax[0], target1)
+
+        if target1Nr == 0 or target2 == '':
+            return []
+
+        assert target1 in self.syntax[0], "'{}' not found".format(target1)
+
+        if target2 == None:
+            return self.syntax[target1Nr][0]
+
+        target2Nr = self.findRealIndex(self.syntax[target1Nr][0], target2)
+
+        if target2Nr == 0:
+            return []
+
+        assert target2 in self.syntax[target1Nr][0], \
+            "'{}' not found in {}".format(target2, self.syntax[target1Nr])
+
+        return self.syntax[target1Nr]\
+            [target2Nr]
+
+    def findRealIndex(self, myList, entry):
+        #assert entry in myList, "{} not found in {}".format(entry, myList)
+        for x in range(len(myList)):
+            if myList[x] == entry:
+                return x + 1
+        return 0

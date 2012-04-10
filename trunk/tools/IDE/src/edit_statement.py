@@ -23,11 +23,11 @@
 #
 
 import wx
-import wx.lib.scrolledpanel as scrolled
+from wx.lib.scrolledpanel import ScrolledPanel
 
-from statement import Statement
+from structures import Value, ComponentUseCase
 
-class EditStatement(scrolled.ScrolledPanel):
+class EditStatement(ScrolledPanel):
     def __init__(self, parent, API, statement, saveCallback):
         super(EditStatement, self).__init__(parent, style = wx.RAISED_BORDER)
         self.saveCallback = saveCallback
@@ -38,16 +38,22 @@ class EditStatement(scrolled.ScrolledPanel):
         self.data = wx.GridBagSizer(hgap = 2, vgap = 1)
         self.main.Add(self.data, 1, wx.EXPAND | wx.ALL, 5)
 
-        self.choices = []
-        self.oldValues = {}
-        self.text = []
-        self.newMode = False
+        self.choices = list()
+        self.oldValues = dict()
+        self.text = list()
 
-        self.statement = statement
+        if statement == None:
+            self.statement = (ComponentUseCase('', '', list()), 0, 0, 0, 0)
+            self.newMode = 2
+        else:
+            self.statement = statement
+            self.newMode = 0
+
+        assert type(self.statement[0]) is ComponentUseCase, "Wrong type"
+
         self.generateActuatorSelect()
 
-        data = self.API.getActuatorInfo(statement.getMode())['parameters']
-        self.generatePatameterSelects(data)
+        self.generatePatameterSelects()
 
         self.SetBackgroundColour("black")
 
@@ -61,22 +67,27 @@ class EditStatement(scrolled.ScrolledPanel):
         # Generate all objects
         self.actuatorText = wx.StaticText(self, label = self.tr("Edit actuator") + ":")
         self.objText = wx.StaticText(self, label = self.tr("Edit object") + ":")
-        self.actuator = wx.ComboBox(self, choices = self.API.getAllStatementActuators(),
+        self.actuator = wx.ComboBox(self, choices = self.API.getKeywords(),
                                 style = wx.CB_DROPDOWN, name = "actuator",
                                 size = (150, 25))
         self.Bind(wx.EVT_COMBOBOX, self.onActuatorChange, self.actuator)
         self.Bind(wx.EVT_TEXT, self.onActuatorChange, self.actuator)
-        self.actuator.SetValue(self.statement.getMode())
-        self.oldValues['actuator'] = self.statement.getMode()
-        choices = self.API.getActuatorInfo(self.statement.getMode())['objects']
+        self.actuator.SetValue(self.statement[0].type)
+        self.oldValues['actuator'] = self.statement[0].type
+
+        choices = self.API.getKeywords(self.statement[0].type)
+        for x in choices:
+            if x.lower() == self.statement[0].name.lower():
+                self.statement[0].name = x
+                break;
         self.obj = wx.ComboBox(self, choices = choices, size = (150, 25),
                                 style = wx.CB_DROPDOWN, name = "object")
         # Only for title change
-        self.Bind(wx.EVT_COMBOBOX, self.updateOriginal, self.obj)
-        self.Bind(wx.EVT_TEXT, self.updateOriginal, self.obj)
+        self.Bind(wx.EVT_COMBOBOX, self.onObjChange, self.obj)
+        self.Bind(wx.EVT_TEXT, self.onObjChange, self.obj)
 
-        self.obj.SetValue(self.statement.getObject())
-        self.oldValues['object'] = self.statement.getObject()
+        self.obj.SetValue(self.statement[0].name)
+        self.oldValues['object'] = self.statement[0].name
         # Add them to layout
         self.data.Add(self.actuatorText, pos = (0, 0))
         self.data.Add(self.actuator, pos = (0, 1))
@@ -84,86 +95,144 @@ class EditStatement(scrolled.ScrolledPanel):
         self.data.Add(self.obj, pos = (1, 1))
         # Set used row count
         self.row = 2
-        if self.statement.getMode() == '':
+        if self.newMode == 2:
             self.obj.Hide()
             self.objText.Hide()
-            self.newMode = True
+            self.newMode -= 1
 
-    def generatePatameterSelects(self, data):
-        # Cycle all parameters and draw according boxes
-        for parameter in data:
-            self.text.append(wx.StaticText(self, label = self.tr(parameter.getName()) + ":"))
+    def generatePatameterSelects(self):
+        # Cycle all posible parameters and draw according boxes
+        for parameter in self.API.getKeywords(self.statement[0].type, self.statement[0].name):
+            if parameter[1] == []:
+                continue
+            self.text.append(wx.StaticText(self, label = self.tr(parameter[0]) + ":"))
             self.data.Add(self.text[-1], pos = (self.row, 0))
-            paramValue = self.statement.getParamValueByName(parameter.getName())
-            if parameter.getValue() != None:
-                self.choices.append(wx.ComboBox(self, choices = parameter.getValue(),
-                                                style = wx.CB_DROPDOWN,
-                                                name = parameter.getName(),
-                                                size = (150, 25)))
-                self.Bind(wx.EVT_COMBOBOX, self.updateOriginal, self.choices[-1])
-                self.Bind(wx.EVT_TEXT, self.updateOriginal, self.choices[-1])
-                if paramValue != None:
-                    self.choices[-1].SetValue(str(paramValue))
-                    self.oldValues[parameter.getName()] = str(paramValue)
-            else:
-                self.choices.append(wx.CheckBox(self, name = parameter.getName()))
-                self.Bind(wx.EVT_CHECKBOX, self.updateOriginal, self.choices[-1])
-                if paramValue != None:
-                    self.choices[-1].SetValue(paramValue)
-                self.oldValues[parameter.getName()] = paramValue
 
-            self.data.Add(self.choices[-1], pos = (self.row, 1))
+            # Get real parameter associated with current name
+            param = self.API.getParamByName(self.statement[0].parameters,
+                                                      parameter[0])
+            value = None
+
+            if param != None:
+                if param[1] == None:
+                    value = True
+                else:
+                    value = param[1].getCode()
+
+            # Create combobox or checkbox
+            if type(parameter[1][0]) is not bool:
+                box = wx.ComboBox(self, choices = [""] + parameter[1],
+                                  style = wx.CB_DROPDOWN, size = (150, 25),
+                                  id = len(self.choices),
+                                  name = str(parameter[0]))
+                self.Bind(wx.EVT_TEXT, self.updateOriginal, box)
+                if value != None:
+                    box.SetValue(str(value))
+                    self.oldValues[parameter[0]] = str(value)
+            else:
+                box = wx.CheckBox(self, id = len(self.choices),
+                                  name = str(parameter[0]))
+                self.Bind(wx.EVT_CHECKBOX, self.updateOriginal, box)
+                if value != None:
+                    box.SetValue(value)
+                    self.oldValues[parameter[0]] = value
+            # Add created object and real parameter if exists
+            self.choices.append(param)
+
+            self.data.Add(box, pos = (self.row, 1))
             self.row += 1
 
     def onActuatorChange(self, event):
         if event != None:
             wx.Yield()
         actuator = self.actuator.GetValue()
-        self.updateOriginal(event)
         # Don't clear if this is already selected
-        if actuator == self.statement.getMode():
+        if actuator == self.statement[0].type:
             return
-        allActuators = self.API.getActuatorInfo(actuator)
-        if allActuators != None:
-            # Generate new statement
-            newStatement = Statement(actuator, self.obj.GetValue())
-            newStatement.setComment(self.statement.getComment())
-            self.statement = newStatement
-            definition = self.API.getActuatorInfo(newStatement.getMode())
-            data = definition['parameters']
-            # Clear All
-            self.clearAll()
-            self.generateActuatorSelect()
-            self.generatePatameterSelects(data)
 
-            self.Layout()
+        self.statement[0].parameters = list()
+        self.statement[0].name = ''
+        self.updateOriginal(event)
 
-    def clearAll(self):
-        # Can't use for loop because it sometimes causes 
-        # return of pointer to already destroyed object, because of rule that 
-        # list can't be altered while looped with for
-        while (len(self.choices) != 0):
-            self.choices.pop().Destroy()
-        while (len(self.text) != 0):
-            self.text.pop().Destroy()
-        self.actuator.Destroy()
-        self.actuatorText.Destroy()
-        self.objText.Destroy()
-        self.obj.Destroy()
-        self.data.Clear()
+        insertionPoint = self.actuator.GetInsertionPoint()
+        # Clear All
+        self.DestroyChildren()
+
+        self.generateActuatorSelect()
+
+        self.Layout()
+        # Take cursor to previous place
+        self.actuator.SetFocus()
+        self.actuator.SetInsertionPoint(insertionPoint + 1)
+
+    def onObjChange(self, event = None):
+        if event != None:
+            wx.Yield()
+        obj = self.obj.GetValue()
+        # Don't clear if this is already selected
+        if obj == self.statement[0].name:
+            return
+
+        self.statement[0].parameters = list()
+        self.statement[0].name = obj
+        self.updateOriginal(event)
+
+        insertionPoint = self.obj.GetInsertionPoint()
+        # Clear All
+        self.DestroyChildren()
+
+        self.generateActuatorSelect()
+
+        self.generatePatameterSelects()
+        self.Layout()
+        # Take cursor to previous place
+        self.obj.SetFocus()
+        self.obj.SetInsertionPoint(insertionPoint + 1)
 
     def updateOriginal(self, event = None):
-        if self.newMode and self.obj.GetValue() == '':
+        # Process newMode
+        if self.newMode == 1:
+            if self.actuator.GetValue() != '':
+                self.obj.Show()
+                self.objText.Show()
+                self.statement[0].type = self.actuator.GetValue()
+                self.saveCallback(self.statement)
+                self.newMode -= 1
             return
-        elif self.newMode:
-            self.saveCallback(self.actuator.GetValue(), self.obj.GetValue(), '')
-            self.newMode = False
-            return
+
         name = event.GetEventObject().GetName()
-        value = event.GetEventObject().GetValue().replace(",", "")
-        event.GetEventObject().SetValue(value)
-        oldVal = None
-        if name in self.oldValues:
-            oldVal = self.oldValues[name]
-        self.oldValues[name] = value
-        self.saveCallback(name, value, oldVal)
+        value = event.GetEventObject().GetValue()
+
+        # Can't allow this
+        if type(value) != bool:
+                value = value.replace(",", "")
+                value = value.replace(";", "")
+                event.GetEventObject().SetValue(value)
+
+        if name == "actuator":
+            self.statement[0].type = value
+        elif name == "object":
+            self.statement[0].name = value
+        else: # parameters
+            nr = event.GetEventObject().GetId()
+            param = self.choices[nr]
+            if param is not None:
+                # TODO: make suffix right!
+                if value != '' and value != False:
+                    param[1].value = value
+                    param[1].suffix = None
+                    self.choices[nr] = param
+                else:
+                    self.statement[0].parameters.remove(param)
+                    self.choices[nr] = None
+            else:
+                newParam = None
+                if value == True:
+                    newParam = (name, None)
+                    self.statement[0].parameters.append(newParam)
+                else:
+                    newParam = (name, Value(value, None))
+                    self.statement[0].parameters.append(newParam)
+                self.choices[nr] = newParam
+        self.saveCallback(self.statement)
+        return
