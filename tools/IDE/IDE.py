@@ -26,7 +26,6 @@
 import os
 from sys import path
 import time
-import memdebug
 
 def main():
     if not importsOk():
