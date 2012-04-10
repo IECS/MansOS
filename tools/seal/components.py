@@ -489,7 +489,7 @@ class StateUseCase(object):
 
 ######################################################
 class ComponentRegister(object):
-  module = None
+    module = None
 
   # load all componentsi for this platform from a file
     def load(self, architecture):
