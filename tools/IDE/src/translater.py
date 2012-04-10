@@ -65,6 +65,7 @@ class Translater:
                 "baudrate": "Baudrate",
                 "crc": "Kontrolsumma",
                 "When": "When",
+                "Elsewhen": "Elsewhen",
 
                 # APLICATION SPECIFIC PART
                 "File": "Izvēlne",

@@ -1,11 +1,13 @@
-use Foobar, period 1000, param2 1s, param3 1500ms;
+use RedLed, period 2s;
 
-when 1 < 2:
-    use Foobar1, param1 1000, param2 1s, param3 1500ms;
-elsewhen 2 > 1:
-    use Foobar2, param1 1000, param2 1s, param3 1500ms;
-elsewhen 2 > 1:
-    use Foobar2, param1 1000, param2 1s, param3 1500ms;
+read Light, period 2s;
+
+read Humidity, period 2s;
+
+when isdaytime:
+  use greenled;
+elsewhen 1 < 22:
+  use redled;
 else:
-    use Foobar3, param1 1000, param2 1s, param3 1500ms;
+  use blueled;
 end

@@ -29,24 +29,23 @@ from globals import * #@UnusedWildImport
 from editor import Editor
 
 class EditorManager(wx.Panel):
-    def __init__(self, parent, API, emmbeddedMode = False):
+    def __init__(self, parent, API):
         wx.Panel.__init__(self, parent)
 
         self.API = API;
         # Just a shorter name
         self.tr = self.API.translater.translate
-        self.initUI(emmbeddedMode)
-        self.emmbeddedMode = emmbeddedMode
+        self.initUI()
+        self.lastSaved = ''
         ### Editor visible variables
-        if not emmbeddedMode:
-            # @ creation we assume document is saved.
-            self.saveState = True
-            # Filename or untitled document
-            self.fileName = self.tr('Untitled document') + ' ' + str(self.GetParent().nextPageNr)
-            # Filename and full path(relative or absolute)
-            self.filePath = self.tr('Untitled document') + ' ' + str(self.GetParent().nextPageNr)
-            # This marks if document already have a file attached to it
-            self.hasAFile = False
+        # @ creation we assume document is saved.
+        self.saveState = True
+        # Filename or untitled document
+        self.fileName = self.tr('Untitled document') + ' ' + str(self.GetParent().nextPageNr)
+        # Filename and full path(relative or absolute)
+        self.filePath = self.tr('Untitled document') + ' ' + str(self.GetParent().nextPageNr)
+        # This marks if document already have a file attached to it
+        self.hasAFile = False
         # Define project type
         self.projectType = SEAL_PROJECT
 
@@ -64,11 +63,13 @@ class EditorManager(wx.Panel):
             self.detectSEAL()
         else:
             self.changeCode()
+        self.lastSaved = self.code.GetText()
+        self.yieldChanges()
 
-    def initUI(self, emmbeddedMode):
+    def initUI(self):
         self.main = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.code = Editor(self, self.API, emmbeddedMode)
+        self.code = Editor(self, self.API)
         self.main.Add(self.code, 1, wx.EXPAND | wx.ALL, 10);
 
     def redrawAll(self):
@@ -81,11 +82,15 @@ class EditorManager(wx.Panel):
     def changeCode(self, newCode = '', overwrite = True):
         if overwrite == True:
             self.code.AddText(newCode)
+            self.lastSaved = newCode
+            self.yieldChanges()
         self.code.setLineNumbers()
         self.redrawAll()
 
-    def save(self):
-        self.code.SaveFile(self.filePath)
+    def save(self, haveChanged = True):
+        self.lastSaved = self.code.GetText()
+        if haveChanged:
+            self.code.SaveFile(self.filePath)
         self.saveState = True
         self.GetParent().markAsSaved()
 
@@ -109,3 +114,9 @@ class EditorManager(wx.Panel):
         else:
             self.projectType = MANSOS_PROJECT
 
+    def yieldChanges(self):
+        if self.code.GetText() != self.lastSaved:
+            self.saveState = False
+            self.API.tabManager.markAsUnsaved()
+        else:
+            self.save(False)

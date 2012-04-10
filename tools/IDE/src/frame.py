@@ -25,7 +25,6 @@
 
 import os
 import wx
-
 from upload_module import UploadModule
 
 class Frame(wx.Frame):
@@ -33,7 +32,6 @@ class Frame(wx.Frame):
         super(Frame, self).__init__(parent, wx.ID_ANY, title, size = size, pos = pos)
         # Get path, here must use only file name, __file__ sometimes contains more than that
         self.path = os.path.dirname(os.path.realpath(__file__.split("/")[-1]))
-
         self.API = API
         self.API.path = self.path
         self.lastPanel = None
@@ -42,7 +40,7 @@ class Frame(wx.Frame):
         self.tr = self.API.tr
         self.toolbar = None
         self.menubar = None
-        self.InitUI()
+        self.initUI()
         self.SetBackgroundColour("white")
 
         self.split1 = wx.SplitterWindow(self, style = wx.SP_LIVE_UPDATE)
@@ -57,17 +55,16 @@ class Frame(wx.Frame):
         self.API.tabManager.Reparent(self.API.editorSplitter)
         self.API.editPanel.Reparent(self.API.editorSplitter)
         self.tabManager = self.API.tabManager
-        self.API.editorSplitter.SetBackgroundColour("white")
-        self.API.editorSplitter.doSplit = self.splitEditor
 
         # Must show&hide to init
-        self.API.editorSplitter.doSplit(self.API.editPanel)
+        self.API.editorSplitter.SplitVertically(self.API.tabManager,
+                                                    self.API.editPanel, -305)
         self.API.editorSplitter.Unsplit()
 
         # Makes outputArea to maintain it's height when whole window is resized
         self.split1.SetSashGravity(1)
 
-    def InitUI(self):
+    def initUI(self):
         fileMenu = wx.Menu()
         new = fileMenu.Append(wx.ID_NEW, '&' + self.tr('New') + '\tCtrl+N',
                               self.tr('Create empty document'))
@@ -159,6 +156,7 @@ class Frame(wx.Frame):
             wx.Yield()
         if self.tabManager.onQuitCheck() == True:
             self.API.performExit()
+            exit()
 
     def OnSave(self, event):
         if event != None:
@@ -222,7 +220,7 @@ class Frame(wx.Frame):
         for i in self.langs:
             if i.IsChecked() == True:
                 self.API.setSetting("activeLanguage", i.GetHelp())
-                self.InitUI()
+                self.initUI()
 
     def disableAdders(self):
         self.toolbar.EnableTool(wx.ID_ADD, False)
@@ -231,13 +229,3 @@ class Frame(wx.Frame):
     def enableAdders(self):
         self.toolbar.EnableTool(wx.ID_ADD, True)
         self.toolbar.EnableTool(wx.ID_APPLY, True)
-
-    def splitEditor(self, editPanel):
-        if self.lastPanel != None:
-            self.API.editorSplitter.Unsplit()
-            self.lastPanel.Destroy()
-        self.lastPanel = editPanel
-        if editPanel != None:
-            self.API.editorSplitter.SplitVertically(self.API.tabManager,
-                                                editPanel, -305)
-

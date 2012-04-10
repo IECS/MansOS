@@ -22,17 +22,13 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import re
-import string
 import wx
 import os
 from time import gmtime, strftime
 
 from frame import Frame
-from seal_struct import SealStruct
 from seal_syntax import SealSyntax
 from translater import Translater
-#from seal_parser import SealParser
 from output_area import OutputArea
 from tab_manager import TabManager
 from upload_core import UploadCore
@@ -40,29 +36,42 @@ from output_tools import OutputTools
 from listen_module import ListenModule
 from globals import * #@UnusedWildImport
 
-from parser import SealParser
+from seal_parser import SealParser
 
 class ApiCore:
     def __init__(self):
         self.path = os.getcwd()
+        # All variables placed here will be saved to configuration file and 
+        # reloaded next run time. See setSetting() and getSetting()
+        # Note: settings in file are with higher priority.
+        self.__settings = {
+                   "activeLanguage" : "LV",
+                   "platform" : "telosb"
+               }
         # Read settings from file
         if os.path.exists(SETTING_FILE) and os.path.isfile(SETTING_FILE):
             f = open(SETTING_FILE, 'r')
             lines = f.readlines()
-            self.__settings = {}
             for x in lines:
                 if x != '':
-                    key, value = x.split(":")
-                    self.__settings[key] = value.strip()
+                    key, value = x.strip().split(":")
+                    if key in self.__settings and value != self.__settings[key]:
+                        # print because logging is not initialized yet :(
+                        print "Replacing setting '{0}' with '{1}'."\
+                            .format(self.__settings[key], value)
+                    self.__settings[key] = value
             f.close()
-        else:
-            # All variables placed here will be saved to configuration file and 
-            # reloaded next run time. See setSetting() and getSetting()
-            self.__settings = {
-                   "activeLanguage" : "LV"
-               }
+
         # All functions here will be called upon exit
         self.onExit = [self.saveSettings]
+
+        # All defined platforms
+        self.platforms = [
+            "telosb",
+            "sadmote",
+            "atmega",
+            "waspmote"
+            ]
 
         if LOG_TO_FILE:
             path = os.getcwd()
@@ -79,10 +88,8 @@ class ApiCore:
         self.emptyFrame = wx.Frame(None)
 
         # Defines seal syntax
-        self.sealSyntax = SealSyntax()
-
-        # Compile regex for finding actuators
-        self.__reActuators = re.compile(string.join(self.sealSyntax.actuators.keys(), '|'), re.I)
+        self.sealSyntax = SealSyntax(self)
+        self.getKeywords = self.sealSyntax.getKeywords
 
         # Init translation module
         self.translater = Translater(self)
@@ -102,14 +109,14 @@ class ApiCore:
         self.clearOutputArea = self.outputArea.clear
 
         # Init seal parser
-        self.sealParser = SealParser("test", self.printInfo, False)
-        self.seal = SealStruct(self)
+        self.sealParser = SealParser("telosb", self.printInfo, False, True)
 
         self.editorSplitter = wx.SplitterWindow(self.emptyFrame,
                                                 style = wx.SP_LIVE_UPDATE)
-        self.editorSplitter.doSplit = None
+
         self.editorSplitter.SetMinimumPaneSize(305)
         self.editorSplitter.SetSashGravity(1)
+        self.editorSplitter.SetBackgroundColour("white")
 
         # Init tab manager 
         self.tabManager = TabManager(self.emptyFrame, self)
@@ -127,22 +134,20 @@ class ApiCore:
         self.frame = Frame(None, "MansOS IDE", (800, 500), (100, 100), self)
         self.onExit.append(self.frame.Close)
 
-        print "List of parentless objects(empty list is good!):"
-        print str(self.emptyFrame.GetChildren()).replace(", ", "\n").strip("wxWindowList: []")
-
-    # Return regex for finding actuators
-    def getReActuators(self):
-        return self.__reActuators
-
-    def getRole(self, actuator):
-        return self.sealSyntax.actuators[actuator]['role']
+        assert len(self.emptyFrame.GetChildren()) == 0, \
+            "There are parentless objects after API initialization."
 
     def getStatementType(self, line):
-        actuator = line.split(None, 1)
-        if actuator != []:
-            if actuator[0] in self.sealSyntax.actuators:
-                return self.sealSyntax.actuators[actuator[0]]['role']
-        return UNKNOWN
+        possibleSplitters = [None, ",", ";"]
+        # Try split statement to parse actuator and object
+        for x in possibleSplitters:
+            actuator = line.split(x)
+            if actuator != []:
+                # If no object found, make sure there is actuator[1] to return :)
+                actuator.append(" ")
+                if actuator[0] in self.sealSyntax.syntax[0]:
+                    return (STATEMENT, actuator[0], actuator[1].strip(",; "))
+        return (UNKNOWN, '', '')
 
     def getActuatorInfo(self, actuator):
         if actuator in self.sealSyntax.actuators:
@@ -156,17 +161,20 @@ class ApiCore:
 
     # Get all actuators, who have role == self.STATEMENT
     def getAllStatementActuators(self):
-        result = []
-        for x in self.sealSyntax.actuators.keys():
-            if self.sealSyntax.actuators[x]['role'] == STATEMENT:
-                result.append(x)
-        return result
+        return self.sealSyntax.actuators.keys()
+
+    def getParamByName(self, parameters, name):
+        assert type(parameters) is list, "List expected."
+        for x in parameters:
+            if x[0].lower() == name.lower():
+                return x
+        return None
 
     def getDefaultConditions(self):
-        return self.sealSyntax.actuators['when']['objects']
+        return ['']#self.sealSyntax.actuators['when']['objects']
 
     def getPlatforms(self):
-        return self.sealSyntax.platforms
+        return self.platforms
 
     def getSetting(self, setting):
         if setting in self.__settings:
@@ -176,7 +184,6 @@ class ApiCore:
     def setSetting(self, name, value):
         self.__settings[name] = value
         # Make sure, that settings are saved on unexpected exit
-        # XXX: is this correct???
         self.saveSettings()
 
     def saveSettings(self):
@@ -200,5 +207,5 @@ class ApiCore:
     def performExit(self):
         print "Prepering to exit:"
         for function in self.onExit:
-            print "    Calling ", function
+            print "    Calling ", str(function)
             function()

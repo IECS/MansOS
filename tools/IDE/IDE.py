@@ -25,6 +25,8 @@
 
 import os
 from sys import path
+import time
+import memdebug
 
 def main():
     if not importsOk():
@@ -65,13 +67,19 @@ def importsOk():
 
     try:
         # Add SEAL parser to python path
-        path.append('..')
-        path.append('../seal/components')
-        import parser
+        sealPath = os.path.join(os.path.dirname(\
+                                os.path.realpath(__file__))[:-4], "seal")
+        path.append(sealPath)
+        path.append(os.path.join(sealPath, 'components'))
+        from seal_parser import SealParser
     except ImportError:
         sealParserOK = False
     except OSError:
         sealParserOK = False
+
+    if not sealParserOK:
+        print "Error finding SEAL parser!"
+        return False
 
     if not (wxModuleOK and serialModuleOK and plyModuleOK and sealParserOK):
         if os.name == 'posix':
@@ -93,7 +101,7 @@ def importsOk():
             print "\tPLY module not found"
             installStr += " python-ply"
 
-        if not plyModuleOK:
+        if not sealParserOK:
             print "\tSEAL parser not found!"
 
         print installStr
