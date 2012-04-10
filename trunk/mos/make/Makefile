@@ -175,7 +175,7 @@ PLATFORM_ACTION ?= platform_build
 
 #===== Tools =====
 
-SEAL = $(MOSROOT)/tools/seal/seal
+SEAL = $(MOSROOT)/tools/parser/main.py
 
 MEMDUMP = $(MOS)/make/scripts/memdump.py
 
@@ -349,7 +349,7 @@ endif
 # .sl -> .c, SEAL sources
 %.c : %.sl
 	$(Print) "SEAL $<"
-	$(_QUIET) $(SEAL) $< -o $@
+	$(_QUIET) $(SEAL) -o build/$@ $<
 
 # .o -> .elf
 $(OUTDIR)/$(APPMOD).elf : $(OBJS)

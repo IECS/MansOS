@@ -108,8 +108,9 @@ def main():
         exit(1)
 
     # import pathname where seal package is located
-    sys.path.append('..')
-    sys.path.append('../seal/components')
+    dirname = os.path.dirname(os.path.realpath(__file__))
+    sys.path.append(dirname + '/..')
+    sys.path.append(dirname + '/../seal/components')
     from seal import generator
 
     parseCommandLine(sys.argv)
