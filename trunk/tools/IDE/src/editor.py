@@ -42,9 +42,9 @@ class Editor(wx.stc.StyledTextCtrl):
         self.last = dict()
         self.lastCount = 0
 
-        # Set scroll bar range
         self.SetEndAtLastLine(True)
         self.SetIndentationGuides(True)
+        self.SetUseAntiAliasing(True)
 
         # Set style
         font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
@@ -52,9 +52,8 @@ class Editor(wx.stc.StyledTextCtrl):
         self.StyleSetSpec(wx.stc.STC_STYLE_LINENUMBER, "back:green,face:%s,size:10" % font.GetFaceName())
 
         # Set captured events
-        self.SetModEventMask(wx.stc.STC_PERFORMED_UNDO | wx.stc.STC_PERFORMED_REDO | wx.stc.STC_MOD_DELETETEXT | wx.stc.STC_MOD_INSERTTEXT | wx.stc.STC_LEXER_START)
-
-        self.SetUseAntiAliasing(True)
+        self.SetModEventMask(wx.stc.STC_PERFORMED_UNDO | wx.stc.STC_PERFORMED_REDO \
+            | wx.stc.STC_MOD_DELETETEXT | wx.stc.STC_MOD_INSERTTEXT | wx.stc.STC_LEXER_START)
 
         self.Bind(wx.stc.EVT_STC_UPDATEUI, self.doGrammarCheck)
 
@@ -87,7 +86,7 @@ class Editor(wx.stc.StyledTextCtrl):
 
         if event != None:
             wx.Yield()
-        # Filter unneccessary triggering
+        # Filter unneccessary triggering(autotrigger allowed once in 1s)
         if time.time() - self.lastAutoEdit < 1:
             return
 
@@ -105,7 +104,6 @@ class Editor(wx.stc.StyledTextCtrl):
         self.splitEditor(dialog)
         wx.Yield()
 
-
     def splitEditor(self, editPanel):
         self.API.editorSplitter.Unsplit()
         if self.lastPanel != None:
@@ -118,7 +116,6 @@ class Editor(wx.stc.StyledTextCtrl):
                                                 editPanel, -305)
 
     def statementUpdateClbk(self, newStatement):
-
         if self.newMode:
             self.SetTargetStart(self.GetCurrentPos())
             self.SetTargetEnd(self.GetCurrentPos())
@@ -199,7 +196,7 @@ class Editor(wx.stc.StyledTextCtrl):
         statementType, actuator, obj = self.API.getStatementType(line)
 
         if statementType == STATEMENT:
-            return(ComponentUseCase(actuator, obj, []), lineNr,
+            return (ComponentUseCase(actuator, obj, []), lineNr,
                    lineNr, lineNr, STATEMENT)
 
         for x in self.lineTracking["Condition"]:

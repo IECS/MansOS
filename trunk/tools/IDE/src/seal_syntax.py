@@ -31,10 +31,10 @@ class SealSyntax():
         self.API = API
 
         self.predefinedConditions = [
-            "True"
-            "False"
-            "isDayTime"
-            "time < 5s"
+            "True",
+            "False",
+            "isDayTime",
+            "time < 5s",
             "Cat's eat apples"
             ]
 

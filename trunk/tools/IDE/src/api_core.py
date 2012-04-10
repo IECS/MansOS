@@ -171,7 +171,7 @@ class ApiCore:
         return None
 
     def getDefaultConditions(self):
-        return ['']#self.sealSyntax.actuators['when']['objects']
+        return self.sealSyntax.predefinedConditions
 
     def getPlatforms(self):
         return self.platforms
