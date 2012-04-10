@@ -1,5 +1,4 @@
 import string, sys
-
 ########################################################
 
 INDENT_STRING = "  "  # indent new code level with two spaces
@@ -73,12 +72,12 @@ class ConditionCollection(object):
                                " and ", " && "),
                                " or ", " || "),
                                " not ", " ! ")))
-                
+
         outputFile.write("}\n")
 
 ########################################################
 class Value(object):
-    def __init__(self, value=None, suffix=None):
+    def __init__(self, value = None, suffix = None):
         self.value = value
         self.suffix = suffix
 
@@ -134,7 +133,7 @@ class SealValue(object):
 
 ########################################################
 class Expression(object):
-    def __init__(self, left=None, op=None, right=None):
+    def __init__(self, left = None, op = None, right = None):
         self.left = left
         self.op = op
         self.right = right
@@ -295,7 +294,7 @@ class CodeBlock(object):
         elif self.blockType == CODE_BlOCK_TYPE_ELSE:
             result += "else:\n"
             indent += 1
- 
+
         for d in self.declarations:
             result += getIndent(indent)
             result += d.getCode(indent)

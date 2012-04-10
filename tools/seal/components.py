@@ -545,7 +545,10 @@ class ComponentRegister(object):
 
     def useComponent(self, keyword, name, parameters, conditions, branchNumber):
         o = self.findComponent(keyword.lower(), name.lower())
-        assert o != None
+        # IDE works with unfinished statements, this assert eliminates them.
+        #assert o != None
+        if o == None:
+            return
         o.addUseCase(parameters, conditions, branchNumber)
 
     def setState(self, name, value, conditions, branchNumber):
