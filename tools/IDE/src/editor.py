@@ -173,7 +173,7 @@ class Editor(wx.stc.StyledTextCtrl):
         self.lastAutoEdit = time.time()
         dialog = EditStatement(self.API.editorSplitter,
                                self.API, None, self.statementUpdateClbk)
-        self.API.editorSplitter.doSplit(dialog)
+        self.splitEditor(dialog)
         self.newMode = True
 
     def addCondition(self):
@@ -181,7 +181,7 @@ class Editor(wx.stc.StyledTextCtrl):
         self.lastAutoEdit = time.time()
         dialog = EditCondition(self.API.editorSplitter,
                                self.API, None, self.conditionUpdateClbk)
-        self.API.editorSplitter.doSplit(dialog)
+        self.splitEditor(dialog)
         self.newMode = True
 
     def findAllStatement(self, lineNr):
