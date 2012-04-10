@@ -39,7 +39,8 @@ class SealParser():
         start = time.time()
         # \n added because guarantees, that lineNr is correct!
         self.yacc.parse('\n' + s)
-        print "Parsing done in %.4f s" % (time.time() - start)
+        if self.verboseMode:
+            print "Parsing done in %.4f s" % (time.time() - start)
         if self.result:
             self.result.addComponents(components.componentRegister,
                                       components.conditionCollection)
