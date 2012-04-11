@@ -111,8 +111,5 @@ class EditCondition(scrolled.ScrolledPanel):
 
     def updateOriginal(self, event = None):
         obj = event.GetEventObject()
-        oldVal = ''
-        if obj.GetName() in self.oldValues:
-            oldVal = self.oldValues[obj.GetName()]
         self.oldValues[obj.GetName()] = obj.GetValue()
-        self.saveCallback(obj.GetName(), obj.GetValue(), oldVal)
+        self.saveCallback(obj.GetName(), obj.GetValue())

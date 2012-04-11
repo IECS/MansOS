@@ -2,8 +2,6 @@ use RedLed, period 2s;
 
 read Light, period 2s;
 
-read Humidity, period 2s;
-
 when isdaytime:
   use greenled;
 elsewhen 1 < 22:
@@ -11,3 +9,5 @@ elsewhen 1 < 22:
 else:
   use blueled;
 end
+
+read Humidity, period 2s;

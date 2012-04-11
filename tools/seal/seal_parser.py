@@ -176,9 +176,7 @@ class SealParser():
         else:
             self.errorMsg(p, "Component '{0}' not known or not supported for this architecture ({1})".format(
                     p[2], components.componentRegister.architecture))
-        #print "Statement start:", p.lineno(1)
-        #print "Statement end:", p.lineno(4)
-        #print "###"
+
         self.lineTracking["Statement"].append((p.lineno(1), p.lineno(4), p[0]))
 
     def p_system_parameter_declaration(self, p):
@@ -205,9 +203,7 @@ class SealParser():
         '''when_block : WHEN_TOKEN condition ':' declaration_list elsewhen_block END_TOKEN
         '''
         p[0] = CodeBlock(CODE_BlOCK_TYPE_WHEN, p[2], p[4], p[5])
-        #print "Cond start:", p.lineno(1)
-        #print "Cond end:", p.lineno(6)
-        #print "###"
+
         self.lineTracking["Condition"].append((p.lineno(1), p.lineno(6), p[0]))
 
     def p_elsewhen_block(self, p):
@@ -221,6 +217,7 @@ class SealParser():
             p[0] = CodeBlock(CODE_BlOCK_TYPE_ELSE, None, p[3], None)
         else:             # elsewhen block
             p[0] = CodeBlock(CODE_BlOCK_TYPE_ELSEWHEN, p[2], p[4], p[5])
+
 
     def p_condition(self, p):
         '''condition : condition_term

@@ -136,17 +136,17 @@ class Editor(wx.stc.StyledTextCtrl):
 
             self.lastEdit = self.findAllStatement(newStatement[2])
 
-    def conditionUpdateClbk(self, name, value, oldValue = None):
+    def conditionUpdateClbk(self, name, value):
         self.lastAutoEdit = time.time()
         if self.newMode:
-            self.AddText("when " + value + ":\n\nend")
+            self.AddText("when " + value + ":\nend")
             self.doGrammarCheck(None)
             self.lastEdit = self.findAllStatement(self.GetCurrentLine())
             self.newMode = False
         else:
             row = self.lastEdit[0].getCode(0).rstrip()
             if name == 'when':
-                start = row.find(name)
+                start = row.find("when") + len("when")
                 end = row[start:].find(":")
             else:
                 name = int(name)
@@ -155,15 +155,17 @@ class Editor(wx.stc.StyledTextCtrl):
                     start += row[start:].find("elsewhen") + len("elsewhen")
                     name -= 1
                 end = row[start:].find(":")
-
-            newPart = row[start:start + end].replace(oldValue, value)
-            row = row[:start] + newPart + row[start + end:]
-
+            # +1 is space after keyword
+            print row
+            row = "{} {}{}".format(row[:start], value, row[start + end:])
+            print row
             self.SetTargetStart(self.PositionFromLine(self.lastEdit[1]))
-            self.SetTargetEnd(self.PositionFromLine(self.lastEdit[3]))
+            self.SetTargetEnd(self.PositionFromLine(self.lastEdit[3]) - 1)
             self.ReplaceTarget(row)
             self.doGrammarCheck(None)
-            self.lastEdit = self.findAllStatement(self.lastEdit[2])
+            # No need to recheck for condition, because no new lines are added
+            # and no lines have been deleted.
+            #self.lastEdit = self.findAllStatement(self.lastEdit[2])
 
     def addStatement(self):
         self.getPlaceForAdding()
@@ -202,6 +204,9 @@ class Editor(wx.stc.StyledTextCtrl):
         for x in self.lineTracking["Condition"]:
             if lineNr + 1 >= x[0] and lineNr + 1 <= x[1]:
                 return (x[2], x[0] - 1, lineNr, x[1], CONDITION)
+
+        # Try find condition in this line
+        # TODO
 
         return (None, -1, lineNr, -1)
 
