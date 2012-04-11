@@ -27,9 +27,9 @@
 #include <hil/gpio.h>
 #include <msp430/msp430_usart.h>
 
-/*
- * SPI bus configuration for the MSP430 x1xx
- */
+//
+// SPI bus configuration for the MSP430 x1xx
+//
 
 /**
  * Initializes SPI bus in either master or slave mode

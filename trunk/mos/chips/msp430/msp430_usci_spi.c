@@ -29,11 +29,15 @@
 #include <kernel/stdtypes.h>
 
 #include "msp430_usci.h"
-    
-/* Initialization */
+
+
+//
+// Initialization
+//
+
 int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
 {
-    /* SPI mode: master, MSB first, 8-bit, 3-pin */
+    // SPI mode: master, MSB first, 8-bit, 3-pin
 #define SPI_MODE  (UCCKPH | UCMSB | UCMST | UCMODE_0 | UCSYNC)
 #define SPI_SPEED (CPU_HZ / 2)
 
@@ -55,23 +59,23 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
         SETUP_SPI_PINS(A0);
         SETUP_USCI(A0);
     }
-    else /* busId == 1 */
+    else // busId == 1
     {
         SETUP_SPI_PINS(B0);
         SETUP_USCI(B0);
     }
-    
+
     return 0;
 }
 
-/* Data transmission */
+// Data transmission
 uint8_t hw_spiExchByte(uint8_t busId, uint8_t b)
 {
 #define SPI_EXCH_BYTE(id) { \
     while (!(UC0IFG & UC##id##TXIFG)); /* Wait for ready */ \
-    UC##id##TXBUF = b;               /* Send data */        \
+    UC##id##TXBUF = b;                 /* Send data */      \
     while (!(UC0IFG & UC##id##RXIFG)); /* Wait for reply */ \
-    return UC##id##RXBUF; }          /* Return reply */
+    return UC##id##RXBUF; }            /* Return reply */
 
     if (busId == 0)
     {

@@ -33,7 +33,7 @@
 #ifndef _MSP430_USCI_H_
 #define _MSP430_USCI_H_
 
-/* The port for all pins is port 3 */
+// The port for all pins is port 3
 #define USCI_PORT 3
 
 #define UCA0TX_PIN 4
@@ -56,7 +56,7 @@
 #define USART_COUNT 1
 #define CPU_HZ (CPU_MHZ * 1000000UL)
 
-/* This module enables and disables components automatically */
+// This module enables and disables components automatically
 static inline uint_t USARTEnableTX(uint8_t id) { return 0; }
 static inline uint_t USARTDisableTX(uint8_t id) { return 0; }
 static inline uint_t USARTEnableRX(uint8_t id) { return 0; }
@@ -77,4 +77,4 @@ static inline void hw_spiBusOff(uint8_t busId) { }
 #define UCB0TXIFG UCTXIFG
 #endif
 
-#endif /* _MSP430_USCI_H_ */
+#endif // _MSP430_USCI_H_

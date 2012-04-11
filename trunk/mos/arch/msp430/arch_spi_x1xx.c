@@ -21,9 +21,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * SPI bus configuration for the MSP430 x1xx
- */
+//
+// SPI bus configuration for the MSP430 x1xx
+//
 
 #include "arch_spi_x1xx.h"
 
