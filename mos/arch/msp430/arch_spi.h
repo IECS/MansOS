@@ -29,9 +29,8 @@
 
 #if defined(__msp430x22x4) || defined(__msp430x22x2) || defined(__msp430x54xA)
 #  include <msp430/msp430_usci.h>
-#else /* Assume x1xx */
+#else // Assume x1xx
 #  include <arch_spi_x1xx.h>
 #endif
 
-#endif /* _MSP430_SPI_H_ */
-
+#endif // _MSP430_SPI_H_

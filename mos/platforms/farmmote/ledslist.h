@@ -23,7 +23,7 @@
  */
 
 //==========================================================
-//  Before including this file 
+//  Before including this file
 //  Define a macro DOIT(xxx) that does something with xxx.
 //  The DOIT macro is applied to the each item xxx listed here.
 //
@@ -33,9 +33,9 @@
 //==========================================================
 
 // DOIT_COUNTER(): starts with 1 and increments for each line
-#ifndef DOIT_COUNTER 
+#ifndef DOIT_COUNTER
 #define DOIT_COUNTER() (__LINE__ - DOIT_FIRST_LINE)
-#endif  // DOIT_COUNTER 
+#endif  // DOIT_COUNTER
 
 
 //-------------------------------------------
@@ -55,7 +55,7 @@
 #undef LEDS_DEFINE
 
 #define LEDS_ON_PIN_VALUE 1
-#define LEDS_PORT 2 
+#define LEDS_PORT 2
 
 LED_DEFINE(redLed, LEDS_PORT, 5, LEDS_ON_PIN_VALUE)
 

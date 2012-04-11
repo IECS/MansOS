@@ -31,35 +31,33 @@
 
 #define ADC_CHANNEL_COUNT   16
 
-/* Predefined ADC channels */
+// Predefined ADC channels
 #define ADC_INTERNAL_TEMPERATURE 10
 #define ADC_INTERNAL_VOLTAGE     11
 
-/* Initialize ADC */
+// Initialize ADC
 static inline void hplAdcInit(void)
 {
-    /*
-     * SREF_1:      VR+ = VRef+ and VR- = Vss
-     * ADC10SHT_3:  64 ADC10CLKs sample-and-hold time
-     */
+    // SREF_1:      VR+ = VRef+ and VR- = Vss
+    // ADC10SHT_3:  64 ADC10CLKs sample-and-hold time
     ADC10CTL0 = ADC10SHT_3 | SREF_1;
 }
 
-/* Switch to 2.5V reference instead of 1.5V */
+// Switch to 2.5V reference instead of 1.5V
 static inline void hplAdcUse2V5VRef(void)
 {
     ADC10CTL0 |= REF2_5V;
 }
 
-/* Turn ADC on */
+// Turn ADC on
 static inline void hplAdcOn(void)
 {
-    ADC10CTL0 |= REFON;     /* Turn on reference generator */
-    ADC10CTL0 |= ADC10ON;   /* Turn on ADC core */
-    ADC10CTL0 |= ENC;       /* Allow conversion */
+    ADC10CTL0 |= REFON;     // Turn on reference generator
+    ADC10CTL0 |= ADC10ON;   // Turn on ADC core
+    ADC10CTL0 |= ENC;       // Allow conversion
 }
 
-/* Turn ADC off */
+// Turn ADC off
 static inline void hplAdcOff(void)
 {
     ADC10CTL0 &= ~ENC;
@@ -67,53 +65,53 @@ static inline void hplAdcOff(void)
     ADC10CTL0 &= ~REFON;
 }
 
-/* Get converted value */
+// Get converted value
 static inline uint16_t hplAdcGetVal(void)
 {
     return ADC10MEM;
 }
 
-/* ADC channel count */
+// ADC channel count
 static inline unsigned adcGetChannelCount(void)
 {
     return ADC_CHANNEL_COUNT;
 }
 
-/* Set ADC channel */
+// Set ADC channel
 static inline void hplAdcSetChannel(unsigned ch)
 {
-    /* The channel number is stored in four MSBs of ADC10CTL1 */
+    // The channel number is stored in four MSBs of ADC10CTL1
     ADC10CTL1 = (ADC10CTL1 & 0x0FFFU) | (ch << 12);
 }
 
-/* Enable ADC interrupts */
+// Enable ADC interrupts
 static inline void hplAdcEnableInterrupt(void)
 {
     ADC10CTL0 |= ADC10IE;
 }
 
-/* Disable ADC interrupts */
+// Disable ADC interrupts
 static inline void hplAdcDisableInterrupt(void)
 {
     ADC10CTL0 &= ~ADC10IE;
 }
 
-/* Check if interrupts are enabled */
+// Check if interrupts are enabled
 static inline bool hplAdcIntsUsed(void)
 {
     return ADC10CTL0 & ADC10IE;
 }
 
-/* Start conversion */
+// Start conversion
 static inline void hplAdcStartConversion(void)
 {
     ADC10CTL0 |= ADC10SC;
 }
 
-/* Check if ADC is busy */
+// Check if ADC is busy
 static inline bool hplAdcIsBusy(void)
 {
     return ADC10CTL1 & ADC10BUSY;
 }
 
-#endif /* _MSP430_ADC10_H_ */
+#endif // _MSP430_ADC10_H_

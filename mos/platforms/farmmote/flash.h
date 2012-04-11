@@ -27,24 +27,24 @@
 #ifndef _PLATFORM_FARMMOTE_FLASH_H_
 #define _PLATFORM_FARMMOTE_FLASH_H_
 
-/* The values correspond to the MSP430 F2252 MCU */
+// The values correspond to the MSP430 F2252 MCU
 
-/* Flash memory location and size */
+// Flash memory location and size
 #define MSP430_FLASH_START 0xC000
 #define MSP430_FLASH_END   0xFFDE
 #define MSP430_FLASH_SIZE  (0xFFFF - MSP430_FLASH_START + 1)
 
-/* Flash segment (minimal erasable unit) size */
+// Flash segment (minimal erasable unit) size
 #define MSP430_FLASH_SEGMENT_SIZE  512
 
-/* Flash block (maximal writable-at-once unit) size */
+// Flash block (maximal writable-at-once unit) size
 #define MSP430_FLASH_BLOCK_SIZE    64
 
-/* Information memory: four segments of 64 bytes each */
+// Information memory: four segments of 64 bytes each
 #define MSP430_FLASH_INFOMEM_START 0x1000
 #define MSP430_FLASH_INFOMEM_END   0x10FF
 
-/* Information memory segment size */
+// Information memory segment size
 #define MSP430_FLASH_INFOMEM_SEGMENT_SIZE  64
 
-#endif /* _PLATFORM_FARMMOTE_FLASH_H_ */
+#endif // _PLATFORM_FARMMOTE_FLASH_H_

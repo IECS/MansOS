@@ -30,7 +30,7 @@
 #define CC1101_MAX_PACKET_LEN  62
 #define CC1101_SYNC_WORD       0xAAAAU
 #define CC1101_DEFAULT_CHANNEL 0
-#define CC1101_TXPOWER         0x50 /* 0 dBm at 868 MHz */
+#define CC1101_TXPOWER         0x50 // 0 dBm at 868 MHz
 #define CC1101_TXPOWER_MIN     0x03
 #define CC1101_TXPOWER_MAX     0xC0
 
@@ -57,4 +57,4 @@ void cc1101Discard(void);
 
 bool cc1101IsChannelClear(void);
 
-#endif /* _CHIPS_CC1101_H_ */
+#endif // _CHIPS_CC1101_H_

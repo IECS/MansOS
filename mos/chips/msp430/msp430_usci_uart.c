@@ -33,60 +33,64 @@
 
 USARTCallback_t usartRecvCb[USART_COUNT];
 
-/* Initialization */
+
+//
+// Initialization
+//
+
 uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf)
 {
-    /*
-     * Default setting is: 8 data bits, 1 stop bit, no parity bit, LSB first
-     */
+    //
+    // Default setting is: 8 data bits, 1 stop bit, no parity bit, LSB first
+    //
 #define UART_MODE 0
 
     (void)id; (void)conf;
 
     pinAsFunction(USCI_PORT, UCA0TX_PIN);
     pinAsFunction(USCI_PORT, UCA0RX_PIN);
-    
-    UCA0CTL1  = UCSWRST;   /* Hold the module in reset state */
-    UCA0CTL1 |= UCSSEL_2;  /* SMCLK clock source */
+
+    UCA0CTL1  = UCSWRST;   // Hold the module in reset state
+    UCA0CTL1 |= UCSSEL_2;  // SMCLK clock source
     if (speed <= CPU_HZ / 16)
     {
-        /* Use oversampling mode */
+        // Use oversampling mode
         UCA0BR0  = (CPU_HZ / (speed * 16)) & 0xFF;
         UCA0BR1  = (CPU_HZ / (speed * 16)) >> 8;
         UCA0MCTL = UCOS16 | ((CPU_HZ / speed) & 0xF) << 4;
     }
     else
     {
-        /* Use normal mode with fractional clock divider */
+        // Use normal mode with fractional clock divider
         UCA0BR0  = (CPU_HZ / speed) & 0xFF;
         UCA0BR1  = (CPU_HZ / speed) >> 8;
         UCA0MCTL = ((CPU_HZ * 8 / speed) & 0x7) << 1;
     }
     UCA0CTL0 = UART_MODE;
-    UC0IE |= UCA0RXIE;       /* Enable receive interrupt */
-    UCA0CTL1 &= ~UCSWRST;  /* Release hold */
-        
+    UC0IE |= UCA0RXIE;     // Enable receive interrupt
+    UCA0CTL1 &= ~UCSWRST;  // Release hold
+
     return 0;
 }
 
-/*
- * Send/receive functions
- */
+
+//
+// Send/receive functions
+//
 
 uint_t USARTSendByte(uint8_t id, uint8_t data)
 {
     (void)id;
-    
-    while (!(UC0IFG & UCA0TXIFG))
-        /* nop */;
 
-    /* Send data */
+    while (!(UC0IFG & UCA0TXIFG));
+
+    // Send data
     UCA0TXBUF = data;
-    
+
     return 0;
 }
 
-/* UART mode receive handler */
+// UART mode receive handler
 #if defined(__msp430x54xA)
 ISR(USCI_A0, USCIAInterruptHandler)
 #else
@@ -100,11 +104,13 @@ ISR(USCIAB0RX, USCIAInterruptHandler)
     data  = UCA0RXBUF;
     if (error || UCA0STAT & UCOE)
     {
-        /* There was an error or a register overflow; clear UCOE and exit */
+        // There was an error or a register overflow; clear UCOE and exit
         data = UCA0RXBUF;
         return;
     }
-    
+
     if (usartRecvCb[0])
+    {
         usartRecvCb[0](data);
+    }
 }
