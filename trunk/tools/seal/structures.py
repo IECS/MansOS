@@ -114,7 +114,7 @@ class Value(object):
 
 ########################################################
 class SealValue(object):
-    def __init__(self, firstPart, secondPart=None):
+    def __init__(self, firstPart, secondPart = None):
         self.firstPart = firstPart
         self.secondPart = secondPart
 
@@ -296,10 +296,12 @@ class CodeBlock(object):
             indent += 1
 
         for d in self.declarations:
+            # IDE -> unfinished condition '1<'
+            if d == None:
+                continue
             result += getIndent(indent)
             result += d.getCode(indent)
             result += "\n"
-
         # recursive call
         if self.next != None:
             assert indent > 0
