@@ -62,6 +62,7 @@ def parseCommandLine(argv):
     global architecture
     global verboseMode
     global testMode
+    global pathToOS
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "a:eho:p:t:Vv",

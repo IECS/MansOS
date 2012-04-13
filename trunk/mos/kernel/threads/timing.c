@@ -82,34 +82,3 @@ ALARM_TIMER_INTERRUPT()
         yield();
     }
 }
-
-// --------------------------------------------- sleep timer
-
-// void doMsleep(uint16_t milliseconds)
-// {
-//     // setup sleep timer
-//     SLEEP_TIMER_SET(milliseconds);
-//     // start timer B
-//     SLEEP_TIMER_START();
-//     // disable alarm interrupt generation
-//     DISABLE_ALARM_INTERRUPT();
-//     // enter low power mode 3 and make sure interrupts are enabled
-//     ENTER_SLEEP_MODE();
-// }
-
-// SLEEP_TIMER_INTERRUPT()
-// {
-//     if (!SLEEP_TIMER_EXPIRED()) return;
-
-//     // restart alarm interrupts
-//     ENABLE_ALARM_INTERRUPT();
-
-//     // sleep timer should not automatically restart
-//     SLEEP_TIMER_STOP();
-
-//     // wake up the current thread
-//     threadWakeup(currentThread->index, THREAD_RUNNING);
-
-//     // exit low power mode
-//     EXIT_SLEEP_MODE();
-// }
