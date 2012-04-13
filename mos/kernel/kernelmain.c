@@ -143,7 +143,7 @@ int main(void)
 
 // ------------------------------------------
 #ifdef USE_THREADS
-    PRAGMA(message "Using threads");
+    MESSAGE("Using threads");
 
     // never returns
     startThreads(appMain, systemMain);
@@ -153,7 +153,7 @@ int main(void)
 
 // ------------------------------------------
 #else
-    PRAGMA(message "Not using threads");
+    MESSAGE("Not using threads");
 
     ENABLE_INTS();
 

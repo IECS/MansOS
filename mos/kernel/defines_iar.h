@@ -36,6 +36,7 @@
 #define BV(x) (1 << (x))
 #endif
 #define PRAGMA(x) _Pragma(#x)
+#define MESSAGE(x) PRAGMA(message(x))
 #define ISR(vec, name) PRAGMA(vector=vec ## _VECTOR) __interrupt void name(void)
 #define ASM_VOLATILE(x) asm(x)
 // attribute for a function place in RAM (i.e. .data section) instead of flash
