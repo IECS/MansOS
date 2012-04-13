@@ -254,7 +254,7 @@ static inline void waitForReady(void)
     // reverts it to its original function. Improvements welcome.
     //
     pinAsInput(CC1101_SO_PORT, CC1101_SO_PIN);
-    while (pinRead(CC1101_SO_PORT, CC1101_SO_PIN));
+    while (pinRead(CC1101_SO_PORT, CC1101_SO_PIN) == 1);
     pinAsFunction(CC1101_SO_PORT, CC1101_SO_PIN);
 }
 
@@ -329,9 +329,14 @@ void cc1101Init(void)
 
     chipSelect();
 
-//    // We rely on automatic module reset
-//    waitForReady();
+#if 0
+    // Rely on automatic module reset
+    waitForReady();
+#else
+    // Manual module reset
     strobe(STROBE_SRES);
+    waitForReady();
+#endif
 
     // Set up registers
     for (i = 0; i < sizeof(rfConfig) / sizeof(rfConfig[0]); i++)
