@@ -52,7 +52,9 @@ SLEEP_TIMER_INTERRUPT()
 
 #endif // !CUSTOM_TIMER_INTERRUPT_HANDLERS
 
-#if USE_EXP_THREADS || PLATFORM_PC
+#ifndef PLATFORM_PC
+
+#if USE_EXP_THREADS
 #define MSLEEP_FUNCTION_NAME doMsleep
 #else
 #define MSLEEP_FUNCTION_NAME msleep
@@ -69,3 +71,5 @@ void MSLEEP_FUNCTION_NAME(uint16_t milliseconds)
     // enter low power mode 3
     ENTER_SLEEP_MODE();
 }
+
+#endif // !PLATFORM_PC

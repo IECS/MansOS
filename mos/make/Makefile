@@ -59,7 +59,7 @@
 MOS = $(MOSROOT)/mos
 
 OUTDIR = $(PROJDIR)/build
-OBJDIR = $(PROJDIR)/build
+BUILDDIR = $(PROJDIR)/build
 
 #===== Files
 
@@ -133,7 +133,6 @@ ifneq ($(PLATFORM),)
 
   # setup output directories
   OUTDIR = $(PROJDIR)/build/$(PLATFORM)
-  OBJDIR = $(PROJDIR)/build/$(PLATFORM)
 
   # Include platform specific Makefile
   include $(MOS)/make/platforms/Makefile.$(PLATFORM)
@@ -167,15 +166,15 @@ endif
 
 # Decide the correct build action
 ifneq ("","$(SEAL_SOURCES)")
-ifeq ("","$(SEAL_RECURSE)")
+#ifeq ("","$(SEAL_RECURSE)")
 PLATFORM_ACTION ?= platform_build_seal
-endif
+#endif
 endif
 PLATFORM_ACTION ?= platform_build
 
 #===== Tools =====
 
-SEAL = $(MOSROOT)/tools/parser/main.py
+SEAL = $(MOSROOT)/tools/parser/main.py --path $(MOSROOT)
 
 MEMDUMP = $(MOS)/make/scripts/memdump.py
 
@@ -233,14 +232,14 @@ INCLUDES += -I$(MOS)/platforms/$(PLATFORM)
 INCLUDES += -I$(MOS)/chips
 
 #=================== SEAL support
-GENERATED_SOURCES = $(SEAL_SOURCES:%.sl=%.c)
+GENERATED_SOURCES = $(SEAL_SOURCES:%.sl=$(BUILDDIR)/%.c)
 
 #===== Sorting out the Objs and Sources =====
 
 PSOURCES += $(PSOURCES-y) $(PSOURCES-yes)
 
-APP_OBJS = $(SOURCES:%.c= $(OBJDIR)/%.o)
-APP_OBJS += $(GENERATED_SOURCES:%.c= $(OBJDIR)/%.o)
+APP_OBJS = $(SOURCES:%.c= $(OUTDIR)/%.o)
+#APP_OBJS += $(GENERATED_SOURCES:%.c= $(OUTDIR)/%.o)
 
 # add platform sources and objs
 PSRC2 = $(subst $(MOSROOT),$(OUTDIR),$(PSOURCES))
@@ -266,7 +265,8 @@ platform_build: build saveplatform
 	$(Print) ""
 
 platform_build_seal: $(GENERATED_SOURCES)
-	$(MAKE) $(TARGET) SEAL_RECURSE=1
+#	SEAL code compiled successfully, now build C sources
+	$(_QUIET) (cd $(BUILDDIR); $(MAKE) $(TARGET))
 
 platform_skip:
 	$(Print) "Skipping $(PROJDIR)/$(APPMOD) for $(TARGET): not for this platform!"
@@ -286,11 +286,11 @@ $(PLATFORMS:%=clean%): clean
 # Save platform name to a makefile to enable later reuse
 #
 saveplatform:
-	$(_QUIET) rm -f $(PROJDIR)/build/Makefile.platform
+	$(_QUIET) rm -f $(BUILDDIR)/Makefile.platform
 	$(_QUIET) @echo "saving Makefile.platform"
-	$(_QUIET) @echo >$(PROJDIR)/build/Makefile.platform "TARGET = $(TARGET)"
+	$(_QUIET) @echo >$(BUILDDIR)/Makefile.platform "TARGET = $(TARGET)"
 
-build : $(OUTDIR)/config objDirs $(EXECUTABLE)
+build : $(BUILDDIR)/config.saved objDirs $(EXECUTABLE)
 
 #
 # "config" file is required for building. An empty file is created it doesn't exist
@@ -301,26 +301,26 @@ $(PROJDIR)/config:
 #
 # Detect whether config file has changed, and rebuild all it has.
 #
-$(OUTDIR)/config: $(PROJDIR)/config
-	$(_QUIET) $(Delete) $(OUTDIR)
-	$(_QUIET) mkdir -p $(OUTDIR)
-	$(_QUIET) cp $(PROJDIR)/config $(OUTDIR)/config
+$(BUILDDIR)/config.saved: $(PROJDIR)/config
+	$(_QUIET) $(Delete) $(BUILDDIR)
+	$(_QUIET) mkdir -p $(BUILDDIR)
+	$(_QUIET) cp $(PROJDIR)/config $(BUILDDIR)/config.saved
 
 #
 # Remove output files
 #
 clean: 
 	$(Print) "RM $(OUTDIR)"
-	$(_QUIET) $(Delete) $(OUTDIR) *.stackdump extflash.dat eeprom $(GENERATED_SOURCES)
+	$(_QUIET) $(Delete) $(OUTDIR) *.stackdump extflash.dat eeprom
 
 #
 # Remove output files, including generated "config" and .c files
 #
-cleanall: clean
-ifneq ("","$(SEAL_SOURCES)")
-	$(Print) "RM config $(GENERATED_SOURCES)"
-	$(_QUIET) $(Delete) config $(GENERATED_SOURCES)
-endif
+#cleanall: clean
+#ifneq ("","$(SEAL_SOURCES)")
+#	$(Print) "RM config $(GENERATED_SOURCES)"
+#	$(_QUIET) $(Delete) config $(GENERATED_SOURCES)
+#endif
 
 # ===== header file dependency tracking =====
 
@@ -333,12 +333,12 @@ endif
 #===== Rules =====
 
 # .c -> .o, system sources
-$(OBJDIR)/%.o : $(MOSROOT)/%.c
+$(OUTDIR)/%.o : $(MOSROOT)/%.c
 	$(Print) "CC $<"
 	$(_QUIET) $(CC) $(CFLAGS) $(INCLUDES) -MD -MF $(subst .o,.d,$@) -MP -MT $(subst .o,.d,$@) -MT $@ -c $< -o $@
 
 # .c -> .o, user sources
-$(OBJDIR)/%.o : $(PROJDIR)/%.c
+$(OUTDIR)/%.o : $(PROJDIR)/%.c
 	$(Print) "CC $<"
 	$(_QUIET) $(CC) $(CFLAGS) $(INCLUDES) -MD -MF $(subst .o,.d,$@) -MP -MT $(subst .o,.d,$@) -MT $@ -c $< -o $@
 ifeq ($(USE_REPROGRAMMING),y)
@@ -347,9 +347,9 @@ ifeq ($(USE_REPROGRAMMING),y)
 endif
 
 # .sl -> .c, SEAL sources
-%.c : %.sl
+$(BUILDDIR)/%.c : %.sl
 	$(Print) "SEAL $<"
-	$(_QUIET) $(SEAL) -o build/$@ $<
+	$(_QUIET) $(SEAL) -o $@ $<
 
 # .o -> .elf
 $(OUTDIR)/$(APPMOD).elf : $(OBJS)
@@ -362,11 +362,11 @@ $(OUTDIR)/$(APPMOD).exe : $(OBJS)
 	$(_QUIET) $(LINKER_SCRIPT) "pc" $@ "$(CFLAGS) $(LDFLAGS)" "$(APP_OBJS)" "$(POBJS)"
 
 # .c -> .rel
-$(OBJDIR)/%.rel : $(MOSROOT)/%.c 
+$(OUTDIR)/%.rel : $(MOSROOT)/%.c 
 	$(Print) "CC $<"
 	$(_QUIET) $(CC) $(CFLAGS) $(INCLUDES) $< -o $@
 
-$(OBJDIR)/%.rel : $(PROJDIR)/%.c 
+$(OUTDIR)/%.rel : $(PROJDIR)/%.c 
 	$(Print) "CC $<"
 	$(_QUIET) $(CC) $(CFLAGS) $(INCLUDES) $< -o $@
 
