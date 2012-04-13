@@ -308,7 +308,16 @@ static const uint8_t rfConfig[][2] = {
     { REG_SYNC1,    MSB(CC1101_SYNC_WORD) }, // Sync word
     { REG_SYNC0,    LSB(CC1101_SYNC_WORD) },
     { REG_MCSM1,    0x03 }, // Switch to RX after packet transmission
-    { REG_PATABLE,  CC1101_TXPOWER } // Default transmit power
+    { REG_PATABLE,  CC1101_TXPOWER }, // Default transmit power
+
+    // Interrupt setup
+#if CC1101_GDO_INTR != 0
+    { REG_GDO0,     0x2E }, // High impedance -- disable clock signal output
+#endif
+#define XREG_IOCFG(x) REG_IOCFG ## x
+#define REG_IOCFG(x)  XREG_IOCFG(x)
+    { REG_IOCFG(CC1101_GDO_INTR), 0x07 } // Assert when a packet has been
+                                         // received with CRC OK
 };
 
 void cc1101Init(void)
@@ -316,10 +325,7 @@ void cc1101Init(void)
     size_t i;
 
     spiBusInit(CC1101_SPI_ID, SPI_MODE_MASTER);
-
     pinAsOutput(CC1101_CSN_PORT, CC1101_CSN_PIN);
-    pinEnableInt(CC1101_INTR_PORT, CC1101_INTR_PIN);
-    pinIntRising(CC1101_INTR_PORT, CC1101_INTR_PIN);
 
     chipSelect();
 
@@ -332,14 +338,10 @@ void cc1101Init(void)
     {
         setreg(rfConfig[i][0], rfConfig[i][1]);
     }
-#if 0
-    setreg(REG_IOCFG0, IOCFG_HIGH_IMP);
-#define XREG_IOCFG(x) REG_IOCFG ## x
-#define REG_IOCFG(x)  XREG_IOCFG(x)
-    setreg(REG_IOCFG(CC1101_GDO_INTR), IOCFG_PACKET_CRC_OK);
-#undef REG_IOCFG
-#undef XREG_IOCFG
-#endif
+
+    // Enable radio interrupts
+    pinIntRising(CC1101_INTR_PORT, CC1101_INTR_PIN);
+    //pinEnableInt(CC1101_INTR_PORT, CC1101_INTR_PIN);
 
     // Wait for the user to enable RX
     strobe(STROBE_SPWD);
