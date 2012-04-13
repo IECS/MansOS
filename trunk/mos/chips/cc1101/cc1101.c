@@ -341,7 +341,7 @@ void cc1101Init(void)
 
     // Enable radio interrupts
     pinIntRising(CC1101_INTR_PORT, CC1101_INTR_PIN);
-    //pinEnableInt(CC1101_INTR_PORT, CC1101_INTR_PIN);
+    pinEnableInt(CC1101_INTR_PORT, CC1101_INTR_PIN);
 
     // Wait for the user to enable RX
     strobe(STROBE_SPWD);
