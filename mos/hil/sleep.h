@@ -30,6 +30,7 @@
 #define _MANSOS_SLEEP_H
 
 #include <kernel/defines.h>
+#include <platform.h>
 
 #ifdef USE_EXP_THREADS
 // use thread specific sleep instead.
@@ -43,15 +44,29 @@
 #else
 
 //
-// Sleep for n seconds. The signature is compatible with POSIX sleep().
-//
-uint16_t sleep(uint16_t seconds);
-
-//
 // Milliseconds sleep
 //
 void msleep(uint16_t milliseconds);
 
-#endif
+//
+// Sleep for n seconds. The signature is compatible with POSIX sleep().
+//
+static inline uint16_t sleep(uint16_t seconds)
+{
+    // 
+    // Maximal supported sleeping time is 15984 msec.
+    // XXX: we do not account for the time that was spent
+    // in the loop and in function calls.
+    // 
+    while (seconds > PLATFORM_MAX_SLEEP_SECONDS) {
+        seconds -= PLATFORM_MAX_SLEEP_SECONDS;
+        msleep(PLATFORM_MAX_SLEEP_MS);
+    }
+    msleep(seconds * 1000);
+
+    return 0; // keep this function compatible with sleep() on PC
+}
+
+#endif // !PLATFORM_PC
 
 #endif

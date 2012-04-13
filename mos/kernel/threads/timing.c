@@ -38,19 +38,21 @@ ALARM_TIMER_INTERRUPT()
     // reset the counter
     RESET_ALARM_TIMER();
 
-    jiffies += JIFFY_MS_COUNT;
+    jiffies += JIFFY_TIMER_MS;
 
     //
     // Clock error (software, due to rounding) is 32/32768 seconds per second,
     // or 0.99609375 milliseconds per each 1.02 seconds
     // We assume it's precisely 1 millisecond per each 1.02 seconds and fix that error here.
-    // The precision is improved 255 times. (0.99609375 compared to 1-0.99609375=0.00390625)
+    // The precision is improved 255 times: 0.99609375 compared to 1 - 0.99609375 = 0.00390625
     //
     bool fixed = false;
-    if (!((jiffies / 10) % 102)) {  // XXX: division...
+    static uint32_t lastFixedJiffies;
+    if (jiffies - lastFixedJiffies > 1020) {
         // fix them
         ++jiffies;
         fixed = true;
+        lastFixedJiffies += 1020;
     }
 
 // #ifdef DEBUG_THREADS
@@ -83,31 +85,31 @@ ALARM_TIMER_INTERRUPT()
 
 // --------------------------------------------- sleep timer
 
-void doMsleep(uint16_t milliseconds)
-{
-    // setup sleep timer
-    SLEEP_TIMER_SET(milliseconds);
-    // start timer B
-    SLEEP_TIMER_START();
-    // disable alarm interrupt generation
-    DISABLE_ALARM_INTERRUPT();
-    // enter low power mode 3 and make sure interrupts are enabled
-    ENTER_SLEEP_MODE();
-}
+// void doMsleep(uint16_t milliseconds)
+// {
+//     // setup sleep timer
+//     SLEEP_TIMER_SET(milliseconds);
+//     // start timer B
+//     SLEEP_TIMER_START();
+//     // disable alarm interrupt generation
+//     DISABLE_ALARM_INTERRUPT();
+//     // enter low power mode 3 and make sure interrupts are enabled
+//     ENTER_SLEEP_MODE();
+// }
 
-SLEEP_TIMER_INTERRUPT()
-{
-    if (!SLEEP_TIMER_EXPIRED()) return;
+// SLEEP_TIMER_INTERRUPT()
+// {
+//     if (!SLEEP_TIMER_EXPIRED()) return;
 
-    // restart alarm interrupts
-    ENABLE_ALARM_INTERRUPT();
+//     // restart alarm interrupts
+//     ENABLE_ALARM_INTERRUPT();
 
-    // sleep timer should not automatically restart
-    SLEEP_TIMER_STOP();
+//     // sleep timer should not automatically restart
+//     SLEEP_TIMER_STOP();
 
-    // wake up the current thread
-    threadWakeup(currentThread->index, THREAD_RUNNING);
+//     // wake up the current thread
+//     threadWakeup(currentThread->index, THREAD_RUNNING);
 
-    // exit low power mode
-    EXIT_SLEEP_MODE();
-}
+//     // exit low power mode
+//     EXIT_SLEEP_MODE();
+// }

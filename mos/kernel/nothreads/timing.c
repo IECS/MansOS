@@ -30,7 +30,6 @@
 //----------------------------------------------------------
 
 volatile uint32_t jiffies; // real time counter, in ms
-
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 
 // alarm timer interrupt handler
@@ -41,33 +40,28 @@ ALARM_TIMER_INTERRUPT()
     // reset the counter
     RESET_ALARM_TIMER();
 
-    jiffies += JIFFY_MS_COUNT;
+    jiffies += JIFFY_TIMER_MS;
 
     //
     // Clock error (software, due to rounding) is 32/32768 seconds per second,
     // or 0.99609375 milliseconds per each 1.02 seconds
     // We assume it's precisely 1 millisecond per each 1.02 seconds and fix that error here.
-    // The precision is improved 255 times. (0.99609375 compared to 1-0.99609375=0.00390625)
+    // The precision is improved 255 times: 0.99609375 compared to 1 - 0.99609375 = 0.00390625
     //
-    if (!((jiffies / 10) % 102)) {  // XXX: division...
+    bool fixed = false;
+    static uint32_t lastFixedJiffies;
+    if (jiffies - lastFixedJiffies > 1020) {
         // fix them
         ++jiffies;
+        fixed = true;
+        lastFixedJiffies += 1020;
     }
 
 #ifdef USE_ALARMS
     if (hasAnyReadyAlarms(jiffies)) {
         alarmsProcess();
     }
-        // if (getNextAlarm) {
-        //     Alarm_t *head = getNextAlarm();
-        //     //HACK! the head shouldn't ever have 0 msecs here.
-        //     if (head && head->msecs == 0) {
-        //         fireAlarm();
-        //     } else if (head && (--(head->msecs) == 0)) {
-        //         fireAlarm();
-        //     }
-        // }
-#endif // USE_ALARMS
+#endif
 
     // TODO: remove this code!
 #if USE_RADIO && (RADIO_CHIP==RADIO_CHIP_MRF24J40)

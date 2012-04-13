@@ -34,9 +34,9 @@
 #define CPU_SPEED (CPU_MHZ * 1000000ul)
 
 enum {
-    JIFFY_MS_COUNT = 1, // jiffy counter signals every 1 millisecond
+    JIFFY_TIMER_MS = 1, // jiffy counter signals every 1 millisecond
     // how many ticks per jiffy
-    JIFFY_CYCLES = JIFFY_MS_COUNT * (CPU_SPEED / 1000 / JIFFY_CLOCK_DIVIDER),
+    JIFFY_CYCLES = JIFFY_TIMER_MS * (CPU_SPEED / 1000 / JIFFY_CLOCK_DIVIDER),
     // in this case, 1 jiffy = 16000 / 64 = 250 clock cycles
 
     MIN_SLEEP_MS = 10, // min sleep amount = 10ms

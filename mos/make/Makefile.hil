@@ -65,6 +65,7 @@ PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/timing.c
 
 ifeq ($(USE_EXP_THREADS),y)
 
+PSOURCES += $(MOS)/kernel/sleep.c
 PSOURCES-$(USE_RADIO) += $(MOS)/kernel/threads/radio.c
 PSOURCES-$(USE_NET_STATS) += $(NET)/net-stats.c
 
@@ -96,7 +97,7 @@ endif
 else #! USE_EXP_THREADS
 
 PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/nothreads/timing.c
-PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/nothreads/sleep.c
+PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/sleep.c
 
 endif # ifeq($(USE_EXP_THREADS),y)
 
