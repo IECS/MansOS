@@ -78,9 +78,9 @@
 #endif
 
 enum {
-    JIFFY_MS_COUNT = 1000 / TIMER_INTERRUPT_HZ, // jiffy counter signals every 10 milliseconds
+    JIFFY_TIMER_MS = 1000 / TIMER_INTERRUPT_HZ, // jiffy counter signals every 10 milliseconds
     // how many ticks per jiffy
-    // JIFFY_CYCLES = JIFFY_MS_COUNT
+    // JIFFY_CYCLES = JIFFY_TIMER_MS
     //    * (JIFFY_CLOCK_SPEED / TIMER_INTERRUPT_HZ / JIFFY_CLOCK_DIVIDER),
     // in 1 jiffy = 1 ms case, 1 jiffy = 32768 / 1000 / 1 = 32 clock cycles
 

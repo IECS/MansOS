@@ -22,6 +22,9 @@
  */
 
 #include <platform.h>
+#if USE_EXP_THREADS
+#include "threads/threads.h"
+#endif
 
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 
@@ -38,15 +41,24 @@ SLEEP_TIMER_INTERRUPT()
     // sleep timer should not automatically restart
     SLEEP_TIMER_STOP();
 
+#if USE_EXP_THREADS
+    // wake up the current thread
+    threadWakeup(currentThread->index, THREAD_RUNNING);
+#endif
+
     // exit low power mode
     EXIT_SLEEP_MODE();
 }
 
 #endif // !CUSTOM_TIMER_INTERRUPT_HANDLERS
 
-#ifndef PLATFORM_PC
+#if USE_EXP_THREADS || PLATFORM_PC
+#define MSLEEP_FUNCTION_NAME doMsleep
+#else
+#define MSLEEP_FUNCTION_NAME msleep
+#endif
 
-void msleep(uint16_t milliseconds)
+void MSLEEP_FUNCTION_NAME(uint16_t milliseconds)
 {
     // setup sleep timer
     SLEEP_TIMER_SET(milliseconds);
@@ -57,21 +69,3 @@ void msleep(uint16_t milliseconds)
     // enter low power mode 3
     ENTER_SLEEP_MODE();
 }
-
-uint16_t sleep(uint16_t seconds)
-{
-    // 
-    // Maximal supported sleeping time is 15984 msec.
-    // XXX: we do not account for the time that was spent
-    // in the loop and in function calls.
-    // 
-    while (seconds > PLATFORM_MAX_SLEEP_SECONDS) {
-        seconds -= PLATFORM_MAX_SLEEP_SECONDS;
-        msleep(PLATFORM_MAX_SLEEP_MS);
-    }
-    msleep(seconds * 1000);
-
-    return 0; // keep this function compatible with sleep() on PC
-}
-
-#endif // !PLATFORM_PC
