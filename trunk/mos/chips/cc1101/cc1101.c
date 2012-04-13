@@ -219,15 +219,8 @@ static inline void setreg(reg_t reg, uint8_t data)
 
 static void burstRead(reg_t start, void *buf, uint8_t len)
 {
-    // TODO: Use spiRead
-    int i;
-    uint8_t *b = buf;
-
     strobe(start | HEADER_BURST | HEADER_RW);
-    for (i = 0; i < len; i++)
-    {
-        b[i] = readByte();
-    }
+    spiRead(CC1101_SPI_ID, buf, len);
 
     chipRelease(); // End burst access
     chipSelect();
@@ -235,14 +228,8 @@ static void burstRead(reg_t start, void *buf, uint8_t len)
 
 static void burstWrite(reg_t start, const void *data, uint8_t len)
 {
-    int i;
-    const uint8_t *d = data;
-
     strobe(start | HEADER_BURST);
-    for (i = 0; i < len; i++)
-    {
-        writeByte(d[i]);
-    }
+    spiWrite(CC1101_SPI_ID, data, len);
 
     chipRelease(); // End burst access
     chipSelect();
