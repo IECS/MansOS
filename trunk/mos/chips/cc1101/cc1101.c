@@ -300,15 +300,15 @@ static const uint8_t rfConfig[][2] = {
     { REG_FSCAL0,   0x1F }, // Frequency Synthesizer Calibration
 
     // Custom setup
-    { REG_CHANNR,       0       },
-    { REG_PKTCTRL1,     0xC     },
-    { REG_PKTCTRL0,     0x5     },
-    { REG_ADDR,         0       },
-    { REG_PKTLEN,       0xFF    },
-    { REG_SYNC1,        0xD3    },
-    { REG_SYNC0,        0x91    },
-    { REG_MCSM1,        0x03    },
-    { REG_PATABLE,      CC1101_TXPOWER }
+    { REG_CHANNR,   CC1101_DEFAULT_CHANNEL },
+    { REG_PKTCTRL1, 0x0C }, // Flush FIFO if CRC not OK, append status bytes
+    { REG_PKTCTRL0, 0x05 }, // CRC enable, variable packet length
+    //{ REG_ADDR,   0x00 }, // Node address
+    { REG_PKTLEN,   CC1101_MAX_PACKET_LEN }, // Maximum packet length
+    { REG_SYNC1,    MSB(CC1101_SYNC_WORD) }, // Sync word
+    { REG_SYNC0,    LSB(CC1101_SYNC_WORD) },
+    { REG_MCSM1,    0x03 }, // Switch to RX after packet transmission
+    { REG_PATABLE,  CC1101_TXPOWER } // Default transmit power
 };
 
 void cc1101Init(void)
