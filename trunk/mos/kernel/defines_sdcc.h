@@ -39,6 +39,7 @@
 #define NO_EPILOGUE
 #define WEAK_SYMBOL
 #define PRAGMA(x)
+#define MESSAGE(x)
 #define restrict
 
 #endif

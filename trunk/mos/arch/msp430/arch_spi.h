@@ -27,7 +27,9 @@
 
 #include <kernel/defines.h>
 
-#if defined(__msp430x22x4) || defined(__msp430x22x2) || defined(__msp430x54xA)
+// TODO: Fix this mess
+#if defined(__msp430x22x4) || defined(__msp430x22x2) || \
+    defined(__MSP430F2252__) || defined(__msp430x54xA)
 #  include <msp430/msp430_usci.h>
 #else // Assume x1xx
 #  include <arch_spi_x1xx.h>
