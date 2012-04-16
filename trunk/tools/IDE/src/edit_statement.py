@@ -55,7 +55,7 @@ class EditStatement(ScrolledPanel):
 
         self.generatePatameterSelects()
 
-        self.SetBackgroundColour("black")
+        self.SetBackgroundColour("light grey")
 
         self.SetSizer(self.main)
         self.SetAutoLayout(1)

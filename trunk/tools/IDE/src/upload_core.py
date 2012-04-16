@@ -91,7 +91,9 @@ class UploadCore():
                               "\n" + res[1])
 
     # Wrapping for compiler function to run in new thread
-    def runCompile(self):
+    def runCompile(self, event = None):
+        if event != None:
+            wx.Yield()
         return self.compiler.doCompile(self.editorManager.fileName,
                                 self.platform, self.editorManager.filePath,
                                 self.editorManager.projectType, False)
