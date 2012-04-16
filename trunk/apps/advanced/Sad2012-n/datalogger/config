@@ -1,0 +1,27 @@
+#
+# Application specific config file
+#
+
+USE_EXT_FLASH=y
+USE_HUMIDITY=y
+USE_SERIAL_NUMBER=y
+USE_ADC=y
+USE_ADDRESSING=y
+USE_RADIO=y
+# APDS light
+#USE_APDS9300=y
+# ISL light
+USE_ISL29003=y
+# high quality light
+USE_ADS1115=y
+
+# for apds & isl
+USE_SOFT_I2C=y
+CONST_SDA_PORT=2
+CONST_SDA_PIN=3
+CONST_SCL_PORT=2
+CONST_SCL_PIN=4
+CONST_ADS_INT_PORT=2
+CONST_ADS_INT_PIN=0
+
+DEBUG=y
