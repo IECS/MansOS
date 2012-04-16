@@ -312,7 +312,7 @@ static const uint8_t rfConfig[][2] = {
 
     // Interrupt setup
 #if CC1101_GDO_INTR != 0
-    { REG_GDO0,     0x2E }, // High impedance -- disable clock signal output
+    { REG_IOCFG0,   0x2E }, // High impedance -- disable clock signal output
 #endif
 #define XREG_IOCFG(x) REG_IOCFG ## x
 #define REG_IOCFG(x)  XREG_IOCFG(x)
