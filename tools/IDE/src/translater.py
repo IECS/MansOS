@@ -119,7 +119,10 @@ class Translater:
                 "devices in": "iekārtas, laiks:",
                 "default device": "ierīces pēc noklusēšanas",
                 "Searching devices": "Meklēju ierīces",
-                "No devices found!" : "Ierīces nav atrastas!"
+                "No devices found!" : "Ierīces nav atrastas!",
+                "Information": "Informācija",
+                "Listen": "Klausīties",
+                "Configure upload and compile": "Konfigurēt augsupielādēšanu un kompilēšanu"
                 }
         }
 

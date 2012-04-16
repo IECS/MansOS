@@ -38,11 +38,11 @@ class ThreadRunner (threading.Thread):
 
     def run (self):
         locTime = time.time()
-        try:
-            self.dataOut += self.function(self.dataIn)
-        except TypeError:
-            self.API.logMsg(LOG_WARNING, "In thread running " + str(self.function) + "type mismatch happened!")
-            self.dataOut += [False, "Type error!"]
-            print self.function()
+        #try:
+        self.dataOut += self.function(self.dataIn)
+        #except TypeError:
+        #    self.API.logMsg(LOG_WARNING, "In thread running " + str(self.function) + "type mismatch happened!")
+        #    self.dataOut += [False, "Type error!"]
+        #    print self.function()
         self.dataOut += [time.time() - locTime]
 

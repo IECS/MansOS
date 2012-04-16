@@ -49,7 +49,6 @@ class DoCompile():
                                       stderr = STDOUT,
                                       stdout = PIPE)
             out = upload.communicate()[0]
-
             if cleanAfter:
                 self.clean()
 

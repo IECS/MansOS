@@ -47,22 +47,23 @@ class GenerateMakefile():
 #  The developer must define at least SOURCES and APPMOD in this file
 #
 #  In addition, PROJDIR and MOSROOT must be defined, before including 
-#  the main Makefile at ${MOSROOT}/mos/make/Makefile
+#  the main Makefile at $(MOSROOT)/mos/make/Makefile
 # --------------------------------------------------------------------
 
 # Sources are all project source files, excluding MansOS files
-""" + sourceType + " = " + fileName + """
+{} = {}
 
 # Module is the name of the main module built by this makefile
-APPMOD = """ + appName + """
+APPMOD = {}
 
 # --------------------------------------------------------------------
 # Set the key variables
 PROJDIR = $(CURDIR)
 ifndef MOSROOT
-  MOSROOT = """ + pathToMansos + """
+  MOSROOT = $(PROJDIR)/{}
 endif
 
 # Include the main makefile
-include ${MOSROOT}/mos/make/Makefile
-""")
+include $(MOSROOT)/mos/make/Makefile
+""".format(sourceType, fileName, appName,
+        path.relpath(pathToMansos, path.dirname(path.realpath(__file__)) + "/..")))
