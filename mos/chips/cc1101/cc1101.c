@@ -24,6 +24,7 @@
  * cc1101.c -- CC1101 radio driver
  *
  * TODO: Replace busy-wait loops with something better
+ * TODO: This module monopolizes a port interrupt vector
  */
 
 #include <hil/gpio.h>
@@ -541,15 +542,20 @@ bool cc1101IsChannelClear(void)
 
 #define XXISR(port, func) ISR(PORT ## port, func)
 #define XISR(port, func)  XXISR(port, func)
+#define XIFG(port)        P ## port ## IFG
+#define IFG(port)         XIFG(port)
 
 XISR(CC1101_INTR_PORT, cc1011Interrupt)
 {
-    if (!callback)
+    if (IFG(CC1101_INTR_PORT) & (1 << CC1101_INTR_PIN))
     {
-        cc1101Discard();
-    }
-    else
-    {
-        callback();
+        if (!callback)
+        {
+            cc1101Discard();
+        }
+        else
+        {
+            callback();
+        }
     }
 }
