@@ -542,12 +542,10 @@ bool cc1101IsChannelClear(void)
 
 #define XXISR(port, func) ISR(PORT ## port, func)
 #define XISR(port, func)  XXISR(port, func)
-#define XIFG(port)        P ## port ## IFG
-#define IFG(port)         XIFG(port)
 
 XISR(CC1101_INTR_PORT, cc1011Interrupt)
 {
-    if (IFG(CC1101_INTR_PORT) & (1 << CC1101_INTR_PIN))
+    if (pinReadIntFlag(CC1101_INTR_PORT, CC1101_INTR_PIN))
     {
         if (!callback)
         {
