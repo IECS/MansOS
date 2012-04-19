@@ -63,7 +63,7 @@ class UseCase(object):
         self.parameters = {}
         # use component's parameters as defaults
         for p in component.parameters:
-            self.parameters[p[0]] = Value(p[1])
+            self.parameters[p] = Value(component.parameters[p])
         # add user's parameters
         for p in parameters:
             if p[0] not in component.parameters:
