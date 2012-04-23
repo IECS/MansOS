@@ -308,7 +308,8 @@ static const uint8_t rfConfig[][2] = {
     { REG_PKTLEN,   CC1101_MAX_PACKET_LEN }, // Maximum packet length
     { REG_SYNC1,    MSB(CC1101_SYNC_WORD) }, // Sync word
     { REG_SYNC0,    LSB(CC1101_SYNC_WORD) },
-    { REG_MCSM1,    0x03 }, // Switch to RX after packet transmission
+    { REG_MCSM1,    0x03 }, // Switch to RX after packet transmission, stay in
+                            // IDLE after receiving a packet
     { REG_PATABLE,  CC1101_TXPOWER }, // Default transmit power
 
     // Interrupt setup
@@ -507,16 +508,8 @@ int8_t cc1101Read(uint8_t *buf, uint8_t buflen)
     lastLQI  = aux[1];
     res = len;
 
-#if 0
-    if (getState(status()) == STATE_RX_OVERFLOW)
-    {
-        // If we had overflow, the next packet is damaged
-        flushrx();
-    }
-#else
     // Resume RX
     strobe(STROBE_SRX);
-#endif
 
 end:
     chipRelease();
