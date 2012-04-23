@@ -27,7 +27,7 @@
 #ifndef _CHIPS_CC1101_H_
 #define _CHIPS_CC1101_H_
 
-#define CC1101_MAX_PACKET_LEN  62
+#define CC1101_MAX_PACKET_LEN  61   // length(1) + data(61) + status(2) = 64
 #define CC1101_SYNC_WORD       0xD391U
 #define CC1101_DEFAULT_CHANNEL 0
 #define CC1101_TXPOWER         0x50 // 0 dBm at 868 MHz
