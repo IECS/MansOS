@@ -547,6 +547,7 @@ XISR(CC1101_INTR_PORT, cc1011Interrupt)
 {
     if (pinReadIntFlag(CC1101_INTR_PORT, CC1101_INTR_PIN))
     {
+        pinClearIntFlag(CC1101_INTR_PORT, CC1101_INTR_PIN);
         if (!callback)
         {
             cc1101Discard();
