@@ -494,7 +494,7 @@ int8_t cc1101Read(uint8_t *buf, uint8_t buflen)
     if (len > buflen)
     {
         res = -EMSGSIZE;
-        flushrx();
+        flushrx(); // Will also resume RX
         goto end;
     }
 
