@@ -30,6 +30,7 @@
 // uint32_t getRealTime(void);
 // #else
 #include <kernel/threads/timing.h>
+#include <atomic.h>
 
 extern volatile uint32_t jiffies;
 
