@@ -23,41 +23,66 @@
 #
 
 #############################################
-# SADmote v2 (almost the same as Tmote Sky)
+# Zolertia Z1 mote
 #############################################
 
 #############################################
 # Define platform variables
 
 ARCH = msp430
-MCU_MODEL = msp430x1611
+MCU_MODEL = msp430f2617
 
 # Upload target
-UPLOAD_TARGET=upload-msp430
+UPLOAD_TARGET=upload-z1
 
 # Default clock speed: 4MHz
 ifeq ($(USE_HARDWARE_TIMERS),y)
-CPU_MHZ ?= 4
+CPU_MHZ ?= 8
 else
-CPU_MHZ ?= 1  # actually the default DCO frequency is around 800 kHz
+CPU_MHZ ?= 1  # TODO?
 endif
 
-CFLAGS += -DPLATFORM_SADMOTE=1
+Z1-BSL = $(MOS)/make/scripts/z1-bsl-nopic
+
+INTERRUPT_VECTOR_COUNT=32
+
+CFLAGS += -DPLATFORM_Z1=1 -mivcnt=$(INTERRUPT_VECTOR_COUNT)
+
+# TODO: this will not work on Mac or Windows!
+MOTELIST = $(MOS)/make/scripts/motelist-z1
 
 #############################################
 # Define platform-specific sources
 # (excluding architecture-specific sources)
 
-PSOURCES += $(MOS)/platforms/sadmote/platform.c
+PSOURCES += $(MOS)/platforms/z1/platform.c
 
-PSOURCES += $(MOS)/chips/msp430/msp430x1xx_clock.c
+PSOURCES += $(MOS)/chips/msp430/msp430x2xx_clock.c
 
-PSOURCES-$(USE_RADIO) += $(MOS)/chips/mrf24j40/mrf24j40.c
-PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/at25df/at25df.c
-PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2401/ds2401.c
-PSOURCES-$(USE_ISL29003) += $(MOS)/chips/isl29003/isl29003.c
-PSOURCES-$(USE_APDS9300) += $(MOS)/chips/apds9300/apds9300.c
-PSOURCES-$(USE_ADS1115) += $(MOS)/chips/ads1115/ads1115.c
+#PSOURCES-$(USE_RADIO) += $(MOS)/chips/...
+#PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/...
+#PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2401/ds2401.c
+#PSOURCES-$(USE_ISL29003) += $(MOS)/chips/isl29003/isl29003.c
+#PSOURCES-$(USE_APDS9300) += $(MOS)/chips/apds9300/apds9300.c
+#PSOURCES-$(USE_ADS1115) += $(MOS)/chips/ads1115/ads1115.c
 
-PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usart.c
-PSOURCES-$(USE_SPI) += $(MOS)/arch/msp430/arch_spi_x1xx.c
+#PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
+#PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
+#PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c
+
+
+PSOURCES += $(MOS)/platforms/telosb/platform.c
+#PSOURCES-$(USE_USER_BUTTON) += $(MOS)/platforms/telosb/user_button.c
+
+PSOURCES-$(USE_RADIO) += $(MOS)/chips/cc2420/cc2420.c
+PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
+#PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/m25p80/m25p80.c
+#PSOURCES-$(USE_ISL29003) += $(MOS)/chips/isl29003/isl29003.c
+#PSOURCES-$(USE_APDS9300) += $(MOS)/chips/apds9300/apds9300.c
+
+#PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usart.c
+#PSOURCES-$(USE_SPI) += $(MOS)/arch/msp430/arch_spi_x1xx.c
+
+PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
+PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
+PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c

@@ -49,4 +49,5 @@ CFLAGS += -DPLATFORM_LAUNCHPAD=1 -D__MSP430_2231__ -DCUSTOM_TIMER_INTERRUPT_HAND
 # (excluding architecture-specific sources)
 
 PSOURCES += $(MOS)/platforms/launchpad/platform.c
+PSOURCES += $(MOS)/chips/msp430/msp430x1xx_clock.c
 PSOURCES-$(USE_USER_BUTTON) += $(MOS)/platforms/launchpad/user_button.c

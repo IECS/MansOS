@@ -166,9 +166,7 @@ endif
 
 # Decide the correct build action
 ifneq ("","$(SEAL_SOURCES)")
-#ifeq ("","$(SEAL_RECURSE)")
 PLATFORM_ACTION ?= platform_build_seal
-#endif
 endif
 PLATFORM_ACTION ?= platform_build
 
@@ -201,7 +199,7 @@ ifeq ($(SHORT_UNAME),MINGW3)
   BSLPORT ?= "$(shell $(MOTELIST) -c | cut -f2 -d, )"
 else
   # the normal case 
-  MOTELIST=$(MOS)/make/scripts/motelist
+  MOTELIST ?= $(MOS)/make/scripts/motelist
 endif
 endif
 endif
@@ -266,11 +264,25 @@ platform_build: build saveplatform
 
 platform_build_seal: $(GENERATED_SOURCES)
 #	SEAL code compiled successfully, now build C sources
-	$(_QUIET) (cd $(BUILDDIR); $(MAKE) $(TARGET))
+	(cd $(BUILDDIR); $(MAKE) $(TARGET) $(NOTPLATFORMTARGETS))
 
 platform_skip:
 	$(Print) "Skipping $(PROJDIR)/$(APPMOD) for $(TARGET): not for this platform!"
 	$(Print) ""
+
+ifeq ("$(SEAL_SOURCES)", "")
+PLATFORM_UPLOAD_ACTION = platform_upload_normal
+else
+PLATFORM_UPLOAD_ACTION = platform_upload_seal
+endif
+
+platform_upload_normal: platform-upload
+
+# do nothing
+platform_upload_seal:
+
+upload: $(PLATFORM_UPLOAD_ACTION)
+	$(_QUIET) @echo ""
 
 #
 # Dispatch the correct platfor_xxx target depending on PLATFORM_ACTION variable
@@ -312,15 +324,6 @@ $(BUILDDIR)/config.saved: $(PROJDIR)/config
 clean: 
 	$(Print) "RM $(OUTDIR)"
 	$(_QUIET) $(Delete) $(OUTDIR) *.stackdump extflash.dat eeprom
-
-#
-# Remove output files, including generated "config" and .c files
-#
-#cleanall: clean
-#ifneq ("","$(SEAL_SOURCES)")
-#	$(Print) "RM config $(GENERATED_SOURCES)"
-#	$(_QUIET) $(Delete) config $(GENERATED_SOURCES)
-#endif
 
 # ===== header file dependency tracking =====
 

@@ -57,7 +57,6 @@ PSOURCES-$(USE_ADDRESSING) += $(MOS)/arch/msp430/comm_hal.c
 PSOURCES-$(USE_EEPROM) += $(MOS)/arch/msp430/eeprom_hal.c
 PSOURCES-$(USE_WATCHDOG) += $(MOS)/arch/msp430/watchdog.c
 
-PSOURCES += $(MOS)/chips/msp430/msp430_clock.c
 ifneq ($(USE_EXP_THREADS),y)
 PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/chips/msp430/msp430_timers.c
 endif
@@ -76,7 +75,7 @@ $(EXECUTABLE): $(OUTDIR)/$(APPMOD).elf
 	$(Print) ""
 	$(OBJCOPY) -O ihex $(OUTDIR)/$(APPMOD).elf $(EXECUTABLE)
 
-upload: build $(UPLOAD_TARGET)
+platform-upload: build $(UPLOAD_TARGET)
 
 upload-tmote:
 	$(Print) ""
@@ -86,6 +85,9 @@ upload-tmote:
 
 upload-msp430: 
 	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) -r -e -I -p $(OUTDIRDOS)/image.ihex
+
+upload-z1:
+	$(Z1-BSL) --z1 -c $(BSLPORT) -r -e -I -p $(OUTDIRDOS)/image.ihex
 
 upload-launchpad:
 	$(MSPDEBUG) rf2500 "prog $(OUTDIRDOS)/image.ihex"
