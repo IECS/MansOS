@@ -28,10 +28,10 @@
 
 #include "stdmansos.h"
 
-//-------------------------------------------
-//      Entry point for the application
-//-------------------------------------------
-void appMain(void)
+//
+// Simple time accounting, no tricks
+//
+void appMainDefault(void)
 {
     for (;;) {
         uint32_t t = getRealTime();
@@ -39,3 +39,20 @@ void appMain(void)
         mdelay(1000);
     }
 }
+
+//
+// Demo that time accounting works even when interrupts are disabled
+//
+void appMain(void)
+{
+    for (;;) {
+        uint32_t t = getRealTime();
+        PRINTF("real time = %lu\n", t);
+        Handle_t handle;
+        ATOMIC_START_TIMESAVE(handle);
+        mdelay(1000);
+        ATOMIC_END_TIMESAVE(handle);
+    }
+}
+
+
