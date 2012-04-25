@@ -22,7 +22,7 @@
  */
 
 //
-// msp430x16x clock(s)
+// msp430x1xx clock(s)
 //
 
 #include "msp430_clock.h"
@@ -45,22 +45,6 @@ enum
 // Procedures
 //===========================================================
 
-#if defined(__msp430x54xA)
-
-void msp430InitClocks(void)
-{
-    msp430InitTimerA();
-    msp430InitTimerB();
-
-    // msp430CalibrateDCO();
-
-    // calibration changes timer config, restore it
-    msp430InitTimerA();
-    msp430InitTimerB();
-}
-
-#else
-
 static uint16_t test_calib_busywait_delta(uint16_t calib)
 {
     int8_t aclk_count = 2;
@@ -70,7 +54,7 @@ static uint16_t test_calib_busywait_delta(uint16_t calib)
     // set_dco_calib( calib )
     BCSCTL1 = (BCSCTL1 & ~0x07) | ((calib >> 8) & 0x07);
     DCOCTL = calib & 0xff;
-    
+
     while (aclk_count-- > 0)
     {
         TBCCR0 = TBR + ACLK_CALIB_PERIOD; // set next interrupt
@@ -122,6 +106,10 @@ static void msp430CalibrateDCO(void)
 
 void msp430InitClocks(void)
 {
+    // reset timers
+    TACTL = TACLR;
+    TBCTL = TBCLR;
+
     // BCSCTL1
     // .XT2OFF = 1; disable the external oscillator for SCLK and MCLK
     // .XTS = 0; set low frequency mode for LXFT1
@@ -137,16 +125,12 @@ void msp430InitClocks(void)
     // .DCOR = 0; select internal resistor for DCO
     BCSCTL2 = DIVS1;
 
-    // no need to disable oscillator fault interrupt: LFXT1 was configured in LF mode
-
-    msp430InitTimerA();
-    msp430InitTimerB();
-
     msp430CalibrateDCO();
 
-    // calibration changes timer config, restore it
+    // no need to disable oscillator fault NMI: LFXT1 was configured in LF mode
+    // IE1 &= ~OFIE;
+
+    // initialize main timers in system mode
     msp430InitTimerA();
     msp430InitTimerB();
 }
-
-#endif
