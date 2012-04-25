@@ -69,6 +69,9 @@ USE_HARDWARE_TIMERS ?= y
 # experimental threading model
 USE_EXP_THREADS ?= n
 
+# execute from RAM, not from flash?
+USE_RAM_EXECUTION ?= n
+
 #TODO:
 #USE_PRINT_SERIAL ?= y
 #USE_PRINT_RADIO ?= y

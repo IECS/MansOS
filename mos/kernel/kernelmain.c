@@ -43,6 +43,7 @@
 #if USE_THREADS
 #include "threads/threads.h"
 #endif
+#include <arch_mem.h>
 
 #if (defined DEBUG && !defined DPRINT_TO_RADIO)
 #define INIT_PRINTF(...) PRINTF(__VA_ARGS__)
@@ -79,6 +80,14 @@ static void initSystem(void)
 #ifdef USE_LEDS
     INIT_PRINTF("init LED(s)...\n");
     ledsInit();
+#endif
+#ifdef RAMTEXT_START
+    if ((MemoryAddress_t)&_end > RAMTEXT_START) {
+        // Panic right aways on RAM overflow.
+        // In case this happens, you might want to increase the address
+        // specified by CONST_RAMTEXT_START in config file
+        assertionFailed("Overflow between .data and .ramtext sections", __FILE__, __LINE__);
+    }
 #endif
 #ifdef USE_ADC
     if (initAdc != NULL) {
