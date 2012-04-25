@@ -106,6 +106,8 @@
 #error CPU_MHZ must be defined!
 #endif
 
+#define CPU_HZ (CPU_MHZ * 1000000ul)
+
 // timer frequency, times per second;
 #if CPU_MHZ > 4 && MCU_AVR
 // sorry, cannot support once-per-10ms ticks - 8-bit timer overflow!
