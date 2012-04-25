@@ -66,7 +66,7 @@
 #define JIFFY_CLOCK_SPEED ACLK_SPEED
 #else
 // use SMCLK as source for the jiffy clock
-#define JIFFY_CLOCK_SPEED (CPU_MHZ * 1024ul * 1024ul)
+#define JIFFY_CLOCK_SPEED CPU_HZ
 #endif
 
 #if SLEEP_CLOCK_USE_ACLK
@@ -74,7 +74,7 @@
 #define SLEEP_CLOCK_SPEED ACLK_SPEED
 #else
 // use SMCLK as source for the sleep clock
-#define SLEEP_CLOCK_SPEED (CPU_MHZ * 1024ul * 1024ul)
+#define SLEEP_CLOCK_SPEED CPU_HZ
 #endif
 
 enum {
@@ -116,7 +116,8 @@ enum {
 #endif
 
 // count up to CCR0 continuously
-#define msp430StartTimerA() TACTL |= MC_UPTO_CCR0
+//#define msp430StartTimerA() TACTL |= MC_UPTO_CCR0
+#define msp430StartTimerA() TACTL |= MC_CONT
 #define msp430StopTimerA() TACTL &= ~(MC_3)
 
 #define msp430StartTimerB() TBCTL |= MC_UPTO_CCR0
@@ -127,7 +128,7 @@ enum {
     /* begin reset/init */ \
     TACTL = TACLR; \
     /* source: 32768Hz ACLK, interrupt enabled. */ \
-    TACTL = TASSEL_ACLK | TAIE; \
+    TACTL = TASSEL_ACLK | ID_DIV1 | /*TAIE | */ CNTL_0;  \
     /* clear all other registers */ \
     TAR = 0; \
     TACCTL0 = TACCTL1 = TACCTL2 = 0; \
@@ -170,15 +171,15 @@ extern void msp430TimerBSet(uint16_t ms);
 #define SET_NEXT_ALARM_TIMER(value) TACCR0 += value
 
 // TimerA interrupt enable/disable
-#define ENABLE_ALARM_INTERRUPT() TACTL |= TAIE
-#define DISABLE_ALARM_INTERRUPT() TACTL &= ~(TAIE)
+#define ENABLE_ALARM_INTERRUPT()  TACCTL0 |= CCIE
+#define DISABLE_ALARM_INTERRUPT() TACCTL0 &= ~(CCIE)
 
 // Sleep timer
 #define SLEEP_TIMER_INIT() msp430InitTimerB()
 #define SLEEP_TIMER_START() msp430StartTimerB()
 #define SLEEP_TIMER_STOP() msp430StopTimerB()
-#define SET_SLEEP_TIMER_VALUE(time) TBR = time
-#define SET_SLEEP_OCR_VALUE(value) TBCCR0  = value
+// #define SET_SLEEP_TIMER_VALUE(time) TBR = time
+// #define SET_SLEEP_OCR_VALUE(value) TBCCR0  = value
 // make sure the interrupt was triggered
 // because of a capture
 #define SLEEP_TIMER_EXPIRED() (TBIV == 14)
@@ -189,10 +190,10 @@ extern void msp430TimerBSet(uint16_t ms);
 #define ENABLE_SLEEP_INTERRUPT() TBCTL |= TBIE
 #define DISABLE_SLEEP_INTERRUPT() TBCTL &= ~(TBIE)
 
-#ifdef TIMERA1_VECTOR
-#define ALARM_TIMER_INTERRUPT() ISR(TIMERA1, alarmTimerInterrupt)
+#ifdef TIMERA0_VECTOR
+#define ALARM_TIMER_INTERRUPT() ISR(TIMERA0, alarmTimerInterrupt)
 #else // for MSP430F5438
-#define ALARM_TIMER_INTERRUPT() ISR(TIMER0_A1, alarmTimerInterrupt)
+#define ALARM_TIMER_INTERRUPT() ISR(TIMER0_A0, alarmTimerInterrupt)
 #endif
 #define SLEEP_TIMER_INTERRUPT() ISR(TIMERB1, sleepTimerInterrupt)
 
