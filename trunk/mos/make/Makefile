@@ -214,6 +214,11 @@ ifeq ($(USE_REPROGRAMMING),y)
 LDFLAGS += "-Wl,--section-start=.text=0x5000,--section-start=.usertext=0xf000,--section-start=.start=0x4000,--defsym=_reset_vector__=0x4000"
 endif
 
+ifneq ($(CONST_RAMTEXT_START),)
+LDFLAGS += "-Wl,--section-start=.ramtext=$(CONST_RAMTEXT_START)"
+endif
+
+
 LINKER_SCRIPT = $(MOS)/make/scripts/link.py
 
 # include the file where platform independent sources are defined
@@ -339,6 +344,10 @@ endif
 $(OUTDIR)/%.o : $(MOSROOT)/%.c
 	$(Print) "CC $<"
 	$(_QUIET) $(CC) $(CFLAGS) $(INCLUDES) -MD -MF $(subst .o,.d,$@) -MP -MT $(subst .o,.d,$@) -MT $@ -c $< -o $@
+ifeq ($(USE_RAM_EXECUTION),y)
+# rename ".text" section to ".ramtext"
+	$(_QUIET) $(OBJCOPY) --rename-section .text=.ramtext $@
+endif
 
 # .c -> .o, user sources
 $(OUTDIR)/%.o : $(PROJDIR)/%.c
@@ -347,6 +356,10 @@ $(OUTDIR)/%.o : $(PROJDIR)/%.c
 ifeq ($(USE_REPROGRAMMING),y)
 # rename ".text" section to ".usertext"
 	$(_QUIET) $(OBJCOPY) --rename-section .text=.usertext $@
+endif
+ifeq ($(USE_RAM_EXECUTION),y)
+# rename ".text" section to ".ramtext"
+	$(_QUIET) $(OBJCOPY) --rename-section .text=.ramtext $@
 endif
 
 # .sl -> .c, SEAL sources

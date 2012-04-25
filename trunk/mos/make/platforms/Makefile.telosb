@@ -44,6 +44,11 @@ endif
 
 CFLAGS += -DPLATFORM_TELOSB=1
 
+ifeq ($(USE_RAM_EXECUTION),y)
+# leave 1K RAM for .data segment
+CONST_RAMTEXT_START=0x1500
+endif
+
 #############################################
 # Define platform-specific sources
 # (excluding architecture-specific sources)
