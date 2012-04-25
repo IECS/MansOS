@@ -92,27 +92,10 @@
         MEMORY_BARRIER();                       \
     } while (0)
 
-
 #define ATOMIC_END(handle) do {                 \
         MEMORY_BARRIER();                       \
         SET_INTERRUPT_STATUS(handle);           \
     } while (0);
-
-
-//
-// Atomic ops (syntactic sugar)
-//
-#define atomic(op)  do {             \
-        Handle_t h;                  \
-        ATOMIC_START(h);             \
-        op;                          \
-        ATOMIC_END(h);               \
-    } while (0)
-
-#define atomic_read(x, ret)  atomic(ret = x)
-#define atomic_write(x, y)  atomic(x = y)
-#define atomic_inc(x, c)  atomic(x += c)
-#define atomic_dec(x, c)  atomic(x -= c)
 
 // structure for saving state of all interrupts
 typedef struct Msp430InterruptContext {

@@ -44,6 +44,8 @@
 #define DISABLE_ALARM_INTERRUPT()
 #define ALARM_TIMER_EXPIRED() (1)
 #define RESET_ALARM_TIMER()
+#define ALARM_TIMER_VALUE() 0
+#define SET_NEXT_ALARM_TIMER(value)
 
 #define SLEEP_TIMER_STOP()
 #define SLEEP_TIMER_EXPIRED() (1)
@@ -66,21 +68,18 @@ enum {
     PLATFORM_MIN_SLEEP_MS = 10, // min sleep amount = 10ms
     PLATFORM_MAX_SLEEP_MS = 0xffff,
     PLATFORM_MAX_SLEEP_SECONDS = PLATFORM_MAX_SLEEP_MS / 1000,
+    PLATFORM_ALARM_TIMER_PERIOD = 1,
 };
+
+#define TIMER_TICKS_TO_MS(ticks) ticks
 
 #define JIFFY_TIMER_MS 1
 
 #define SLEEP_CYCLES 0
 #define SLEEP_CYCLES_DEC 0
 
-#define ATOMIC_START(x) ((void) x)
+#define ATOMIC_START(x) (x) = 0
 #define ATOMIC_END(x)   ((void) x)
-
-#define atomic(op)  op
-#define atomic_read(x, ret)  atomic(ret = x)
-#define atomic_write(x, y)  atomic(x = y)
-#define atomic_inc(x, c)  atomic(x += c)
-#define atomic_dec(x, c)  atomic(x -= c)
 
 // LEDs: all present! Defined in pc/ledslist.h
 

@@ -40,7 +40,8 @@
 enum {
     JIFFY_TIMER_MS = 1000 / TIMER_INTERRUPT_HZ,
     // how many ticks per jiffy
-    JIFFY_CYCLES = JIFFY_TIMER_MS * (CPU_HZ / TIMER_INTERRUPT_HZ / JIFFY_CLOCK_DIVIDER),
+    PLATFORM_ALARM_TIMER_PERIOD = JIFFY_TIMER_MS *
+           (CPU_HZ / TIMER_INTERRUPT_HZ / JIFFY_CLOCK_DIVIDER),
     // in 1 jiffy = 1 ms case, 1 jiffy = 16000 / 64 = 250 clock cycles
 
     PLATFORM_MIN_SLEEP_MS = 10, // min sleep amount = 10ms
@@ -49,8 +50,12 @@ enum {
 
     // clock cycles in every sleep ms: significant digits and decimal part
     SLEEP_CYCLES = (CPU_HZ / 1000 / SLEEP_CLOCK_DIVIDER),
-    SLEEP_CYCLES_DEC = (CPU_HZ / SLEEP_CLOCK_DIVIDER) % 1000
+    SLEEP_CYCLES_DEC = (CPU_HZ / SLEEP_CLOCK_DIVIDER) % 1000,
+
+    TICKS_IN_MS = CPU_HZ / 1000 / JIFFY_CLOCK_DIVIDER,
 };
+
+#define TIMER_TICKS_TO_MS(ticks) ((ticks) / TICKS_IN_MS)
 
 // bits for clock divider setup
 #define TIMER0_DIV_1 (1 << CS00)
@@ -106,7 +111,7 @@ enum {
     /* no clock source at the moment - timer not running */ \
     TCCR0A = (1 << WGM01); \
     /* set time slice to jiffy (1ms) */ \
-    OCR0A = JIFFY_CYCLES - 1; \
+    OCR0A = PLATFORM_ALARM_TIMER_PERIOD - 1; \
     /* Enable Compare-A interrupt */ \
     TIMSK0 = (1 << OCIE0A); \
     /* reset counter */ \
@@ -135,8 +140,9 @@ enum {
 #define SLEEP_TIMER_START() atmegaStartTimer1()
 #define SLEEP_TIMER_STOP() atmegaStopTimer1()
 
-#define ALARM_TIMER_VALUE (TCNT0)
+#define ALARM_TIMER_VALUE() (TCNT0)
 #define RESET_ALARM_TIMER() (TCNT0 = 0)
+#define SET_NEXT_ALARM_TIMER(value) OCR0A += value
 // #define SET_ALARM_OCR_VALUE(value) OCR0A  = value
 // #define SET_SLEEP_TIMER_VALUE(time) TCNT1 = time
 // #define SET_SLEEP_OCR_VALUE(value) OCR1A  = value

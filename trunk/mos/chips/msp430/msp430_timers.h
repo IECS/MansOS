@@ -79,10 +79,8 @@
 
 enum {
     JIFFY_TIMER_MS = 1000 / TIMER_INTERRUPT_HZ, // jiffy counter signals every 10 milliseconds
-    // how many ticks per jiffy
-    // JIFFY_CYCLES = JIFFY_TIMER_MS
-    //    * (JIFFY_CLOCK_SPEED / TIMER_INTERRUPT_HZ / JIFFY_CLOCK_DIVIDER),
-    // in 1 jiffy = 1 ms case, 1 jiffy = 32768 / 1000 / 1 = 32 clock cycles
+    // round up, because 7>5 and 6>5
+    PLATFORM_ALARM_TIMER_PERIOD = ACLK_SPEED / TIMER_INTERRUPT_HZ + 1,
 
     PLATFORM_MIN_SLEEP_MS = 10, // min sleep amount = 10ms
     PLATFORM_MAX_SLEEP_MS = 0xffff / (SLEEP_CLOCK_SPEED / 1000 / SLEEP_CLOCK_DIVIDER + 1),
@@ -92,9 +90,10 @@ enum {
     SLEEP_CYCLES = (SLEEP_CLOCK_SPEED / 1000 / SLEEP_CLOCK_DIVIDER),
     SLEEP_CYCLES_DEC = (SLEEP_CLOCK_SPEED / SLEEP_CLOCK_DIVIDER) % 1000,
 
-    // round up, because 7>5 and 6>5
-    PLATFORM_ALARM_TIMER_PERIOD = ACLK_SPEED / TIMER_INTERRUPT_HZ + 1,
+    TICKS_IN_MS = ACLK_SPEED / 1000 + 1,
 };
+
+#define TIMER_TICKS_TO_MS(ticks) ((ticks) / TICKS_IN_MS)
 
 //===========================================================
 // Macros
@@ -166,7 +165,7 @@ extern void msp430TimerBSet(uint16_t ms);
 #define ALARM_TIMER_START() msp430StartTimerA()
 #define ALARM_TIMER_STOP() msp430StopTimerA()
 #define ALARM_TIMER_EXPIRED() (TAIV == 10)
-#define ALARM_TIMER_VALUE (TAR)
+#define ALARM_TIMER_VALUE() (TAR)
 #define RESET_ALARM_TIMER() (TAR = 0)
 #define SET_NEXT_ALARM_TIMER(value) TACCR0 += value
 
