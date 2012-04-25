@@ -45,7 +45,8 @@
 #endif
 
 //
-// This function takes ~4 CPU cycles.
+// This function takes ~4 CPU cycles for CPU_MHZ <= 4,
+// and correspondingly more for faster CPU frequencies.
 // It should be safe to optimizations.
 // If very short time interval is needed, using NOPs might be a better idea.
 //
