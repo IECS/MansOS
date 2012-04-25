@@ -25,7 +25,7 @@
  * - Naming
  * - Static transmission buffer, only pointer for reception buffer - write data
  *     directly into user's buffer without copying it
- * - CPU_FREQ changed to CPU_SPEED for compatibility
+ * - CPU_FREQ changed to CPU_HZ for compatibility
  * - TWI_FREQ changed to TWI_SPEED for compatibility
  * - Some comments added
  * - Slave operation removed, only master mode support left
@@ -38,11 +38,7 @@
 #ifndef ATMEGA_2WIRE_H
 #define ATMEGA_2WIRE_H
 
-#include <stdtypes.h>
-
-#ifndef CPU_SPEED
-#define CPU_SPEED CPU_MHZ * 1000000L
-#endif
+#include "atmega_timers.h"
 
 #ifndef TWI_SPEED
 #define TWI_SPEED 100000L

@@ -24,7 +24,7 @@
  * - Naming
  * - Static transmission buffer, only pointer for reception buffer - write data
  *     directly into user's buffer without copying it
- * - CPU_FREQ changed to CPU_SPEED for compatibility
+ * - CPU_FREQ changed to CPU_HZ for compatibility
  * - TWI_FREQ changed to TWI_SPEED for compatibility
  * - Some comments added
  * - Slave operation removed, only master mode support left
@@ -95,7 +95,7 @@ void twiInit()
   // initialize twi prescaler and bit rate
   cbi(TWSR, TWPS0);
   cbi(TWSR, TWPS1);
-  TWBR = ((CPU_SPEED / TWI_SPEED) - 16) / 2;
+  TWBR = ((CPU_HZ / TWI_SPEED) - 16) / 2;
 
   /* twi bit rate formula from atmega128 manual pg 204
   SCL Frequency = CPU Clock Frequency / (16 + (2 * TWBR))
