@@ -348,6 +348,7 @@ void cc1101Init(void)
     setreg(REG_PATABLE, CC1101_TXPOWER);
 
     // Enable radio interrupts
+    pinClearIntFlag(CC1101_INTR_PORT, CC1101_INTR_PIN);
     pinIntRising(CC1101_INTR_PORT, CC1101_INTR_PIN);
     pinEnableInt(CC1101_INTR_PORT, CC1101_INTR_PIN);
 
