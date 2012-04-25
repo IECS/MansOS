@@ -33,6 +33,8 @@
 #ifndef _MSP430_USCI_H_
 #define _MSP430_USCI_H_
 
+#include <kernel/defines.h>
+
 // The port for all pins is port 3
 #define USCI_PORT 3
 
@@ -54,27 +56,32 @@
 
 #define PRINTF_USART_ID 0
 #define USART_COUNT 1
-#define CPU_HZ (CPU_MHZ * 1000000UL)
+
+#if defined(__msp430x54xA)
+# define UC0IE     UCA0IE
+# define UC0IFG    UCA0IFG
+# define UCA0RXIE  UCRXIE
+# define UCA0TXIE  UCTXIE
+# define UCA0RXIFG UCRXIFG
+# define UCA0TXIFG UCTXIFG
+# define UCB0RXIE  UCRXIE
+# define UCB0TXIE  UCTXIE
+# define UCB0RXIFG UCRXIFG
+# define UCB0TXIFG UCTXIFG
+#endif
 
 // This module enables and disables components automatically
 static inline uint_t USARTEnableTX(uint8_t id) { return 0; }
 static inline uint_t USARTDisableTX(uint8_t id) { return 0; }
-static inline uint_t USARTEnableRX(uint8_t id) { return 0; }
-static inline uint_t USARTDisableRX(uint8_t id) { return 0; }
+static inline uint_t USARTEnableRX(uint8_t id) {
+    UC0IE |= UCA0RXIE;     // Enable receive interrupt
+    return 0;
+}
+static inline uint_t USARTDisableRX(uint8_t id) {
+    UC0IE &= ~UCA0RXIE;    // Disable receive interrupt
+    return 0;
+}
 static inline void hw_spiBusOn(uint8_t busId) { }
 static inline void hw_spiBusOff(uint8_t busId) { }
-
-#if defined(__msp430x54xA)
-#define UC0IE     UCA0IE
-#define UC0IFG    UCA0IFG
-#define UCA0RXIE  UCRXIE
-#define UCA0TXIE  UCTXIE
-#define UCA0RXIFG UCRXIFG
-#define UCA0TXIFG UCTXIFG
-#define UCB0RXIE  UCRXIE
-#define UCB0TXIE  UCTXIE
-#define UCB0RXIFG UCRXIFG
-#define UCB0TXIFG UCTXIFG
-#endif
 
 #endif // _MSP430_USCI_H_
