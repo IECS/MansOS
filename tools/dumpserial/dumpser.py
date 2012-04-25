@@ -9,6 +9,7 @@ import string
 import serial
 import sys
 import threading
+import argparse
 
 global flDone
 global baudRate
@@ -39,27 +40,37 @@ def listenSerial():
     return 0
 
 
+def getCliArgs():
+    defaultSerialPort = "/dev/ttyUSB0"
+    defaultBaudRate = 38400
+    version = "0.2/2012.04.25"
+
+    parser = argparse.ArgumentParser(description="MansOS serial listener", prog="dumpser")
+
+    parser.add_argument('-s', '--serial_port', dest='serialPort', action='store', default=defaultSerialPort,
+        help='serial port to listen (default: ' + defaultSerialPort + ' )')
+    parser.add_argument('-b', '--baud_rate', dest='baudRate', action='store', default=defaultBaudRate,
+        help='baud rate (default: ' + str(defaultBaudRate) + ')')
+    parser.add_argument('--version', action='version', version='%(prog)s ' + version)
+    return parser.parse_args()
+
+
+
 def main():
     global flDone
     global serPort
     global baudRate
-
     flDone = False
-    serPort = '/dev/ttyUSB0'
-    baudRate = 38400
 
-    for arg in sys.argv : 
-        print arg
+    args = getCliArgs()
 
-    if len(sys.argv) > 1 :
-        serPort = sys.argv[1]
+    serPort = args.serialPort
 
     if serPort in ("ACM", "chronos") :
         serPort = "/dev/ttyACM0" 
         baudRate = 115200
 
-    if len(sys.argv) > 2 :
-        baudRate = sys.argv[2]
+    baudRate = args.baudRate
 
     print "MansOS serial listener"
     threading.Thread(target=listenSerial).start() 
