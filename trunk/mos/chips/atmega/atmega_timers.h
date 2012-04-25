@@ -31,8 +31,6 @@
 #include <avr/power.h>
 #include <kernel/defines.h>
 
-#define CPU_SPEED (CPU_MHZ * 1000000ul)
-
 #define atmegaWatchdogStop() wdt_disable()
 
 // these must be defined as macros
@@ -42,16 +40,16 @@
 enum {
     JIFFY_TIMER_MS = 1000 / TIMER_INTERRUPT_HZ,
     // how many ticks per jiffy
-    JIFFY_CYCLES = JIFFY_TIMER_MS * (CPU_SPEED / TIMER_INTERRUPT_HZ / JIFFY_CLOCK_DIVIDER),
+    JIFFY_CYCLES = JIFFY_TIMER_MS * (CPU_HZ / TIMER_INTERRUPT_HZ / JIFFY_CLOCK_DIVIDER),
     // in 1 jiffy = 1 ms case, 1 jiffy = 16000 / 64 = 250 clock cycles
 
     PLATFORM_MIN_SLEEP_MS = 10, // min sleep amount = 10ms
-    PLATFORM_MAX_SLEEP_MS = 0xffff / (CPU_SPEED / 1000 / SLEEP_CLOCK_DIVIDER + 1),
+    PLATFORM_MAX_SLEEP_MS = 0xffff / (CPU_HZ / 1000 / SLEEP_CLOCK_DIVIDER + 1),
     PLATFORM_MAX_SLEEP_SECONDS = PLATFORM_MAX_SLEEP_MS / 1000,
 
     // clock cycles in every sleep ms: significant digits and decimal part
-    SLEEP_CYCLES = (CPU_SPEED / 1000 / SLEEP_CLOCK_DIVIDER),
-    SLEEP_CYCLES_DEC = (CPU_SPEED / SLEEP_CLOCK_DIVIDER) % 1000
+    SLEEP_CYCLES = (CPU_HZ / 1000 / SLEEP_CLOCK_DIVIDER),
+    SLEEP_CYCLES_DEC = (CPU_HZ / SLEEP_CLOCK_DIVIDER) % 1000
 };
 
 // bits for clock divider setup
@@ -139,9 +137,9 @@ enum {
 
 #define ALARM_TIMER_VALUE (TCNT0)
 #define RESET_ALARM_TIMER() (TCNT0 = 0)
-#define SET_ALARM_OCR_VALUE(value) OCR0A  = value
-#define SET_SLEEP_TIMER_VALUE(time) TCNT1 = time
-#define SET_SLEEP_OCR_VALUE(value) OCR1A  = value
+// #define SET_ALARM_OCR_VALUE(value) OCR0A  = value
+// #define SET_SLEEP_TIMER_VALUE(time) TCNT1 = time
+// #define SET_SLEEP_OCR_VALUE(value) OCR1A  = value
 
 extern void atmegaTimer1Set(uint16_t ms);
 #define SLEEP_TIMER_SET(ms) atmegaTimer1Set(ms)

@@ -38,21 +38,19 @@ typedef enum {
 // actual USARTx mode (UART/SPI/I2C)
 static ATMegaUSARTMode_t usartMode[USART_COUNT] = { UM_DISABLED };
 
-#define CPU_SPEED (CPU_MHZ * 1000000ul)
-
 //===========================================================
 // Data types and constants
 //===========================================================
 /** @brief UBRR calculation for desired baudrate in async mode */
 enum {
 #if 0
-    ASYNC_UBRR_9600 = (CPU_SPEED / 4 / 9600 - 1) / 2,
-    ASYNC_UBRR_38400 = (CPU_SPEED / 4 / 38400 - 1) / 2,
-    ASYNC_UBRR_115200 = (CPU_SPEED / 4 / 115200 - 1) / 2
+    ASYNC_UBRR_9600 = (CPU_HZ / 4 / 9600 - 1) / 2,
+    ASYNC_UBRR_38400 = (CPU_HZ / 4 / 38400 - 1) / 2,
+    ASYNC_UBRR_115200 = (CPU_HZ / 4 / 115200 - 1) / 2
 #else
-    ASYNC_UBRR_9600 = (CPU_SPEED / 16) / 9600 - 1,
-    ASYNC_UBRR_38400 = (CPU_SPEED / 16) / 38400 - 1,
-    ASYNC_UBRR_115200 = (CPU_SPEED / 16) / 115200 - 1
+    ASYNC_UBRR_9600 = (CPU_HZ / 16) / 9600 - 1,
+    ASYNC_UBRR_38400 = (CPU_HZ / 16) / 38400 - 1,
+    ASYNC_UBRR_115200 = (CPU_HZ / 16) / 115200 - 1
 #endif
 };
 
