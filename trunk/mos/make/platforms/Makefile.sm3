@@ -35,14 +35,17 @@ MCU_MODEL = msp430f5438a
 # Upload target
 UPLOAD_TARGET=upload-msp430
 
-INTERRUPT_VECTOR_COUNT=64
-
-# Default clock speed: 8MHz
+# Default clock speed: 8MHz,
+# which is also the maximum without tweaking Power Management Module (PMM).
+# To use higher frequency, set PMMCTL0 to PMMCOREV_x, where x > 0.
+# Bonus: PMMCOREV_0 works from 1.8V battery.
 ifeq ($(USE_HARDWARE_TIMERS),y)
 CPU_MHZ ?= 8
 else
-CPU_MHZ ?= 1  # TODO?
+CPU_MHZ ?= 1  # default SMCLK is approximately 1.05 MHz on MSP430F5xx devices
 endif
+
+INTERRUPT_VECTOR_COUNT=64
 
 CFLAGS += -DPLATFORM_SADMOTE=1 -DPLATFORM_SADMOTE3=1 -mivcnt=$(INTERRUPT_VECTOR_COUNT)
 
@@ -52,8 +55,10 @@ CFLAGS += -DPLATFORM_SADMOTE=1 -DPLATFORM_SADMOTE3=1 -mivcnt=$(INTERRUPT_VECTOR_
 
 PSOURCES += $(MOS)/platforms/sm3/platform.c
 
-#PSOURCES-$(USE_RADIO) += $(MOS)/chips/mrf24j40/mrf24j40.c
-#PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/at25df/at25df.c
+PSOURCES += $(MOS)/chips/msp430/msp430x5xx_clock.c
+
+#PSOURCES-$(USE_RADIO) += $(MOS)/chips/...
+#PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/...
 PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2401/ds2401.c
 PSOURCES-$(USE_ISL29003) += $(MOS)/chips/isl29003/isl29003.c
 PSOURCES-$(USE_APDS9300) += $(MOS)/chips/apds9300/apds9300.c

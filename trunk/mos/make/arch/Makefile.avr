@@ -64,7 +64,7 @@ $(EXECUTABLE) : $(OUTDIR)/$(APPMOD).elf
 	$(Print) ""
 	$(OBJCOPY) -O ihex $(OUTDIR)/$(APPMOD).elf $(EXECUTABLE)
 
-upload : build
+platform-upload : build
 	$(Print) ""
 	$(MOTELIST)
 	$(Print) ""

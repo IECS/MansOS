@@ -35,6 +35,7 @@ endif
 
 GOALS += $(MAKECMDGOALS)
 TARGETS = $(filter $(PLATFORMS), $(GOALS))
+NOTPLATFORMTARGETS := $(filter-out $(PLATFORMS), $(GOALS))
 
 # Select only the first platform in the list
 TARGET = $(firstword $(TARGETS))
