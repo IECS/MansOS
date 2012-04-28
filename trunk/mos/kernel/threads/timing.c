@@ -32,11 +32,8 @@ volatile uint32_t jiffies;
 
 ALARM_TIMER_INTERRUPT()
 {
-    // Check the interrupt vector. Value 10 means timer overflow.
-    if (!ALARM_TIMER_EXPIRED()) return;
-
-    // reset the counter
-    RESET_ALARM_TIMER();
+    // advance the CCR
+    SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
 
     jiffies += JIFFY_TIMER_MS;
 
