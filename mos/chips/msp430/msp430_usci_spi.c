@@ -44,7 +44,9 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
 #define SETUP_SPI_PINS(id) ( \
     pinAsFunction(USCI_PORT, UC##id##SIMO_PIN), \
     pinAsFunction(USCI_PORT, UC##id##SOMI_PIN), \
-    pinAsFunction(USCI_PORT, UC##id##CLK_PIN) )
+    pinAsFunction(USCI_PORT, UC##id##CLK_PIN),  \
+    pinAsOutput(USCI_PORT, UC##id##SOMI_PIN),   \
+    pinAsOutput(USCI_PORT, UC##id##CLK_PIN) )
 #define SETUP_USCI(id) ( \
     UC##id##CTL1 = UCSWRST,             /* Hold the module in reset state */   \
     UC##id##CTL1 |= UCSSEL_2,           /* SMCLK clock source */               \
