@@ -47,6 +47,13 @@
 #define DEBUG_THREADS 1
 #endif
 
+#define SCHEDULING_POLICY_ROUND_ROBIN    1
+#define SCHEDULING_POLICY_PRIORITY_BASED 2
+
+#ifndef SCHEDULING_POLICY
+#define SCHEDULING_POLICY SCHEDULING_POLICY_ROUND_ROBIN
+#endif
+
 // ----------------------------------------------------------------
 // Types
 // ----------------------------------------------------------------
@@ -63,11 +70,14 @@ typedef enum ThreadState_e {
 
 typedef struct Thread_s {
     MemoryAddress_t sp;     // stack pointer
-    uint_t index;           // thread number
+    uint8_t index;          // thread number
+    uint8_t priority;       // threads with larger priority are run first
     ThreadState_t state;    // state (running, ready, etc.)
     ThreadFunc function;    // thread start function
     uint32_t sleepEndTime;  // in jiffies, defined when state is THREAD_SLEEPING
-    uint32_t lastSeenRunning; // used for lockup detection, and for scheduling (?)
+#if DEBUG_THREADS || SCHEDULING_POLICY == SCHEDULING_POLICY_ROUND_ROBIN
+    uint32_t lastSeenRunning; // used for lockup detection, and for scheduling
+#endif
 } Thread_t;
 
 typedef union {
@@ -152,6 +162,26 @@ void systemMain(void) NORETURN;
 #define LOCKUP_DETECT_TIME  3000
 void checkThreadLockups(void);
 #endif
+
+static inline void setSeenRunning(Thread_t *t) {
+#if DEBUG_THREADS || SCHEDULING_POLICY == SCHEDULING_POLICY_ROUND_ROBIN
+    t->lastSeenRunning = getJiffies();
+#endif
+}
+
+static inline uint32_t getLastSeenRunning(Thread_t *t) {
+#if DEBUG_THREADS || SCHEDULING_POLICY == SCHEDULING_POLICY_ROUND_ROBIN
+    return t->lastSeenRunning;
+#else
+    return 0;
+#endif
+}
+
+static inline void setPriority(Thread_t *t, uint8_t priority) {
+#if SCHEDULING_POLICY == SCHEDULING_POLICY_PRIORITY_BASED
+    t->priority = priority;
+#endif
+}
 
 // ----------------------------------------------------------------
 // User API

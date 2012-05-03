@@ -54,7 +54,7 @@ void checkThreadLockups(void)
     uint16_t i;
     uint32_t now = getJiffies();
     // note: this could be used for gathering time statistics as well!
-    currentThread->lastSeenRunning = now;
+    setSeenRunning(currentThread);
     for (i = 0; i < NUM_USER_THREADS; ++i) {
         switch (threads[i].state) {
         case THREAD_SLEEPING:
@@ -84,7 +84,7 @@ void checkThreadLockups(void)
 static void threadWrapper(void)
 {
     ASSERT(currentThread);
-    currentThread->lastSeenRunning = getJiffies();
+    setSeenRunning(currentThread);
     // execute the thread's function (may never return)
     currentThread->function();
     // mark the thread as having quit
@@ -104,6 +104,7 @@ void threadCreate(uint_t index, ThreadFunc function)
     threads[index].index = index;
     threads[index].state = THREAD_READY;
     threads[index].function = function;
+    threads[index].priority = 0;
 
     // stack grows to the bottom; initial pointer must be at the end of memory region
     stackAddress += THREAD_STACK_SIZE;
@@ -190,9 +191,9 @@ void threadWakeup(uint16_t threadIndex, ThreadState_t newState)
 #else
 
 //
-// Multiple user threads
+// Multiple user threads + multiple scheduling policies
 //
-#define SELECT_NEXT_THREAD()                                            \
+#define SELECT_NEXT_THREAD(policy)                                      \
     for (i = 0; i < NUM_THREADS; ++i) {                                 \
         tmpThread = &threads[(i + currentThread->index) % NUM_THREADS]; \
                                                                         \
@@ -229,9 +230,14 @@ void threadWakeup(uint16_t threadIndex, ThreadState_t newState)
         } else if (nextThread->index == KERNEL_THREAD_INDEX) {          \
             continue;                                                   \
         }                                                               \
-        else {                                                          \
+        else if (policy == SCHEDULING_POLICY_ROUND_ROBIN) {             \
             /* for awake threads, select the one that was running least recently */ \
-            if (timeAfter32(tmpThread->lastSeenRunning, nextThread->lastSeenRunning)) { \
+            if (timeAfter32(getLastSeenRunning(tmpThread), getLastSeenRunning(nextThread))) { \
+                continue;                                               \
+            }                                                           \
+        } else if (policy == SCHEDULING_POLICY_PRIORITY_BASED) {        \
+            /* select the one with higher priority */                   \
+            if (tmpThread->priority <= nextThread->priority) {          \
                 continue;                                               \
             }                                                           \
         }                                                               \
@@ -265,7 +271,7 @@ NO_EPILOGUE void schedule(void)
     // system's sleep time adjusted accordingly;
     // if there are no threads ready to run at the present moment,
     // the system will go in low power mode.
-    SELECT_NEXT_THREAD();
+    SELECT_NEXT_THREAD(SCHEDULING_POLICY);
 
     if (currentThread != nextThread) {
         SWITCH_THREADS(currentThread, nextThread);
@@ -284,7 +290,7 @@ NO_EPILOGUE void schedule(void)
     } else {
         THREADS_PRINTF("schedule: keep running\n");
     }
-    currentThread->lastSeenRunning = getJiffies();
+    setSeenRunning(currentThread);
     RESTORE_ALL_REGISTERS();
     ASM_VOLATILE("ret");
 }
