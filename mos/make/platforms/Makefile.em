@@ -20,24 +20,34 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-#
-# Defines options for make, used as make targets in addition
-# to the main target. Overrides the related options in the config file.
-#
-# Invoked from the main Makefile and the Makefile.top.
 #
 
-#--- Supported options
+#############################################
+# Energy Measuring board
+#############################################
 
-OPT_VERBOSE = verbose
-OPT_QUIET = quiet
-OPT_OPTIMIZE = optimize
+#############################################
+# Define platform variables
 
-ALLOPTIONS = $(OPT_VERBOSE) $(OPT_QUIET) $(OPT_OPTIMIZE)
+ARCH = msp430
+MCU_MODEL = msp430f1611
 
-#--- Supported platforms
+# Upload target specifically for EM board
+UPLOAD_TARGET=upload-em
 
-PLATFORMS ?= pc pcapp telosb tmote sadmote sm3 z1 atmega arduino nrf waspmote launchpad farmmote em
+# Default clock speed: 1MHz
+ifeq ($(USE_HARDWARE_TIMERS),y)
+CPU_MHZ ?= 4
+else
+CPU_MHZ ?= 1  # actually the default DCO frequency is around 800 kHz
+endif
 
-ALLTARGETS = build clean upload run testbed memdump mspsim $(PLATFORMS:%=clean%) $(PLATFORMS) $(ALLOPTIONS)
+CFLAGS += -DPLATFORM_EM=1 
+
+#############################################
+# Define platform-specific sources
+# (excluding architecture-specific sources)
+
+PSOURCES += $(MOS)/platforms/em/platform.c
+PSOURCES += $(MOS)/chips/msp430/msp430x1xx_clock.c
+

@@ -92,6 +92,11 @@ upload-z1:
 upload-launchpad:
 	$(MSPDEBUG) rf2500 "prog $(OUTDIRDOS)/image.ihex"
 
+upload-em:
+# note: this is valid for version 3 firmware only
+# TODO: device name!
+	$(MSPDEBUG) tilib -d /dev/ttyACM0 "prog $(OUTDIRDOS)/image.ihex"
+
 memdump: build
 	$(MEMDUMP) $(OUTDIR)/$(APPMOD).elf msp430
 
