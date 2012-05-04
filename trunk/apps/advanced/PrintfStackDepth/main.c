@@ -21,43 +21,43 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_EXPTHREADS_TIMING_H
-#define MANSOS_EXPTHREADS_TIMING_H
+//------------------------------------------------
+// This program demonstrates the (excessive) stack depth used by
+// msp430 libC printf() functions.
+// For gcc version 4.5.3 (GNU GCC patched mspgcc-20110716))
+// stack usage is 62 bytes + storage room for each argument argcount
+// (as args are pushed onto stack).
+// Note that by default MansOS uses vsnprintf() instead of vprintf(),
+// so even greater stack depth is likely to be used!
+//------------------------------------------------
 
-#include <kernel/defines.h>
+#include "stdmansos.h"
 
-extern volatile uint32_t jiffies;
+MemoryAddress_t spInMain;
+MemoryAddress_t spInPutchar;
 
-static inline uint32_t getJiffies(void) INLINE;
-static inline uint32_t getJiffies(void)
+int putchar(int c) {
+    if (!spInPutchar) {
+        GET_SP(spInPutchar);
+    }
+    USARTSendByte(PRINTF_USART_ID, c);
+    return c;
+}
+
+void appMain(void)
 {
-    return jiffies;
-}
+    GET_SP(spInMain);
 
-static inline uint32_t jiffies2ms(uint32_t jiffies) INLINE;
-static inline uint32_t jiffies2ms(uint32_t jiffies)
-{
-    return jiffies;
-}
+    // this uses 62 bytes
+    //PRINTF("hello world\r\n");
 
-static inline uint32_t ms2jiffies(uint32_t ms) INLINE;
-static inline uint32_t ms2jiffies(uint32_t ms)
-{
-    return ms;
-}
+    // this uses 70 bytes (62 + 2 + 2 + 4)
+    PRINTF("hello %s! running mansos version %d, uptime is %lu seconds\r\n",
+            "world",
+            MANSOS_VERSION,
+            getUptime()); // 70 baiti stekaa... (versija gcc version 4.5.3 (GNU GCC patched mspgcc-20110716))
 
-//
-// For backwards compatibility
-//
-static inline uint32_t getRealTime(void) {
-    return jiffies2ms(jiffies);
+    PRINTF("stack pointer in main: %#x\r\n", spInMain);
+    PRINTF("stack pointer in putchar: %#x\r\n", spInPutchar);
+    PRINTF("difference: %d\r\n", spInMain - spInPutchar);
 }
-
-//
-// Get seconds elapsed since system start
-//
-static inline uint32_t getUptime(void) {
-    return jiffies2ms(jiffies) / 1000;
-}
-
-#endif

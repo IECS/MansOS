@@ -21,43 +21,13 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_EXPTHREADS_TIMING_H
-#define MANSOS_EXPTHREADS_TIMING_H
+//------------------------------------------------
+// This program demonstrates execution from RAM
+//------------------------------------------------
 
-#include <kernel/defines.h>
+#include "stdmansos.h"
 
-extern volatile uint32_t jiffies;
-
-static inline uint32_t getJiffies(void) INLINE;
-static inline uint32_t getJiffies(void)
+void appMain(void)
 {
-    return jiffies;
+    PRINTF("running app main from %p\n", appMain);
 }
-
-static inline uint32_t jiffies2ms(uint32_t jiffies) INLINE;
-static inline uint32_t jiffies2ms(uint32_t jiffies)
-{
-    return jiffies;
-}
-
-static inline uint32_t ms2jiffies(uint32_t ms) INLINE;
-static inline uint32_t ms2jiffies(uint32_t ms)
-{
-    return ms;
-}
-
-//
-// For backwards compatibility
-//
-static inline uint32_t getRealTime(void) {
-    return jiffies2ms(jiffies);
-}
-
-//
-// Get seconds elapsed since system start
-//
-static inline uint32_t getUptime(void) {
-    return jiffies2ms(jiffies) / 1000;
-}
-
-#endif

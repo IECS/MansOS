@@ -21,42 +21,27 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	GCC compiler related options, used by many but not all platforms
+# --------------------------------------------------------------------
+#	Makefile for the sample application
 #
+#  The developer must define at least SOURCES and APPMOD in this file
+#
+#  In addition, PROJDIR and MOSROOT must be defined, before including 
+#  the main Makefile at ${MOSROOT}/mos/make/Makefile
+# --------------------------------------------------------------------
 
-ifeq ($(OPTIMIZE),yes)
-# cannot use -Os because of "compiler bugs"
-# (see TinyOS ML discussions for details)
-	CFLAGS += -O
-endif
+# Sources are all project source files, excluding MansOS files
+SOURCES = main.c
 
-GCC_VERSION := $(shell $(CC) -v 2>&1 | grep "gcc version" | cut -b 13)
-GCC_SUBVERSION := $(shell $(CC) -v 2>&1 | grep "gcc version" | cut -b 15)
+# Module is the name of the main module buit by this makefile
+APPMOD = App
 
-ifeq ($(USE_REPROGRAMMING),y)
-	OPTIMIZE_SIZE_EXTRA ?= no
-endif
-ifeq ($(PLATFORM),pc)
-	OPTIMIZE_SIZE_EXTRA ?= no
-endif
-#ifeq ($(UNAME),Darwin)
-# --gc-sections not available on MacOSX GCC   /really?/
-#	OPTIMIZE_SIZE_EXTRA ?= no
-#endif
-ifeq ($(USE_RAM_EXECUTION),y)
-	OPTIMIZE_SIZE_EXTRA ?= no
+# --------------------------------------------------------------------
+# Set the key variables
+PROJDIR = $(CURDIR)
+ifndef MOSROOT
+  MOSROOT = $(PROJDIR)/../../..
 endif
 
-ifeq (4,$(GCC_VERSION))
-# Enable size optimizations by default on GCC 4.x where x < 5.
-# Note: some versions of msp430-gcc 4.5 and 4.6 have the --gc-sections bug fixed,
-# e.g. the one in Ubuntu 12.04. Unfortunately, it's too hard to discern which is which...
-ifeq ("", "$(filter $(GCC_SUBVERSION), 5 6)")
-	OPTIMIZE_SIZE_EXTRA ?= yes
-endif
-endif
-
-ifeq (yes,$(OPTIMIZE_SIZE_EXTRA))
-	CFLAGS += -fdata-sections -ffunction-sections
-	LDFLAGS += -Wl,--gc-sections
-endif
+# Include the main makefile
+include ${MOSROOT}/mos/make/Makefile

@@ -31,7 +31,7 @@ void appMain(void)
 {
     uint8_t counter = 0;
 
-    while(1)
+    while (1)
     {
         PRINTF("counter = %u\n", counter++);
         redLedToggle();
