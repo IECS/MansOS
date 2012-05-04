@@ -24,6 +24,7 @@
 
 import os
 import wx
+from stat import *
 from upload_module import UploadModule
 
 class Frame(wx.Frame):
@@ -39,6 +40,7 @@ class Frame(wx.Frame):
         self.tr = self.API.tr
         self.toolbar = None
         self.menubar = None
+        self.examples = dict()
         self.initUI()
         self.SetBackgroundColour("white")
 
@@ -80,6 +82,37 @@ class Frame(wx.Frame):
         close = fileMenu.Append(wx.ID_EXIT, '&' + self.tr('Exit') + '\tCtrl+Q',
                               self.tr('Exit application'))
 
+        # show menu with mansos demo applications
+        pathToMansosApps = self.API.path + "/../../apps/"
+        exampleMenu = wx.Menu()
+        # list all directories in mansos/apps
+        dirlist = os.listdir(pathToMansosApps)
+        dirlist.sort()
+        for dirname in dirlist:
+            pathname = os.path.join(pathToMansosApps, dirname)
+            mode = os.stat(pathname).st_mode
+            if not S_ISDIR(mode): continue
+            # it's a directory; process it
+            dirMenu = wx.Menu()
+            emptyMenu = True
+            # list all directories in the current subdirectory
+            applist = os.listdir(pathname)
+            applist.sort()
+            for filename in applist:
+                appname = os.path.join(pathname, filename)
+                mode = os.stat(appname).st_mode
+                if not S_ISDIR(mode): continue
+                # it's a directory; test whether it has a Makefile in it
+                if not os.path.isfile(os.path.join(appname, 'Makefile')): continue
+                # append the name of this example to directory menu
+                ex = dirMenu.Append(wx.ID_ANY, filename, os.path.join(dirname, appname))
+                # save this id/path combination, to be used in callback code
+                self.examples[ex.GetId()] = appname
+                self.Bind(wx.EVT_MENU, self.OnOpenExample, ex)
+                emptyMenu = False
+            if not emptyMenu:
+                exampleMenu.AppendMenu(wx.ID_ANY, dirname, dirMenu)
+
         optionMenu = wx.Menu()
         language = wx.Menu()
         self.langs = []
@@ -100,6 +133,7 @@ class Frame(wx.Frame):
                 self.menubar.Remove(0)
 
         self.menubar.Append(fileMenu, '&' + self.tr('File'))
+        self.menubar.Append(exampleMenu, '&' + self.tr('Examples'))
         self.menubar.Append(optionMenu, '&' + self.tr('Options'))
         self.SetMenuBar(self.menubar)
 
@@ -202,6 +236,32 @@ class Frame(wx.Frame):
         if open_.ShowModal() == wx.ID_OK:
             self.tabManager.addPage(open_.GetPath())
         open_.Destroy()
+
+    def findFirstSourceFile(self, path):
+        # look for files in this order: first main.sl
+        filename = os.path.join(path, "main.sl")
+        if os.path.isfile(filename): return filename
+        # then main.c
+        filename = os.path.join(path, "main.c")
+        if os.path.isfile(filename): return filename
+        # then any other .sl file
+        for f in os.listdir(path):
+            filename = os.path.join(path, filename)
+            if filename[len(filename) - 3:] == '.sl': return filename
+        # then any other .c file
+        for f in os.listdir(path):
+            filename = os.path.join(path, filename)
+            if filename[len(filename) - 2:] == '.c': return filename
+        # then give up
+        return None
+
+    def OnOpenExample(self, event):
+        if event != None:
+            wx.Yield()
+        path = self.examples.get(event.GetId())
+        filename = self.findFirstSourceFile(path)
+        if filename: self.tabManager.addPage(filename)
+        else: print "no source files in " + path
 
     def OnAddStatement(self, event):
         if event != None:

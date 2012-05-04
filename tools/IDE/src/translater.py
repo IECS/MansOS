@@ -75,6 +75,7 @@ class Translater:
                 "Save as": "Saglabāt kā",
                 "Reload": "Pārlādēt",
                 "Open": "Atvērt",
+                "Examples": "Piemēri",
                 "Upload": "Augšupielādēt",
                 "Read output": "Klausīties",
                 "Exit": "Iziet",
