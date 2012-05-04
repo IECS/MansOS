@@ -82,8 +82,12 @@ void debugPrintf(char* str, ...)
     if (!_print_buf) return;
 
     va_start(args, str);
+#if USE_PUTCHAR
+    vprintf(str, args);
+#else
     vsnprintf(_print_buf, PRINT_BUFFER_SIZE, str, args);
     PRINT(_print_buf);
+#endif
 }
 
 #ifdef DEBUG

@@ -69,19 +69,6 @@ MAKEFILE_OPTIONS = $(MOS)/make/Makefile.options
 MAKEFILE_GCC = $(MOS)/make/Makefile.gcc
 MAKEFILE_HIL = $(MOS)/make/Makefile.hil
 
-#===== optimization
-OPTIMIZE ?= yes
-
-ifneq (,$(findstring $(OPT_OPTIMIZE), $(MAKECMDGOALS)))
-	OPTIMIZE = yes
-endif
-ifeq (y,$(OPTIMIZE))
-	OPTIMIZE = yes
-endif
-ifeq (y,$(OPTIMIZE_SIZE_EXTRA))
-	OPTIMIZE_SIZE_EXTRA = yes
-endif
-
 #===== verbosity
 VERBOSE ?= $(V)
 
@@ -126,7 +113,20 @@ include $(MAKEFILE_PLATFORMS)
 # Include configuration specific options
 include $(MAKEFILE_CONFIG)
 
-# Select and include the makefiles according the target platform
+#===== optimization
+OPTIMIZE ?= yes
+
+ifneq (,$(findstring $(OPT_OPTIMIZE), $(MAKECMDGOALS)))
+	OPTIMIZE = yes
+endif
+ifeq (y,$(OPTIMIZE))
+	OPTIMIZE = yes
+endif
+ifeq (y,$(OPTIMIZE_SIZE_EXTRA))
+	OPTIMIZE_SIZE_EXTRA = yes
+endif
+
+#===== Select and include the makefiles according the target platform
 ifneq ($(PLATFORM),)
   # dirty hack: this is needed for cygwin
   PROJDIR = .
@@ -211,13 +211,9 @@ BSLPORT ?= "$(shell $(MOTELIST) -c | xargs -0 echo | xargs echo | cut -f2 -d, )"
 
 ifeq ($(USE_REPROGRAMMING),y)
 # put user and system code in separate sections
+# TODO: move these platform dependent constants to platform files!
 LDFLAGS += "-Wl,--section-start=.text=0x5000,--section-start=.usertext=0xf000,--section-start=.start=0x4000,--defsym=_reset_vector__=0x4000"
 endif
-
-ifneq ($(CONST_RAMTEXT_START),)
-LDFLAGS += "-Wl,--section-start=.ramtext=$(CONST_RAMTEXT_START)"
-endif
-
 
 LINKER_SCRIPT = $(MOS)/make/scripts/link.py
 
@@ -242,7 +238,6 @@ GENERATED_SOURCES = $(SEAL_SOURCES:%.sl=$(BUILDDIR)/%.c)
 PSOURCES += $(PSOURCES-y) $(PSOURCES-yes)
 
 APP_OBJS = $(SOURCES:%.c= $(OUTDIR)/%.o)
-#APP_OBJS += $(GENERATED_SOURCES:%.c= $(OUTDIR)/%.o)
 
 # add platform sources and objs
 PSRC2 = $(subst $(MOSROOT),$(OUTDIR),$(PSOURCES))

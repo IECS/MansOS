@@ -1,0 +1,8 @@
+#
+# Application specific config file
+#
+
+USE_RAM_EXECUTION=y
+# using size optimizations conflicts with RAM execution, unfortunately
+# (need smarter binutils!)
+#OPTIMIZE_SIZE_EXTRA=n

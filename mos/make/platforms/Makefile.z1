@@ -59,29 +59,8 @@ PSOURCES += $(MOS)/platforms/z1/platform.c
 
 PSOURCES += $(MOS)/chips/msp430/msp430x2xx_clock.c
 
-#PSOURCES-$(USE_RADIO) += $(MOS)/chips/...
-#PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/...
-#PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2401/ds2401.c
-#PSOURCES-$(USE_ISL29003) += $(MOS)/chips/isl29003/isl29003.c
-#PSOURCES-$(USE_APDS9300) += $(MOS)/chips/apds9300/apds9300.c
-#PSOURCES-$(USE_ADS1115) += $(MOS)/chips/ads1115/ads1115.c
-
-#PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
-#PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
-#PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c
-
-
-PSOURCES += $(MOS)/platforms/telosb/platform.c
-#PSOURCES-$(USE_USER_BUTTON) += $(MOS)/platforms/telosb/user_button.c
-
 PSOURCES-$(USE_RADIO) += $(MOS)/chips/cc2420/cc2420.c
-PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
-#PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/m25p80/m25p80.c
-#PSOURCES-$(USE_ISL29003) += $(MOS)/chips/isl29003/isl29003.c
-#PSOURCES-$(USE_APDS9300) += $(MOS)/chips/apds9300/apds9300.c
-
-#PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usart.c
-#PSOURCES-$(USE_SPI) += $(MOS)/arch/msp430/arch_spi_x1xx.c
+#PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
 
 PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
 PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c

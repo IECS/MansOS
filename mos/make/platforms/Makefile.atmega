@@ -35,10 +35,6 @@ CPU_MHZ ?= 16
 
 CFLAGS += -DPLATFORM_ARDUINO=1
 
-ifeq ($(USE_HARDWARE_TIMERS),y)
-# TODO: set CONST_RAMTEXT_START to a RAM address
-endif
-
 #############################################
 # Define platform-specific sources
 # (excluding architecture-specific sources)
