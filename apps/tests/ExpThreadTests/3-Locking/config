@@ -2,4 +2,4 @@
 # Application specific config file
 #
 
-USE_EXP_THREADS=y
+USE_THREADS=y

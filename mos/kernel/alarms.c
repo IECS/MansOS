@@ -21,7 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if USE_EXP_THREADS
+#if USE_THREADS
 #include "threads/threads.h"
 #endif
 #include "alarms_system.h"
@@ -89,7 +89,7 @@ void alarmSchedule(Alarm_t *alarm, uint32_t milliseconds)
     }
     SLIST_INSERT(prev, alarm, chain);
 
-#if USE_EXP_THREADS
+#if USE_THREADS
     // always reschedule alarm processing in case some alarm was added
     // that might need to be processed before end of current kernel sleep time
     processFlags.bits.alarmsProcess = true;

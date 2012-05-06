@@ -30,13 +30,17 @@ RadioPacketBuffer_t *radioPacketBuffer;
 void radioProcess(void)
 {
     if (!radioPacketBuffer) {
+#if DEBUG
         PRINTF("got a radio packet, but no buffer!\n");
+#endif
         radioDiscard();
         return;
     }
 
     if (isRadioPacketReceived(*radioPacketBuffer)) {
+#if DEBUG
         PRINTF("got a radio packet, but the buffer is already full!\n");
+#endif
         radioDiscard();
         return;
     }

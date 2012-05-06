@@ -29,11 +29,13 @@
 #include <hil/usart.h>
 #include <avr/interrupt.h>
 
-typedef enum {
+enum ATMegaUSARTMode_e {
     UM_DISABLED,
     UM_UART,
     UM_SPI,
-} ATMegaUSARTMode_t;
+} PACKED;
+
+typedef enum ATMegaUSARTMode_e ATMegaUSARTMode_t;
 
 // actual USARTx mode (UART/SPI/I2C)
 static ATMegaUSARTMode_t usartMode[USART_COUNT] = { UM_DISABLED };

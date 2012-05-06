@@ -29,12 +29,12 @@
 
 #include <kernel/defines.h>
 #include <platform.h>
-#ifdef USE_EXP_THREADS
+#ifdef USE_THREADS
 # include <kernel/threads/threads.h>
 #endif
 
 /* Ensure we have a valid stack pointer to call functions */
-#ifdef USE_EXP_THREADS
+#ifdef USE_THREADS
 #  define RESET_SP() SET_SP(threadStackBuffer + THREAD_STACK_SIZE)
 /* It makes sense to define RESET_SP() always, but the above will fail if
  * expthreads are not linked in. It would be nice for <platform.h> to

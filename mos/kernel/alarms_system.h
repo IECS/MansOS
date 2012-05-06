@@ -43,7 +43,7 @@ void initAlarms(void);
 // or from interrupt context (when threads are not enabled)
 void alarmsProcess(void);
 
-#if USE_EXP_THREADS
+#if USE_THREADS
 // called from interrupt context
 static inline void scheduleProcessAlarms(uint32_t now)
 {
@@ -72,6 +72,6 @@ static inline bool hasAnyReadyAlarms(uint32_t now) {
     return !timeAfter32(SLIST_FIRST(&alarmListHead)->jiffies, now);
 }
 
-#endif // USE_EXP_THREADS
+#endif // USE_THREADS
 
 #endif

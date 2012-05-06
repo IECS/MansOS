@@ -58,12 +58,12 @@ PSOURCES-$(USE_NET) += $(NET)/comm.c
 PSOURCES-$(USE_NET) += $(NET)/mac.c
 PSOURCES-$(USE_NET) += $(NET)/queue.c
 
-PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/main.c
-PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/mutex.c
-PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/threads.c
-PSOURCES-$(USE_EXP_THREADS) += $(MOS)/kernel/threads/timing.c
+PSOURCES-$(USE_THREADS) += $(MOS)/kernel/threads/main.c
+PSOURCES-$(USE_THREADS) += $(MOS)/kernel/threads/mutex.c
+PSOURCES-$(USE_THREADS) += $(MOS)/kernel/threads/threads.c
+PSOURCES-$(USE_THREADS) += $(MOS)/kernel/threads/timing.c
 
-ifeq ($(USE_EXP_THREADS),y)
+ifeq ($(USE_THREADS),y)
 
 PSOURCES += $(MOS)/kernel/sleep.c
 PSOURCES-$(USE_RADIO) += $(MOS)/kernel/threads/radio.c
@@ -94,12 +94,12 @@ ifeq ($(MULTIHOP_FORWARDER),y)
 CFLAGS += -DMULTIHOP_FORWARDER=1
 endif
 
-else #! USE_EXP_THREADS
+else #! USE_THREADS
 
 PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/nothreads/timing.c
 PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/sleep.c
 
-endif # ifeq($(USE_EXP_THREADS),y)
+endif # ifeq($(USE_THREADS),y)
 
 PSOURCES-$(USE_NET) += $(MOS)/lib/buffer.c
 PSOURCES-$(USE_HD4478_LCD) += $(MOS)/chips/hd4478/hd4478.c

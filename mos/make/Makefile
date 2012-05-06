@@ -158,7 +158,7 @@ endif
 endif
 
 # for now, no support for threads on PC
-ifeq ("y", "$(USE_EXP_THREADS)")
+ifeq ("y", "$(USE_THREADS)")
 ifeq (pc,$(PLATFORM))
 PLATFORM_ACTION=platform_skip
 endif

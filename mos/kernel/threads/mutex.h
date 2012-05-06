@@ -24,7 +24,7 @@
 #ifndef MANSOS_MUTEX_H
 #define MANSOS_MUTEX_H
 
-#if USE_EXP_THREADS
+#if USE_THREADS
 
 #include "threads.h"
 
@@ -52,6 +52,6 @@ static inline void mutexInit(Mutex_t *m) {}
 static inline void mutexLock(Mutex_t *m) {}
 static inline void mutexUnlock(Mutex_t *m) {}
 
-#endif // USE_EXP_THREADS
+#endif // USE_THREADS
 
 #endif

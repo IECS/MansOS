@@ -38,13 +38,15 @@
 // Data types and constants
 //===========================================================
 
-typedef enum {
+enum Msp430USARTMode_e {
     UM_DISABLED,
     UM_UART,
     UM_SPI_MASTER,
     UM_SPI_SLAVE,
     UM_I2C
-} Msp430USARTMode_t;
+} PACKED;
+
+typedef enum Msp430USARTMode_e Msp430USARTMode_t;
 
 USARTCallback_t usartRecvCb[USART_COUNT];
 

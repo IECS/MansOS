@@ -160,9 +160,9 @@ void threadWakeup(uint16_t threadIndex, ThreadState_t newState)
 #if NUM_USER_THREADS == 1
 
 //
-// Single user thread
+// Single user thread ("policy" has no effect and is ignored)
 //
-#define SELECT_NEXT_THREAD() do {                                       \
+#define SELECT_NEXT_THREAD(policy) do {                                 \
     nextThread = currentThread;                                         \
     tmpThread = &threads[currentThread->index ^ 1];                     \
     switch (tmpThread->state) {                                         \
@@ -194,9 +194,8 @@ void threadWakeup(uint16_t threadIndex, ThreadState_t newState)
 // Multiple user threads + multiple scheduling policies
 //
 #define SELECT_NEXT_THREAD(policy)                                      \
-    for (i = 0; i < NUM_THREADS; ++i) {                                 \
-        tmpThread = &threads[(i + currentThread->index) % NUM_THREADS]; \
-                                                                        \
+    tmpThread = currentThread;                                          \
+    do {                                                                \
         switch (tmpThread->state) {                                     \
         case THREAD_SLEEPING:                                           \
             if (!timeAfter32(tmpThread->sleepEndTime, now)) {           \
@@ -221,7 +220,7 @@ void threadWakeup(uint16_t threadIndex, ThreadState_t newState)
         }                                                               \
         /* for sleeping threads, select the one that will wake up sooner */ \
         if (tmpThread->state == THREAD_SLEEPING) {                      \
-            if (!timeAfter32(nextThread->sleepEndTime, tmpThread->sleepEndTime)) { \
+            if (timeAfter32(tmpThread->sleepEndTime, nextThread->sleepEndTime)) { \
                 continue;                                               \
             }                                                           \
         } /* always prioritize kernel */                                \
@@ -231,8 +230,8 @@ void threadWakeup(uint16_t threadIndex, ThreadState_t newState)
             continue;                                                   \
         }                                                               \
         else if (policy == SCHEDULING_POLICY_ROUND_ROBIN) {             \
-            /* for awake threads, select the one that was running least recently */ \
-            if (timeAfter32(getLastSeenRunning(tmpThread), getLastSeenRunning(nextThread))) { \
+            /* for awake threads, select the one that was running least recently */  \
+            if (timeAfter32(getLastSeenRunning(tmpThread), getLastSeenRunning(nextThread)))  { \
                 continue;                                               \
             }                                                           \
         } else if (policy == SCHEDULING_POLICY_PRIORITY_BASED) {        \
@@ -243,7 +242,12 @@ void threadWakeup(uint16_t threadIndex, ThreadState_t newState)
         }                                                               \
       useTmp:                                                           \
         nextThread = tmpThread;                                         \
-    }
+                                                                        \
+        tmpThread++;                                                    \
+        if (tmpThread >= threads + NUM_THREADS) {                       \
+            tmpThread = threads;                                        \
+        }                                                               \
+    } while (tmpThread != currentThread);
 #endif
 
 //
@@ -254,9 +258,6 @@ NO_EPILOGUE void schedule(void)
     static Thread_t *nextThread;
     static Thread_t *tmpThread;
     static uint32_t now;
-#if NUM_USER_THREADS > 1
-    static uint16_t i;
-#endif
 
     SAVE_ALL_REGISTERS();
     now = jiffies;

@@ -5,7 +5,7 @@
 # hopeless to fit this on farmmote
 PLATFORM_EXCLUDE=farmmote
 
-USE_EXP_THREADS=y
+USE_THREADS=y
 USE_RADIO=y
 USE_NET=y
 
