@@ -22,7 +22,7 @@
  */
 
 #include <platform.h>
-#if USE_EXP_THREADS
+#if USE_THREADS
 #include "threads/threads.h"
 #endif
 
@@ -41,7 +41,7 @@ SLEEP_TIMER_INTERRUPT()
     // sleep timer should not automatically restart
     SLEEP_TIMER_STOP();
 
-#if USE_EXP_THREADS
+#if USE_THREADS
     // wake up the current thread
     threadWakeup(currentThread->index, THREAD_RUNNING);
 #endif
@@ -54,7 +54,7 @@ SLEEP_TIMER_INTERRUPT()
 
 #ifndef PLATFORM_PC
 
-#if USE_EXP_THREADS
+#if USE_THREADS
 #define MSLEEP_FUNCTION_NAME doMsleep
 #else
 #define MSLEEP_FUNCTION_NAME msleep

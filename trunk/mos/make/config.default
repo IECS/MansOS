@@ -66,8 +66,8 @@ USE_SOFT_I2C ?= n
 # timers are needed for e.g. USART communication and alarms; disable with care!
 USE_HARDWARE_TIMERS ?= y
 
-# experimental threading model
-USE_EXP_THREADS ?= n
+# threads
+USE_THREADS ?= n
 
 # execute from RAM, not from flash?
 USE_RAM_EXECUTION ?= n

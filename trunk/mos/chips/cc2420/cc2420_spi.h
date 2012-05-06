@@ -88,6 +88,7 @@
         CC2420_SPI_DISABLE();                   \
     } while (0)
 
+// For Z1 platform: may want to look at CC2420_WRITE_REG() in Contiki.
 #define CC2420_SETREG(a,v)                      \
    do {                                         \
         CC2420_SPI_ENABLE();                    \

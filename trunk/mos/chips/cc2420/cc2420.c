@@ -536,7 +536,7 @@ ISR(PORT1, cc2420Interrupt)
 
     // USARTSendByte(1, 'I');
 
-#if USE_EXP_THREADS
+#if USE_THREADS
     // simply set the "interrupt happened" flag
     processFlags.bits.radioProcess = true;
     // XXX: add support for "wake on radio"?

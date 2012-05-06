@@ -32,7 +32,7 @@
 #include <kernel/defines.h>
 #include <platform.h>
 
-#ifdef USE_EXP_THREADS
+#ifdef USE_THREADS
 // use thread specific sleep instead.
 #include <threads/threads.h>
 #endif

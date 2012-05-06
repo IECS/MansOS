@@ -500,7 +500,7 @@ bool mrf24j40PollForPacket(void)
     if (intstat.bits.RF_RXIF) {
         RPRINTF("got radio RX int!\n");
 
-#if USE_EXP_THREADS
+#if USE_THREADS
         if (mrf24j40IsOn) {
             process = true;
         } else {
@@ -531,7 +531,7 @@ bool mrf24j40PollForPacket(void)
         resetRx();
     }
 
-#if USE_EXP_THREADS    
+#if USE_THREADS    
     if (process) processFlags.bits.radioProcess = true;
 #endif
     return process;

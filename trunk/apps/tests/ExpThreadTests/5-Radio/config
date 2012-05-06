@@ -2,7 +2,7 @@
 # Application specific config file
 #
 
-USE_EXP_THREADS=y
+USE_THREADS=y
 USE_RADIO=y
 
 CONST_MAX_KERNEL_SLEEP_TIME=300

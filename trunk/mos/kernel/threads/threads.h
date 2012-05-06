@@ -40,7 +40,7 @@
 #if PLATFORM_FARMMOTE
 #define THREAD_STACK_SIZE 128
 #else
-#define THREAD_STACK_SIZE 512
+#define THREAD_STACK_SIZE 256
 #endif
 
 #if DEBUG
@@ -54,19 +54,31 @@
 #define SCHEDULING_POLICY SCHEDULING_POLICY_ROUND_ROBIN
 #endif
 
+#if DEBUG_THREADS
+#define SAVE_THREAD_LAST_RUN_TIME 1
+#endif
+#if NUM_USER_THREADS > 1
+#if SCHEDULING_POLICY == SCHEDULING_POLICY_ROUND_ROBIN
+#define SAVE_THREAD_LAST_RUN_TIME 1
+#endif
+#endif
+
+
 // ----------------------------------------------------------------
 // Types
 // ----------------------------------------------------------------
 
 typedef void (*ThreadFunc)(void);
 
-typedef enum ThreadState_e {
+enum ThreadState_e {
     THREAD_UNUSED,
     THREAD_BLOCKED,
     THREAD_SLEEPING,
     THREAD_READY,
     THREAD_RUNNING,
-} ThreadState_t;
+} PACKED;
+
+typedef enum ThreadState_e ThreadState_t;
 
 typedef struct Thread_s {
     MemoryAddress_t sp;     // stack pointer
@@ -75,7 +87,7 @@ typedef struct Thread_s {
     ThreadState_t state;    // state (running, ready, etc.)
     ThreadFunc function;    // thread start function
     uint32_t sleepEndTime;  // in jiffies, defined when state is THREAD_SLEEPING
-#if DEBUG_THREADS || SCHEDULING_POLICY == SCHEDULING_POLICY_ROUND_ROBIN
+#if SAVE_THREAD_LAST_RUN_TIME
     uint32_t lastSeenRunning; // used for lockup detection, and for scheduling
 #endif
 } Thread_t;
@@ -164,13 +176,13 @@ void checkThreadLockups(void);
 #endif
 
 static inline void setSeenRunning(Thread_t *t) {
-#if DEBUG_THREADS || SCHEDULING_POLICY == SCHEDULING_POLICY_ROUND_ROBIN
+#if SAVE_THREAD_LAST_RUN_TIME
     t->lastSeenRunning = getJiffies();
 #endif
 }
 
 static inline uint32_t getLastSeenRunning(Thread_t *t) {
-#if DEBUG_THREADS || SCHEDULING_POLICY == SCHEDULING_POLICY_ROUND_ROBIN
+#if SAVE_THREAD_LAST_RUN_TIME
     return t->lastSeenRunning;
 #else
     return 0;
