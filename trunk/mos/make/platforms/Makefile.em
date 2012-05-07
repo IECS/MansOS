@@ -50,4 +50,4 @@ CFLAGS += -DPLATFORM_EM=1
 
 PSOURCES += $(MOS)/platforms/em/platform.c
 PSOURCES += $(MOS)/chips/msp430/msp430x1xx_clock.c
-
+PSOURCES-$(USE_ADS1115) += $(MOS)/chips/ads1115/ads1115.c
