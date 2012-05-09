@@ -31,10 +31,10 @@
 // #define RADIO_CHIP RADIO_CHIP_CC2420
 // #endif
 
-#include <platform_radio.h> // in platform's directory
-
 #ifndef RADIO_CHIP
-#error Radio chip not defined for this platform!
+#include <arch/null_radio.h>
+#else
+#include <platform_radio.h>
 #endif
 
 #endif

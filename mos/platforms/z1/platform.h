@@ -28,6 +28,7 @@
 #include <msp430/msp430_timers.h>
 #include <msp430/msp430_int.h>
 #include <msp430/msp430_adc.h>
+#include <msp430/msp430_usci.h>
 
 #include "cc2420_pins.h"
 #include "sht_pins.h"

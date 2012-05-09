@@ -34,7 +34,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include "usart_hal.h"
+#include "platform.h"
 
 //===========================================================
 // Variables

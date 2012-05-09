@@ -28,6 +28,7 @@
 #include <msp430/msp430_timers.h>
 #include <msp430/msp430_int.h>
 #include <msp430/msp430_adc.h>
+#include <msp430/msp430_usart.h>
 
 //===========================================================
 // Functions
@@ -38,8 +39,6 @@ void initPlatform(void);
 //===========================================================
 // Data types and constants
 //===========================================================
-
-#define RADIO_CHIP RADIO_CHIP_CC2420 // XXX
 
 //----- LEDs for EM platform.h -----
 // On EM LEDs are attached to port 5, pins 4-6 (same as TelosB)

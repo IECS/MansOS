@@ -24,6 +24,8 @@
 #include "msp430_timers.h"
 #include <hil/timers.h>
 
+#ifdef TBCCR0_ // only if the platform has timer B available
+
 void msp430TimerBSet(uint16_t ms)
 {
     if (ms > PLATFORM_MAX_SLEEP_MS) {
@@ -35,3 +37,5 @@ void msp430TimerBSet(uint16_t ms)
     incRealtime(ms);
     TBCCR0 = TBR + ocr;
 }
+
+#endif

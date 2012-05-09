@@ -3,6 +3,6 @@
 #
 
 # only for telosb
-PLATFORM_ONLY=telosb
+PLATFORM_ONLY=telosb launchpad
 
 USE_USER_BUTTON=y

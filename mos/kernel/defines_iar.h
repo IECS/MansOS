@@ -38,6 +38,9 @@
 #define PRAGMA(x) _Pragma(#x)
 #define MESSAGE(x) PRAGMA(message(x))
 #define ISR(vec, name) PRAGMA(vector=vec ## _VECTOR) __interrupt void name(void)
+// use XISR instead of ISR if symbolic names are wanted
+#define XXISR(port, func) ISR(PORT ## port, func)
+#define XISR(port, func)  XXISR(port, func)
 #define ASM_VOLATILE(x) asm(x)
 // attribute for a function place in RAM (i.e. .data section) instead of flash
 //# define RAMFUNC __ramfunc   // already defined in IAR headers!

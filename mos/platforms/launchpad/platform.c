@@ -27,14 +27,21 @@
 #include "platform.h"
 #include "user_button.h"
 
+// no clock calibration for launchpad (?)
+void msp430InitClocks(void)
+{
+    // initialize main timers in system mode (no timer B available)
+    msp430InitTimerA();
+}
+
 //----------------------------------------------------------
 //      Init the platform as if on cold reset
 //----------------------------------------------------------
 void initPlatform(void)
 {
-#if USE_HARDWARE_TIMERS
+//#if USE_HARDWARE_TIMERS
     msp430InitClocks();
-#endif
+//#endif
 #if USE_USER_BUTTON
     userButtonInit();
 #endif

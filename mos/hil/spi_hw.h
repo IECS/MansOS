@@ -31,7 +31,7 @@
 #define MANSOS_SPI_HW_H
 
 #include <stdtypes.h>
-#include <arch_spi.h>
+#include <platform.h>
 
 /**
  * Initializes SPI bus in either master or slave mode

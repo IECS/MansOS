@@ -27,6 +27,9 @@
 #include <atmega/atmega_timers.h>
 #include <atmega/atmega_int.h>
 #include <atmega/atmega_adc.h>
+#include <atmega/atmega_usart.h>
+
+#include <arch/null_spi.h>
 
 #include <hil/gpio.h>
 

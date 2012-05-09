@@ -21,45 +21,25 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "user_button.h"
+//
+// Empty SPI implementation
+//
 
-// User button is connected to Port 2.7
-// rising edge signals button release. falling: button press
+#ifndef NULL_SPI_H
+#define NULL_SPI_H
 
-static ButtonFunc_p callback;
-ButtonState_t state;
-
-ButtonState_t userButtonGet(void) {
-    return state;
+static inline int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode) {
+    return 0;
 }
 
-void userButtonEnable(ButtonFunc_p handler) {
-    // start with a released state and wait for falling edge (button press)
-    callback = handler;
-    state = BUTTON_RELEASED;
-    PIN_ENABLE_INT(2, 7);
-    PIN_INT_FALLING(2, 7);
+static inline void hw_spiBusOn(uint8_t busId) {
 }
 
-void userButtonDisable(void) {
-    PIN_DISABLE_INT(2, 7);
+static inline void hw_spiBusOff(uint8_t busId) {
 }
 
-ISR(PORT2, user_button_interrupt)
-{
-    if (PIN_READ_INT_FLAG(2, 7)) {
-        // PIN 7 generated interrupt
-
-        // switch between the int edge: rising/falling
-        // and change the cached state
-        if (PIN_IS_INT_RISING(2, 7)) {
-            state = BUTTON_RELEASED;
-            PIN_INT_FALLING(2, 7);
-        } else {
-            state = BUTTON_PRESSED;
-            PIN_INT_RISING(2, 7);
-        }
-        if (callback) callback();
-        PIN_CLEAR_INT_FLAG(2, 7); // do not forget to clear the int flag!
-    }
+static inline uint8_t hw_spiExchByte(uint8_t busId, uint8_t b) {
+    return 0;
 }
+
+#endif

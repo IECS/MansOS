@@ -28,6 +28,7 @@
 #include <msp430/msp430_timers.h>
 #include <msp430/msp430_int.h>
 #include <msp430/msp430_adc.h>
+#include <msp430/msp430_usart.h>
 
 #include "mrf24j40_pins.h"
 #include "at25df_pins.h"

@@ -1,5 +1,6 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2011, Institute of Electronics and Computer Science
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,54 +22,27 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MSP430_SPI_X1XX_H
-#define MSP430_SPI_X1XX_H
+#ifndef _PLATFORM_LAUNCHPAD_FLASH_H_
+#define _PLATFORM_LAUNCHPAD_FLASH_H_
 
-#include <hil/gpio.h>
-#include <msp430/msp430_usart.h>
+// The values correspond to the MSP430G2231 MCU
 
-//
-// SPI bus configuration for the MSP430 x1xx
-//
+// Flash memory location and size
+#define MSP430_FLASH_START 0xF800
+#define MSP430_FLASH_END   0xFFDE
+#define MSP430_FLASH_SIZE  (0xFFFF - MSP430_FLASH_START + 1)
 
-/**
- * Initializes SPI bus in either master or slave mode
- * Does not change any Slave-Select pins!
+// Flash segment (minimal erasable unit) size
+#define MSP430_FLASH_SEGMENT_SIZE  512
 
- * @param   busId   SPI bus ID
- * @param   mode    SPI bus mode: either master or slave
- * @return  0       on success, -1 on error
- */
-static inline int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode) {
-    return msp430USARTInitSPI(busId, spiBusMode);
-}
+// Flash block (maximal writable-at-once unit) size
+#define MSP430_FLASH_BLOCK_SIZE    64
 
-/**
- * Turn on the SPI bus, provide bus ID (starting from 0)
- * On MSP430, USART TX/RX is used for SPI TX/RX
- * @param   busId   SPI bus ID
- */
-static inline void hw_spiBusOn(uint8_t busId) {
-    // enable tx and rx
-    if (busId == 0) {
-        U0ME |= (UTXE0 | URXE0);
-    } else {
-        U1ME |= (UTXE1 | URXE1);
-    }
-}
+// Information memory: four segments of 64 bytes each
+#define MSP430_FLASH_INFOMEM_START 0x1000
+#define MSP430_FLASH_INFOMEM_END   0x10FF
 
-/**
- * Turn off the SPI bus, provide bus ID (starting from 0)
- * On MSP430, USART TX/RX is used for SPI TX/RX
- * @param   busId   SPI bus ID
- */
-static inline void hw_spiBusOff(uint8_t busId) {
-    // disable tx and rx
-    if (busId == 0) {
-        U0ME &= ~(UTXE0 | URXE0);
-    } else {
-        U1ME &= ~(UTXE1 | URXE1);
-    }
-}
+// Information memory segment size
+#define MSP430_FLASH_INFOMEM_SEGMENT_SIZE  64
 
 #endif

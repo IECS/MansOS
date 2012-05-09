@@ -52,7 +52,7 @@ PSOURCES += $(MOS)/platforms/telosb/platform.c
 
 PSOURCES += $(MOS)/chips/msp430/msp430x1xx_clock.c
 
-PSOURCES-$(USE_USER_BUTTON) += $(MOS)/platforms/telosb/user_button.c
+PSOURCES-$(USE_USER_BUTTON) += $(MOS)/arch/msp430/user_button.c
 
 PSOURCES-$(USE_RADIO) += $(MOS)/chips/cc2420/cc2420.c
 PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
@@ -61,4 +61,4 @@ PSOURCES-$(USE_ISL29003) += $(MOS)/chips/isl29003/isl29003.c
 PSOURCES-$(USE_APDS9300) += $(MOS)/chips/apds9300/apds9300.c
 
 PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usart.c
-PSOURCES-$(USE_SPI) += $(MOS)/arch/msp430/arch_spi_x1xx.c
+PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usart_spi.c

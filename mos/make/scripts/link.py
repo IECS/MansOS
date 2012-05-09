@@ -159,7 +159,7 @@ def find_needed_objects(app_o, system_o):
             progress = True
             break
 
-    if len(unresolved) != 0 and arch != 'waspmote':
+    if len(unresolved) != 0:
         print "Warning: not all symbols found! Still unresolved:"
         print unresolved
 

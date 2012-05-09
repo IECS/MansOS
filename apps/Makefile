@@ -5,7 +5,8 @@
 #   (telosb must have all targets, otherwise they will not be cleared)
 #
 
-PLATFORMS = pc telosb sadmote farmmote arduino 
+PLATFORMS = pc telosb sadmote farmmote arduino z1
+# launchpad
 
 DEMO_TARGETS = \
 	Blink					\
@@ -89,11 +90,16 @@ SEAL_TARGETS = \
 	Custom					\
 	Sensors					\
 
+#COMMON_TARGETS = \
+#	$(foreach t,$(DEMO_TARGETS),demo/$(t)) \
+#	$(foreach t,$(ADVANCED_TARGETS),advanced/$(t)) \
+#	$(foreach t,$(TEST_TARGETS),tests/$(t)) \
+#	$(foreach t,$(SEAL_TARGETS),seal/$(t))
+
 COMMON_TARGETS = \
 	$(foreach t,$(DEMO_TARGETS),demo/$(t)) \
 	$(foreach t,$(ADVANCED_TARGETS),advanced/$(t)) \
-	$(foreach t,$(TEST_TARGETS),tests/$(t)) \
-	$(foreach t,$(SEAL_TARGETS),seal/$(t))
+	$(foreach t,$(TEST_TARGETS),tests/$(t))
 
 # -- generic part follows
 
