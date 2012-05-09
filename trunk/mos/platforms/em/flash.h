@@ -20,37 +20,11 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * flash.h -- Internal flash memory constants
  */
 
 #ifndef _PLATFORM_EM_FLASH_H_
 #define _PLATFORM_EM_FLASH_H_
 
-//
-// On MSP430-F1611 (e.g. TelosB) 48kb internal flash memory is present.
-//
-#define MSP430_FLASH_START 0x4000
-#define MSP430_FLASH_END   0xFFE0 // End of the flash memory: interrupt vector start
-#define MSP430_FLASH_SIZE  (0xFFFF - MSP430_FLASH_START + 1)
+#include "../telosb/flash.h"
 
-//
-// Flash segment size (this is the minimal flash area that can be erased)
-//
-#define MSP430_FLASH_SEGMENT_SIZE  512
-//
-// Flash block size (this is the maximal flash area that can be written at once)
-//
-#define MSP430_FLASH_BLOCK_SIZE    64
-
-//
-// Flash Information Memory range: 256 bytes in two 128-byte segments
-//
-#define MSP430_FLASH_INFOMEM_START 0x1000
-#define MSP430_FLASH_INFOMEM_END   0x10FF
-//
-// Flash Information Memory segment size
-//
-#define MSP430_FLASH_INFOMEM_SEGMENT_SIZE  128
-
-#endif /* _PLATFORM_TELOSB_FLASH_H_ */
+#endif

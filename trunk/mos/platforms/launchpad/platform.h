@@ -31,4 +31,12 @@
 
 void initPlatform(void);
 
-#endif  // _PLATFORM_HPL_H_
+#define USER_BUTTON_PORT 1
+#define USER_BUTTON_PIN  3
+
+// number of USARTs
+#define USART_COUNT 1
+// use the only "USART" for PRINTF
+#define PRINTF_USART_ID 0
+
+#endif

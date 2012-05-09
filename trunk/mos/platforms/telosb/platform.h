@@ -28,6 +28,7 @@
 #include <msp430/msp430_timers.h>
 #include <msp430/msp430_int.h>
 #include <msp430/msp430_adc.h>
+#include <msp430/msp430_usart.h>
 
 #include "cc2420_pins.h"
 #include "hd4478_pins.h"
@@ -60,5 +61,8 @@ void initPlatform(void);
 #define RADIO_CHIP RADIO_CHIP_CC2420
 
 #define SNUM_CHIP SNUM_DS2411
+
+#define USER_BUTTON_PORT 2
+#define USER_BUTTON_PIN  7
 
 #endif

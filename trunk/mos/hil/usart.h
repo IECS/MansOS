@@ -28,8 +28,7 @@
 #ifndef _MANSOS_USART_H_
 #define _MANSOS_USART_H_
 
-#include <kernel/defines.h>
-#include "usart_hal.h"
+#include <platform.h>
 
 //===========================================================
 // Macros

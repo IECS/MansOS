@@ -53,4 +53,4 @@
 //
 #define MSP430_FLASH_INFOMEM_SEGMENT_SIZE  128
 
-#endif /* _PLATFORM_TELOSB_FLASH_H_ */
+#endif

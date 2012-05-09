@@ -30,7 +30,7 @@
 static uint8_t radioBuffer[RADIO_MAX_PACKET];
 static char serialBuffer[255];
 
-void recvRadio(void) 
+void recvRadio(void)
 {
     int16_t len;
 

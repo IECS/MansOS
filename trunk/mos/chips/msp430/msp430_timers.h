@@ -126,13 +126,13 @@ enum {
 #define msp430InitTimerA() \
     /* begin reset/init */ \
     TACTL = TACLR; \
-    /* source: 32768Hz ACLK, interrupt enabled. */ \
-    TACTL = TASSEL_ACLK | ID_DIV1 | /*TAIE | */ CNTL_0;  \
+    /* source: 32768Hz ACLK, DIV = 1, interrupt disabled */ \
+    TACTL = TASSEL_ACLK | ID_DIV1;  \
     /* clear all other registers */ \
     TAR = 0; \
-    TACCTL0 = TACCTL1 = TACCTL2 = 0; \
+    TACCTL0 = TACCTL1 = 0; \
     TACCR0 = TACCR1 = 0; \
-    /* we want the timer to work every single HZ */             \
+    /* we want the timer to work every single HZ */ \
     TACCR0 = PLATFORM_ALARM_TIMER_PERIOD; \
 
 #define msp430InitTimerB() \

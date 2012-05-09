@@ -29,6 +29,7 @@
 #include <msp430/msp430_timers.h>
 #include <msp430/msp430_int.h>
 #include <msp430/msp430_adc10.h>
+#include <msp430/msp430_usci.h>
 
 #include "flash.h"
 

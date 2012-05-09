@@ -55,6 +55,10 @@
 #ifndef ISR // Interrupt Service Routine syntax
 #define ISR(vec, name) interrupt(vec ## _VECTOR) name(void)
 #endif
+// use XISR instead of ISR if symbolic names are wanted
+#define XXISR(port, func) ISR(PORT ## port, func)
+#define XISR(port, func)  XXISR(port, func)
+
 #define ASM_VOLATILE(x) __asm__ __volatile__(x)
 #define RAMFUNC __attribute__ ((section (".data")))
 

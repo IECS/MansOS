@@ -3,7 +3,7 @@
 #
 
 USE_REPROGRAMMING=n
-PLATFORM_EXCLUDE=pc farmmote
+PLATFORM_EXCLUDE=pc farmmote atmega
 
 USE_SMP=y
 USE_HUMIDITY=y

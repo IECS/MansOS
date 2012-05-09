@@ -22,29 +22,30 @@
  */
 
 //
-// PC USART
+// SPI bus configuration for the MSP430 x1xx
 //
 
-#ifndef _usart_hal_h_
-#define _usart_hal_h_
+#include "msp430_usart_spi.h"
 
-#include  "stdio.h"
-
-//===========================================================
-// Data types and constants
-//===========================================================
-// available USART count (1 virtual)
-#define USART_COUNT 1
-
-// use the only "USART" for PRINTF
-#define PRINTF_USART_ID 0
-
-//===========================================================
-// Procedures
-//===========================================================
-
-
-//===========================================================
-//===========================================================
-
-#endif  // _usart_hal_h_
+/**
+ * Exchange byte with a slave: write a byte to SPI and returns response,
+ * received from the slave in full-duplex mode
+ * Does not change any Slave-Select pin!
+ *
+ * @param   busId   SPI bus ID
+ * @param   b       byte to transmit
+ * @return          byte received from the slave
+ */
+uint8_t hw_spiExchByte(uint8_t busId, uint8_t b) {
+    if (busId == 0) {
+        U0TXBUF = b;
+        while ((U0TCTL & TXEPT) == 0);
+        while ((IFG1 & URXIFG0) == 0);
+        return U0RXBUF;
+    } else {
+        U1TXBUF = b;
+        while ((U1TCTL & TXEPT) == 0);
+        while ((IFG2 & URXIFG1) == 0);
+        return U1RXBUF;
+    }
+}

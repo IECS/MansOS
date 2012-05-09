@@ -87,6 +87,7 @@
 #define pinDisableInt( po, pi ) PIN_DISABLE_INT( po, pi )
 #define pinIntRising( po, pi ) PIN_INT_RISING( po, pi )
 #define pinIntFalling( po, pi ) PIN_INT_FALLING( po, pi )
+#define pinIsIntRising( po, pi ) PIN_IS_INT_RISING( po, pi )
 #define pinReadIntFlag( po, pi ) PIN_READ_INT_FLAG( po, pi )
 #define pinClearIntFlag( po, pi ) PIN_CLEAR_INT_FLAG( po, pi )
 

@@ -21,9 +21,46 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MOS_USART_HAL_H
-#define MOS_USART_HAL_H
+#include "user_button.h"
 
-#include <atmega/atmega_usart.h>
+// On TelosB User button is connected to port 2.7
+// Rising edge signals button release, falling: button press.
 
-#endif
+static ButtonFunc_p callback;
+ButtonState_t state;
+
+ButtonState_t userButtonGet(void) {
+    return state;
+}
+
+void userButtonEnable(ButtonFunc_p handler) {
+    // start with a released state and wait for falling edge (button press)
+    callback = handler;
+    state = BUTTON_RELEASED;
+    pinEnableInt(USER_BUTTON_PORT, USER_BUTTON_PIN);
+    pinIntFalling(USER_BUTTON_PORT, USER_BUTTON_PIN);
+}
+
+void userButtonDisable(void) {
+    pinDisableInt(USER_BUTTON_PORT, USER_BUTTON_PIN);
+}
+
+XISR(USER_BUTTON_PORT, userNuttonInterrupt)
+{
+    if (pinReadIntFlag(USER_BUTTON_PORT, USER_BUTTON_PIN)) {
+        // PIN generated interrupt
+
+        // switch between the int edge: rising/falling
+        // and change the cached state
+        if (pinIsIntRising(USER_BUTTON_PORT, USER_BUTTON_PIN)) {
+            state = BUTTON_RELEASED;
+            pinIntFalling(USER_BUTTON_PORT, USER_BUTTON_PIN);
+        } else {
+            state = BUTTON_PRESSED;
+            pinIntRising(USER_BUTTON_PORT, USER_BUTTON_PIN);
+        }
+        if (callback) callback();
+        // do not forget to clear the int flag!
+        pinClearIntFlag(USER_BUTTON_PORT, USER_BUTTON_PIN);
+    }
+}

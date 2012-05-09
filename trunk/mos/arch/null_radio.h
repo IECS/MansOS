@@ -1,6 +1,5 @@
 /**
- * Copyright (c) 2011, Institute of Electronics and Computer Science
- * All rights reserved.
+ * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -22,17 +21,58 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MSP430_SPI_H_
-#define _MSP430_SPI_H_
+#ifndef NULL_RADIO_H
+#define NULL_RADIO_H
 
-#include <kernel/defines.h>
+static inline void radioInit(void) {
+}
 
-// TODO: Fix this mess
-#if defined(__msp430x22x4) || defined(__msp430x22x2) || \
-    defined(__MSP430F2252__) || defined(__msp430x54xA) || defined(__msp430x26x)
-#  include <msp430/msp430_usci.h>
-#else // Assume x1xx
-#  include <arch_spi_x1xx.h>
+static inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
+                                     const void *data, uint16_t dataLength) {
+    return 0;
+}
+
+static inline int16_t radioRecv(void *buffer, uint16_t bufferLength) {
+    return 0;
+}
+
+static inline void radioDiscard(void) {
+}
+
+static inline RadioRecvFunction radioSetReceiveHandle(RadioRecvFunction functionHandle) {
+    return 0;
+}
+
+static inline void radioOn(void) {
+}
+
+static inline void radioOff(void) {
+}
+
+static inline int radioGetRSSI(void) {
+    return 0;
+}
+
+static inline int8_t radioGetLastRSSI(void) {
+    return 0;
+}
+
+static inline uint8_t radioGetLastLQI(void) {
+    return 0;
+}
+
+static inline void radioSetChannel(int channel) {
+}
+
+static inline void radioSetTxPower(uint8_t power) {
+}
+
+static inline bool radioIsChannelClear(void) {
+    return true;
+}
+
+#define RADIO_MAX_PACKET          0
+#define RADIO_TX_POWER_MIN        0
+#define RADIO_TX_POWER_MAX        0
+
 #endif
-
-#endif // _MSP430_SPI_H_

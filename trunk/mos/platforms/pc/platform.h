@@ -25,10 +25,13 @@
 #define _PLATFORM_PC_H_
 
 #include <unistd.h>
+#include <stdio.h>
 #include "sem_hal.h"
 #include "leds_hal.h"
 #include "alarms_hal.h"
 #include "adc_hal.h"
+
+#include <arch/null_spi.h>
 
 #include <hil/gpio.h>
 
@@ -82,5 +85,11 @@ enum {
 #define ATOMIC_END(x)   ((void) x)
 
 // LEDs: all present! Defined in pc/ledslist.h
+
+// number of USARTs
+#define USART_COUNT 1
+// use the only "USART" for PRINTF
+#define PRINTF_USART_ID 0
+
 
 #endif

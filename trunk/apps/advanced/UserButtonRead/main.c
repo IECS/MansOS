@@ -32,11 +32,13 @@
 static bool stateChanged;
 
 void printUserButtonState(const ButtonState_t s) {
+#if USE_PRINT
     if (s == BUTTON_PRESSED) {
         PRINTLN("Button Pressed");
     } else {
         PRINTLN("Button Released");
     }
+#endif
 }
 
 void buttonStateChanged() {
@@ -58,7 +60,7 @@ void appMain(void)
         }
 
         mdelay(100);
-        redLedToggle();
+        //redLedToggle();
     }
 }
 

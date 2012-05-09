@@ -21,45 +21,44 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "user_button.h"
+//
+// MSP430 User Button
+//
 
-// User button is connected to Port 1.3
-// rising edge signals button release. falling: button press
+#ifndef _USER_BUTTON_HAL_H_
+#define _USER_BUTTON_HAL_H_
 
-static ButtonFunc_p callback;
-ButtonState_t state;
+#include <hil/gpio.h>
+#include <platform.h>
 
-ButtonState_t userButtonGet(void) {
-    return state;
+//===========================================================
+// Data types and constants
+//===========================================================
+
+enum ButtonState_e {
+    BUTTON_RELEASED = 0,
+    BUTTON_PRESSED = 1
+} PACKED;
+
+typedef enum ButtonState_e ButtonState_t;
+
+typedef void (*ButtonFunc_p)(void);
+
+//===========================================================
+// Functions
+//===========================================================
+
+static inline void userButtonInit(void) {
+    pinAsInput(USER_BUTTON_PORT, USER_BUTTON_PIN);
 }
 
-void userButtonEnable(ButtonFunc_p handler) {
-    // start with a released state and wait for falling edge (button press)
-    callback = handler;
-    state = BUTTON_RELEASED;
-    PIN_ENABLE_INT(1, 3);
-    PIN_INT_FALLING(1, 3);
-}
+// starts catching user button ints and sets callback
+void userButtonEnable(ButtonFunc_p handler);
 
-void userButtonDisable(void) {
-    PIN_DISABLE_INT(1, 3);
-}
+// disables listening
+void userButtonDisable(void);
 
-ISR(PORT2, user_button_interrupt)
-{
-    if (PIN_READ_INT_FLAG(1, 3)) {
-        // PIN 7 generated interrupt
+// returns actual state of user button
+ButtonState_t userButtonGet(void);
 
-        // switch between the int edge: rising/falling
-        // and change the cached state
-        if (PIN_IS_INT_RISING(1, 3)) {
-            state = BUTTON_RELEASED;
-            PIN_INT_FALLING(1, 3);
-        } else {
-            state = BUTTON_PRESSED;
-            PIN_INT_RISING(1, 3);
-        }
-        if (callback) callback();
-        PIN_CLEAR_INT_FLAG(1, 3); // do not forget to clear the int flag!
-    }
-}
+#endif

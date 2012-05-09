@@ -24,7 +24,7 @@
 #ifndef MSP430_USART_H
 #define MSP430_USART_H
 
-#include <kernel/defines.h>
+#include "msp430_usart_spi.h"
 
 //===========================================================
 // Data types and constants
@@ -71,8 +71,6 @@ extern volatile uint8_t * const UxTXBUF[USART_COUNT];
 extern volatile const uint8_t * const UxRXBUF[USART_COUNT];
 
 // Not on all platforms SPI and I2C is part of USART
-uint_t msp430USARTInitSPI(uint8_t id, uint_t spiBusMode);
 uint_t msp430USARTInitI2C(uint8_t id);
 
-
-#endif // !MSP430_USART_H
+#endif

@@ -52,7 +52,7 @@ SLEEP_TIMER_INTERRUPT()
 
 #endif // !CUSTOM_TIMER_INTERRUPT_HANDLERS
 
-#ifndef PLATFORM_PC
+#if defined TBCTL_ || defined TOIE1 // only for platforms where timer B is available
 
 #if USE_THREADS
 #define MSLEEP_FUNCTION_NAME doMsleep
@@ -72,4 +72,4 @@ void MSLEEP_FUNCTION_NAME(uint16_t milliseconds)
     ENTER_SLEEP_MODE();
 }
 
-#endif // !PLATFORM_PC
+#endif
