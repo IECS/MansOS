@@ -25,12 +25,8 @@
 #define MOS_HIL_TIMERS_H
 
 #include <platform.h>
-
-// #if PLATFORM_PC
-// uint32_t getRealTime(void);
-// #else
 #include <kernel/threads/timing.h>
-#include <atomic.h>
+#include <hil/atomic.h>
 
 extern volatile uint32_t jiffies;
 

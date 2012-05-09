@@ -623,7 +623,6 @@ void cc2420ContinousWave(bool on)
     }
 }
 
-#include "dprint.h"
 //
 // Configure CCA with specific values
 //

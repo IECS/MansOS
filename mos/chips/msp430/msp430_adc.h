@@ -64,7 +64,7 @@
 #define SHT1_3 ADC12SHT13
 #endif
 
-#ifndef ENC
+#if !defined ENC && !defined __IAR_SYSTEMS_ICC__
 #define ENC         ADC12ENC
 #define SHP         ADC12SHP
 #define CSTARTADD_2 ADC12CSTARTADD2
