@@ -54,11 +54,11 @@
         </option>
         <option>
           <name>RTConfigPath</name>
-          <state>$TOOLKIT_DIR$\LIB\DLIB\dl430fn.h</state>
+          <state>$TOOLKIT_DIR$\LIB\DLIB\dl430xsfn.h</state>
         </option>
         <option>
           <name>RTLibraryPath</name>
-          <state>$TOOLKIT_DIR$\LIB\DLIB\dl430fn.r43</state>
+          <state>$TOOLKIT_DIR$\LIB\DLIB\dl430xsfn.r43</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -105,11 +105,11 @@
         </option>
         <option>
           <name>GStackSize2</name>
-          <state>80</state>
+          <state>160</state>
         </option>
         <option>
           <name>GHeapSize2</name>
-          <state>80</state>
+          <state>160</state>
         </option>
         <option>
           <name>RadioDataModelType</name>
@@ -169,14 +169,12 @@
           <state>MCU_MSP430=1</state>
           <state>USE_KERNEL_MAIN</state>
           <state>USE_HARDWARE_TIMERS</state>
-          <state>USE_ADC</state>
           <state>USE_SERIAL</state>
           <state>USE_SPI</state>
           <state>USE_CRC</state>
           <state>USE_LEDS</state>
           <state>USE_ALARMS</state>
           <state>USE_ASSERT</state>
-          <state>USE_RADIO</state>
           <state>USE_PRINT</state>
         </option>
         <option>
@@ -332,7 +330,7 @@
           <name>newCCIncludePaths</name>
           <state>$PROJ_DIR$\..\..\..\mos</state>
           <state>$PROJ_DIR$\..\..\..\mos\kernel</state>
-          <state>$PROJ_DIR$\..\..\..\mos\platforms\telosb</state>
+          <state>$PROJ_DIR$\..\..\..\mos\platforms\sm3</state>
           <state>$PROJ_DIR$\..\..\..\mos\arch\msp430</state>
           <state>$PROJ_DIR$\..\..\..\mos\chips</state>
         </option>
@@ -665,7 +663,7 @@
         </option>
         <option>
           <name>OutputFile</name>
-          <state>Blink.d43</state>
+          <state>Blink5.d43</state>
         </option>
         <option>
           <name>OutputFormat</name>
@@ -731,7 +729,7 @@
         </option>
         <option>
           <name>XclFile</name>
-          <state>$TOOLKIT_DIR$\CONFIG\lnk430F1611.xcl</state>
+          <state>$TOOLKIT_DIR$\CONFIG\lnk430F5438A.xcl</state>
         </option>
         <option>
           <name>XclFileSlave</name>
@@ -859,7 +857,7 @@
         </option>
         <option>
           <name>ExtraOutputFile</name>
-          <state>Blink.a43</state>
+          <state>Blink5.a43</state>
         </option>
         <option>
           <name>ExtraOutputFormat</name>
@@ -1919,12 +1917,6 @@
     </settings>
   </configuration>
   <file>
-    <name>$PROJ_DIR$\..\..\..\mos\hil\adc.c</name>
-  </file>
-  <file>
-    <name>$PROJ_DIR$\..\..\..\mos\hil\adc.h</name>
-  </file>
-  <file>
     <name>$PROJ_DIR$\..\..\..\mos\kernel\alarms.c</name>
   </file>
   <file>
@@ -1934,22 +1926,13 @@
     <name>$PROJ_DIR$\..\..\..\mos\kernel\alarms_system.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\..\..\..\mos\platforms\sm3\amb8420_pins.h</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\..\..\..\mos\lib\assert.c</name>
   </file>
   <file>
     <name>$PROJ_DIR$\..\..\..\mos\lib\assert.h</name>
-  </file>
-  <file>
-    <name>$PROJ_DIR$\..\..\..\mos\chips\cc2420\cc2420.c</name>
-  </file>
-  <file>
-    <name>$PROJ_DIR$\..\..\..\mos\chips\cc2420\cc2420.h</name>
-  </file>
-  <file>
-    <name>$PROJ_DIR$\..\..\..\mos\chips\cc2420\cc2420_const.h</name>
-  </file>
-  <file>
-    <name>$PROJ_DIR$\..\..\..\mos\chips\cc2420\cc2420_spi.h</name>
   </file>
   <file>
     <name>$PROJ_DIR$\..\..\..\mos\kernel\defines.h</name>
@@ -1973,6 +1956,9 @@
     <name>$PROJ_DIR$\..\..\..\mos\platforms\telosb\flash.h</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\..\..\..\mos\platforms\sm3\flash.h</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\..\..\..\mos\hil\gpio.h</name>
   </file>
   <file>
@@ -1989,6 +1975,9 @@
   </file>
   <file>
     <name>$PROJ_DIR$\..\..\..\mos\platforms\telosb\ledslist.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\..\..\..\mos\platforms\sm3\ledslist.h</name>
   </file>
   <file>
     <name>$PROJ_DIR$\..\..\..\apps\demo\Blink\main.c</name>
@@ -2009,25 +1998,31 @@
     <name>$PROJ_DIR$\..\..\..\mos\chips\msp430\msp430_timers.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\..\..\..\mos\chips\msp430\msp430_usart.c</name>
+    <name>$PROJ_DIR$\..\..\..\mos\chips\msp430\msp430_usci.h</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\..\..\..\mos\chips\msp430\msp430_usart.h</name>
+    <name>$PROJ_DIR$\..\..\..\mos\chips\msp430\msp430_usci_i2c.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\..\..\..\mos\chips\msp430\msp430_usart_spi.c</name>
+    <name>$PROJ_DIR$\..\..\..\mos\chips\msp430\msp430_usci_spi.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\..\..\..\mos\chips\msp430\msp430_usart_spi.h</name>
+    <name>$PROJ_DIR$\..\..\..\mos\chips\msp430\msp430_usci_uart.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\..\..\..\mos\chips\msp430\msp430x1xx_clock.c</name>
+    <name>$PROJ_DIR$\..\..\..\mos\chips\msp430\msp430x5xx_clock.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\..\..\..\mos\platforms\telosb\platform.c</name>
+    <name>$PROJ_DIR$\..\..\..\mos\platforms\sm3\platform.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\..\..\..\mos\platforms\telosb\platform.h</name>
+    <name>$PROJ_DIR$\..\..\..\mos\platforms\sm3\platform.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\..\..\..\mos\platforms\sm3\platform_radio.h</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\..\..\..\mos\platforms\sm3\sht_pins.h</name>
   </file>
   <file>
     <name>$PROJ_DIR$\..\..\..\mos\kernel\sleep.c</name>

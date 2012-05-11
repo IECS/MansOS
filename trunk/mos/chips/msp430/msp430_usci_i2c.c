@@ -50,7 +50,9 @@ void i2cInit(void)
     UCB0BR0 = (CPU_HZ / I2C_SPEED) & 0xFF; // Clock divider, lower part
     UCB0BR1 = (CPU_HZ / I2C_SPEED) >> 8;   // Clock divider, higher part
     UCB0CTL0 = I2C_MODE;                   // Set specified mode
+#ifndef __IAR_SYSTEMS_ICC__
     IE2 &= ~UCB0RXIE;                      // Disable receive interrupt
+#endif
     UCB0CTL1 &= ~UCSWRST;                  // Release hold
 }
 
