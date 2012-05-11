@@ -57,7 +57,7 @@
 #define PRINTF_USART_ID 0
 #define USART_COUNT 1
 
-#if defined(__msp430x54xA)
+#if defined(__msp430x54xA) || defined __IAR_SYSTEMS_ICC__
 # define UC0IE     UCA0IE
 # define UC0IFG    UCA0IFG
 # define UCA0RXIE  UCRXIE

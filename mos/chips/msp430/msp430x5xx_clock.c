@@ -37,8 +37,12 @@ static void msp430CalibrateDCO(void) {
     UCSCTL3 |= SELREF_2;                      // Set DCO FLL reference = REFO
     UCSCTL4 |= SELA_2;                        // Set ACLK = REFO
 
-//    __bis_SR_register(SCG0);                  // Disable the FLL control loop
+    
+#ifdef __IAR_SYSTEMS_ICC__
+    __bis_SR_register(SCG0);                  // Disable the FLL control loop
+#else
     ASM_VOLATILE("bis %0, r2" : : "r" (SCG0));
+#endif
 
     UCSCTL0 = 0x0000;                         // Set lowest possible DCOx, MODx
     UCSCTL1 = DCORSEL_5;                      // Select DCO range 16MHz operation
@@ -46,8 +50,11 @@ static void msp430CalibrateDCO(void) {
                                               // (N + 1) * FLLRef = Fdco
                                               // (249 + 1) * 32768 = 8MHz
                                               // Set FLL Div = fDCOCLK/2
-//    __bic_SR_register(SCG0);                  // Enable the FLL control loop
+#ifdef __IAR_SYSTEMS_ICC__
+    __bic_SR_register(SCG0);                  // Enable the FLL control loop
+#else
     ASM_VOLATILE("bic %0, r2" : : "r" (SCG0));
+#endif
 
     // Worst-case settling time for the DCO when the DCO range bits have been
     // changed is n x 32 x 32 x f_MCLK / f_FLL_reference. See UCS chapter in 5xx

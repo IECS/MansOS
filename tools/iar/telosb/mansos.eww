@@ -4,6 +4,9 @@
   <project>
     <path>$WS_DIR$\Blink.ewp</path>
   </project>
+  <project>
+    <path>$WS_DIR$\Blink5.ewp</path>
+  </project>
   <batchBuild/>
 </workspace>
 
