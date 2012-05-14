@@ -55,13 +55,15 @@ class EditStatement(ScrolledPanel):
 
         self.generatePatameterSelects()
 
-        self.SetBackgroundColour("light grey")
+        self.SetBackgroundColour("white")
 
         self.SetSizer(self.main)
         self.SetAutoLayout(1)
         self.main.Fit(self)
         self.SetupScrolling()
-        self.Show()
+        #self.Show()
+        self.Hide()
+        self.Show(False)
 
     def generateActuatorSelect(self):
         # Generate all objects
@@ -143,8 +145,6 @@ class EditStatement(ScrolledPanel):
             self.row += 1
 
     def onActuatorChange(self, event):
-        if event != None:
-            wx.Yield()
         actuator = self.actuator.GetValue()
         # Don't clear if this is already selected
         if actuator == self.statement[0].type:
@@ -166,8 +166,6 @@ class EditStatement(ScrolledPanel):
         self.actuator.SetInsertionPoint(insertionPoint + 1)
 
     def onObjChange(self, event = None):
-        if event != None:
-            wx.Yield()
         obj = self.obj.GetValue()
         # Don't clear if this is already selected
         if obj == self.statement[0].name:

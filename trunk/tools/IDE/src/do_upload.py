@@ -32,7 +32,7 @@ class DoUpload():
         self.pathToMansos = pathToMansos
 
     def doUpload(self, targets, compiler, targetType, platform):
-        res = compiler()
+        res = compiler([])
         if res[0] == False:
             return res
         if targetType == SHELL:
@@ -42,15 +42,18 @@ class DoUpload():
             return self.usbUpload(targets, platform)
 
     def usbUpload(self, targets, platform):
+        if targets == []:
+            targets.append(list())
         for target in targets:
             if target != []:
                 self.changeTarget(target)
             try:
+                print "uploading"
                 upload = Popen(["make", platform, "upload"],
                                           stderr = STDOUT,
                                           stdout = PIPE)
                 out = upload.communicate()[0]
-
+                print out
                 haveUploadError = out.rfind("An error occoured")
                 if haveUploadError != -1:
                     return [False, out[haveUploadError:]]
@@ -98,6 +101,7 @@ class DoUpload():
         return [True, '']
 
     def changeTarget(self, newTarget = None):
+        print "#", newTarget, "$" + newTarget[-1] + "$"
         if newTarget == None:
             os.unsetenv("BSLPORT")
         else:

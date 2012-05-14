@@ -69,8 +69,6 @@ class Editor(wx.stc.StyledTextCtrl):
         self.SetMarginWidth(1, 0)
 
     def doGrammarCheck(self, event):
-        if event != None:
-            wx.Yield()
         # Mark that file has possibly changed
         self.GetParent().yieldChanges()
         self.API.clearInfoArea()
@@ -83,9 +81,6 @@ class Editor(wx.stc.StyledTextCtrl):
             self.getAction(event)
 
     def getAction(self, event):
-
-        if event != None:
-            wx.Yield()
         # Filter unneccessary triggering(autotrigger allowed once in 1s)
         if time.time() - self.lastAutoEdit < 1:
             return
@@ -93,27 +88,28 @@ class Editor(wx.stc.StyledTextCtrl):
         dialog = None
         # Get statement and corresponding lines
         self.lastEdit = self.findAllStatement(self.GetCurrentLine())
-        if self.lastEdit[0] != None:
-            if self.lastEdit[4] == STATEMENT:
-                dialog = EditStatement(self.API.editorSplitter,
-                        self.API, self.lastEdit, self.statementUpdateClbk)
-            elif self.lastEdit[4] == CONDITION:
-                dialog = EditCondition(self.API.editorSplitter,
-                        self.API, self.lastEdit, self.conditionUpdateClbk)
-        # Show or hide splash window
-        self.splitEditor(dialog)
-        wx.Yield()
 
-    def splitEditor(self, editPanel):
         self.API.editorSplitter.Unsplit()
         if self.lastPanel != None:
             self.lastPanel.DissociateHandle()
             self.lastPanel.DestroyChildren()
             self.lastPanel.Destroy()
-        self.lastPanel = editPanel
-        if editPanel != None:
+
+        if self.lastEdit[0] != None:
+            if self.lastEdit[4] == STATEMENT:
+                dialog = EditStatement(self.API.emptyFrame,
+                        self.API, self.lastEdit, self.statementUpdateClbk)
+            elif self.lastEdit[4] == CONDITION:
+                dialog = EditCondition(self.API.editorSplitter,
+                        self.API, self.lastEdit, self.conditionUpdateClbk)
+            dialog.Hide()
+        # Show or hide splash window
+        if dialog != None:
+            dialog.Reparent(self.API.editorSplitter)
             self.API.editorSplitter.SplitVertically(self.API.tabManager,
-                                                editPanel, -305)
+                                                dialog, -305)
+
+        self.lastPanel = dialog
 
     def statementUpdateClbk(self, newStatement):
         if self.newMode:

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2008-2012 the MansOS team. All rights reserved.
@@ -24,14 +25,15 @@
 
 import os
 import wx
-from stat import *
+from stat import S_ISDIR
+
 from upload_module import UploadModule
 
 class Frame(wx.Frame):
     def __init__(self, parent, title, size, pos, API):
         super(Frame, self).__init__(parent, wx.ID_ANY, title, size = size, pos = pos)
         # Get path, here must use only file name, __file__ sometimes contains more than that
-        self.path = os.path.dirname(os.path.realpath(__file__.split("/")[-1]))
+        self.path = os.path.dirname(os.path.realpath(os.path.split(__file__)[1]))
         self.API = API
         self.API.path = self.path
         self.lastPanel = None
@@ -83,7 +85,7 @@ class Frame(wx.Frame):
                               self.tr('Exit application'))
 
         # show menu with mansos demo applications
-        pathToMansosApps = self.API.path + "/../../apps/"
+        pathToMansosApps = self.API.path + os.path.normcase("/../../apps/")
         exampleMenu = wx.Menu()
         # list all directories in mansos/apps
         dirlist = os.listdir(pathToMansosApps)
@@ -185,31 +187,21 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
 
     def OnQuit(self, event):
-        if event != None:
-            wx.Yield()
         if self.tabManager.onQuitCheck() == True:
             self.API.performExit()
             exit()
 
     def OnSave(self, event):
-        if event != None:
-            wx.Yield()
         self.tabManager.doPopupSave(None)
 
     def OnSaveAs(self, event):
-        if event != None:
-            wx.Yield()
         self.tabManager.doPopupSaveAs(None)
 
     def OnUpload(self, event):
-        if event != None:
-            wx.Yield()
         if self.tabManager.doPopupSave(None) == True:
             self.API.uploadCore.manageUpload()
 
     def OnOutput(self, event):
-        if event != None:
-            wx.Yield()
         if self.tabManager.doPopupSave(None) == True:
 
             dialog = wx.Dialog(self, wx.ID_ANY, self.tr('Configure upload and compile'),
@@ -221,16 +213,12 @@ class Frame(wx.Frame):
             dialog.Destroy()
 
     def OnNew(self, event):
-        if event != None:
-            wx.Yield()
         self.tabManager.addPage()
 
     def OnOpen(self, event):
-        if event != None:
-            wx.Yield()
         open_ = wx.FileDialog(self,
             self.tr("Open new document"),
-            wildcard = 'Seal ' + self.tr('files') + ' (*.sl)|*.sl|' +
+            wildcard = 'Seal or MansOS ' + self.tr('files') + ' (*.sl, *.c)|*.sl;*.c|' +
                     self.tr('All files') + '|*',
             style = wx.FD_OPEN)
         if open_.ShowModal() == wx.ID_OK:
@@ -245,11 +233,11 @@ class Frame(wx.Frame):
         filename = os.path.join(path, "main.c")
         if os.path.isfile(filename): return filename
         # then any other .sl file
-        for f in os.listdir(path):
+        for _ in os.listdir(path):
             filename = os.path.join(path, filename)
             if filename[len(filename) - 3:] == '.sl': return filename
         # then any other .c file
-        for f in os.listdir(path):
+        for _ in os.listdir(path):
             filename = os.path.join(path, filename)
             if filename[len(filename) - 2:] == '.c': return filename
         # then give up
@@ -264,18 +252,12 @@ class Frame(wx.Frame):
         else: print "no source files in " + path
 
     def OnAddStatement(self, event):
-        if event != None:
-            wx.Yield()
         self.tabManager.getPageObject().code.addStatement()
 
     def OnAddCondition(self, event):
-        if event != None:
-            wx.Yield()
         self.tabManager.getPageObject().code.addCondition()
 
     def changeLanguage(self, event):
-        if event != None:
-            wx.Yield()
         for i in self.langs:
             if i.IsChecked() == True:
                 self.API.setSetting("activeLanguage", i.GetHelp())

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding:utf-8 -*-
 #
 # Copyright (c) 2008-2012 the MansOS team. All rights reserved.
 #
@@ -49,7 +49,7 @@ class Translater:
                 },
 
             "LV" :{
-                'langName':"Latviešu",
+                'langName': "Latviesu", # why 'š' creates fail???
 
                 # SEAL SPECIFIC PART
                 "period": "Periods",
@@ -74,8 +74,8 @@ class Translater:
                 "Save": "Saglabāt",
                 "Save as": "Saglabāt kā",
                 "Reload": "Pārlādēt",
-                "Open": "Atvērt",
                 "Examples": "Piemēri",
+                "Open": "Atvērt",
                 "Upload": "Augšupielādēt",
                 "Read output": "Klausīties",
                 "Exit": "Iziet",
@@ -120,14 +120,12 @@ class Translater:
                 "devices in": "iekārtas, laiks:",
                 "default device": "ierīces pēc noklusēšanas",
                 "Searching devices": "Meklēju ierīces",
-                "No devices found!" : "Ierīces nav atrastas!",
-                "Information": "Informācija",
-                "Listen": "Klausīties",
-                "Configure upload and compile": "Konfigurēt augsupielādēšanu un kompilēšanu"
+                "No devices found!" : "Ierīces nav atrastas!"
                 }
         }
 
     def translate(self, data, lang = ''):
+        return data
         if lang == '':
             lang = self.parent.getSetting("activeLanguage")
         # This happens when no language is set

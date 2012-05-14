@@ -24,6 +24,7 @@
 
 
 import os
+from platform import system
 from re import compile
 from subprocess import Popen, PIPE, STDOUT
 
@@ -69,7 +70,11 @@ class GetMotelist(object):
         motelist = []
         try:
             # Get motelist output as string... |-(
-            process = Popen([self.pathToMansos + "/mos/make/scripts/motelist", "-c"],
+            target = os.path.normcase(self.pathToMansos + "/mos/make/scripts/motelist")
+            if system() == 'Windows':
+                target += ".exe"
+            print "Detected", system()
+            process = Popen([target, "-c"],
                                           stderr = STDOUT,
                                           stdout = PIPE)
             motes = process.communicate()[0]
@@ -82,6 +87,7 @@ class GetMotelist(object):
                 data = line.split(',')
                 if data != ['']:
                     motelist.append(data)
+            print motelist
             return [True, motelist]
 
         except OSError, e:

@@ -68,8 +68,6 @@ class ListenModule(wx.Panel):
         self.Show()
 
     def doClear(self, event = None):
-        if event is not None:
-            wx.Yield()
         self.listening = not self.listening
         if self.listening:
             self.clear.SetLabel(self.tr('Stop listening'))
@@ -99,7 +97,7 @@ class ListenModule(wx.Panel):
                 # Keep interface alive, long sleep makes it to delay responses.
                 # Listen once every .1 sec
                 for _ in range(0, 100):
-                    wx.Yield()
+                    wx.YieldIfNeeded()
                     time.sleep(0.001)
                     if not self.listening:
                         break
@@ -113,8 +111,6 @@ class ListenModule(wx.Panel):
             pass
 
     def getMotelist(self, event = None):
-        if event != None:
-            wx.Yield()
         self.ports.Clear()
         self.ports.Append(self.tr("Searching devices") + "...", 0)
         self.ports.Disable()

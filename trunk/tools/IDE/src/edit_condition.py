@@ -56,7 +56,7 @@ class EditCondition(scrolled.ScrolledPanel):
 
         self.generateElseWhenSelects()
 
-        self.SetBackgroundColour("grey")
+        self.SetBackgroundColour("white")
 
         self.SetSizer(self.main)
         self.SetAutoLayout(1)
