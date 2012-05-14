@@ -30,7 +30,7 @@
 # Define platform variables
 
 ARCH = msp430
-MCU_MODEL = msp430x1611
+MCU_MODEL = msp430f1611
 
 # Upload target
 UPLOAD_TARGET=upload-msp430

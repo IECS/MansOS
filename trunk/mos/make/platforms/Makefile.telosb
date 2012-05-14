@@ -30,7 +30,7 @@
 # Define platform variables
 
 ARCH = msp430
-MCU_MODEL = msp430x1611
+MCU_MODEL = msp430f1611
 
 # Upload target specifically for Tmote (without pin inversion)
 UPLOAD_TARGET=upload-tmote
