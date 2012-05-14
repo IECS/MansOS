@@ -264,7 +264,7 @@ platform_build: build saveplatform
 
 platform_build_seal: $(GENERATED_SOURCES)
 #	SEAL code compiled successfully, now build C sources
-	(cd $(BUILDDIR); $(MAKE) $(TARGET) $(NOTPLATFORMTARGETS))
+	(cd $(BUILDDIR); MAKECMDGOALS="$(TARGET) $(NOTPLATFORMTARGETS)" $(MAKE) $(TARGET) $(NOTPLATFORMTARGETS))
 
 platform_skip:
 	$(Print) "Skipping $(PROJDIR)/$(APPMOD) for $(TARGET): not for this platform!"
@@ -345,7 +345,8 @@ ifeq ($(USE_RAM_EXECUTION),y)
 endif
 
 # .c -> .o, user sources
-$(OUTDIR)/%.o : $(PROJDIR)/%.c
+# objDirs was added as dependency because otherwise on MinGW they are not built.
+$(OUTDIR)/%.o : $(PROJDIR)/%.c objDirs
 	$(Print) "CC $<"
 	$(_QUIET) $(CC) $(CFLAGS) $(INCLUDES) -MD -MF $(subst .o,.d,$@) -MP -MT $(subst .o,.d,$@) -MT $@ -c $< -o $@
 ifeq ($(USE_REPROGRAMMING),y)
