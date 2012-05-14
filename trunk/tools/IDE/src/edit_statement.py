@@ -23,13 +23,12 @@
 #
 
 import wx
-from wx.lib.scrolledpanel import ScrolledPanel
 
 from structures import Value, ComponentUseCase
 
-class EditStatement(ScrolledPanel):
+class EditStatement(wx.Panel):
     def __init__(self, parent, API, statement, saveCallback):
-        super(EditStatement, self).__init__(parent, style = wx.RAISED_BORDER)
+        super(EditStatement, self).__init__(parent, style = wx.NO_BORDER)
         self.saveCallback = saveCallback
         self.API = API
         # Just a shorter name
@@ -60,10 +59,9 @@ class EditStatement(ScrolledPanel):
         self.SetSizer(self.main)
         self.SetAutoLayout(1)
         self.main.Fit(self)
-        self.SetupScrolling()
+#        self.SetupScrolling()
         #self.Show()
-        self.Hide()
-        self.Show(False)
+        self.Show()
 
     def generateActuatorSelect(self):
         # Generate all objects
@@ -149,21 +147,9 @@ class EditStatement(ScrolledPanel):
         # Don't clear if this is already selected
         if actuator == self.statement[0].type:
             return
-
         self.statement[0].parameters = list()
         self.statement[0].name = ''
         self.updateOriginal(event)
-
-        insertionPoint = self.actuator.GetInsertionPoint()
-        # Clear All
-        self.DestroyChildren()
-
-        self.generateActuatorSelect()
-
-        self.Layout()
-        # Take cursor to previous place
-        self.actuator.SetFocus()
-        self.actuator.SetInsertionPoint(insertionPoint + 1)
 
     def onObjChange(self, event = None):
         obj = self.obj.GetValue()
@@ -175,44 +161,35 @@ class EditStatement(ScrolledPanel):
         self.statement[0].name = obj
         self.updateOriginal(event)
 
-        insertionPoint = self.obj.GetInsertionPoint()
-        # Clear All
-        self.DestroyChildren()
-
-        self.generateActuatorSelect()
-
-        self.generatePatameterSelects()
-        self.Layout()
-        # Take cursor to previous place
-        self.obj.SetFocus()
-        self.obj.SetInsertionPoint(insertionPoint + 1)
-
     def updateOriginal(self, event = None):
+        obj = event.GetEventObject()
+        if type(obj) != wx.CheckBox:
+            insertionPoint = obj.GetInsertionPoint()
         # Process newMode
         if self.newMode == 1:
             if self.actuator.GetValue() != '':
                 self.obj.Show()
                 self.objText.Show()
                 self.statement[0].type = self.actuator.GetValue()
-                self.saveCallback(self.statement)
                 self.newMode -= 1
+                self.saveCallback(self.statement)
             return
 
-        name = event.GetEventObject().GetName()
-        value = event.GetEventObject().GetValue()
+        name = obj.GetName()
+        value = obj.GetValue()
 
         # Can't allow this
         if type(value) != bool:
                 value = value.replace(",", "")
                 value = value.replace(";", "")
-                event.GetEventObject().SetValue(value)
+                obj.SetValue(value)
 
         if name == "actuator":
             self.statement[0].type = value
         elif name == "object":
             self.statement[0].name = value
         else: # parameters
-            nr = event.GetEventObject().GetId()
+            nr = obj.GetId()
             param = self.choices[nr]
             if param is not None:
                 # TODO: make suffix right!
@@ -233,4 +210,8 @@ class EditStatement(ScrolledPanel):
                     self.statement[0].parameters.append(newParam)
                 self.choices[nr] = newParam
         self.saveCallback(self.statement)
+        # Place cursor in last edited place(works only on manual edit)
+        if type(obj) != wx.CheckBox:
+            obj.SetFocus()
+            obj.SetInsertionPoint(insertionPoint + 1)
         return

@@ -145,10 +145,6 @@ class TabManager(fnb.FlatNotebook):
             return False
         # Remove selected page.
         self.DeletePage(self.GetSelection())
-        if checkConsequences == True:
-            # If this is last page we should add empty page
-            if self.GetPageCount() == 0:
-                self.addPage()
         self.Layout()
         return True
 
@@ -175,7 +171,10 @@ class TabManager(fnb.FlatNotebook):
         self.onPageChanged(None)
 
     def onCloseCheck(self, event = None):
-        if self.getPageObject().saveState == False:
+        if not self.GetCurrentPage():
+            # Nothing to check
+            return True
+        if self.GetCurrentPage().saveState == False:
             # Initiate DialogBox
             dialog = wx.MessageDialog(self,
                 self.tr('Save changes to') + ' "' +
@@ -192,17 +191,18 @@ class TabManager(fnb.FlatNotebook):
                 # Recursion to make sure it's really saved.
                 return self.onCloseCheck()
             elif retVal == wx.ID_CANCEL:
-                # Stop action
-                event.Veto()
+                # Stop action if there is any
+                if event:
+                    event.Veto()
                 return False
         # If this is last page we should add empty page
-        if self.GetPageCount() == 0:
-            self.addPage()
+        #if self.GetPageCount() == 0:
+        #    self.addPage()
         # It's ok to close
         return True
 
     def onQuitCheck(self):
-        while self.GetPageCount() > 1:
+        while self.GetPageCount() > 0:
             # Select first page and try to close it
             self.SetSelection(0)
             if self.doPopupClose(None, False) == False:

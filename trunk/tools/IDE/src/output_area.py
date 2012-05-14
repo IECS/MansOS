@@ -33,7 +33,7 @@ class OutputArea(wx.Panel):
         self.outputArea = wx.TextCtrl(self, style = wx.TE_MULTILINE)
         self.outputArea.SetBackgroundColour("black")
         self.outputArea.SetForegroundColour("white")
-        self.outputArea.Disable()
+        self.outputArea.SetEditable(False)
         sizer.Add(self.outputArea, 2, wx.EXPAND | wx.ALL, 5)
         self.SetBackgroundColour("white")
         self.SetSizerAndFit(sizer)

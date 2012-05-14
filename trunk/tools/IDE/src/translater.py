@@ -61,6 +61,7 @@ class Translater:
                 "blinkTwice": "Mirgot 2 reizes",
                 "blinkTimes": "Mirgot n reizes",
                 "print": "Izvadīt",
+                "once": "Vienreiz",
                 "aggregate": "Apvienot",
                 "baudrate": "Baudrate",
                 "crc": "Kontrolsumma",
@@ -77,7 +78,8 @@ class Translater:
                 "Examples": "Piemēri",
                 "Open": "Atvērt",
                 "Upload": "Augšupielādēt",
-                "Read output": "Klausīties",
+                "Information": "Informācija",
+                "Listen": "Klausīties",
                 "Exit": "Iziet",
                 "Close": "Aizvērt",
                 "Edit": "Labot",
@@ -120,7 +122,8 @@ class Translater:
                 "devices in": "iekārtas, laiks:",
                 "default device": "ierīces pēc noklusēšanas",
                 "Searching devices": "Meklēju ierīces",
-                "No devices found!" : "Ierīces nav atrastas!"
+                "No devices found!" : "Ierīces nav atrastas!",
+                "Configure upload and compile": "Konfigurēt kompilēšanu un augšupielādēšanu"
                 }
         }
 
