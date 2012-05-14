@@ -28,6 +28,7 @@ class OutputTools(wx.Notebook):
     def __init__(self, parent, API):
         wx.Notebook.__init__(self, parent)
         self.API = API
+        self.SetBackgroundColour("White")
 
     def addTools(self):
         self.API.infoArea.Reparent(self)

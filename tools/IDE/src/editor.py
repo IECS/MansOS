@@ -35,7 +35,6 @@ class Editor(wx.stc.StyledTextCtrl):
         wx.stc.StyledTextCtrl.__init__(self, parent)
         self.API = API
         self.lastText = ''
-        self.lastAutoEdit = 0
         self.lastPanel = None
         self.newMode = False
 
@@ -81,35 +80,22 @@ class Editor(wx.stc.StyledTextCtrl):
             self.getAction(event)
 
     def getAction(self, event):
-        # Filter unneccessary triggering(autotrigger allowed once in 1s)
-        if time.time() - self.lastAutoEdit < 1:
+        if self.newMode:
             return
 
         dialog = None
         # Get statement and corresponding lines
         self.lastEdit = self.findAllStatement(self.GetCurrentLine())
 
-        self.API.editorSplitter.Unsplit()
-        if self.lastPanel != None:
-            self.lastPanel.DissociateHandle()
-            self.lastPanel.DestroyChildren()
-            self.lastPanel.Destroy()
-
         if self.lastEdit[0] != None:
             if self.lastEdit[4] == STATEMENT:
-                dialog = EditStatement(self.API.emptyFrame,
+                dialog = EditStatement(self.API.editPanel,
                         self.API, self.lastEdit, self.statementUpdateClbk)
             elif self.lastEdit[4] == CONDITION:
-                dialog = EditCondition(self.API.editorSplitter,
+                dialog = EditCondition(self.API.editPanel,
                         self.API, self.lastEdit, self.conditionUpdateClbk)
-            dialog.Hide()
         # Show or hide splash window
-        if dialog != None:
-            dialog.Reparent(self.API.editorSplitter)
-            self.API.editorSplitter.SplitVertically(self.API.tabManager,
-                                                dialog, -305)
-
-        self.lastPanel = dialog
+        self.clearUpDialogs(dialog)
 
     def statementUpdateClbk(self, newStatement):
         if self.newMode:
@@ -117,10 +103,8 @@ class Editor(wx.stc.StyledTextCtrl):
             self.SetTargetEnd(self.GetCurrentPos())
             self.ReplaceTarget(newStatement[0].getCode(0))
             self.lastEdit = self.findAllStatement(self.GetCurrentLine())
-            self.getAction(None)
             self.newMode = False
         else:
-            self.lastAutoEdit = time.time()
             self.SetTargetStart(self.PositionFromLine(newStatement[1]))
             endPos = self.PositionFromLine(newStatement[3] + 1)
             if self.GetCharAt(endPos) == '\n':
@@ -129,17 +113,16 @@ class Editor(wx.stc.StyledTextCtrl):
             else:
                 self.SetTargetEnd(endPos)
                 self.ReplaceTarget(newStatement[0].getCode(0) + '\n')
-
             self.lastEdit = self.findAllStatement(newStatement[2])
 
     def conditionUpdateClbk(self, name, value):
-        self.lastAutoEdit = time.time()
         if self.newMode:
             self.AddText("when " + value + ":\nend")
             self.doGrammarCheck(None)
             self.lastEdit = self.findAllStatement(self.GetCurrentLine())
             self.newMode = False
         else:
+            # Attribute error here because of seal failing on unknown condition
             row = self.lastEdit[0].getCode(0).rstrip()
             if name == 'when':
                 start = row.find("when") + len("when")
@@ -152,13 +135,10 @@ class Editor(wx.stc.StyledTextCtrl):
                     name -= 1
                 end = row[start:].find(":")
             # +1 is space after keyword
-            print row
             row = "{} {}{}".format(row[:start], value, row[start + end:])
-            print row
             self.SetTargetStart(self.PositionFromLine(self.lastEdit[1]))
             self.SetTargetEnd(self.PositionFromLine(self.lastEdit[3]) - 1)
             self.ReplaceTarget(row)
-            self.doGrammarCheck(None)
             # No need to recheck for condition, because no new lines are added
             # and no lines have been deleted.
             #self.lastEdit = self.findAllStatement(self.lastEdit[2])
@@ -166,18 +146,17 @@ class Editor(wx.stc.StyledTextCtrl):
     def addStatement(self):
         self.getPlaceForAdding()
         self.lastAutoEdit = time.time()
-        dialog = EditStatement(self.API.editorSplitter,
-                               self.API, None, self.statementUpdateClbk)
-        self.splitEditor(dialog)
         self.newMode = True
+        self.clearUpDialogs(EditStatement(self.API.editPanel,
+                               self.API, None, self.statementUpdateClbk))
+
 
     def addCondition(self):
         self.getPlaceForAdding()
         self.lastAutoEdit = time.time()
-        dialog = EditCondition(self.API.editorSplitter,
-                               self.API, None, self.conditionUpdateClbk)
-        self.splitEditor(dialog)
         self.newMode = True
+        self.clearUpDialogs(EditCondition(self.API.editPanel,
+                               self.API, None, self.conditionUpdateClbk))
 
     def findAllStatement(self, lineNr):
         # Check for empty line
@@ -210,3 +189,13 @@ class Editor(wx.stc.StyledTextCtrl):
         self.LineEndDisplay()
         self.AddText("\n\n")
         # Smtng's wrong here...
+
+    def clearUpDialogs(self, dialog):
+        # Don't destroy if typing in dialog caused statement to become invalid
+        if not dialog and self.GetCurLine()[0].strip() != '':
+                return
+
+        for x in self.API.editorSplitter.GetWindow2().GetChildren():
+            if x != dialog:
+                x.DestroyChildren()
+                x.Destroy()

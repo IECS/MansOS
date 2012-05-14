@@ -25,6 +25,7 @@
 
 import os
 import wx
+from wx.gizmos import ThinSplitterWindow
 from stat import S_ISDIR
 
 from upload_module import UploadModule
@@ -47,7 +48,7 @@ class Frame(wx.Frame):
         self.initUI()
         self.SetBackgroundColour("white")
 
-        self.split1 = wx.SplitterWindow(self, style = wx.SP_LIVE_UPDATE)
+        self.split1 = ThinSplitterWindow(self, style = wx.SP_3D | wx.CLIP_CHILDREN | wx.SP_LIVE_UPDATE)
 
         self.API.editorSplitter.Reparent(self.split1)
         self.API.outputTools.Reparent(self.split1)
@@ -63,7 +64,8 @@ class Frame(wx.Frame):
         # Must show&hide to init
         self.API.editorSplitter.SplitVertically(self.API.tabManager,
                                                     self.API.editPanel, -305)
-        self.API.editorSplitter.Unsplit()
+        #self.API.editorSplitter.Unsplit()
+        #self.API.editPanel.Destroy()
 
         # Makes outputArea to maintain it's height when whole window is resized
         self.split1.SetSashGravity(1)
@@ -80,7 +82,7 @@ class Frame(wx.Frame):
                               self.tr('Save document as'))
         upload = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Upload') + '\tCtrl+U',
                               self.tr('Open upload window'))
-        output = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Read output') + '\tCtrl+R',
+        output = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Configure upload and compile') + '\tCtrl+R',
                               self.tr('Open read output window'))
         close = fileMenu.Append(wx.ID_EXIT, '&' + self.tr('Exit') + '\tCtrl+Q',
                               self.tr('Exit application'))
@@ -158,26 +160,34 @@ class Frame(wx.Frame):
 
         # Note that all icons must be 32x32, so they look good :)
         self.toolbar.AddLabelTool(wx.ID_NEW, self.tr('New'),
-                                wx.Bitmap(self.path + '/src/Icons/new.png'))
+                                wx.Bitmap(self.path + '/src/Icons/new.png'),
+                                shortHelp = self.tr('New'))
         self.toolbar.AddSeparator()
         self.toolbar.AddLabelTool(wx.ID_OPEN, self.tr('Open'),
-                                wx.Bitmap(self.path + '/src/Icons/open.png'))
+                                wx.Bitmap(self.path + '/src/Icons/open.png'),
+                                shortHelp = self.tr('Open'))
         self.toolbar.AddLabelTool(wx.ID_SAVE, self.tr('Save'),
-                                wx.Bitmap(self.path + '/src/Icons/save.png'))
+                                wx.Bitmap(self.path + '/src/Icons/save.png'),
+                                shortHelp = self.tr('Save'))
         self.toolbar.AddSeparator()
         addStatementTool = self.toolbar.AddLabelTool(wx.ID_ADD, self.tr('Add statement'),
-                                wx.Bitmap(self.path + '/src/Icons/add_statement.png'))
+                                wx.Bitmap(self.path + '/src/Icons/add_statement.png'),
+                                shortHelp = self.tr('Add statement'))
         # Used ID_APPLY for identification, hope nothing else uses it
         addConditionTool = self.toolbar.AddLabelTool(wx.ID_APPLY, self.tr('Add condition'),
-                                wx.Bitmap(self.path + '/src/Icons/add_condition.png'))
+                                wx.Bitmap(self.path + '/src/Icons/add_condition.png'),
+                                shortHelp = self.tr('Add condition'))
         self.toolbar.AddSeparator()
         uplTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Upload'),
-                                wx.Bitmap(self.path + '/src/Icons/upload.png'))
-        outputTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Read output'),
-                                wx.Bitmap(self.path + '/src/Icons/read.png'))
+                                wx.Bitmap(self.path + '/src/Icons/upload.png'),
+                                shortHelp = self.tr('Upload'))
+        outputTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Configure upload and compile'),
+                                wx.Bitmap(self.path + '/src/Icons/read.png'),
+                                shortHelp = self.tr('Configure upload and compile'))
         self.toolbar.AddSeparator()
         self.toolbar.AddLabelTool(wx.ID_EXIT, self.tr('Exit'),
-                                wx.Bitmap(self.path + '/src/Icons/exit.png'))
+                                wx.Bitmap(self.path + '/src/Icons/exit.png'),
+                                shortHelp = self.tr('Exit'))
         self.toolbar.Realize()
 
         # Second bind to toolbar, but only items with ID_ANY, because all

@@ -23,14 +23,13 @@
 #
 
 import wx
-import wx.lib.scrolledpanel as scrolled
 
 from structures import Expression, CodeBlock
 from globals import * #@UnusedWildImport
 
-class EditCondition(scrolled.ScrolledPanel):
+class EditCondition(wx.Panel):
     def __init__(self, parent, API, condition, saveCallback):
-        super(EditCondition, self).__init__(parent, style = wx.RAISED_BORDER)
+        super(EditCondition, self).__init__(parent, style = wx.NO_BORDER)
         self.saveCallback = saveCallback
         self.API = API
         # Just a shorter name
@@ -61,7 +60,7 @@ class EditCondition(scrolled.ScrolledPanel):
         self.SetSizer(self.main)
         self.SetAutoLayout(1)
         self.main.Fit(self)
-        self.SetupScrolling()
+        #self.SetupScrolling()
         self.Show()
 
     def generateWhenSelect(self):

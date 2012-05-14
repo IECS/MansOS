@@ -23,6 +23,8 @@
 #
 
 import wx
+from wx.gizmos import ThinSplitterWindow
+from wx.lib.scrolledpanel import ScrolledPanel
 import os
 from time import gmtime, strftime
 
@@ -112,8 +114,8 @@ class ApiCore:
         # Init seal parser
         self.sealParser = SealParser("telosb", self.printInfo, False, True)
 
-        self.editorSplitter = wx.SplitterWindow(self.emptyFrame,
-                                                style = wx.SP_LIVE_UPDATE)
+        self.editorSplitter = ThinSplitterWindow(self.emptyFrame,
+                                                style = wx.SP_3DBORDER | wx.CLIP_CHILDREN | wx.SP_LIVE_UPDATE)
 
         self.editorSplitter.SetMinimumPaneSize(305)
         self.editorSplitter.SetSashGravity(1)
@@ -130,7 +132,7 @@ class ApiCore:
 
         self.outputTools.addTools()
 
-        self.editPanel = wx.Panel(self.emptyFrame)
+        self.editPanel = ScrolledPanel(self.emptyFrame)
 
         self.frame = Frame(None, "MansOS IDE", (800, 500), (100, 100), self)
         self.onExit.append(self.frame.Close)

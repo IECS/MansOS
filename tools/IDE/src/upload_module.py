@@ -90,10 +90,10 @@ class UploadModule(wx.Panel):
         if len(motelist) == 0:
             self.list.Insert(self.tr("No devices found!"), 0)
         else:
-            for i in range(0, len (motelist)):
-                print motelist[i][0] + "(" + motelist[i][2] + ") @ " + motelist[i][1], i, motelist[i]
-                self.list.Insert(motelist[i][0] + "(" + motelist[i][2] +
-                                 ") @ " + motelist[i][1], i)
+            #for i in range(0, len (motelist)):
+            #    print motelist[i][0] + "(" + motelist[i][2] + ") @ " + motelist[i][1], i, motelist[i]
+            #    self.list.Insert(motelist[i][0] + "(" + motelist[i][2] +
+            #                     ") @ " + motelist[i][1], i)
             self.list.Enable()
 
     def modifyTargets(self, event):
