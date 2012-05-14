@@ -28,6 +28,7 @@ import wx
 from stat import S_ISDIR
 
 from upload_module import UploadModule
+from globals import * #@UnusedWildImport
 
 class Frame(wx.Frame):
     def __init__(self, parent, title, size, pos, API):
@@ -244,12 +245,12 @@ class Frame(wx.Frame):
         return None
 
     def OnOpenExample(self, event):
-        if event != None:
-            wx.Yield()
         path = self.examples.get(event.GetId())
         filename = self.findFirstSourceFile(path)
-        if filename: self.tabManager.addPage(filename)
-        else: print "no source files in " + path
+        if filename:
+            self.tabManager.addPage(filename)
+        else:
+            self.API.logMsg(LOG_WARNING, "No source files in {}".format(path))
 
     def OnAddStatement(self, event):
         self.tabManager.getPageObject().code.addStatement()

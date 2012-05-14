@@ -73,7 +73,7 @@ class GetMotelist(object):
             target = os.path.normcase(self.pathToMansos + "/mos/make/scripts/motelist")
             if system() == 'Windows':
                 target += ".exe"
-            print "Detected", system()
+
             process = Popen([target, "-c"],
                                           stderr = STDOUT,
                                           stdout = PIPE)
@@ -87,7 +87,6 @@ class GetMotelist(object):
                 data = line.split(',')
                 if data != ['']:
                     motelist.append(data)
-            print motelist
             return [True, motelist]
 
         except OSError, e:

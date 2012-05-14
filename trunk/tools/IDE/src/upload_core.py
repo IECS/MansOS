@@ -100,7 +100,6 @@ class UploadCore():
             return
 
         self.targets, targetText = self.API.uploadTargets
-
         self.updateStatus(self.tr("Starting upload on") + " " + targetText)
 
         res = self.managePopen(self.runUpload)
@@ -115,7 +114,6 @@ class UploadCore():
 
     # Wrapping for upload function to run in new thread
     def runUpload(self, dataIn):
-        print "Targets", self.targets
         return self.uploader.doUpload(self.targets, self.runCompile,
                                       self.targetType, self.platform)
 
@@ -141,6 +139,5 @@ class UploadCore():
 
     def syncWithTabManager(self):
         self.editorManager = self.API.tabManager.GetCurrentPage()
-        print "Got", self.editorManager
         self.filename = self.editorManager.fileName
 

@@ -86,7 +86,6 @@ class UploadModule(wx.Panel):
         motelist = self.API.uploadCore.populateMotelist(None, self.source.GetValue())
 
         self.list.Clear()
-        self.moteOrder = list()
 
         if len(motelist) == 0:
             self.list.Insert(self.tr("No devices found!"), 0)
@@ -95,12 +94,10 @@ class UploadModule(wx.Panel):
                 print motelist[i][0] + "(" + motelist[i][2] + ") @ " + motelist[i][1], i, motelist[i]
                 self.list.Insert(motelist[i][0] + "(" + motelist[i][2] +
                                  ") @ " + motelist[i][1], i)
-                self.moteOrder.append(motelist[i])
             self.list.Enable()
 
     def modifyTargets(self, event):
         checked = self.list.GetChecked()
-        print checked
         targets = []
         targetText = ''
         for x in checked:
