@@ -91,7 +91,7 @@ uint_t USARTSendByte(uint8_t id, uint8_t data)
 }
 
 // UART mode receive handler
-#if defined(__msp430x54xA) || defined __IAR_SYSTEMS_ICC__
+#if defined(__msp430x54xA) // || defined __IAR_SYSTEMS_ICC__
 ISR(USCI_A0, USCIAInterruptHandler)
 #else
 ISR(USCIAB0RX, USCIAInterruptHandler)
