@@ -33,6 +33,7 @@ class EditorManager(wx.Panel):
         wx.Panel.__init__(self, parent)
 
         self.API = API;
+        self.API.editors.append(self)
         # Just a shorter name
         self.tr = self.API.translater.translate
         self.initUI()
@@ -59,7 +60,7 @@ class EditorManager(wx.Panel):
             self.changeCode('', False)
             # Update editor info
             self.updateInfo(initFilePath, saveState = True, hasAFile = True)
-            self.GetParent().titleChange(self.fileName)
+            self.GetParent().titleChange(os.path.split(self.fileName)[1])
             self.detectSEAL()
         else:
             self.changeCode()
@@ -98,9 +99,9 @@ class EditorManager(wx.Panel):
                    hasAFile = '', projectType = None):
         if path != '':
             self.filePath = path
-            self.fileName = path.split("/")[-1]
+            self.fileName = os.path.split(path)[1]
         if fileName != '':
-            self.fileName = fileName
+            self.fileName = os.path.split(fileName)[1]
         if saveState != '':
             self.saveState = saveState
         if hasAFile != '':

@@ -34,8 +34,7 @@ class UploadCore():
     def __init__(self, API, printLine):
 
         self.API = API
-        self.editorManager = self.API.tabManager.getPageObject()
-        self.filename = self.editorManager.fileName
+        self.syncWithTabManager()
         # Just a shorter name
         self.tr = self.API.translater.translate
         self.tmpDir = self.API.path + '/temp/'
@@ -53,8 +52,6 @@ class UploadCore():
         self.motelist = GetMotelist(self.pathToMansos)
 
     def populateMotelist(self, event = None, source = None, quiet = False):
-        if event != None:
-            wx.Yield()
         self.motes = []
         res = []
         if source == 'Shell':
@@ -78,8 +75,6 @@ class UploadCore():
         return motelist
 
     def manageCompile(self, event = None):
-        if event != None:
-            wx.Yield()
         self.updateStatus(self.tr("Starting compile") + "...")
         res = self.managePopen(self.runCompile)
         self.compiler.clean()
@@ -91,16 +86,13 @@ class UploadCore():
                               "\n" + res[1])
 
     # Wrapping for compiler function to run in new thread
-    def runCompile(self, event = None):
-        if event != None:
-            wx.Yield()
+    def runCompile(self, dataIn):
+        self.syncWithTabManager()
         return self.compiler.doCompile(self.editorManager.fileName,
                                 self.platform, self.editorManager.filePath,
                                 self.editorManager.projectType, False)
 
     def manageUpload(self, event = None):
-        if event != None:
-            wx.Yield()
         self.populateMotelist(None, self.platform)
 
         if not self.haveMote:
@@ -122,7 +114,8 @@ class UploadCore():
                               "\n" + res[1])
 
     # Wrapping for upload function to run in new thread
-    def runUpload(self):
+    def runUpload(self, dataIn):
+        print "Targets", self.targets
         return self.uploader.doUpload(self.targets, self.runCompile,
                                       self.targetType, self.platform)
 
@@ -145,4 +138,9 @@ class UploadCore():
 
     def updateStatus(self, message):
         self.printMsg(message)
+
+    def syncWithTabManager(self):
+        self.editorManager = self.API.tabManager.GetCurrentPage()
+        print "Got", self.editorManager
+        self.filename = self.editorManager.fileName
 

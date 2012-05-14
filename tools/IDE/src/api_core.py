@@ -85,6 +85,7 @@ class ApiCore:
 # Visual objects here can be used in forms only after they have been re-parented 
 # using their Reparent() function, else they won't be visible!
 
+        self.editors = list()
         self.emptyFrame = wx.Frame(None)
 
         # Defines seal syntax

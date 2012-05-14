@@ -22,7 +22,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from os import chdir
+from os import chdir, getcwd, path
 from subprocess import Popen, PIPE, STDOUT
 
 from generate_makefile import GenerateMakefile
@@ -32,26 +32,21 @@ class DoCompile():
         self.API = API
         self.generateMakefile = GenerateMakefile()
 
-    def doCompile(self, sourceFileName, platform, path, projectType,
+    def doCompile(self, sourceFileName, platform, filePath, projectType,
                   cleanAfter = True):
 
-        goodPath = path.rfind('/')
-
-        if goodPath != -1:
-            chdir(path[:goodPath])
-        else:
-            chdir(self.API.path)
-
+        chdir(path.split(path.realpath(filePath))[0])
+        print getcwd()
         self.generateMakefile.generate(sourceFileName, projectType,
                                        self.API.path + "/../../")
         try:
-            upload = Popen(["make", platform],
+            compiler = Popen(["make", platform],
                                       stderr = STDOUT,
                                       stdout = PIPE)
-            out = upload.communicate()[0]
+            out = compiler.communicate()[0]
+            print out
             if cleanAfter:
                 self.clean()
-
             if out.rfind("saving Makefile.platform") == -1:
                 return [False, out]
             else:

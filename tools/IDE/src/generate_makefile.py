@@ -39,7 +39,7 @@ class GenerateMakefile():
             else:
                 sourceType = "SOURCES"
                 if appName == '': appName = 'CApp'
-
+            print "Generating Makefile"
             with open("Makefile", "w") as out:
                 out.write("""#-*-Makefile-*- vim:syntax=make
 #
@@ -47,23 +47,22 @@ class GenerateMakefile():
 #  The developer must define at least SOURCES and APPMOD in this file
 #
 #  In addition, PROJDIR and MOSROOT must be defined, before including 
-#  the main Makefile at $(MOSROOT)/mos/make/Makefile
+#  the main Makefile at ${MOSROOT}/mos/make/Makefile
 # --------------------------------------------------------------------
 
 # Sources are all project source files, excluding MansOS files
-{} = {}
+""" + sourceType + " = " + fileName + """
 
 # Module is the name of the main module built by this makefile
-APPMOD = {}
+APPMOD = """ + appName + """
 
 # --------------------------------------------------------------------
 # Set the key variables
 PROJDIR = $(CURDIR)
 ifndef MOSROOT
-  MOSROOT = $(PROJDIR)/{}
+  MOSROOT = """ + path.realpath(pathToMansos) + """
 endif
 
 # Include the main makefile
-include $(MOSROOT)/mos/make/Makefile
-""".format(sourceType, fileName, appName,
-        path.relpath(pathToMansos, path.dirname(path.realpath(__file__)) + "/..")))
+include ${MOSROOT}/mos/make/Makefile
+""")

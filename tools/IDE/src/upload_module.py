@@ -29,13 +29,14 @@ class UploadModule(wx.Panel):
         super(UploadModule, self).__init__(parent = parent)
 
         self.API = API
-        self.editorManager = self.API.tabManager.getPageObject()
+        self.editorManager = self.API.tabManager.GetCurrentPage()
         self.filename = self.editorManager.fileName
         # Just a shorter name
         self.tr = self.API.translater.translate
         self.tmpDir = self.API.path + '/temp/'
         self.haveMote = False
         self.platform = "telosb"
+        self.moteOrder = list()
         # this is path from /mansos/tools/IDE
         self.pathToMansos = self.API.path + "/../.."
         self.motes = []
@@ -78,8 +79,6 @@ class UploadModule(wx.Panel):
         self.populateMotelist()
 
     def populateMotelist(self, event = None):
-        if event != None:
-            wx.Yield()
         self.list.Clear()
         self.list.Insert(self.tr("Searching devices") + "...", 0)
         self.list.Disable()
@@ -87,19 +86,21 @@ class UploadModule(wx.Panel):
         motelist = self.API.uploadCore.populateMotelist(None, self.source.GetValue())
 
         self.list.Clear()
+        self.moteOrder = list()
 
         if len(motelist) == 0:
             self.list.Insert(self.tr("No devices found!"), 0)
         else:
             for i in range(0, len (motelist)):
+                print motelist[i][0] + "(" + motelist[i][2] + ") @ " + motelist[i][1], i, motelist[i]
                 self.list.Insert(motelist[i][0] + "(" + motelist[i][2] +
-                                 ") @ " + motelist[i][1], i, motelist[i])
+                                 ") @ " + motelist[i][1], i)
+                self.moteOrder.append(motelist[i])
             self.list.Enable()
 
     def modifyTargets(self, event):
-        if event != None:
-            wx.Yield()
         checked = self.list.GetChecked()
+        print checked
         targets = []
         targetText = ''
         for x in checked:

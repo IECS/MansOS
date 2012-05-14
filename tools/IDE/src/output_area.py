@@ -46,7 +46,6 @@ class OutputArea(wx.Panel):
             self.clear()
         self.outputArea.AppendText(text.strip() + '\n\n')
         self.outputArea.ScrollLines(1)
-        wx.Yield()
 
     def clear(self):
         self.outputArea.Clear()
