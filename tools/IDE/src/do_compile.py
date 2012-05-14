@@ -22,7 +22,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from os import chdir, getcwd, path
+from os import chdir, path
 from subprocess import Popen, PIPE, STDOUT
 
 from generate_makefile import GenerateMakefile
@@ -36,7 +36,7 @@ class DoCompile():
                   cleanAfter = True):
 
         chdir(path.split(path.realpath(filePath))[0])
-        print getcwd()
+
         self.generateMakefile.generate(sourceFileName, projectType,
                                        self.API.path + "/../../")
         try:
@@ -44,7 +44,6 @@ class DoCompile():
                                       stderr = STDOUT,
                                       stdout = PIPE)
             out = compiler.communicate()[0]
-            print out
             if cleanAfter:
                 self.clean()
             if out.rfind("saving Makefile.platform") == -1:

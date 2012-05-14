@@ -43,17 +43,16 @@ class DoUpload():
 
     def usbUpload(self, targets, platform):
         if targets == []:
-            targets.append(list())
+            targets.append(None)
         for target in targets:
             if target != []:
                 self.changeTarget(target)
             try:
-                print "uploading"
                 upload = Popen(["make", platform, "upload"],
                                           stderr = STDOUT,
                                           stdout = PIPE)
                 out = upload.communicate()[0]
-                print out
+
                 haveUploadError = out.rfind("An error occoured")
                 if haveUploadError != -1:
                     return [False, out[haveUploadError:]]
@@ -101,8 +100,9 @@ class DoUpload():
         return [True, '']
 
     def changeTarget(self, newTarget = None):
-        print "#", newTarget, "$" + newTarget[-1] + "$"
         if newTarget == None:
             os.unsetenv("BSLPORT")
         else:
-            os.environ["BSLPORT"] = newTarget
+            # Windows puts "\x00" at port end and it is not allowed in 
+            # environment variable
+            os.environ["BSLPORT"] = str(newTarget.strip().strip("\x00"))

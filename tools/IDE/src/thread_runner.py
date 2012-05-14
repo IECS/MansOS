@@ -40,7 +40,6 @@ class ThreadRunner (threading.Thread):
         locTime = time.time()
         try:
             self.dataOut += self.function(self.dataIn)
-            print self.dataOut
         except TypeError:
             self.API.logMsg(LOG_WARNING, "In thread running " + str(self.function) + "type mismatch happened!")
             self.dataOut += [False, "Type error!"]
