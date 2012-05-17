@@ -107,85 +107,57 @@
 #define OPORTL PORTL
 
 // set bit to 1 for output and 0 for input
-#define PORT_AS_OUTPUT( portnum )  PORT##portnum##DIR = 0xff;
-#define PORT_AS_INPUT( portnum )   PORT##portnum##DIR = 0x00;
+#define PORT_AS_OUTPUT(portnum)  PORT##portnum##DIR = 0xff;
+#define PORT_AS_INPUT(portnum)   PORT##portnum##DIR = 0x00;
 
-#define PIN_AS_OUTPUT( portnum, pinnum ) \
+#define PIN_AS_OUTPUT(portnum, pinnum)        \
   { PORT##portnum##DIR |= (1 << (pinnum)); }
 
-#define PIN_AS_INPUT( portnum, pinnum ) \
+#define PIN_AS_INPUT(portnum, pinnum)         \
   { PORT##portnum##DIR &= (~(1 << (pinnum))); }
 
 // pins are defined as functions differently on atmegas
 // by default they are data GPIO pins
-#define PIN_AS_FUNCTION( portnum, pinnum )
-#define PIN_AS_DATA( portnum, pinnum )
+#define PIN_AS_FUNCTION(portnum, pinnum)
+#define PIN_AS_DATA(portnum, pinnum)
 
 
-#define PORT_READ( portnum ) IPIN##portnum
+#define PORT_READ(portnum) IPIN##portnum
 
-#define PORT_WRITE( portnum, val ) OPORT##portnum = val
+#define PORT_WRITE(portnum, val) OPORT##portnum = val
 
-#define PIN_READ( portnum, pinnum ) \
+#define PIN_READ(portnum, pinnum)             \
     ((IPIN##portnum & (1 << (pinnum))) ? 1 : 0)
 
-#define PIN_WRITE( portnum, pinnum, val )       \
-  OPORT##portnum =                             \
-    ( val ?                                     \
-      (OPORT##portnum | (1 << (pinnum))) :       \
-      (OPORT##portnum & (~(1 << (pinnum))))      \
+#define PIN_WRITE(portnum, pinnum, val)       \
+  OPORT##portnum =                            \
+    ( val ?                                   \
+      (OPORT##portnum | (1 << (pinnum))) :    \
+      (OPORT##portnum & (~(1 << (pinnum))))   \
     );
 
-#define PIN_SET( portnum, pinnum )              \
+#define PIN_SET(portnum, pinnum)              \
       OPORT##portnum |= (1 << (pinnum))
 
-#define PIN_SET_MASK( portnum, mask )           \
+#define PIN_SET_MASK(portnum, mask)           \
       OPORT##portnum |= (mask)
 
-#define PIN_CLEAR( portnum, pinnum )            \
+#define PIN_CLEAR(portnum, pinnum)            \
       OPORT##portnum &= (~(1 << (pinnum)))
 
-#define PIN_CLEAR_MASK( portnum, mask )         \
+#define PIN_CLEAR_MASK(portnum, mask)         \
       OPORT##portnum &= ~(mask)
 
-#define PIN_TOGGLE( portnum, pinnum )           \
+#define PIN_TOGGLE(portnum, pinnum)           \
       OPORT##portnum ^= (1 << (pinnum))
 
-#define PIN_TOGGLE_MASK( portnum, mask )        \
+#define PIN_TOGGLE_MASK(portnum, mask)        \
       OPORT##portnum ^= (mask)
 
 // TODO
 // interrupts
-#if 0
-#define PIN_ENABLE_INT( portnum, pinnum )              \
-     P##portnum##IE |= (1 << (pinnum))
-
-#define PIN_DISABLE_INT( portnum, pinnum )              \
-     P##portnum##IE &= ~(1 << (pinnum))
-
-// catch interrupt on rising/falling edge
-#define PIN_INT_RISING( portnum, pinnum )              \
-     P##portnum##IES &= ~(1 << (pinnum))
-
-#define PIN_INT_FALLING( portnum, pinnum )              \
-     P##portnum##IES |= (1 << (pinnum))
-
-// check whether pin int is catched on rising edge
-#define PIN_IS_INT_RISING( portnum, pinnum )              \
-     ((P##portnum##IES & (1 << (pinnum))) ? 0 : 1)
-
-// int flag is set on interrupt and must be cleared afterwards
-#define PORT_INT_FLAG( portnum )              \
-     P##portnum##IFG
-
-#define PIN_READ_INT_FLAG( portnum, pinnum )              \
-     P##portnum##IFG & (1 << (pinnum))
-
-#define PIN_CLEAR_INT_FLAG( portnum, pinnum )              \
-     P##portnum##IFG &= ~(1 << (pinnum))
-#endif // 0
 
 //===========================================================
 //===========================================================
 
-#endif  // _atmega_ports_h_
+#endif

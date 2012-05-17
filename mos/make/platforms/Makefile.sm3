@@ -57,7 +57,8 @@ PSOURCES += $(MOS)/platforms/sm3/platform.c
 
 PSOURCES += $(MOS)/chips/msp430/msp430x5xx_clock.c
 
-#PSOURCES-$(USE_RADIO) += $(MOS)/chips/...
+PSOURCES-$(USE_RADIO) += $(MOS)/chips/amb8420/amb8420.c
+
 #PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/...
 PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2401/ds2401.c
 PSOURCES-$(USE_ISL29003) += $(MOS)/chips/isl29003/isl29003.c

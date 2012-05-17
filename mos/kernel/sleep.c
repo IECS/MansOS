@@ -52,7 +52,10 @@ SLEEP_TIMER_INTERRUPT()
 
 #endif // !CUSTOM_TIMER_INTERRUPT_HANDLERS
 
-#if defined TBCTL_ || defined TOIE1 // only for platforms where timer B is available
+//
+// Include msleep() function only on platforms where timer B is available.
+//
+#if defined TBCTL || defined TBCTL_ || defined TOIE1
 
 #if USE_THREADS
 #define MSLEEP_FUNCTION_NAME doMsleep
