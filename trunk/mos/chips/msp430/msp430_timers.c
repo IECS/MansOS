@@ -24,7 +24,10 @@
 #include "msp430_timers.h"
 #include <hil/timers.h>
 
-#ifdef TBCCR0_ // only if the platform has timer B available
+//
+// Include this code only on platforms where timer B is available.
+//
+#if defined TBCTL || defined TBCTL_ || defined TOIE1
 
 void msp430TimerBSet(uint16_t ms)
 {
