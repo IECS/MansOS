@@ -40,6 +40,9 @@ class Editor(wx.stc.StyledTextCtrl):
 
         self.last = dict()
         self.lastCount = 0
+        self.lastLine = -1
+        self.lastType = ''
+        self.lastName = ''
 
         self.SetEndAtLastLine(True)
         self.SetIndentationGuides(True)
@@ -191,11 +194,34 @@ class Editor(wx.stc.StyledTextCtrl):
         # Smtng's wrong here...
 
     def clearUpDialogs(self, dialog):
+        # If we are on the same line, no need to change anything
+        if self.lastLine == self.lastEdit[2]:
+            if type(self.lastEdit[0]) is ComponentUseCase:
+                if self.lastName == self.lastEdit[0].name and self.lastType == self.lastEdit[0].type:
+                    if dialog:
+                        dialog.Destroy()
+                    return
+            else:
+                if dialog:
+                    dialog.Destroy()
+                return
+
+        self.lastLine = self.lastEdit[2]
+        if type(self.lastEdit[0]) is ComponentUseCase:
+            self.lastType = self.lastEdit[0].type
+            self.lastName = self.lastEdit[0].name
+        else:
+            self.lastType = ''
+            self.lastName = ''
+
         # Don't destroy if typing in dialog caused statement to become invalid
         if not dialog and self.GetCurLine()[0].strip() != '':
                 return
 
+        if self.API.editorSplitter.GetWindow2() is None:
+            self.API.editorSplitter.SplitVertically(self.API.tabManager,
+                                                    self.API.editPanel, -305)
+
         for x in self.API.editorSplitter.GetWindow2().GetChildren():
             if x != dialog:
-                x.DestroyChildren()
                 x.Destroy()
