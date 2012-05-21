@@ -157,7 +157,7 @@ class EditStatement(wx.Panel):
         if obj == self.statement[0].name:
             return
 
-        self.statement[0].parameters = list()
+
         self.statement[0].name = obj
         self.updateOriginal(event)
 

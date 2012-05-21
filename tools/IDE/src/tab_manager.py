@@ -72,8 +72,14 @@ class TabManager(fnb.FlatNotebook):
             self.API.frame.enableAdders()
         else:
             self.API.frame.disableAdders()
+
+        # Clear last dialog line, otherwise same line can't trigger new dialog
+        # until other line triggers it.
+        self.GetCurrentPage().code.lastLine = -1
+
         # Remove any Helper windows
         self.API.editorSplitter.Unsplit()
+        wx.YieldIfNeeded()
 
     def showPopupMenu(self):
         # Make clicked tab active, so all actions target this tab.
