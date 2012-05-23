@@ -135,6 +135,12 @@ class ApiCore:
         self.editPanel = ScrolledPanel(self.emptyFrame)
 
         self.frame = Frame(None, "MansOS IDE", (800, 500), (100, 100), self)
+        icon = os.path.normpath('../../doc/mansos-32x32.ico')
+        if os.path.exists(icon):
+            self.frame.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_ICO, 32, 32))
+        else:
+            self.logMsg(LOG_WARNING, "Icon not found in '{}'!".format(icon))
+
         self.onExit.append(self.frame.Close)
 
         assert len(self.emptyFrame.GetChildren()) == 0, \
