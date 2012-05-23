@@ -31,7 +31,8 @@ from editor_manager import EditorManager
 
 class TabManager(fnb.FlatNotebook):
     def __init__(self, parent, API):
-        fnb.FlatNotebook.__init__(self, parent)
+        fnb.FlatNotebook.__init__(self, parent, agwStyle = fnb.FNB_VC8 | \
+            fnb.FNB_NO_NAV_BUTTONS | fnb.FNB_X_ON_TAB | fnb.FNB_NO_X_BUTTON)
         self.empty = EmptyTab(self)
         self.API = API
         self.API.tabManager = self
@@ -50,16 +51,6 @@ class TabManager(fnb.FlatNotebook):
         self.SetRightClickMenu(self._rmenu)
 
         self.nextPageNr += 1
-
-        style = self.GetWindowStyleFlag()
-
-        # remove old tabs style
-        mirror = ~(fnb.FNB_VC71 | fnb.FNB_VC8 | fnb.FNB_FANCY_TABS | fnb.FNB_FF2)
-        style &= mirror
-
-        style |= fnb.FNB_FANCY_TABS
-
-        self.SetWindowStyleFlag(fnb.FNB_VC8 | fnb.FNB_NO_NAV_BUTTONS)
 
     def onPopupMenu(self, event):
         self.SetSelection(event.GetSelection())
