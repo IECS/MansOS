@@ -153,7 +153,6 @@ class Editor(wx.stc.StyledTextCtrl):
         self.clearUpDialogs(EditStatement(self.API.editPanel,
                                self.API, None, self.statementUpdateClbk), True)
 
-
     def addCondition(self):
         self.getPlaceForAdding()
         self.lastAutoEdit = time.time()
@@ -200,12 +199,10 @@ class Editor(wx.stc.StyledTextCtrl):
                 if self.lastName == self.lastEdit[0].name and self.lastType == self.lastEdit[0].type:
                     if dialog:
                         dialog.Destroy()
-                        print "fail 1"
                     return
             else:
                 if dialog:
                     dialog.Destroy()
-                print "fail 2"
                 return
 
         self.lastLine = self.lastEdit[2]
@@ -218,8 +215,6 @@ class Editor(wx.stc.StyledTextCtrl):
 
         # Don't destroy if typing in dialog caused statement to become invalid
         if not dialog and self.GetCurLine()[0].strip() != '':
-
-                print "fail 3"
                 return
 
         if self.API.editorSplitter.GetWindow2() is None:
