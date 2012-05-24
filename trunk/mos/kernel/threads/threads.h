@@ -113,10 +113,14 @@ typedef union {
             (MemoryAddress_t)threadStackBuffer + (currentThread->index * THREAD_STACK_SIZE))
 
 #if DEBUG_THREADS
-#define STACK_GUARD() do {                              \
-        MemoryAddress_t currentSp;                      \
-        GET_SP(currentSp);                              \
-        ASSERT_NOSTACK(currentSp >= STACK_ADDR_LOW());  \
+#define STACK_GUARD() do {                                         \
+        /* declare a stack pointer variable */                     \
+        MemoryAddress_t currentSp;                                 \
+        /* read the current stack pointer into the variable */     \
+        GET_SP(currentSp);                                         \
+        /* compare the current stack pointer with stack bottom */  \
+        /* and abort in case of overflow */                        \
+        ASSERT_NOSTACK(currentSp >= STACK_ADDR_LOW());             \
     } while (0)
 #else
 #define STACK_GUARD()
