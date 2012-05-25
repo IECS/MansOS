@@ -146,6 +146,16 @@ class ApiCore:
         assert len(self.emptyFrame.GetChildren()) == 0, \
             "There are parentless objects after API initialization."
 
+        path = "../../apps/seal/Blink/"
+        if os.path.exists(path):
+            filename = self.frame.findFirstSourceFile(path)
+            if filename:
+                self.tabManager.getPageObject().update(filename)
+            else:
+                self.tabManager.getPageObject().update('sampleCode.sl')
+        else:
+            self.tabManager.getPageObject().update('sampleCode.sl')
+
     def getStatementType(self, line):
         possibleSplitters = [None, ",", ";"]
         # Try split statement to parse actuator and object
