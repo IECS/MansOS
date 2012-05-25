@@ -43,7 +43,7 @@ class TabManager(fnb.FlatNotebook):
         # Need to set because next statement uses it
         self.nextPageNr = 1
         self.AddPage(EditorManager(self, self.API),
-                self.tr("Untitled document") + ' ' + str(self.nextPageNr))
+                self.tr("Untitled document"))
         #
 
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.onPageChanged)
@@ -160,6 +160,7 @@ class TabManager(fnb.FlatNotebook):
         return self.GetPage(self.GetSelection())
 
     def addPage(self, newFile = ''):
+        print "adding", newFile
         self.AddPage(EditorManager(self, self.API),
                 self.tr("Untitled document") + ' ' + str(self.nextPageNr))
         self.nextPageNr += 1
@@ -217,23 +218,22 @@ class TabManager(fnb.FlatNotebook):
 
     def loadRememberedTabs(self):
         tabs = self.API.getSetting('openedTabs').split(';')
-        if tabs != '':
-            # Remove automatically created first page
-            self.DeletePage(self.GetSelection())
-        # Add all Tabs
-        for x in tabs:
-            self.addPage(x)
 
-        if tabs != '':
+        # Remove automatically created first page
+        self.DeletePage(0)
+
+        if tabs != ['']:
+            # Add all Tabs
+            for x in tabs:
+                self.addPage(x)
             return
 
         # Open default files if no tabs were saved
         path = "../../apps/seal/Blink/"
         if exists(path):
-            filename = self.frame.findFirstSourceFile(path)
+            filename = self.API.frame.findFirstSourceFile(path)
             if filename:
-                self.tabManager.getPageObject().update(filename)
-            else:
-                self.tabManager.getPageObject().update('sampleCode.sl')
-        else:
-            self.tabManager.getPageObject().update('sampleCode.sl')
+                self.addPage(filename)
+                return
+
+        self.addPage('sampleCode.sl')
