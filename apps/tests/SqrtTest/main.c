@@ -21,27 +21,16 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// generic algorthms
-//
-
-#ifndef MANSOS_ALGO_H
-#define MANSOS_ALGO_H
-
 #include "stdmansos.h"
+#include "algo.h"
 
-#define swap(p1, p2) \
-    do {                                         \
-        typeof(p1) t = p2;                       \
-        p2 = p1;                                 \
-        p1 = t;                                  \
-    } while (0)
+void appMain(void) {
+    uint32_t i = 1;
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
-
-#define max(a, b) ((a) > (b) ? (a) : (b))
-
-// Calculate square root, rounded down.
-uint16_t intSqrt(uint32_t);
-
-#endif
+    while(true) {
+        PRINTF("Sqrt(%lu) = %lu\n",i, intSqrt(i));
+        i++;
+        // wait for 1000 milliseconds
+        msleep(1000);
+    }
+}

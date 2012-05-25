@@ -9,7 +9,7 @@ import components
 ###################################################
 
 class SealParser():
-    def __init__(self, architecture, printMsg, verboseMode, debugMode = False):
+    def __init__(self, architecture, printMsg, verboseMode = True, debugMode = True):
         self.isError = False
         # Lex & yacc
         self.lex = lex.lex(module = self, debug = verboseMode, reflags = re.IGNORECASE)
@@ -61,6 +61,8 @@ class SealParser():
       "define": "DEFINE_TOKEN",
       "set": "SET_TOKEN",
       "pattern": "PATTERN_TOKEN",
+      "process": "PROCESS_TOKEN",
+      "filter": "FILTER_TOKEN",
       "true": "TRUE_TOKEN",
       "false": "FALSE_TOKEN",
       "not": "NOT_TOKEN",
@@ -153,8 +155,9 @@ class SealParser():
                        | when_block
                        | system_parameter_declaration
                        | pattern_declaration
-                       | set_statement
+                       | set_statement 
                        | define_statement
+                       | process_statement
                        | ';'
                        | error END_TOKEN
                        | error ';'
@@ -236,7 +239,7 @@ class SealParser():
 
 
     def p_logical_statement(self, p):
-      ''' logical_statement : arithmetic_expression
+        ''' logical_statement : arithmetic_expression
                | '(' condition ')'
                | arithmetic_expression EQ_TOKEN arithmetic_expression
                | arithmetic_expression NEQ_TOKEN arithmetic_expression
@@ -244,13 +247,13 @@ class SealParser():
                | arithmetic_expression '<' arithmetic_expression
                | arithmetic_expression GEQ_TOKEN arithmetic_expression
                | arithmetic_expression LEQ_TOKEN arithmetic_expression
-      '''
-      if len(p) == 2:
-          p[0] = p[1]
-      elif p[1] == '(':
-          p[0] = p[2] # TODO: will not be able to generate code correctly!
-      else:
-          p[0] = Expression(p[1], p[2], p[3])
+        '''
+        if len(p) == 2:
+            p[0] = p[1]
+        elif p[1] == '(':
+            p[0] = p[2] # TODO: will not be able to generate code correctly!
+        else:
+            p[0] = Expression(p[1], p[2], p[3])
 
     def p_arithmetic_expression(self, p):
         '''arithmetic_expression : arithmetic_expression '+' arithmetic_term
@@ -289,7 +292,10 @@ class SealParser():
         '''parameter : IDENTIFIER_TOKEN
                      | IDENTIFIER_TOKEN value
                      | PATTERN_TOKEN value
+                     | FILTER_TOKEN filter_statement
         '''
+        if p[1] in ['average', 'stdev', 'filter']:
+            components.processFunctionsUsed[p[1]] = True
 # TODO?:
 #                     | WHEN_TOKEN condition
 # TODO JJ: also support this: "filter >100"
@@ -356,3 +362,20 @@ class SealParser():
         self.isError = True
         self.printMsg("Syntax error at line {0}: {1}\n".format(p.lineno(1), msg))
 
+### PROCESS
+
+    def p_process_statement(self, p):
+        '''process_statement : PROCESS_TOKEN IDENTIFIER_TOKEN IDENTIFIER_TOKEN parameter_list ';'
+        '''
+        p[0] = ProcessStatement(p[2], p[3], p[4])
+
+
+    def p_filter_statement(self, p):
+        ''' filter_statement : EQ_TOKEN arithmetic_expression
+               | NEQ_TOKEN arithmetic_expression
+               | '>' arithmetic_expression
+               | '<' arithmetic_expression
+               | GEQ_TOKEN arithmetic_expression
+               | LEQ_TOKEN arithmetic_expression
+        '''
+        p[0] = Expression(None, p[1], p[2])

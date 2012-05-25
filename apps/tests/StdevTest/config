@@ -1,0 +1,4 @@
+USE_AVERAGE = y
+USE_STDEV = y
+# for sqrt
+USE_ALGO = y

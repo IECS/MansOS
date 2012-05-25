@@ -224,6 +224,7 @@ include $(MAKEFILE_HIL)
 INCLUDES += -I$(MOS)
 INCLUDES += -I$(MOS)/kernel
 INCLUDES += -I$(MOS)/lib
+INCLUDES += -I$(MOS)/lib/processing
 INCLUDES += -I$(NET)
 INCLUDES += -I$(MOS)/hil
 INCLUDES += -I$(MOS)/arch/$(ARCH)

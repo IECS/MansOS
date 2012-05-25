@@ -19,7 +19,7 @@ class SealComponent(object):
         self.extraConfig = SealParameter(None)  # config file line(s)
         self.extraIncludes = SealParameter(None) # #include<> line(s)
         self.period = SealParameter(1000, ['100', '200', '500', '1000', '2000'])
-        self.pattern = SealParameter(None)
+        self.pattern = None
         self.once = SealParameter(False, [False, True])
         self.useFunction = SealParameter(None)  # each usable component must define this
         self.readFunction = SealParameter(None)  # each readable component must define this
@@ -29,13 +29,32 @@ class SealComponent(object):
 class SealSensor(SealComponent):
     def __init__(self, name):
         super(SealSensor, self).__init__(TYPE_SENSOR, name)
+        self.readFunction = SealParameter(None)  # each sensor must define this
         self.dataSize = 2 # in bytes
+        self.filter = SealParameter('', ['> 100'])
+        self.average = SealParameter('', ['10'])
+        self.stdev = SealParameter('', ['10'])
 
 class Light(SealSensor):
     def __init__(self):
         super(Light, self).__init__("Light")
         self.useFunction.value = "lightRead()"
         self.readFunction.value = "lightRead()"
+
+class Constant(SealSensor):
+    def __init__(self):
+        super(Constant, self).__init__("Constant")
+        self.useFunction.value = "5"
+        self.readFunction.value = "5"
+
+class Random(SealSensor):
+    def __init__(self):
+        super(Random, self).__init__("Random")
+        self.useFunction.value = "randomRand()"
+        self.readFunction.value = "randomRand()"
+        self.extraConfig = SealParameter("USE_RANDOM=y")
+        self.extraIncludes = SealParameter("#include <random.h>")
+
 
 class Humidity(SealSensor):
     def __init__(self):
@@ -50,6 +69,7 @@ class Humidity(SealSensor):
 class SealActuator(SealComponent):
     def __init__(self, name):
         super(SealActuator, self).__init__(TYPE_ACTUATOR, name)
+        self.useFunction = SealParameter(None)  # each actuator must define this
 
 class Led(SealActuator):
     def __init__(self):
@@ -94,6 +114,7 @@ class Print(SealActuator):
 class SealOutput(SealComponent):
     def __init__(self, name):
         super(SealOutput, self).__init__(TYPE_OUTPUT, name)
+        self.sendFunction = None # each output must define this
         self.aggregate = SealParameter(True, [False, True])
         self.crc = SealParameter(False, [False, True])
 

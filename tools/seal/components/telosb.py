@@ -11,3 +11,7 @@ greenled = GreenLed()
 
 light = Light()
 humidity = Humidity()
+constant = Constant()
+random = Random()
+constant = Constant()
+random = Random()

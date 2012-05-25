@@ -21,27 +21,34 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// generic algorthms
-//
-
-#ifndef MANSOS_ALGO_H
-#define MANSOS_ALGO_H
-
 #include "stdmansos.h"
+#include "average.h"
+#include "random.h"
+#include "stdev.h"
+#include "algo.h"
 
-#define swap(p1, p2) \
-    do {                                         \
-        typeof(p1) t = p2;                       \
-        p2 = p1;                                 \
-        p1 = t;                                  \
-    } while (0)
+void appMain(void) {
+    uint8_t coeffs[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
+    // Init with coefficients
+    Average_t avg1 = avgInitWithCoeffs(10, coeffs);
+    // Init with window 5
+    Average_t avg2 = avgInit(10);
+    // Init with infinite window
+    Average_t avg3 = avgInit(0);
 
-#define max(a, b) ((a) > (b) ? (a) : (b))
+    while (true) {
+        uint16_t temp = randomRand();
+        addAverage(&avg1, &temp);
+        addAverage(&avg2, &temp);
+        addAverage(&avg3, &temp);
 
-// Calculate square root, rounded down.
-uint16_t intSqrt(uint32_t);
-
-#endif
+        PRINTF("%u %u %u %u %u\n", temp,getAverageValue(&avg1),
+                getAverageValue(&avg2), getAverageValue(&avg3),
+                intSqrt(temp));
+        // change the default LED status
+        ledToggle();
+        // wait for 1000 milliseconds
+        mdelay(1000);
+    }
+}

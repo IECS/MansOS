@@ -1,0 +1,4 @@
+USE_AVERAGE = y
+USE_RANDOM = y
+USE_ALGO = y
+USE_STDEV = y

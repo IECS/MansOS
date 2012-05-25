@@ -64,6 +64,7 @@ class UseCase(object):
         # use component's parameters as defaults
         for p in component.parameters:
             self.parameters[p] = Value(component.parameters[p])
+
         # add user's parameters
         for p in parameters:
             if p[0] not in component.parameters:
@@ -100,6 +101,13 @@ class UseCase(object):
             self.once = bool(p.value)
         else:
             self.once = None
+        for x in ['average', 'stdev', 'filter']:
+            p = self.parameters.get(x)
+            if p:
+                self.__setattr__(x, p.asString())
+            else:
+                self.__setattr__(x, None)
+
         if self.period and self.pattern or self.period and self.once or self.pattern and self.once:
             if self.period and self.pattern:
                 userError("Both period and pattern specified for component '{0}' use case\n".format(component.name))
@@ -120,8 +128,8 @@ class UseCase(object):
         #print "after conditions[1] =", branchCollection.branches[branchNumber][0][1]
 
     def generateConstants(self, outputFile):
+        ucname = self.component.getNameUC()
         if self.period:
-            ucname = self.component.getNameUC()
             if self.branchNumber != 0:
                 ucname += self.branchName.upper()
             outputFile.write(
@@ -134,6 +142,30 @@ class UseCase(object):
                 "Alarm_t {0}{1}Alarm{2};\n".format(
                     self.component.getNameCC(), self.branchName, self.numInBranch))
 
+        if self.filter:
+            outputFile.write(
+                "Filter_t {}{}Filter{};\n".format(
+                    self.component.getNameCC(), self.branchName, self.numInBranch))
+            processStructInits.append("    {}{}Filter{} = filterInit({});\n".format(
+                    self.component.getNameCC(), self.branchName, self.numInBranch,
+                    self.filter))
+
+        if self.average:
+            outputFile.write(
+                "Average_t {}{}Average{};\n".format(
+                    self.component.getNameCC(), self.branchName, self.numInBranch))
+            processStructInits.append("    {}{}Average{} = avgInit({});\n".format(
+                    self.component.getNameCC(), self.branchName, self.numInBranch,
+                    self.average))
+
+        if self.stdev:
+            outputFile.write(
+                "Stdev_t {}{}Stdev{};\n".format(
+                    self.component.getNameCC(), self.branchName, self.numInBranch))
+            processStructInits.append("    {}{}Stdev{} = stdevInit({});\n".format(
+                    self.component.getNameCC(), self.branchName, self.numInBranch,
+                    self.stdev))
+
     def generateCallbacks(self, outputFile, outputs):
         ccname = self.component.getNameCC()
         ccname += self.branchName
@@ -144,7 +176,7 @@ class UseCase(object):
             self.component.getNameCC())
 
         if self.generateAlarm:
-            outputFile.write("void {0}{1}Callback(void *__unused)\n".format(ccname, self.numInBranch))
+            outputFile.write("void {0}{1}Callback(void * __unused)\n".format(ccname, self.numInBranch))
             outputFile.write("{\n")
             if type(self.component) is Actuator:
                 if self.component.name.lower() == "print":
@@ -161,8 +193,36 @@ class UseCase(object):
             elif type(self.component) is Sensor:
                 intTypeName = "uint{0}_t".format(self.component.getDataSize() * 8)
                 outputFile.write("    {0} {1} = {2};\n".format(intTypeName, self.component.getNameCC(), useFunction))
-                for o in outputs:
-                    o.generateCallbackCode(self.component, outputFile)
+                if self.filter:
+                    filterName = "{}{}Filter{}".format(self.component.getNameCC(),
+                                self.branchName, self.numInBranch)
+                    outputFile.write("    if(addFilter(&{}, &{})) ".format(
+                         filterName, self.component.getNameCC()))
+                    outputFile.write("{\n")
+                    if self.average:
+                        outputFile.write("        addAverage(&{}{}Average{}, &getValue(&{}));\n".format(
+                            self.component.getNameCC(), self.branchName,
+                            self.numInBranch, filterName))
+                    if self.stdev:
+                        outputFile.write("        addStdev(&{}{}Stdev{}, &getValue(&{}));\n".format(
+                            self.component.getNameCC(), self.branchName,
+                            self.numInBranch, filterName))
+                    self.checkDependencies(self.component.getNameCC(), 2, outputFile)
+                    for o in outputs:
+                        o.generateCallbackCode(self.component, outputFile)
+                    outputFile.write("    }\n")
+                else:
+                    if self.average:
+                        outputFile.write("    addAverage(&{}{}Average{}, &{});\n".format(
+                            self.component.getNameCC(), self.branchName,
+                            self.numInBranch, self.component.getNameCC()))
+                    if self.stdev:
+                        outputFile.write("    addStdev(&{}{}Stdev{}, &{});\n".format(
+                            self.component.getNameCC(), self.branchName,
+                            self.numInBranch, self.component.getNameCC()))
+                    self.checkDependencies(self.component.getNameCC(), 1, outputFile)
+                    for o in outputs:
+                        o.generateCallbackCode(self.component, outputFile)
 
             if self.period:
                 outputFile.write("    alarmSchedule(&{0}Alarm{1}, {2}_PERIOD{1});\n".format(
@@ -176,6 +236,11 @@ class UseCase(object):
             else: # once
                 pass
             outputFile.write("}\n")
+
+    # Checks for dependencies for given name
+    def checkDependencies(self, name, indent, outputFile):
+        for x in componentRegister.getDependentProcess(name):
+            x[1].generateCallbackCode(outputFile, name, indent, self.checkDependencies)
 
     def generateAppMainCode(self, outputFile):
         ccname = self.component.getNameCC()
@@ -501,6 +566,7 @@ class ComponentRegister(object):
         self.systemStates = {}
         self.defines = {}
         self.patterns = {}
+        self.process = {}
         self.architecture = architecture
         # import the module (residing in "components" directory and named "<architecture>.py")
         self.module = __import__(architecture)
@@ -561,9 +627,20 @@ class ComponentRegister(object):
             s[0].generateVariables(outputFile)
         for p in self.patterns.itervalues():
             p.generateVariables(outputFile)
+        for p in self.process.itervalues():
+            p.generateVariables(outputFile)
 
     def getAllComponents(self):
         return set(self.actuators.values()).union(set(self.sensors.values())).union(set(self.outputs.values()))
+
+    def getDependentProcess(self, name):
+        result = []
+        # Find any process statement who is dependent from this component
+        for x in self.process.iteritems():
+            if x[1].target == name.lower():
+                result.append(x)
+                print x[1].name, "depends on", name
+        return result
 
     def replaceCode(self, componentName, parameterName):
         c = self.sensors.get(componentName, None)
@@ -571,6 +648,11 @@ class ComponentRegister(object):
             c = self.actuators.get(componentName, None)
         if c == None:
             c = self.outputs.get(componentName, None)
+        if c == None:
+            c = self.process.get(componentName, None)
+            if c != None:
+                if parameterName == 'value':
+                    return c.name
         # not found?
         if c == None:
             if parameterName == 'ispresent':
@@ -598,6 +680,9 @@ class ComponentRegister(object):
             else:
                 userError("Parameter '{0}' for component '{1} is not readable!'\n".format(parameterName, componentName))
                 return "false"
+        if parameterName in ['average', 'stdev', 'filter']:
+            return "get{}{}Value(&{}{}{})".format(parameterName[0].upper(), parameterName[1:],
+                  componentName, parameterName[0].upper(), parameterName[1:])
         userError("Unknown parameter '{0}' for component '{1}'\n".format(parameterName, componentName))
         return "false"
 
@@ -606,3 +691,4 @@ class ComponentRegister(object):
 componentRegister = ComponentRegister()
 branchCollection = BranchCollection()
 conditionCollection = ConditionCollection()
+processFunctionsUsed = dict()
