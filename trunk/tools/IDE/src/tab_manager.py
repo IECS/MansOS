@@ -160,7 +160,6 @@ class TabManager(fnb.FlatNotebook):
         return self.GetPage(self.GetSelection())
 
     def addPage(self, newFile = ''):
-        print "adding", newFile
         self.AddPage(EditorManager(self, self.API),
                 self.tr("Untitled document") + ' ' + str(self.nextPageNr))
         self.nextPageNr += 1

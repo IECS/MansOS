@@ -73,6 +73,8 @@ class GetMotelist(object):
             target = os.path.normcase(self.pathToMansos + "/mos/make/scripts/motelist")
             if system() == 'Windows':
                 target += ".exe"
+            elif system() == "Mac":
+                target += ".apple"
 
             process = Popen([target, "-c"],
                                           stderr = STDOUT,
@@ -80,7 +82,7 @@ class GetMotelist(object):
             motes = process.communicate()[0]
 
             if motes.find("No devices found") == False:
-                return [False, '']
+                return [False, ['']]
 
             for line in motes.split("\n"):
                 # Seperate ID, port, description
