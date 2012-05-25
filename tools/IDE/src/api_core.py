@@ -125,7 +125,7 @@ class ApiCore:
         self.tabManager = TabManager(self.emptyFrame, self)
 
         self.uploadCore = UploadCore(self, self.printInfo)
-        self.uploadTargets = ([], self.tr('default device'))
+        self.uploadTargets = ([], self.tr('the default device'))
 
         # Init listenModule
         self.listenModule = ListenModule(self.emptyFrame, self)
