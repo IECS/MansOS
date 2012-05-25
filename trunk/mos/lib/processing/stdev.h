@@ -21,27 +21,27 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// generic algorthms
-//
-
-#ifndef MANSOS_ALGO_H
-#define MANSOS_ALGO_H
+#ifndef STDEV_H_
+#define STDEV_H_
 
 #include "stdmansos.h"
+#include "average.h"
+#include "algo.h"
 
-#define swap(p1, p2) \
-    do {                                         \
-        typeof(p1) t = p2;                       \
-        p2 = p1;                                 \
-        p1 = t;                                  \
-    } while (0)
+#define DEFAULT_SIZE 10
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
+struct Stdev_s {
+    Average_t average;
+    uint16_t value;
+};
 
-#define max(a, b) ((a) > (b) ? (a) : (b))
+typedef struct Stdev_s Stdev_t;
 
-// Calculate square root, rounded down.
-uint16_t intSqrt(uint32_t);
+Stdev_t stdevInit(uint8_t);
 
-#endif
+void addStdev(Stdev_t*, uint16_t*);
+
+uint16_t getStdevValue(Stdev_t*);
+
+#endif /* STDEV_H_ */
+

@@ -21,27 +21,36 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// generic algorthms
-//
-
-#ifndef MANSOS_ALGO_H
-#define MANSOS_ALGO_H
+#ifndef MANSOS_AVERAGE_H_
+#define MANSOS_AVERAGE_H_
 
 #include "stdmansos.h"
 
-#define swap(p1, p2) \
-    do {                                         \
-        typeof(p1) t = p2;                       \
-        p2 = p1;                                 \
-        p1 = t;                                  \
-    } while (0)
+// For 2^32
+#define BUFFERING_START_TRESHOLD 2147483648U // 2^31
+#define BUFFERING_STOP_TRESHOLD 4294901760U // 2^32 - 2^16
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
+struct Average_s {
+    uint16_t value;
+    uint32_t sum;
+    uint32_t count;
+    uint32_t bufSum;
+    uint32_t bufCount;
+    uint8_t window;
+    uint16_t *history;
+    uint8_t *coefficients;
+    uint8_t oldestValue;
+    bool haveCoefficients;
+};
 
-#define max(a, b) ((a) > (b) ? (a) : (b))
+typedef struct Average_s Average_t;
 
-// Calculate square root, rounded down.
-uint16_t intSqrt(uint32_t);
+Average_t avgInit(uint8_t);
 
-#endif
+Average_t avgInitWithCoeffs(uint8_t, uint8_t *);
+
+void addAverage(Average_t*, uint16_t*);
+
+uint16_t getAverageValue(Average_t *avg);
+
+#endif /* MANSOS_AVERAGE_H_ */

@@ -21,27 +21,33 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// generic algorthms
-//
-
-#ifndef MANSOS_ALGO_H
-#define MANSOS_ALGO_H
+#ifndef MANSOS_FILTER_H_
+#define MANSOS_FILTER_H_
 
 #include "stdmansos.h"
 
-#define swap(p1, p2) \
-    do {                                         \
-        typeof(p1) t = p2;                       \
-        p2 = p1;                                 \
-        p1 = t;                                  \
-    } while (0)
+enum Comparators {
+    NOT_EQUAL,
+    EQUAL,
+    LESS,
+    LESS_OR_EQUAL,
+    MORE_OR_EQUAL,
+    MORE
+};
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
+struct Filter_s {
+    enum Comparators comparator;
+    uint16_t treshold;
+    uint16_t value;
+};
 
-#define max(a, b) ((a) > (b) ? (a) : (b))
+typedef struct Filter_s Filter_t;
 
-// Calculate square root, rounded down.
-uint16_t intSqrt(uint32_t);
+Filter_t filterInit(enum Comparators, uint16_t);
 
-#endif
+bool addFilter(Filter_t*, uint16_t*);
+
+uint16_t getFilterValue(Filter_t*);
+
+#endif /* MANSOS_FILTER_H_ */
+

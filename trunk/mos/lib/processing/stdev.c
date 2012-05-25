@@ -21,27 +21,42 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// generic algorthms
-//
+#include "stdev.h"
 
-#ifndef MANSOS_ALGO_H
-#define MANSOS_ALGO_H
+// Initialize Stdev_t
+Stdev_t stdevInit(uint8_t window) {
+    Stdev_t result;
+    // Disallowed, because can't hold all values in memory.
+    if (window == 0) {
+        result.average = avgInit(DEFAULT_SIZE);
+    } else {
+        result.average = avgInit(window);
+    }
+    return result;
+};
 
-#include "stdmansos.h"
+void addStdev(Stdev_t *stdev, uint16_t *val) {
+    addAverage(&stdev->average, val);
+};
 
-#define swap(p1, p2) \
-    do {                                         \
-        typeof(p1) t = p2;                       \
-        p2 = p1;                                 \
-        p1 = t;                                  \
-    } while (0)
-
-#define min(a, b) ((a) < (b) ? (a) : (b))
-
-#define max(a, b) ((a) > (b) ? (a) : (b))
-
-// Calculate square root, rounded down.
-uint16_t intSqrt(uint32_t);
-
-#endif
+uint16_t getStdevValue(Stdev_t *stdev) {
+    // If getter() is used we can calculate this only on demand
+    uint16_t average = getAverageValue(&stdev->average);
+    uint8_t temp;
+    uint32_t sum = 0;
+    for (temp = 0; temp < stdev->average.count; temp++) {
+        int32_t dif;
+        if (stdev->average.history[temp] > average) {
+            dif = (int32_t)(stdev->average.history[temp] - average);
+        } else {
+            dif = (int32_t)(average - stdev->average.history[temp]);
+        }
+        // Dividing here helps against overflow if dif > 2^16, because
+        // 2^16^2 = 2^32 - too large
+        sum += (dif / stdev->average.count) * dif;
+#ifdef DEBUG
+        PRINTF("Adding %lu to stdev sum\n", dif * dif);
+#endif //DEBUG
+    }
+    return (stdev->value = intSqrt(sum));
+};

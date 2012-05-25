@@ -21,27 +21,26 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// generic algorthms
-//
-
-#ifndef MANSOS_ALGO_H
-#define MANSOS_ALGO_H
-
 #include "stdmansos.h"
+#include "filter.h"
+#include "random.h"
 
-#define swap(p1, p2) \
-    do {                                         \
-        typeof(p1) t = p2;                       \
-        p2 = p1;                                 \
-        p1 = t;                                  \
-    } while (0)
+// <= 10000
+Filter_t filter = filterInit(3, 10000);
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
+void appMain(void) {
+    while(true) {
+        uint16_t temp = randomRand();
+        if (addFilter(&filter, (uint16_t*)&temp)) {
+            PRINTF("Adding %d succeeds", temp);
+        } else {
+            PRINTF("Adding %d fails", temp);
+        }
+        PRINTF(", lastVal = %d\n", getFilterValue(&filter));
 
-#define max(a, b) ((a) > (b) ? (a) : (b))
-
-// Calculate square root, rounded down.
-uint16_t intSqrt(uint32_t);
-
-#endif
+        // change the default LED status
+        ledToggle();
+        // wait for 1000 milliseconds
+        msleep(1000);
+    }
+}

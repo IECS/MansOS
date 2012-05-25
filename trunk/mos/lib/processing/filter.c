@@ -21,27 +21,43 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// generic algorthms
-//
+#include "filter.h"
 
-#ifndef MANSOS_ALGO_H
-#define MANSOS_ALGO_H
+// Initialize Filter_t
+Filter_t filterInit(enum Comparators comp, uint16_t treshold) {
+    Filter_t result;
+    result.comparator = comp;
+    result.treshold = treshold;
+    return result;
+};
 
-#include "stdmansos.h"
+bool addFilter(Filter_t *filter, uint16_t *val) {
+    switch (filter->comparator) {
+    case NOT_EQUAL:
+        return (*val != filter->treshold) ? (filter->value = *val) || true : false;
+        break;
+    case EQUAL:
+        return (*val == filter->treshold) ? (filter->value = *val) || true : false;
+        break;
+    case LESS:
+        return (*val < filter->treshold) ? (filter->value = *val) || true : false;
+        break;
+    case LESS_OR_EQUAL:
+        return (*val <= filter->treshold) ? (filter->value = *val) || true : false;
+        break;
+    case MORE:
+        return (*val > filter->treshold) ? (filter->value = *val) || true : false;
+        break;
+    case MORE_OR_EQUAL:
+        return (*val >= filter->treshold) ? (filter->value = *val) || true : false;
+        break;
+    };
+#ifdef DEBUG
+    PRINTF("%d is not supported comparator!\n", filter->comparator);
+#endif //DEBUG
+    return false;
+};
 
-#define swap(p1, p2) \
-    do {                                         \
-        typeof(p1) t = p2;                       \
-        p2 = p1;                                 \
-        p1 = t;                                  \
-    } while (0)
-
-#define min(a, b) ((a) < (b) ? (a) : (b))
-
-#define max(a, b) ((a) > (b) ? (a) : (b))
-
-// Calculate square root, rounded down.
-uint16_t intSqrt(uint32_t);
-
-#endif
+uint16_t getFilterValue(Filter_t *filter) {
+    return filter->value;
+};

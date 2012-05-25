@@ -1,7 +1,7 @@
 import string, sys
 ########################################################
 
-INDENT_STRING = "  "  # indent new code level with two spaces
+INDENT_STRING = "    "  # indent new code level with two spaces
 def getIndent(indent):
     # take indent string n times
     return INDENT_STRING * indent
@@ -26,6 +26,17 @@ def toMilliseconds(x):
 def toCamelCase(s):
     if s == '': return ''
     return string.lower(s[0]) + s[1:]
+
+filterParam = {
+               "!=": 0,
+               "==": 1,
+               "=": 1,
+               "<": 2,
+               "<=": 3,
+               ">=": 4,
+               ">": 5
+               }
+processStructInits = list()
 
 ########################################################
 class ConditionCollection(object):
@@ -159,6 +170,10 @@ class Expression(object):
             return "(" + self.right.getCodeForGenerator(componentRegister) + ")"
         return self.right
 
+    def asString(self):
+        temp = self.getCode().split(" ", 1)
+        return "{}, {}".format(filterParam[temp[0]], temp[1])
+
 ########################################################
 class SystemParameter(object):
     def __init__(self, name, value):
@@ -241,6 +256,75 @@ class DefineStatement(object):
             userError("Define {0} already specified, ignoring\n".format(self.name))
             return
         componentRegister.defines[self.name] = self
+
+class ProcessStatement(object):
+    def __init__(self, name, target, parameters):
+        self.name = name.lower()
+        self.target = target.lower()
+        self.parameters = parameters
+
+    def getCode(self, indent):
+        result = "process {} {},".format(self.name, self.target)
+        for p in self.parameters:
+            result += " "
+            result += p[0]
+            if p[1] != None:
+                result += " "
+                result += p[1].getCode()
+            result += ","
+        if self.parameters != []:
+            result = result[:-1] # remove last comma
+        result += ';'
+        return result
+
+    def generateVariables(self, outputFile = None):
+        outputFile.write ("uint16_t {} = 0;\n".format(self.name));
+        for x in self.parameters:
+            if x[0] in ['average', 'filter', 'stdev']:
+                outputFile.write ("{}{}_t {}{}{};\n".format(
+                    x[0][0].upper(), x[0][1:], x[0], self.name[0].upper(),
+                    self.name[1:]));
+                processStructInits.append("    {}{}{} = {}Init({});\n".format(
+                    x[0], self.name[0].upper(), self.name[1:], x[0], x[1].asString()))
+
+    def generateCallbackCode(self, outputFile, inputValue, indent, recursiveCall):
+        lastVal = inputValue
+        myIndent = indent
+        haveFilter = False
+        for x in self.parameters:
+            name = x[0] + self.name[0].upper() + self.name[1:]
+            if x[0] == 'filter':
+                haveFilter = True
+                outputFile.write(getIndent(myIndent))
+                outputFile.write("if (addFilter(&{}, &{})) ".format(name, lastVal));
+                outputFile.write("{\n");
+                myIndent += 1
+            elif x[0] in ['average', 'stdev']:
+                outputFile.write(getIndent(myIndent))
+                outputFile.write("add{}{}(&{}, &{});\n".format(x[0][0].upper(),
+                                                x[0][1:], name, lastVal));
+            else:
+                # TODO: disallow this
+                print "Unsuported parameter for process: {}".format(x[0])
+                continue
+            lastVal = "get{}{}Value(&{})".format(x[0][0].upper(), x[0][1:], name)
+
+        outputFile.write(getIndent(myIndent));
+        outputFile.write("{} = {};\n".format(self.name, lastVal));
+
+        # Calls function who checks for dependencies against this process, 
+        # can't be done here because scope is too small
+        recursiveCall(self.name, myIndent, outputFile)
+
+        if haveFilter:
+            outputFile.write(getIndent(myIndent - 1));
+            outputFile.write("}\n");
+
+    def addComponents(self, componentRegister, conditionCollection):
+        if self.name in componentRegister.process:
+            userError("Process {0} already specified, ignoring\n".format(self.name))
+            return
+        componentRegister.process[self.name] = self
 
 ########################################################
 class ComponentUseCase(object):
@@ -352,7 +436,7 @@ class CodeBlock(object):
                             d.name))
                 else:
                     d.addComponents(componentRegister, conditionCollection)
-            if type(d) is SetStatement or type(d) is DefineStatement:
+            if type(d) is SetStatement or type(d) is DefineStatement or type(d) is ProcessStatement:
                 d.addComponents(componentRegister, conditionCollection)
         for d in self.declarations:
             if type(d) is ComponentUseCase:

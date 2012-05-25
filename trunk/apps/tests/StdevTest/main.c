@@ -21,27 +21,28 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// generic algorthms
-//
-
-#ifndef MANSOS_ALGO_H
-#define MANSOS_ALGO_H
-
 #include "stdmansos.h"
+#include "stdev.h"
 
-#define swap(p1, p2) \
-    do {                                         \
-        typeof(p1) t = p2;                       \
-        p2 = p1;                                 \
-        p1 = t;                                  \
-    } while (0)
+void appMain(void) {
+    Stdev_t stdev = stdevInit(8);
+    uint16_t i = 2;
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
+    addStdev(&stdev, &i); // 2
+    i=4;
+    addStdev(&stdev,&i); // 4
+    addStdev(&stdev,&i); // 4
+    addStdev(&stdev,&i); // 4
+    i=5;
+    addStdev(&stdev,&i); // 5
+    addStdev(&stdev,&i); // 5
+    i=7;
+    addStdev(&stdev,&i); // 7
+    i=9;
+    addStdev(&stdev,&i); // 9
 
-#define max(a, b) ((a) > (b) ? (a) : (b))
-
-// Calculate square root, rounded down.
-uint16_t intSqrt(uint32_t);
-
-#endif
+    // Should print avg = 5, stdev = 2
+    PRINTF("Data = {2,4,4,4,5,5,7,9}, avg = %u, stdev = %u\n",
+            getAverageValue(&stdev.average), getStdevValue(&stdev));
+    PRINTF("Done!");
+}

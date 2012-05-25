@@ -1,4 +1,5 @@
 from seal_parser import *
+from structures import processStructInits
 #import components
 import os
 
@@ -31,6 +32,8 @@ class Generator(object):
     def generateIncludes(self):
         for c in self.components:
             c.generateIncludes(self.outputFile)
+        for x in components.processFunctionsUsed:
+            self.outputFile.write('#include "{}.h"\n'.format(x))
         self.outputFile.write("\n")
 
     def generateConstants(self):
@@ -93,6 +96,10 @@ class Generator(object):
             c.generateAppMainCode(self.outputFile)
         for c in self.sensors:
             c.generateAppMainCode(self.outputFile)
+        # Init Process variables
+        for p in processStructInits:
+            self.outputFile.write(p)
+
         self.outputFile.write("\n\n")
         self.outputFile.write("    for (;;) {\n")
         self.outputFile.write("        uint32_t iterationEndTime = getRealTime() + 1000;\n")
@@ -142,11 +149,11 @@ class Generator(object):
         self.actuators = []
         for c in self.components:
             if type(c) is components.Output and len(c.useCases):
-               self.outputs.append(c)
+                self.outputs.append(c)
             elif type(c) is components.Sensor and len(c.useCases):
-               self.sensors.append(c)
+                self.sensors.append(c)
             elif type(c) is components.Actuator and len(c.useCases):
-               self.actuators.append(c)
+                self.actuators.append(c)
         self.cacheTypes()
 
         self.generateIncludes()
@@ -176,6 +183,8 @@ class Generator(object):
     def generateConfigFile(self, outputFile):
         for c in self.components:
             c.generateConfig(outputFile)
+        for x in components.processFunctionsUsed:
+            outputFile.write("USE_{} = y\n".format(x.upper()))
 
     def generateMakefile(self, outputFile, outputFileName, pathToOS):
         outputFile.write('''
@@ -216,4 +225,4 @@ def createGenerator(targetOS):
         return MansOSGenerator()
     if targetOS == "contiki":
         return ContikiGenerator()
-    return None 
+    return None

@@ -52,6 +52,11 @@ PSOURCES-$(USE_GPS) += $(MOS)/lib/nmea/nmea_stream.c
 PSOURCES-$(USE_HASH) += $(MOS)/lib/hash.c
 PSOURCES-$(USE_TOSMSG_FORMAT) += $(MOS)/lib/tosmsg.c
 PSOURCES-$(USE_CRC) += $(MOS)/lib/codec/crc.c
+# Data processing
+PSOURCES-$(USE_ALGO) += $(MOS)/lib/algo.c
+PSOURCES-$(USE_AVERAGE) += $(MOS)/lib/processing/average.c
+PSOURCES-$(USE_STDEV) += $(MOS)/lib/processing/stdev.c
+PSOURCES-$(USE_FILTER) += $(MOS)/lib/processing/filter.c
 
 PSOURCES-$(USE_NET) += $(NET)/socket.c
 PSOURCES-$(USE_NET) += $(NET)/comm.c
