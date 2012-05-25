@@ -120,7 +120,7 @@ class Translater:
                 "Edit object": "Labot objektu",
                 "Got": "Atradu",
                 "devices in": "iekārtas, laiks:",
-                "default device": "ierīces pēc noklusēšanas",
+                "the default device": "ierīces pēc noklusēšanas",
                 "Searching devices": "Meklēju ierīces",
                 "No devices found!" : "Ierīces nav atrastas!",
                 "Configure upload and compile": "Konfigurēt kompilēšanu un augšupielādēšanu"
