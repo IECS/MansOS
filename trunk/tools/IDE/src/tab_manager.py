@@ -24,6 +24,7 @@
 
 import wx
 from wx.lib.agw import flatnotebook as fnb
+from os.path import exists
 
 from globals import * #@UnusedWildImports
 from empty_tab import EmptyTab
@@ -206,3 +207,33 @@ class TabManager(fnb.FlatNotebook):
             if self.doPopupClose(None, False) == False:
                 return False
         return True
+
+    def rememberOpenedTabs(self):
+        result = ''
+        for x in self.API.editors:
+            if type(x) is EditorManager:
+                result += x.filePath + ";"
+        self.API.setSetting('openedTabs', result.strip(";"))
+
+    def loadRememberedTabs(self):
+        tabs = self.API.getSetting('openedTabs').split(';')
+        if tabs != '':
+            # Remove automatically created first page
+            self.DeletePage(self.GetSelection())
+        # Add all Tabs
+        for x in tabs:
+            self.addPage(x)
+
+        if tabs != '':
+            return
+
+        # Open default files if no tabs were saved
+        path = "../../apps/seal/Blink/"
+        if exists(path):
+            filename = self.frame.findFirstSourceFile(path)
+            if filename:
+                self.tabManager.getPageObject().update(filename)
+            else:
+                self.tabManager.getPageObject().update('sampleCode.sl')
+        else:
+            self.tabManager.getPageObject().update('sampleCode.sl')

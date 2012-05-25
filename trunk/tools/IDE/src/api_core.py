@@ -56,7 +56,7 @@ class ApiCore:
             lines = f.readlines()
             for x in lines:
                 if x != '':
-                    key, value = x.strip().split(":")
+                    key, value = x.strip().split("->")
                     if key in self.__settings and value != self.__settings[key]:
                         # print because logging is not initialized yet :(
                         print "Replacing setting '{0}' with '{1}'."\
@@ -146,15 +146,7 @@ class ApiCore:
         assert len(self.emptyFrame.GetChildren()) == 0, \
             "There are parentless objects after API initialization."
 
-        path = "../../apps/seal/Blink/"
-        if os.path.exists(path):
-            filename = self.frame.findFirstSourceFile(path)
-            if filename:
-                self.tabManager.getPageObject().update(filename)
-            else:
-                self.tabManager.getPageObject().update('sampleCode.sl')
-        else:
-            self.tabManager.getPageObject().update('sampleCode.sl')
+        self.tabManager.loadRememberedTabs()
 
     def getStatementType(self, line):
         possibleSplitters = [None, ",", ";"]
@@ -209,7 +201,7 @@ class ApiCore:
         os.chdir(self.path)
         f = open(SETTING_FILE, 'w')
         for key in self.__settings:
-            f.write(key + ":" + self.__settings[key] + '\n')
+            f.write(key + "->" + self.__settings[key] + '\n')
         f.close()
 
     def logMsg(self, msgType, msgText):

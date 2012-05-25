@@ -202,6 +202,7 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
 
     def OnQuit(self, event):
+        self.API.tabManager.rememberOpenedTabs()
         if self.tabManager.onQuitCheck() == True:
             self.API.performExit()
             exit()
