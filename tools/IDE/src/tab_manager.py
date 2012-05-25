@@ -43,7 +43,8 @@ class TabManager(fnb.FlatNotebook):
         self.nextPageNr = 1
         self.AddPage(EditorManager(self, self.API),
                 self.tr("Untitled document") + ' ' + str(self.nextPageNr))
-        self.getPageObject().update('sampleCode.sl')
+        #
+
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.onPageChanged)
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CLOSED, self.onCloseCheck)
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CONTEXT_MENU, self.onPopupMenu)
