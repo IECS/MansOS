@@ -56,7 +56,13 @@ class ApiCore:
             lines = f.readlines()
             for x in lines:
                 if x != '':
-                    key, value = x.strip().split("->")
+                    if x.find("->") != -1:
+                        if x[x.find("->") + 2:].find("->") == -1:
+                            key, value = x.strip().split("->")
+                        else:
+                            continue
+                    else:
+                        continue
                     if key in self.__settings and value != self.__settings[key]:
                         # print because logging is not initialized yet :(
                         print "Replacing setting '{0}' with '{1}'."\
