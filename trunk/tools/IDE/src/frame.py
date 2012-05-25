@@ -178,6 +178,9 @@ class Frame(wx.Frame):
                                 wx.Bitmap(self.path + '/src/Icons/add_condition.png'),
                                 shortHelp = self.tr('Add condition'))
         self.toolbar.AddSeparator()
+        compileTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Compile'),
+                                wx.Bitmap(self.path + '/src/Icons/compile.png'),
+                                shortHelp = self.tr('Compile'))
         uplTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Upload'),
                                 wx.Bitmap(self.path + '/src/Icons/upload.png'),
                                 shortHelp = self.tr('Upload'))
@@ -192,6 +195,7 @@ class Frame(wx.Frame):
 
         # Second bind to toolbar, but only items with ID_ANY, because all
         # defined ID already binded from menu, weird side effect.
+        self.Bind(wx.EVT_TOOL, self.OnCompile, compileTool)
         self.Bind(wx.EVT_TOOL, self.OnUpload, uplTool)
         self.Bind(wx.EVT_TOOL, self.OnOutput, outputTool)
         self.Bind(wx.EVT_TOOL, self.OnAddStatement, addStatementTool)
@@ -207,6 +211,10 @@ class Frame(wx.Frame):
 
     def OnSaveAs(self, event):
         self.tabManager.doPopupSaveAs(None)
+
+    def OnCompile(self, event):
+        if self.tabManager.doPopupSave(None) == True:
+            self.API.uploadCore.manageCompile()
 
     def OnUpload(self, event):
         if self.tabManager.doPopupSave(None) == True:
