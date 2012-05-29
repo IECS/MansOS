@@ -71,7 +71,9 @@ class UploadCore():
 
         if len(motelist) != 0:
             for i in range(0, len (motelist)):
-                self.motes.append(motelist[i][self.targetType])
+                if len(motelist[i]) > 1:
+                    self.motes.append(motelist[i][self.targetType])
+
         return motelist
 
     def manageCompile(self, event = None):

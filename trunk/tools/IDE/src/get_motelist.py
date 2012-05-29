@@ -76,13 +76,11 @@ class GetMotelist(object):
             elif system() == "Mac":
                 target += ".apple"
 
-            process = Popen([target, "-c"],
-                                          stderr = STDOUT,
-                                          stdout = PIPE)
+            process = Popen([target, "-c"], stderr = STDOUT, stdout = PIPE)
             motes = process.communicate()[0]
 
             if motes.find("No devices found") == False:
-                return [False, ['']]
+                return [True, ['']]
 
             for line in motes.split("\n"):
                 # Seperate ID, port, description
