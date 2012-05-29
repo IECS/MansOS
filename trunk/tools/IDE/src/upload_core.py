@@ -69,6 +69,9 @@ class UploadCore():
             self.updateStatus(self.tr("Got") + " " + str(len(motelist)) + " " +
                     self.tr("devices in") + " " + str(round(res[2], 3)) + " s.")
 
+        if type(motelist) is not list:
+            return []
+
         if len(motelist) != 0:
             for i in range(0, len (motelist)):
                 if len(motelist[i]) > 1:
