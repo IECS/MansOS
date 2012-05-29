@@ -103,8 +103,8 @@ class UseCase(object):
             self.once = None
         for x in ['average', 'stdev', 'filter']:
             p = self.parameters.get(x)
-            if p:
-                self.__setattr__(x, p.asString())
+            if p and p.value != '':
+                    self.__setattr__(x, p.asString())
             else:
                 self.__setattr__(x, None)
 
