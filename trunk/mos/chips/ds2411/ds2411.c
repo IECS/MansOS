@@ -23,6 +23,7 @@
 
 #include "ds2411.h"
 #include <hil/udelay.h>
+#include <hil/gpio.h>
 #include <lib/codec/crc.h>
 #include <string.h>
 #include "platform.h"
@@ -44,8 +45,8 @@ bool ds2411SnumMatches(const uint8_t *snum) {
 
 /* Set 1-Wire low or high. */
 #define OUTP_0() ( \
-    pinClear(DS2411_PORT, DS2411_PIN),    /* Output 0 */ \
-    pinAsOutput(DS2411_PORT, DS2411_PIN)) /* Enable master drive */
+    pinAsOutput(DS2411_PORT, DS2411_PIN), /* Enable master drive */ \
+    pinClear(DS2411_PORT, DS2411_PIN))    /* Output 0 */
 #define OUTP_1() ( \
     pinAsInput(DS2411_PORT, DS2411_PIN),  /* Disable master drive */ \
     pinSet(DS2411_PORT, DS2411_PIN))      /* Turn on pullup resistor */

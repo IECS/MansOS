@@ -34,6 +34,7 @@
 #include "flash.h"
 
 #define RADIO_CHIP RADIO_CHIP_CC1101
+#define SNUM_CHIP  SNUM_DS2411
 
 //===========================================================
 // Functions
@@ -44,5 +45,11 @@ void initPlatform(void);
 //===========================================================
 // Data types and constants
 //===========================================================
+
+#define DS2411_PORT 4
+#define DS2411_PIN  5
+
+#define DS2411_VCC_PORT 4
+#define DS2411_VCC_PIN  6
 
 #endif

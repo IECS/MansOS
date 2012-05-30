@@ -26,6 +26,7 @@
 //      Platform code
 //----------------------------------------------------------
 #include "platform.h"
+#include <hil/gpio.h>
 #include <hil/snum.h>
 
 //----------------------------------------------------------
@@ -37,7 +38,15 @@ void initPlatform(void)
     msp430InitClocks();
 #endif
 #if USE_SERIAL_NUMBER
+    // Set up Vcc for the DS2411
+    pinAsOutput(DS2411_VCC_PORT, DS2411_VCC_PIN);
+    pinSet(DS2411_VCC_PORT, DS2411_VCC_PIN);
+
+    // Read the serial number
     halSerialNumberInit();
+
+    // Disable Vcc
+    pinClear(DS2411_VCC_PORT, DS2411_VCC_PIN);
 #endif
 }
 
