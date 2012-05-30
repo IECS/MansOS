@@ -30,7 +30,9 @@
 # Define platform variables
 
 ARCH = msp430
-MCU_MODEL = msp430f1611
+# Older mspgcc can't handle 'f', newer can't handle 'x'
+MCU_MODEL = \
+  $(if $(filter $(GCC_VERSION).$(GCC_SUBVERSION),4.6),msp430f1611,msp430x1611)
 
 # Upload target
 UPLOAD_TARGET=upload-msp430
