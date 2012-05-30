@@ -8,6 +8,8 @@ USART0:
 * GPS on lynxmote
 
 USART1:
+* USB virtual serial port on telosb
 * debug output: USART1
   (dprint.h file in sources)
 * SD card on lynxmote: USART1
+
