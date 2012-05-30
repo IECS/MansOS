@@ -65,4 +65,7 @@ void initPlatform(void);
 #define USER_BUTTON_PORT 2
 #define USER_BUTTON_PIN  7
 
+#define DS2411_PORT 2
+#define DS2411_PIN  4
+
 #endif
