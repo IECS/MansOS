@@ -42,20 +42,29 @@ bool ds2411SnumMatches(const uint8_t *snum) {
     return ds2411Ok && memcmp(ds2411, snum, SERIAL_NUMBER_SIZE) == 0;
 }
 
-/* 1-wire is at p2.4 */
-#define PIN BV(4)
-
-#define PIN_INIT() {                                                    \
-        P2DIR &= ~PIN;      /* p2.4 in, resistor pull high */       \
-        P2OUT &= ~PIN;      /* p2.4 == 0 but still input */         \
-    }
-
 /* Set 1-Wire low or high. */
-#define OUTP_0() (P2DIR |=  PIN) /* output and p2.4 == 0 from above */
-#define OUTP_1() (P2DIR &= ~PIN) /* p2.4 in, external resistor pull high */
+#define OUTP_0() ( \
+    pinClear(DS2411_PORT, DS2411_PIN),    /* Output 0 */ \
+    pinAsOutput(DS2411_PORT, DS2411_PIN)) /* Enable master drive */
+#define OUTP_1() ( \
+    pinAsInput(DS2411_PORT, DS2411_PIN),  /* Disable master drive */ \
+    pinSet(DS2411_PORT, DS2411_PIN))      /* Turn on pullup resistor */
 
 /* Read one bit. */
-#define INP()    (P2IN & PIN)
+#define INP() pinRead(DS2411_PORT, DS2411_PIN)
+
+/* Configure the pullup resistor */
+#define XREN(port) P##port##REN
+#define REN(port)  XREN(port)
+#ifdef PLATFORM_TELOSB /* Hack! x1xx doesn't have integrated gpio resistors */
+#  define PULLUP_INIT() ((void)0)
+#else /* Not TelosB */
+#  define PULLUP_INIT() (REN(DS2411_PORT) |= BV(DS2411_PIN))
+#endif
+
+#define PIN_INIT() ( \
+    PULLUP_INIT(), /* Set up the pullup resistor */ \
+    OUTP_1())
 
 /*
  * Recommended delay times in us.
