@@ -12,3 +12,4 @@ read SlowRead3, period 3s;
 // when FastRead.value > 100:
 //      use Print, once, format "fast > 100, value=%d\n", arg1 FastRead.value;
 // end
+
