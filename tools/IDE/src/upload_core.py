@@ -64,7 +64,6 @@ class UploadCore():
             self.targetType = USB
 
         motelist = res[1]
-        self.haveMote = res[0]
 
         if type(motelist) is not list:
             motelist = list()
@@ -77,7 +76,7 @@ class UploadCore():
             for i in range(0, len (motelist)):
                 if len(motelist[i]) > 1:
                     self.motes.append(motelist[i][self.targetType])
-
+        self.haveMote = bool(len(motelist) != 0)
         return motelist
 
     def manageCompile(self, event = None):
