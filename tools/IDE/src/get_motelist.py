@@ -59,7 +59,7 @@ class GetMotelist(object):
                     res = self.shellRegex.search(out)
                 return [True, motelist]
             else:
-                return [False, '']
+                return [False, []]
 
         except OSError, e:
             print "execution failed:", e
@@ -83,7 +83,7 @@ class GetMotelist(object):
             motes = process.communicate()[0]
 
             if motes.find("No devices found") == False:
-                return [True, ['']]
+                return [True, []]
 
             for line in motes.split("\n"):
                 # Seperate ID, port, description

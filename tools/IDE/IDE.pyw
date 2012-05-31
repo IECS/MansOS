@@ -26,6 +26,7 @@
 import os
 from sys import path
 import time
+import wx.lib.inspection
 
 def main():
     if not importsOk():
@@ -40,7 +41,7 @@ def main():
 
     API = api_core.ApiCore()
     API.frame.Show()
-
+    #wx.lib.inspection.InspectionTool().Show()
     ex.MainLoop()
 
 def importsOk():
@@ -75,10 +76,6 @@ def importsOk():
         sealParserOK = False
     except OSError:
         sealParserOK = False
-
-    if not sealParserOK:
-        print "Error finding SEAL parser!"
-        return False
 
     if not (wxModuleOK and serialModuleOK and plyModuleOK and sealParserOK):
         if os.name == 'posix':

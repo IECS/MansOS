@@ -26,13 +26,13 @@ import wx
 
 class OutputTools(wx.Notebook):
     def __init__(self, parent, API):
-        wx.Notebook.__init__(self, parent)
+        #wx.Notebook.__init__(self, parent)
         self.API = API
-        self.SetBackgroundColour("White")
+        #self.SetBackgroundColour("White")
 
     def addTools(self):
-        self.API.infoArea.Reparent(self)
-        self.AddPage(self.API.infoArea, self.API.tr("Information"))
-        self.API.listenModule.Reparent(self)
-        self.AddPage(self.API.listenModule, self.API.tr("Listen"))
+        self.API.infoArea.Reparent(self.API.frame)
+        self.API.frame.auiManager.AddPane(self.API.infoArea, self.API.frame.bottomPane)
+        self.API.listenModule.Reparent(self.API.frame)
+        self.API.frame.auiManager.AddPane(self.API.listenModule, self.API.frame.bottomPane)
 

@@ -23,6 +23,7 @@
 #
 
 import wx
+from os import chdir, getcwd, path
 
 from globals import * #@UnusedWildImport
 from do_compile import DoCompile
@@ -65,12 +66,12 @@ class UploadCore():
         motelist = res[1]
         self.haveMote = res[0]
 
+        if type(motelist) is not list:
+            motelist = list()
+
         if not quiet:
             self.updateStatus(self.tr("Got") + " " + str(len(motelist)) + " " +
                     self.tr("devices in") + " " + str(round(res[2], 3)) + " s.")
-
-        if type(motelist) is not list:
-            return []
 
         if len(motelist) != 0:
             for i in range(0, len (motelist)):
@@ -119,8 +120,12 @@ class UploadCore():
 
     # Wrapping for upload function to run in new thread
     def runUpload(self, dataIn):
+        self.syncWithTabManager()
+        curPath = getcwd()
+        chdir(path.normpath(path.split(self.editorManager.filePath)[0]))
         return self.uploader.doUpload(self.targets, self.runCompile,
                                       self.targetType, self.platform)
+        chdir(curPath)
 
     def managePopen(self, funct):
         # Must be list, here returned values will be stored
@@ -143,6 +148,6 @@ class UploadCore():
         self.printMsg(message)
 
     def syncWithTabManager(self):
-        self.editorManager = self.API.tabManager.GetCurrentPage()
+        self.editorManager = self.API.tabManager.getPageObject()
         self.filename = self.editorManager.fileName
 
