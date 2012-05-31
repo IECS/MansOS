@@ -4,8 +4,11 @@
 
 from component_hierarchy import *
 
-serial = Serial()
-radio = Radio()
-internalFlash = InternalFlash()
+serial = SerialOutput()
+radio = RadioOutput()
+internalFlash = InternalFlashOutput()
 
-printing = Print()
+printing = PrintAct()
+
+constant = ConstantSensor()
+random = RandomSensor()

@@ -4,12 +4,10 @@
 
 from msp430 import *
 
-led = Led()
-redLed = RedLed()
-blueled = BlueLed()
-greenled = GreenLed()
+led = LedAct()
+redLed = RedLedAct()
+blueled = BlueLedAct()
+greenled = GreenLedAct()
 
-light = Light()
-humidity = Humidity()
-constant = Constant()
-random = Random()
+light = LightSensor()
+humidity = HumiditySensor()

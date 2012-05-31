@@ -137,7 +137,7 @@ class SealParser():
     def p_program(self, p):
         '''program : declaration_list
         '''
-        self.result = CodeBlock(CODE_BlOCK_TYPE_PROGRAM, None, p[1], None)
+        self.result = CodeBlock(CODE_BLOCK_TYPE_PROGRAM, None, p[1], None)
 
     def p_declaration_list(self, p):
         '''declaration_list : declaration_list declaration
@@ -205,7 +205,7 @@ class SealParser():
     def p_when_block(self, p):
         '''when_block : WHEN_TOKEN condition ':' declaration_list elsewhen_block END_TOKEN
         '''
-        p[0] = CodeBlock(CODE_BlOCK_TYPE_WHEN, p[2], p[4], p[5])
+        p[0] = CodeBlock(CODE_BLOCK_TYPE_WHEN, p[2], p[4], p[5])
 
         self.lineTracking["Condition"].append((p.lineno(1), p.lineno(6), p[0]))
 
@@ -217,9 +217,9 @@ class SealParser():
         if len(p) == 2:   # empty
             p[0] = None
         elif len(p) == 4: # else block
-            p[0] = CodeBlock(CODE_BlOCK_TYPE_ELSE, None, p[3], None)
+            p[0] = CodeBlock(CODE_BLOCK_TYPE_ELSE, None, p[3], None)
         else:             # elsewhen block
-            p[0] = CodeBlock(CODE_BlOCK_TYPE_ELSEWHEN, p[2], p[4], p[5])
+            p[0] = CodeBlock(CODE_BLOCK_TYPE_ELSEWHEN, p[2], p[4], p[5])
 
 
     def p_condition(self, p):

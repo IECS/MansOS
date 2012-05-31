@@ -29,36 +29,36 @@ class SealComponent(object):
 class SealSensor(SealComponent):
     def __init__(self, name):
         super(SealSensor, self).__init__(TYPE_SENSOR, name)
-        self.readFunction = SealParameter(None)  # each sensor must define this
+        self.cacheable = False # whether can be kept in cache
         self.dataSize = 2 # in bytes
         self.filter = SealParameter('', ['> 100'])
         self.average = SealParameter('', ['10'])
         self.stdev = SealParameter('', ['10'])
+        self.prereadFunction = SealParameter(None)
 
-class Light(SealSensor):
+class ConstantSensor(SealSensor):
     def __init__(self):
-        super(Light, self).__init__("Light")
-        self.useFunction.value = "lightRead()"
-        self.readFunction.value = "lightRead()"
-
-class Constant(SealSensor):
-    def __init__(self):
-        super(Constant, self).__init__("Constant")
+        super(ConstantSensor, self).__init__("Constant")
         self.useFunction.value = "5"
         self.readFunction.value = "5"
 
-class Random(SealSensor):
+class RandomSensor(SealSensor):
     def __init__(self):
-        super(Random, self).__init__("Random")
+        super(RandomSensor, self).__init__("Random")
         self.useFunction.value = "randomRand()"
         self.readFunction.value = "randomRand()"
         self.extraConfig = SealParameter("USE_RANDOM=y")
         self.extraIncludes = SealParameter("#include <random.h>")
 
-
-class Humidity(SealSensor):
+class LightSensor(SealSensor):
     def __init__(self):
-        super(Humidity, self).__init__("Humidity")
+        super(LightSensor, self).__init__("Light")
+        self.useFunction.value = "lightRead()"
+        self.readFunction.value = "lightRead()"
+
+class HumiditySensor(SealSensor):
+    def __init__(self):
+        super(HumiditySensor, self).__init__("Humidity")
         self.useFunction.value = "humidityRead()"
         self.readFunction.value = "humidityRead()"
         self.errorFunction = SealParameter("humidityIsError()")
@@ -69,35 +69,34 @@ class Humidity(SealSensor):
 class SealActuator(SealComponent):
     def __init__(self, name):
         super(SealActuator, self).__init__(TYPE_ACTUATOR, name)
-        self.useFunction = SealParameter(None)  # each actuator must define this
 
-class Led(SealActuator):
+class LedAct(SealActuator):
     def __init__(self):
-        super(Led, self).__init__("Led")
+        super(LedAct, self).__init__("Led")
         self.useFunction.value = "ledToggle()"
         self.readFunction.value = "ledGet()"
 
-class RedLed(SealActuator):
+class RedLedAct(SealActuator):
     def __init__(self):
-        super(RedLed, self).__init__("RedLed")
+        super(RedLedAct, self).__init__("RedLed")
         self.useFunction.value = "redLedToggle()"
         self.readFunction.value = "redLedGet()"
 
-class BlueLed(SealActuator):
+class BlueLedAct(SealActuator):
     def __init__(self):
-        super(BlueLed, self).__init__("BlueLed")
+        super(BlueLedAct, self).__init__("BlueLed")
         self.useFunction.value = "blueLedToggle()"
         self.readFunction.value = "blueLedGet()"
 
-class GreenLed(SealActuator):
+class GreenLedAct(SealActuator):
     def __init__(self):
-        super(GreenLed, self).__init__("GreenLed")
+        super(GreenLedAct, self).__init__("GreenLed")
         self.useFunction.value = "greenLedToggle()"
         self.readFunction.value = "greenLedGet()"
 
-class Print(SealActuator):
+class PrintAct(SealActuator):
     def __init__(self):
-        super(Print, self).__init__("Print")
+        super(PrintAct, self).__init__("Print")
         self.format = SealParameter(None)
         self.arg0 = SealParameter(None)
         self.arg1 = SealParameter(None)
@@ -114,29 +113,28 @@ class Print(SealActuator):
 class SealOutput(SealComponent):
     def __init__(self, name):
         super(SealOutput, self).__init__(TYPE_OUTPUT, name)
-        self.sendFunction = None # each output must define this
         self.aggregate = SealParameter(True, [False, True])
         self.crc = SealParameter(False, [False, True])
 
-class Serial(SealOutput):
+class SerialOutput(SealOutput):
     def __init__(self):
-        super(Serial, self).__init__("Serial")
+        super(SerialOutput, self).__init__("Serial")
         self.useFunction.value = "serialPacketPrint()"
         self.baudrate = SealParameter(38400, ['9600', '38400', '57600', '115200'])
         self.aggregate.value = False # false by default
 
-class Radio(SealOutput):
+class RadioOutput(SealOutput):
     def __init__(self):
-        super(Radio, self).__init__("Radio")
+        super(RadioOutput, self).__init__("Radio")
         self.useFunction.value = "radioSend(&radioPacket, sizeof(radioPacket))"
         self.crc.value = True # true by default
 
-class InternalFlash(SealOutput):
+class InternalFlashOutput(SealOutput):
     def __init__(self):
-        super(InternalFlash, self).__init__("InternalFlash")
+        super(InternalFlashOutput, self).__init__("InternalFlash")
         self.useFunction.value = "flashWrite(&internalFlashPacket, sizeof(internalFlashPacket))"
 
-class ExternalFlash(SealOutput):
+class ExternalFlashOutput(SealOutput):
     def __init__(self):
-        super(ExternalFlash, self).__init__("ExternalFlash")
+        super(ExternalFlashOutput, self).__init__("ExternalFlash")
         self.useFunction.value = "extFlashWrite(&externalFlashPacket, sizeof(externalFlashPacket))"
