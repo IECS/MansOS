@@ -29,7 +29,7 @@ Filter_t filterInit(enum Comparators comp, uint16_t treshold) {
     result.comparator = comp;
     result.treshold = treshold;
     return result;
-};
+}
 
 bool addFilter(Filter_t *filter, uint16_t *val) {
     switch (filter->comparator) {
@@ -51,13 +51,13 @@ bool addFilter(Filter_t *filter, uint16_t *val) {
     case MORE_OR_EQUAL:
         return (*val >= filter->treshold) ? (filter->value = *val) || true : false;
         break;
-    };
+    }
 #ifdef DEBUG
     PRINTF("%d is not supported comparator!\n", filter->comparator);
 #endif //DEBUG
     return false;
-};
+}
 
 uint16_t getFilterValue(Filter_t *filter) {
     return filter->value;
-};
+}

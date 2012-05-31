@@ -40,10 +40,10 @@ Average_t avgInit(uint8_t window) {
         result.oldestValue = 0;
     }
     return (result);
-};
+}
 
 // Initialize Average_t with coefficients, window = len(coefs)
-Average_t avgInitWithCoeffs(uint8_t window, uint8_t *coefs){
+Average_t avgInitWithCoeffs(uint8_t window, uint8_t *coefs) {
     Average_t result = avgInit(window);
     uint8_t temp;
     if (window) {
@@ -57,7 +57,7 @@ Average_t avgInitWithCoeffs(uint8_t window, uint8_t *coefs){
         result.haveCoefficients = true;
     }
     return (result);
-};
+}
 
 void addAverage(Average_t *avg, uint16_t *val) {
     // Continuous average
@@ -97,7 +97,7 @@ void addAverage(Average_t *avg, uint16_t *val) {
                                  % avg->window] * avg->coefficients[temp];
             }
         // Moving average
-		} else {
+        } else {
             // Change sum, cant use *val - temp, because it yields incorrect
             // result if temp > *val
             avg->sum += *val;
@@ -106,9 +106,9 @@ void addAverage(Average_t *avg, uint16_t *val) {
             avg->count += (uint8_t)(avg->count < avg->window);
         }
     }
-};
+}
 
 uint16_t getAverageValue(Average_t *avg) {
     // If getter() is used we can calculate this only on demand
     return (avg->value = avg->sum / avg->count);
-};
+}

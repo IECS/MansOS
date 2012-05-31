@@ -21,8 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef STDEV_H_
-#define STDEV_H_
+#ifndef MANSOS_STDEV_H_
+#define MANSOS_STDEV_H_
 
 #include "stdmansos.h"
 #include "average.h"
@@ -44,4 +44,3 @@ void addStdev(Stdev_t*, uint16_t*);
 uint16_t getStdevValue(Stdev_t*);
 
 #endif /* STDEV_H_ */
-
