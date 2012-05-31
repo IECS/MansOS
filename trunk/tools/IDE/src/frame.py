@@ -25,8 +25,8 @@
 
 import os
 import wx
-from wx.gizmos import ThinSplitterWindow
 from stat import S_ISDIR
+from wx.lib.agw import aui
 
 from upload_module import UploadModule
 from globals import * #@UnusedWildImport
@@ -34,11 +34,14 @@ from globals import * #@UnusedWildImport
 class Frame(wx.Frame):
     def __init__(self, parent, title, size, pos, API):
         super(Frame, self).__init__(parent, wx.ID_ANY, title, size = size, pos = pos)
+
         # Get path, here must use only file name, __file__ sometimes contains more than that
         self.path = os.path.dirname(os.path.realpath(os.path.split(__file__)[1]))
         self.API = API
         self.API.path = self.path
         self.lastPanel = None
+        self.auiManager = aui.AuiManager()
+        self.loadPositioning()
 
         # Just a shorter name
         self.tr = self.API.tr
@@ -48,27 +51,51 @@ class Frame(wx.Frame):
         self.initUI()
         self.SetBackgroundColour("white")
 
-        self.split1 = ThinSplitterWindow(self, style = wx.SP_3D | wx.CLIP_CHILDREN | wx.SP_LIVE_UPDATE)
+        flag = aui.AUI_MGR_ALLOW_ACTIVE_PANE | aui.AUI_MGR_LIVE_RESIZE | \
+        aui.AUI_MGR_AUTONB_NO_CAPTION | aui.AUI_MGR_SMOOTH_DOCKING | \
+        aui.AUI_MGR_TRANSPARENT_HINT | aui.AUI_NB_CLOSE_ON_TAB_LEFT | \
+        aui.AUI_MGR_AERO_DOCKING_GUIDES | aui.AUI_MGR_TRANSPARENT_DRAG
+        self.auiManager.SetAGWFlags(self.auiManager.GetAGWFlags() ^ flag)
+        self.auiManager.SetAutoNotebookStyle(aui.AUI_NB_TOP | aui.AUI_NB_SMART_TABS)
 
-        self.API.editorSplitter.Reparent(self.split1)
-        self.API.outputTools.Reparent(self.split1)
+        #self.API.outputTools.Reparent(self)
+        self.API.tabManager.Reparent(self)
+        self.API.editPanel.Reparent(self)
 
-        self.split1.SplitHorizontally(self.API.editorSplitter,
-                                      self.API.outputTools, -100)
-        self.split1.SetMinimumPaneSize(100)
-
-        self.API.tabManager.Reparent(self.API.editorSplitter)
-        self.API.editPanel.Reparent(self.API.editorSplitter)
         self.tabManager = self.API.tabManager
 
-        # Must show&hide to init
-        self.API.editorSplitter.SplitVertically(self.API.tabManager,
-                                                    self.API.editPanel, -305)
-        #self.API.editorSplitter.Unsplit()
-        #self.API.editPanel.Destroy()
+        self.auiManager.SetManagedWindow(self)
+        self.auiManager.AddPane(self.API.tabManager,
+                aui.AuiPaneInfo().CenterPane().
+                CloseButton(False).
+                Caption("Editors").CaptionVisible(False).
+                MinimizeButton(True).MaximizeButton(True).
+                BestSize(wx.Size(400, 400))
+                                )
+        self.auiManager.UpdateNotebook()
+        rightPane = (aui.AuiPaneInfo().Floatable(True).
+                Right().
+                CloseButton(False).
+                Caption("Visual edit").CaptionVisible(True).
+                MinimizeButton(True).MaximizeButton(True).
+                BestSize(wx.Size(250, 400)))
+        self.auiManager.AddPane(self.API.editPanel, rightPane)
 
-        # Makes outputArea to maintain it's height when whole window is resized
-        self.split1.SetSashGravity(1)
+        self.bottomPane = (aui.AuiPaneInfo().
+                Bottom().CloseButton(False).
+                CaptionVisible(True).Caption("Listen").
+                MinimizeButton(True).MaximizeButton(True).
+                BestSize(wx.Size(500, 150)))
+        self.API.listenModule.Reparent(self)
+        self.auiManager.AddPane(self.API.listenModule, self.bottomPane)
+        self.API.infoArea.Reparent(self)
+        infoPane = (aui.AuiPaneInfo().Caption("Info").CloseButton(False).
+                CaptionVisible(True).
+                MinimizeButton(True).MaximizeButton(True).
+                BestSize(wx.Size(500, 150)))
+        self.auiManager.AddPane(self.API.infoArea, infoPane, target = self.bottomPane)
+
+        self.auiManager.Update()
 
     def initUI(self):
         fileMenu = wx.Menu()
@@ -82,8 +109,6 @@ class Frame(wx.Frame):
                               self.tr('Save document as'))
         upload = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Upload') + '\tCtrl+U',
                               self.tr('Open upload window'))
-        output = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Configure upload and compile') + '\tCtrl+R',
-                              self.tr('Open read output window'))
         close = fileMenu.Append(wx.ID_EXIT, '&' + self.tr('Exit') + '\tCtrl+Q',
                               self.tr('Exit application'))
 
@@ -130,6 +155,8 @@ class Frame(wx.Frame):
 
         optionMenu.AppendMenu(wx.ID_ANY, self.tr('Change language'), language)
 
+        output = optionMenu.Append(wx.ID_ANY, '&' + self.tr('Configure upload and compile') + '\tCtrl+R',
+                              self.tr('Open read output window'))
         # Check if we need to update existing menubar(for translate)
         if self.menubar == None:
             self.menubar = wx.MenuBar()
@@ -178,13 +205,13 @@ class Frame(wx.Frame):
                                 wx.Bitmap(self.path + '/src/Icons/add_condition.png'),
                                 shortHelp = self.tr('Add condition'))
         self.toolbar.AddSeparator()
-        compileTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Compile'),
+        compileTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW, self.tr('Compile'),
                                 wx.Bitmap(self.path + '/src/Icons/compile.png'),
                                 shortHelp = self.tr('Compile'))
-        uplTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Upload'),
+        uplTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW_GOTO, self.tr('Upload'),
                                 wx.Bitmap(self.path + '/src/Icons/upload.png'),
                                 shortHelp = self.tr('Upload'))
-        outputTool = self.toolbar.AddLabelTool(wx.ID_ANY, self.tr('Configure upload and compile'),
+        outputTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW_ZOOM, self.tr('Configure upload and compile'),
                                 wx.Bitmap(self.path + '/src/Icons/read.png'),
                                 shortHelp = self.tr('Configure upload and compile'))
         self.toolbar.AddSeparator()
@@ -203,9 +230,10 @@ class Frame(wx.Frame):
 
     def OnQuit(self, event):
         self.API.tabManager.rememberOpenedTabs()
+        self.rememberPositioning()
         if self.tabManager.onQuitCheck() == True:
             self.API.performExit()
-            exit()
+            wx.Exit()
 
     def OnSave(self, event):
         self.tabManager.doPopupSave(None)
@@ -290,3 +318,71 @@ class Frame(wx.Frame):
     def enableAdders(self):
         self.toolbar.EnableTool(wx.ID_ADD, True)
         self.toolbar.EnableTool(wx.ID_APPLY, True)
+
+    def rememberPositioning(self):
+        # This approach have a small bug.
+        #    1. Maximize window
+        #    2. Exit
+        #    3. Reopen
+        #    4. Re-maximize
+        # Result is that window stays with maximized height and width, 
+        # but is not maximized.
+        # TODO: FIX: cache all sizes when resizing and not in maximized mode.
+        self.API.setSetting("Width", self.GetSize()[0])
+        self.API.setSetting("Height", self.GetSize()[1])
+        self.API.setSetting("LocX", self.GetScreenPositionTuple()[0])
+        self.API.setSetting("LocY", self.GetScreenPositionTuple()[1])
+        self.API.setSetting("Maximized", self.IsMaximized())
+
+    def loadPositioning(self):
+        width = self.API.getSetting("Width")
+        if width == '':
+            width = 600
+        else:
+            width = int(width)
+
+        height = self.API.getSetting("Height")
+        if height == '':
+            height = 800
+        else:
+            height = int(height)
+
+        self.SetSize((width, height))
+
+        locX = self.API.getSetting("LocX")
+        if locX == '':
+            locX = wx.GetDisplaySize()[0] / 2
+        else:
+            locX = int(locX)
+
+        locY = self.API.getSetting("LocY")
+        if locY == '':
+            locY = wx.GetDisplaySize()[1] / 2
+        else:
+            locY = int(locY)
+
+        self.SetPosition((locX, locY))
+
+        maximized = self.API.getSetting("Maximized")
+        if maximized == '':
+            maximized = False
+        else:
+            maximized = bool(maximized == "True")
+
+        self.Maximize(maximized)
+
+    def deactivateNoEditorMode(self):
+        self.toolbar.EnableTool(wx.ID_SAVE, True)
+        self.toolbar.EnableTool(wx.ID_ADD, True)
+        self.toolbar.EnableTool(wx.ID_APPLY, True)
+        self.toolbar.EnableTool(wx.ID_PREVIEW, True)
+        self.toolbar.EnableTool(wx.ID_PREVIEW_GOTO, True)
+        self.toolbar.EnableTool(wx.ID_PREVIEW_ZOOM, True)
+
+    def activateNoEditorMode(self):
+        self.toolbar.EnableTool(wx.ID_SAVE, False)
+        self.toolbar.EnableTool(wx.ID_ADD, False)
+        self.toolbar.EnableTool(wx.ID_APPLY, False)
+        self.toolbar.EnableTool(wx.ID_PREVIEW, False)
+        self.toolbar.EnableTool(wx.ID_PREVIEW_GOTO, False)
+        self.toolbar.EnableTool(wx.ID_PREVIEW_ZOOM, False)

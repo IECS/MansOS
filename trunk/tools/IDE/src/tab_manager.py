@@ -23,18 +23,17 @@
 #
 
 import wx
-from wx.lib.agw import flatnotebook as fnb
 from os.path import exists
 
+from wx.lib.agw import aui
+
 from globals import * #@UnusedWildImports
-from empty_tab import EmptyTab
 from editor_manager import EditorManager
 
-class TabManager(fnb.FlatNotebook):
+class TabManager(aui.AuiNotebook):
     def __init__(self, parent, API):
-        fnb.FlatNotebook.__init__(self, parent, agwStyle = fnb.FNB_VC8 | \
-            fnb.FNB_NO_NAV_BUTTONS | fnb.FNB_X_ON_TAB | fnb.FNB_NO_X_BUTTON)
-        self.empty = EmptyTab(self)
+        aui.AuiNotebook.__init__(self, parent, style = aui.AUI_NB_CLOSE_ON_ACTIVE_TAB | aui.AUI_NB_SMART_TABS)
+
         self.API = API
         self.API.tabManager = self
         # Just a shorter name
@@ -44,39 +43,31 @@ class TabManager(fnb.FlatNotebook):
         self.nextPageNr = 1
         self.AddPage(EditorManager(self, self.API),
                 self.tr("Untitled document"))
-        #
 
-        self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.onPageChanged)
-        self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CLOSED, self.onCloseCheck)
-        self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CONTEXT_MENU, self.onPopupMenu)
-        self.showPopupMenu()
-        self.SetRightClickMenu(self._rmenu)
-
-        self.nextPageNr += 1
-
-    def onPopupMenu(self, event):
-        self.SetSelection(event.GetSelection())
-        self.onPageChanged(None)
+        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.onPageChanged)
+        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.doPopupClose)
+        #self.Bind(aui.EVT_AUINOTEBOOK_BUTTON, self.onCloseCheck)
+        self.Bind(aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, self.showPopupMenu)
 
     def onPageChanged(self, event):
         if event != None:
             event.Skip()
-        if self.GetCurrentPage().projectType == SEAL_PROJECT:
+        if self.getPageObject().projectType == SEAL_PROJECT:
             self.API.frame.enableAdders()
         else:
             self.API.frame.disableAdders()
 
         # Clear last dialog line, otherwise same line can't trigger new dialog
         # until other line triggers it.
-        self.GetCurrentPage().code.lastLine = -1
+        self.getPageObject().code.lastLine = -1
 
         # Remove any Helper windows
-        self.API.editorSplitter.Unsplit()
+        self.API.checkForDeletedEditors()
         wx.YieldIfNeeded()
 
-    def showPopupMenu(self):
+    def showPopupMenu(self, event):
         # Make clicked tab active, so all actions target this tab.
-        #self.SetSelection(self.HitTest(event.GetPositionTuple())[0])
+        self.SetSelection(event.GetSelection(), True)
 
         self._rmenu = wx.Menu()
         self.popupReload = self._rmenu.Append(wx.ID_REPLACE, '&' + self.tr("Reload") +
@@ -97,16 +88,16 @@ class TabManager(fnb.FlatNotebook):
 
         # Popup the menu. If an item is selected then its handler
         # will be called before PopupMenu returns.
-        #self.PopupMenu(self._rmenu)
-        #self._rmenu.Destroy()
+        self.PopupMenu(self._rmenu)
+        self._rmenu.Destroy()
 
     def doPopupReload(self, event):
-        print self.API.editors
-
         self.getPageObject().update()
         self.onPageChanged(None)
 
     def doPopupSave(self, event):
+        if self.getPageObject() == None:
+            return
         if self.getPageObject().hasAFile == True:
             self.getPageObject().save()
         else:
@@ -144,6 +135,12 @@ class TabManager(fnb.FlatNotebook):
             return False
         # Remove selected page.
         self.DeletePage(self.GetSelection())
+
+        if self.GetPageCount() == 0:
+            self.API.frame.activateNoEditorMode()
+        self.API.checkForDeletedEditors()
+        if event:
+            event.Veto()
         self.Layout()
         return True
 
@@ -154,10 +151,14 @@ class TabManager(fnb.FlatNotebook):
         self.titleChange('* ' + self.getPageObject().fileName)
 
     def markAsSaved(self):
-        self.titleChange(self.getPageObject().fileName)
+        if self.getPageObject() != None:
+            self.titleChange(self.getPageObject().fileName)
 
     def getPageObject(self):
-        return self.GetPage(self.GetSelection())
+        if self.GetSelection() != -1:
+            return self.GetPage(self.GetSelection())
+        else:
+            return None
 
     def addPage(self, newFile = ''):
         self.AddPage(EditorManager(self, self.API),
@@ -167,13 +168,17 @@ class TabManager(fnb.FlatNotebook):
         # Add any file associated with it
         self.getPageObject().update(newFile)
         self.Layout()
+        self.API.frame.deactivateNoEditorMode()
         self.onPageChanged(None)
 
+    def GetCurrentPage(self):
+        return self.getPageObject()
+
     def onCloseCheck(self, event = None):
-        if not self.GetCurrentPage():
+        if self.getPageObject() == None:
             # Nothing to check
             return True
-        if self.GetCurrentPage().saveState == False:
+        if self.getPageObject().saveState == False:
             # Initiate DialogBox
             dialog = wx.MessageDialog(self,
                 self.tr('Save changes to') + ' "' +
@@ -194,9 +199,6 @@ class TabManager(fnb.FlatNotebook):
                 if event:
                     event.Veto()
                 return False
-        # If this is last page we should add empty page
-        #if self.GetPageCount() == 0:
-        #    self.addPage()
         # It's ok to close
         return True
 

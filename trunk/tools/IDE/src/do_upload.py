@@ -53,12 +53,7 @@ class DoUpload():
                                           stdout = PIPE)
                 out = upload.communicate()[0]
 
-                haveUploadError = out.rfind("An error occoured")
-                if haveUploadError != -1:
-                    return [False, out[haveUploadError:]]
-
-                haveCompileError = out.rfind("Error")
-                if haveCompileError != -1:
+                if upload.returncode != 0:
                     return [False, out]
 
             except OSError, e:

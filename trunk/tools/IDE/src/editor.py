@@ -217,10 +217,10 @@ class Editor(wx.stc.StyledTextCtrl):
         if not dialog and self.GetCurLine()[0].strip() != '':
                 return
 
-        if self.API.editorSplitter.GetWindow2() is None:
-            self.API.editorSplitter.SplitVertically(self.API.tabManager,
-                                                    self.API.editPanel, -305)
+        #if self.API.editorSplitter.GetWindow2() is None:
+        #    self.API.editorSplitter.SplitVertically(self.API.tabManager,
+        #                                            self.API.editPanel, -305)
 
-        for x in self.API.editorSplitter.GetWindow2().GetChildren():
+        for x in self.API.editPanel.GetChildren():
             if x != dialog:
                 x.Destroy()

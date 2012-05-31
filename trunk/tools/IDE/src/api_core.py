@@ -23,7 +23,6 @@
 #
 
 import wx
-from wx.gizmos import ThinSplitterWindow
 from wx.lib.scrolledpanel import ScrolledPanel
 import os
 from time import gmtime, strftime
@@ -36,6 +35,7 @@ from tab_manager import TabManager
 from upload_core import UploadCore
 from output_tools import OutputTools
 from listen_module import ListenModule
+from editor_manager import EditorManager
 from globals import * #@UnusedWildImport
 
 from seal_parser import SealParser
@@ -120,13 +120,6 @@ class ApiCore:
         # Init seal parser
         self.sealParser = SealParser("telosb", self.printInfo, False, True)
 
-        self.editorSplitter = ThinSplitterWindow(self.emptyFrame,
-                                                style = wx.SP_3DBORDER | wx.CLIP_CHILDREN | wx.SP_LIVE_UPDATE)
-
-        self.editorSplitter.SetMinimumPaneSize(305)
-        self.editorSplitter.SetSashGravity(1)
-        self.editorSplitter.SetBackgroundColour("white")
-
         # Init tab manager 
         self.tabManager = TabManager(self.emptyFrame, self)
 
@@ -136,11 +129,12 @@ class ApiCore:
         # Init listenModule
         self.listenModule = ListenModule(self.emptyFrame, self)
 
-        self.outputTools.addTools()
-
         self.editPanel = ScrolledPanel(self.emptyFrame)
 
         self.frame = Frame(None, "MansOS IDE", (800, 500), (100, 100), self)
+
+        #self.outputTools.addTools()
+
         icon = os.path.normpath('../../doc/mansos-32x32.ico')
         if os.path.exists(icon):
             self.frame.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_ICO, 32, 32))
@@ -153,6 +147,7 @@ class ApiCore:
             "There are parentless objects after API initialization."
 
         self.tabManager.loadRememberedTabs()
+        self.frame.auiManager.Update()
 
     def getStatementType(self, line):
         possibleSplitters = [None, ",", ";"]
@@ -175,6 +170,15 @@ class ApiCore:
                 'parameters': [],
                 'role': UNKNOWN
                 }
+
+    def checkForDeletedEditors(self):
+        toDrop = list()
+        for x in range(len(self.editors)):
+            if type(self.editors[x]) != EditorManager:
+                toDrop.append(x)
+        # Hack for deleting them in reverse order, so remaining list indexes remain correct
+        for x in range(len(toDrop)):
+            self.editors.pop(toDrop[len(toDrop) - x - 1])
 
     # Get all actuators, who have role == self.STATEMENT
     def getAllStatementActuators(self):
@@ -207,7 +211,7 @@ class ApiCore:
         os.chdir(self.path)
         f = open(SETTING_FILE, 'w')
         for key in self.__settings:
-            f.write(key + "->" + self.__settings[key] + '\n')
+            f.write(str(key) + "->" + str(self.__settings[key]) + '\n')
         f.close()
 
     def logMsg(self, msgType, msgText):
