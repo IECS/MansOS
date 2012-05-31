@@ -23,7 +23,7 @@
 #
 
 import wx
-from os.path import exists
+from os.path import exists, join
 
 from wx.lib.agw import aui
 
@@ -230,7 +230,7 @@ class TabManager(aui.AuiNotebook):
             return
 
         # Open default files if no tabs were saved
-        path = "../../apps/seal/Blink/"
+        path = join(self.API.path, "../../apps/seal/Blink/")
         if exists(path):
             filename = self.API.frame.findFirstSourceFile(path)
             if filename:
