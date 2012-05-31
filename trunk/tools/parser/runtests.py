@@ -19,7 +19,8 @@ def runTest(sourceFileName):
     try:
         main.main()
     except Exception:
-        pass
+        print "error compiling {}!".format(sourceFileName)
+        return
 
     # prepend output with the test script
     with open(outputFileName, 'r+') as outputFile:
@@ -27,6 +28,7 @@ def runTest(sourceFileName):
         outputFile.seek(os.SEEK_SET, 0)
         outputFile.truncate()
         outputFile.write("/*\n")
+        outputFile.write("# This .c file was generated from SEAL source:\n")
         with open(sourceFileName, 'r') as sourceFile:
             outputFile.write(sourceFile.read())
         outputFile.write("*/\n\n")

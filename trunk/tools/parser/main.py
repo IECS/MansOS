@@ -14,7 +14,7 @@ testMode = False
 def exitProgram(code):
     if not testMode:
         exit(code)
-    print "Exit code " + str(code)
+    print "Would exit from program with code " + str(code)
     raise Exception
 
 def importsOk():
