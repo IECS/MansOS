@@ -36,6 +36,7 @@ void initPlatform(void)
     msp430InitClocks();
 #endif
 #if USE_SERIAL_NUMBER
-    halSerialNumberInit();
+//    halSerialNumberInit();
+#warning No serial number for z1
 #endif
 }

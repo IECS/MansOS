@@ -23,17 +23,19 @@
 
 #include <hil/watchdog.h>
 #include <msp430/msp430_int.h>
-#include <msp430/msp430_usart.h>
+#include <platform.h>
 
 void watchdogReboot(void)
 {
     msp430ClearAllInterruptsBeforeReboot();
 
     // switch off all things...
-    U0ME &= ~(UTXE0 | URXE0);
-    U1ME &= ~(UTXE1 | URXE1);
-    UCTL0 = SWRST;
-    UCTL1 = SWRST;
+    USARTDisableTX(0);
+    USARTDisableTX(1);
+    USARTDisableRX(0);
+    USARTDisableRX(1);
+    // UCTL0 = SWRST;
+    // UCTL1 = SWRST;
     TACTL = TACLR;
     TBCTL = TBCLR;
     BCSCTL2 = 0;

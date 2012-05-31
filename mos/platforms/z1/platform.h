@@ -47,6 +47,6 @@ void initPlatform(void);
 
 #define RADIO_CHIP RADIO_CHIP_CC2420
 
-#define SNUM_CHIP SNUM_DS2411
+//#define SNUM_CHIP SNUM_DS2411
 
 #endif

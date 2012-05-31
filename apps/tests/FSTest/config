@@ -2,7 +2,7 @@
 # Application specific config file
 #
 
-PLATFORM_EXCLUDE=arduino atmega farmmote
+PLATFORM_EXCLUDE=arduino atmega farmmote z1
 
 USE_THREADS   = n
 USE_EEPROM    = y
