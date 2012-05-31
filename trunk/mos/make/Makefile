@@ -303,7 +303,9 @@ saveplatform:
 	$(_QUIET) @echo "saving Makefile.platform"
 	$(_QUIET) @echo >$(BUILDDIR)/Makefile.platform "TARGET = $(TARGET)"
 
-build : $(BUILDDIR)/config.saved objDirs $(EXECUTABLE)
+build: $(BUILDDIR)/config.saved objDirs buildMingw
+
+buildMingw: objDirs $(EXECUTABLE)
 
 #
 # "config" file is required for building. An empty file is created it doesn't exist
@@ -347,7 +349,7 @@ endif
 
 # .c -> .o, user sources
 # objDirs was added as dependency because otherwise on MinGW they are not built.
-$(OUTDIR)/%.o : $(PROJDIR)/%.c objDirs
+$(OUTDIR)/%.o : $(PROJDIR)/%.c
 	$(Print) "CC $<"
 	$(_QUIET) $(CC) $(CFLAGS) $(INCLUDES) -MD -MF $(subst .o,.d,$@) -MP -MT $(subst .o,.d,$@) -MT $@ -c $< -o $@
 ifeq ($(USE_REPROGRAMMING),y)
