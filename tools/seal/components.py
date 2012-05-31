@@ -110,9 +110,9 @@ class UseCase(object):
 
         if self.period and self.pattern or self.period and self.once or self.pattern and self.once:
             if self.period and self.pattern:
-                userError("Both period and pattern specified for component '{0}' use case\n".format(component.name))
+                userError("Both 'period' and 'pattern' specified for component '{0}' use case\n".format(component.name))
             else:
-                userError("Both once and period or pattern specified for component '{0}' use case\n".format(component.name))
+                userError("Both 'once' and 'period' or 'pattern' specified for component '{0}' use case\n".format(component.name))
         self.generateAlarm = self.once or self.pattern or self.period
 
         if branchNumber != 0:
@@ -176,7 +176,7 @@ class UseCase(object):
             self.component.getNameCC())
 
         if self.generateAlarm:
-            outputFile.write("void {0}{1}Callback(void * __unused)\n".format(ccname, self.numInBranch))
+            outputFile.write("void {0}{1}Callback(void *__unused)\n".format(ccname, self.numInBranch))
             outputFile.write("{\n")
             if type(self.component) is Actuator:
                 if self.component.name.lower() == "print":
@@ -324,8 +324,13 @@ class Component(object):
 
     def generateIncludes(self, outputFile):
 #  TODO?  if self.isUsed():
-            includes = self.getParameterValue("extraIncludes")
+            # TODO WTF - not working?
+            # includes = self.getParameterValue("extraIncludes")
+            includes = None
+            if "extraIncludes" in self.parameters:
+                includes = self.parameters["extraIncludes"]
             if includes is not None:
+                # print "includes=", includes
                 outputFile.write("{0}\n".format(includes))
 
     def generateConstants(self, outputFile):
@@ -500,7 +505,12 @@ class Output(Component):
             outputFile.write("    {0}Packet.crc = crc16((const uint8_t *) &{0}Packet, sizeof({0}Packet) - 2);\n".format(
                     self.getNameCC()))
 
-        outputFile.write("    {0};\n".format(self.getParameterValue("useFunction", "")))
+        useFunction = self.getParameterValue("useFunction")
+#        if useFunction and useFunction.value:
+#            outputFile.write("    {0};\n".format(useFunction.asString()))
+#        if useFunction and useFunction.value:
+        if useFunction and useFunction.value:
+            outputFile.write("    {0};\n".format(useFunction.value))
         outputFile.write("    {0}PacketInit();\n".format(self.getNameCC()))
         outputFile.write("}\n\n")
 

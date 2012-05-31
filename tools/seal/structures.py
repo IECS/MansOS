@@ -20,7 +20,7 @@ def toMilliseconds(x):
     elif x.suffix == "s" or x.suffix == "sec":
         value *= 1000
     else:
-        userError("Unknown suffix {0} for time value\n".format(x.suffix))
+        userError("Unknown suffix '{0}' for time value\n".format(x.suffix))
     return value
 
 def toCamelCase(s):
@@ -182,7 +182,7 @@ class SystemParameter(object):
 
     def addComponents(self, componentRegister, conditionCollection):
         if self.name in componentRegister.systemParams:
-            userError("Parameter {0} already specified, ignoring\n".format(self.name))
+            userError("Parameter '{0}' already specified, ignoring\n".format(self.name))
             return
         componentRegister.systemParams[self.name] = self
 
@@ -351,10 +351,10 @@ class ComponentUseCase(object):
                                        conditionCollection.branchNumber)
 
 ########################################################
-CODE_BlOCK_TYPE_PROGRAM = 0
-CODE_BlOCK_TYPE_WHEN = 1
-CODE_BlOCK_TYPE_ELSEWHEN = 2
-CODE_BlOCK_TYPE_ELSE = 3
+CODE_BLOCK_TYPE_PROGRAM = 0
+CODE_BLOCK_TYPE_WHEN = 1
+CODE_BLOCK_TYPE_ELSEWHEN = 2
+CODE_BLOCK_TYPE_ELSE = 3
 
 class CodeBlock(object):
     def __init__(self, blockType, condition, declarations, next_):
@@ -365,17 +365,17 @@ class CodeBlock(object):
 
     def getCode(self, indent):
         result = getIndent(indent)
-        if self.blockType == CODE_BlOCK_TYPE_WHEN:
+        if self.blockType == CODE_BLOCK_TYPE_WHEN:
             result += "when"
             result += " " + self.condition.getCode()
             result += ":\n"
             indent += 1
-        elif self.blockType == CODE_BlOCK_TYPE_ELSEWHEN:
+        elif self.blockType == CODE_BLOCK_TYPE_ELSEWHEN:
             result += "elsewhen"
             result += " " + self.condition.getCode()
             result += ":\n"
             indent += 1
-        elif self.blockType == CODE_BlOCK_TYPE_ELSE:
+        elif self.blockType == CODE_BLOCK_TYPE_ELSE:
             result += "else:\n"
             indent += 1
 
@@ -393,26 +393,26 @@ class CodeBlock(object):
             result += getIndent(indent)
             result += self.next.getCode(indent)
             result += "\n"
-        elif self.blockType != CODE_BlOCK_TYPE_PROGRAM:
+        elif self.blockType != CODE_BLOCK_TYPE_PROGRAM:
             result += "end\n"
 
         return result
 
     def addComponents(self, componentRegister, conditionCollection):
-        if self.blockType == CODE_BlOCK_TYPE_PROGRAM:
+        if self.blockType == CODE_BLOCK_TYPE_PROGRAM:
             # reset all
             conditionCollection.reset()
             # TODO: system parameters!
-        elif self.blockType == CODE_BlOCK_TYPE_WHEN:
+        elif self.blockType == CODE_BLOCK_TYPE_WHEN:
             stackStartSize = conditionCollection.size()
             # append new
             conditionCollection.add(self.condition)
-        elif self.blockType == CODE_BlOCK_TYPE_ELSEWHEN:
+        elif self.blockType == CODE_BLOCK_TYPE_ELSEWHEN:
             # invert previous...
             conditionCollection.invertLast()
             # ..and append new
             conditionCollection.add(self.condition)
-        elif self.blockType == CODE_BlOCK_TYPE_ELSE:
+        elif self.blockType == CODE_BLOCK_TYPE_ELSE:
             # just invert previous
             conditionCollection.invertLast()
 
@@ -425,13 +425,13 @@ class CodeBlock(object):
         # add components - use cases always first, "when ..." blocks afterwards!
         for d in self.declarations:
             if type(d) is SystemParameter:
-                if self.blockType != CODE_BlOCK_TYPE_PROGRAM:
+                if self.blockType != CODE_BLOCK_TYPE_PROGRAM:
                     userError("Parameter declarations supported only in top level, ignoring parameter {0}\n".format(
                             d.name))
                 else:
                     d.addComponents(componentRegister, conditionCollection)
             if type(d) is PatternDeclaration:
-                if self.blockType != CODE_BlOCK_TYPE_PROGRAM:
+                if self.blockType != CODE_BLOCK_TYPE_PROGRAM:
                     userError("Pattern declarations supported only in top level, ignoring pattern {0}\n".format(
                             d.name))
                 else:
@@ -449,6 +449,6 @@ class CodeBlock(object):
         if self.next != None:
             self.next.addComponents(componentRegister, conditionCollection)
 
-        if self.blockType == CODE_BlOCK_TYPE_WHEN:
+        if self.blockType == CODE_BLOCK_TYPE_WHEN:
             # pop all conditions from this code block
             conditionCollection.pop(conditionCollection.size() - stackStartSize)
