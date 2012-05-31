@@ -28,7 +28,7 @@
 #include "stdmansos.h"
 
 static uint8_t radioBuffer[RADIO_MAX_PACKET];
-static char serialBuffer[255];
+static char serialBuffer[250];
 
 void recvRadio(void)
 {
