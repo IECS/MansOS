@@ -33,11 +33,11 @@ Stdev_t stdevInit(uint8_t window) {
         result.average = avgInit(window);
     }
     return result;
-};
+}
 
 void addStdev(Stdev_t *stdev, uint16_t *val) {
     addAverage(&stdev->average, val);
-};
+}
 
 uint16_t getStdevValue(Stdev_t *stdev) {
     // If getter() is used we can calculate this only on demand
@@ -59,4 +59,4 @@ uint16_t getStdevValue(Stdev_t *stdev) {
 #endif //DEBUG
     }
     return (stdev->value = intSqrt(sum));
-};
+}

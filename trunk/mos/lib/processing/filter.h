@@ -50,4 +50,3 @@ bool addFilter(Filter_t*, uint16_t*);
 uint16_t getFilterValue(Filter_t*);
 
 #endif /* MANSOS_FILTER_H_ */
-
