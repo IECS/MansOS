@@ -64,7 +64,12 @@ $(EXECUTABLE) : $(OUTDIR)/$(APPMOD).elf
 	$(Print) ""
 	$(OBJCOPY) -O ihex $(OUTDIR)/$(APPMOD).elf $(EXECUTABLE)
 
-platform-upload : build
+# TODO
+UPLOAD_TARGET=upload-atmega
+
+platform-upload : build $(UPLOAD_TARGET)
+
+upload-atmega:
 	$(Print) ""
 	$(MOTELIST)
 	$(Print) ""

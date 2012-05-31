@@ -247,7 +247,6 @@ POBJS = $(PSRC2:%.c= %.o)
 OBJS = $(APP_OBJS) $(POBJS)
 OBJDIRS = $(dir $(OBJS))
 
-
 # ===== Targets =====
 .PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs clean cleanall
 
@@ -264,8 +263,13 @@ platform_build: build saveplatform
 	$(Print) ""
 
 platform_build_seal: $(GENERATED_SOURCES)
-#	SEAL code compiled successfully, now build C sources
-	(cd $(BUILDDIR); MAKECMDGOALS="$(TARGET) $(NOTPLATFORMTARGETS)" $(MAKE) $(TARGET) $(NOTPLATFORMTARGETS))
+# SEAL code compiled successfully, now build C sources.
+# Sorry for this mess - needed to compile at all on MinGW...  
+	(cd $(BUILDDIR);\
+	echo "TARGET=$(TARGET)">Makefile.target;\
+	MAKECMDGOALS="$(TARGET)" $(MAKE) $(TARGET);\
+	$(MakeDir) $(TARGET);\
+	$(Copy) build/$(TARGET)/image.ihex $(TARGET)/image.ihex)
 
 platform_skip:
 	$(Print) "Skipping $(PROJDIR)/$(APPMOD) for $(TARGET): not for this platform!"
@@ -279,8 +283,7 @@ endif
 
 platform_upload_normal: platform-upload
 
-# do nothing
-platform_upload_seal:
+platform_upload_seal: $(UPLOAD_TARGET)
 
 upload: $(PLATFORM_UPLOAD_ACTION)
 	$(_QUIET) @echo ""
@@ -299,13 +302,11 @@ $(PLATFORMS:%=clean%): clean
 # Save platform name to a makefile to enable later reuse
 #
 saveplatform:
-	$(_QUIET) rm -f $(BUILDDIR)/Makefile.platform
-	$(_QUIET) @echo "saving Makefile.platform"
-	$(_QUIET) @echo >$(BUILDDIR)/Makefile.platform "TARGET = $(TARGET)"
+	$(_QUIET) rm -f $(BUILDDIR)/Makefile.target
+	$(_QUIET) @echo "saving Makefile.target"
+	$(_QUIET) @echo >$(BUILDDIR)/Makefile.target "TARGET = $(TARGET)"
 
-build: $(BUILDDIR)/config.saved objDirs buildMingw
-
-buildMingw: objDirs $(EXECUTABLE)
+build: $(BUILDDIR)/config.saved objDirs $(EXECUTABLE)
 
 #
 # "config" file is required for building. An empty file is created it doesn't exist
@@ -349,7 +350,8 @@ endif
 
 # .c -> .o, user sources
 # objDirs was added as dependency because otherwise on MinGW they are not built.
-$(OUTDIR)/%.o : $(PROJDIR)/%.c
+$(OUTDIR)/%.o : $(PROJDIR)/%.c objDirs
+#	echo MAKECMDGOALS=$(MAKECMDGOALS)
 	$(Print) "CC $<"
 	$(_QUIET) $(CC) $(CFLAGS) $(INCLUDES) -MD -MF $(subst .o,.d,$@) -MP -MT $(subst .o,.d,$@) -MT $@ -c $< -o $@
 ifeq ($(USE_REPROGRAMMING),y)
