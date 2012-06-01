@@ -199,7 +199,9 @@ void cc2420Init(void)
 
     if (initialized) {
         RPRINTF("calling cc2420Init multiple times!\n");
-        return;
+        // allow calling initialization multiple times, for example
+        // to arbitrate between multiple devices on the same SPI bus
+        // return;
     }
     initialized = true;
 
