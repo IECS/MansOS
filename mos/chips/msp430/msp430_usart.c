@@ -119,11 +119,19 @@ static inline void USARTInitSpeed(uint8_t id, uint32_t speed) {
     // http://mspgcc.sourceforge.net/baudrate.html
     // basically: BR0 ~= CLOCK_FREQUENCY / BAUDRATE, and MCTL is correction value
     switch(speed) {
+
+    // Added by Girts 2012-05-18 (User's guide page 265)
+    case 2400:
+        clock = SSEL_ACLK; // use ACLK
+        frequency = 0xd;
+        correction = 0x6b;
+        break; 
+
     case 4800:
         clock = SSEL_ACLK; // use ACLK
         frequency = 0x6;
         correction = 0x77;
-        break; 
+        break;
 
     default:
         // TODO: Tell somehow, that no valid speed is selected/found,
