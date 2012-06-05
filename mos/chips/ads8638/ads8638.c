@@ -21,21 +21,57 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//----------------------------------------------------------
-//      Platform code
-//----------------------------------------------------------
-#include "platform.h"
-#include <hil/snum.h>
+#include "ads8638.h"
+#include <hil/spi.h>
+#include <lib/dprint.h>
 
-//----------------------------------------------------------
-//      Init the platform as if on cold reset
-//----------------------------------------------------------
-void initPlatform(void)
+#define ADS8638_SPI_ENABLE()   spiSlaveEnable(ADS8638_CS_PORT, ADS8638_CS_PIN)
+#define ADS8638_SPI_DISABLE()  spiSlaveDisable(ADS8638_CS_PORT, ADS8638_CS_PIN)
+
+static uint8_t adsChannel;
+static uint8_t adsRange;
+
+static void ads8638RegWrite(uint8_t address, uint8_t data)
 {
-#if USE_HARDWARE_TIMERS
-    msp430InitClocks();
-#endif
-#if USE_SERIAL_NUMBER
-#warning No serial number for z1
-#endif
+    ADS8638_SPI_ENABLE();
+    spiWriteByte(ADS8638_SPI_ID, address << 1);
+    spiWriteByte(ADS8638_SPI_ID, data);
+    ADS8638_SPI_DISABLE();
+}
+
+void ads8638Init(void)
+{
+    spiBusInit(ADS8638_SPI_ID, SPI_MODE_MASTER);
+
+    pinAsOutput(ADS8638_CS_PORT, ADS8638_CS_PIN);
+
+    ADS8638_SPI_DISABLE();
+}
+
+void ads8638SelectChannel(uint8_t channel, uint8_t range)
+{
+    adsChannel = channel;
+    adsRange = range;
+}
+
+bool ads8638Read(uint16_t *value)
+{
+    uint8_t b0, b1;
+
+    ads8638RegWrite(ADS8638_REG_MANUAL, (adsChannel << 4) | (adsRange << 1));
+
+    ADS8638_SPI_ENABLE();
+    b0 = spiReadByte(ADS8638_SPI_ID);
+    b1 = spiReadByte(ADS8638_SPI_ID);
+    ADS8638_SPI_DISABLE();
+
+    *value = b0 & 0xf;
+    *value <<= 8;
+    *value |= b1;
+
+    // PRINTF("got %#02x %#02x\n", b0, b1);
+    // PRINTF("channel = %d\n", b0 >> 4);
+    // PRINTF("value = %d\n", *value);
+
+    return true;
 }

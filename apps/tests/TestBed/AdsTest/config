@@ -1,0 +1,8 @@
+#
+# Application specific config file
+#
+
+# only for testbed
+PLATFORM_ONLY=testbed
+
+USE_ADS8638=y

@@ -20,24 +20,28 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #
-# Defines options for make, used as make targets in addition
-# to the main target. Overrides the related options in the config file.
+# --------------------------------------------------------------------
+#	Makefile for the sample application
 #
-# Invoked from the main Makefile and the Makefile.top.
+#  The developer must define at least SOURCES and APPMOD in this file
 #
+#  In addition, PROJDIR and MOSROOT must be defined, before including 
+#  the main Makefile at ${MOSROOT}/mos/make/Makefile
+# --------------------------------------------------------------------
 
-#--- Supported options
+# Sources are all project source files, excluding MansOS files
+SOURCES = main.c
 
-OPT_VERBOSE = verbose
-OPT_QUIET = quiet
-OPT_OPTIMIZE = optimize
+# Module is the name of the main module buit by this makefile
+APPMOD = AdsTest
 
-ALLOPTIONS = $(OPT_VERBOSE) $(OPT_QUIET) $(OPT_OPTIMIZE)
+# --------------------------------------------------------------------
+# Set the key variables
+PROJDIR = $(CURDIR)
+ifndef MOSROOT
+  MOSROOT = $(PROJDIR)/../../../..
+endif
 
-#--- Supported platforms
-
-PLATFORMS ?= pc pcapp telosb tmote sadmote sm3 z1 atmega arduino nrf launchpad farmmote em testbed
-
-ALLTARGETS = build clean upload run testbed memdump mspsim $(PLATFORMS:%=clean%) $(PLATFORMS) $(ALLOPTIONS)
+# Include the main makefile
+include ${MOSROOT}/mos/make/Makefile

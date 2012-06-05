@@ -21,21 +21,23 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//----------------------------------------------------------
-//      Platform code
-//----------------------------------------------------------
-#include "platform.h"
-#include <hil/snum.h>
+#include "stdmansos.h"
+#include "dac7718/dac7718.h"
 
-//----------------------------------------------------------
-//      Init the platform as if on cold reset
-//----------------------------------------------------------
-void initPlatform(void)
+void appMain(void)
 {
-#if USE_HARDWARE_TIMERS
-    msp430InitClocks();
-#endif
-#if USE_SERIAL_NUMBER
-#warning No serial number for z1
-#endif
+    uint16_t val;
+    uint16_t i;
+
+    dac7718Init();
+    dac7718SelectChannel(DAC7718_CHANNEL_0);
+
+    for (i = 0, val = 0; ; i++) {
+        i %= 8;
+        val++;
+        dac7718SelectChannel(i);
+        PRINTF("Writing to AIN%d: %#x\n", i, val);
+        dac7718Write(val);
+        sleep(1);
+    }
 }

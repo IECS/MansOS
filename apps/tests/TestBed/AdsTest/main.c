@@ -21,21 +21,22 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//----------------------------------------------------------
-//      Platform code
-//----------------------------------------------------------
-#include "platform.h"
-#include <hil/snum.h>
+#include "stdmansos.h"
+#include "ads8638/ads8638.h"
 
-//----------------------------------------------------------
-//      Init the platform as if on cold reset
-//----------------------------------------------------------
-void initPlatform(void)
+void appMain(void)
 {
-#if USE_HARDWARE_TIMERS
-    msp430InitClocks();
-#endif
-#if USE_SERIAL_NUMBER
-#warning No serial number for z1
-#endif
+    uint16_t val;
+    uint16_t i;
+
+    ads8638Init();
+    ads8638SelectChannel(ADS8638_CHANNEL_0, ADS8638_RANGE_2_5V);
+
+    for (i = 0; ; i++) {
+        i %= 8;
+        ads8638SelectChannel(i, ADS8638_RANGE_2_5V);
+        ads8638Read(&val);
+        PRINTF("Conversion result from AIN%d: %#x\n", i, val);
+        sleep(1);
+    }
 }

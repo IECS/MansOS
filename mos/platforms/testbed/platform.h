@@ -21,21 +21,31 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//----------------------------------------------------------
-//      Platform code
-//----------------------------------------------------------
-#include "platform.h"
-#include <hil/snum.h>
+#ifndef _PLATFORM_TESTBED_H_
+#define _PLATFORM_TESTBED_H_
 
-//----------------------------------------------------------
-//      Init the platform as if on cold reset
-//----------------------------------------------------------
-void initPlatform(void)
-{
-#if USE_HARDWARE_TIMERS
-    msp430InitClocks();
+#include <msp430/msp430_clock.h>
+#include <msp430/msp430_timers.h>
+#include <msp430/msp430_int.h>
+#include <msp430/msp430_adc.h>
+#include <msp430/msp430_usci.h>
+
+#include "adc_dac_pins.h"
+
+//===========================================================
+// Functions
+//===========================================================
+
+void initPlatform(void);
+
+//===========================================================
+// Data types and constants
+//===========================================================
+
+//#define EXT_FLASH_CHIP FLASH_CHIP_AT25DF
+
+//#define RADIO_CHIP RADIO_CHIP_CC2420
+
+//#define SNUM_CHIP SNUM_DS2411
+
 #endif
-#if USE_SERIAL_NUMBER
-#warning No serial number for z1
-#endif
-}
