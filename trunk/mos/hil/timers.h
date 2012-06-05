@@ -37,12 +37,10 @@ static inline void incRealtime(uint32_t inc)
     atomic_inc(jiffies, inc);
 }
 
-
-static inline uint16_t msToSleepCycles(uint16_t ms) {
+static inline uint16_t msToSleepCycles(uint16_t ms)
+{
     return ms * SLEEP_CYCLES
         + (uint16_t) ((uint32_t) ms * (uint32_t) SLEEP_CYCLES_DEC / 1000ull);
 }
-
-//#endif // PLATFORM_PC
 
 #endif

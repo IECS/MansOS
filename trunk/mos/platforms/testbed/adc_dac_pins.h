@@ -21,21 +21,48 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//----------------------------------------------------------
-//      Platform code
-//----------------------------------------------------------
-#include "platform.h"
-#include <hil/snum.h>
+#ifndef ADC_PINS_H
+#define ADC_PINS_H
 
-//----------------------------------------------------------
-//      Init the platform as if on cold reset
-//----------------------------------------------------------
-void initPlatform(void)
-{
-#if USE_HARDWARE_TIMERS
-    msp430InitClocks();
+// Testbed platform uses ADS8638 analog/digital converter
+
+#define ADS8638_CS_PORT 1
+#define ADS8638_CS_PIN  1
+
+// Testbed platform uses DAC7718 digital/analog converter
+
+#define DAC7718_CS_PORT   1
+#define DAC7718_CS_PIN    1
+
+#define DAC7718_RST_PORT  1
+#define DAC7718_RST_PIN   1
+
+// selects output voltage after reset
+#define DAC7718_RSTSEL_PORT 1
+#define DAC7718_RSTSEL_PIN  1
+
+// fix DAC latch (active low)
+#define DAC7718_LDAC_PORT 1
+#define DAC7718_LDAC_PIN  1
+
+// when 0, all V_out pins set to ground
+#define DAC7718_CLR_PORT  1
+#define DAC7718_CLR_PIN   1
+
+// when 0, wake up SPI to normal mode from sleep
+#define DAC7718_WAKEUP_PORT 1
+#define DAC7718_WAKEUP_PIN  1
+
+// use binary two's complement? (if IOV_dd)
+#define DAC7718_BTC_PORT 1
+#define DAC7718_BTC_PIN  1
+
+// digital ground
+#define DAC7718_DGND_PORT 1
+#define DAC7718_DGND_PIN  1
+
+// interface power (I/O Voltage digital)
+#define DAC7718_IOVDD_PORT 1
+#define DAC7718_IOVDD_PIN  1
+
 #endif
-#if USE_SERIAL_NUMBER
-#warning No serial number for z1
-#endif
-}

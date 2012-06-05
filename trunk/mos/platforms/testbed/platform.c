@@ -36,6 +36,6 @@ void initPlatform(void)
     msp430InitClocks();
 #endif
 #if USE_SERIAL_NUMBER
-#warning No serial number for z1
+#warning No serial number for testbed mote
 #endif
 }
