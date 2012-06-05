@@ -28,7 +28,8 @@
 #include <msp430/msp430_timers.h>
 #include <msp430/msp430_int.h>
 #include <msp430/msp430_adc.h>
-#include <msp430/msp430_usci.h>
+//#include <msp430/msp430_usci.h>
+#include <msp430/msp430_usart.h>
 
 #include "amb8420_pins.h"
 #include "sht_pins.h"

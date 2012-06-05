@@ -56,11 +56,11 @@
 // LEDs attached to VDD on this platform
 // to turn LED on, corresponding PIN must be set LOW
 #define LEDS_ON_PIN_VALUE 0 
-#define LEDS_PORT 10 
+#define LEDS_PORT 5
 
-LED_DEFINE(redLed,   LEDS_PORT, 0, LEDS_ON_PIN_VALUE)
-LED_DEFINE(greenLed, LEDS_PORT, 1, LEDS_ON_PIN_VALUE)
-LED_DEFINE(blueLed,  LEDS_PORT, 2, LEDS_ON_PIN_VALUE)
+LED_DEFINE(redLed,   LEDS_PORT, 4, LEDS_ON_PIN_VALUE)
+LED_DEFINE(greenLed, LEDS_PORT, 5, LEDS_ON_PIN_VALUE)
+LED_DEFINE(blueLed,  LEDS_PORT, 6, LEDS_ON_PIN_VALUE)
 
 #define RED_LED_DEFINED    1
 #define GREEN_LED_DEFINED  1
