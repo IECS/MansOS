@@ -29,6 +29,9 @@
 #include <hil/gpio.h>
 #include <hil/snum.h>
 
+#define XREN(port) P##port##REN
+#define REN(port)  XREN(port)
+
 //----------------------------------------------------------
 //      Init the platform as if on cold reset
 //----------------------------------------------------------
@@ -41,6 +44,9 @@ void initPlatform(void)
     // Set up Vcc for the DS2411
     pinAsOutput(DS2411_VCC_PORT, DS2411_VCC_PIN);
     pinSet(DS2411_VCC_PORT, DS2411_VCC_PIN);
+
+    // Enablee the pullup resistor
+    REN(DS2411_PORT) |= BV(DS2411_PIN);
 
     // Read the serial number
     halSerialNumberInit();
