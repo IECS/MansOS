@@ -60,6 +60,8 @@ bool ads8638Read(uint16_t *value)
 
     ads8638RegWrite(ADS8638_REG_MANUAL, (adsChannel << 4) | (adsRange << 1));
 
+    udelay(1); // conversion time 750 ns
+
     ADS8638_SPI_ENABLE();
     b0 = spiReadByte(ADS8638_SPI_ID);
     b1 = spiReadByte(ADS8638_SPI_ID);
