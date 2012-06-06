@@ -67,9 +67,12 @@ enum {
     DAC7718_CHANNEL_7,
 };
 
-
 void dac7718Init(void);
 
 void dac7718SelectChannel(uint8_t channel);
 
+//
+// Value is unsigned integer [0...0xfff],
+// output voltage is [-3 * V_ref ... +3 * V_ref]
+//
 void dac7718Write(uint16_t value);
