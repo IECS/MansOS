@@ -45,7 +45,7 @@ void initPlatform(void)
     pinAsOutput(DS2411_VCC_PORT, DS2411_VCC_PIN);
     pinSet(DS2411_VCC_PORT, DS2411_VCC_PIN);
 
-    // Enablee the pullup resistor
+    // Enable the pullup resistor
     REN(DS2411_PORT) |= BV(DS2411_PIN);
 
     // Read the serial number
