@@ -51,18 +51,21 @@ void dac7718Init(void)
     pinAsOutput(DAC7718_CLR_PORT, DAC7718_CLR_PIN);
     pinAsOutput(DAC7718_WAKEUP_PORT, DAC7718_WAKEUP_PIN);
     pinAsOutput(DAC7718_BTC_PORT, DAC7718_BTC_PIN);
-    pinAsOutput(DAC7718_DGND_PORT, DAC7718_DGND_PIN);
-    pinAsOutput(DAC7718_IOVDD_PORT, DAC7718_IOVDD_PIN);
+    // pinAsOutput(DAC7718_DGND_PORT, DAC7718_DGND_PIN);
+    // pinAsOutput(DAC7718_IOVDD_PORT, DAC7718_IOVDD_PIN);
 
     DAC7718_SPI_DISABLE();
     pinSet(DAC7718_RST_PORT, DAC7718_RST_PIN);
-    pinClear(DAC7718_RSTSEL_PORT, DAC7718_RSTSEL_PIN);
+    // 0V on output pins after reset
+    pinSet(DAC7718_RSTSEL_PORT, DAC7718_RSTSEL_PIN);
+    // async mode, update immediately
     pinClear(DAC7718_LDAC_PORT, DAC7718_LDAC_PIN);
     pinSet(DAC7718_CLR_PORT, DAC7718_CLR_PIN);
     pinClear(DAC7718_WAKEUP_PORT, DAC7718_WAKEUP_PIN);
+    // use straight binary code
     pinClear(DAC7718_BTC_PORT, DAC7718_BTC_PIN);
-    pinClear(DAC7718_DGND_PORT, DAC7718_DGND_PIN);
-    pinSet(DAC7718_IOVDD_PORT, DAC7718_IOVDD_PIN);
+    // pinClear(DAC7718_DGND_PORT, DAC7718_DGND_PIN);
+    // pinSet(DAC7718_IOVDD_PORT, DAC7718_IOVDD_PIN);
 }
 
 void dac7718SelectChannel(uint8_t channel)
@@ -72,5 +75,5 @@ void dac7718SelectChannel(uint8_t channel)
 
 void dac7718Write(uint16_t value)
 {
-    dac7718RegWrite(DAC7718_REG_DAC_0 + dacChannel, value);
+    dac7718RegWrite(DAC7718_REG_DAC_0 + dacChannel, value << 4);
 }
