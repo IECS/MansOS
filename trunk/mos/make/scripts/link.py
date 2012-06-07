@@ -25,7 +25,7 @@
 import sys, subprocess, string, re
 
 if len(sys.argv) != 6:
-    print 'Usage: ' + sys.argv[0] + ' <arch> <target> <flags> <app_objects> <mos_objects>'
+    print('Usage: ' + sys.argv[0] + ' <arch> <target> <flags> <app_objects> <mos_objects>')
     sys.exit(1)
 
 arch = sys.argv[1]
@@ -46,7 +46,7 @@ elif arch == 'avr':
     cc = 'avr-gcc'
     objdump = 'avr-objdump'
 else:
-    print "Error: unknown arhitecture!"
+    print("Error: unknown arhitecture!")
     sys.exit(1)
 
 
@@ -71,12 +71,13 @@ def get_symbols(file):
     unresolved = []
     try:
         output = subprocess.Popen([objdump, '-t', file], stdout=subprocess.PIPE).communicate()[0]
-    except OSError, e:
-        print >>sys.stderr, "objdump execution failed:", e
+    except OSError as e:
+        sys.stderr.write("objdump execution failed: {0}".format(str(e)))
         sys.exit(1)
 
-    lines = output.split('\n')
-    for line in lines:
+    lines = output.splitlines()
+    for lineb in lines:
+        line = lineb.decode("utf-8")
         # exported functions
         m = re.search('\sg\s*F\s.*\s([a-zA-Z0-9_]+)\s*$', line)
         if not m is None:
@@ -99,8 +100,8 @@ def check_objdump_present():
     try:
         output = subprocess.Popen([objdump], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
         return True
-    except OSError, e:
-        print >>sys.stderr, "Warning: failed to execute obdjump ('" + objdump + "'):", e
+    except OSError as e:
+        sys.stderr.write("Warning: failed to execute obdjump ('{0}'): {1}".format(objdump, str(e)))
         return False
 
 
@@ -160,8 +161,8 @@ def find_needed_objects(app_o, system_o):
             break
 
     if len(unresolved) != 0:
-        print "Warning: not all symbols found! Still unresolved:"
-        print unresolved
+        print("Warning: not all symbols found! Still unresolved:")
+        print(unresolved)
 
     #print 'files unused: '
     #print string.join(remaining_system_files)
@@ -176,15 +177,15 @@ else:
     # filter out
     used_objects = find_needed_objects(app_objects, system_objects)
 
-arglist = [cc, string.join(used_objects), '-o', target, flags]
+arglist = [cc, " ".join(used_objects), '-o', target, flags]
 
-#print 'arglist:'
-#print string.join(arglist)
+#print ('arglist:', arglist)
+#print (" ".join(arglist))
 
 try:
-    retcode = subprocess.call(string.join(arglist), shell=True)
-except OSError, e:
-    print >>sys.stderr, "gcc execution failed:", e
+    retcode = subprocess.call(" ".join(arglist), shell=True)
+except OSError as e:
+    sys.stderr.write("gcc execution failed: {}".format(str(e)))
     retcode = 1
 
 sys.exit(retcode)
