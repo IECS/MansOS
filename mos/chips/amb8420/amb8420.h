@@ -26,24 +26,7 @@
 
 #include <kernel/defines.h>
 
-//
-// Configuration constants
-//
-#define WITH_SEND_CCA 1
-#define AMB8420_CONF_CHECKSUM 0
-#define AMB8420_CONF_AUTOACK 0
-#define AMB8420_CONF_AUTOCRC 1
-
-#if AMB8420_CONF_CHECKSUM
-#define CHECKSUM_LEN 2
-#else
-#define CHECKSUM_LEN 0
-#endif
-
-#define FOOTER_LEN 2
-#define AUX_LEN (CHECKSUM_LEN + FOOTER_LEN)
-
-#define AMB8420_MAX_PACKET_LEN      (62 - AUX_LEN)
+#define AMB8420_MAX_PACKET_LEN      128
 
 #define AMB8420_TX_POWER_MIN        0  // -38.75 dBm
 #define AMB8420_TX_POWER_MAX        31 // 0 dBm
@@ -80,5 +63,7 @@ int amb8420GetRSSI(void);
 
 // returns true if CCA fails to detect radio interference
 bool amb8420IsChannelClear(void);
+
+void amb8420PollForPacket(void);
 
 #endif

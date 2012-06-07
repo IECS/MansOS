@@ -50,7 +50,7 @@ endif
 #INTERRUPT_VECTOR_COUNT=64
 INTERRUPT_VECTOR_COUNT=16
 
-CFLAGS += -DPLATFORM_SADMOTE=1 -DPLATFORM_SADMOTE3=1 -mivcnt=$(INTERRUPT_VECTOR_COUNT)
+CFLAGS += -DPLATFORM_SM3=1 -mivcnt=$(INTERRUPT_VECTOR_COUNT)
 
 #############################################
 # Define platform-specific sources

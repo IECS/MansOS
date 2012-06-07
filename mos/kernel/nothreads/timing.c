@@ -63,6 +63,9 @@ ALARM_TIMER_INTERRUPT()
 #if USE_RADIO && (RADIO_CHIP==RADIO_CHIP_MRF24J40)
     if (mrf24j40PollForPacket) mrf24j40PollForPacket();
 #endif
+#if USE_RADIO && (RADIO_CHIP==RADIO_CHIP_AMB8420)
+    if (amb8420PollForPacket) amb8420PollForPacket();
+#endif
 }
 
 #endif // !CUSTOM_TIMER_INTERRUPT_HANDLERS

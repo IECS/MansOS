@@ -58,11 +58,11 @@
 #define DAC7718_BTC_PIN  1
 
 // digital ground
-#define DAC7718_DGND_PORT 1
-#define DAC7718_DGND_PIN  1
+// #define DAC7718_DGND_PORT 1
+// #define DAC7718_DGND_PIN  1
 
-// interface power (I/O Voltage digital)
-#define DAC7718_IOVDD_PORT 1
-#define DAC7718_IOVDD_PIN  1
+// // interface power (I/O Voltage digital)
+// #define DAC7718_IOVDD_PORT 1
+// #define DAC7718_IOVDD_PIN  1
 
 #endif
