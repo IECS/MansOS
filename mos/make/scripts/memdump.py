@@ -26,13 +26,13 @@
 
 # parse symbols in ELF image, display variable addresses
 
-import sys, subprocess, string, re, commands
+import sys, subprocess, string, re
 
 PRINT_DATA_MEMORY = True
 PRINT_CODE_MEMORY = False
 
 if len(sys.argv) != 3:
-    print 'Usage: ' + sys.argv[0] + ' <target> <arch>'
+    print('Usage: ' + sys.argv[0] + ' <target> <arch>')
     sys.exit(1)
 
 target = sys.argv[1]
@@ -46,15 +46,24 @@ elif arch == 'msp430':
 elif arch == 'avr':
     objdump = 'avr-objdump'
 else:
-    print "Error: unknown arhitecture!"
+    print("Error: unknown arhitecture!")
     sys.exit(1)
+
+def getstatusoutput(cmd):
+    """Return (status, output) of executing cmd in a shell."""
+    """This new implementation should work on all platforms."""
+    pipe = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True, universal_newlines=True)
+    output = pipe.stdout.read()
+    sts = pipe.returncode
+    if sts is None: sts = 0
+    return sts, output
 
 
 def readObjFile(file):
     try:
-        [res, output] = commands.getstatusoutput(objdump + ' -x ' + file)
-    except OSError, e:
-        print >>sys.stderr, "objdump execution failed:", e
+        [res, output] = getstatusoutput(objdump + ' -x ' + file)
+    except OSError as e:
+        sys.stderr.write("objdump execution failed: {0}".format(str(e)))
         sys.exit(1)
     return output.split('\n')
 
@@ -82,24 +91,23 @@ def getSymbols(lines, sections, description):
                 sl[addr] = name
                 sizes[addr] = size
 
-    addrs = sl.keys()
+    addrs = list(sl.keys())
     sortedA = sorted(addrs)
-    print description + ':'
+    print(description + ':')
     for a in sortedA:
         size = sizes[a]
-        print a + ' [', size, '] ->', sl[a]
-
+        print ("{}[{}] -> {}".format(a, size, sl[a]))
 
 lines = readObjFile(target)
 totalRamSize = getSectionSize(lines, '\.bss') + getSectionSize(lines, '\.data')
 totalCodeSize = getSectionSize(lines, '\.text') + getSectionSize(lines, '\.usertext')
 if PRINT_DATA_MEMORY:
     getSymbols(lines, '(\.bss|\.data)', 'Variables')
-    print '-----------------------------'
-    print 'Total size in RAM:', totalRamSize, 'bytes'
-    print '-----------------------------'
+    print('-----------------------------')
+    print('Total size in RAM: {} bytes'.format(totalRamSize))
+    print('-----------------------------')
 if PRINT_CODE_MEMORY:
     getSymbols(lines, '(\.text)', 'Functions')
-    print '-----------------------------'
-    print 'Total size in code memory:', totalCodeSize, 'bytes'
-    print '-----------------------------'
+    print('-----------------------------')
+    print('Total size in code memory: {} bytes'.format(totalCodeSize))
+    print('-----------------------------')
