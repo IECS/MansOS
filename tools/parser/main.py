@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# - because /usr/bin/env python does not works when called from IDE on Windows
 
 import os, sys, getopt
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Dump serial output to console
 
@@ -23,19 +23,21 @@ def listenSerial():
     try:
         ser = serial.Serial(serPort, baudRate, timeout=1, 
             parity=serial.PARITY_NONE, rtscts=1)
-    except serial.SerialException, ( msg ):
-        print "\nSerial exception:\n\t", msg
+    except serial.SerialException as ex:
+        print ("\nSerial exception {}:\n\t".format(ex))
         flDone = True
         return
     
-    print "Listening to serial port: ", ser.portstr, ", rate: ", baudRate
+    print ("Listening to serial port: {}, rate: {}".format(ser.portstr, baudRate))
     
     while (not flDone):
         s = ser.read(1)
-        sys.stdout.write( s )
-        sys.stdout.flush()
+        if len(s) >= 1:
+            if type(s) is str: sys.stdout.write( s )
+            else: sys.stdout.write( "{}".format(chr(s[0])) )
+            sys.stdout.flush()
             
-    print "\nDone"
+    print ("\nDone")
     ser.close()
     return 0
 
@@ -72,15 +74,15 @@ def main():
 
     baudRate = args.baudRate
 
-    print "MansOS serial listener"
+    print ("MansOS serial listener")
     threading.Thread(target=listenSerial).start() 
     
     #Keyboard scanning loop
     while (not flDone):
         try:
-            s = raw_input()
+            s = input()
         except:
-            print "\nKeyboard interrupt"
+            print ("\nKeyboard interrupt")
             flDone = True
             return 0
              
