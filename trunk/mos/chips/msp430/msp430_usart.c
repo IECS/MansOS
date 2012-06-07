@@ -328,9 +328,6 @@ uint_t USARTSendByte(uint8_t id, uint8_t data)
 //    STACK_GUARD();
     // USARTx not supported, x >= USART_COUNT
     if (id >= USART_COUNT) return NOT_IMPLEMENTED;
-    // if (id == 0) {
-    //     PRINTF("usart 0 tx %#02x\n", data);
-    // }
     *UxTXBUF[id] = data;
     while (((*UxTCTL[id]) & (TXEPT)) == 0);  // Is byte sent ?
     return 0;
@@ -366,11 +363,11 @@ uint_t USARTEnableRX(uint8_t id) {
     if (id >= USART_COUNT) return NOT_IMPLEMENTED;
     *UxME[id] |= URXEx[id];   // Enable RX module
     // Enable RX interrupt only in UART mode
-//    if (usartMode[id] == UM_UART) {
+    if (usartMode[id] == UM_UART) {
         *IEx[id] |= URXIEx[id];
-//    } else {
-//        return -1u;
-//    }
+    } else {
+        return -1u;
+    }
     return 0;
 }
 
@@ -418,36 +415,23 @@ ISR(UART0RX, UART0InterruptHandler)
     if (URCTL0 & RXERR) {
         volatile unsigned dummy;
         dummy = RXBUF0;   /* Clear error flags by forcing a dummy read. */
-//        PRINT("usart 0 rx err\n");
         return;
     }
 
     uint8_t x = U0RXBUF;
 
-//    PRINTF("usart 0 rx %#02x\n", x);
-
     if (usartRecvCb[0]) usartRecvCb[0](x);
 }
-
-// #pragma vector=USART0RX_VECTOR
-// __interrupt void usart0_rx (void)
-// {
-//   while (!(IFG1 & UTXIFG0));                // USART0 TX buffer ready?
-//   TXBUF0 = RXBUF0;                          // RXBUF0 to TXBUF0
-// }
 
 ISR(UART1RX, UART1InterruptHandler)
 {
     if (URCTL1 & RXERR) {
         volatile unsigned dummy;
         dummy = RXBUF1;   /* Clear error flags by forcing a dummy read. */
-        PRINT("usart 1 rx err\n");
         return;
     }
 
     uint8_t x = U1RXBUF;
-
-    PRINTF("usart 1 rx %#02x\n", x);
 
     if (usartRecvCb[1]) usartRecvCb[1](x);
 }
