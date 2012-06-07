@@ -19,7 +19,7 @@ def runTest(sourceFileName):
     try:
         main.main()
     except Exception:
-        print "error compiling {}!".format(sourceFileName)
+        print ("error compiling {}".format(sourceFileName))
         return
 
     # prepend output with the test script
@@ -41,11 +41,11 @@ def runTests():
     for f in files:
         if len(f) < 3 or f[len(f) - 3:] != '.sl': continue
         sourceFileName = os.path.join(testFileDir, f)
-        print "\nprocessing " + sourceFileName + "..."
+        print ("\nprocessing " + sourceFileName + "...")
         runTest(sourceFileName)
         numTests += 1
         # break ###
-    print numTests, "tests successfully executed"
+    print ("{} tests successfully executed".format(numTests))
 
 if __name__ == '__main__':
     runTests()
