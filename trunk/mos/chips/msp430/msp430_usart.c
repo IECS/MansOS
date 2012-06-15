@@ -408,7 +408,7 @@ uint_t USARTDisableRX(uint8_t id) {
 //-----------------------------------------------------------
 //-----------------------------------------------------------
 
-#ifdef USE_USART_RX
+#if USE_USART_RX
 
 ISR(UART0RX, UART0InterruptHandler)
 {

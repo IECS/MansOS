@@ -59,7 +59,7 @@
 //----------------------------------------------------------
 //      System initialization
 //----------------------------------------------------------
-static void initSystem(void)
+static inline void initSystem(void)
 {
     // disable interrupts (disabled on msp430 by default, but other systems might need this)
     DISABLE_INTS();
@@ -169,13 +169,13 @@ int main(void)
     appMain();
 
     //
-    // Insert explicit infinite loop here.
-    // Needed because when GCC 4.5+ is used, the compiler
-    // disables interrupts after the end of this main() function - bad!
+    // Do not allow to quit from main(). This code is needed because
+    // GCC 4.5+ disables interrupts after completion of main() function,
+    // while sensor programs may want to use main() for initialization only
+    // and do the "real work" in interrupt handlers.
     //
     for (;;);
-
-#endif // !USE_THREADS
+#endif // USE_THREADS
 
     return 0;
 }

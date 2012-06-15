@@ -63,6 +63,22 @@
 #define extFlashBulkErase() at25df_bulkErase()
 #define extFlashEraseSector(addr) at25df_eraseSector(addr)
 
+#elif EXT_FLASH_CHIP == FLASH_CHIP_SDCARD
+
+#include <sdcard/sdcard.h>
+
+#define EXT_FLASH_SECTOR_SIZE   SDCARD_SECTOR_SIZE
+#define EXT_FLASH_SECTOR_COUNT  SDCARD_SECTOR_COUNT
+#define EXT_FLASH_PAGE_SIZE     SDCARD_PAGE_SIZE
+
+#define extFlashInit() sdcardInit()
+#define extFlashSleep() sdcardSleep()
+#define extFlashWake() sdcardWake()
+#define extFlashRead(addr, buf, len) sdcardRead(addr, buf, len)
+#define extFlashWrite(addr, buf, len) sdcardWrite(addr, buf, len)
+#define extFlashBulkErase() sdcardBulkErase()
+#define extFlashEraseSector(addr) sdcardEraseSector(addr)
+
 #else
 #warning External flash chip not defined for this platform!
 #define extFlashInit()

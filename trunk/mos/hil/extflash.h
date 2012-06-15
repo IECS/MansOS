@@ -31,8 +31,9 @@
 //
 // List all supported external flash models here (before including extflash_hal.h)
 //
-#define FLASH_CHIP_M25P80 1
-#define FLASH_CHIP_AT25DF 2
+#define FLASH_CHIP_M25P80  1
+#define FLASH_CHIP_AT25DF  2
+#define FLASH_CHIP_SDCARD  3 // not really a flash chip, but...
 
 #include "extflash_hal.h"
 

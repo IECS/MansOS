@@ -112,13 +112,13 @@ static uint_t m25p80_mode;
     m25p80_mode = DEV_MODE_OFF;
 
 
-void m25p80_sleep()
+void m25p80_sleep(void)
 {
     M25P80_WAIT_WHILE_WIP();
     M25P80_DEEP_POWERDOWN();
 }
 
-void m25p80_wake()
+void m25p80_wake(void)
 {
     if (m25p80_mode == DEV_MODE_OFF) {
         M25P80_INSTR(RES);
@@ -126,7 +126,7 @@ void m25p80_wake()
     }
 }
 
-void m25p80_init() {
+void m25p80_init(void) {
     spiBusInit(M25P80_SPI_ID, SPI_MODE_MASTER);
 
     pinAsOutput(M25P80_HOLD_PORT, M25P80_HOLD_PIN);
@@ -153,7 +153,7 @@ static void m25p80_pageProgram(uint32_t addr, const uint8_t *buffer,
     M25P80_SPI_DISABLE();
 }
 
-void m25p80_bulkErase()
+void m25p80_bulkErase(void)
 {
     M25P80_WAIT_WHILE_WIP();
     M25P80_WRITE_ENABLE();

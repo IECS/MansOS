@@ -108,10 +108,6 @@ endif # ifeq($(USE_THREADS),y)
 
 PSOURCES-$(USE_NET) += $(MOS)/lib/buffer.c
 PSOURCES-$(USE_HD4478_LCD) += $(MOS)/chips/hd4478/hd4478.c
-PSOURCES-$(USE_SD_CARD) += $(MOS)/fs/sdcard/halayer.c
-PSOURCES-$(USE_SD_CARD) += $(MOS)/fs/sdcard/mmc.c
-PSOURCES-$(USE_SD_CARD) += $(MOS)/fs/sdcard/sdcard_hal.c
-PSOURCES-$(USE_SD_CARD) += $(MOS)/fs/sdcard/fatlib.c
 
 PSOURCES-$(USE_REPROGRAMMING) += $(MOS)/kernel/boot.c
 PSOURCES-$(USE_REPROGRAMMING) += $(MOS)/kernel/reprogramming.c

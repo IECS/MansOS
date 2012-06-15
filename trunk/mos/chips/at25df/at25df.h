@@ -35,18 +35,18 @@
 #define AT25DF_SECTOR_COUNT   512
 
 // initialize pin directions and SPI in general. Enter low power mode afterwards
-void at25df_init();
+void at25df_init(void);
 // Enter low power mode (wait for last instruction to complete)
-void at25df_sleep();
+void at25df_sleep(void);
 // Exit low power mode
-void at25df_wake();
+void at25df_wake(void);
 // Read a block of data from addr
 void at25df_read(uint32_t addr, void* buffer, uint16_t len);
 // Write len bytes (len <= 256) to flash at addr
 // Block can split over multiple sectors/pages
 void at25df_write(uint32_t addr, const void *buf, uint16_t len);
 // Erase the entire flash
-void at25df_bulkErase();
+void at25df_bulkErase(void);
 // Erase on sector, containing address addr. Addr is not the number of sector,
 // rather an address (any) inside the sector
 void at25df_eraseSector(uint32_t addr);
