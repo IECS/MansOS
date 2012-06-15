@@ -1,43 +1,47 @@
-##############################
-# constants & variables      #
-##############################
+#-*-Makefile-*- vim:syntax=make
+#
+# Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#  * Redistributions of source code must retain the above copyright notice,
+#    this list of  conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# --------------------------------------------------------------------
+#	Makefile for the sample application
+#
+#  The developer must define at least SOURCES and APPMOD in this file
+#
+#  In addition, PROJDIR and MOSROOT must be defined, before including 
+#  the main Makefile at ${MOSROOT}/mos/make/Makefile
+# --------------------------------------------------------------------
 
-TARGET = sdtest
+# Sources are all project source files, excluding MansOS files
+SOURCES = main.c sdcard_hal.c mmc.c
 
-MOTELIST = motelist
-BSL = ../../../mos/make/scripts/bsl.py
-BSLPORT ?= "$(shell $(MOTELIST) -c | xargs echo | cut -f2 -d, )"
+# Module is the name of the main module buit by this makefile
+APPMOD = Test
 
-##############################
-# platform specific stuff    #
-##############################
+# --------------------------------------------------------------------
+# Set the key variables
+PROJDIR = $(CURDIR)
+ifndef MOSROOT
+  MOSROOT = $(PROJDIR)/../../..
+endif
 
-CC = msp430-gcc
-MODEL = msp430x1611
-CFLAGS += -mmcu=$(MODEL) -g -Wall -W -DPLATFORM_TELOSB=1
-LDFLAGS += 
-
-##############################
-# targets                    #
-##############################
-
-# the default target
-DEMO=sdtest
-
-.PHONY: all sdtest upload clean
-
-all: upload
-
-sdtest: OBJECTS := main.c sdcard_hal.c mmc.c
-sdtest: DEMO := sdtest
-sdtest: ihex
-
-ihex: $(OBJECTS)
-	$(CC) $(OBJECTS) $(CFLAGS) $(LDFLAGS) -o $(TARGET).elf
-	msp430-objcopy -O ihex $(TARGET).elf $(TARGET).ihex
-
-upload: $(DEMO)
-	$(BSL) --invert-reset --invert-test -c $(BSLPORT) -r -e -I -p  $(TARGET).ihex
-
-clean:
-	rm -f $(TARGET).ihex $(TARGET).elf *.o
+# Include the main makefile
+include ${MOSROOT}/mos/make/Makefile
