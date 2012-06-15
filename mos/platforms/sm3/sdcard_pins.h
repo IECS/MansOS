@@ -21,32 +21,33 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PLATFORM_SADMOTE3_H_
-#define _PLATFORM_SADMOTE3_H_
+#ifndef SDCARD_PINS_H
+#define SDCARD_PINS_H
 
-#include <msp430/msp430_clock.h>
-#include <msp430/msp430_timers.h>
-#include <msp430/msp430_int.h>
-#include <msp430/msp430_adc.h>
-#include <msp430/msp430_usart.h>
+#include <hil/spi.h>
 
-#include "amb8420_pins.h"
-#include "sht_pins.h"
+/*
+ * SdCard SPI bus configuration for SADmote v03
+ */
 
-//===========================================================
-// Functions
-//===========================================================
+// SDcard attached to USART0 SPI BUS
+#define SDCARD_SPI_ID   0
 
-void initPlatform(void);
+// To use soft-SPI, uncomment the line below and define
+// MISO, MOSI and SCLK pins (see hil/spi_soft.h) in your config file!
+//#define SDCARD_SPI_ID   SPI_BUS_SW
 
-//===========================================================
-// Data types and constants
-//===========================================================
+// Flash pins
+#define SDCARD_CS_PORT    4   /* P4.1 Output */
+#define SDCARD_CS_PIN     1
 
-#define EXT_FLASH_CHIP FLASH_CHIP_SDCARD
+/* Enable/disable flash access to the SPI bus (active low). */
+#define SDCARD_SPI_ENABLE()    \
+    pinClear(SDCARD_CS_PORT, SDCARD_CS_PIN)
 
-#define RADIO_CHIP RADIO_CHIP_AMB8420
-
-#define SNUM_CHIP SNUM_DS2401
+#define SDCARD_SPI_DISABLE()   \
+    pinSet(SDCARD_CS_PORT, SDCARD_CS_PIN); \
+    /* ensure MISO goes high impedance */  \
+    spiWriteByte(SDCARD_SPI_ID, 0xff);
 
 #endif

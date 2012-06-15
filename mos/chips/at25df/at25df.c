@@ -106,21 +106,21 @@ static inline uint8_t readStatusRegister()
     return statusReg;
 }
 
-void at25df_sleep()
+void at25df_sleep(void)
 {
     // enter deep sleep mode
     command(AT25DF_DEEP_POWER_DOWN_COMMAND);
     udelay(TIME_EDPD);
 }
 
-void at25df_wake()
+void at25df_wake(void)
 {
     // exit deep sleep mode
     command(AT25DF_RESUME_COMMAND);
     udelay(TIME_RDPD);
 }
 
-void at25df_init() {
+void at25df_init(void) {
     spiBusInit(AT25DF_SPI_ID, SPI_MODE_MASTER);
 
     pinAsOutput(AT25DF_HOLD_PORT, AT25DF_HOLD_PIN);
@@ -158,7 +158,7 @@ static void at25df_pageProgram(uint32_t addr, const uint8_t *buffer, uint16_t le
 //    ATOMIC_END(h);
 }
 
-void at25df_bulkErase()
+void at25df_bulkErase(void)
 {
     // Handle_t h;
     // ATOMIC_START(h);

@@ -21,32 +21,40 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PLATFORM_SADMOTE3_H_
-#define _PLATFORM_SADMOTE3_H_
+#ifndef MANSOS_SDCARD_H
+#define MANSOS_SDCARD_H
 
-#include <msp430/msp430_clock.h>
-#include <msp430/msp430_timers.h>
-#include <msp430/msp430_int.h>
-#include <msp430/msp430_adc.h>
-#include <msp430/msp430_usart.h>
+#include <kernel/stdtypes.h>
 
-#include "amb8420_pins.h"
-#include "sht_pins.h"
+// minimal unit that can be erased
+#define SDCARD_SECTOR_SIZE    512
 
-//===========================================================
-// Functions
-//===========================================================
+// maximal unit that can be written
+#define SDCARD_PAGE_SIZE      512
 
-void initPlatform(void);
+// 1 GB total (the minimal size - use this only for compatibility with flash drivers)
+// The maximal size is 4GB due to addressing constraints (32 bit)
+#define SDCARD_SECTOR_COUNT   (2 * 1024 * 1024ul)
 
-//===========================================================
-// Data types and constants
-//===========================================================
+// initialize pin directions and SPI in general. Enter low power mode afterwards
+bool sdcardInit(void);
+// Enter low power mode (wait for last instruction to complete)
+void sdcardSleep(void);
+// Exit low power mode
+void sdcardWake(void);
+// Read a block of data from addr
+void sdcardRead(uint32_t addr, void* buffer, uint16_t len);
+// Write len bytes (len <= 256) to flash at addr
+// Block can split over multiple sectors/pages
+void sdcardWrite(uint32_t addr, const void *buf, uint16_t len);
+// Erase the entire flash
+void sdcardBulkErase(void);
+// Erase on sector, containing address addr. Addr is not the number of sector,
+// rather an address (any) inside the sector
+void sdcardEraseSector(uint32_t addr);
 
-#define EXT_FLASH_CHIP FLASH_CHIP_SDCARD
-
-#define RADIO_CHIP RADIO_CHIP_AMB8420
-
-#define SNUM_CHIP SNUM_DS2401
+// internal
+bool sdcardReadBlock(uint32_t addr, void* buffer);
+bool sdcardWriteBlock(uint32_t addr, const void *buf);
 
 #endif

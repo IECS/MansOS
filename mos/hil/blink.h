@@ -21,32 +21,16 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PLATFORM_SADMOTE3_H_
-#define _PLATFORM_SADMOTE3_H_
+#include <hil/udelay.h>
+#include <hil/leds.h>
 
-#include <msp430/msp430_clock.h>
-#include <msp430/msp430_timers.h>
-#include <msp430/msp430_int.h>
-#include <msp430/msp430_adc.h>
-#include <msp430/msp430_usart.h>
-
-#include "amb8420_pins.h"
-#include "sht_pins.h"
-
-//===========================================================
-// Functions
-//===========================================================
-
-void initPlatform(void);
-
-//===========================================================
-// Data types and constants
-//===========================================================
-
-#define EXT_FLASH_CHIP FLASH_CHIP_SDCARD
-
-#define RADIO_CHIP RADIO_CHIP_AMB8420
-
-#define SNUM_CHIP SNUM_DS2401
-
-#endif
+static inline void blink(uint16_t count, uint16_t interval)
+{
+    uint16_t i;
+    for (i = 0; i < count; i++) {
+        ledOn();
+        mdelay(interval);
+        ledOff();
+        mdelay(interval);
+    }
+}
