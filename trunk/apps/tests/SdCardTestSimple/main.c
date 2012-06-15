@@ -92,156 +92,9 @@
 #include <msp430x16x.h>
 #include "mmc.h"
 #include <stdio.h>
-#include "mansos.h"
-#include "udelay.h"
-#include "sleep.h"
-
-#define CPU_FREQUENCY 4096
-#define CPU_MULTIPLIER 4
-
-// DCO calibration approach is borrowed from TOS1.x
-enum {
-    ACLK_CALIB_PERIOD = 8,
-    ACLK_KHZ = 32,
-    TARGET_DCO_KHZ = CPU_FREQUENCY, // prescribe the cpu clock rate in kHz
-    TARGET_DCO_DELTA = (TARGET_DCO_KHZ / ACLK_KHZ) * ACLK_CALIB_PERIOD,
-};
-
-static uint16_t testCalibBusywaitDelta(uint16_t calib)
-{
-    int8_t aclk_count = 2;
-    uint16_t dco_prev = 0;
-    uint16_t dco_curr = 0;
-
-    // Set DCO calibration
-    BCSCTL1 = (BCSCTL1 & ~0x07) | ((calib >> 8) & 0x07);
-    DCOCTL = calib & 0xff;
-
-    while (aclk_count--) {
-        TBCCR0 = TBR + ACLK_CALIB_PERIOD; // set next interrupt
-        TBCCTL0 &= ~CCIFG; // clear pending interrupt
-        while ((TBCCTL0 & CCIFG) == 0); // busy wait
-        dco_prev = dco_curr;
-        dco_curr = TAR;
-    }
-
-    return dco_curr - dco_prev;
-}
-
-void msp430CalibrateDCO(void)
-{
-    uint16_t calib;
-    uint16_t step;
-
-    // Timer source is SMCLK, continuous mode
-    TACTL = TASSEL1 | MC1;
-    TBCTL = TBSSEL0 | MC1;
-    BCSCTL1 = XT2OFF | RSEL2;
-    BCSCTL2 = 0;
-    TBCCTL0 = CM0;
-
-    // Binary search for RSEL, DCO, DCOMOD.
-    // It's okay that RSEL isn't monotonic.
-    for (calib = 0, step = 0x800; step != 0; step >>= 1) {
-        // if the step is not past the target, commit it
-        if (testCalibBusywaitDelta(calib | step) <= TARGET_DCO_DELTA) {
-            calib |= step;
-        }
-    }
-
-    // if DCOx is 7 (0xe0 in calib),
-    // then the 5-bit MODx is not useable, set it to 0
-    if ((calib & 0xe0) == 0xe0) {
-        calib &= ~0x1f;
-    }
-
-    // Set DCO calibration
-    BCSCTL1 = (BCSCTL1 & ~0x07) | ((calib >> 8) & 0x07);
-    DCOCTL = calib & 0xff;
-}
-
-void initClocks(void)
-{
-    // Reset timers and clear interrupt vectors
-    TACTL = TACLR;
-//    TAIV = 0;
-    TBCTL = TBCLR;
-//    TBIV = 0;
-
-    // IE1.OFIE = 0; no interrupt for oscillator fault
-    IE1 &= ~OFIE;
-
-    msp430CalibrateDCO();
-}
-
-// -- LEDs code
-
-#define LEDS_PORT 5
-
-#define LEDS_RED_PIN 4
-#define LEDS_GREEN_PIN 5
-#define LEDS_BLUE_PIN 6
-
-#define LEDS_ALL_PIN_MASK \
-    ((1 << LEDS_RED_PIN)                        \
-            | (1 << LEDS_GREEN_PIN)             \
-            | (1 << LEDS_BLUE_PIN))             \
-
-#define PIN_AS_OUTPUT(portnum, pinbit)          \
-    P##portnum##DIR |= pinbit
-#define PIN_SET(portnum, pinbit)                \
-    P##portnum##OUT |= pinbit      
-#define PIN_CLEAR(portnum, pinbit)              \
-    P##portnum##OUT &= ~(pinbit)
-#define PIN_TOGGLE(portnum, pinbit)             \
-    P##portnum##OUT ^= pinbit
-
-#define pinSet(po, pi) PIN_SET(po, 1 << pi)
-#define pinSetMask(po, pm) PIN_SET(po, pm)
-#define pinClear(po, pi) PIN_CLEAR(po, 1 << pi)
-#define pinClearMask(po, pm) PIN_CLEAR(po, pm)
-#define pinToggle(po, pi) PIN_TOGGLE(po, 1 << pi)
-#define pinToggleMask(po, pm) PIN_TOGGLE(po, pm)
-#define pinAsOutput(po, pi) PIN_AS_OUTPUT(po, 1 << pi)
-#define pinAsOutputMask(po, pm) PIN_AS_OUTPUT(po, pm)
-
-#define toggleRedLed()   pinToggle(LEDS_PORT, LEDS_RED_PIN)
-#define toggleGreenLed() pinToggle(LEDS_PORT, LEDS_GREEN_PIN)
-#define toggleBlueLed()  pinToggle(LEDS_PORT, LEDS_BLUE_PIN)
-#define toggleAllLeds()  pinToggleMask(LEDS_PORT, LEDS_ALL_PIN_MASK)
-
-#define redLedOn()       pinClear(LEDS_PORT, LEDS_RED_PIN)
-#define greenLedOn()     pinClear(LEDS_PORT, LEDS_GREEN_PIN)
-#define blueLedOn()      pinClear(LEDS_PORT, LEDS_BLUE_PIN)
-#define allLedsOn()      pinClearMask(LEDS_PORT, LEDS_ALL_PIN_MASK)
-
-#define redLedOff()      pinSet(LEDS_PORT, LEDS_RED_PIN)
-#define greenLedOff()    pinSet(LEDS_PORT, LEDS_GREEN_PIN)
-#define blueLedOff()     pinSet(LEDS_PORT, LEDS_BLUE_PIN)
-#define allLedsOff()     pinSetMask(LEDS_PORT, LEDS_ALL_PIN_MASK)
-
-void initLEDs()
-{
-    pinAsOutputMask(LEDS_PORT, LEDS_ALL_PIN_MASK);
-    allLedsOff();
-}
-
-void blink(uint16_t count)
-{
-    uint16_t i;
-    for (i = 0; i < count; i++) {
-        redLedOn();
-        mdelay(100);
-        redLedOff();
-        mdelay(100);
-    }
-}
-
-void panic()
-{
-    blink(100);
-}
-
+#include "kernel/stdmansos.h"
+#include "hil/udelay.h"
+#include "hil/blink.h"
 
 unsigned long cardSize = 0;
 unsigned char status = 1;
@@ -250,10 +103,9 @@ int i = 0;
 
 unsigned char buffer[512];
 
-int main(void)
+void appMain(void)
 {
-    WDTCTL = WDTPW + WDTHOLD;
-    initClocks();
+    blink(3, 100);
 
     //Initialisation of the MMC/SD-card
     while (status != 0) {                      // if return in not NULL an error did occur and the
@@ -266,11 +118,19 @@ int main(void)
         }
     }
 
+    if (status) {
+        blink(1000, 100);
+    }
+
     while ((mmcPing() != MMC_SUCCESS));      // Wait till card is inserted
 
-    initLEDs();
+//    blink(3, 100);
 
-    blink(3);
+    blink(1000, 1000);
+
+    // mdelay(2000);
+    // panic();
+    // return;
 
     // Read the Card Size from the CSD Register
     cardSize = mmcReadCardSize();
@@ -327,6 +187,6 @@ int main(void)
 
     for (;;) {
         mdelay(1000);
-        toggleRedLed();
+        ledToggle();
     }
 }

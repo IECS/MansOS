@@ -269,7 +269,7 @@
 
 
 // Function Prototypes
-void halSPISetup (void);
+void halSPISetup(void);
 unsigned char spiSendByte(const unsigned char data);
 void spiReadFrame(unsigned char* pBuffer, unsigned int size);
 void spiSendFrame(unsigned char* pBuffer, unsigned int size);
