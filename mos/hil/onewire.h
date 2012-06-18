@@ -40,15 +40,15 @@
  * internal or external.
  */
 #define OUTP_0() ( \
-    pinAsOutput(DS2411_PORT, DS2411_PIN), /* Enable master drive */     \
-    pinClear(DS2411_PORT, DS2411_PIN))    /* Output 0 */
+    pinAsOutput(ONEWIRE_PORT, ONEWIRE_PIN), /* Enable master drive */     \
+    pinClear(ONEWIRE_PORT, ONEWIRE_PIN))    /* Output 0 */
 #define OUTP_1() ( \
-    pinAsInput(DS2411_PORT, DS2411_PIN),  /* Disable master drive */    \
-    pinSet(DS2411_PORT, DS2411_PIN))      /* Turn on internal MSP430 */ \
-                                          /* pullup resistor, if any */
+    pinAsInput(ONEWIRE_PORT, ONEWIRE_PIN),  /* Disable master drive */    \
+    pinSet(ONEWIRE_PORT, ONEWIRE_PIN))      /* Turn on internal MSP430 */ \
+                                            /* pullup resistor, if any */
 
 /* Read one bit. */
-#define INP() pinRead(DS2411_PORT, DS2411_PIN)
+#define INP() pinRead(ONEWIRE_PORT, ONEWIRE_PIN)
 
 /*
  * Recommended delay times in us.
