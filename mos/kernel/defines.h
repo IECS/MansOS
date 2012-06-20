@@ -46,14 +46,6 @@
 #endif
 
 //
-// MansOS version
-//
-#define MAKE_VERSION(major, minor)  ((major << 8) + minor)
-
-#define MANSOS_VERSION  MAKE_VERSION(0, 0)
-
-
-//
 // Compile time assert (use for type size checing and similar)
 //
 #define COMPILE_TIME_ASSERT(e, name)                 \
