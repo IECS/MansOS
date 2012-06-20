@@ -108,7 +108,7 @@ class UseCase(object):
             else:
                 self.__setattr__(x, None)
 
-        if self.period and self.pattern or self.period and self.once or self.pattern and self.once:
+        if (self.period and self.pattern) or (self.period and self.once) or (self.pattern and self.once):
             if self.period and self.pattern:
                 userError("Both 'period' and 'pattern' specified for component '{0}' use case\n".format(component.name))
             else:
