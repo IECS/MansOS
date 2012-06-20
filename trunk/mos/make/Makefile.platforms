@@ -74,13 +74,3 @@ endif
 # setup PLATFORM variable
 PLATFORM ?= $(TARGET)
 PLATFORM_TARGET := $(PLATFORM)
-
-ifeq ($(PLATFORM),tmote)
-# use "tmote" as synonym for telosb
-PLATFORM=telosb
-endif
-
-ifeq ($(PLATFORM),arduino)
-# use "arduino" as synonym for atmega
-PLATFORM=atmega
-endif

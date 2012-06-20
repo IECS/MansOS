@@ -5,7 +5,7 @@
 #   (telosb must have all targets, otherwise they will not be cleared)
 #
 
-PLATFORMS = pc telosb sadmote farmmote arduino z1
+PLATFORMS = pc telosb sadmote farmmote atmega z1
 # launchpad
 
 DEMO_TARGETS = \
