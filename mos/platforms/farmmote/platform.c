@@ -29,6 +29,8 @@
 #include <hil/gpio.h>
 #include <hil/snum.h>
 
+#include <chips/ds18b20/ds18b20.h>
+
 #define XREN(port) P##port##REN
 #define REN(port)  XREN(port)
 
@@ -54,5 +56,10 @@ void initPlatform(void)
     // Disable Vcc
     pinClear(DS2411_VCC_PORT, DS2411_VCC_PIN);
 #endif
-}
 
+    // This is needed by DS18B20
+    pinAsOutput(VDD_SWITCH_PORT, VDD_SWITCH_PIN);
+    pinSet(VDD_SWITCH_PORT, VDD_SWITCH_PIN);
+
+    ds18b20Init(); // Return value ignored
+}

@@ -1,6 +1,5 @@
 /**
- * Copyright (c) 2011, Institute of Electronics and Computer Science
- * All rights reserved.
+ * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -22,41 +21,30 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PLATFORM_FARMMOTE_H_
-#define _PLATFORM_FARMMOTE_H_
+//
+// Maxim DS18B20 1-Wire Digital Thermometer
+//
 
-#include <msp430/msp430_clock.h>
-#include <msp430/msp430_timers.h>
-#include <msp430/msp430_int.h>
-#include <msp430/msp430_adc10.h>
-#include <msp430/msp430_usci.h>
+#ifndef DS18B20_H
+#define DS18B20_H
 
-#include "flash.h"
+#include <kernel/stdtypes.h>
 
-#define RADIO_CHIP RADIO_CHIP_CC1101
-#define SNUM_CHIP  SNUM_DS2411
+//
+// Available conversion resolutions
+//
+enum {
+    BS18B20_9BIT  = 0,
+    BS18B20_10BIT = 1,
+    BS18B20_11BIT = 2,
+    BS18B20_12BIT = 3
+};
 
-//===========================================================
-// Functions
-//===========================================================
+// Selected conversion resolution
+#define DS18B20_RESOLUTION BS18B20_9BIT
 
-void initPlatform(void);
+bool ds18b20Init(void);
 
-//===========================================================
-// Data types and constants
-//===========================================================
+int16_t ds18b20Measure(void);
 
-#define DS2411_PORT 4
-#define DS2411_PIN  5
-
-#define DS2411_VCC_PORT 4
-#define DS2411_VCC_PIN  6
-
-// What is this?
-#define VDD_SWITCH_PORT 2
-#define VDD_SWITCH_PIN  3
-
-#define DS18B20_PORT 2
-#define DS18B20_PIN  4
-
-#endif
+#endif // DS18B20_H
