@@ -42,6 +42,7 @@ CFLAGS += -DPLATFORM_FARMMOTE=1 -DACLK_SPEED=32768
 # (excluding architecture-specific sources)
 
 PSOURCES += $(MOS)/platforms/farmmote/platform.c
+PSOURCES += $(MOS)/chips/ds18b20/ds18b20.c
 
 # this works?
 PSOURCES += $(MOS)/chips/msp430/msp430x1xx_clock.c

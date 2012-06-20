@@ -31,6 +31,12 @@
 #include <hil/gpio.h>
 #include <lib/codec/crc.h>
 
+/* Common 1-Wire commands */
+enum {
+    ONEWIRE_SEARCH_ROM = 0xF0,
+    ONEWIRE_READ_ROM   = 0x33
+};
+
 #define ONEWIRE_ROM_SIZE 8
 
 /*
@@ -130,7 +136,7 @@ static bool owReadROM(uint8_t buf[ONEWIRE_ROM_SIZE])
 
     Handle_t h;
     ATOMIC_START(h);
-    owwriteb(0x33);     /* Read ROM command. */
+    owwriteb(ONEWIRE_READ_ROM);
     /* We receive 8 bytes in the reverse order, LSbyte first. */
     for (i = 7; i >= 0; i--) {
         buf[i] = owreadb();
