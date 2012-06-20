@@ -38,6 +38,6 @@ ALLOPTIONS = $(OPT_VERBOSE) $(OPT_QUIET) $(OPT_OPTIMIZE)
 
 #--- Supported platforms
 
-PLATFORMS ?= pc pcapp telosb tmote sadmote sm3 z1 atmega arduino nrf launchpad farmmote em testbed
+PLATFORMS ?= pc pcapp telosb sadmote sm3 z1 atmega nrf launchpad farmmote em testbed
 
 ALLTARGETS = build clean upload run testbed memdump mspsim $(PLATFORMS:%=clean%) $(PLATFORMS) $(ALLOPTIONS)
