@@ -9,7 +9,6 @@ USART0:
 
 USART1:
 * USB virtual serial port on telosb
-* debug output: USART1
-  (dprint.h file in sources)
+* debug output
+  (PRINTF_USART_ID in sources)
 * SD card on lynxmote: USART1
-
