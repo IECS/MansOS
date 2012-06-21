@@ -12,3 +12,8 @@ printing = PrintAct()
 
 constant = ConstantSensor()
 random = RandomSensor()
+
+squarewave = SquareWaveSensor()
+trianglewave = TriangleWaveSensor()
+sawwave = SawtoothWaveSensor()
+sinewave = SineWaveSensor()

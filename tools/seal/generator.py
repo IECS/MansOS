@@ -1,6 +1,4 @@
 from seal_parser import *
-from structures import processStructInits
-#import components
 import os
 
 SEPARATOR = "// -----------------------------\n"
@@ -92,12 +90,10 @@ class Generator(object):
     def generateAppMain(self):
         self.outputFile.write("void appMain(void)\n")
         self.outputFile.write("{\n")
-        for c in self.actuators:
-            c.generateAppMainCode(self.outputFile)
-        for c in self.sensors:
+        for c in self.components:
             c.generateAppMainCode(self.outputFile)
         # Init Process variables
-        for p in processStructInits:
+        for p in components.processStructInits:
             self.outputFile.write(p)
 
         self.outputFile.write("\n\n")
