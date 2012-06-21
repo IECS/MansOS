@@ -1,15 +1,21 @@
+// read Constant;             // default constant value 0
+// read Constant, value 123;  // specific constant value 123
 
-//read Light, period 2s;
+// read Random;
+// read Random, min 10, max 100;
 
-read SlowRead1, period 2s;
-read SlowRead2, period 2s;
-read SlowRead3, period 3s;
-// read FastRead1, period 10ms;
+// // "wavePeriod", because "period" is already used for sampling period
+// read SquareWave, low 10, high 100, wavePeriod 1600;
 
-// when SlowRead1.value > 100:
-//      use Print, once, format "slow > 100, value=%d\n", arg1 SlowRead1.value;
-// end
-// when FastRead.value > 100:
-//      use Print, once, format "fast > 100, value=%d\n", arg1 FastRead.value;
-// end
+// read TriangleWave, low 10, high 100, wavePeriod 1600;
 
+// read SawtoothWave, low 10, high 100, wavePeriod 1600;
+
+// read SineWave, low 10, high 100, wavePeriod 1500;
+
+// output serial;
+
+
+when true:
+        use RedLed;
+end;

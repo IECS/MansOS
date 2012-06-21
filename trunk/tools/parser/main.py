@@ -114,6 +114,8 @@ def main():
     sys.path.append(dirname + '/..')
     sys.path.append(dirname + '/../seal/components')
     from seal import generator
+    # in case tis is used multiple times
+    generator.components.clearGlobals()
 
     parseCommandLine(sys.argv)
 

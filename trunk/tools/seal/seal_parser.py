@@ -326,7 +326,7 @@ class SealParser():
     def p_boolean_literal(self, p):
         '''boolean_literal : TRUE_TOKEN
                            | FALSE_TOKEN'''
-        p[0] = Value(string.lower(p[1]) == 't')
+        p[0] = Value(string.lower(p[1][0]) == 't')
 
     def p_integer_literal(self, p):
         '''integer_literal : DECIMAL_INTEGER_LITERAL

@@ -16,6 +16,7 @@ class SealComponent(object):
         self.typeCode = typeCode
         self.name = name
         # parameters
+        self.id = SealParameter(0, ["0", "1"])
         self.extraConfig = SealParameter(None)  # config file line(s)
         self.extraIncludes = SealParameter(None) # #include<> line(s)
         self.period = SealParameter(1000, ['100', '200', '500', '1000', '2000'])
@@ -24,8 +25,17 @@ class SealComponent(object):
         self.useFunction = SealParameter(None)  # each usable component must define this
         self.readFunction = SealParameter(None)  # each readable component must define this
         components.append(self)
+         
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        # default implementation
+        return self.__getattribute__(parameter).value
 
-#######################################################
+    def getParameterValue(self, parameter, useCaseParameters):
+        if parameter in useCaseParameters:
+            return useCaseParameters[parameter].value
+        return self.__getattribute__(parameter).value
+
+######################################################
 class SealSensor(SealComponent):
     def __init__(self, name):
         super(SealSensor, self).__init__(TYPE_SENSOR, name)
@@ -39,8 +49,13 @@ class SealSensor(SealComponent):
 class ConstantSensor(SealSensor):
     def __init__(self):
         super(ConstantSensor, self).__init__("Constant")
-        self.useFunction.value = "5"
-        self.readFunction.value = "5"
+        self.useFunction.value = "0"
+        self.readFunction = self.useFunction.value
+        # the value used in read function
+        self.value = SealParameter(5, ["0", "1", "2", "5", "10", "100", "1000"])
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        return self.getParameterValue("value", useCaseParameters)
 
 class RandomSensor(SealSensor):
     def __init__(self):
@@ -49,6 +64,81 @@ class RandomSensor(SealSensor):
         self.readFunction.value = "randomRand()"
         self.extraConfig = SealParameter("USE_RANDOM=y")
         self.extraIncludes = SealParameter("#include <random.h>")
+        # parameters
+        self.min = SealParameter(0, ["0", "1", "2", "5", "10", "100", "1000"])
+        self.max = SealParameter(0xffff, ["1", "2", "5", "10", "100", "1000", "65535"])
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        #if parameter != "readFunction" and parameter != "useFunction":
+        #    return SealSensor.calculateParameterValue(parameter, useCaseParameters)
+        min = int(self.getParameterValue("min", useCaseParameters))
+        max = int(self.getParameterValue("max", useCaseParameters))
+        modulo = max - min + 1
+        if modulo == 0x10000:
+            return self.useFunction.value
+        else:
+            # TODO: cast the result to uint16_t, but only in case of signed int overflow
+            return "{} % {} + {}".format(self.useFunction.value, modulo, min)
+
+class WaveSensor(SealSensor):
+    def __init__(self, name):
+        super(WaveSensor, self).__init__(name)
+        self.useFunction.value = "0"
+        self.readFunction.value = "0"
+        # parameters (all names must be lowercase because of search algorithm limitations)
+        self.low = SealParameter(0, ["0", "1", "2", "5", "10", "100", "1000"])
+        self.high = SealParameter(100, ["0", "1", "2", "5", "10", "100", "1000"])
+        self.waveperiod = SealParameter(1000, ["100", "200", "500", "1000", "2000"])
+
+#    +----+    +----+    +----+
+#  --+    +----+    +----+    +--
+class SquareWaveSensor(WaveSensor):
+    def __init__(self):
+        super(SquareWaveSensor, self).__init__("SquareWave")
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
+        low = self.getParameterValue("low", useCaseParameters)
+        high = self.getParameterValue("high", useCaseParameters)
+        return "(getJiffies() % {0} < ({0} / 2)) ? {1} : {2}".format(wavePeriod, low, high)
+
+#   ^   ^   ^
+#  / \ / \ / \
+# /   v   v   v
+class TriangleWaveSensor(WaveSensor):
+    def __init__(self):
+        super(TriangleWaveSensor, self).__init__("TriangleWave")
+        self.extraIncludes = SealParameter("#include <lib/algo.h>")
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
+        low = self.getParameterValue("low", useCaseParameters)
+        high = self.getParameterValue("high", useCaseParameters)
+        return "triangleWaveValue({}, {}, {})".format(wavePeriod, low, high)
+
+#   /  /  /
+#  /| /| /|
+# / |/ |/ |
+class SawtoothWaveSensor(WaveSensor):
+    def __init__(self):
+        super(SawtoothWaveSensor, self).__init__("SawtoothWave")
+        self.extraIncludes = SealParameter("#include <lib/algo.h>")
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
+        low = self.getParameterValue("low", useCaseParameters)
+        high = self.getParameterValue("high", useCaseParameters)
+        return "sawtoothWaveValue({}, {}, {})".format(wavePeriod, low, high)
+
+class SineWaveSensor(WaveSensor):
+    def __init__(self):
+        super(SineWaveSensor, self).__init__("SineWave")
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
+        low = self.getParameterValue("low", useCaseParameters)
+        high = self.getParameterValue("high", useCaseParameters)
+        return "sineWaveValue({}, {}, {})".format(wavePeriod, low, high)
 
 class LightSensor(SealSensor):
     def __init__(self):

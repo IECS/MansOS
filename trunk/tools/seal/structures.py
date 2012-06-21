@@ -36,7 +36,6 @@ filterParam = {
                ">=": 4,
                ">": 5
                }
-processStructInits = list()
 
 ########################################################
 class ConditionCollection(object):
@@ -100,12 +99,13 @@ class Value(object):
         if type(self.value) is str:
             return '"' + self.value + '"'
         # integer or boolean
-        s = "{0}".format(self.value)
+        s = string.lower("{0}".format(self.value))
         if not (self.suffix is None):
             s += self.suffix
         return s
 
     def getCodeForGenerator(self, componentRegister):
+        # print "getCodeForGenerator for ", self.value
         if type(self.value) is SealValue:
             return self.value.getCodeForGenerator(componentRegister)
         return self.getCode()
@@ -116,6 +116,7 @@ class Value(object):
         if type(self.value) is bool:
             return "bool"
         return "int_t"
+
     def asString(self):
         return self.getCode()
 #        if type(self.value) is bool:
@@ -275,9 +276,9 @@ class ProcessStatement(object):
         if self.parameters != []:
             result = result[:-1] # remove last comma
         result += ';'
-        return result
+        return reslt
 
-    def generateVariables(self, outputFile = None):
+    def generateVariables(self, processStructInits, outputFile):
         outputFile.write ("uint16_t {} = 0;\n".format(self.name));
         for x in self.parameters:
             if x[0] in ['average', 'filter', 'stdev']:

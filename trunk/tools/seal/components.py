@@ -14,6 +14,7 @@ def generateSerialFunctions(intSizes, outputFile):
         outputFile.write('    PRINTF("%s=%u\\n", name, value);' + "\n")
         outputFile.write("}\n")
 
+
 ######################################################
 class BranchCollection(object):
     def __init__(self):
@@ -55,6 +56,7 @@ class BranchCollection(object):
 
     def getNumBranches(self):
         return len(self.branches)
+
 
 ######################################################
 class UseCase(object):
@@ -137,6 +139,8 @@ class UseCase(object):
                     ucname, self.numInBranch, self.period))
 
     def generateVariables(self, outputFile):
+        global processStructInits
+
         if self.generateAlarm:
             outputFile.write(
                 "Alarm_t {0}{1}Alarm{2};\n".format(
@@ -172,8 +176,7 @@ class UseCase(object):
         ucname = self.component.getNameUC()
         ucname += self.branchName.upper()
 
-        useFunction = self.component.getParameterValue("useFunction", "{0}Use()").format(
-            self.component.getNameCC())
+        useFunction = self.component.getDependentParameterValue("useFunction", self.parameters)
 
         if self.generateAlarm:
             outputFile.write("void {0}{1}Callback(void *__unused)\n".format(ccname, self.numInBranch))
@@ -267,6 +270,7 @@ class UseCase(object):
             return self.parameters[parameter].getCodeForGenerator(componentRegister)
         return self.component.getParameterValue(parameter, defaultValue)
 
+
 ######################################################
 class Component(object):
     def __init__(self, specification):
@@ -278,6 +282,8 @@ class Component(object):
                 self.parameters[p] = specification.__getattribute__(p).value
         self.useCases = []
         self.markedAsUsed = False
+        # save specification (needed for dependent parameters)
+        self.specification = specification
 
     def markAsUsed(self):
         self.markedAsUsed = True
@@ -322,13 +328,16 @@ class Component(object):
                     finalParameters[p[0]] = p[1]
         self.useCases.append(UseCase(self, list(finalParameters.iteritems()), conditions, branchNumber, numInBranch))
 
+    # XXX: replacement for "getParamValue"
+    def getSpecialValue(self, parameter):
+        if parameter in self.parameters:
+            value = self.parameters[parameter]
+            if value is not None: return value
+        return None
+
     def generateIncludes(self, outputFile):
 #  TODO?  if self.isUsed():
-            # TODO WTF - not working?
-            # includes = self.getParameterValue("extraIncludes")
-            includes = None
-            if "extraIncludes" in self.parameters:
-                includes = self.parameters["extraIncludes"]
+            includes = self.getSpecialValue("extraIncludes")
             if includes is not None:
                 # print "includes=", includes
                 outputFile.write("{0}\n".format(includes))
@@ -352,7 +361,7 @@ class Component(object):
 
     def generateConfig(self, outputFile):
         if self.isUsed():
-            config = self.getParameterValue("extraConfig")
+            config = self.getSpecialValue("extraConfig")
             if config is not None:
                 outputFile.write("{0}\n".format(config))
 
@@ -361,6 +370,11 @@ class Component(object):
             value = self.parameters[parameter]
             if value is not None: return value
         return defaultValue
+
+    def getDependentParameterValue(self, parameter, useCaseParameters):
+        if parameter not in self.parameters:
+            return None
+        return self.specification.calculateParameterValue(parameter, useCaseParameters)
 
 class Actuator(Component):
     def __init__(self, specification):
@@ -506,9 +520,6 @@ class Output(Component):
                     self.getNameCC()))
 
         useFunction = self.getParameterValue("useFunction")
-#        if useFunction and useFunction.value:
-#            outputFile.write("    {0};\n".format(useFunction.asString()))
-#        if useFunction and useFunction.value:
         if useFunction and useFunction.value:
             outputFile.write("    {0};\n".format(useFunction.value))
         outputFile.write("    {0}PacketInit();\n".format(self.getNameCC()))
@@ -542,6 +553,10 @@ class Output(Component):
         outputFile.write("        {0}PacketSend();\n".format(self.getNameCC()))
         outputFile.write("    }\n\n")
 
+    def generateAppMainCode(self, outputFile):
+        if self.isUsed() and self.isAggregate():
+            outputFile.write("    {0}PacketInit();\n".format(self.getNameCC()))
+
 ######################################################
 class StateUseCase(object):
     def __init__(self, name, value, conditions, branchNumber):
@@ -561,6 +576,7 @@ class StateUseCase(object):
 
     def generateBranchExitCode(self, outputFile):
         pass
+
 
 ######################################################
 class ComponentRegister(object):
@@ -633,12 +649,14 @@ class ComponentRegister(object):
         self.systemStates[name].append(StateUseCase(name, value, conditions, branchNumber))
 
     def generateVariables(self, outputFile):
+        global processStructInits
+
         for s in self.systemStates.itervalues():
             s[0].generateVariables(outputFile)
         for p in self.patterns.itervalues():
             p.generateVariables(outputFile)
         for p in self.process.itervalues():
-            p.generateVariables(outputFile)
+            p.generateVariables(processStructInits, outputFile)
 
     def getAllComponents(self):
         return set(self.actuators.values()).union(set(self.sensors.values())).union(set(self.outputs.values()))
@@ -696,9 +714,24 @@ class ComponentRegister(object):
         userError("Unknown parameter '{0}' for component '{1}'\n".format(parameterName, componentName))
         return "false"
 
+
 ######################################################
 # global variables
 componentRegister = ComponentRegister()
 branchCollection = BranchCollection()
 conditionCollection = ConditionCollection()
 processFunctionsUsed = dict()
+processStructInits = list()
+
+def clearGlobals():
+    global componentRegister
+    global branchCollection
+    global conditionCollection
+    global processFunctionsUsed
+    global processStructInits
+    componentRegister = ComponentRegister()
+    branchCollection = BranchCollection()
+    conditionCollection = ConditionCollection()
+    processFunctionsUsed = dict()
+    processStructInits = list()
+
