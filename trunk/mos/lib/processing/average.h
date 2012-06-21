@@ -21,10 +21,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_AVERAGE_H_
-#define MANSOS_AVERAGE_H_
+#ifndef MANSOS_AVERAGE_H
+#define MANSOS_AVERAGE_H
 
-#include "stdmansos.h"
+#include <kernel/defines.h>
 
 // For 2^32
 #define BUFFERING_START_TRESHOLD 2147483648U // 2^31
@@ -53,4 +53,4 @@ void addAverage(Average_t*, uint16_t*);
 
 uint16_t getAverageValue(Average_t *avg);
 
-#endif /* MANSOS_AVERAGE_H_ */
+#endif
