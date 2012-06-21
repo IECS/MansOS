@@ -21,10 +21,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_FILTER_H_
-#define MANSOS_FILTER_H_
+#ifndef MANSOS_FILTER_H
+#define MANSOS_FILTER_H
 
-#include "stdmansos.h"
+#include <kernel/defines.h>
 
 enum Comparators {
     NOT_EQUAL,
@@ -49,4 +49,4 @@ bool addFilter(Filter_t*, uint16_t*);
 
 uint16_t getFilterValue(Filter_t*);
 
-#endif /* MANSOS_FILTER_H_ */
+#endif

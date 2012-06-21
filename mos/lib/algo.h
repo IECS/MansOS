@@ -28,7 +28,7 @@
 #ifndef MANSOS_ALGO_H
 #define MANSOS_ALGO_H
 
-#include "stdmansos.h"
+#include "stdmansos.h" // TODO
 
 #define swap(p1, p2) \
     do {                                         \
@@ -43,5 +43,43 @@
 
 // Calculate square root, rounded down.
 uint16_t intSqrt(uint32_t);
+
+//
+// Calculate approximate triangle wave value at given point of time
+//
+static inline uint16_t triangleWaveValue(uint16_t period, uint16_t low, uint16_t high)
+{
+    const uint16_t amplitude = high - low;
+    const uint16_t halfPeriod = period / 2;
+    uint16_t positionX = getJiffies() % (halfPeriod + 1);
+    const bool invert = (getJiffies() % period) > halfPeriod;
+    if (invert) {
+        positionX = halfPeriod - positionX;
+    }
+    const uint16_t positionY = (positionX * amplitude) / halfPeriod + low;
+    return positionY;
+}
+
+//
+// Calculate approximate sawtooth wave value at given point of time
+//
+static inline uint16_t sawtoothWaveValue(uint16_t period, uint16_t low, uint16_t high)
+{
+    const uint16_t amplitude = high - low;
+    uint16_t positionX = getJiffies() % period;
+    const uint16_t positionY = (positionX * amplitude) / period + low;
+    return positionY;
+}
+
+//
+// Calculate approximate sine wave value at given point of time
+// (TODO XXX: too complicated?)
+//
+static inline uint16_t sineWaveValue(uint16_t period, uint16_t low, uint16_t high)
+{
+    const uint16_t amplitude = high - low;
+    return low + (amplitude / 2);
+}
+
 
 #endif
