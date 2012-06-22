@@ -178,7 +178,7 @@ void smpProxySendSmp(uint8_t *data, uint16_t length) {
         // add a random delay here to minimize collision probability
         // XXX: this could be improved a lot.
         radioOff();
-        mdelay(randomRand() % 600);
+        mdelay(randomNumberBounded(600));
         radioOn();
 
         uint8_t header[2];

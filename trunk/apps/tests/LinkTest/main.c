@@ -157,7 +157,7 @@ static void sendTestRequest(Socket_t *socket, MosShortAddr addr)
                 o = MAX_WAIT_FOR_REPLY_COUNT;
             } else{
                 //PRINTF("Sleeping, local:%d, sent:%d\n",localSeqnum(addr), i + 1);
-                mdelay(SLEEP_BETWEEN_SEND + (randomRand() % 4));
+                mdelay(SLEEP_BETWEEN_SEND + randomNumberBounded(4));
             }
         }
     }
@@ -174,7 +174,7 @@ static void sendAddrRequest(Socket_t *socket)
         } else{
             // PRINT("Addr request sent\n");
         }
-        mdelay(SLEEP_BETWEEN_SEND + (randomRand() % 128));
+        mdelay(SLEEP_BETWEEN_SEND + randomNumberBounded(128));
     }
 }
 
@@ -231,7 +231,7 @@ void appMain(void)
     // Wait for everyone else who might wanna test
     while(true) {
         // Wait random time
-        msleep(1000 + (randomRand() % 1024));
+        msleep(randomInRange(1000, 2024));
     
         // Try to be first
         while (!blocker){

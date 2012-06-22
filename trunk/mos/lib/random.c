@@ -52,7 +52,7 @@ void randomSeed(uint16_t seed) {
     randomKey = seed;
 }
 
-uint16_t randomRand(void) {
+uint16_t randomNumber(void) {
     //
     // The numbers are from "Numerical Recipes"
     //

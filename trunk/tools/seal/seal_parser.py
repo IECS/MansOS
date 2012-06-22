@@ -174,11 +174,14 @@ class SealParser():
                               | READ_TOKEN IDENTIFIER_TOKEN parameter_list ';'
                               | OUTPUT_TOKEN IDENTIFIER_TOKEN parameter_list ';'
         '''
-        if components.componentRegister.hasComponent(p[1], p[2]) or self.debugMode:
+        if components.componentRegister.hasComponent(p[1], p[2]):
             p[0] = ComponentUseCase(p[1], p[2], p[3])
         else:
-            self.errorMsg(p, "Component '{0}' not known or not supported for this architecture ({1})".format(
-                    p[2], components.componentRegister.architecture))
+            # print error message, but do not set 'self.isError'
+            self.errorMsg(p, "Component '{0}' not known or not supported for this architecture ('{1}')".format(
+                    p[2], components.componentRegister.architecture), False)
+            # hack by JJ: allow unknown components in debug mode
+            if self.debugMode: p[0] = ComponentUseCase(p[1], p[2], p[3])
 
         self.lineTracking["Statement"].append((p.lineno(1), p.lineno(4), p[0]))
 
@@ -358,8 +361,9 @@ class SealParser():
         else:
             self.printMsg("Syntax error at EOF\n")
 
-    def errorMsg(self, p, msg):
-        self.isError = True
+    def errorMsg(self, p, msg, doSetError = True):
+        if doSetError:
+            self.isError = True
         self.printMsg("Syntax error at line {0}: {1}\n".format(p.lineno(1), msg))
 
 ### PROCESS

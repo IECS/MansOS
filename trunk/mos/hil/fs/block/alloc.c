@@ -99,7 +99,7 @@ static inline blk_t makeBlock(segnum_t seg, blk_t off)
 static blk_t findFreeBlock(segnum_t seg)
 {
     /* Computing the remainder isn't the best option, but should suffice */
-    blk_t     start = randomRand() % BLOCKS_PER_SEGMENT,
+    blk_t     start = randomNumber() % BLOCKS_PER_SEGMENT,
               i = start;
     segment_t s = readSeg(seg);
 
@@ -146,7 +146,7 @@ blk_t fsBlockAllocate(blk_t old)
          * ones of the latter kinds, if any.
          */
 
-        segnum_t start = randomRand() % EXT_FLASH_SECTOR_COUNT,
+        segnum_t start = randomNumber() % EXT_FLASH_SECTOR_COUNT,
                  i = start,
                  avail = SEGNUM_INVAL, partial = SEGNUM_INVAL;
         do
@@ -154,7 +154,7 @@ blk_t fsBlockAllocate(blk_t old)
             segment_t s = readSeg(i);
             if (s == BLOCK_ALL_FREE)
             {
-                res = makeBlock(i, randomRand() % BLOCKS_PER_SEGMENT);
+                res = makeBlock(i, randomNumber() % BLOCKS_PER_SEGMENT);
                 break;
             }
             else if (!(s & BLOCK_ALL_USED))
@@ -180,7 +180,7 @@ blk_t fsBlockAllocate(blk_t old)
                 /* If there's an available segment, erase it */
                 writeSeg(avail, BLOCK_ALL_FREE);
                 blkExtFlashEraseSector(flashAddr(makeBlock(avail, 0), 0));
-                res = makeBlock(avail, randomRand() % BLOCKS_PER_SEGMENT);
+                res = makeBlock(avail, randomNumber() % BLOCKS_PER_SEGMENT);
             }
             else if (partial != SEGNUM_INVAL)
             {

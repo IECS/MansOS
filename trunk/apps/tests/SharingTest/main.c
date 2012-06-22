@@ -152,7 +152,7 @@ void appMain(void)
 
         UNSELECT_FLASH;
 
-        msleep(400 + randomRand() % 600);
+        msleep(randomInRange(400, 1000));
 
         PRINTF("send smth to radio...\n");
         radioSend("hello world", sizeof("hello world"));

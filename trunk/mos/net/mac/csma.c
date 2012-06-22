@@ -79,7 +79,7 @@ static int8_t sendCsmaMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
         // add random backoff for forwarded packets
         ret = queueAddPacket(mi, data, length, true, NULL);
         if (ret) return ret;
-        alarmSchedule(&sendTimer, randomRand() % MAC_PROTOCOL_MAX_INITIAL_BACKOFF);
+        alarmSchedule(&sendTimer, randomNumberBounded(MAC_PROTOCOL_MAX_INITIAL_BACKOFF));
         // do NOT increase send tries, because we are not trying to send!
         return length;
     }

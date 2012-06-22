@@ -45,6 +45,8 @@ class SealSensor(SealComponent):
         self.average = SealParameter('', ['10'])
         self.stdev = SealParameter('', ['10'])
         self.prereadFunction = SealParameter(None)
+        self.minUpdatePeriod = 1000 # milliseconds
+        self.readTime = 0 # read instanttly
 
 class ConstantSensor(SealSensor):
     def __init__(self):

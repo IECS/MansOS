@@ -32,6 +32,8 @@ class Generator(object):
             c.generateIncludes(self.outputFile)
         for x in components.processFunctionsUsed:
             self.outputFile.write('#include "{}.h"\n'.format(x))
+        if self.numCachedSensors:
+            self.outputFile.write("#include <lib/processing/cache.h>\n")
         self.outputFile.write("\n")
 
     def generateConstants(self):
@@ -152,6 +154,11 @@ class Generator(object):
                 self.actuators.append(c)
         self.cacheTypes()
 
+        self.numCachedSensors = 0
+        for c in self.sensors:
+            if c.isCacheNeeded(self.numCachedSensors):
+                self.numCachedSensors += 1
+
         self.generateIncludes()
         outputFile.write(SEPARATOR)
         outputFile.write("// Constants\n\n")
@@ -180,7 +187,10 @@ class Generator(object):
         for c in self.components:
             c.generateConfig(outputFile)
         for x in components.processFunctionsUsed:
-            outputFile.write("USE_{} = y\n".format(x.upper()))
+            outputFile.write("USE_{}=y\n".format(x.upper()))
+        if self.numCachedSensors > 0:
+            outputFile.write("USE_CACHE=y\n")
+            outputFile.write("CONST_TOTAL_CACHEABLE_SENSORS={}\n".format(self.numCachedSensors))
 
     def generateMakefile(self, outputFile, outputFileName, pathToOS):
         outputFile.write('''

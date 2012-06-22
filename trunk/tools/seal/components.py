@@ -178,6 +178,17 @@ class UseCase(object):
 
         useFunction = self.component.getDependentParameterValue("useFunction", self.parameters)
 
+        # generate read function for cacheable sensors
+        if self.generateAlarm and type(self.component) is Sensor and self.component.cacheNeeded:
+            if not self.component.readFunctionOk:
+                self.component.readFunctionOk = True
+                outputFile.write("uint{0}_t read{1}(void)\n".format(self.component.getDataSize() * 8,
+                                                                    self.component.name))
+                outputFile.write("{\n")
+                outputFile.write("    return {};\n".format(useFunction))
+                outputFile.write("}\n\n")
+            useFunction = self.component.getReadFunction()
+
         if self.generateAlarm:
             outputFile.write("void {0}{1}Callback(void *__unused)\n".format(ccname, self.numInBranch))
             outputFile.write("{\n")
@@ -195,11 +206,12 @@ class UseCase(object):
                     outputFile.write("    {0};\n".format(useFunction))
             elif type(self.component) is Sensor:
                 intTypeName = "uint{0}_t".format(self.component.getDataSize() * 8)
-                outputFile.write("    {0} {1} = {2};\n".format(intTypeName, self.component.getNameCC(), useFunction))
+                outputFile.write("    {0} {1}Value = {2};\n".format(
+                        intTypeName, self.component.getNameCC(), useFunction))
                 if self.filter:
                     filterName = "{}{}Filter{}".format(self.component.getNameCC(),
                                 self.branchName, self.numInBranch)
-                    outputFile.write("    if(addFilter(&{}, &{})) ".format(
+                    outputFile.write("    if(addFilter(&{}, &{}Value)) ".format(
                          filterName, self.component.getNameCC()))
                     outputFile.write("{\n")
                     if self.average:
@@ -216,11 +228,11 @@ class UseCase(object):
                     outputFile.write("    }\n")
                 else:
                     if self.average:
-                        outputFile.write("    addAverage(&{}{}Average{}, &{});\n".format(
+                        outputFile.write("    addAverage(&{}{}Average{}, &{}Value);\n".format(
                             self.component.getNameCC(), self.branchName,
                             self.numInBranch, self.component.getNameCC()))
                     if self.stdev:
-                        outputFile.write("    addStdev(&{}{}Stdev{}, &{});\n".format(
+                        outputFile.write("    addStdev(&{}{}Stdev{}, &{}Value);\n".format(
                             self.component.getNameCC(), self.branchName,
                             self.numInBranch, self.component.getNameCC()))
                     self.checkDependencies(self.component.getNameCC(), 1, outputFile)
@@ -336,7 +348,7 @@ class Component(object):
         return None
 
     def generateIncludes(self, outputFile):
-#  TODO?  if self.isUsed():
+        if self.isUsed():
             includes = self.getSpecialValue("extraIncludes")
             if includes is not None:
                 # print "includes=", includes
@@ -376,13 +388,22 @@ class Component(object):
             return None
         return self.specification.calculateParameterValue(parameter, useCaseParameters)
 
+######################################################
 class Actuator(Component):
     def __init__(self, specification):
         super(Actuator, self).__init__(specification)
 
+######################################################
 class Sensor(Component):
     def __init__(self, specification):
         super(Sensor, self).__init__(specification)
+        if self.specification.minUpdatePeriod is None:
+            self.minUpdatePeriod = 1000 # default value
+        else:
+            self.minUpdatePeriod = self.specification.minUpdatePeriod
+        self.cacheNeeded = False
+        self.cacheNumber = 0
+        self.readFunctionOk = False
 
     def getDataSize(self):
         size = self.getParameterValue("dataSize")
@@ -398,6 +419,24 @@ class Sensor(Component):
         if self.isUsed():
             outputFile.write("#define {0}_NO_VALUE    {1}\n".format(self.getNameUC(), self.getNoValue()))
 
+    def isCacheNeeded(self, numCacheableSensors):
+        for uc in self.useCases:
+            if uc.period is not None and uc.period < self.minUpdatePeriod:
+                self.cacheNeeded = True
+                self.cacheNumber = numCacheableSensors
+                break
+
+        return self.cacheNeeded
+
+    def getReadFunction(self):
+        if self.cacheNeeded:
+            dataFormat = str(self.getDataSize() * 8)
+            return "cacheReadSensorU{0}({1}, &read{2}, {3})".format(
+                dataFormat, self.cacheNumber, self.name, self.minUpdatePeriod)
+            # return "read".format(self.getNameCC())
+        return c.getParameterValue("readFunction", None)
+
+######################################################
 class Output(Component):
     def __init__(self, specification):
         super(Output, self).__init__(specification)
@@ -701,6 +740,7 @@ class ComponentRegister(object):
                 return "false"
         if parameterName == 'value':
             # TODO: otherwise unused component might become usable because of this!
+            # TODO FIXME: what if cache is used?!
             readFunction = c.getParameterValue("readFunction", None)
             if readFunction:
                 c.markAsUsed()
@@ -708,9 +748,12 @@ class ComponentRegister(object):
             else:
                 userError("Parameter '{0}' for component '{1} is not readable!'\n".format(parameterName, componentName))
                 return "false"
+
         if parameterName in ['average', 'stdev', 'filter']:
-            return "get{}{}Value(&{}{}{})".format(parameterName[0].upper(), parameterName[1:],
-                  componentName, parameterName[0].upper(), parameterName[1:])
+            return "get{}Value(&{}{})".format(toTitleCase(parameterName),
+                                              componentName,
+                                              toTitleCase(parameterName))
+
         userError("Unknown parameter '{0}' for component '{1}'\n".format(parameterName, componentName))
         return "false"
 

@@ -8,7 +8,7 @@ outputFileName = 'main.c'
 #architecture = 'testarch'
 architecture = 'telosb'
 targetOS = 'mansos'
-pathToOS = '../..'
+pathToOS = '..'
 verboseMode = False
 testMode = False
 

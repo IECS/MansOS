@@ -50,6 +50,24 @@ void randomSeed(uint16_t seed);
 //
 // Get a random integer between 0 and RANDOM_MAX (including)
 //
-uint16_t randomRand(void);
+uint16_t randomNumber(void);
+
+//
+// Get a random integer between 0 and limit
+//
+static uint16_t randomNumberBounded(uint16_t limit)
+{
+    if (limit == 0) return 0;
+    return randomNumber() % limit;
+}
+
+//
+// Get a random integer in a specific range
+//
+static uint16_t randomInRange(uint16_t low, uint16_t high)
+{
+    if (low >= high) return low;
+    return randomNumber() % (high - low) + low;
+}
 
 #endif

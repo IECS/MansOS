@@ -27,6 +27,10 @@ def toCamelCase(s):
     if s == '': return ''
     return string.lower(s[0]) + s[1:]
 
+def toTitleCase(s):
+    if s == '': return ''
+    return string.upper(s[0]) + s[1:]
+
 filterParam = {
                "!=": 0,
                "==": 1,
