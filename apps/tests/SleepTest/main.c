@@ -26,8 +26,11 @@
 //-------------------------------------------
 
 #include "stdmansos.h"
+#include "radio.h"
 #include "extflash.h"
+#if PLATFORM_SADMOTE
 #include "ads1115/ads1115.h"
+#endif
 
 #define PAUSE 2000
 
@@ -54,8 +57,35 @@ void appMain(void) {
     adsInit();
 #endif
 
+#if 0
+    P1OUT = 0;
+    P2OUT = 0;
+    P3OUT = 0;
+    P4OUT = 0;
+    //P5OUT = 0;
+    P6OUT = 0;
+
+    UCTL0 = SWRST;
+    ME1 &= ~(URXE0 | UTXE0 | USPIE0);
+    UCTL0 &= ~SWRST;
+
+    UCTL1 = SWRST;
+    ME2 &= ~(URXE1 | UTXE1 | USPIE1);
+    UCTL1 &= ~SWRST;
+
+    ADC12IE = 0;
+    ADC12IFG = 0;
+    ADC12CTL0 &= ~ENC;
+    ADC12CTL0 &= ~REFON;
+    ADC12CTL0 &= ~ADC12ON;
+
+    DMA0CTL = 0;
+    DMA1CTL = 0;
+#endif
+
     while (1) {
         msleep(PAUSE); // sleep PAUSE seconds
-        PRINT("hello world\n");
+        //PRINT("hello world\n");
+        ledToggle();
     }
 }

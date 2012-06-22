@@ -38,7 +38,7 @@ void appMain(void) {
     Average_t avg3 = avgInit(0);
 
     while (true) {
-        uint16_t temp = randomRand();
+        uint16_t temp = randomNumber();
         addAverage(&avg1, &temp);
         addAverage(&avg2, &temp);
         addAverage(&avg3, &temp);

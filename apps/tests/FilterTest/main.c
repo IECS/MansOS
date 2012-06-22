@@ -30,7 +30,7 @@ Filter_t filter = filterInit(3, 10000);
 
 void appMain(void) {
     while(true) {
-        uint16_t temp = randomRand();
+        uint16_t temp = randomNumber();
         if (addFilter(&filter, (uint16_t*)&temp)) {
             PRINTF("Adding %d succeeds", temp);
         } else {

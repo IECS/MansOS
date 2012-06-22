@@ -53,6 +53,6 @@ void appMain(void)
     for (;;) {
         greenLedToggle();
         radioSend(sendBuffer, sizeof(sendBuffer));
-        mdelay(600 + randomRand() % 400);
+        mdelay(randomInRange(600, 1000));
     }
 }

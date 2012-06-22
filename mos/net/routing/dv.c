@@ -79,7 +79,7 @@ void initRouting(void)
     alarmInit(&roForwardTimer, roForwardTimerCb, NULL);
 #endif
     alarmInit(&roRequestTimer, roRequestTimerCb, NULL);
-    alarmSchedule(&roRequestTimer, 2000 + randomRand() % 1000);
+    alarmSchedule(&roRequestTimer, randomInRange(2000, 3000);
 }
 
 #if MULTIHOP_FORWARDER
@@ -105,7 +105,7 @@ static void roForwardTimerCb(void *x)
     markForwardTimerActive(timesLeft);
     if (timesLeft) {
         // reschedule alarm
-        alarmSchedule(&roForwardTimer, 100 + randomRand() % 200);
+        alarmSchedule(&roForwardTimer, randomInRange(100, 300);
     }
 }
 #endif
@@ -146,7 +146,7 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 #if MULTIHOP_FORWARDER
         if (!isForwardTimerActive()) {
             markForwardTimerActive(1);
-            alarmSchedule(&roForwardTimer, 1000 + randomRand() % 2000);
+            alarmSchedule(&roForwardTimer, randomInRange(1000, 3000));
         }
 #endif
         return;
@@ -187,7 +187,7 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 #if MULTIHOP_FORWARDER
         if (!isForwardTimerActive()) {
             markForwardTimerActive(1);
-            alarmSchedule(&roForwardTimer, 1000 + randomRand() % 2000);
+            alarmSchedule(&roForwardTimer, randomInRange(1000, 3000));
         }
 #endif
         lastRootMessageTime = getJiffies();

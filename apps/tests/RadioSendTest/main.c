@@ -72,23 +72,28 @@ void recvCounter(void)
     if (len == 0) {
         PRINTF("0 len!\n");
     }
+    // debugHexdump(buffer, len);
     if (len > 0) {
         memcpy(&sender, buffer + 1, sizeof(sender));
         counter = buffer[0];
-        PRINTF("0x%04x: received counter %u\n", sender, counter);
+        PRINTF("received counter %u (%d bytes)\n", counter, len);
         ledsSet(counter);
     }
 }
 
 void sendCounter(void) {
-    static uint8_t sendBuffer[100];
+    // static uint8_t sendBuffer[120];
+    static uint8_t sendBuffer[20] = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+        10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+    };
     uint8_t *counter = &sendBuffer[0];
-    memcpy(sendBuffer + 1, &localAddress, 2);
+    // memcpy(sendBuffer + 1, &localAddress, 2);
     while (1) {
         PRINTF("0x%04x: sending counter %i\n", localAddress, *counter);
         redLedToggle();
         radioSend(sendBuffer, sizeof(sendBuffer));
-        msleep(3 * 100 + randomRand() % 1000);
+        mdelay(3000);
         ++(*counter);
     }
 }

@@ -22,7 +22,7 @@
  */
 
 //
-// generic algorthms
+// Generic algorithms
 //
 
 #ifndef MANSOS_ALGO_H
@@ -73,12 +73,25 @@ static inline uint16_t sawtoothWaveValue(uint16_t period, uint16_t low, uint16_t
 
 //
 // Calculate approximate sine wave value at given point of time
-// (TODO XXX: too complicated?)
 //
 static inline uint16_t sineWaveValue(uint16_t period, uint16_t low, uint16_t high)
 {
     const uint16_t amplitude = high - low;
+    // TODO...
+    // XXX: too complicated?
     return low + (amplitude / 2);
+}
+
+//
+// Map a specific value from input range to output range
+//
+static inline int32_t map(int32_t value,
+                          int32_t inputLow, int32_t inputHigh,
+                          int32_t outputLow, int32_t oututHigh)
+{
+    const int32_t amplitudeIn = inputHigh - inputLow;
+    const int32_t amplitudeOut = outputHigh - outputLow;
+    return (value - inputLow) * rangeOut / rangeIn + outputLow;
 }
 
 

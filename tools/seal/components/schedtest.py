@@ -13,10 +13,10 @@ class SlowReadSensor1(SealSensor):
         self.useFunction.value = "slowRead1()"
         self.readFunction.value = "slowRead1()"
         self.prereadFunction.value = "slowPreread1()"
-        # deterministic maximal read time in milliseconds
-        self.readTime = 500
         # update readings no faster than once in 10 seconds
-        self.cacheTime = 10000
+        self.minUpdatePeriod = 10000
+        # deterministic upper bound of time-to-read in milliseconds
+        self.readTime = 500
 
 class SlowReadSensor2(SealSensor):
     def __init__(self):
@@ -25,10 +25,10 @@ class SlowReadSensor2(SealSensor):
         self.useFunction.value = "slowRead2()"
         self.readFunction.value = "slowRead2()"
         self.prereadFunction.value = "slowPreread2()"
-        # deterministic maximal read time in milliseconds
-        self.readTime = 300
         # update readings no faster than once in 5 seconds
-        self.cacheTime = 5000
+        self.minUpdatePeriod = 5000
+        # deterministic upper bound of time-to-read in milliseconds
+        self.readTime = 300
 
 class SlowReadSensor3(SealSensor):
     def __init__(self):
@@ -37,19 +37,20 @@ class SlowReadSensor3(SealSensor):
         self.useFunction.value = "slowRead3()"
         self.readFunction.value = "slowRead3()"
         self.prereadFunction.value = "slowPreread3()"
-        # deterministic maximal read time in milliseconds
-        self.readTime = 100
         # update readings no faster than once in 1 seconds (the default)
-        # self.cacheTime = 1000
+        # self.minUpdatePeriod = 1000
+        # deterministic upper bound of time-to-read in milliseconds
+        self.readTime = 100
 
 class FastReadSensor(SealSensor):
     def __init__(self):
         super(FastReadSensor, self).__init__("FastRead")
-        self.cacheable = True # actually make sense
+        self.cacheable = True # actually makes sense
         self.useFunction.value = "fastRead()"
         self.readFunction.value = "fastRead()"
         # do not cache
-        self.cacheTime = 0
+        self.minUpdatePeriod = 0
+        # time-to-read is negligible
 
 ######################################################
 # component instantiation
