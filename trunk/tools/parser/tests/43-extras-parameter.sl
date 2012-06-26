@@ -1,5 +1,8 @@
 // define system parameters
-parameter battery 2700mAh;
-parameter routingProtocol GPSR;
-parameter configLine "USE_ADDRESSING=y";
-parameter configLine "USE_SPI=y";
+
+// config battery 2700mAh;
+// config routingProtocol GPSR;
+
+config "USE_ADDRESSING=y";
+config "USE_SPI=y";
+config "DEBUG=y";
