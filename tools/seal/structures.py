@@ -31,15 +31,27 @@ def toTitleCase(s):
     if s == '': return ''
     return string.upper(s[0]) + s[1:]
 
-filterParam = {
-               "!=": 0,
-               "==": 1,
-               "=": 1,
-               "<": 2,
-               "<=": 3,
-               ">=": 4,
-               ">": 5
-               }
+#filterParam = {
+#               "!=": 0,
+#               "==": 1,
+#               "=": 1,
+#               "<": 2,
+#               "<=": 3,
+#               ">=": 4,
+#               ">": 5
+#               }
+
+def isConstant(s):
+    return s[0] >= '0' and s[0] <= '9'
+
+######################################################
+class FunctionTree(object):
+    def __init__(self, function, arguments):
+        self.function = function
+        self.arguments = arguments
+
+#    def addArgument(self, arg):
+#        self.arguments.add(arg)
 
 ########################################################
 class ConditionCollection(object):
@@ -51,6 +63,7 @@ class ConditionCollection(object):
         self.conditionList = []
         self.branchNumber = 0
         self.branchChanged = False
+        self.codeList = []
 
     def add(self, condition):
         self.conditionList.append(condition)
@@ -74,25 +87,34 @@ class ConditionCollection(object):
             self.conditionStack.pop()
             n -= 1
 
-    def generateCode(self, outputFile, componentRegister):
+    def generateCode(self, componentRegister):
         for i in range(len(self.conditionList)):
-            self.generateCodeForCondition(i, outputFile, componentRegister)
+            self.codeList.append(self.generateCodeForCondition(i, componentRegister))
 
-    def generateCodeForCondition(self, i, outputFile, componentRegister):
-        outputFile.write("bool condition{0}Check(void) {1}\n".format(i + 1, '{'))
-        outputFile.write("    return {0};\n".format(
+    def generateCodeForCondition(self, i, componentRegister):
+        result = "static inline bool condition{0}Check(void) {1}\n".format(i + 1, '{')
+        result += "    return {0};\n".format(
                 string.replace(string.replace(string.replace(
                             self.conditionList[i].getCodeForGenerator(componentRegister),
                                " and ", " && "),
                                " or ", " || "),
-                               " not ", " ! ")))
+                               " not ", " ! "))
 
-        outputFile.write("}\n")
+        result += "}\n"
+        return result
+
+    def writeOutCode(self, outputFile):
+        for i in range(len(self.codeList)):
+            outputFile.write(self.codeList[i])
 
 ########################################################
 class Value(object):
     def __init__(self, value = None, suffix = None):
-        self.value = value
+        if type(value) is Value:
+            # decapsulate
+            self.value = value.value
+        else:
+            self.value = value
         self.suffix = suffix
 
     def getCode(self):
@@ -181,18 +203,22 @@ class Expression(object):
 
 ########################################################
 class SystemParameter(object):
-    def __init__(self, name, value):
-        self.name = name.lower()
+    def __init__(self, value):
+        # self.name = name.lower()
         self.value = value
 
     def addComponents(self, componentRegister, conditionCollection):
-        if self.name in componentRegister.systemParams:
-            userError("Parameter '{0}' already specified, ignoring\n".format(self.name))
-            return
-        componentRegister.systemParams[self.name] = self
+        #if self.name in componentRegister.systemParams:
+        #    userError("Parameter '{0}' already specified, ignoring\n".format(self.name))
+        #    return
+        #componentRegister.systemParams[self.name] = self
+        componentRegister.systemParams.append(self)
 
     def getCode(self, indent):
-        return "parameter " + self.name + " " + self.value.getCode() + ';'
+        return "config " + self.value.getCode() + ';'
+
+    def getConfigLine(self):
+        return self.value.getCode().strip('"')
 
 ########################################################
 class PatternDeclaration(object):
@@ -237,13 +263,74 @@ class SetStatement(object):
     def getCode(self, indent):
         return "set " + self.name + " " + self.value.getCode() + ';'
 
-class DefineStatement(object):
+########################################################
+#class FunctionalExpression(object):
+#    def __init__(self, name, arguments):
+#        self.name = name
+#        self.
+
+########################################################
+class ComponentDefineStatement(object):
+    def __init__(self, name, functionTree, parameters):
+        self.name = name.lower()
+#        self.basename = basename.lower()
+        self.functionTree = functionTree
+        self.parameterList = parameters
+        self.parameterDictionary = {}
+        self.added = False
+        self.isError = False
+        self.base = None # underlying "real" component
+#        self.bases = []
+
+    def getCode(self, indent):
+        result = "define " + self.name
+        # TODO
+#        for p in self.parameterList:
+#            result += " "
+#            result += p[0]
+#            if p[1] != None:
+#                result += " "
+#                result += p[1].getCode()
+#            result += ","
+#        if self.parameterList != []:
+#            result = result[:-1] # remove last comma
+#        result += ';'
+#        return result
+
+    def addComponents(self, componentRegister, conditionCollection):
+        componentRegister.addVirtualComponent(self)
+
+    def continueAdding(self, componentRegister):
+        if not self.isError:
+            componentRegister.continueAddingVirtualComponent(self)
+
+    def finishAdding(self, componentRegister):
+        if not self.isError:
+            componentRegister.finishAddingVirtualComponent(self)
+
+    def getBasenamesRecursively(self, functionTree):
+        if len(functionTree.arguments) == 0:
+            # in this (default) case of 0-ary function, function name = sensor or constant name
+            # TODO: replace CONST defines before this!
+            if type(functionTree.function) is Value:
+                return ["__const" + str(functionTree.function.value)]
+            return [functionTree.function]
+        basenames = []
+        for a in functionTree.arguments:
+            basenames += self.getBasenamesRecursively(a)
+        return basenames
+
+    def getBasenames(self):
+        return self.getBasenamesRecursively(self.functionTree)
+
+########################################################
+class ParametersDefineStatement(object):
     def __init__(self, name, parameters):
         self.name = name.lower()
         self.parameters = parameters
 
     def getCode(self, indent):
-        result = self.name
+        result = "parameters " + self.name
         for p in self.parameters:
             result += " "
             result += p[0]
@@ -257,79 +344,80 @@ class DefineStatement(object):
         return result
 
     def addComponents(self, componentRegister, conditionCollection):
-        if self.name in componentRegister.defines:
-            userError("Define {0} already specified, ignoring\n".format(self.name))
+        if self.name in componentRegister.parameterDefines:
+            userError("Parameter define {0} already specified, ignoring\n".format(self.name))
             return
-        componentRegister.defines[self.name] = self
+        componentRegister.parameterDefines[self.name] = self
 
-class ProcessStatement(object):
-    def __init__(self, name, target, parameters):
-        self.name = name.lower()
-        self.target = target.lower()
-        self.parameters = parameters
+########################################################
+#class ProcessStatement(object):
+#    def __init__(self, name, target, parameters):
+#        self.name = name.lower()
+#        self.target = target.lower()
+#        self.parameters = parameters
 
-    def getCode(self, indent):
-        result = "process {} {},".format(self.name, self.target)
-        for p in self.parameters:
-            result += " "
-            result += p[0]
-            if p[1] != None:
-                result += " "
-                result += p[1].getCode()
-            result += ","
-        if self.parameters != []:
-            result = result[:-1] # remove last comma
-        result += ';'
-        return reslt
+#    def getCode(self, indent):
+#        result = "process {} {},".format(self.name, self.target)
+#        for p in self.parameters:
+#            result += " "
+#            result += p[0]
+#            if p[1] != None:
+#                result += " "
+#                result += p[1].getCode()
+#            result += ","
+#        if self.parameters != []:
+#            result = result[:-1] # remove last comma
+#        result += ';'
+#        return reslt
 
-    def generateVariables(self, processStructInits, outputFile):
-        outputFile.write ("uint16_t {} = 0;\n".format(self.name));
-        for x in self.parameters:
-            if x[0] in ['average', 'filter', 'stdev']:
-                outputFile.write ("{}{}_t {}{}{};\n".format(
-                    x[0][0].upper(), x[0][1:], x[0], self.name[0].upper(),
-                    self.name[1:]));
-                processStructInits.append("    {}{}{} = {}Init({});\n".format(
-                    x[0], self.name[0].upper(), self.name[1:], x[0], x[1].asString()))
+#    def generateVariables(self, processStructInits, outputFile):
+#        outputFile.write ("uint16_t {} = 0;\n".format(self.name));
+#        for x in self.parameters:
+#            if x[0] in ['average', 'filter', 'stdev']:
+#                outputFile.write ("{}{}_t {}{}{};\n".format(
+#                    x[0][0].upper(), x[0][1:], x[0], self.name[0].upper(),
+#                    self.name[1:]));
+#                processStructInits.append("    {}{}{} = {}Init({});\n".format(
+#                    x[0], self.name[0].upper(), self.name[1:], x[0], x[1].asString()))
 
-    def generateCallbackCode(self, outputFile, inputValue, indent, recursiveCall):
-        lastVal = inputValue
-        myIndent = indent
-        haveFilter = False
-        for x in self.parameters:
-            name = x[0] + self.name[0].upper() + self.name[1:]
-            if x[0] == 'filter':
-                haveFilter = True
-                outputFile.write(getIndent(myIndent))
-                outputFile.write("if (addFilter(&{}, &{})) ".format(name, lastVal));
-                outputFile.write("{\n");
-                myIndent += 1
-            elif x[0] in ['average', 'stdev']:
-                outputFile.write(getIndent(myIndent))
-                outputFile.write("add{}{}(&{}, &{});\n".format(x[0][0].upper(),
-                                                x[0][1:], name, lastVal));
-            else:
-                # TODO: disallow this
-                print "Unsuported parameter for process: {}".format(x[0])
-                continue
-            lastVal = "get{}{}Value(&{})".format(x[0][0].upper(), x[0][1:], name)
-
-        outputFile.write(getIndent(myIndent));
-        outputFile.write("{} = {};\n".format(self.name, lastVal));
-
-        # Calls function who checks for dependencies against this process, 
-        # can't be done here because scope is too small
-        recursiveCall(self.name, myIndent, outputFile)
-
-        if haveFilter:
-            outputFile.write(getIndent(myIndent - 1));
-            outputFile.write("}\n");
-
-    def addComponents(self, componentRegister, conditionCollection):
-        if self.name in componentRegister.process:
-            userError("Process {0} already specified, ignoring\n".format(self.name))
-            return
-        componentRegister.process[self.name] = self
+#    def generateCallbackCode(self, outputFile, inputValue, indent, recursiveCall):
+#        lastVal = inputValue
+#        myIndent = indent
+#        haveFilter = False
+#        for x in self.parameters:
+#            name = x[0] + self.name[0].upper() + self.name[1:]
+#            if x[0] == 'filter':
+#                haveFilter = True
+#                outputFile.write(getIndent(myIndent))
+#                outputFile.write("if (addFilter(&{}, &{})) ".format(name, lastVal));
+#                outputFile.write("{\n");
+#                myIndent += 1
+#            elif x[0] in ['average', 'stdev']:
+#                outputFile.write(getIndent(myIndent))
+#                outputFile.write("add{}{}(&{}, &{});\n".format(x[0][0].upper(),
+#                                                x[0][1:], name, lastVal));
+#            else:
+#                # TODO: disallow this
+#                print "Unsuported parameter for process: {}".format(x[0])
+#                continue
+#            lastVal = "get{}{}Value(&{})".format(x[0][0].upper(), x[0][1:], name)
+#
+#        outputFile.write(getIndent(myIndent));
+#        outputFile.write("{} = {};\n".format(self.name, lastVal));
+#
+#        # Calls function who checks for dependencies against this process, 
+#        # can't be done here because scope is too small
+#        recursiveCall(self.name, myIndent, outputFile)
+#
+#        if haveFilter:
+#            outputFile.write(getIndent(myIndent - 1));
+#            outputFile.write("}\n");
+#
+#    def addComponents(self, componentRegister, conditionCollection):
+#        if self.name in componentRegister.process:
+#            userError("Process {0} already specified, ignoring\n".format(self.name))
+#            return
+#        componentRegister.process[self.name] = self
 
 ########################################################
 class ComponentUseCase(object):
@@ -431,26 +519,44 @@ class CodeBlock(object):
         for d in self.declarations:
             if type(d) is SystemParameter:
                 if self.blockType != CODE_BLOCK_TYPE_PROGRAM:
-                    userError("Parameter declarations supported only in top level, ignoring parameter {0}\n".format(
-                            d.name))
+                    userError("System configuration supported only in top level, ignoring '{0}'\n".format(
+                            d.getConfigLine()))
                 else:
                     d.addComponents(componentRegister, conditionCollection)
             if type(d) is PatternDeclaration:
                 if self.blockType != CODE_BLOCK_TYPE_PROGRAM:
-                    userError("Pattern declarations supported only in top level, ignoring pattern {0}\n".format(
+                    userError("Pattern declarations supported only in top level, ignoring pattern '{0}'\n".format(
                             d.name))
                 else:
                     d.addComponents(componentRegister, conditionCollection)
-            if type(d) is SetStatement or type(d) is DefineStatement or type(d) is ProcessStatement:
+            if type(d) is ComponentDefineStatement:
+                if self.blockType != CODE_BLOCK_TYPE_PROGRAM:
+                    userError("Define supported only in top level, ignoring define '{0}'\n".format(
+                            d.name))
+                else:
+                    d.addComponents(componentRegister, conditionCollection)
+            if type(d) is SetStatement or type(d) is ParametersDefineStatement:
                 d.addComponents(componentRegister, conditionCollection)
+
+        # finish adding all virtual components
+        for d in self.declarations:
+            if type(d) is ComponentDefineStatement:
+                d.continueAdding(componentRegister)
+        for d in self.declarations:
+            if type(d) is ComponentDefineStatement:
+                d.finishAdding(componentRegister)
+
+        # add use cases
         for d in self.declarations:
             if type(d) is ComponentUseCase:
                 d.addComponents(componentRegister, conditionCollection)
+
+        # recursive call (for included "when" statements)
         for d in self.declarations:
             if type(d) is CodeBlock:
                 d.addComponents(componentRegister, conditionCollection)
 
-        # recursive call
+        # recursive call (for next "elsewhen" or "else" branch)
         if self.next != None:
             self.next.addComponents(componentRegister, conditionCollection)
 

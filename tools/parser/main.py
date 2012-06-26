@@ -5,8 +5,8 @@ import os, sys, getopt
 
 inputFileName = 'test.sl'
 outputFileName = 'main.c'
-#architecture = 'testarch'
-architecture = 'telosb'
+architecture = 'testarch'
+#architecture = 'telosb'
 targetOS = 'mansos'
 pathToOS = '..'
 verboseMode = False

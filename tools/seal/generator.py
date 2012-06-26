@@ -32,7 +32,7 @@ class Generator(object):
             c.generateIncludes(self.outputFile)
         for x in components.processFunctionsUsed:
             self.outputFile.write('#include "{}.h"\n'.format(x))
-        if self.numCachedSensors:
+        if components.componentRegister.numCachedSensors:
             self.outputFile.write("#include <lib/processing/cache.h>\n")
         self.outputFile.write("\n")
 
@@ -83,9 +83,6 @@ class Generator(object):
         for c in self.components:
             c.generateCallbacks(self.outputFile, self.outputs)
 
-    def generateConditionCode(self):
-        components.conditionCollection.generateCode(self.outputFile, components.componentRegister)
-
     def generateBranchCode(self):
         components.branchCollection.generateCode(self.outputFile)
 
@@ -95,8 +92,8 @@ class Generator(object):
         for c in self.components:
             c.generateAppMainCode(self.outputFile)
         # Init Process variables
-        for p in components.processStructInits:
-            self.outputFile.write(p)
+#        for p in components.processStructInits:
+#            self.outputFile.write(p)
 
         self.outputFile.write("\n\n")
         self.outputFile.write("    for (;;) {\n")
@@ -154,10 +151,10 @@ class Generator(object):
                 self.actuators.append(c)
         self.cacheTypes()
 
-        self.numCachedSensors = 0
-        for c in self.sensors:
-            if c.isCacheNeeded(self.numCachedSensors):
-                self.numCachedSensors += 1
+        # find out the sensors that should be cached
+        components.componentRegister.markCachedSensors()
+        # generate condition code now, for later use
+        components.conditionCollection.generateCode(components.componentRegister)
 
         self.generateIncludes()
         outputFile.write(SEPARATOR)
@@ -175,7 +172,7 @@ class Generator(object):
         self.generateCallbacks()
         outputFile.write(SEPARATOR)
         outputFile.write("// Conditions\n\n")
-        self.generateConditionCode()
+        components.conditionCollection.writeOutCode(self.outputFile)
         outputFile.write(SEPARATOR)
         outputFile.write("// Branches\n\n")
         self.generateBranchCode()
@@ -188,9 +185,13 @@ class Generator(object):
             c.generateConfig(outputFile)
         for x in components.processFunctionsUsed:
             outputFile.write("USE_{}=y\n".format(x.upper()))
-        if self.numCachedSensors > 0:
+        for x in components.componentRegister.systemParams:
+            outputFile.write(x.getConfigLine())
+            outputFile.write("\n")
+        if components.componentRegister.numCachedSensors > 0:
             outputFile.write("USE_CACHE=y\n")
-            outputFile.write("CONST_TOTAL_CACHEABLE_SENSORS={}\n".format(self.numCachedSensors))
+            outputFile.write("CONST_TOTAL_CACHEABLE_SENSORS={}\n".format(
+                    components.componentRegister.numCachedSensors))
 
     def generateMakefile(self, outputFile, outputFileName, pathToOS):
         outputFile.write('''

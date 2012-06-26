@@ -41,9 +41,9 @@ class SealSensor(SealComponent):
         super(SealSensor, self).__init__(TYPE_SENSOR, name)
         self.cacheable = False # whether can be kept in cache
         self.dataSize = 2 # in bytes
-        self.filter = SealParameter('', ['> 100'])
-        self.average = SealParameter('', ['10'])
-        self.stdev = SealParameter('', ['10'])
+#        self.filter = SealParameter('', ['> 100'])
+#        self.average = SealParameter('', ['10'])
+#        self.stdev = SealParameter('', ['10'])
         self.prereadFunction = SealParameter(None)
         self.minUpdatePeriod = 1000 # milliseconds
         self.readTime = 0 # read instanttly
@@ -52,11 +52,13 @@ class ConstantSensor(SealSensor):
     def __init__(self):
         super(ConstantSensor, self).__init__("Constant")
         self.useFunction.value = "0"
-        self.readFunction = self.useFunction.value
+        self.readFunction.value = self.useFunction.value
         # the value used in read function
         self.value = SealParameter(5, ["0", "1", "2", "5", "10", "100", "1000"])
 
     def calculateParameterValue(self, parameter, useCaseParameters):
+        print "calculateParameterValue, params:", useCaseParameters
+        print " val:", useCaseParameters["value"].value
         return self.getParameterValue("value", useCaseParameters)
 
 class RandomSensor(SealSensor):
@@ -82,6 +84,34 @@ class RandomSensor(SealSensor):
             # TODO: cast the result to uint16_t, but only in case of signed int overflow
             return "{} % {} + {}".format(self.useFunction.value, modulo, min)
 
+#
+# A time-based counter value.
+# Be careful about wraparound: use 64-bit jiffies if possible!
+#
+class CounterSensor(SealSensor):
+    def __init__(self):
+        super(CounterSensor, self).__init__("Counter")
+        self.useFunction.value = "0"
+        self.readFunction.value = "0"
+        self.counterperiod = SealParameter(1000, ["100", "200", "500", "1000", "2000"])
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        counterPeriod = self.getParameterValue("counterperiod", useCaseParameters)
+        return "getJiffies() / {0}".format(counterPeriod)
+
+#
+# Timestamp sensor.
+# At the moment, timestamp is the same as system uptime seconds.
+#
+class TimestampSensor(SealSensor):
+    def __init__(self):
+        super(TimestampSensor, self).__init__("Timestamp")
+        self.useFunction.value = "getUptime()"
+        self.readFunction.value = "getUptime()"
+
+#
+# Generic sensor with a predefined waveform.
+#
 class WaveSensor(SealSensor):
     def __init__(self, name):
         super(WaveSensor, self).__init__(name)
@@ -92,8 +122,11 @@ class WaveSensor(SealSensor):
         self.high = SealParameter(100, ["0", "1", "2", "5", "10", "100", "1000"])
         self.waveperiod = SealParameter(1000, ["100", "200", "500", "1000", "2000"])
 
+#
+# Predefined waveform sensor: 
 #    +----+    +----+    +----+
 #  --+    +----+    +----+    +--
+#
 class SquareWaveSensor(WaveSensor):
     def __init__(self):
         super(SquareWaveSensor, self).__init__("SquareWave")
@@ -104,9 +137,12 @@ class SquareWaveSensor(WaveSensor):
         high = self.getParameterValue("high", useCaseParameters)
         return "(getJiffies() % {0} < ({0} / 2)) ? {1} : {2}".format(wavePeriod, low, high)
 
+#
+# Predefined waveform sensor:
 #   ^   ^   ^
 #  / \ / \ / \
 # /   v   v   v
+#
 class TriangleWaveSensor(WaveSensor):
     def __init__(self):
         super(TriangleWaveSensor, self).__init__("TriangleWave")
@@ -118,9 +154,12 @@ class TriangleWaveSensor(WaveSensor):
         high = self.getParameterValue("high", useCaseParameters)
         return "triangleWaveValue({}, {}, {})".format(wavePeriod, low, high)
 
+#
+# Predefined waveform sensor:
 #   /  /  /
 #  /| /| /|
 # / |/ |/ |
+#
 class SawtoothWaveSensor(WaveSensor):
     def __init__(self):
         super(SawtoothWaveSensor, self).__init__("SawtoothWave")
@@ -132,6 +171,9 @@ class SawtoothWaveSensor(WaveSensor):
         high = self.getParameterValue("high", useCaseParameters)
         return "sawtoothWaveValue({}, {}, {})".format(wavePeriod, low, high)
 
+#
+# Predefined waveform sensor: sine wave
+#
 class SineWaveSensor(WaveSensor):
     def __init__(self):
         super(SineWaveSensor, self).__init__("SineWave")
