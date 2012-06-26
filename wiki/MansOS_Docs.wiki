@@ -1,0 +1,3 @@
+MansOS documentation can be found here:
+
+* http://mansos.net
