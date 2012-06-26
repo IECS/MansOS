@@ -2,8 +2,8 @@
 // define LightAlias Light;
 // use LightAlias;
 
-// define Virtual5 5;
-// use Virtual5;
+//define Virtual5 5;
+//use Virtual5;
 
 // 2.
 // define VirtualBar Bar;
@@ -11,8 +11,8 @@
 // use VirtualVirtualBar;
 
 // 3
-define Constant13 Constant, value 13;
-use Constant13;
+// define Constant13 Constant, value 13;
+// use Constant13;
 
 // 4
 // define Random100 Random, max 100;
@@ -44,5 +44,8 @@ use Constant13;
 // end
 
 // return minimum value from the random numbers so far
-// define MinRandom min(Random);
-// read MinRandom;
+//define MinRandom min(Random);
+//read MinRandom;
+
+define Sum53 sum(5, 3);
+read Sum53;

@@ -3,9 +3,6 @@ from structures import *
 
 ######################################################
 
-def isConstantField(f):
-    return False # TODO
-
 def generateSerialFunctions(intSizes, outputFile):
     for size in intSizes:
         outputFile.write("static inline void serialPrintU{0}(const char *name, uint{0}_t value)\n".format(
@@ -78,6 +75,7 @@ class UseCase(object):
                 self.parameters[p[0]] = p[1]
             else:
                 self.parameters[p[0]] = Value(True)
+        self.readFunctionSuffix = ""
         self.conditions = list(conditions)
         self.branchNumber = branchNumber
         if numInBranch == 0:
@@ -195,9 +193,9 @@ class UseCase(object):
                     outputFile.write("    {0};\n".format(useFunction))
             elif type(self.component) is Sensor:
                 intTypeName = self.component.getDataType()
-                outputFile.write("    {0} {1}Value = {2}ReadProcess();\n".format(
+                outputFile.write("    {0} {1}Value = {2}ReadProcess{3}();\n".format(
                         intTypeName, self.component.getNameCC(),
-                        self.component.getNameCC()))
+                        self.component.getNameCC(), self.readFunctionSuffix))
 #                if self.filter:
 #                    filterName = "{}{}Filter{}".format(self.component.getNameCC(),
 #                                self.branchName, self.numInBranch)
@@ -287,12 +285,8 @@ class Component(object):
         self.markedAsUsed = False
         # save specification (needed for dependent parameters)
         self.specification = specification
-        self.baseComponents = []
+#        self.baseComponents = []
         self.functionTree = None
-        self.virtualUse = True
-
-    def isPhysicalComponent(self):
-        return bool(len(self.baseComponents))
 
     def markAsUsed(self):
         self.markedAsUsed = True
@@ -367,7 +361,11 @@ class Component(object):
         if type(self) is Output:
             return
         if type(self) is Sensor:
-            self.generateReadFunction(outputFile)
+            if self.specification.readFunctionDependsOnParams:
+                for uc in self.useCases:
+                    self.generateReadFunctions(outputFile, uc)
+            else:
+                self.generateReadFunctions(outputFile, None)
         for uc in self.useCases:
             uc.generateCallbacks(outputFile, outputs)
 
@@ -407,6 +405,7 @@ class Sensor(Component):
             self.minUpdatePeriod = self.specification.minUpdatePeriod
         self.cacheNeeded = False
         self.cacheNumber = 0
+        self.readFunctionNum = 0
 
     def getDataSize(self):
         size = self.getParameterValue("dataSize")
@@ -453,13 +452,9 @@ class Sensor(Component):
             componentRegister.numCachedSensors += 1
         return self.cacheNeeded
 
-    def getRawReadFunction(self):
-        if self.isPhysicalComponent():
-            rawReadFunc = "{}ReadRaw()".format(self.getNameCC())
-        else:
-            rawReadFunc = "{}ReadRaw()".format(self.baseComponents[0].getNameCC())
-
-        if self.cacheNeeded:
+    def getRawReadFunction(self, suffix):
+        rawReadFunc = "{}ReadRaw{}()".format(self.getNameCC(), suffix)
+        if len(suffix) == 0 and self.cacheNeeded:
             dataFormat = str(self.getDataSize() * 8)
             return "cacheReadSensorU{0}({1}, &{2}, {3})".format(
                 dataFormat, self.cacheNumber, rawReadFunc, self.minUpdatePeriod)
@@ -468,6 +463,8 @@ class Sensor(Component):
     def dataProcess(self, functionTree):
         if functionTree is None:
             return ""
+
+        # print "functionTree = ", functionTree
 
         # intialize to empty list of strings (no processing)
         result = []
@@ -479,50 +476,47 @@ class Sensor(Component):
 
         # process (transform the value) according to the upper level function given
         if functionTree.function == "min":
-            result.add("static {0} minValue = {1};".format(self.getDataType(), self.getMaxValue()))
-            result.add("if (minValue > value) minValue = value;")
-            result.add("else value = minValue;")
+            result.append("static {0} minValue = {1};".format(self.getDataType(), self.getMaxValue()))
+            result.append("if (minValue > value) minValue = value;")
+            result.append("else value = minValue;")
         elif functionTree.function == "max":
-            result.add("static {0} maxValue = {1};".format(self.getDataType(), self.getMinValue()))
-            result.add("if (maxValue < value) maxValue = value;")
-            result.add("else value = maxValue;")
-
-#        if parameter not in self.parameters:
-#            return None
-#        return self.specification.calculateParameterValue(parameter, useCaseParameters)
-
-#        if functionTree.function == "min":
-#        if functionTree.function == "max":
+            result.append("static {0} maxValue = {1};".format(self.getDataType(), self.getMinValue()))
+            result.append("if (maxValue < value) maxValue = value;")
+            result.append("else value = maxValue;")
+        else:
+            print "unhandled function", functionTree.function
         return result
 
-    def generateReadFunction(self, outputFile):
-        if not (self.isUsed() or self.virtualUse): return
-
-        if self.isPhysicalComponent():
-            # generate raw read function
-            outputFile.write("static inline uint{0}_t {1}ReadRaw(void)\n".format(
-                    self.getDataSize() * 8, self.getNameCC()))
-            outputFile.write("{\n")
-#            specifiedReadFunction = self.getParameterValue("readFunction", None)
-#            print "specifiedReadFunction = ", specifiedReadFunction
-#        return self.specification.calculateParameterValue(parameter, useCaseParameters)
-
-            getDependentParameterValue
-
-            if specifiedReadFunction is None:
-                userError("Sensor '{}' has no valid read function!".format(self.name))
-                specReadFunction = "0"
-            outputFile.write("    return {};\n".format(specifiedReadFunction))
-            outputFile.write("}\n\n")
-
+    def generateReadFunctions(self, outputFile, useCase):
         if not self.isUsed(): return
 
+        if useCase is not None:
+            readFunctionSuffix = str(self.readFunctionNum)
+            useCase.readFunctionSuffix = readFunctionSuffix
+            self.readFunctionNum += 1
+        else:
+            readFunctionSuffix = ""
+
+        # generate raw read function
+        outputFile.write("static inline uint{0}_t {1}ReadRaw{2}(void)\n".format(
+                self.getDataSize() * 8, self.getNameCC(), readFunctionSuffix))
+        outputFile.write("{\n")
+        if useCase is not None:
+            specifiedReadFunction = self.getDependentParameterValue("readFunction", useCase.parameters)
+        else:
+            specifiedReadFunction = self.getParameterValue("readFunction", None)
+        if specifiedReadFunction is None:
+            userError("Sensor '{}' has no valid read function!".format(self.name))
+            specReadFunction = "0"
+        outputFile.write("    return {};\n".format(specifiedReadFunction))
+        outputFile.write("}\n\n")
+
         # generate reading and processing function
-        outputFile.write("static inline uint{0}_t {1}ReadProcess(void)\n".format(
-                self.getDataSize() * 8, self.getNameCC()))
+        outputFile.write("static inline uint{0}_t {1}ReadProcess{2}(void)\n".format(
+                self.getDataSize() * 8, self.getNameCC(), readFunctionSuffix))
         outputFile.write("{\n")
         outputFile.write("    uint{0}_t value;\n".format(self.getDataSize() * 8))
-        outputFile.write("    value = {};\n".format(self.getRawReadFunction()))
+        outputFile.write("    value = {};\n".format(self.getRawReadFunction(readFunctionSuffix)))
         processResult = self.dataProcess(self.functionTree)
         for line in processResult:
             outputFile.write("    " + line + "\n")
@@ -625,20 +619,11 @@ class Output(Component):
         outputFile.write("static inline void {0}PacketInit(void)\n".format(self.getNameCC()))
         outputFile.write("{\n")
 
-        # count const fields
-        numConstFields = 0
-        for f in self.usedFields:
-            if isConstantField(f): numConstFields += 1
-        outputFile.write("    {0}PacketNumFieldsFull = {1};\n".format(
-                self.getNameCC(), numConstFields))
+        outputFile.write("    {0}PacketNumFieldsFull = 0;\n".format(self.getNameCC()))
 
         for f in self.usedFields:
-            if isConstantField(f):
-                outputFile.write("    {0}Packet.{1} = {2};\n".format(
-                        self.getNameCC(), toCamelCase(f.name), f.value))
-            else:
-                outputFile.write("    {0}Packet.{1} = {2}_NO_VALUE;\n".format(
-                        self.getNameCC(), toCamelCase(f[1]), f[1].upper()))
+            outputFile.write("    {0}Packet.{1} = {2}_NO_VALUE;\n".format(
+                    self.getNameCC(), toCamelCase(f[1]), f[1].upper()))
 
         outputFile.write("}\n\n")
 
@@ -750,7 +735,6 @@ class ComponentRegister(object):
             if isDuplicate:
                 userError("Component '{0}' duplicated for platform '{1}', ignoring\n".format(
                         spec.name, architecture))
-        self.nullSensor = self.sensors["null"]
 
     #######################################################################
     def findComponentByName(self, componentName):
@@ -794,10 +778,10 @@ class ComponentRegister(object):
         if c.added: return
 
         c.added = True
+        c.base = None
 
-        c.bases = []
-        immediateVirtualBase = None
-        basenames = c.getBasenames()
+#        immediateVirtualBase = None
+        basenames = c.getAllBasenames()
 
         for basename in basenames:
             if c.name == basename:
@@ -809,15 +793,15 @@ class ComponentRegister(object):
         for basename in basenames:
             if basename[:7] == '__const':
                 numericalValue = int(basename[7:], 0)
-                basename = "Constant"
+                basename = "constant"
             while True:
                 base = self.findComponentByName(basename)
                 if base is not None:
-                    c.bases.append(base)
+                    # c.bases.append(base)
                     break
                 virtualBase = self.virtualComponents.get(basename, None)
                 if virtualBase is None:
-                    userError("Virtual component '{0}' has unknown base component '{1}'', ignoring\n".format(
+                    userError("Virtual component '{0}' has unknown base component '{1}', ignoring\n".format(
                             c.name, basename))
                     c.isError = True
                     return
@@ -826,13 +810,19 @@ class ComponentRegister(object):
                 self.continueAddingVirtualComponent(virtualBase)
 
                 basename = virtualBase.basename
-                if immediateVirtualBase is None:
-                    immediateVirtualBase = virtualBase
+#                if immediateVirtualBase is None:
+#                    immediateVirtualBase = virtualBase
 
-        # now all bases have been added, add parameters to this
-        print "len(c.bases)=", len(c.bases)
-        if len(c.bases) == 1 and immediateVirtualBase is not None:
+        immediateBaseName = c.getImmediateBasename()
+        immediateBase = self.virtualComponents.get(immediateBaseName, None)
+        if immediateBase is not None:
+            # inherit parameters from parent virtual sensor
             c.parameterDictionary = immediateVirtualBase.parameterDictionary
+            # inherit the base too
+            c.base = immediateBase.base  
+        else:
+            c.base = self.findComponentByName(immediateBaseName)
+        assert c.base
 
         # fill the parameter dictionary
         for p in c.parameterList:
@@ -846,27 +836,26 @@ class ComponentRegister(object):
 
     def finishAddingVirtualComponent(self, c):
         assert not c.isError
-        assert len(c.bases)
+        assert c.base
 
-        if len(c.bases) > 1:
-            base = self.nullSensor
-        else:
-            base = c.bases[0]
+#        if len(c.bases) > 1:
+#            base = self.nullSensor
+#        else:
+#            base = c.bases[0]
 
-        if type(base) is Sensor:
-            s = self.sensors[c.name] = Sensor(c.name, base.specification)
-        elif type(base) is Actuator:
-            s = self.actuators[c.name] = Actuator(c.name, base.specification)
-        elif type(base) is Output:
-            s = self.outputs[c.name] = Output(c.name, base.specification)
+        if type(c.base) is Sensor:
+            s = self.sensors[c.name] = Sensor(c.name, c.base.specification)
+        elif type(c.base) is Actuator:
+            s = self.actuators[c.name] = Actuator(c.name, c.base.specification)
+        elif type(c.base) is Output:
+            s = self.outputs[c.name] = Output(c.name, c.base.specification)
 
-        print "s.parameters = ", s.parameters
-        print "c.parameterDictionary = ", c.parameterDictionary
         s.parameters.update(c.parameterDictionary)
+        s.functionTree = c.functionTree
+#        s.base = c.base
 
-        for b in c.bases:
-            b.virtualUse = True
-            s.baseComponents.append(b)
+#        for b in c.bases:
+#            s.baseComponents.append(b)
 
     #######################################################################
     def useComponent(self, keyword, name, parameters, conditions, branchNumber):

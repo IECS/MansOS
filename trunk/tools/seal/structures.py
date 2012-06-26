@@ -264,12 +264,6 @@ class SetStatement(object):
         return "set " + self.name + " " + self.value.getCode() + ';'
 
 ########################################################
-#class FunctionalExpression(object):
-#    def __init__(self, name, arguments):
-#        self.name = name
-#        self.
-
-########################################################
 class ComponentDefineStatement(object):
     def __init__(self, name, functionTree, parameters):
         self.name = name.lower()
@@ -308,7 +302,7 @@ class ComponentDefineStatement(object):
         if not self.isError:
             componentRegister.finishAddingVirtualComponent(self)
 
-    def getBasenamesRecursively(self, functionTree):
+    def getAllBasenamesRecursively(self, functionTree):
         if len(functionTree.arguments) == 0:
             # in this (default) case of 0-ary function, function name = sensor or constant name
             # TODO: replace CONST defines before this!
@@ -317,11 +311,34 @@ class ComponentDefineStatement(object):
             return [functionTree.function]
         basenames = []
         for a in functionTree.arguments:
-            basenames += self.getBasenamesRecursively(a)
+            basenames += self.getAllBasenamesRecursively(a)
         return basenames
 
-    def getBasenames(self):
-        return self.getBasenamesRecursively(self.functionTree)
+    def getAllBasenames(self):
+        return self.getAllBasenamesRecursively(self.functionTree)
+
+    def getImmediateBasenameRecursively(self, functionTree):
+        # no function
+        if len(functionTree.arguments) == 0:
+            if type(functionTree.function) is Value:
+                return "constant"
+            return functionTree.function
+        # unary function
+        if len(functionTree.arguments) == 1:
+            return self.getImmediateBasenameRecursively(functionTree.arguments[0])
+        # n-ary function; may return null sensor as base, if more than one are used
+        # TODO: not all n-ary functions use multiple sensors!!!
+        return "null"
+#        subsensors = []
+#        for a in functionTree.arguments:
+#            if len(a.arguments) > 0:
+#                subsensors.add(a)
+#        if len(subsensors) == 1
+
+    def getImmediateBasename(self):
+        return self.getImmediateBasenameRecursively(self.functionTree)
+
+
 
 ########################################################
 class ParametersDefineStatement(object):

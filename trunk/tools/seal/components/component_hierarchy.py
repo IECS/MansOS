@@ -47,6 +47,7 @@ class SealSensor(SealComponent):
         self.prereadFunction = SealParameter(None)
         self.minUpdatePeriod = 1000 # milliseconds
         self.readTime = 0 # read instanttly
+        self.readFunctionDependsOnParams = False
 
 class ConstantSensor(SealSensor):
     def __init__(self):
@@ -55,10 +56,9 @@ class ConstantSensor(SealSensor):
         self.readFunction.value = self.useFunction.value
         # the value used in read function
         self.value = SealParameter(5, ["0", "1", "2", "5", "10", "100", "1000"])
+        self.readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
-        print "calculateParameterValue, params:", useCaseParameters
-        print " val:", useCaseParameters["value"].value
         return self.getParameterValue("value", useCaseParameters)
 
 class RandomSensor(SealSensor):
@@ -71,6 +71,7 @@ class RandomSensor(SealSensor):
         # parameters
         self.min = SealParameter(0, ["0", "1", "2", "5", "10", "100", "1000"])
         self.max = SealParameter(0xffff, ["1", "2", "5", "10", "100", "1000", "65535"])
+        self.readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         #if parameter != "readFunction" and parameter != "useFunction":
@@ -94,6 +95,7 @@ class CounterSensor(SealSensor):
         self.useFunction.value = "0"
         self.readFunction.value = "0"
         self.counterperiod = SealParameter(1000, ["100", "200", "500", "1000", "2000"])
+        self.readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         counterPeriod = self.getParameterValue("counterperiod", useCaseParameters)
@@ -121,6 +123,7 @@ class WaveSensor(SealSensor):
         self.low = SealParameter(0, ["0", "1", "2", "5", "10", "100", "1000"])
         self.high = SealParameter(100, ["0", "1", "2", "5", "10", "100", "1000"])
         self.waveperiod = SealParameter(1000, ["100", "200", "500", "1000", "2000"])
+        self.readFunctionDependsOnParams = True
 
 #
 # Predefined waveform sensor: 
