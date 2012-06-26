@@ -17,6 +17,9 @@ import sys, time, string, io, struct
 sys.path.append("/usr/lib/tinyos")
 import serial, os, glob
 
+#Only for use in Python 2.6.0a2 and later (Leo S.)
+from __future__ import print_function
+
 #forked from TinyOS Telos version.
 VERSION = "1.39-goodfet-8"
 
