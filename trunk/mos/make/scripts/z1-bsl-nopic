@@ -13,6 +13,9 @@
 # Forked by Travis Goodspeed <travis at tnbelt.com> for use with the GoodFET
 # JTAG programmer.
 
+#Only for use in Python 2.6.0a2 and later (Leo S.)
+from __future__ import print_function
+
 import sys, time, string, io, struct
 sys.path.append("/usr/lib/tinyos")
 import serial, os, glob
