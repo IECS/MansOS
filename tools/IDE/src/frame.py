@@ -27,6 +27,7 @@ import os
 import wx
 from stat import S_ISDIR
 from wx.lib.agw import aui
+from time import strftime, localtime
 
 from upload_module import UploadModule
 from globals import * #@UnusedWildImport
@@ -168,6 +169,10 @@ class Frame(wx.Frame):
 
         output = optionMenu.Append(wx.ID_ANY, '&' + self.tr('Configure upload and compile') + '\tCtrl+R',
                               self.tr('Open read output window'))
+
+        helpMenu = wx.Menu()
+        about = helpMenu.Append(wx.ID_ABOUT, '&' + self.tr('About') + '\tCtrl+H',
+                              self.tr('About'))
         # Check if we need to update existing menubar(for translate)
         if self.menubar == None:
             self.menubar = wx.MenuBar()
@@ -178,6 +183,7 @@ class Frame(wx.Frame):
         self.menubar.Append(fileMenu, '&' + self.tr('File'))
         self.menubar.Append(exampleMenu, '&' + self.tr('Examples'))
         self.menubar.Append(optionMenu, '&' + self.tr('Options'))
+        self.menubar.Append(helpMenu, '&' + self.tr('Help'))
         self.SetMenuBar(self.menubar)
 
         # First bind to menu
@@ -188,6 +194,7 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnUpload, upload)
         self.Bind(wx.EVT_MENU, self.OnOutput, output)
         self.Bind(wx.EVT_MENU, self.OnNew, new)
+        self.Bind(wx.EVT_MENU, self.OnAbout, about)
 
         # Check if we need to update existing toolbar(for rerun)
         if self.toolbar == None:
@@ -325,6 +332,30 @@ class Frame(wx.Frame):
 
     def OnAddCondition(self, event):
         self.tabManager.getPageObject().code.addCondition()
+
+    def OnAbout(self, event):
+        versionFile = os.path.join("../..", "doc/VERSION")
+        f = open(versionFile, "r")
+        version = f.readline()
+        f.close()
+        mtime = os.path.getmtime(versionFile)
+        text = """
+MansOS
+
+Version: {}
+Release date: {}
+
+MansOS is an operating system for wireless sensor networks (WSN) and other resource-constrained embedded systems.
+
+The emphasis is on easy use and fast adoption time. Therefore, MansOS supports code written in C, and UNIX-like concepts such as sockets for communication. MansOS is also designed to be modular for easy portability to new platforms and architectures.
+
+Some of the supported target platforms are based on MSP430 and Atmega microcontrollers (Nordic MCU support is in development). Popular and supported platform names include Tmote Sky and other Telosb clones, Waspmote, Arduino.
+
+Should you have questions or suggestions about the support, please contact info@mansos.net 
+""".format(version, strftime("%d.%m.%Y %H:%M", localtime(mtime)))
+        wx.MessageBox(text, 'Info',
+            wx.OK | wx.ICON_INFORMATION)
+
 
     def changeLanguage(self, event):
         for i in self.langs:
