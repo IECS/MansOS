@@ -150,6 +150,7 @@ class TabManager(aui.AuiNotebook):
     def markAsUnsaved(self):
         self.titleChange('* ' + self.getPageObject().fileName)
 
+
     def markAsSaved(self):
         if self.getPageObject() != None:
             self.titleChange(self.getPageObject().fileName)
@@ -161,8 +162,11 @@ class TabManager(aui.AuiNotebook):
             return None
 
     def addPage(self, newFile = ''):
-        self.AddPage(EditorManager(self, self.API),
+        if newFile == '':
+            self.AddPage(EditorManager(self, self.API),
                 self.tr("Untitled document") + ' ' + str(self.nextPageNr))
+        else:
+            self.AddPage(EditorManager(self, self.API), newFile)
         self.nextPageNr += 1
         self.SetSelection(self.GetPageCount() - 1)
         # Add any file associated with it

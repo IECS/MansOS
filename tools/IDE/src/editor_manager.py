@@ -39,8 +39,8 @@ class EditorManager(wx.Panel):
         self.initUI()
         self.lastSaved = ''
         ### Editor visible variables
-        # @ creation we assume document is saved.
-        self.saveState = True
+        # @ creation we assume document is not saved.
+        self.saveState = False
         # Filename or untitled document
         self.fileName = self.tr('Untitled document') + ' ' + str(self.GetParent().nextPageNr)
         # Filename and full path(relative or absolute)
@@ -51,6 +51,7 @@ class EditorManager(wx.Panel):
         self.projectType = SEAL_PROJECT
 
     def update (self, initFilePath = ''):
+        print initFilePath
         if initFilePath == '':
             initFilePath = self.filePath
         if os.path.exists(initFilePath) and os.path.isfile(initFilePath):
@@ -83,7 +84,6 @@ class EditorManager(wx.Panel):
     def changeCode(self, newCode = '', overwrite = True):
         if overwrite == True:
             self.code.AddText(newCode)
-            self.lastSaved = newCode
             self.yieldChanges()
         self.code.setLineNumbers()
         self.redrawAll()

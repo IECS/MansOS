@@ -36,6 +36,7 @@ from upload_core import UploadCore
 from output_tools import OutputTools
 from listen_module import ListenModule
 from editor_manager import EditorManager
+from blockly import Blockly
 from globals import * #@UnusedWildImport
 
 from seal_parser import SealParser
@@ -48,7 +49,10 @@ class ApiCore:
         # Note: settings in file are with higher priority.
         self.__settings = {
                    "activeLanguage" : "LV",
-                   "platform" : "telosb"
+                   "platform" : "telosb",
+                   "blocklyPort" : '8090',
+                   "blocklyHost" : "localhost",
+                   "blocklyLocation" : "../../../seal-blockly/blockly/seal/playground-seal.html"
                }
         # Read settings from file
         if os.path.exists(SETTING_FILE) and os.path.isfile(SETTING_FILE):
@@ -116,6 +120,9 @@ class ApiCore:
         self.outputArea = OutputArea(self.emptyFrame, self, 1)
         self.printOutput = self.outputArea.printLine
         self.clearOutputArea = self.outputArea.clear
+
+        # Init blockly handler XXX: Preemptive ftw?
+        self.blockly = Blockly(self.emptyFrame, self)
 
         # Init seal parser
         self.sealParser = SealParser("telosb", self.printInfo, False, True)

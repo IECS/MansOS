@@ -43,6 +43,7 @@ class Frame(wx.Frame):
         self.auiManager = aui.AuiManager()
         self.loadPositioning()
         self.exitCalled = False
+        self.blocklyToolVisible = False
 
         # Just a shorter name
         self.tr = self.API.tr
@@ -62,6 +63,7 @@ class Frame(wx.Frame):
         #self.API.outputTools.Reparent(self)
         self.API.tabManager.Reparent(self)
         self.API.editPanel.Reparent(self)
+        self.API.blockly.Reparent(self)
 
         self.tabManager = self.API.tabManager
 
@@ -89,6 +91,13 @@ class Frame(wx.Frame):
                 BestSize(wx.Size(500, 150)))
         self.API.listenModule.Reparent(self)
         self.auiManager.AddPane(self.API.listenModule, self.bottomPane)
+
+        self.blocklyPane = (aui.AuiPaneInfo().Caption("Seal-Blockly handler").CloseButton(False).
+                CaptionVisible(True).
+                MinimizeButton(True).MaximizeButton(True).
+                BestSize(wx.Size(500, 150)))
+        self.auiManager.AddPane(self.API.blockly, self.blocklyPane, target = self.bottomPane)
+
         self.API.infoArea.Reparent(self)
         infoPane = (aui.AuiPaneInfo().Caption("Info").CloseButton(False).
                 CaptionVisible(True).
@@ -206,6 +215,10 @@ class Frame(wx.Frame):
         addConditionTool = self.toolbar.AddLabelTool(wx.ID_APPLY, self.tr('Add condition'),
                                 wx.Bitmap(self.path + '/src/Icons/add_condition.png'),
                                 shortHelp = self.tr('Add condition'))
+        #self.toolbar.AddSeparator()
+        #addBlocklyTool = self.toolbar.AddLabelTool(wx.ID_MORE, self.tr('Open Seal-Blockly editor'),
+        #                        wx.Bitmap(self.path + '/src/Icons/Seal_blockly.png'),
+        #                        shortHelp = self.tr('Open Seal-Blockly editor'))
         self.toolbar.AddSeparator()
         compileTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW, self.tr('Compile'),
                                 wx.Bitmap(self.path + '/src/Icons/compile.png'),
@@ -229,6 +242,7 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_TOOL, self.OnOutput, outputTool)
         self.Bind(wx.EVT_TOOL, self.OnAddStatement, addStatementTool)
         self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
+        #self.Bind(wx.EVT_TOOL, self.OnBlocklyTool, addBlocklyTool)
 
     def OnQuit(self, event):
         # Workaround, because wx.exit calls wx.ON_CLOSE, which is binded to this 
@@ -393,3 +407,8 @@ class Frame(wx.Frame):
         self.toolbar.EnableTool(wx.ID_PREVIEW, False)
         self.toolbar.EnableTool(wx.ID_PREVIEW_GOTO, False)
         self.toolbar.EnableTool(wx.ID_PREVIEW_ZOOM, False)
+
+    #def OnBlocklyTool(self, event):
+    #    wx.YieldIfNeeded()
+    #    self.auiManager.RestorePane(self.blocklyPane)
+    #    self.blocklyToolVisible = not self.blocklyToolVisible

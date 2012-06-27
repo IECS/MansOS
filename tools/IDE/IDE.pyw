@@ -45,10 +45,11 @@ def main():
     ex.MainLoop()
 
 def importsOk():
-    wxModuleOK = True      # wx widgets
-    serialModuleOK = True  # serial port communication
-    plyModuleOK = True     # Python Lex Yacc - for compilation
-    sealParserOK = True    # SEAL parser
+    wxModuleOK = True       # wx widgets
+    serialModuleOK = True   # serial port communication
+    plyModuleOK = True      # Python Lex Yacc - for compilation
+    sealParserOK = True     # SEAL parser
+    mansOSOK = True         # MansOS
 
     try:
         import wx
@@ -77,7 +78,16 @@ def importsOk():
     except OSError:
         sealParserOK = False
 
-    if not (wxModuleOK and serialModuleOK and plyModuleOK and sealParserOK):
+    versionFile = os.path.join("../..", "doc/VERSION")
+    if not os.path.exists(versionFile) or not os.path.isfile(versionFile):
+        mansOSOK = False
+    else:
+        f = open(versionFile, "r")
+        version = f.readline()
+        print ("MansOS version: {}".format(version))
+        f.close()
+
+    if not (wxModuleOK and serialModuleOK and plyModuleOK and sealParserOK and mansOSOK):
         if os.name == 'posix':
             installStr = "Make sure you have installed required modules. Run:\n\tapt-get install"
         else:
@@ -100,6 +110,8 @@ def importsOk():
         if not sealParserOK:
             print "\tSEAL parser not found!"
 
+        if not mansOSOK:
+            print "\tMansOS not found!"
         print installStr
         return False
     return True
