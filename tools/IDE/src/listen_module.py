@@ -71,9 +71,11 @@ class ListenModule(wx.Panel):
         self.listening = not self.listening
         if self.listening:
             self.clear.SetLabel(self.tr('Stop listening'))
+            self.updateStatus("Listening started.", False)
             #self.API.onExit.insert(0, self.doClear)
         else:
             self.clear.SetLabel(self.tr('Start listening'))
+            self.updateStatus("Listening stopped.", False)
             #self.API.onExit.remove(self.doClear)
         # Redraw button if size have changed
         self.clear.SetSize(self.clear.GetEffectiveMinSize())
@@ -111,6 +113,7 @@ class ListenModule(wx.Panel):
             pass
 
     def getMotelist(self, event = None):
+        self.updateStatus("Refreshing...", False)
         self.ports.Clear()
         self.ports.Append(self.tr("Searching devices") + "...", 0)
         self.ports.Disable()
