@@ -42,6 +42,7 @@ class Frame(wx.Frame):
         self.lastPanel = None
         self.auiManager = aui.AuiManager()
         self.loadPositioning()
+        self.exitCalled = False
 
         # Just a shorter name
         self.tr = self.API.tr
@@ -96,6 +97,7 @@ class Frame(wx.Frame):
         self.auiManager.AddPane(self.API.infoArea, infoPane, target = self.bottomPane)
 
         self.auiManager.Update()
+        self.Bind(wx.EVT_CLOSE, self.OnQuit)
 
     def initUI(self):
         fileMenu = wx.Menu()
@@ -229,6 +231,11 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
 
     def OnQuit(self, event):
+        # Workaround, because wx.exit calls wx.ON_CLOSE, which is binded to this 
+        # function, result is recursive calling of this function.
+        if self.exitCalled:
+            return
+        self.exitCalled = True
         self.API.tabManager.rememberOpenedTabs()
         self.rememberPositioning()
         if self.tabManager.onQuitCheck() == True:
