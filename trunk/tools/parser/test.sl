@@ -59,10 +59,18 @@
 //output serial (Random);
 //output serial;
 
-read Random;
-output Radio;
+//read Random;
+//output Radio;
 
 // const COMMAND_PRINT 17;
 // when RemoteCommand == COMMAND_PRINT:
 //     use print, format "hello world\n", once;
 // end;
+
+//read avg(Random);
+when min(Random) < 10000:
+    use print, format "rand number < 10000 encountered!\n", once;
+else:
+    use print, format "meh!\n", once;
+end;
+//output serial;

@@ -1,8 +1,6 @@
 import string, sys
 ########################################################
 
-#isError = False
-
 INDENT_STRING = "    "  # indent new code level with two spaces
 def getIndent(indent):
     # take indent string n times
@@ -26,16 +24,6 @@ def toCamelCase(s):
 def toTitleCase(s):
     if s == '': return ''
     return string.upper(s[0]) + s[1:]
-
-#filterParam = {
-#               "!=": 0,
-#               "==": 1,
-#               "=": 1,
-#               "<": 2,
-#               "<=": 3,
-#               ">=": 4,
-#               ">": 5
-#               }
 
 def isConstant(s):
     return s[0] >= '0' and s[0] <= '9'
@@ -61,6 +49,12 @@ class FunctionTree(object):
         except Exception:
             return None
 
+    def generateSensorName(self):
+        result = self.function.lower()
+        for a in self.arguments:
+            result += "_" + a.generateSensorName()
+        return result
+
 ########################################################
 class ConditionCollection(object):
     def __init__(self):
@@ -81,7 +75,7 @@ class ConditionCollection(object):
 
     def invertLast(self):
         last = self.conditionStack.pop()
-        # signal logical negation by negative integer value
+        # signal *logical* negation by negative *integer* value
         self.conditionStack.append(-last)
         self.branchChanged = True
 
@@ -163,6 +157,9 @@ class Value(object):
 #        # TODO: convert time values to milliseconds?
 #        return str(self.value)
 
+    def collectImplicitDefines(self):
+        return []
+
 ########################################################
 class SealValue(object):
     def __init__(self, firstPart, secondPart = None):
@@ -185,9 +182,37 @@ class SealValue(object):
 ########################################################
 class Expression(object):
     def __init__(self, left = None, op = None, right = None):
-        self.left = left
         self.op = op
-        self.right = right
+        self.funcExpressionLeft = None
+        self.funcExpressionRight = None
+        if type(left) is FunctionTree:
+            if len(left.arguments) == 0:
+                self.left = left.function
+            else:
+                self.left = Value(SealValue(left.generateSensorName()))
+                self.funcExpressionLeft = left
+        else:
+            self.left = left
+        if type(right) is FunctionTree:
+            if len(right.arguments) == 0:
+                self.right = right.function
+            else:
+                self.right = Value(SealValue(right.generateSensorName()))
+                self.funcExpressionRight = right
+        else:
+            self.right = right
+
+    def collectImplicitDefines(self):
+        result = []
+        if self.funcExpressionLeft:
+            result.append(ComponentDefineStatement(self.left.value.firstPart, self.funcExpressionLeft, []))
+        else:
+            result += self.left.collectImplicitDefines()
+        if self.funcExpressionRight:
+            result.append(ComponentDefineStatement(self.right.value.firstPart, self.funcExpressionRight, []))
+        else:
+            result += self.right.collectImplicitDefines()
+        return result
 
     def getCode(self):
         if self.left != None and self.right != None:
@@ -364,7 +389,6 @@ class ComponentDefineStatement(object):
         return self.getImmediateBasenameRecursively(self.functionTree)
 
 
-
 ########################################################
 class ParametersDefineStatement(object):
     def __init__(self, name, parameters):
@@ -463,9 +487,17 @@ class ParametersDefineStatement(object):
 
 ########################################################
 class ComponentUseCase(object):
-    def __init__(self, type, name, parameters, fields):
-        self.type = type.lower()
-        self.name = name.lower()
+    def __init__(self, type_, name, parameters, fields):
+        self.type = type_.lower()
+        self.expression = None
+        if type(name) is FunctionTree:
+            if len(name.arguments) == 0:
+                self.name = name.function.lower()
+            else:
+                self.name = name.generateSensorName()
+                self.expression = name
+        else:
+            self.name = name.lower()
         self.parameters = parameters
         self.fields = []
         if fields:
@@ -502,11 +534,11 @@ CODE_BLOCK_TYPE_ELSEWHEN = 2
 CODE_BLOCK_TYPE_ELSE = 3
 
 class CodeBlock(object):
-    def __init__(self, blockType, condition, declarations, next_):
+    def __init__(self, blockType, condition, declarations, next):
         self.blockType = blockType
         self.condition = condition
         self.declarations = declarations
-        self.next = next_
+        self.next = next
 
     def getCode(self, indent):
         result = getIndent(indent)
@@ -567,6 +599,16 @@ class CodeBlock(object):
             conditionCollection.branchNumber += 1
             conditionCollection.branchChanged = False
 
+        # add implicitly declared virtual senosrs
+        implicitDefines = []
+        for d in self.declarations:
+            if (type(d) is ComponentUseCase) and d.expression:
+                implicitDefines.append(ComponentDefineStatement(d.name, d.expression, []))
+        self.declarations += implicitDefines
+        # collect implicit defines from conditions too...
+        if self.condition:
+            self.declarations += self.condition.collectImplicitDefines()
+
         # add components - use cases always first, "when ..." blocks afterwards!
         for d in self.declarations:
             if type(d) is SystemParameter:
@@ -581,13 +623,15 @@ class CodeBlock(object):
                             d.name))
                 else:
                     d.addComponents(componentRegister, conditionCollection)
-            if type(d) is ComponentDefineStatement:
-                if self.blockType != CODE_BLOCK_TYPE_PROGRAM:
-                    componentRegister.userError("Define supported only in top level, ignoring define '{0}'\n".format(
-                            d.name))
-                else:
-                    d.addComponents(componentRegister, conditionCollection)
-            if type(d) is SetStatement or type(d) is ParametersDefineStatement:
+#            if type(d) is ComponentDefineStatement:
+#                if self.blockType != CODE_BLOCK_TYPE_PROGRAM:
+#                    componentRegister.userError("Define supported only in top level, ignoring define '{0}'\n".format(
+#                            d.name))
+#                else:
+#                    d.addComponents(componentRegister, conditionCollection)
+            if type(d) is SetStatement \
+                    or type(d) is ParametersDefineStatement \
+                    or type(d) is ComponentDefineStatement:
                 d.addComponents(componentRegister, conditionCollection)
 
         # finish adding all virtual components
