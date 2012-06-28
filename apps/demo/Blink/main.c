@@ -33,6 +33,6 @@ void appMain(void)
         // change the default LED status
         ledToggle();
         // wait for 1000 milliseconds
-        mdelay(2000);
+        mdelay(1000);
     }
 }

@@ -26,22 +26,22 @@
 
 #include <kernel/defines.h>
 
-extern volatile time_t jiffies;
+extern volatile ticks_t jiffies;
 
-static inline time_t getJiffies(void) INLINE;
-static inline time_t getJiffies(void)
+static inline ticks_t getJiffies(void) INLINE;
+static inline ticks_t getJiffies(void)
 {
     return jiffies;
 }
 
-static inline time_t jiffies2ms(time_t jiffies) INLINE;
-static inline time_t jiffies2ms(time_t jiffies)
+static inline ticks_t jiffies2ms(ticks_t jiffies) INLINE;
+static inline ticks_t jiffies2ms(ticks_t jiffies)
 {
     return jiffies;
 }
 
-static inline time_t ms2jiffies(time_t ms) INLINE;
-static inline time_t ms2jiffies(time_t ms)
+static inline ticks_t ms2jiffies(ticks_t ms) INLINE;
+static inline ticks_t ms2jiffies(ticks_t ms)
 {
     return ms;
 }
@@ -49,7 +49,7 @@ static inline time_t ms2jiffies(time_t ms)
 //
 // For backwards compatibility
 //
-static inline time_t getRealTime(void) {
+static inline ticks_t getRealTime(void) {
     return jiffies2ms(jiffies);
 }
 
