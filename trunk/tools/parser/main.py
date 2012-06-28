@@ -152,7 +152,7 @@ def main():
             g.generateMakefile(outputFile, outputFileName, pathToOS)
         with open(outputDirName + "config", 'w') as outputFile:
             g.generateConfigFile(outputFile)
-        if parser.isError:
+        if generator.components.componentRegister.isError:
             # cleanup
             os.remove(outputFileName)
             os.remove(outputDirName + "Makefile")

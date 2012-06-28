@@ -45,29 +45,33 @@ class Generator(object):
             c.generateConstants(self.outputFile)
             # self.outputFile.write("\n")
 
-    def cacheTypes(self):
+    def definePacketTypes(self):
+        for o in self.outputs:
+            o.definePacketType()
+
+#    def cacheTypes(self):
         # use packet types iff there is least one aggregated output
-        usePackets = reduce(lambda x, y: x or y.isAggregate(), self.outputs, False)
-        if not usePackets: return
+#        usePackets = reduce(lambda x, y: x or y.isAggregate(), self.outputs, False)
+#        if not usePackets: return
 
         # sensors are used iff there is at least one use case declared
         #anySensorsUsed = reduce(lambda x, y: x or (type(y) is Sensor and len(y.useCases)), self.components, False)
         #if not anySensorsUsed: return
-        if len(self.sensors) == 0: return
+#        if len(self.sensors) == 0: return
 
-        packetFields = []
-        for c in self.sensors:
-            packetFields.append((c.getDataSize(), c.getDataType(), c.name))
-        packetFields = list(set(packetFields)) # uniquify
-        packetFields.sort()
-        packetFields.reverse()
+#        packetFields = []
+#        for c in self.sensors:
+#            packetFields.append((c.getDataSize(), c.getDataType(), c.name))
+#        packetFields = list(set(packetFields)) # uniquify
+#        packetFields.sort()
+#        packetFields.reverse()
 
-        for c in self.outputs:
-            c.cachePacketType(packetFields)
+#        for c in self.outputs:
+#            c.cachePacketType(packetFields)
 
     def generateTypes(self):
-       for c in self.outputs:
-           c.generatePacketType(self.outputFile)
+       for o in self.outputs:
+           o.generatePacketType(self.outputFile)
 
     def generateVariables(self):
         self.outputFile.write("bool oldConditionStatus[NUM_CONDITIONS + 1];\n")
@@ -76,8 +80,11 @@ class Generator(object):
             c.generateVariables(self.outputFile)
 
     def generateOutputCode(self):
+        sensorsUsed = []
+        for s in components.componentRegister.sensors.itervalues():
+            if s.isUsed(): sensorsUsed.append(s)
         for c in self.outputs:
-            c.generateOutputCode(self.outputFile, self.sensors)
+            c.generateOutputCode(self.outputFile, sensorsUsed)
 
     def generateCallbacks(self):
         for c in self.components:
@@ -104,7 +111,7 @@ class Generator(object):
         self.outputFile.write("        bool newConditionStatus[NUM_CONDITIONS + 1];\n")
         self.outputFile.write("        newConditionStatus[DEFAULT_CONDITION] = true;\n")
         for i in range(totalConditions):
-            self.outputFile.write("        newConditionStatus[{0}] = condition{0}Check();\n".format(i + 1))
+            self.outputFile.write("        newConditionStatus[{0}] = condition{0}Check(oldConditionStatus[{0}]);\n".format(i + 1))
         self.outputFile.write("\n")
 
         self.outputFile.write("        bool branch0OldStatus = oldConditionStatus[DEFAULT_CONDITION];\n")
@@ -137,20 +144,23 @@ class Generator(object):
         self.outputFile.write("}\n")
 
     def generate(self, outputFile):
+#        self.isError = False
         self.outputFile = outputFile
         self.components = components.componentRegister.getAllComponents()
         self.outputs = []
-        self.sensors = []
-        self.actuators = []
+#        self.sensors = []
+#        self.actuators = []
         for c in self.components:
             if type(c) is components.Output and len(c.useCases):
                 self.outputs.append(c)
-            elif type(c) is components.Sensor and len(c.useCases):
-                self.sensors.append(c)
-            elif type(c) is components.Actuator and len(c.useCases):
-                self.actuators.append(c)
-        self.cacheTypes()
+#            elif type(c) is components.Sensor and len(c.useCases):
+#                self.sensors.append(c)
+#            elif type(c) is components.Actuator and len(c.useCases):
+#                self.actuators.append(c)
+#        self.cacheTypes()
 
+        # generate packet types now, for later use
+        self.definePacketTypes()
         # find out the sensors that should be cached
         components.componentRegister.markCachedSensors()
         # generate condition code now, for later use
@@ -179,6 +189,10 @@ class Generator(object):
         outputFile.write(SEPARATOR)
         outputFile.write("// Main function\n\n")
         self.generateAppMain()
+
+#        global isError
+#        print "global isError: ", isError
+#        if isError: self.isError = True
 
     def generateConfigFile(self, outputFile):
         config = set()

@@ -1,10 +1,6 @@
-set temperatureCritical false;
-when Sensors.Temperature > 50:
-    set temperatureCritical true;
-end
-when Sensors.Temperature < 40:
-    set temperatureCritical false;
-end
-when temperatureCritical:
-    use RedLed, period 100ms;
-end
+set LARGE_RANDOM_NUMBER_ENCOUNTERED false;
+when Random > 50000:
+    set LARGE_RANDOM_NUMBER_ENCOUNTERED true;
+end;
+
+read LARGE_RANDOM_NUMBER_ENCOUNTERED;

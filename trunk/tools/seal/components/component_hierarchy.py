@@ -25,7 +25,7 @@ class SealComponent(object):
         self.useFunction = SealParameter(None)  # each usable component must define this
         self.readFunction = SealParameter(None)  # each readable component must define this
         components.append(self)
-         
+
     def calculateParameterValue(self, parameter, useCaseParameters):
         # default implementation
         return self.__getattribute__(parameter).value
@@ -257,6 +257,8 @@ class SealOutput(SealComponent):
         super(SealOutput, self).__init__(TYPE_OUTPUT, name)
         self.aggregate = SealParameter(True, [False, True])
         self.crc = SealParameter(False, [False, True])
+        self.address = SealParameter(False, [False, True])
+        self.timestamp = SealParameter(True, [False, True])
 
 class SerialOutput(SealOutput):
     def __init__(self):
@@ -270,6 +272,7 @@ class RadioOutput(SealOutput):
         super(RadioOutput, self).__init__("Radio")
         self.useFunction.value = "radioSend(&radioPacket, sizeof(radioPacket))"
         self.crc.value = True # true by default
+        self.address.value = True # true by default
 
 class InternalFlashOutput(SealOutput):
     def __init__(self):
@@ -280,3 +283,7 @@ class ExternalFlashOutput(SealOutput):
     def __init__(self):
         super(ExternalFlashOutput, self).__init__("ExternalFlash")
         self.useFunction.value = "extFlashWrite(&externalFlashPacket, sizeof(externalFlashPacket))"
+
+# TODO: SD card
+
+# TODO: "local storage" (i.e. [external] flash or SD card, depending on platform

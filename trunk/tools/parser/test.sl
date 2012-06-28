@@ -39,6 +39,30 @@
 // define AvgRandom avg(filterLess(Random, 32000));
 // read AvgRandom;
 
-define MinRandom min(Random, Random);
-read MinRandom;
-output serial;
+// define MinRandom min(Random, Random);
+// read MinRandom;
+// output serial;
+
+// set LARGE_RANDOM_NUMBER_ENCOUNTERED false;
+// when Random > 50000:
+//     set LARGE_RANDOM_NUMBER_ENCOUNTERED true;
+// end;
+
+// read LARGE_RANDOM_NUMBER_ENCOUNTERED;
+// output serial;
+
+// read Constant, value 13;
+// read Constant, value 14;
+//output serial;
+
+//read Light;
+//output serial (Random);
+//output serial;
+
+read Random;
+output Radio;
+
+// const COMMAND_PRINT 17;
+// when RemoteCommand == COMMAND_PRINT:
+//     use print, format "hello world\n", once;
+// end;

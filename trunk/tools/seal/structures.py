@@ -1,18 +1,14 @@
 import string, sys
 ########################################################
 
+#isError = False
+
 INDENT_STRING = "    "  # indent new code level with two spaces
 def getIndent(indent):
     # take indent string n times
     return INDENT_STRING * indent
 
-def userError(msg):
-    # TODO JJ - redirect to IDE
-    sys.stderr.write(msg)
-    # TODO
-    # parser.isError = True
-
-def toMilliseconds(x):
+def toMilliseconds(x, componentRegister):
     if type(x) is int: return x
     value = x.value
     if x.suffix is None or x.suffix == '' or x.suffix == "ms":
@@ -20,7 +16,7 @@ def toMilliseconds(x):
     elif x.suffix == "s" or x.suffix == "sec":
         value *= 1000
     else:
-        userError("Unknown suffix '{0}' for time value\n".format(x.suffix))
+        componentRegister.userError("Unknown suffix '{0}' for time value\n".format(x.suffix))
     return value
 
 def toCamelCase(s):
@@ -50,9 +46,9 @@ class FunctionTree(object):
         self.function = function
         self.arguments = arguments
 
-    def checkArgs(self, argCount):
+    def checkArgs(self, argCount, componentRegister):
         if len(self.arguments) != argCount:
-            userError("Function {}(): {} arguments expected, {} given!".format(
+            componentRegister.userError("Function {}(): {} arguments expected, {} given!\n".format(
                     self.function, argCount, len(self.arguments)))
             return False
         return True
@@ -85,6 +81,7 @@ class ConditionCollection(object):
 
     def invertLast(self):
         last = self.conditionStack.pop()
+        # signal logical negation by negative integer value
         self.conditionStack.append(-last)
         self.branchChanged = True
 
@@ -104,14 +101,17 @@ class ConditionCollection(object):
             self.codeList.append(self.generateCodeForCondition(i, componentRegister))
 
     def generateCodeForCondition(self, i, componentRegister):
-        result = "static inline bool condition{0}Check(void) {1}\n".format(i + 1, '{')
-        result += "    return {0};\n".format(
-                string.replace(string.replace(string.replace(
+        result = "static inline bool condition{0}Check(bool oldValue) {1}\n".format(i + 1, '{')
+        result += "    bool isFilteredOut = false;\n"
+        # TODO: at the moment, all subconditions are always evaluated.
+        # for optimization, should return as soon as isFilteredOut becomes true.
+        result += "    bool result = " + \
+            string.replace(string.replace(string.replace(
                             self.conditionList[i].getCodeForGenerator(componentRegister),
                                " and ", " && "),
                                " or ", " || "),
-                               " not ", " ! "))
-
+                               " not ", " ! ") + ";\n"
+        result += "    return isFilteredOut ? oldValue : result;\n"
         result += "}\n"
         return result
 
@@ -241,17 +241,17 @@ class PatternDeclaration(object):
 
     def addComponents(self, componentRegister, conditionCollection):
         if self.name in componentRegister.patterns:
-            userError("Pattern {0} already specified, ignoring\n".format(self.name))
+            componentRegister.userError("Pattern {0} already specified, ignoring\n".format(self.name))
             return
         componentRegister.patterns[self.name] = self
 
     def getCode(self, indent):
-        result = "pattern " + self.name + " ["
+        result = "pattern " + self.name + " ("
         assert len(self.values)
         for v in self.values[:-1]:
             result += v.getCode() + ', '
         result += self.values[-1].getCode()
-        result += '];'
+        result += ');'
         return result
 
     def generateVariables(self, outputFile):
@@ -387,7 +387,7 @@ class ParametersDefineStatement(object):
 
     def addComponents(self, componentRegister, conditionCollection):
         if self.name in componentRegister.parameterDefines:
-            userError("Parameter define {0} already specified, ignoring\n".format(self.name))
+            componentRegister.userError("Parameter define {0} already specified, ignoring\n".format(self.name))
             return
         componentRegister.parameterDefines[self.name] = self
 
@@ -463,13 +463,23 @@ class ParametersDefineStatement(object):
 
 ########################################################
 class ComponentUseCase(object):
-    def __init__(self, type, name, parameters):
+    def __init__(self, type, name, parameters, fields):
         self.type = type.lower()
         self.name = name.lower()
         self.parameters = parameters
+        self.fields = []
+        if fields:
+            for f in fields: self.fields.append(f.lower())
 
     def getCode(self, indent):
         result = self.type + " " + self.name
+        if len(self.fields):
+            result += " ("
+            for f in self.fields:
+                result += f
+                result += ", "
+            result = result[:-2] # remove last comma
+            result += ")"
         for p in self.parameters:
             result += ", "
             result += p[0]
@@ -481,7 +491,7 @@ class ComponentUseCase(object):
 
     def addComponents(self, componentRegister, conditionCollection):
         componentRegister.useComponent(self.type, self.name,
-                                       self.parameters,
+                                       self.parameters, self.fields,
                                        conditionCollection.conditionStack,
                                        conditionCollection.branchNumber)
 
@@ -561,19 +571,19 @@ class CodeBlock(object):
         for d in self.declarations:
             if type(d) is SystemParameter:
                 if self.blockType != CODE_BLOCK_TYPE_PROGRAM:
-                    userError("System configuration supported only in top level, ignoring '{0}'\n".format(
+                    componentRegister.userError("System configuration supported only in top level, ignoring '{0}'\n".format(
                             d.getConfigLine()))
                 else:
                     d.addComponents(componentRegister, conditionCollection)
             if type(d) is PatternDeclaration:
                 if self.blockType != CODE_BLOCK_TYPE_PROGRAM:
-                    userError("Pattern declarations supported only in top level, ignoring pattern '{0}'\n".format(
+                    componentRegister.userError("Pattern declarations supported only in top level, ignoring pattern '{0}'\n".format(
                             d.name))
                 else:
                     d.addComponents(componentRegister, conditionCollection)
             if type(d) is ComponentDefineStatement:
                 if self.blockType != CODE_BLOCK_TYPE_PROGRAM:
-                    userError("Define supported only in top level, ignoring define '{0}'\n".format(
+                    componentRegister.userError("Define supported only in top level, ignoring define '{0}'\n".format(
                             d.name))
                 else:
                     d.addComponents(componentRegister, conditionCollection)
