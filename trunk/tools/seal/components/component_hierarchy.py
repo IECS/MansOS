@@ -31,8 +31,13 @@ class SealComponent(object):
         return self.__getattribute__(parameter).value
 
     def getParameterValue(self, parameter, useCaseParameters):
-        if parameter in useCaseParameters:
-            return useCaseParameters[parameter].value
+        param = useCaseParameters.get(parameter, None)
+        if param is not None:
+            # XXX ugly hack!
+            try:
+                return param.value
+            except AttributeError:
+                return param
         return self.__getattribute__(parameter).value
 
 ######################################################
@@ -64,8 +69,8 @@ class ConstantSensor(SealSensor):
 class RandomSensor(SealSensor):
     def __init__(self):
         super(RandomSensor, self).__init__("Random")
-        self.useFunction.value = "randomRand()"
-        self.readFunction.value = "randomRand()"
+        self.useFunction.value = "randomNumber()"
+        self.readFunction.value = "randomNumber()"
         self.extraConfig = SealParameter("USE_RANDOM=y")
         self.extraIncludes = SealParameter("#include <random.h>")
         # parameters
