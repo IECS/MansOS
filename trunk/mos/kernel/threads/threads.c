@@ -52,7 +52,7 @@ uint16_t jiffiesToSleep;
 void checkThreadLockups(void)
 {
     uint16_t i;
-    uint32_t now = getJiffies();
+    uint32_t now = (uint32_t) getJiffies();
     // note: this could be used for gathering time statistics as well!
     setSeenRunning(currentThread);
     for (i = 0; i < NUM_USER_THREADS; ++i) {
@@ -260,7 +260,7 @@ NO_EPILOGUE void schedule(void)
     static uint32_t now;
 
     SAVE_ALL_REGISTERS();
-    now = jiffies;
+    now = (uint32_t)jiffies;
     // if 'jiffiesToSleep' is nonzero the current thread will be put to sleep
     currentThread->sleepEndTime = now + jiffiesToSleep;
     if (currentThread->state == THREAD_RUNNING) {

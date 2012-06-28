@@ -31,7 +31,7 @@
 //
 // Simple time accounting, no tricks
 //
-void appMainDefault(void)
+void appMainx(void)
 {
     for (;;) {
         uint32_t t = getRealTime();
@@ -41,9 +41,28 @@ void appMainDefault(void)
 }
 
 //
+// Demo that time accounting works after 32-bit value wraparound
+// (specify USE_LONG_LIFETIME=y in config file)
+//
+void appMainLong(void)
+{
+    extern volatile time_t jiffies;
+    jiffies = ULONG_MAX - 2000;
+    for (;;) {
+        time_t time = getRealTime();
+        uint8_t *t = (uint8_t *)&time;
+        PRINTF("real time = 0x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+                t[7], t[6], t[5], t[4],
+                t[3], t[2], t[1], t[0]);
+        mdelay(1000);
+    }
+}
+
+
+//
 // Demo that time accounting works even when interrupts are disabled
 //
-void appMain(void)
+void appMainTimesave(void)
 {
     for (;;) {
         uint32_t t = getRealTime();

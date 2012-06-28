@@ -44,7 +44,7 @@ void alarmsProcess(void)
     // Note that this code works in the way that neither locking the list
     // nor disabling interrupts is required
     //
-    uint32_t now = getJiffies();
+    uint32_t now = (uint32_t) getJiffies();
 
     // PRINTF("processAlarms: jiffies=%lu\n", now);
 
@@ -71,7 +71,7 @@ void alarmsProcess(void)
 
 void alarmSchedule(Alarm_t *alarm, uint32_t milliseconds)
 {
-    alarm->jiffies = getJiffies() + ms2jiffies(milliseconds);
+    alarm->jiffies = (uint32_t)getJiffies() + ms2jiffies(milliseconds);
 
     // locking is required, because both kernel and user threads can be using this function
     Handle_t h;

@@ -44,6 +44,7 @@
 // Calculate square root, rounded down.
 uint16_t intSqrt(uint32_t);
 
+
 //
 // Calculate approximate triangle wave value at given point of time
 //
@@ -87,11 +88,11 @@ static inline uint16_t sineWaveValue(uint16_t period, uint16_t low, uint16_t hig
 //
 static inline int32_t map(int32_t value,
                           int32_t inputLow, int32_t inputHigh,
-                          int32_t outputLow, int32_t oututHigh)
+                          int32_t outputLow, int32_t outputHigh)
 {
     const int32_t amplitudeIn = inputHigh - inputLow;
     const int32_t amplitudeOut = outputHigh - outputLow;
-    return (value - inputLow) * rangeOut / rangeIn + outputLow;
+    return (value - inputLow) * amplitudeOut / amplitudeIn + outputLow;
 }
 
 

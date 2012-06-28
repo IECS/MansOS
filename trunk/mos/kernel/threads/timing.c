@@ -26,7 +26,7 @@
 #include <platform.h>
 #include <hil/radio.h> // XXX
 
-volatile uint32_t jiffies;
+volatile time_t jiffies;
 
 // --------------------------------------------- alarm / time accounting timer
 
@@ -44,7 +44,7 @@ ALARM_TIMER_INTERRUPT()
     // The precision is improved 255 times: 0.99609375 compared to 1 - 0.99609375 = 0.00390625
     //
     bool fixed = false;
-    static uint32_t lastFixedJiffies;
+    static time_t lastFixedJiffies;
     if (jiffies - lastFixedJiffies > 1020) {
         // fix them
         ++jiffies;

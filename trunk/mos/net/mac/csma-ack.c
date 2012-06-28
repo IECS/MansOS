@@ -119,7 +119,7 @@ static void sendTimerCb(void *x) {
 
     if (STAILQ_EMPTY(&packetQueue)) return;
 
-    uint32_t now = getJiffies();
+    uint32_t now = (uint32)getJiffies();
     uint16_t nextTimerTime = MAC_PROTOCOL_ACK_TIME;
     STAILQ_FOREACH(p, &packetQueue, chain) {
         // for this packet ack time has not yet come
