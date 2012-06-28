@@ -50,8 +50,20 @@ class FunctionTree(object):
         self.function = function
         self.arguments = arguments
 
-#    def addArgument(self, arg):
-#        self.arguments.add(arg)
+    def checkArgs(self, argCount):
+        if len(self.arguments) != argCount:
+            userError("Function {}(): {} arguments expected, {} given!".format(
+                    self.function, argCount, len(self.arguments)))
+            return False
+        return True
+
+    def asConstant(self):
+        if len(self.arguments):
+            return None
+        try:
+            return int(self.function.value)
+        except Exception:
+            return None
 
 ########################################################
 class ConditionCollection(object):
@@ -113,9 +125,10 @@ class Value(object):
         if type(value) is Value:
             # decapsulate
             self.value = value.value
+            self.suffix = value.suffix
         else:
             self.value = value
-        self.suffix = suffix
+            self.suffix = suffix
 
     def getCode(self):
         if self.value is None:
@@ -248,6 +261,18 @@ class PatternDeclaration(object):
         outputFile.write("    {0}\n".format(self.values[-1].asString()))
         outputFile.write("};\n");
         outputFile.write("uint_t __pattern_{0}Cursor = 0;\n".format(self.name));
+
+########################################################
+class ConstStatement(object):
+    def __init__(self, name, value):
+        self.name = name.lower()
+        self.value = value
+
+    def addComponents(self, componentRegister, conditionCollection):
+        pass
+
+    def getCode(self, indent):
+        return "const " + self.name + " " + self.value.getCode() + ';'
 
 ########################################################
 class SetStatement(object):

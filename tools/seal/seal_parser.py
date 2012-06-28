@@ -60,10 +60,9 @@ class SealParser():
       "parameters": "PARAMETERS_TOKEN",
       "define": "DEFINE_TOKEN",
       "config": "CONFIG_TOKEN",
+      "const": "CONST_TOKEN",
       "set": "SET_TOKEN",
       "pattern": "PATTERN_TOKEN",
-#      "process": "PROCESS_TOKEN",
-#      "filter": "FILTER_TOKEN",
       "true": "TRUE_TOKEN",
       "false": "FALSE_TOKEN",
       "not": "NOT_TOKEN",
@@ -156,7 +155,8 @@ class SealParser():
                        | when_block
                        | system_config
                        | pattern_declaration
-                       | set_statement 
+                       | const_statement 
+                       | set_statement
                        | define_statement
                        | parameters_statement
                        | ';'
@@ -193,15 +193,26 @@ class SealParser():
         '''
         p[0] = SystemParameter(p[2])
 
-    def p_pattern_declaration(self, p):
-        '''pattern_declaration : PATTERN_TOKEN IDENTIFIER_TOKEN '[' value_list ']' ';'
+    def p_const_statement(self, p):
+        '''const_statement : CONST_TOKEN IDENTIFIER_TOKEN value ';'
         '''
-        p[0] = PatternDeclaration(p[2], p[4])
+        name = p[2]
+        value = p[3]
+        p[0] = ConstStatement(name, value)
+        if name in components.componentRegister.systemConstants:
+            self.errorMsg(p, "Constant '{}' already defined, ignoring".format(name), False)
+        else:
+            components.componentRegister.systemConstants[name] = value
 
     def p_set_statement(self, p):
         '''set_statement : SET_TOKEN IDENTIFIER_TOKEN value ';'
         '''
         p[0] = SetStatement(p[2], p[3])
+
+    def p_pattern_declaration(self, p):
+        '''pattern_declaration : PATTERN_TOKEN IDENTIFIER_TOKEN '[' value_list ']' ';'
+        '''
+        p[0] = PatternDeclaration(p[2], p[4])
 
     def p_define_statement(self, p):
         '''define_statement : DEFINE_TOKEN IDENTIFIER_TOKEN functional_expression parameter_list ';'
@@ -214,18 +225,21 @@ class SealParser():
                                  | integer_literal
         '''
         if len(p) == 2:
-            p[0] = FunctionTree(p[1], [])
+            # try to resolve constant
+            const = components.componentRegister.systemConstants.get(p[1], None)
+            if const: v = Value(const.value)
+            else: v = p[1]
+            p[0] = FunctionTree(v, [])
         else:
+            p[3].reverse()
             p[0] = FunctionTree(p[1], p[3])
 
     def p_argument_list(self, p):
         '''argument_list : functional_expression ',' argument_list
                          | functional_expression
         '''
-        if len(p) == 4:
-            p[0] = p[3]
-        else:
-            p[0] = []
+        if len(p) == 4: p[0] = p[3]
+        else: p[0] = []
         p[0].append(p[1])
 
     def p_parameters_statement(self, p):
@@ -373,7 +387,10 @@ class SealParser():
                       | IDENTIFIER_TOKEN '.' IDENTIFIER_TOKEN
         '''
         if len(p) == 2:
-            p[0] = Value(SealValue(p[1]))
+            # try to resolve constant
+            const = components.componentRegister.systemConstants.get(p[1], None)
+            if const: p[0] = Value(const.value)
+            else: p[0] = Value(SealValue(p[1]))
         else:
             p[0] = Value(SealValue(p[1], p[3]))
 

@@ -30,8 +30,8 @@ class Generator(object):
     def generateIncludes(self):
         for c in self.components:
             c.generateIncludes(self.outputFile)
-        for x in components.processFunctionsUsed:
-            self.outputFile.write('#include "{}.h"\n'.format(x))
+#        for x in components.processFunctionsUsed:
+#            self.outputFile.write('#include "{}.h"\n'.format(x))
         if components.componentRegister.numCachedSensors:
             self.outputFile.write("#include <lib/processing/cache.h>\n")
         self.outputFile.write("\n")
@@ -57,7 +57,7 @@ class Generator(object):
 
         packetFields = []
         for c in self.sensors:
-            packetFields.append((c.getDataSize(), c.name))
+            packetFields.append((c.getDataSize(), c.getDataType(), c.name))
         packetFields = list(set(packetFields)) # uniquify
         packetFields.sort()
         packetFields.reverse()
@@ -181,13 +181,19 @@ class Generator(object):
         self.generateAppMain()
 
     def generateConfigFile(self, outputFile):
+        config = set()
+        # put all config in a set
         for c in self.components:
-            c.generateConfig(outputFile)
-        for x in components.processFunctionsUsed:
-            outputFile.write("USE_{}=y\n".format(x.upper()))
+            cfg = c.getConfig(outputFile)
+            if cfg: config.add(cfg)
+        for x in components.componentRegister.additionalConfig:
+            config.add("USE_{}=y\n".format(x.upper()))
         for x in components.componentRegister.systemParams:
-            outputFile.write(x.getConfigLine())
-            outputFile.write("\n")
+            config.add(x.getConfigLine() + "\n")
+        # print the set to the file
+        for line in config:
+            outputFile.write(line)
+        # check if cache is used
         if components.componentRegister.numCachedSensors > 0:
             outputFile.write("USE_CACHE=y\n")
             outputFile.write("CONST_TOTAL_CACHEABLE_SENSORS={}\n".format(
