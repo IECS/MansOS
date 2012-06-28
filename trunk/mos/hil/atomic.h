@@ -33,7 +33,7 @@
 // Note that interrupt handlers are called as soon as interrupts are enabled,
 // so delays < 10ms will be handled by the default logic
 //
-extern volatile time_t jiffies;
+extern volatile ticks_t jiffies;
 
 #define ATOMIC_START_TIMESAVE(h)                                     \
     const uint_t _start_time = ALARM_TIMER_VALUE();                  \

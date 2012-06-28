@@ -31,6 +31,7 @@
 
 #include "stdtypes.h"
 #include <stdlib.h> // include file where NULL is defined
+#include <limits.h>
 
 //
 // Compiler specific function and data attributes
@@ -75,10 +76,10 @@
 
 // define jiffies type
 #ifdef USE_LONG_LIFETIME
-typedef uint64_t time_t;
+typedef uint64_t ticks_t;
 #define timeAfter(a, b) timeAfter64(a, b)
 #else
-typedef uint32_t time_t;
+typedef uint32_t ticks_t;
 #define timeAfter(a, b) timeAfter32(a, b)
 #endif
 
@@ -118,4 +119,4 @@ typedef uint32_t time_t;
 #define TIMER_INTERRUPT_HZ  100
 #endif
 
-#endif // _MANSOS_DEFINES_H_
+#endif

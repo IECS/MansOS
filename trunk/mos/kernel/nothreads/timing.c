@@ -29,7 +29,7 @@
 // internal variables
 //----------------------------------------------------------
 
-volatile time_t jiffies; // real time counter, in ms
+volatile ticks_t jiffies; // real time counter, in ms
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 
 // alarm timer interrupt handler

@@ -46,10 +46,10 @@ void appMainx(void)
 //
 void appMainLong(void)
 {
-    extern volatile time_t jiffies;
+    extern volatile ticks_t jiffies;
     jiffies = ULONG_MAX - 2000;
     for (;;) {
-        time_t time = getRealTime();
+        ticks_t time = getRealTime();
         uint8_t *t = (uint8_t *)&time;
         PRINTF("real time = 0x%02x%02x%02x%02x%02x%02x%02x%02x\n",
                 t[7], t[6], t[5], t[4],
