@@ -84,7 +84,10 @@ class SealParser():
     t_GEQ_TOKEN = r'>='
     t_LEQ_TOKEN = r'<='
 
-    literals = ['.', ',', ':', ';', '{', '}', '(', ')', '[', ']', '+', '-', '/', '*', '>', '<']
+    # Rules:
+    #   - avoid different kind of braces and brackets (as in C), use "(" and ")" for everything
+    #   - avoid arithmetic operators
+    literals = ['.', ',', ':', ';', '(', ')', '<', '>']
 
     t_ignore = " \t\r"
 
@@ -173,19 +176,13 @@ class SealParser():
     def p_component_use_case(self, p):
         '''component_use_case : USE_TOKEN IDENTIFIER_TOKEN parameter_list ';'
                               | READ_TOKEN IDENTIFIER_TOKEN parameter_list ';'
-                              | OUTPUT_TOKEN IDENTIFIER_TOKEN parameter_list ';'
+                              | OUTPUT_TOKEN IDENTIFIER_TOKEN output_fields parameter_list ';'
         '''
         # allow all, including unknown, components here (because of virtual components)
-        p[0] = ComponentUseCase(p[1], p[2], p[3])
-#        if components.componentRegister.hasComponent(p[1], p[2]):
-#            p[0] = ComponentUseCase(p[1], p[2], p[3])
-#        else:
-#            # print error message, but do not set 'self.isError'
-#            self.errorMsg(p, "Component '{0}' not known or not supported for this architecture ('{1}')".format(
-#                    p[2], components.componentRegister.architecture), False)
-#            # hack by JJ: allow unknown components in debug mode
-#            if self.debugMode: p[0] = ComponentUseCase(p[1], p[2], p[3])
-
+        if len(p) == 5:
+            p[0] = ComponentUseCase(p[1], p[2], p[3], None)
+        else:
+            p[0] = ComponentUseCase(p[1], p[2], p[4], p[3])
         self.lineTracking["Statement"].append((p.lineno(1), p.lineno(4), p[0]))
 
     def p_system_config(self, p):
@@ -210,7 +207,7 @@ class SealParser():
         p[0] = SetStatement(p[2], p[3])
 
     def p_pattern_declaration(self, p):
-        '''pattern_declaration : PATTERN_TOKEN IDENTIFIER_TOKEN '[' value_list ']' ';'
+        '''pattern_declaration : PATTERN_TOKEN IDENTIFIER_TOKEN '(' value_list ')' ';'
         '''
         p[0] = PatternDeclaration(p[2], p[4])
 
@@ -237,6 +234,21 @@ class SealParser():
     def p_argument_list(self, p):
         '''argument_list : functional_expression ',' argument_list
                          | functional_expression
+        '''
+        if len(p) == 4: p[0] = p[3]
+        else: p[0] = []
+        p[0].append(p[1])
+
+    def p_output_fields(self, p):
+        '''output_fields : '(' output_field_list ')'
+                         | empty
+        '''
+        if len(p) == 2: p[0] = []
+        else: p[0] = p[2]
+
+    def p_output_field_list(self, p):
+        '''output_field_list : IDENTIFIER_TOKEN ',' output_field_list
+                             | IDENTIFIER_TOKEN
         '''
         if len(p) == 4: p[0] = p[3]
         else: p[0] = []
@@ -284,14 +296,14 @@ class SealParser():
 
 
     def p_logical_statement(self, p):
-        ''' logical_statement : arithmetic_expression
+        ''' logical_statement : value
                | '(' condition ')'
-               | arithmetic_expression EQ_TOKEN arithmetic_expression
-               | arithmetic_expression NEQ_TOKEN arithmetic_expression
-               | arithmetic_expression '>' arithmetic_expression
-               | arithmetic_expression '<' arithmetic_expression
-               | arithmetic_expression GEQ_TOKEN arithmetic_expression
-               | arithmetic_expression LEQ_TOKEN arithmetic_expression
+               | value EQ_TOKEN value
+               | value NEQ_TOKEN value
+               | value '>' value
+               | value '<' value
+               | value GEQ_TOKEN value
+               | value LEQ_TOKEN value
         '''
         if len(p) == 2:
             p[0] = p[1]
@@ -299,28 +311,6 @@ class SealParser():
             p[0] = p[2] # TODO: will not be able to generate code correctly!
         else:
             p[0] = Expression(p[1], p[2], p[3])
-
-    def p_arithmetic_expression(self, p):
-        '''arithmetic_expression : arithmetic_expression '+' arithmetic_term
-                | arithmetic_expression '-' arithmetic_term
-                | arithmetic_term
-           arithmetic_term : arithmetic_term '*' arithmetic_factor
-                | arithmetic_term '/' arithmetic_factor
-                | arithmetic_factor
-        '''
-        if len(p) == 2:
-            p[0] = p[1]
-        else:
-            p[0] = Expression(p[1], p[2], p[3])
-
-    def p_arithmetic_factor(self, p):
-        '''arithmetic_factor : value
-                             | '(' arithmetic_expression ')'
-        '''
-        if len(p) == 2:
-            p[0] = p[1]
-        else:
-            p[1] = p[2] # TODO: will not be able to generate code correctly!
 
     def p_parameter_list(self, p):
         '''parameter_list : parameter_list ',' parameter
@@ -338,12 +328,6 @@ class SealParser():
                      | IDENTIFIER_TOKEN value
                      | PATTERN_TOKEN value
         '''
-#                     | FILTER_TOKEN filter_statement
-#        if p[1] in ['average', 'stdev', 'filter']:
-#            components.processFunctionsUsed[p[1]] = True
-# TODO?:
-#                     | WHEN_TOKEN condition
-# TODO JJ: also support this: "filter >100"
         if len(p) == 2:
             p[0] = (p[1], None)
         else:
@@ -407,24 +391,5 @@ class SealParser():
             self.printMsg("Syntax error at EOF\n")
 
     def errorMsg(self, p, msg, doSetError = True):
-        if doSetError:
-            self.isError = True
+        if doSetError: self.isError = True
         self.printMsg("Syntax error at line {0}: {1}\n".format(p.lineno(1), msg))
-
-### PROCESS
-
-#    def p_process_statement(self, p):
-#        '''process_statement : PROCESS_TOKEN IDENTIFIER_TOKEN IDENTIFIER_TOKEN parameter_list ';'
-#        '''
-#        p[0] = ProcessStatement(p[2], p[3], p[4])
-
-
-#    def p_filter_statement(self, p):
-#        ''' filter_statement : EQ_TOKEN arithmetic_expression
-#               | NEQ_TOKEN arithmetic_expression
-#               | '>' arithmetic_expression
-#               | '<' arithmetic_expression
-#               | GEQ_TOKEN arithmetic_expression
-#               | LEQ_TOKEN arithmetic_expression
-#        '''
-#        p[0] = Expression(None, p[1], p[2])
