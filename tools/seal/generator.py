@@ -3,6 +3,9 @@ import os
 
 SEPARATOR = "// -----------------------------\n"
 
+# a random 2-byte number
+SEAL_MAGIC = 0xABCD  # 43981
+
 def formatCondition(condition, isNew):
     if isNew:
         prefix = "new"
@@ -37,10 +40,14 @@ class Generator(object):
         self.outputFile.write("\n")
 
     def generateConstants(self):
+        self.outputFile.write("#ifndef SEAL_MAGIC\n")
+        self.outputFile.write("#define SEAL_MAGIC    0x{0:X}\n".format(SEAL_MAGIC))
+        self.outputFile.write("#endif\n\n")
+
         self.outputFile.write("#define NUM_CONDITIONS {0}\n".format(
                 components.conditionCollection.totalConditions()))
-        self.outputFile.write("#define DEFAULT_CONDITION 0\n")
-        self.outputFile.write("\n")
+        self.outputFile.write("#define DEFAULT_CONDITION 0\n\n")
+
         for c in self.components:
             c.generateConstants(self.outputFile)
             # self.outputFile.write("\n")

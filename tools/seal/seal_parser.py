@@ -175,7 +175,7 @@ class SealParser():
 
     def p_component_use_case(self, p):
         '''component_use_case : USE_TOKEN IDENTIFIER_TOKEN parameter_list ';'
-                              | READ_TOKEN IDENTIFIER_TOKEN parameter_list ';'
+                              | READ_TOKEN functional_expression parameter_list ';'
                               | OUTPUT_TOKEN IDENTIFIER_TOKEN output_fields parameter_list ';'
         '''
         # allow all, including unknown, components here (because of virtual components)
@@ -218,13 +218,13 @@ class SealParser():
 
     def p_functional_expression(self, p):
         '''functional_expression : IDENTIFIER_TOKEN '(' argument_list ')'
-                                 | IDENTIFIER_TOKEN
-                                 | integer_literal
+                                 | value
         '''
         if len(p) == 2:
-            # try to resolve constant
-            const = components.componentRegister.systemConstants.get(p[1], None)
-            if const: v = Value(const.value)
+            # hacks...
+            if type(p[1].value) is str: v = p[1].value
+            # XXX: for now just ignore structure.field syntax inside functions
+            elif type(p[1].value) is SealValue: v = p[1].value.firstPart
             else: v = p[1]
             p[0] = FunctionTree(v, [])
         else:
@@ -296,14 +296,14 @@ class SealParser():
 
 
     def p_logical_statement(self, p):
-        ''' logical_statement : value
+        ''' logical_statement : functional_expression
                | '(' condition ')'
-               | value EQ_TOKEN value
-               | value NEQ_TOKEN value
-               | value '>' value
-               | value '<' value
-               | value GEQ_TOKEN value
-               | value LEQ_TOKEN value
+               | functional_expression EQ_TOKEN functional_expression
+               | functional_expression NEQ_TOKEN functional_expression
+               | functional_expression '>' functional_expression
+               | functional_expression '<' functional_expression
+               | functional_expression GEQ_TOKEN functional_expression
+               | functional_expression LEQ_TOKEN functional_expression
         '''
         if len(p) == 2:
             p[0] = p[1]

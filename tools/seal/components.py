@@ -9,9 +9,6 @@ PACKET_FIELD_ID_CRC        = 3
 # first free packet field ID (not that ID 31, 63, 95, 127 etc. are reserved for extension)
 PACKET_FIELD_ID_FIRST_FREE = 4
 
-# a random 2-byte number
-SEAL_MAGIC = 0xabcd  # 43981
-
 ######################################################
 
 def generateSerialFunctions(intSizes, outputFile):
@@ -42,18 +39,20 @@ class BranchCollection(object):
         outputFile.write("{\n")
         for uc in useCases:
             uc.generateBranchEnterCode(outputFile)
-        outputFile.write("}\n")
-        outputFile.write("\n")
+        outputFile.write("}\n\n")
 
     def generateStopCode(self, b, outputFile):
         number = b[0]
         useCases = b[1]
         outputFile.write("void branch{0}Stop(void)\n".format(number))
         outputFile.write("{\n")
-        for uc in useCases:
-            uc.generateBranchExitCode(outputFile)
-        outputFile.write("}\n")
-        outputFile.write("\n")
+        # the default branch NEVER stops.
+        if number == 0:
+            outputFile.write("    // never executed\n")
+        else:
+            for uc in useCases:
+                uc.generateBranchExitCode(outputFile)
+        outputFile.write("}\n\n")
 
     # Returns list of numbers [N] of conditions that must be fullfilled to enter this branch
     # * number N > 0: condition N must be true
@@ -475,7 +474,7 @@ class Sensor(Component):
         super(Sensor, self).generateConstants(outputFile)
         if self.isUsed():
             outputFile.write("#define {0}_NO_VALUE    {1}\n".format(self.getNameUC(), self.getNoValue()))
-            outputFile.write("#define {0}_TYPE_ID     {1}\n".format(self.getNameUC(), (1 << self.systemwideID)))
+            outputFile.write("#define {0}_TYPE_ID     0x{1:x}\n".format(self.getNameUC(), (1 << self.systemwideID)))
 
     def isCacheNeeded(self, numCachedSensors):
         for uc in self.useCases:
@@ -694,7 +693,7 @@ class Sensor(Component):
         outputFile.write("{\n")
         # stdev = sqrt(squared_average - average_squared)
         outputFile.write("    static int32_t totalSum;\n")
-        # XXX: does not work correctly withou the volatile - compiler bug?
+        # XXX: does not work correctly without the volatile - compiler bug?
         outputFile.write("    static volatile uint64_t totalSquaredSum;\n")
         outputFile.write("    static uint16_t totalCount;\n")
         outputFile.write("    bool b = false, *isFilteredOut = &b;\n")
@@ -841,23 +840,28 @@ class Sensor(Component):
         outputFile.write("        valuesCursor = (valuesCursor + 1) % {};\n".format(numToTake))
         outputFile.write("    }\n")
         outputFile.write("    {} value;\n".format(self.getDataType()))
+        # MINIMUM
         if aggregateFunction == "min":
             outputFile.write("    value = {};\n".format(self.getMaxValue()))
             outputFile.write("    int i; for (i = 0; i < {}; ++i)\n".format(numToTake))
             outputFile.write("        if (values[i] < value) value = values[i];\n")
+        # MAXIMUM
         elif aggregateFunction == "max":
             outputFile.write("    value = {};\n".format(self.getMinValue()))
             outputFile.write("    int i; for (i = 0; i < {}; ++i)\n".format(numToTake))
             outputFile.write("        if (values[i] > value) value = values[i];\n")
+        # SUM
         elif aggregateFunction == "sum":
             outputFile.write("    value = 0;\n")
             outputFile.write("    int i; for (i = 0; i < {}; ++i)\n".format(numToTake))
             outputFile.write("        value += values[i];\n")
+        # AVERAGE
         elif aggregateFunction == "avg":
             outputFile.write("    value = 0;\n")
             outputFile.write("    int i; for (i = 0; i < {}; ++i)\n".format(numToTake))
             outputFile.write("        value += values[i];\n")
             outputFile.write("    value /= {};\n".format(numToTake))
+        # STANDARD DEVIATION
         elif aggregateFunction == "stdev":
             outputFile.write("    int32_t avg = 0;\n")
             outputFile.write("    int i; for (i = 0; i < {}; ++i)\n".format(numToTake))
@@ -867,6 +871,7 @@ class Sensor(Component):
             outputFile.write("    for (i = 0; i < {}; ++i)\n".format(numToTake))
             outputFile.write("        value += abs(values[i] - avg);\n")
             outputFile.write("    value /= {};\n".format(numToTake))
+        # OTHER
         else:
             componentRegister.userError("take(): unknown aggregate function {}()!\n".format(aggregateFunction));
         outputFile.write("    return value;\n")
@@ -1140,7 +1145,7 @@ class Output(Component):
         outputFile.write("static inline void {0}PacketSend(void)\n".format(self.getNameCC()))
         outputFile.write("{\n")
 
-        outputFile.write("    {0}Packet.magic = {1:x};\n".format(self.getNameCC(), SEAL_MAGIC))
+        outputFile.write("    {0}Packet.magic = SEAL_MAGIC;\n".format(self.getNameCC()))
 
         for i in range(len(self.headerMasks)):
             outputFile.write("    {0}Packet.typeMask{1} = 0x{2:x};\n".format(
@@ -1375,11 +1380,6 @@ class ComponentRegister(object):
         assert not c.isError
         assert c.base
 
-#        if len(c.bases) > 1:
-#            base = self.nullSensor
-#        else:
-#            base = c.bases[0]
-
         if type(c.base) is Sensor:
             s = self.sensors[c.name] = Sensor(c.name, c.base.specification)
         elif type(c.base) is Actuator:
@@ -1389,10 +1389,6 @@ class ComponentRegister(object):
 
         s.parameters.update(c.parameterDictionary)
         s.functionTree = c.functionTree
-#        s.base = c.base
-
-#        for b in c.bases:
-#            s.baseComponents.append(b)
 
     #######################################################################
     def useComponent(self, keyword, name, parameters, fields, conditions, branchNumber):
