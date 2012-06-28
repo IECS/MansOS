@@ -71,6 +71,16 @@
 //
 #define timeAfter16(a, b) ((int16_t) ((b) - (a)) < 0)
 #define timeAfter32(a, b) ((int32_t) ((b) - (a)) < 0)
+#define timeAfter64(a, b) ((int64_t) ((b) - (a)) < 0)
+
+// define jiffies type
+#ifdef USE_LONG_LIFETIME
+typedef uint64_t time_t;
+#define timeAfter(a, b) timeAfter64(a, b)
+#else
+typedef uint32_t time_t;
+#define timeAfter(a, b) timeAfter32(a, b)
+#endif
 
 //
 // Alignment check and ops: work for powers of 2

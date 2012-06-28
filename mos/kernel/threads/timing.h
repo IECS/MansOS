@@ -26,22 +26,22 @@
 
 #include <kernel/defines.h>
 
-extern volatile uint32_t jiffies;
+extern volatile time_t jiffies;
 
-static inline uint32_t getJiffies(void) INLINE;
-static inline uint32_t getJiffies(void)
+static inline time_t getJiffies(void) INLINE;
+static inline time_t getJiffies(void)
 {
     return jiffies;
 }
 
-static inline uint32_t jiffies2ms(uint32_t jiffies) INLINE;
-static inline uint32_t jiffies2ms(uint32_t jiffies)
+static inline time_t jiffies2ms(time_t jiffies) INLINE;
+static inline time_t jiffies2ms(time_t jiffies)
 {
     return jiffies;
 }
 
-static inline uint32_t ms2jiffies(uint32_t ms) INLINE;
-static inline uint32_t ms2jiffies(uint32_t ms)
+static inline time_t ms2jiffies(time_t ms) INLINE;
+static inline time_t ms2jiffies(time_t ms)
 {
     return ms;
 }
@@ -49,12 +49,13 @@ static inline uint32_t ms2jiffies(uint32_t ms)
 //
 // For backwards compatibility
 //
-static inline uint32_t getRealTime(void) {
+static inline time_t getRealTime(void) {
     return jiffies2ms(jiffies);
 }
 
 //
 // Get seconds elapsed since system start
+// 32-bit value is OK: ~136 year system lifetime sounds long enough ;)
 //
 static inline uint32_t getUptime(void) {
     return jiffies2ms(jiffies) / 1000;

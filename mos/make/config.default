@@ -72,6 +72,10 @@ USE_THREADS ?= n
 # execute from RAM, not from flash?
 USE_RAM_EXECUTION ?= n
 
+# run this code on long-living systems? affects time value wraparound,
+# e.g. by default timestamps will repeat after ~40 days.
+USE_LONG_LIFETIME ?= n
+
 #TODO:
 #USE_PRINT_SERIAL ?= y
 #USE_PRINT_RADIO ?= y

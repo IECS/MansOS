@@ -49,8 +49,8 @@ static inline void scheduleProcessAlarms(uint32_t now)
 {
     // if there are no alarms, return
     if (SLIST_EMPTY(&alarmListHead)) return;
-    // take the fist alarm and compare its time with the current time
-    if (timeAfter32(SLIST_FIRST(&alarmListHead)->jiffies, now) == false) {
+    // take the first alarm and compare its time with the current time
+    if (timeAfter(SLIST_FIRST(&alarmListHead)->jiffies, now) == false) {
         processFlags.bits.alarmsProcess = true;
     }
 }
@@ -65,11 +65,12 @@ static inline uint32_t getNextAlarmTime(void)
 #else // not using threads
 
 // called from interrupt context
-static inline bool hasAnyReadyAlarms(uint32_t now) {
+static inline bool hasAnyReadyAlarms(uint32_t now)
+{
     // if there are no alarms, return false
     if (SLIST_EMPTY(&alarmListHead)) return false;
     // take the fist alarm and compare its time with the current time
-    return !timeAfter32(SLIST_FIRST(&alarmListHead)->jiffies, now);
+    return !timeAfter(SLIST_FIRST(&alarmListHead)->jiffies, now);
 }
 
 #endif // USE_THREADS

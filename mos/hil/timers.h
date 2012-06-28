@@ -28,7 +28,7 @@
 #include <kernel/threads/timing.h>
 #include <hil/atomic.h>
 
-extern volatile uint32_t jiffies;
+extern volatile time_t jiffies;
 
 // used when waking up from sleep during which the realtime
 // counter was not incremented
