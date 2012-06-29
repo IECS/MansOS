@@ -5,9 +5,8 @@ from structures import *
 PACKET_FIELD_ID_COMMAND    = 0
 PACKET_FIELD_ID_TIMESTAMP  = 1
 PACKET_FIELD_ID_ADDRESS    = 2
-PACKET_FIELD_ID_CRC        = 3
-# first free packet field ID (not that ID 31, 63, 95, 127 etc. are reserved for extension)
-PACKET_FIELD_ID_FIRST_FREE = 4
+# first free packet field ID (note that ID 31, 63, 95, 127 etc. are reserved for extension)
+PACKET_FIELD_ID_FIRST_FREE = 3
 
 ######################################################
 
@@ -131,7 +130,10 @@ class UseCase(object):
         if (self.pattern and self.once):
             componentRegister.userError("Both 'once' and 'pattern' specified for component '{0}' use case\n".format(component.name))
 
-        self.generateAlarm = self.once or self.pattern or self.period
+        if component.isRemote:
+            self.generateAlarm = False
+        else:
+            self.generateAlarm = self.once or self.pattern or self.period
 
         if branchNumber != 0:
             self.branchName = "Branch{0}".format(branchNumber)
@@ -194,8 +196,17 @@ class UseCase(object):
 
         useFunction = self.component.getDependentParameterValue("useFunction", self.parameters)
 
-        if self.generateAlarm:
-            outputFile.write("void {0}{1}Callback(void *__unused)\n".format(ccname, self.numInBranch))
+#            outputFile.write("void {0}{1}Callback(uint32_t value)\n".format(ccname, self.numInBranch))
+#            outputFile.write("{\n")
+#            if type(self.component) is Sensor:
+#                pass
+#            outputFile.write("}\n\n")
+
+        if self.generateAlarm or self.component.isRemote:
+            if self.generateAlarm: argumentType = "void *" 
+            else: argumentType = "uint32_t"
+            outputFile.write("void {0}{1}Callback({2} __unused)\n".format(
+                    ccname, self.numInBranch, argumentType))
             outputFile.write("{\n")
             if type(self.component) is Actuator:
                 if self.component.name.lower() == "print":
@@ -275,7 +286,10 @@ class UseCase(object):
         ccname += self.branchName
         if self.generateAlarm:
             outputFile.write("    alarmInit(&{0}Alarm{1}, {0}{1}Callback, NULL);\n".format(
-                    ccname, self.numInBranch))
+                   ccname, self.numInBranch))
+        elif self.component.isRemote:
+            outputFile.write("    sealCommRegisterInterest({}, {}{}Callback);\n".format(
+                    self.component.systemwideID, self.component.getNameCC(), self.numInBranch))
 
     def generateBranchEnterCode(self, outputFile):
         if type(self.component) is not Output and self.generateAlarm:
@@ -312,6 +326,7 @@ class Component(object):
         self.specification = specification
 #        self.baseComponents = []
         self.functionTree = None
+        self.isRemote = False
 
     def markAsUsed(self):
         self.markedAsUsed = True
@@ -390,7 +405,6 @@ class Component(object):
         if type(self) is Output:
             return
         if type(self) is Sensor:
-#            print "generateCallbacks for ", self.name 
 #            print self.specification.readFunctionDependsOnParams
 #            print self.useCases
 #            print self.usedForConditions
@@ -407,6 +421,9 @@ class Component(object):
     def generateAppMainCode(self, outputFile):
         for uc in self.useCases:
             uc.generateAppMainCode(outputFile)
+        if self.isRemote:
+            outputFile.write("    sealCommRegisterInterest({}, {}Callback);\n".format(
+                    self.component.systemwideID, self.component.getNameCC()))
 
     def getConfig(self, outputFile):
         if self.isUsed():
@@ -440,10 +457,23 @@ class Sensor(Component):
         else:
             self.minUpdatePeriod = self.specification.minUpdatePeriod
         self.cacheNeeded = False
+        cnParam = self.getParameterValue("cache")
+        if cnParam is not None:
+            self.cacheNeeded = cnParam
         self.cacheNumber = 0
         self.readFunctionNum = 0
         self.generatedDefaultReadFunction = False
-        self.systemwideID = componentRegister.allocateSensorId()
+        if name.lower() == "command":
+            self.systemwideID = PACKET_FIELD_ID_COMMAND
+        else:
+            self.systemwideID = componentRegister.allocateSensorId()
+
+    def updateParameters(self, dictionary):
+        for p in dictionary.iteritems():
+            self.parameters[p[0]] = p[1].value
+        cnParam = self.getParameterValue("cache")
+        if cnParam is not None:
+            self.cacheNeeded = cnParam
 
     def getDataSize(self):
 #        size = self.getParameterValue("dataSize")
@@ -477,6 +507,7 @@ class Sensor(Component):
             outputFile.write("#define {0}_TYPE_ID     0x{1:x}\n".format(self.getNameUC(), (1 << self.systemwideID)))
 
     def isCacheNeeded(self, numCachedSensors):
+        if self.cacheNeeded: return True
         for uc in self.useCases:
             if uc.period is not None and uc.period < self.minUpdatePeriod:
                 self.cacheNeeded = True
@@ -499,9 +530,17 @@ class Sensor(Component):
     # Start of reading and processing function generation
     #########################################################################
 
-    def getRawReadFunction(self, suffix):
+    def getRawReadFunction(self, suffix, root):
+        if self.isRemote:
+            # remote sensors require specialHandling
+            return "sealCommReadValue({})".format(self.systemwideID)
+
         rawReadFunc = "{}ReadRaw{}()".format(self.getNameCC(), suffix)
-        if len(suffix) == 0 and self.cacheNeeded:
+#        if len(suffix) == 0 and self.cacheNeeded:
+        cacheNeeded = False
+        if self.cacheNeeded: cacheNeeded = True
+        if root and root.cacheNeeded: cacheNeeded = True
+        if cacheNeeded:
             dataFormat = str(self.getDataSize() * 8)
             return "cacheReadSensorU{0}({1}, &{2}, {3})".format(
                 dataFormat, self.cacheNumber, rawReadFunc, self.minUpdatePeriod)
@@ -512,10 +551,11 @@ class Sensor(Component):
         self.readFunctionNum += 1
         return self.getNameCC() + "Read" + toTitleCase(fun) + readFunctionSuffix
 
-    def generateAbsFunction(self, outputFile, functionTree):
+    def generateAbsFunction(self, outputFile, functionTree, root):
         if not functionTree.checkArgs(1, componentRegister):
             return ""
-        subReadFunction = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[0])
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
 
         funName = self.getGeneratedFunctionName("abs")
         outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
@@ -525,10 +565,11 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateNegFunction(self, outputFile, functionTree):
+    def generateNegFunction(self, outputFile, functionTree, root):
         if not functionTree.checkArgs(1, componentRegister):
             return ""
-        subReadFunction = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[0])
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
 
         funName = self.getGeneratedFunctionName("neg")
         outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
@@ -538,10 +579,11 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateMapFunction(self, outputFile, functionTree):
+    def generateMapFunction(self, outputFile, functionTree, root):
         if not functionTree.checkArgs(5, componentRegister):
             return ""
-        subReadFunction = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[0])
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
 
         funName = self.getGeneratedFunctionName("map")
         outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
@@ -553,8 +595,9 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateUnaryMinFunction(self, outputFile, functionTree):
-        subReadFunction = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[0])
+    def generateUnaryMinFunction(self, outputFile, functionTree, root):
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
 
         funName = self.getGeneratedFunctionName("min")
         outputFile.write("static inline {0} {1}(bool *__unused)\n".format(self.getDataType(), funName))
@@ -569,8 +612,9 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateUnaryMaxFunction(self, outputFile, functionTree):
-        subReadFunction = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[0])
+    def generateUnaryMaxFunction(self, outputFile, functionTree, root):
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root, root)
 
         funName = self.getGeneratedFunctionName("min")
         outputFile.write("static inline {0} {1}(bool *__unused)\n".format(self.getDataType(), funName))
@@ -585,10 +629,11 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateNaryMinFunction(self, outputFile, functionTree):
+    def generateNaryMinFunction(self, outputFile, functionTree, root):
         subReadFunctions = []
         for a in functionTree.arguments:
-            subReadFunctions.append(self.generateSubReadFunctions(outputFile, None, a))
+            subReadFunctions.append(self.generateSubReadFunctions(
+                    outputFile, None, a, root))
 
         funName = self.getGeneratedFunctionName("min")
         outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
@@ -600,10 +645,11 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateNaryMaxFunction(self, outputFile, functionTree):
+    def generateNaryMaxFunction(self, outputFile, functionTree, root):
         subReadFunctions = []
         for a in functionTree.arguments:
-            subReadFunctions.append(self.generateSubReadFunctions(outputFile, None, a))
+            subReadFunctions.append(self.generateSubReadFunctions(
+                    outputFile, None, a, root))
         funName = self.getGeneratedFunctionName("max")
         outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
         outputFile.write("{\n")
@@ -614,24 +660,25 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateMinFunction(self, outputFile, functionTree):
+    def generateMinFunction(self, outputFile, functionTree, root):
         if len(functionTree.arguments) == 1:
             if functionTree.arguments[0].function == "take":
                 return self.generateTakeFunction(outputFile, functionTree.arguments[0], "min")
-            return self.generateUnaryMinFunction(outputFile, functionTree)
-        return self.generateNaryMinFunction(outputFile, functionTree)
+            return self.generateUnaryMinFunction(outputFile, functionTree, root)
+        return self.generateNaryMinFunction(outputFile, functionTree, root)
 
-    def generateMaxFunction(self, outputFile, functionTree):
+    def generateMaxFunction(self, outputFile, functionTree, root):
         if len(functionTree.arguments) == 1:
-            return self.generateUnaryMaxFunction(outputFile, functionTree)
+            return self.generateUnaryMaxFunction(outputFile, functionTree, root)
             if functionTree.arguments[0].function == "take":
                 return self.generateTakeFunction(outputFile, functionTree.arguments[0], "min")
-        return self.generateNaryMaxFunction(outputFile, functionTree)
+        return self.generateNaryMaxFunction(outputFile, functionTree, root)
 
-    def generateSquareFunction(self, outputFile, functionTree):
+    def generateSquareFunction(self, outputFile, functionTree, root):
         if not functionTree.checkArgs(1, componentRegister):
             return ""
-        subReadFunction = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[0])
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
 
         funName = self.getGeneratedFunctionName("square")
         outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
@@ -641,10 +688,11 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateSqrtFunction(self, outputFile, functionTree):
+    def generateSqrtFunction(self, outputFile, functionTree, root):
         if not functionTree.checkArgs(1, componentRegister):
             return ""
-        subReadFunction = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[0])
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
 
         componentRegister.additionalConfig.add("algo")
 
@@ -657,12 +705,13 @@ class Sensor(Component):
         return funName + "(isFilteredOut)"
     
 
-    def generateAvgFunction(self, outputFile, functionTree):
+    def generateAvgFunction(self, outputFile, functionTree, root):
         if not functionTree.checkArgs(1, componentRegister):
             return ""
         if functionTree.arguments[0].function == "take":
             return self.generateTakeFunction(outputFile, functionTree.arguments[0], "avg")
-        subReadFunction = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[0])
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
 
         funName = self.getGeneratedFunctionName("avg")
         outputFile.write("static inline {0} {1}(bool *__unused)\n".format(self.getDataType(), funName))
@@ -679,12 +728,13 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateStdevFunction(self, outputFile, functionTree):
+    def generateStdevFunction(self, outputFile, functionTree, root):
         if not functionTree.checkArgs(1, componentRegister):
             return ""
         if functionTree.arguments[0].function == "take":
             return self.generateTakeFunction(outputFile, functionTree.arguments[0], "stdev")
-        subReadFunction = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[0])
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
 
         componentRegister.additionalConfig.add("algo")
 
@@ -709,12 +759,13 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateSumFunction(self, outputFile, functionTree):
+    def generateSumFunction(self, outputFile, functionTree, root):
         if len(functionTree.arguments) == 1 and functionTree.arguments[0].function == "take":
             return self.generateTakeFunction(outputFile, functionTree.arguments[0], "sum")
         subReadFunctions = []
         for a in functionTree.arguments:
-            subReadFunctions.append(self.generateSubReadFunctions(outputFile, None, a))
+            subReadFunctions.append(self.generateSubReadFunctions(
+                    outputFile, None, a, root))
 
         funName = self.getGeneratedFunctionName("sum")
         outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
@@ -726,12 +777,14 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateArithmeticFunction(self, outputFile, functionTree, op):
+    def generateArithmeticFunction(self, outputFile, functionTree, op, root):
         if not functionTree.checkArgs(2, componentRegister):
             return ""
 
-        subReadFunction1 = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[0])
-        subReadFunction2 = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[1])
+        subReadFunction1 = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
+        subReadFunction2 = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[1], root)
 
         funName = self.getGeneratedFunctionName(functionTree.function)
         outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
@@ -742,7 +795,7 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generatePowerFunction(self, outputFile, functionTree):
+    def generatePowerFunction(self, outputFile, functionTree, root):
         if not functionTree.checkArgs(2, componentRegister):
             return ""
 
@@ -751,7 +804,8 @@ class Sensor(Component):
             componentRegister.userError("Second argument of power() function is expected to be a constant!\n")
             return ""
 
-        subReadFunction = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[0])
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
 
         funName = self.getGeneratedFunctionName("power")
         outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
@@ -764,11 +818,12 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateFilterRangeFunction(self, outputFile, functionTree, op):
+    def generateFilterRangeFunction(self, outputFile, functionTree, op, root):
         if not functionTree.checkArgs(3, componentRegister):
             return ""
 
-        subReadFunction = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[0])
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
 
         thresholdMin = functionTree.arguments[1].asConstant()
         thresholdMax = functionTree.arguments[2].asConstant()
@@ -787,13 +842,14 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateFilterFunction(self, outputFile, functionTree):
+    def generateFilterFunction(self, outputFile, functionTree, root):
         if not functionTree.checkArgs(2, componentRegister):
             return ""
 
         kind = functionTree.function[6:]
 
-        subReadFunction = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[0])
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
         threshold = functionTree.arguments[1].asConstant()
         if threshold is None:
             componentRegister.userError("Second argument of {}() function is expected to be a constant!\n".format(
@@ -822,7 +878,8 @@ class Sensor(Component):
     def generateTakeFunction(self, outputFile, functionTree, aggregateFunction):
         if not functionTree.checkArgs(2, componentRegister):
             return ""
-        subReadFunction = self.generateSubReadFunctions(outputFile, None, functionTree.arguments[0])
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], None)
         numToTake = functionTree.arguments[1].asConstant()
         if numToTake is None:
             componentRegister.userError("Second argument of take() function is expected to be a constant!\n")
@@ -878,7 +935,7 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateSubReadFunctions(self, outputFile, useCase, functionTree):
+    def generateSubReadFunctions(self, outputFile, useCase, functionTree, root):
         if functionTree is None:
             # a physical sensor; generate just raw read function
 
@@ -910,7 +967,7 @@ class Sensor(Component):
             if useCase is None: self.generatedDefaultReadFunction = True
 
             # return either this, just generated function or cacheRead()
-            return self.getRawReadFunction(readFunctionSuffix)
+            return self.getRawReadFunction(readFunctionSuffix, root)
 
         # if this is a sensor name with no arguments, find the sensor and recurse
         if len(functionTree.arguments) == 0:
@@ -922,45 +979,45 @@ class Sensor(Component):
                 sensor = componentRegister.findComponentByName(functionTree.function)
                 assert sensor
                 assert type(sensor) is Sensor
-                return sensor.generateSubReadFunctions(outputFile, useCase, None)
+                return sensor.generateSubReadFunctions(outputFile, useCase, None, root)
 
         # run through the tree and generate all needed
         if functionTree.function == "abs":
-            return self.generateAbsFunction(outputFile, functionTree)
+            return self.generateAbsFunction(outputFile, functionTree, root)
         if functionTree.function == "neg":
-            return self.generateNegFunction(outputFile, functionTree)
+            return self.generateNegFunction(outputFile, functionTree, root)
         if functionTree.function == "map":
-            return self.generateMapFunction(outputFile, functionTree)
+            return self.generateMapFunction(outputFile, functionTree, root)
         if functionTree.function == "min":
-            return self.generateMinFunction(outputFile, functionTree)
+            return self.generateMinFunction(outputFile, functionTree, root)
         if functionTree.function == "max":
-            return self.generateMaxFunction(outputFile, functionTree)
+            return self.generateMaxFunction(outputFile, functionTree, root)
         if functionTree.function == "square":
-            return self.generateSquareFunction(outputFile, functionTree)
+            return self.generateSquareFunction(outputFile, functionTree, root)
         if functionTree.function == "sqrt":
-            return self.generateSqrtFunction(outputFile, functionTree)
+            return self.generateSqrtFunction(outputFile, functionTree, root)
         if functionTree.function == "avg":
-            return self.generateAvgFunction(outputFile, functionTree)
+            return self.generateAvgFunction(outputFile, functionTree, root)
         if functionTree.function == "stdev":
-            return self.generateStdevFunction(outputFile, functionTree)
+            return self.generateStdevFunction(outputFile, functionTree, root)
         if functionTree.function == "sum":
-            return self.generateSumFunction(outputFile, functionTree)
+            return self.generateSumFunction(outputFile, functionTree, root)
         if functionTree.function == "minus":
-            return self.generateArithmeticFunction(outputFile, functionTree, '-')
+            return self.generateArithmeticFunction(outputFile, functionTree, '-', root)
         if functionTree.function == "multiply":
-            return self.generateArithmeticFunction(outputFile, functionTree, '*')
+            return self.generateArithmeticFunction(outputFile, functionTree, '*', root)
         if functionTree.function == "divide":
-            return self.generateArithmeticFunction(outputFile, functionTree, '/')
+            return self.generateArithmeticFunction(outputFile, functionTree, '/', root)
         if functionTree.function == "modulo":
-            return self.generateArithmeticFunction(outputFile, functionTree, '%')
+            return self.generateArithmeticFunction(outputFile, functionTree, '%', root)
         if functionTree.function == "power":
-            return self.generatePowerFunction(outputFile, functionTree)
+            return self.generatePowerFunction(outputFile, functionTree, root)
         if functionTree.function == "filterRange":
-            return self.generateFilterRangeFunction(outputFile, functionTree)
+            return self.generateFilterRangeFunction(outputFile, functionTree, root)
         if functionTree.function[:6] == "filter":
-            return self.generateFilterFunction(outputFile, functionTree)
+            return self.generateFilterFunction(outputFile, functionTree, root)
         if functionTree.function == "synch":
-            return self.generateSynchFunction(outputFile, functionTree)
+            return self.generateSynchFunction(outputFile, functionTree, root)
         if functionTree.function == "take":        
             componentRegister.userError("take() function can be used only as an argument to one of the following:\n" +
                       "    min(), max(), sum(), avg(), stdev()!\n")
@@ -982,7 +1039,7 @@ class Sensor(Component):
         if self.generatedDefaultReadFunction: return
 
         subReadFunction = self.generateSubReadFunctions(
-            outputFile, useCase, self.functionTree)
+            outputFile, useCase, self.functionTree, self)
 
         # generate reading and processing function
         outputFile.write("static inline {0} {1}ReadProcess{2}(bool *isFilteredOut)\n".format(
@@ -996,8 +1053,10 @@ class PacketField(object):
     def __init__(self, sensorID, sensorName, dataSize, dataType, isRealSensor=True):
         self.sensorID = sensorID
         self.sensorName = sensorName
-        self.dataSize = dataSize
-        self.dataType = dataType
+        # always use 4 bytes, because decoding otherwise is too messy
+        # (could and should be optimized if the need arises...)
+        self.dataSize = 4
+        self.dataType = "uint32_t"
         self.isRealSensor = isRealSensor
 
 class Output(Component):
@@ -1036,9 +1095,7 @@ class Output(Component):
                 continue
             if self.useOnlyFields:
                 # check if this field is used
-                print "check if field is used: ", s.name.lower()
                 if s.name.lower() not in self.useOnlyFields:
-                    print "not!"
                     continue
             self.packetFields.append(PacketField(s.systemwideID, s.getNameCC(), s.getDataSize(), s.getDataType()))
             self.numSensorFields += 1
@@ -1070,21 +1127,23 @@ class Output(Component):
         outputFile.write("    uint16_t magic;\n")  # 2-byte magic number
         outputFile.write("    uint16_t crc;\n")    # 2-byte crc (always)
         # type masks
-        largestSensorID = 31
         headerField = 0
+        numField = 1
         for f in self.packetFields:
-            if f.sensorID > largestSensorID:
-                headerField |= (1 << largestSensorID)
-                outputFile.write("    uint32_t typeMask{};\n".format((largestSensorID + 1) / 32))
+            if f.sensorID >= numField * 32:
+                headerField |= 1 << 31
+                outputFile.write("    uint32_t typeMask{};\n".format(numField))
                 self.headerMasks.append(headerField)
                 headerField = 0
-                largestSensorID += 32
-            headerField |= (1 << f.sensorID)
+                numField += 1
+            bit = f.sensorID
+            bit -= 32 * (numField - 1)
+            headerField |= (1 << bit)
         if headerField:
-            outputFile.write("    uint32_t typeMask{};\n".format((largestSensorID + 1) / 32))
+            outputFile.write("    uint32_t typeMask{};\n".format(numField))
             self.headerMasks.append(headerField)
 
-        # generate the body of the packet
+        # --- generate the body of the packet
         reservedNum = 0
         packetLen = 0
         for f in self.packetFields:
@@ -1097,9 +1156,9 @@ class Output(Component):
             outputFile.write("    {} {};\n".format(f.dataType, f.sensorName))
             packetLen += f.dataSize
 
-        # finish the packet
+        # --- finish the packet
         outputFile.write("} PACKED;\n\n")
-        # and add a typedef
+        # add a typedef
         outputFile.write("typedef struct {0}Packet_s {0}Packet_t;\n\n".format(self.getNameTC()))
 
 
@@ -1132,33 +1191,26 @@ class Output(Component):
 
         outputFile.write("static inline void {0}PacketInit(void)\n".format(self.getNameCC()))
         outputFile.write("{\n")
-
         outputFile.write("    {0}PacketNumFieldsFull = 0;\n".format(self.getNameCC()))
-
         for f in self.packetFields:
             if f.isRealSensor:
                 outputFile.write("    {0}Packet.{1} = {2}_NO_VALUE;\n".format(
                         self.getNameCC(), f.sensorName, f.sensorName.upper()))
-
         outputFile.write("}\n\n")
 
         outputFile.write("static inline void {0}PacketSend(void)\n".format(self.getNameCC()))
         outputFile.write("{\n")
-
         outputFile.write("    {0}Packet.magic = SEAL_MAGIC;\n".format(self.getNameCC()))
-
         for i in range(len(self.headerMasks)):
             outputFile.write("    {0}Packet.typeMask{1} = 0x{2:x};\n".format(
                     self.getNameCC(), i + 1, self.headerMasks[i]))
-
         if self.getParameterValue("timestamp"):
             outputFile.write("    {0}Packet.timestamp = getUptime();\n".format(self.getNameCC()))
-
         if self.getParameterValue("address"):
             outputFile.write("    {0}Packet.address = localAddress;\n".format(self.getNameCC()))
             componentRegister.additionalConfig.add("addressing")
-
-        outputFile.write("    {0}Packet.crc = crc16((const uint8_t *) &{0}Packet + 4, sizeof({0}Packet) - 4);\n".format(
+        if True:
+            outputFile.write("    {0}Packet.crc = crc16((const uint8_t *) &{0}Packet + 4, sizeof({0}Packet) - 4);\n".format(
                     self.getNameCC()))
 
         useFunction = self.getParameterValue("useFunction")
@@ -1231,6 +1283,22 @@ class StateUseCase(object):
 class ComponentRegister(object):
     module = None
 
+    def addComponent(self, name, spec):
+        s = None
+        if spec.typeCode == self.module.TYPE_ACTUATOR:
+            if name in self.actuators:
+                return None
+            s = self.actuators[name] = Actuator(name, spec)
+        elif spec.typeCode == self.module.TYPE_SENSOR:
+            if name in self.sensors:
+                return None
+            s = self.sensors[name] = Sensor(name, spec)
+        elif spec.typeCode == self.module.TYPE_OUTPUT:
+            if name in self.outputs:
+                return None
+            s = self.outputs[name] = Output(name, spec)
+        return s
+
     # load all components for this platform from a file
     def load(self, architecture):
         # reset components
@@ -1249,28 +1317,12 @@ class ComponentRegister(object):
         self.architecture = architecture
         # import the module (residing in "components" directory and named "<architecture>.py")
         self.module = __import__(architecture)
-        self.nextFreeSensorId = PACKET_FIELD_ID_FIRST_FREE
+        self.nextFreeSensorID = PACKET_FIELD_ID_FIRST_FREE
         # construct empty components from descriptions
         for spec in self.module.components:
-            isDuplicate = False
-            name = spec.name.lower()
-            # print "load", name
-            if spec.typeCode == self.module.TYPE_ACTUATOR:
-                if name in self.actuators:
-                    isDuplicate = True
-                else:
-                    self.actuators[name] = Actuator(name, spec)
-            elif spec.typeCode == self.module.TYPE_SENSOR:
-                if name in self.sensors:
-                    isDuplicate = True
-                else:
-                    self.sensors[name] = Sensor(name, spec)
-            elif spec.typeCode == self.module.TYPE_OUTPUT:
-                if name in self.outputs:
-                    isDuplicate = True
-                else:
-                    self.outputs[name] = Output(name, spec)
-            if isDuplicate:
+            # print "load", spec.name
+            c = self.addComponent(spec.name.lower(), spec)
+            if not c:
                 componentRegister.userError("Component '{0}' duplicated for platform '{1}', ignoring\n".format(
                         spec.name, architecture))
 
@@ -1298,11 +1350,11 @@ class ComponentRegister(object):
         return bool(self.findComponentByKeyword(keyword.lower(), name.lower()))
 
     def allocateSensorId(self):
-        result = self.nextFreeSensorId
-        self.nextFreeSensorId += 1
+        result = self.nextFreeSensorID
+        self.nextFreeSensorID += 1
         # values 31, 63, 95, 127 are reserved
-        if ((self.nextFreeSensorId + 1) & 31) == 0:
-            self.nextFreeSensorId += 1
+        if ((self.nextFreeSensorID + 1) & 31) == 0:
+            self.nextFreeSensorID += 1
         return result
 
     #######################################################################
@@ -1380,29 +1432,48 @@ class ComponentRegister(object):
         assert not c.isError
         assert c.base
 
-        if type(c.base) is Sensor:
-            s = self.sensors[c.name] = Sensor(c.name, c.base.specification)
-        elif type(c.base) is Actuator:
-            s = self.actuators[c.name] = Actuator(c.name, c.base.specification)
-        elif type(c.base) is Output:
-            s = self.outputs[c.name] = Output(c.name, c.base.specification)
+        s = self.addComponent(c.name, c.base.specification)
+        if not s:
+            componentRegister.userError("Virtual component '{0}' duplicated, ignoring\n".format(
+                    c.name))
+            return
 
-        s.parameters.update(c.parameterDictionary)
+        s.updateParameters(c.parameterDictionary)
         s.functionTree = c.functionTree
 
     #######################################################################
-    def useComponent(self, keyword, name, parameters, fields, conditions, branchNumber):
-        o = self.findComponentByKeyword(keyword.lower(), name.lower())
-        # IDE works with unfinished statements, this assert eliminates them.
-        if o is None:
-            self.userError("Component '{0}' not known or not supported for architecture '{1}'\n".format(
+    def addRemote(self, name):
+        print "addRemote", name
+        base = self.sensors.get(name[6:], None)
+        if base is None:
+            self.userError("Remote component '{0}' has no base sensor component for architecture '{1}'\n".format(
                     name, self.architecture))
-            return
+            return None
+        o = self.addComponent(name, base.specification)
+        o.isRemote = True
+        componentRegister.additionalConfig.add("seal_comm")
+        return o
+
+    def useComponent(self, keyword, name, parameters, fields, conditions, branchNumber):
+        # find the component
+        o = self.findComponentByKeyword(keyword, name)
+        if o is None:
+            # check if this is a remote component
+            if name[:6] == "remote":
+                o = self.addRemote(name)
+                if o == None: return
+            # not a remote, treat as error.
+            else:
+                self.userError("Component '{0}' not known or not supported for architecture '{1}'\n".format(
+                        name, self.architecture))
+                return
+        # check if it can be used
         if type(o) is Output:
             if len(o.useCases):
                 self.userError("Output component '{0}': can be used just once in whole program!\n".format(name))
                 return
             o.setFields(fields)
+        # add use case to the component
         o.addUseCase(parameters, conditions, branchNumber)
 
     def setState(self, name, value, conditions, branchNumber):
@@ -1448,14 +1519,28 @@ class ComponentRegister(object):
             if s.isCacheNeeded(self.numCachedSensors):
                 self.numCachedSensors += 1
 
-    def replaceCode(self, componentName, parameterName):
+    def replaceCode(self, componentName, parameterName, condition):
+        print "component: ", componentName
+        if type(componentName) is Value:
+            return componentName.getCode()
+
         c = self.findComponentByName(componentName)
 #        if c == None:
 #            c = self.process.get(componentName, None)
 #            if c != None:
 #                if parameterName == 'value':
 #                    return c.name
+
+        # here
+
+#        print "parameterName: ", parameterName
+
         # not found?
+        if c == None:
+            # check if this is a remote component
+            if componentName[:6] == "remote":
+                c = self.addRemote(componentName)
+                condition.eventBased = True
         if c == None:
             if parameterName == 'ispresent':
                 return "false"

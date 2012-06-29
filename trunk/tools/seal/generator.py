@@ -4,7 +4,7 @@ import os
 SEPARATOR = "// -----------------------------\n"
 
 # a random 2-byte number
-SEAL_MAGIC = 0xABCD  # 43981
+#SEAL_MAGIC = 0xABCD  # 43981
 
 def formatCondition(condition, isNew):
     if isNew:
@@ -37,11 +37,13 @@ class Generator(object):
 #            self.outputFile.write('#include "{}.h"\n'.format(x))
         if components.componentRegister.numCachedSensors:
             self.outputFile.write("#include <lib/processing/cache.h>\n")
+        self.outputFile.write("#include <net/seal_comm.h>\n")
         self.outputFile.write("\n")
 
     def generateConstants(self):
-        self.outputFile.write("#ifndef SEAL_MAGIC\n")
-        self.outputFile.write("#define SEAL_MAGIC    0x{0:X}\n".format(SEAL_MAGIC))
+        # main loop is executed once in second by default
+        self.outputFile.write("#ifndef CONDITION_EVALUATION_INTERVAL\n")
+        self.outputFile.write("#define CONDITION_EVALUATION_INTERVAL  1000\n") # ms
         self.outputFile.write("#endif\n\n")
 
         self.outputFile.write("#define NUM_CONDITIONS {0}\n".format(
@@ -111,7 +113,7 @@ class Generator(object):
 
         self.outputFile.write("\n\n")
         self.outputFile.write("    for (;;) {\n")
-        self.outputFile.write("        uint32_t iterationEndTime = getRealTime() + 1000;\n")
+        self.outputFile.write("        uint32_t iterationEndTime = getRealTime() + CONDITION_EVALUATION_INTERVAL;\n")
         self.outputFile.write("\n")
 
         totalConditions = components.conditionCollection.totalConditions()
@@ -153,25 +155,19 @@ class Generator(object):
     def generate(self, outputFile):
 #        self.isError = False
         self.outputFile = outputFile
-        self.components = components.componentRegister.getAllComponents()
-        self.outputs = []
-#        self.sensors = []
-#        self.actuators = []
-        for c in self.components:
-            if type(c) is components.Output and len(c.useCases):
-                self.outputs.append(c)
-#            elif type(c) is components.Sensor and len(c.useCases):
-#                self.sensors.append(c)
-#            elif type(c) is components.Actuator and len(c.useCases):
-#                self.actuators.append(c)
-#        self.cacheTypes()
 
-        # generate packet types now, for later use
-        self.definePacketTypes()
         # find out the sensors that should be cached
         components.componentRegister.markCachedSensors()
         # generate condition code now, for later use
         components.conditionCollection.generateCode(components.componentRegister)
+
+        self.components = components.componentRegister.getAllComponents()
+        self.outputs = []
+        for c in self.components:
+            if type(c) is components.Output and len(c.useCases):
+                self.outputs.append(c)
+        # generate packet types now, for later use
+        self.definePacketTypes()
 
         self.generateIncludes()
         outputFile.write(SEPARATOR)
@@ -208,15 +204,19 @@ class Generator(object):
             cfg = c.getConfig(outputFile)
             if cfg: config.add(cfg)
         for x in components.componentRegister.additionalConfig:
-            config.add("USE_{}=y\n".format(x.upper()))
+            if x.find('=') != -1:
+                config.add("{}\n".format(x.upper()))
+            else:
+                config.add("USE_{}=y\n".format(x.upper()))
         for x in components.componentRegister.systemParams:
             config.add(x.getConfigLine() + "\n")
+        if components.componentRegister.numCachedSensors > 0:
+            config.add("USE_CACHE=y\n")
         # print the set to the file
         for line in config:
             outputFile.write(line)
         # check if cache is used
         if components.componentRegister.numCachedSensors > 0:
-            outputFile.write("USE_CACHE=y\n")
             outputFile.write("CONST_TOTAL_CACHEABLE_SENSORS={}\n".format(
                     components.componentRegister.numCachedSensors))
 

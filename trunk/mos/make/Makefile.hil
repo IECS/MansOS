@@ -133,3 +133,5 @@ PSOURCES-$(USE_FS) += \
 	$(MOSROOT)$(PDFS)/block/block.c \
 	$(MOSROOT)$(PDFS)/block/meta.c  \
 	$(MOSROOT)$(PDFS)/block/alloc.c
+
+PSOURCES-$(USE_SEAL_COMM) += $(MOS)/net/seal_comm.c

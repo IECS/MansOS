@@ -14,6 +14,8 @@ printing = PrintAct()
 
 nullSensor = SealSensor("Null") # hack: for virtual use, e.g. min of two sensors
 
+command = CommandSensor()
+
 constant = ConstantSensor()
 random = RandomSensor()
 
