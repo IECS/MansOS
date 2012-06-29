@@ -2024,7 +2024,7 @@
   <file>
     <name>$PROJ_DIR$\..\..\..\mos\platforms\sm3\sht_pins.h</name>
   </file>
-  <file>Bli
+  <file>
     <name>$PROJ_DIR$\..\..\..\mos\kernel\sleep.c</name>
   </file>
   <file>
