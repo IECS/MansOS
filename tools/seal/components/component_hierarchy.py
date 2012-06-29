@@ -44,7 +44,8 @@ class SealComponent(object):
 class SealSensor(SealComponent):
     def __init__(self, name):
         super(SealSensor, self).__init__(TYPE_SENSOR, name)
-        self.cacheable = False # whether can be kept in cache
+        self.cache = SealParameter(False, [False, True])
+        self.cacheable = True # whether can be kept in cache
         self.dataSize = 2 # in bytes
 #        self.filter = SealParameter('', ['> 100'])
 #        self.average = SealParameter('', ['10'])
@@ -53,6 +54,13 @@ class SealSensor(SealComponent):
         self.minUpdatePeriod = 1000 # milliseconds
         self.readTime = 0 # read instanttly
         self.readFunctionDependsOnParams = False
+
+# for remote use only
+class CommandSensor(SealSensor):
+    def __init__(self):
+        super(CommandSensor, self).__init__("Command")
+        self.useFunction.value = "0"
+        self.readFunction.value = self.useFunction.value
 
 class ConstantSensor(SealSensor):
     def __init__(self):

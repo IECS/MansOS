@@ -99,12 +99,14 @@ class ConditionCollection(object):
         result += "    bool isFilteredOut = false;\n"
         # TODO: at the moment, all subconditions are always evaluated.
         # for optimization, should return as soon as isFilteredOut becomes true.
+        condition = self.conditionList[i]
+        condCode = condition.getCodeForGenerator(componentRegister, condition)
         result += "    bool result = " + \
             string.replace(string.replace(string.replace(
-                            self.conditionList[i].getCodeForGenerator(componentRegister),
-                               " and ", " && "),
-                               " or ", " || "),
-                               " not ", " ! ") + ";\n"
+                    condCode,
+                    " and ", " && "),
+                    " or ", " || "),
+                    " not ", " ! ") + ";\n"
         result += "    return isFilteredOut ? oldValue : result;\n"
         result += "}\n"
         return result
@@ -137,10 +139,10 @@ class Value(object):
             s += self.suffix
         return s
 
-    def getCodeForGenerator(self, componentRegister):
+    def getCodeForGenerator(self, componentRegister, condition):
         # print "getCodeForGenerator for ", self.value
         if type(self.value) is SealValue:
-            return self.value.getCodeForGenerator(componentRegister)
+            return self.value.getCodeForGenerator(componentRegister, condition)
         return self.getCode()
 
     def getType(self):
@@ -173,11 +175,11 @@ class SealValue(object):
             result += self.secondPart
         return result
 
-    def getCodeForGenerator(self, componentRegister):
+    def getCodeForGenerator(self, componentRegister, condition):
         sp = self.secondPart
         if sp is None:
             sp = "value"
-        return componentRegister.replaceCode(self.firstPart, sp)
+        return componentRegister.replaceCode(self.firstPart, sp, condition)
 
 ########################################################
 class Expression(object):
@@ -187,7 +189,7 @@ class Expression(object):
         self.funcExpressionRight = None
         if type(left) is FunctionTree:
             if len(left.arguments) == 0:
-                self.left = left.function
+                self.left = Value(SealValue(left.function))
             else:
                 self.left = Value(SealValue(left.generateSensorName()))
                 self.funcExpressionLeft = left
@@ -195,15 +197,19 @@ class Expression(object):
             self.left = left
         if type(right) is FunctionTree:
             if len(right.arguments) == 0:
-                self.right = right.function
+                self.right = Value(SealValue(right.function))
             else:
                 self.right = Value(SealValue(right.generateSensorName()))
                 self.funcExpressionRight = right
         else:
             self.right = right
+        # because expression in some contexts == condition
+        self.eventBased = False
 
     def collectImplicitDefines(self):
         result = []
+#       print "left  = ", self.left
+#       print "right = ", self.right
         if self.funcExpressionLeft:
             result.append(ComponentDefineStatement(self.left.value.firstPart, self.funcExpressionLeft, []))
         else:
@@ -223,16 +229,16 @@ class Expression(object):
             return "(" + self.right.getCode() + ")"
         return self.right
 
-    def getCodeForGenerator(self, componentRegister):
+    def getCodeForGenerator(self, componentRegister, condition):
         if self.left != None and self.right != None:
-            result = self.left.getCodeForGenerator(componentRegister)
+            result = self.left.getCodeForGenerator(componentRegister, condition)
             result += " " + self.op + " "
-            result += self.right.getCodeForGenerator(componentRegister)
+            result += self.right.getCodeForGenerator(componentRegister, condition)
             return result
         if self.op != None:
-            return self.op + " " + self.right.getCodeForGenerator(componentRegister)
+            return self.op + " " + self.right.getCodeForGenerator(componentRegister, condition)
         if type(self.right) is Expression:
-            return "(" + self.right.getCodeForGenerator(componentRegister) + ")"
+            return "(" + self.right.getCodeForGenerator(componentRegister, condition) + ")"
         return self.right
 
     def asString(self):

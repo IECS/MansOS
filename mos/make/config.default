@@ -81,9 +81,14 @@ USE_LONG_LIFETIME ?= n
 #USE_PRINT_RADIO ?= y
 #USE_PRINT_BUFFER_SIZE ?= 128
 
+USE_SEAL_COMM ?= n
+
 ifeq ($(USE_NET),y)
    USE_ADDRESSING ?= y
    USE_RANDOM ?= y
+endif
+ifeq ($(USE_SEAL_COMM),y)
+   USE_ADDRESSING ?= y
 endif
 USE_ADDRESSING ?= n
 USE_RANDOM ?= n

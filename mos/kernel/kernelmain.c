@@ -40,6 +40,7 @@
 #endif
 #include "alarms_system.h"
 #include <net/comm.h>
+#include <net/seal_comm.h>
 #if USE_THREADS
 #include "threads/threads.h"
 #endif
@@ -138,6 +139,10 @@ static inline void initSystem(void)
 #ifdef USE_FS
     INIT_PRINTF("init file system...\n");
     fsInit();
+#endif
+#ifdef USE_SEAL_COMM
+    INIT_PRINTF("init SEAL communications...\n");
+    sealCommInit();
 #endif
 
     INIT_PRINTF("starting the application...\n");

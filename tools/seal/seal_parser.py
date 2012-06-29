@@ -263,7 +263,6 @@ class SealParser():
         '''when_block : WHEN_TOKEN condition ':' declaration_list elsewhen_block END_TOKEN
         '''
         p[0] = CodeBlock(CODE_BLOCK_TYPE_WHEN, p[2], p[4], p[5])
-
         self.lineTracking["Condition"].append((p.lineno(1), p.lineno(6), p[0]))
 
     def p_elsewhen_block(self, p):
@@ -277,7 +276,6 @@ class SealParser():
             p[0] = CodeBlock(CODE_BLOCK_TYPE_ELSE, None, p[3], None)
         else:             # elsewhen block
             p[0] = CodeBlock(CODE_BLOCK_TYPE_ELSEWHEN, p[2], p[4], p[5])
-
 
     def p_condition(self, p):
         '''condition : condition_term
@@ -293,7 +291,6 @@ class SealParser():
             p[0] = Expression(None, p[1], p[2])
         else:
             p[0] = Expression(p[1], p[2], p[3])
-
 
     def p_logical_statement(self, p):
         ''' logical_statement : functional_expression
