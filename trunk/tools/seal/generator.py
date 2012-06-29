@@ -37,7 +37,7 @@ class Generator(object):
 #            self.outputFile.write('#include "{}.h"\n'.format(x))
         if components.componentRegister.numCachedSensors:
             self.outputFile.write("#include <lib/processing/cache.h>\n")
-        self.outputFile.write("#include <net/seal_comm.h>\n")
+#TODO        self.outputFile.write("#include <net/seal_comm.h>\n")
         self.outputFile.write("\n")
 
     def generateConstants(self):
@@ -57,26 +57,6 @@ class Generator(object):
     def definePacketTypes(self):
         for o in self.outputs:
             o.definePacketType()
-
-#    def cacheTypes(self):
-        # use packet types iff there is least one aggregated output
-#        usePackets = reduce(lambda x, y: x or y.isAggregate(), self.outputs, False)
-#        if not usePackets: return
-
-        # sensors are used iff there is at least one use case declared
-        #anySensorsUsed = reduce(lambda x, y: x or (type(y) is Sensor and len(y.useCases)), self.components, False)
-        #if not anySensorsUsed: return
-#        if len(self.sensors) == 0: return
-
-#        packetFields = []
-#        for c in self.sensors:
-#            packetFields.append((c.getDataSize(), c.getDataType(), c.name))
-#        packetFields = list(set(packetFields)) # uniquify
-#        packetFields.sort()
-#        packetFields.reverse()
-
-#        for c in self.outputs:
-#            c.cachePacketType(packetFields)
 
     def generateTypes(self):
        for o in self.outputs:
@@ -107,6 +87,8 @@ class Generator(object):
         self.outputFile.write("{\n")
         for c in self.components:
             c.generateAppMainCode(self.outputFile)
+        components.conditionCollection.generateAppMainCode(self.outputFile)
+
         # Init Process variables
 #        for p in components.processStructInits:
 #            self.outputFile.write(p)
@@ -156,10 +138,12 @@ class Generator(object):
 #        self.isError = False
         self.outputFile = outputFile
 
-        # find out the sensors that should be cached
-        components.componentRegister.markCachedSensors()
         # generate condition code now, for later use
         components.conditionCollection.generateCode(components.componentRegister)
+        # find out the sensors that should be cached
+        components.componentRegister.markCachedSensors()
+        # find out the sensors that should syned
+        components.componentRegister.markSyncSensors()
 
         self.components = components.componentRegister.getAllComponents()
         self.outputs = []
@@ -184,11 +168,11 @@ class Generator(object):
         outputFile.write("// Callbacks\n\n")
         self.generateCallbacks()
         outputFile.write(SEPARATOR)
-        outputFile.write("// Conditions\n\n")
-        components.conditionCollection.writeOutCode(self.outputFile)
-        outputFile.write(SEPARATOR)
         outputFile.write("// Branches\n\n")
         self.generateBranchCode()
+        outputFile.write(SEPARATOR)
+        outputFile.write("// Conditions\n\n")
+        components.conditionCollection.writeOutCode(self.outputFile)
         outputFile.write(SEPARATOR)
         outputFile.write("// Main function\n\n")
         self.generateAppMain()

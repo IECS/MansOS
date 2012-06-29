@@ -163,6 +163,8 @@ class UseCase(object):
             outputFile.write(
                 "Alarm_t {0}{1}Alarm{2};\n".format(
                     self.component.getNameCC(), self.branchName, self.numInBranch))
+            for s in self.component.subsensors:
+                outputFile.write("Alarm_t {0}PreAlarm;\n".format(s.getNameCC()))
 
 #        if self.filter:
 #            outputFile.write(
@@ -226,10 +228,18 @@ class UseCase(object):
                 outputFile.write("    {0} {1}Value = {2}ReadProcess{3}(&isFilteredOut);\n".format(
                         intTypeName, self.component.getNameCC(),
                         self.component.getNameCC(), self.readFunctionSuffix))
-                outputFile.write("    if (!isFilteredOut) {\n")
-                for o in outputs:
-                    o.generateCallbackCode(self.component, outputFile, self.readFunctionSuffix)
-                outputFile.write("    }\n")
+                if not self.component.syncOnlySensor:
+                    outputFile.write("    if (!isFilteredOut) {\n")
+                    for o in outputs:
+                        o.generateCallbackCode(self.component, outputFile, self.readFunctionSuffix)
+                        outputFile.write("    }\n")
+                elif self.period:
+                    for s in self.component.subsensors:
+                        if s.getParameterValue("prereadFunction") is None: continue
+                        prereadTime = s.specification.readTime
+                        if prereadTime == 0: continue
+                        outputFile.write("    alarmSchedule(&{0}PreAlarm, {2}_PERIOD{1} - {3});\n".format(
+                                s.getNameCC(), self.numInBranch, ucname, prereadTime))
 
 #                if self.filter:
 #                    filterName = "{}{}Filter{}".format(self.component.getNameCC(),
@@ -263,7 +273,9 @@ class UseCase(object):
 #                    for o in outputs:
 #                        o.generateCallbackCode(self.component, outputFile)
 
-            if self.once:
+            if self.component.isRemote:
+                pass
+            elif self.once:
                 pass
             elif self.period:
                 outputFile.write("    alarmSchedule(&{0}Alarm{1}, {2}_PERIOD{1});\n".format(
@@ -287,6 +299,8 @@ class UseCase(object):
         if self.generateAlarm:
             outputFile.write("    alarmInit(&{0}Alarm{1}, {0}{1}Callback, NULL);\n".format(
                    ccname, self.numInBranch))
+            for s in self.component.subsensors:
+                outputFile.write("    alarmInit(&{0}PreAlarm, {0}PreReadCallback, NULL);\n".format(s.getNameCC()))
         elif self.component.isRemote:
             outputFile.write("    sealCommRegisterInterest({}, {}{}Callback);\n".format(
                     self.component.systemwideID, self.component.getNameCC(), self.numInBranch))
@@ -306,7 +320,7 @@ class UseCase(object):
 
     def getParameterValue(self, parameter, defaultValue = None):
         if parameter in self.parameters:
-            return self.parameters[parameter].getCodeForGenerator(componentRegister)
+            return self.parameters[parameter].getCodeForGenerator(componentRegister, None)
         return self.component.getParameterValue(parameter, defaultValue)
 
 
@@ -324,7 +338,6 @@ class Component(object):
         self.usedForConditions = False
         # save specification (needed for dependent parameters)
         self.specification = specification
-#        self.baseComponents = []
         self.functionTree = None
         self.isRemote = False
 
@@ -415,15 +428,22 @@ class Component(object):
                     self.generateReadFunctions(outputFile, None)
             else:
                 self.generateReadFunctions(outputFile, None)
+
+            if self.doGenerateSyncCallback:
+                self.generateSyncCallback(outputFile, outputs)
+
+            for s in self.subsensors:
+                s.generatePrereadCallback(outputFile)
+
         for uc in self.useCases:
             uc.generateCallbacks(outputFile, outputs)
 
     def generateAppMainCode(self, outputFile):
         for uc in self.useCases:
             uc.generateAppMainCode(outputFile)
-        if self.isRemote:
-            outputFile.write("    sealCommRegisterInterest({}, {}Callback);\n".format(
-                    self.component.systemwideID, self.component.getNameCC()))
+#        if self.isRemote:
+#            outputFile.write("    sealCommRegisterInterest({}, {}Callback);\n".format(
+#                    self.systemwideID, self.getNameCC()))
 
     def getConfig(self, outputFile):
         if self.isUsed():
@@ -463,10 +483,14 @@ class Sensor(Component):
         self.cacheNumber = 0
         self.readFunctionNum = 0
         self.generatedDefaultReadFunction = False
-        if name.lower() == "command":
+        if name.lower() == "command" or name.lower() == "remotecommand":
             self.systemwideID = PACKET_FIELD_ID_COMMAND
         else:
             self.systemwideID = componentRegister.allocateSensorId()
+
+        self.doGenerateSyncCallback = False
+        self.syncOnlySensor = False
+        self.subsensors = []
 
     def updateParameters(self, dictionary):
         for p in dictionary.iteritems():
@@ -502,7 +526,7 @@ class Sensor(Component):
 
     def generateConstants(self, outputFile):
         super(Sensor, self).generateConstants(outputFile)
-        if self.isUsed():
+        if self.isUsed() or self.doGenerateSyncCallback:
             outputFile.write("#define {0}_NO_VALUE    {1}\n".format(self.getNameUC(), self.getNoValue()))
             outputFile.write("#define {0}_TYPE_ID     0x{1:x}\n".format(self.getNameUC(), (1 << self.systemwideID)))
 
@@ -525,6 +549,37 @@ class Sensor(Component):
             self.cacheNumber = componentRegister.numCachedSensors
             componentRegister.numCachedSensors += 1
         return self.cacheNeeded
+
+    def generateSyncCallback(self, outputFile, outputs):
+        useFunction = self.getDependentParameterValue("useFunction", self.parameters)
+
+        outputFile.write("void {0}SyncCallback(void)\n".format(self.getNameCC()))
+        outputFile.write("{\n")
+        outputFile.write("    bool isFilteredOut = false;\n")
+        outputFile.write("    {0} {1}Value = {1}ReadProcess(&isFilteredOut);\n".format(
+                self.getDataType(), self.getNameCC()))
+        outputFile.write("    if (!isFilteredOut) {\n")
+        for o in outputs:
+            o.generateCallbackCode(self, outputFile, "")
+        outputFile.write("    }\n")
+        outputFile.write("}\n")
+
+    def generatePrereadCallback(self, outputFile):
+        func = self.getParameterValue("prereadFunction")
+        if func is None: func = ""
+
+        outputFile.write("void {0}PreReadCallback(void *__unused)\n".format(self.getNameCC()))
+        outputFile.write("{\n")
+        outputFile.write("    " + func + ";\n")
+        outputFile.write("}\n\n")
+
+    def addSubsensors(self):
+        for a in self.functionTree.arguments:
+            sensor = componentRegister.findComponentByName(a.generateSensorName())
+            assert sensor
+            assert type(sensor) is Sensor
+            sensor.doGenerateSyncCallback = True
+            self.subsensors.append(sensor)
 
     #########################################################################
     # Start of reading and processing function generation
@@ -875,6 +930,19 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
+    def generateSyncFunction(self, outputFile, useCase, functionTree, root):
+        assert self.syncOnlySensor
+
+        funName = self.getGeneratedFunctionName(functionTree.function)
+        outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
+        outputFile.write("{\n")
+        for s in self.subsensors:
+            outputFile.write("    extern void {}SyncCallback(void);\n".format(s.getNameCC()))
+            outputFile.write("    {}SyncCallback();\n".format(s.getNameCC()))
+        outputFile.write("    return 0;\n")
+        outputFile.write("}\n\n")
+        return funName + "(isFilteredOut)"
+
     def generateTakeFunction(self, outputFile, functionTree, aggregateFunction):
         if not functionTree.checkArgs(2, componentRegister):
             return ""
@@ -1016,8 +1084,11 @@ class Sensor(Component):
             return self.generateFilterRangeFunction(outputFile, functionTree, root)
         if functionTree.function[:6] == "filter":
             return self.generateFilterFunction(outputFile, functionTree, root)
-        if functionTree.function == "synch":
-            return self.generateSynchFunction(outputFile, functionTree, root)
+        if functionTree.function == "sync":
+            if functionTree != self.functionTree:
+                componentRegister.userError("sync() function only allowed at the top level!\n")
+            else:
+                return self.generateSyncFunction(outputFile, useCase, functionTree, root)
         if functionTree.function == "take":        
             componentRegister.userError("take() function can be used only as an argument to one of the following:\n" +
                       "    min(), max(), sum(), avg(), stdev()!\n")
@@ -1086,6 +1157,17 @@ class Output(Component):
             outputFile.write("{0}Packet_t {1}Packet;\n".format(self.getNameTC(), self.getNameCC()))
             outputFile.write("uint_t {0}PacketNumFieldsFull;\n".format(self.getNameCC()))
 
+    def addPacketTypes(self, s):
+        # special case for dummy sync sensors
+        if s.syncOnlySensor:
+            for subsensor in s.subsensors:
+                self.addPacketTypes(subsensor)
+            return
+        # normal case
+        self.packetFields.append(PacketField(
+                s.systemwideID, s.getNameCC(), s.getDataSize(), s.getDataType()))
+        self.numSensorFields += 1
+
     def definePacketType(self):
         # TODO: handle the case of multiple use cases of the same sensor with different value params! (marginal)
         self.packetFields = []
@@ -1097,8 +1179,7 @@ class Output(Component):
                 # check if this field is used
                 if s.name.lower() not in self.useOnlyFields:
                     continue
-            self.packetFields.append(PacketField(s.systemwideID, s.getNameCC(), s.getDataSize(), s.getDataType()))
-            self.numSensorFields += 1
+            self.addPacketTypes(s)
 
         if self.getParameterValue("timestamp"):
             # 4-byte timestamp (seconds since system uptime)
@@ -1160,7 +1241,6 @@ class Output(Component):
         outputFile.write("} PACKED;\n\n")
         # add a typedef
         outputFile.write("typedef struct {0}Packet_s {0}Packet_t;\n\n".format(self.getNameTC()))
-
 
     def generateSerialOutputCode(self, outputFile, sensorsUsed):
         usedSizes = set()
@@ -1378,7 +1458,6 @@ class ComponentRegister(object):
         c.added = True
         c.base = None
 
-#        immediateVirtualBase = None
         basenames = c.getAllBasenames()
 
         for basename in basenames:
@@ -1440,10 +1519,11 @@ class ComponentRegister(object):
 
         s.updateParameters(c.parameterDictionary)
         s.functionTree = c.functionTree
+        if s.functionTree.function == "sync":
+            s.syncOnlySensor = True
 
     #######################################################################
     def addRemote(self, name):
-        print "addRemote", name
         base = self.sensors.get(name[6:], None)
         if base is None:
             self.userError("Remote component '{0}' has no base sensor component for architecture '{1}'\n".format(
@@ -1513,6 +1593,11 @@ class ComponentRegister(object):
 #                print x[1].name, "depends on", name
 #        return result
 
+    def markSyncSensors(self):
+        for s in self.sensors.itervalues():
+            if s.syncOnlySensor:
+                s.addSubsensors()
+
     def markCachedSensors(self):
         self.numCachedSensors = 0
         for s in self.sensors.itervalues():
@@ -1520,7 +1605,6 @@ class ComponentRegister(object):
                 self.numCachedSensors += 1
 
     def replaceCode(self, componentName, parameterName, condition):
-        print "component: ", componentName
         if type(componentName) is Value:
             return componentName.getCode()
 
@@ -1533,20 +1617,23 @@ class ComponentRegister(object):
 
         # here
 
-#        print "parameterName: ", parameterName
-
         # not found?
         if c == None:
             # check if this is a remote component
             if componentName[:6] == "remote":
                 c = self.addRemote(componentName)
-                condition.eventBased = True
         if c == None:
             if parameterName == 'ispresent':
                 return "false"
             else:
                 self.userError("Component '{0}' not known\n".format(componentName))
                 return "false"
+
+        # in case the component is remote: make condition dependent on it
+        if c.isRemote:
+            assert condition
+            condition.dependentOnSensors.append(c)
+
         # found
         if parameterName == 'ispresent':
             return "true"
@@ -1568,12 +1655,6 @@ class ComponentRegister(object):
             c.markAsUsedForConditions()
             # return the right read function
             return c.getNameCC() + "ReadProcess(&isFilteredOut)"
-
-#                outputFile.write("    bool isFilteredOut = false;\n")
-##                outputFile.write("    {0} {1}Value = {2}ReadProcess{3}(&isFilteredOut);\n".format(
-#                        intTypeName, self.component.getNameCC(),
-#                        self.component.getNameCC(), self.readFunctionSuffix))
-#                outputFile.write("    if (!isFilteredOut) {\n")
 
 #            readFunction = c.getParameterValue("readFunction", None)
 #            if readFunction:

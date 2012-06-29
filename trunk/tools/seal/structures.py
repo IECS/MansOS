@@ -90,30 +90,69 @@ class ConditionCollection(object):
             self.conditionStack.pop()
             n -= 1
 
+    def generateCodeForCondition(self, i, componentRegister):
+        # TODO: at the moment, all subconditions are always evaluated.
+        # for optimization, should return as soon as isFilteredOut becomes true.
+        condition = self.conditionList[i]
+        condition.id = i + 1
+        return  "    bool result = " + \
+            string.replace(string.replace(string.replace(
+                    condition.getCodeForGenerator(componentRegister, condition),
+                    " and ", " && "),
+                    " or ", " || "),
+                    " not ", " ! ") + ";\n"
+
     def generateCode(self, componentRegister):
         for i in range(len(self.conditionList)):
             self.codeList.append(self.generateCodeForCondition(i, componentRegister))
 
-    def generateCodeForCondition(self, i, componentRegister):
-        result = "static inline bool condition{0}Check(bool oldValue) {1}\n".format(i + 1, '{')
-        result += "    bool isFilteredOut = false;\n"
-        # TODO: at the moment, all subconditions are always evaluated.
-        # for optimization, should return as soon as isFilteredOut becomes true.
-        condition = self.conditionList[i]
-        condCode = condition.getCodeForGenerator(componentRegister, condition)
-        result += "    bool result = " + \
-            string.replace(string.replace(string.replace(
-                    condCode,
-                    " and ", " && "),
-                    " or ", " || "),
-                    " not ", " ! ") + ";\n"
-        result += "    return isFilteredOut ? oldValue : result;\n"
-        result += "}\n"
-        return result
+    def writeOutCodeForEventBasedCondition(self, condition, outputFile):
+        outputFile.write("static void condition{0}Callback(uint32_t value)\n".format(condition.id))
+        outputFile.write("{\n")
+        outputFile.write("    bool isFilteredOut = false;\n")
+        outputFile.write(self.codeList[condition.id - 1])
+        outputFile.write("    if (isFilteredOut) return;\n")
+        outputFile.write("    if (result == oldConditionStatus[{}]) return;\n".format(condition.id))
+        # OK, the status has changed; start or stop the code branch
+        outputFile.write("\n")
+        outputFile.write("    oldConditionStatus[{}] = result;\n".format(condition.id))
+        outputFile.write("    if (result) branch{0}Start();\n".format(condition.id))
+        outputFile.write("    else branch{0}Stop();\n".format(condition.id))
+        outputFile.write("}\n\n")
+
+        # this function does nothing
+        outputFile.write("static inline bool condition{0}Check(bool oldValue)\n".format(condition.id))
+        outputFile.write("{\n")
+        outputFile.write("    return oldValue;\n")
+        outputFile.write("}\n\n")
+
+    def writeOutCodeForPeriodicCondition(self, condition, outputFile):
+        outputFile.write("static inline bool condition{0}Check(bool oldValue)\n".format(condition.id))
+        outputFile.write("{\n")
+        outputFile.write("    bool isFilteredOut = false;\n")
+        outputFile.write(self.codeList[condition.id - 1])
+        outputFile.write("    return isFilteredOut ? oldValue : result;\n")
+        outputFile.write("}\n\n")
+
+    def writeOutCodeForCondition(self, condition, outputFile):
+        if condition.isEventBased():
+            self.writeOutCodeForEventBasedCondition(condition, outputFile)
+        else:
+            self.writeOutCodeForPeriodicCondition(condition, outputFile)
 
     def writeOutCode(self, outputFile):
-        for i in range(len(self.codeList)):
-            outputFile.write(self.codeList[i])
+        for c in self.conditionList:
+            self.writeOutCodeForCondition(c, outputFile)
+
+    def generateAppMainCodeForCondition(self, condition, outputFile):
+        for s in condition.dependentOnSensors:
+            outputFile.write("    sealCommRegisterInterest({}, condition{}Callback);\n".format(
+                    s.systemwideID, condition.id))
+
+    def generateAppMainCode(self, outputFile):
+        for c in self.conditionList:
+            self.generateAppMainCodeForCondition(c, outputFile)
+
 
 ########################################################
 class Value(object):
@@ -204,7 +243,10 @@ class Expression(object):
         else:
             self.right = right
         # because expression in some contexts == condition
-        self.eventBased = False
+        self.dependentOnSensors = []
+
+    def isEventBased(self):
+        return bool(len(self.dependentOnSensors))
 
     def collectImplicitDefines(self):
         result = []
