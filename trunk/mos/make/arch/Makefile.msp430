@@ -47,6 +47,9 @@ BSL ?= $(MOS)/make/scripts/tos-bsl
 MSP430-BSL ?= $(MOSROOT)/mos/make/scripts/bsl.py
 endif
 
+# this option is needed for testbed device
+SLOW = --slow
+
 #===== Additional includes =====
 
 INCLUDES += -I$(MOS)/fs/sdcard
@@ -84,10 +87,13 @@ upload-tmote:
 	$(BSL) --telosb -c $(BSLPORT) -r -e -I -p $(EXECUTABLE)
 
 upload-msp430: 
-	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) -r -e -I -p $(EXECUTABLE)
+	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) $(SLOW) -r -e -I -p $(EXECUTABLE)
 
 upload-z1:
 	$(Z1-BSL) --z1 -c $(BSLPORT) -r -e -I -p $(EXECUTABLE)
+
+upload-xm1000:
+	$(XM1000-BSL) --telosb -c $(BSLPORT) -r -e -I -p $(EXECUTABLE)
 
 upload-launchpad:
 	$(MSPDEBUG) rf2500 "prog $(EXECUTABLE)"
