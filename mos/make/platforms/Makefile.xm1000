@@ -20,24 +20,48 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-#
-# Defines options for make, used as make targets in addition
-# to the main target. Overrides the related options in the config file.
-#
-# Invoked from the main Makefile and the Makefile.top.
 #
 
-#--- Supported options
+#############################################
+# XM1000 mote
+#############################################
 
-OPT_VERBOSE = verbose
-OPT_QUIET = quiet
-OPT_OPTIMIZE = optimize
+#############################################
+# Define platform variables
 
-ALLOPTIONS = $(OPT_VERBOSE) $(OPT_QUIET) $(OPT_OPTIMIZE)
+ARCH = msp430
+# Older mspgcc can't handle 'f', newer can't handle 'x'
+MCU_MODEL = \
+  $(if $(filter $(GCC_VERSION).$(GCC_SUBVERSION),4.6),msp430f2618,msp430x2618)
 
-#--- Supported platforms
+# Upload target
+UPLOAD_TARGET=upload-xm1000
 
-PLATFORMS ?= pc pcapp telosb sadmote sm3 z1 atmega nrf launchpad farmmote em testbed xm1000
+# Default clock speed: 4MHz
+ifeq ($(USE_HARDWARE_TIMERS),y)
+CPU_MHZ ?= 8
+else
+CPU_MHZ ?= 1  # actually the default DCO frequency is around 800 kHz
+endif
 
-ALLTARGETS = build clean upload run testbed memdump mspsim $(PLATFORMS:%=clean%) $(PLATFORMS) $(ALLOPTIONS)
+XM1000-BSL = $(MOS)/make/scripts/xm1000-bsl
+
+CFLAGS += -DPLATFORM_XM1000=1 -mmpy=none
+
+#############################################
+# Define platform-specific sources
+# (excluding architecture-specific sources)
+
+PSOURCES += $(MOS)/platforms/xm1000/platform.c
+
+PSOURCES += $(MOS)/chips/msp430/msp430x2xx_clock.c
+
+PSOURCES-$(USE_USER_BUTTON) += $(MOS)/arch/msp430/user_button.c
+
+PSOURCES-$(USE_RADIO) += $(MOS)/chips/cc2420/cc2420.c
+PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
+PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/m25p80/m25p80.c
+
+PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
+PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
+PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c
