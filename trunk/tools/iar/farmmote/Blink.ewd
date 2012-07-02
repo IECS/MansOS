@@ -154,7 +154,7 @@
         </option>
         <option>
           <name>Erase</name>
-          <state>1</state>
+          <state>0</state>
         </option>
         <option>
           <name>EMUVerifyDownloadP7</name>

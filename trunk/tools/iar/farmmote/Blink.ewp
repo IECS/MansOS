@@ -169,17 +169,18 @@
           <state>USE_ADC</state>
           <state>USE_SERIAL</state>
           <state>USE_SPI</state>
-          <state>USE_LEDS</state>
-          <state>USE_ALARMS</state>
           <state>USE_SERIAL_NUMBER</state>
+          <state>USE_LEDS</state>
+          <state>USE_SOFT_I2C</state>
+          <state>USE_ALARMS</state>
           <state>USE_CRC</state>
           <state>USE_ASSERT</state>
           <state>USE_RADIO</state>
           <state>USE_PRINT</state>
           <state>CPU_MHZ=1</state>
-          <state>PLATFORM_FARMMOTE</state>
+          <state>PLATFORM_FARMMOTE=1</state>
           <state>ACLK_SPEED=32768</state>
-          <state>MCU_MSP430</state>
+          <state>MCU_MSP430=1</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -223,7 +224,7 @@
         </option>
         <option>
           <name>CCDiagRemark</name>
-          <state></state>
+          <state>Pa050</state>
         </option>
         <option>
           <name>CCDiagWarning</name>
@@ -336,6 +337,7 @@
           <state>$PROJ_DIR$\..\..\..\mos</state>
           <state>$PROJ_DIR$\..\..\..\mos\kernel</state>
           <state>$PROJ_DIR$\..\..\..\mos\lib</state>
+          <state>$PROJ_DIR$\..\..\..\mos\lib\processing</state>
           <state>$PROJ_DIR$\..\..\..\mos\net</state>
           <state>$PROJ_DIR$\..\..\..\mos\hil</state>
           <state>$PROJ_DIR$\..\..\..\mos\arch\msp430</state>
@@ -671,7 +673,7 @@
         </option>
         <option>
           <name>OutputFile</name>
-          <state>mansos.d43</state>
+          <state>Blink.d43</state>
         </option>
         <option>
           <name>OutputFormat</name>
@@ -865,7 +867,7 @@
         </option>
         <option>
           <name>ExtraOutputFile</name>
-          <state>mansos.a43</state>
+          <state>Blink.a43</state>
         </option>
         <option>
           <name>ExtraOutputFormat</name>
@@ -1999,6 +2001,9 @@
     <name>$PROJ_DIR$\..\..\..\mos\hil\errors.c</name>
   </file>
   <file>
+    <name>$PROJ_DIR$\..\..\..\mos\hil\i2c_soft.c</name>
+  </file>
+  <file>
     <name>$PROJ_DIR$\..\..\..\mos\kernel\kernelmain.c</name>
   </file>
   <file>
@@ -2023,7 +2028,7 @@
     <name>$PROJ_DIR$\..\..\..\mos\chips\msp430\msp430x1xx_clock.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\..\..\..\mos\PLATFORMS\farmmote\platform.c</name>
+    <name>$PROJ_DIR$\..\..\..\mos\platforms\farmmote\platform.c</name>
   </file>
   <file>
     <name>$PROJ_DIR$\..\..\..\mos\kernel\sleep.c</name>
