@@ -35,6 +35,10 @@ static bool adcIsOn;
 static uint8_t adcChannel;
 static uint16_t adcVal;
 
+#define enableAdcPin(port, pin) \
+    pinAsFunction(port, pin);   \
+    pinAsInput(port, pin);
+
 void adcOn() {
     hplAdcOn();
     adcIsOn = true;
@@ -50,6 +54,19 @@ void initAdc()
     hplAdcInit();
     hplAdcOff();
     adcChannel = 1;
+
+    // XXX: needed for lynx board to work without specific initialization
+    hplAdcUseSupplyRef();
+    hplAdcOn();
+
+    enableAdcPin(6, 0);
+    enableAdcPin(6, 1);
+    enableAdcPin(6, 2);
+    enableAdcPin(6, 3);
+    enableAdcPin(6, 4);
+    enableAdcPin(6, 5);
+    enableAdcPin(6, 6);
+    enableAdcPin(6, 7);
 }
 
 void adcSetChannel(uint8_t ch)

@@ -41,6 +41,8 @@
 #define hplAdcOn() ADCSRA |= (1 << ADEN)
 #define hplAdcOff() ADCSRA &= ~(1 << ADEN)
 
+#define hplAdcUseSupplyRef()
+
 #define ADC_INT_HEADER() ISR(ADC_vect)
 
 // important: ADCL must be read before ADCH!
