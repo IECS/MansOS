@@ -2002,6 +2002,9 @@
   </file>
   <file>
     <name>$PROJ_DIR$\..\..\..\mos\hil\i2c_soft.c</name>
+    <excluded>
+      <configuration>Debug</configuration>
+    </excluded>
   </file>
   <file>
     <name>$PROJ_DIR$\..\..\..\mos\kernel\kernelmain.c</name>
