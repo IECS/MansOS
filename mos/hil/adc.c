@@ -23,6 +23,7 @@
 
 #include <stdbool.h>
 #include "adc.h"
+#include "gpio.h"
 
 //----------------------------------------------------------
 // types
@@ -59,6 +60,7 @@ void initAdc()
     hplAdcUseSupplyRef();
     hplAdcOn();
 
+#ifdef P6SEL
     enableAdcPin(6, 0);
     enableAdcPin(6, 1);
     enableAdcPin(6, 2);
@@ -67,6 +69,7 @@ void initAdc()
     enableAdcPin(6, 5);
     enableAdcPin(6, 6);
     enableAdcPin(6, 7);
+#endif
 }
 
 void adcSetChannel(uint8_t ch)

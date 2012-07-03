@@ -168,39 +168,15 @@ bool amb8420IsChannelClear(void)
     return 0;
 }
 
-// XISR(AMB8420_DATA_INDICATE_PORT, amb8420Interrupt)
-// {
-//     if (!pinReadIntFlag(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN)) {
-//         RPRINTF("got some other port1 interrupt!\n");
-//         return;
-//     }
-//     RPRINTF("****************** got radio interrupt!\n");
-//     pinClearIntFlag(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
-
-// #if USE_THREADS
-//     processFlags.bits.radioProcess = true;
-// #else
-//     if (rxHandle) {
-//         rxHandle();
-//     } else {
-//         amb8420Discard();
-//     }
-// #endif
-// }
-
-void amb8420PollForPacket(void)
+XISR(AMB8420_DATA_INDICATE_PORT, amb8420Interrupt)
 {
-    static bool wasLow;
-
-    bool isLow = !pinRead(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
-    if (isLow == wasLow) return;
-    wasLow = isLow;
-
-    // falling edge indicates radio packet rx
-    if (isLow) {
+    if (!pinReadIntFlag(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN)) {
+        RPRINTF("got some other port1 interrupt!\n");
         return;
     }
-    // rising edge indicates no more data on serial
+    RPRINTF("****************** got radio interrupt!\n");
+    pinClearIntFlag(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
+
 #if USE_THREADS
     processFlags.bits.radioProcess = true;
 #else
@@ -211,3 +187,27 @@ void amb8420PollForPacket(void)
     }
 #endif
 }
+
+// void amb8420PollForPacket(void)
+// {
+//     static bool wasLow;
+
+//     bool isLow = !pinRead(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
+//     if (isLow == wasLow) return;
+//     wasLow = isLow;
+
+//     // falling edge indicates radio packet rx
+//     if (isLow) {
+//         return;
+//     }
+//     // rising edge indicates no more data on serial
+// #if USE_THREADS
+//     processFlags.bits.radioProcess = true;
+// #else
+//     if (rxHandle) {
+//         rxHandle();
+//     } else {
+//         amb8420Discard();
+//     }
+// #endif
+// }

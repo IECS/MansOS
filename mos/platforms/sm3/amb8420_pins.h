@@ -36,15 +36,15 @@
 
 // on falling edge: switch to config mode
 #define AMB8420_CONFIG_PORT 4
-#define AMB8420_CONFIG_PIN  6
+#define AMB8420_CONFIG_PIN  2
 
 // when high: enter low power mode
-#define AMB8420_SLEEP_PORT  1
-#define AMB8420_SLEEP_PIN   3
+#define AMB8420_SLEEP_PORT  4
+#define AMB8420_SLEEP_PIN   5
 
 // when high: switch off Tx. XXX: needed?
-#define AMB8420_TRX_DISABLE_PORT  5
-#define AMB8420_TRX_DISABLE_PIN   0
+#define AMB8420_TRX_DISABLE_PORT  4
+#define AMB8420_TRX_DISABLE_PIN   3
 
 // on falling edge: take the data from UART buffer and send out wirelessly
 #define AMB8420_DATA_REQUEST_PORT 4
@@ -54,11 +54,11 @@
 // when low: ready to send.
 // when high: UART buffer is full, or wireless reception is detected
 #define AMB8420_RTS_PORT  4
-#define AMB8420_RTS_PIN   5
+#define AMB8420_RTS_PIN   1
 
 // input;
 // falling edge signals that valid frame is received via wireless
-#define AMB8420_DATA_INDICATE_PORT  4
-#define AMB8420_DATA_INDICATE_PIN   3
+#define AMB8420_DATA_INDICATE_PORT  1
+#define AMB8420_DATA_INDICATE_PIN   7
 
 #endif

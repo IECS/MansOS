@@ -30,8 +30,8 @@
  * M25P80 Flash SPI bus configuration for TelosB platform
  */
 
-// Flash attached to USART0 SPI BUS
-#define M25P80_SPI_ID   0
+// Flash attached to USCI 1 SPI BUS
+#define M25P80_SPI_ID   1
 
 // To use soft-SPI, uncomment the line below and define
 // MISO, MOSI and SCLK pins (see hil/spi_soft.h) in your config file!

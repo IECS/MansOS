@@ -42,8 +42,8 @@ void i2cInit(void)
 #define I2C_MODE (UCMST | UCMODE_3 | UCSYNC)
 #define I2C_SPEED 100000UL
 
-    pinAsFunction(USCI_PORT, UCB0SDA_PIN);
-    pinAsFunction(USCI_PORT, UCB0SCL_PIN);
+    pinAsFunction(USCI0_I2C_PORT, UCB0SDA_PIN);
+    pinAsFunction(USCI0_I2C_PORT, UCB0SCL_PIN);
 
     UCB0CTL1 = UCSWRST;                    // Hold the module in reset state
     UCB0CTL1 |= UCSSEL_2;                  // SMCLK clock source

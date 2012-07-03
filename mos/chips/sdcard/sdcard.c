@@ -78,9 +78,9 @@ static bool cacheChanged;
 #if SDCARD_SPI_ID == 0
 
 // Chip Select
-#define MMC_CS_PxOUT      P4OUT
-#define MMC_CS_PxDIR      P4DIR
-#define MMC_CS            0x02
+#define MMC_CS_PxOUT      P3OUT
+#define MMC_CS_PxDIR      P3DIR
+#define MMC_CS            0x01
 
 #define SPI_PxSEL         P3SEL
 #define SPI_PxDIR         P3DIR
@@ -239,7 +239,7 @@ static bool waitCardNotBusyNoints(uint16_t timeout)
 
 static uint8_t sdcardCommand(uint8_t cmd, uint32_t arg, uint8_t crc)
 {
-    // SPRINTF("sdcardCommand\n");
+//    SPRINTF("sdcardCommand\n");
         
     SDCARD_SPI_ENABLE();
 
@@ -262,6 +262,7 @@ static uint8_t sdcardCommand(uint8_t cmd, uint32_t arg, uint8_t crc)
     uint8_t status;
     for (i = 0; i != 0xFF; i++) {
         status = SDCARD_RD_BYTE();
+//        SPRINTF("status=%x\n", status);
         if (!(status & 0x80)) break;
     }
     
@@ -297,8 +298,8 @@ bool sdcardInit(void)
     initOk = false;
 
     // disable radio
-    pinAsOutput(4, 2);
-    pinSet(4, 2);
+    //pinAsOutput(4, 2);
+    //pinSet(4, 2);
 
     //msp430USARTInitSPI(SDCARD_SPI_ID, SPI_MODE_MASTER);
     //spiBusInit(SDCARD_SPI_ID, SPI_MODE_MASTER);
