@@ -37,7 +37,7 @@ MCU_MODEL = \
 # Upload target
 UPLOAD_TARGET=upload-xm1000
 
-# Default clock speed: 4MHz
+# Default clock speed: 8MHz
 ifeq ($(USE_HARDWARE_TIMERS),y)
 CPU_MHZ ?= 8
 else
@@ -46,7 +46,9 @@ endif
 
 XM1000-BSL = $(MOS)/make/scripts/xm1000-bsl
 
-CFLAGS += -DPLATFORM_XM1000=1 -mmpy=none
+INTERRUPT_VECTOR_COUNT=32
+
+CFLAGS += -DPLATFORM_XM1000=1 -mivcnt=$(INTERRUPT_VECTOR_COUNT)
 
 #############################################
 # Define platform-specific sources

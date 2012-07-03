@@ -198,6 +198,7 @@ deviceids = {
 class BSLException(Exception):
     pass
 
+# -------------- added for python 2/3 compatibility
 def asBinary(s):
     r = bytearray([])
     for c in s:
@@ -206,6 +207,11 @@ def asBinary(s):
 
 def isPython3():
     return sys.version_info.major >= 3
+
+def version3FixFrameFormat(rxFrame):
+    if isPython3(): return asBinary(rxFrame)
+    return rxFrame
+# --------------
 
 class LowLevel:
     "lowlevel communication"
@@ -565,7 +571,7 @@ class LowLevel:
         self.bslSync(wait)                          #synchronize BSL
         rxFrame = self.comTxRx(cmd, dataOut, len(dataOut))  #Send frame
         if rxFrame:                                 #test answer
-            return rxFrame[4:] #return only data w/o [hdr,null,len,len]
+            return version3FixFrameFormat(rxFrame[4:]) #return only data w/o [hdr,null,len,len]
         else:
             return rxFrame
 
@@ -890,7 +896,6 @@ class BootStrapLoader(LowLevel):
         blkin = self.bslTxRx(self.BSL_RXBLK,        #Command: Read/Receive Block
                           0x0ff0,                   #Start address
                           16)                       #No. of bytes to read
-        if isPython3(): blkin = asBinary(blkin)
         dev_id, bslVerHi, bslVerLo = struct.unpack(">H8xBB4x", blkin[:-2]) #cut away checksum and extract data
 
         if self.cpu is None:                        #cpy type forced?
