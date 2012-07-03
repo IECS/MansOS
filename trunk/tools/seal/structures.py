@@ -50,6 +50,8 @@ class FunctionTree(object):
             return None
 
     def generateSensorName(self):
+        if type(self.function) is Value:
+            return self.function.asString()
         result = self.function.lower()
         for a in self.arguments:
             result += "_" + a.generateSensorName()

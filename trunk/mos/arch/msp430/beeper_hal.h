@@ -31,17 +31,17 @@
 #define beeperToggle()  PIN_TOGGLE(1, 2)
 
 enum {
-    DEFAULT_FREQUENCY = 1000, // Hz
-    DEFAULT_PERIOD = 1000000ul / DEFAULT_FREQUENCY, // microseconds
+    BEEPER_DEFAULT_FREQUENCY = 1000, // Hz
+    BEEPER_DEFAULT_PERIOD = 1000000ul / BEEPER_DEFAULT_FREQUENCY, // microseconds
 };
 
 // note that the timing is not exactly accurate
 static inline void beeperBeep(uint16_t ms) {
     uint32_t usec = ms * 800ul;
-    while (usec >= DEFAULT_PERIOD) {
+    while (usec >= BEEPER_DEFAULT_PERIOD) {
         beeperToggle();
-        udelay(DEFAULT_PERIOD - 50);
-        usec -= DEFAULT_PERIOD;
+        udelay(BEEPER_DEFAULT_PERIOD - 50);
+        usec -= BEEPER_DEFAULT_PERIOD;
     }
 }
 
