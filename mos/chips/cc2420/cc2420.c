@@ -192,6 +192,14 @@ static inline void setreg(enum cc2420_register regname, unsigned value)
     CC2420_SETREG(regname, value);
 }
 
+void cc2420InitSpi(void)
+{
+    spiBusInit(CC2420_SPI_ID, SPI_MODE_MASTER);
+    pinAsOutput(CC2420_CSN_PORT, CC2420_CSN_PIN);
+    // Unselect radio
+    CC2420_SPI_DISABLE();
+}
+
 void cc2420Init(void)
 {
     uint16_t reg;
@@ -208,9 +216,8 @@ void cc2420Init(void)
     ATOMIC_START(h);
     {
         // Initalize ports and SPI
-        spiBusInit(CC2420_SPI_ID, SPI_MODE_MASTER);
+        cc2420InitSpi();
 
-        pinAsOutput(CC2420_CSN_PORT, CC2420_CSN_PIN);
         pinAsOutput(CC2420_RESET_N_PORT, CC2420_RESET_N_PIN);
         pinAsOutput(CC2420_VREG_EN_PORT, CC2420_VREG_EN_PIN);
 
@@ -218,9 +225,6 @@ void cc2420Init(void)
         pinAsInput(CC2420_FIFO_PORT, CC2420_FIFO_PIN);
         pinAsInput(CC2420_CCA_PORT, CC2420_CCA_PIN);
         pinAsInput(CC2420_SFD_PORT, CC2420_SFD_PIN);
-
-        // Unselect radio
-        CC2420_SPI_DISABLE();
 
         CC2420_DISABLE_FIFOP_INT();
         CC2420_FIFOP_INT_INIT();

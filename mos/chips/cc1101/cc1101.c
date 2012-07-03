@@ -327,10 +327,16 @@ static const uint8_t rfConfig[] = {
     [REG_IOCFG0]   = IOCFG_VAL(0),
 };
 
-void cc1101Init(void)
+void cc1101InitSpi(void)
 {
     spiBusInit(CC1101_SPI_ID, SPI_MODE_MASTER);
     pinAsOutput(CC1101_CSN_PORT, CC1101_CSN_PIN);
+    chipRelease();
+}
+
+void cc1101Init(void)
+{
+    cc1101InitSpi();
 
     chipSelect();
 

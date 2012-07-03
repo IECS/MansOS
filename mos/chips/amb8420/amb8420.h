@@ -64,6 +64,6 @@ int amb8420GetRSSI(void);
 // returns true if CCA fails to detect radio interference
 bool amb8420IsChannelClear(void);
 
-//void amb8420PollForPacket(void);
+void amb8420InitUsart(void);
 
 #endif
