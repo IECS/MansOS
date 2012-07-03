@@ -38,8 +38,8 @@
 //#define SDCARD_SPI_ID   SPI_BUS_SW
 
 // Flash pins
-#define SDCARD_CS_PORT    4   /* P4.1 Output */
-#define SDCARD_CS_PIN     1
+#define SDCARD_CS_PORT    3   /* P3.0 Output */
+#define SDCARD_CS_PIN     0
 
 /* Enable/disable flash access to the SPI bus (active low). */
 #define SDCARD_SPI_ENABLE()    \

@@ -30,8 +30,8 @@
 
 #include <hil/gpio.h>
 
-// Radio attached to USART0 SPI BUS
-#define CC2420_SPI_ID   0
+// Radio attached to USCI B0 SPI BUS
+#define CC2420_SPI_ID   1
 
 // To use soft-SPI for communication with CC2420, uncomment the line below and
 // define MISO, MOSI and SCLK pins (see spi_soft.h) in your config file!

@@ -31,7 +31,8 @@
 
 #include "stdtypes.h"
 #include <stdlib.h> // include file where NULL is defined
-#include <limits.h>
+#include <limits.h> // INT_MAX etc
+#include <string.h> // memcpy()
 
 //
 // Compiler specific function and data attributes
@@ -109,7 +110,13 @@ typedef uint32_t ticks_t;
 #error CPU_MHZ must be defined!
 #endif
 
+#if MCU_AVR
+// Atmel has straight decimal MHz
 #define CPU_HZ (CPU_MHZ * 1000000ul)
+#else
+// msp430-based devices usally has binary MHz
+#define CPU_HZ (CPU_MHZ * 1024ul * 1024)
+#endif
 
 // timer frequency, times per second;
 #if CPU_MHZ > 4 && MCU_AVR

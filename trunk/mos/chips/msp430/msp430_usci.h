@@ -35,27 +35,53 @@
 
 #include <kernel/defines.h>
 
-// The port for all pins is port 3
-#define USCI_PORT 3
-
+#define USCI_A0_RXTX_PORT 3
 #define UCA0TX_PIN 4
 #define UCA0RX_PIN 5
+#define UCA0SIMO_PIN UCA0TX_PIN
+#define UCA0SOMI_PIN UCA0RX_PIN
 
-#define UCA0SIMO_PIN 4
-#define UCA0SOMI_PIN 5
-#define UCA0CLK_PIN 0
-#define UCA0STE_PIN 3
+#define USCI_A1_RXTX_PORT 3
+#define UCA1TX_PIN 6
+#define UCA1RX_PIN 7
+#define UCA1SIMO_PIN UCA1TX_PIN
+#define UCA1SOMI_PIN UCA1RX_PIN
 
+#define USCI_A0_CLK_PORT 3
+#define UCA0CLK_PIN    0
+
+#define USCI_A1_CLK_PORT 5
+#define UCA1CLK_PIN    0
+
+#define USCI_A0_STE_PORT 3
+#define UCA0STE_PIN    3
+
+#define USCI_A1_STE_PORT 5
+#define UCA1STE_PIN    3
+
+#define USCI_B0_RXTX_PORT 3
 #define UCB0SIMO_PIN 1
 #define UCB0SOMI_PIN 2
-#define UCB0CLK_PIN 3
-#define UCB0STE_PIN 0
+#define USCI_B0_CLK_PORT 3
+#define UCB0CLK_PIN  3
+#define USCI_B0_STE_PORT 3
+#define UCB0STE_PIN  0
 
-#define UCB0SDA_PIN 1
-#define UCB0SCL_PIN 2
+#define USCI_B0_I2C_PORT 3
+#define UCB0SDA_PIN      1
+#define UCB0SCL_PIN      2
 
-#define PRINTF_USART_ID 0
+#define USCI_B1_I2C_PORT 5
+#define UCB1SDA_PIN      1
+#define UCB1SCL_PIN      2
+
+#if PLATFORM_XM1000
+#define USART_COUNT 2
+#define PRINTF_USART_ID 1
+#else
 #define USART_COUNT 1
+#define PRINTF_USART_ID 0
+#endif
 
 #if defined(__msp430x54xA) // || defined __IAR_SYSTEMS_ICC__
 # define UC0IE     UCA0IE
