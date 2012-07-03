@@ -24,10 +24,36 @@
 #ifndef MSP430_BEEPER_HAL_H
 #define MSP430_BEEPER_HAL_H
 
-// no beeper by default
-#define beeperInit()
-#define beeperToggle()
-#define beeperBeep(ms)
-#define beeperBeepEx(ms, frequency)
+#include <hil/udelay.h>
+#include <hil/gpio.h>
+
+#define beeperInit()  PIN_AS_OUTPUT(1, 2)
+#define beeperToggle()  PIN_TOGGLE(1, 2)
+
+enum {
+    DEFAULT_FREQUENCY = 1000, // Hz
+    DEFAULT_PERIOD = 1000000ul / DEFAULT_FREQUENCY, // microseconds
+};
+
+// note that the timing is not exactly accurate
+static inline void beeperBeep(uint16_t ms) {
+    uint32_t usec = ms * 800ul;
+    while (usec >= DEFAULT_PERIOD) {
+        beeperToggle();
+        udelay(DEFAULT_PERIOD - 50);
+        usec -= DEFAULT_PERIOD;
+    }
+}
+
+static inline void beeperBeepEx(uint16_t ms, uint16_t frequency) {
+    uint32_t usec = ms * 800ul;
+    uint16_t period = (uint16_t) (1000000ul / frequency); // XXX: division
+    uint16_t adjustedPeriod = period > 50 ? period - 50 : 0;
+    while (usec >= period) {
+        beeperToggle();
+        udelay(adjustedPeriod);
+        usec -= period;
+    }
+}
 
 #endif
