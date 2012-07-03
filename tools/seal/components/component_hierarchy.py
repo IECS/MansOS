@@ -20,9 +20,9 @@ class SealComponent(object):
         self.extraConfig = SealParameter(None)  # config file line(s)
         self.extraIncludes = SealParameter(None) # #include<> line(s)
         self.period = SealParameter(1000, ['100', '200', '500', '1000', '2000'])
-        self.pattern = None
+        self.pattern = SealParameter(None)
         self.once = SealParameter(False, [False, True])
-        self.useFunction = SealParameter(None)  # each usable component must define this
+        self.useFunction = SealParameter(None)   # each usable component must define this
         self.readFunction = SealParameter(None)  # each readable component must define this
         components.append(self)
 
@@ -34,7 +34,9 @@ class SealComponent(object):
         param = useCaseParameters.get(parameter, None)
         if param is not None:
             # XXX ugly hack!
+            # print "got param = ", param
             try:
+                # print "   value = ", param.value
                 return param.value
             except AttributeError:
                 return param
@@ -115,12 +117,12 @@ class CounterSensor(SealSensor):
         return "getJiffies() / {0}".format(counterPeriod)
 
 #
-# Timestamp sensor.
+# System time sensor.
 # At the moment, timestamp is the same as system uptime seconds.
 #
-class TimestampSensor(SealSensor):
+class SystemTimeSensor(SealSensor):
     def __init__(self):
-        super(TimestampSensor, self).__init__("Timestamp")
+        super(SystemTimeSensor, self).__init__("SystemTime")
         self.useFunction.value = "getUptime()"
         self.readFunction.value = "getUptime()"
 
@@ -215,34 +217,134 @@ class HumiditySensor(SealSensor):
         self.extraConfig = SealParameter("USE_HUMIDITY=y")
         self.extraIncludes = SealParameter("#include <hil/humidity.h>")
 
+class AnalogInputSensor(SealSensor):
+    def __init__(self):
+        super(AnalogInputSensor, self).__init__("AnalogIn")
+        self.useFunction.value = "adcRead(1)"
+        self.readFunction.value = "adcRead(1)"
+        self.readFunctionDependsOnParams = True
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        # print "calculateParameterValue: ", parameter
+        if parameter != "readFunction" and parameter != "useFunction":
+            return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
+        # print "params:", useCaseParameters
+        channel = int(self.getParameterValue("channel", useCaseParameters))
+        # print "channel: ", channel
+        if channel is None: channel = 1
+        return "adcRead({})".format(channel)
+
+class DigitalInputSensor(SealSensor):
+    def __init__(self):
+        super(DigitalInputSensor, self).__init__("DigitalIn")
+        self.useFunction.value = "pinRead(1, 0)"
+        self.readFunction.value = "pinRead(1, 0)"
+        self.readFunctionDependsOnParams = True
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "readFunction" and parameter != "useFunction":
+            return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
+        port = int(self.getParameterValue("port", useCaseParameters))
+        pin = int(self.getParameterValue("pin", useCaseParameters))
+        if port is None: port = 1
+        if pin is None: pin = 0
+        return "pinRead({}, {})".format(port, pin)
+
 #######################################################
 class SealActuator(SealComponent):
     def __init__(self, name):
         super(SealActuator, self).__init__(TYPE_ACTUATOR, name)
+        self.onFunction = SealParameter(None)
+        self.offFunction = SealParameter(None)
+        self.on = SealParameter(False, [False, True])
+        self.off = SealParameter(False, [False, True])
 
 class LedAct(SealActuator):
     def __init__(self):
         super(LedAct, self).__init__("Led")
         self.useFunction.value = "ledToggle()"
         self.readFunction.value = "ledGet()"
+        self.onFunction.value = "ledOn()"
+        self.offFunction.value = "ledOff()"
 
 class RedLedAct(SealActuator):
     def __init__(self):
         super(RedLedAct, self).__init__("RedLed")
         self.useFunction.value = "redLedToggle()"
         self.readFunction.value = "redLedGet()"
+        self.onFunction.value = "redLedOn()"
+        self.offFunction.value = "redLedOff()"
 
 class BlueLedAct(SealActuator):
     def __init__(self):
         super(BlueLedAct, self).__init__("BlueLed")
         self.useFunction.value = "blueLedToggle()"
         self.readFunction.value = "blueLedGet()"
+        self.onFunction.value = "blueLedOn()"
+        self.offFunction.value = "blueLedOff()"
 
 class GreenLedAct(SealActuator):
     def __init__(self):
         super(GreenLedAct, self).__init__("GreenLed")
         self.useFunction.value = "greenLedToggle()"
         self.readFunction.value = "greenLedGet()"
+        self.onFunction.value = "greenLedOn()"
+        self.offFunction.value = "greenLedOff()"
+
+class DigitalOutputAct(SealActuator):
+    def __init__(self):
+        super(DigitalOutputAct, self).__init__("DigitalOut")
+        self.useFunction.value = "pinToggle(1, 0)"
+        self.readFunction.value = "pinRead(1, 0)"
+        self.onFunction.value = "pinSet(1, 0)"
+        self.offFunction.value = "pinClear(1, 0)"
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "readFunction" \
+                and parameter != "useFunction" \
+                and parameter != "onFunction" \
+                and parameter != "offFunction":
+            return SealActuator.calculateParameterValue(self, parameter, useCaseParameters)
+        port = int(self.getParameterValue("port", useCaseParameters))
+        pin = int(self.getParameterValue("pin", useCaseParameters))
+        if port is None: port = 1
+        if pin is None: pin = 0
+        args = "(" + str(port) + ", " + str(pin) + ")"
+        if parameter == "readFunction":
+            return "pinRead" + args
+        if parameter == "useFunction":
+            return "pinToggle" + args
+        if parameter == "onFunction":
+            return "pinSet" + args
+        if parameter == "offFunction":
+            return "pinClear" + args
+        return None
+
+class BeeperAct(SealActuator):
+    def __init__(self):
+        super(BeeperAct, self).__init__("Beeper")
+        self.useFunction.value = "beeperBeep(100)"
+        self.readFunction.value = "false"
+        self.onFunction.value = "beeperBeep(100)"
+        self.offFunction.value = "/* nothing */"
+
+        self.frequency = SealParameter(None, ["100", "200", "500", "1000", "2000", "5000", "10000"])
+        self.duration = SealParameter(None, ["10", "20", "50", "100", "200", "500", "1000", "2000"])
+
+        self.extraConfig = SealParameter("USE_BEEPER=y")
+        self.extraIncludes = SealParameter("#include <hil/beeper.h>")
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "useFunction" and parameter != "onFunction":
+            return SealActuator.calculateParameterValue(self, parameter, useCaseParameters)
+        frequency = self.getParameterValue("frequency", useCaseParameters)
+        duration = self.getParameterValue("duration", useCaseParameters)
+        if duration is None: duration = "100"
+        if parameter == "useFunction" or parameter == "onFunction":
+            if frequency:
+                return "beeperBeepEx({}, {})".format(duration, frequency)
+            return "beeperBeep({})".format(duration)
+
 
 class PrintAct(SealActuator):
     def __init__(self):

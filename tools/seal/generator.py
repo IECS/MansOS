@@ -37,7 +37,7 @@ class Generator(object):
 #            self.outputFile.write('#include "{}.h"\n'.format(x))
         if components.componentRegister.numCachedSensors:
             self.outputFile.write("#include <lib/processing/cache.h>\n")
-#TODO        self.outputFile.write("#include <net/seal_comm.h>\n")
+        self.outputFile.write("#include <net/seal_comm.h>\n")
         self.outputFile.write("\n")
 
     def generateConstants(self):

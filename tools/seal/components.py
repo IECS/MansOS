@@ -115,6 +115,25 @@ class UseCase(object):
             if self.once: self.period = None
         else:
             self.once = None
+
+        self.on = False
+        p = self.parameters.get("on")
+        if p:
+            self.on = bool(p.value)
+            if self.on: self.once = True
+            if self.once: self.period = None
+        else:
+            self.once = None
+
+        self.off = False
+        p = self.parameters.get("off")
+        if p:
+            self.off = bool(p.value)
+            if self.off: self.once = True
+            if self.once: self.period = None
+        else:
+            self.once = None
+
 #        for x in ['average', 'stdev', 'filter']:
 #            p = self.parameters.get(x)
 #            if p and p.value != '':
@@ -163,8 +182,9 @@ class UseCase(object):
             outputFile.write(
                 "Alarm_t {0}{1}Alarm{2};\n".format(
                     self.component.getNameCC(), self.branchName, self.numInBranch))
-            for s in self.component.subsensors:
-                outputFile.write("Alarm_t {0}PreAlarm;\n".format(s.getNameCC()))
+            if type(self) is Sensor:
+                for s in self.component.subsensors:
+                    outputFile.write("Alarm_t {0}PreAlarm;\n".format(s.getNameCC()))
 
 #        if self.filter:
 #            outputFile.write(
@@ -196,7 +216,7 @@ class UseCase(object):
         ucname = self.component.getNameUC()
         ucname += self.branchName.upper()
 
-        useFunction = self.component.getDependentParameterValue("useFunction", self.parameters)
+#        print "useFunction = ", useFunction
 
 #            outputFile.write("void {0}{1}Callback(uint32_t value)\n".format(ccname, self.numInBranch))
 #            outputFile.write("{\n")
@@ -220,7 +240,17 @@ class UseCase(object):
                         if param:
                             outputFile.write(", {0}".format(param))
                     outputFile.write(");\n")
+                elif self.on:
+                    onFunction = self.component.getDependentParameterValue(
+                        "onFunction", self.parameters)
+                    outputFile.write("    {0};\n".format(onFunction))
+                elif self.off:
+                    offFunction = self.component.getDependentParameterValue(
+                        "offFunction", self.parameters)
+                    outputFile.write("    {0};\n".format(offFunction))
                 else:
+                    useFunction = self.component.getDependentParameterValue(
+                        "useFunction", self.parameters)
                     outputFile.write("    {0};\n".format(useFunction))
             elif type(self.component) is Sensor:
                 intTypeName = self.component.getDataType()
@@ -299,8 +329,9 @@ class UseCase(object):
         if self.generateAlarm:
             outputFile.write("    alarmInit(&{0}Alarm{1}, {0}{1}Callback, NULL);\n".format(
                    ccname, self.numInBranch))
-            for s in self.component.subsensors:
-                outputFile.write("    alarmInit(&{0}PreAlarm, {0}PreReadCallback, NULL);\n".format(s.getNameCC()))
+            if type(self) is Sensor:
+                for s in self.component.subsensors:
+                    outputFile.write("    alarmInit(&{0}PreAlarm, {0}PreReadCallback, NULL);\n".format(s.getNameCC()))
         elif self.component.isRemote:
             outputFile.write("    sealCommRegisterInterest({}, {}{}Callback);\n".format(
                     self.component.systemwideID, self.component.getNameCC(), self.numInBranch))
@@ -961,7 +992,7 @@ class Sensor(Component):
         outputFile.write("    bool b = false, *isFilteredOut = &b;\n")
         outputFile.write("    {0} tmp = {1};\n".format(self.getDataType(), subReadFunction))
         outputFile.write("    if (!*isFilteredOut) {\n")
-        outputFile.write("        values[valuesCursor] = {};\n".format(subReadFunction))
+        outputFile.write("        values[valuesCursor] = tmp;\n")
         outputFile.write("        valuesCursor = (valuesCursor + 1) % {};\n".format(numToTake))
         outputFile.write("    }\n")
         outputFile.write("    {} value;\n".format(self.getDataType()))
@@ -1025,6 +1056,9 @@ class Sensor(Component):
                 specifiedReadFunction = self.getDependentParameterValue("readFunction", params)
             else:
                 specifiedReadFunction = self.getParameterValue("readFunction", None)
+
+#        useFunction = self.component.getDependentParameterValue("useFunction", self.parameters)
+#        print "useFunction = ", useFunction
 
             if specifiedReadFunction is None:
                 componentRegister.userError("Sensor '{}' has no valid read function!\n".format(self.name))

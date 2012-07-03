@@ -41,6 +41,7 @@
 #include "alarms_system.h"
 #include <net/comm.h>
 #include <net/seal_comm.h>
+#include <hil/beeper.h>
 #if USE_THREADS
 #include "threads/threads.h"
 #endif
@@ -81,6 +82,9 @@ static inline void initSystem(void)
 #ifdef USE_LEDS
     INIT_PRINTF("init LED(s)...\n");
     ledsInit();
+#endif
+#ifdef USE_BEEPER
+    beeperInit();
 #endif
 #ifdef RAMTEXT_START
     if ((MemoryAddress_t)&_end > RAMTEXT_START) {

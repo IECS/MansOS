@@ -83,6 +83,8 @@ USE_LONG_LIFETIME ?= n
 
 USE_SEAL_COMM ?= n
 
+USE_BEEPER ?= n
+
 ifeq ($(USE_NET),y)
    USE_ADDRESSING ?= y
    USE_RANDOM ?= y
