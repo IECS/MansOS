@@ -22,18 +22,26 @@ static uint8_t rxBuffer[AMB8420_MAX_PACKET_LEN];
 static uint16_t rxCursor;
 
 static void usartReceive(uint8_t byte) {
+    // USARTSendByte(1, '0' + (byte >> 4) );
+    // USARTSendByte(1, '0' + (byte & 0xf) );
+    // USARTSendByte(1, '\n');
     if (rxCursor < AMB8420_MAX_PACKET_LEN) {
         rxBuffer[rxCursor++] = byte;
     }
+}
+
+void amb8420InitUsart(void)
+{
+    USARTInit(AMB8420_UART_ID, AMB8420_SERIAL_BAUDRATE, 0);
+    USARTEnableTX(AMB8420_UART_ID);
+    USARTSetReceiveHandle(AMB8420_UART_ID, usartReceive);
 }
 
 void amb8420Init(void)
 {
     RPRINTF("amb8420Init...\n");
 
-    USARTInit(AMB8420_UART_ID, AMB8420_SERIAL_BAUDRATE, 0);
-    USARTEnableTX(AMB8420_UART_ID);
-    USARTSetReceiveHandle(AMB8420_UART_ID, usartReceive);
+    amb8420InitUsart();
 
     pinAsOutput(AMB8420_RESET_PORT, AMB8420_RESET_PIN);
     pinAsOutput(AMB8420_CONFIG_PORT, AMB8420_CONFIG_PIN);
@@ -50,8 +58,8 @@ void amb8420Init(void)
     // and enter sleep mode
     pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);
 
-    // pinIntFalling(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
-    // pinEnableInt(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
+    pinIntRising(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
+    pinEnableInt(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
 
     // put the system in reset
     pinClear(AMB8420_RESET_PORT, AMB8420_RESET_PIN);
@@ -69,6 +77,11 @@ void amb8420Init(void)
 void amb8420On(void)
 {
     RPRINTF("amb842On\n");
+
+    USARTInit(AMB8420_UART_ID, AMB8420_SERIAL_BAUDRATE, 0);
+    USARTEnableTX(AMB8420_UART_ID);
+    USARTSetReceiveHandle(AMB8420_UART_ID, usartReceive);
+
     if (!isOn) {
         pinClear(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);
         pinClear(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);
@@ -174,7 +187,8 @@ XISR(AMB8420_DATA_INDICATE_PORT, amb8420Interrupt)
         RPRINTF("got some other port1 interrupt!\n");
         return;
     }
-    RPRINTF("****************** got radio interrupt!\n");
+    // RPRINTF("****************** got radio interrupt!\n");
+    RPRINTF("int!\n");
     pinClearIntFlag(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
 
 #if USE_THREADS
@@ -187,27 +201,3 @@ XISR(AMB8420_DATA_INDICATE_PORT, amb8420Interrupt)
     }
 #endif
 }
-
-// void amb8420PollForPacket(void)
-// {
-//     static bool wasLow;
-
-//     bool isLow = !pinRead(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
-//     if (isLow == wasLow) return;
-//     wasLow = isLow;
-
-//     // falling edge indicates radio packet rx
-//     if (isLow) {
-//         return;
-//     }
-//     // rising edge indicates no more data on serial
-// #if USE_THREADS
-//     processFlags.bits.radioProcess = true;
-// #else
-//     if (rxHandle) {
-//         rxHandle();
-//     } else {
-//         amb8420Discard();
-//     }
-// #endif
-// }

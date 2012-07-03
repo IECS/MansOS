@@ -84,4 +84,6 @@ int cc2420GetRSSI(void);
 // radio must be turned on before calling this!
 bool cc2420IsChannelClear(void);
 
+void cc2420InitSpi(void);
+
 #endif

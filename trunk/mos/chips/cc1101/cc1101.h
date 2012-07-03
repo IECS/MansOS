@@ -57,4 +57,6 @@ void cc1101Discard(void);
 
 bool cc1101IsChannelClear(void);
 
+void cc1101InitSpi(void);
+
 #endif // _CHIPS_CC1101_H_
