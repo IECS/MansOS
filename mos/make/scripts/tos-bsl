@@ -10,6 +10,8 @@
 # Volker Rzehak
 # additional infos from slaa089a.pdf
 
+from __future__ import print_function
+
 import sys, time, string, io, struct
 sys.path.append("@tinyoslibdir@")
 import serial
@@ -199,6 +201,21 @@ deviceids = {
 class BSLException(Exception):
     pass
 
+# -------------- added for python 2/3 compatibility
+def asBinary(s):
+    r = bytearray([])
+    for c in s:
+        r.append(ord(c))
+    return r
+
+def isPython3():
+    return sys.version_info.major >= 3
+
+def version3FixFrameFormat(rxFrame):
+    if isPython3(): return asBinary(rxFrame)
+    return rxFrame
+# --------------
+
 class LowLevel:
     "lowlevel communication"
     #Constants
@@ -251,7 +268,7 @@ class LowLevel:
         """Calculates a checksum of "data"."""
         checksum = 0
 
-        for i in range(length/2):
+        for i in range(int(length/2)):
             checksum = checksum ^ (ord(data[i*2]) | (ord(data[i*2+1]) << 8))    #xor-ing
         return 0xffff & (checksum ^ 0xffff)         #inverting
 
@@ -337,7 +354,9 @@ class LowLevel:
         if DEBUG > 2: sys.stderr.write("  comRxFrame() header...\n")
         rxFramedata = self.serialport.read(3)
         if len(rxFramedata) != 3: raise BSLException("Timeout")
-        rxFrame = rxFrame + rxFramedata
+        for d in rxFramedata:
+            if type(d) is int: rxFrame += chr(d)
+            else: rxFrame += d
 
         if DEBUG > 3: sys.stderr.write("  comRxFrame() check header...\n")
         if rxFrame[1] == chr(0) and rxFrame[2] == rxFrame[3]:   #Add. header info. correct?
@@ -346,7 +365,9 @@ class LowLevel:
 
             rxFramedata = self.serialport.read(rxLengthCRC)
             if len(rxFramedata) != rxLengthCRC: raise BSLException("Timeout")
-            rxFrame = rxFrame + rxFramedata
+            for d in rxFramedata:
+                if type(d) is int: rxFrame += chr(d)
+                else: rxFrame += d
             #Check received frame:
             if DEBUG > 3: sys.stderr.write("  comRxFrame() crc check\n")
             #rxLength+4: Length with header but w/o CRC:
@@ -393,7 +414,9 @@ class LowLevel:
 
         self.reqNo = (self.seqNo + 1) % self.MAX_FRAME_COUNT
 
-        txFrame = txFrame + "".join(dataOut)
+        for d in dataOut:
+            if type(d) == int: txFrame += chr(d)
+            else: txFrame += d
         checksum = self.calcChecksum(txFrame, length + 4)
         txFrame = txFrame + chr(checksum & 0xff)
         txFrame = txFrame + chr((checksum >> 8) & 0xff)
@@ -406,7 +429,7 @@ class LowLevel:
         #TODO: Check after each transmitted character,
         #TODO: if microcontroller did send a character (probably a NAK!).
         for c in txFrame:
-            self.serialport.write(c)
+            self.serialport.write(bytearray([ord(c)]))
             if DEBUG > 3: sys.stderr.write("\ttx %02x" % ord(c))
             #if self.serialport.inWaiting(): break  #abort when BSL replies, probably NAK
         else:
@@ -585,8 +608,9 @@ class LowLevel:
             loopcnt = loopcnt - 1                   #count down tries
             self.serialport.flushInput()            #clear input, in case a prog is running
 
-            self.serialport.write(chr(self.BSL_SYNC))   #Send synchronization byte
+            self.serialport.write(bytearray([self.BSL_SYNC]))   #Send synchronization byte
             c = self.serialport.read(1)             #read answer
+            if type(c) != str: c = chr(c[0])        #for version 3
             if c == chr(self.DATA_ACK):             #ACk
                 if DEBUG > 1: sys.stderr.write("  bslSync() OK\n")
                 return                              #Sync. successful
@@ -646,12 +670,12 @@ class LowLevel:
         dataOut =  struct.pack("<HH", addr, length)
 
         if blkout: #Copy data out of blkout into frame
-            dataOut = dataOut + blkout
+            dataOut += asBinary(blkout)
 
         self.bslSync(wait)                          #synchronize BSL
         rxFrame = self.comTxRx(cmd, dataOut, len(dataOut))  #Send frame
         if rxFrame:                                 #test answer
-            return rxFrame[4:] #return only data w/o [hdr,null,len,len]
+            return version3FixFrameFormat(rxFrame[4:]) #return only data w/o [hdr,null,len,len]
         else:
             return rxFrame
 
@@ -1625,5 +1649,5 @@ if __name__ == '__main__':
         sys.exit(1)         #set errorlevel for script usage
     except Exception as msg:  #every Exception is caught and displayed
         if DEBUG: raise     #show full trace in debug mode
-        sys.stderr.write("\nAn error occoured:\n%s\n" % msg) #short messy in user mode
+        sys.stderr.write("\nAn error occured:\n%s\n" % msg) #short messy in user mode
         sys.exit(1)         #set errorlevel for script usage

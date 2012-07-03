@@ -35,7 +35,7 @@ MCU_MODEL = msp430f2617
 # Upload target
 UPLOAD_TARGET=upload-z1
 
-# Default clock speed: 4MHz
+# Default clock speed: 8MHz
 ifeq ($(USE_HARDWARE_TIMERS),y)
 CPU_MHZ ?= 8
 else
