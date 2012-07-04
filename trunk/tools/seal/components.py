@@ -1052,7 +1052,7 @@ class Sensor(Component):
 
             if self.specification.readFunctionDependsOnParams:
                 if useCase: params = useCase.parameters
-                else: params = self.parameters
+                else: params = root.parameters
                 specifiedReadFunction = self.getDependentParameterValue("readFunction", params)
             else:
                 specifiedReadFunction = self.getParameterValue("readFunction", None)
