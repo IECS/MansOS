@@ -222,15 +222,14 @@ class AnalogInputSensor(SealSensor):
         super(AnalogInputSensor, self).__init__("AnalogIn")
         self.useFunction.value = "adcRead(1)"
         self.readFunction.value = "adcRead(1)"
+        self.channel = SealParameter(0, ["0", "1", "2", "3", "4", "5", "6", "7"])
         self.readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         # print "calculateParameterValue: ", parameter
         if parameter != "readFunction" and parameter != "useFunction":
             return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
-        # print "params:", useCaseParameters
         channel = int(self.getParameterValue("channel", useCaseParameters))
-        # print "channel: ", channel
         if channel is None: channel = 1
         return "adcRead({})".format(channel)
 
