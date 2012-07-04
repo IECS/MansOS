@@ -206,7 +206,7 @@ def asBinary(s):
     return r
 
 def isPython3():
-    return sys.version_info.major >= 3
+    return sys.version_info[0] >= 3
 
 def version3FixFrameFormat(rxFrame):
     if isPython3(): return asBinary(rxFrame)
