@@ -57,6 +57,7 @@ void initAdc()
     adcChannel = 1;
 
     // XXX: needed for lynx board to work without specific initialization
+#if 0
     hplAdcUseSupplyRef();
     hplAdcOn();
 
@@ -69,6 +70,7 @@ void initAdc()
     enableAdcPin(6, 5);
     enableAdcPin(6, 6);
     enableAdcPin(6, 7);
+#endif
 #endif
 }
 
