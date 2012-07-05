@@ -448,6 +448,8 @@ void sdcardEraseSector(uint32_t address)
 
 bool sdcardReadBlock(uint32_t address, void* buffer)
 {
+    //PRINTF("sdcardReadBlock at %lu\n", address);
+
     //  if SDHC card: use block number instead of address
     if (cardType == SD_CARD_TYPE_SDHC) address >>= 9;
 
@@ -516,6 +518,8 @@ static bool sdcardWriteData(uint8_t token, const uint8_t* data)
 // Write len bytes (len == 512) to card at address
 bool sdcardWriteBlock(uint32_t address, const void *buf)
 {
+    // PRINTF("sdcardWriteBlock at %lu\n", address);
+
     //  if SDHC card: use block number instead of address
     if (cardType == SD_CARD_TYPE_SDHC) address >>= 9;
 
@@ -539,7 +543,7 @@ bool sdcardWriteBlock(uint32_t address, const void *buf)
     SDCARD_SPI_DISABLE();
     return false;
 }
-
+ 
 // -----------------------------------------------------------------
 
 void sdcardFlush(void)
@@ -550,25 +554,40 @@ void sdcardFlush(void)
 
 static inline void takeFromCache(void* buffer, uint16_t len, uint16_t offset)
 {
+    //ASSERT(offset < SDCARD_SECTOR_SIZE);
+    //ASSERT(cacheAddress % SDCARD_SECTOR_SIZE == 0);
+    //PRINTF("sd card take from cache %u bytes at %lu\n", len, cacheAddress + offset);
+
     memcpy(buffer, cacheBuffer + offset, len);
 }
 
 // Read len bytes (len <= 512) at address
 static void sdcardReadInBlock(uint32_t address, void* buffer, uint16_t len)
 {
+    // PRINTF("sdcardReadInBlock %u bytes at %lu\n", len, address);
+
     if (IN_SECTOR(address, cacheAddress)) {
         takeFromCache(buffer, len, address & (SDCARD_SECTOR_SIZE - 1));
         return;
     }
+    // flush cache here too
+    if (cacheChanged) {
+        sdcardWriteBlock(cacheAddress, cacheBuffer);
+        cacheChanged = false;
+    }
+
     cacheAddress = address & 0xfffffe00;
     sdcardReadBlock(cacheAddress, cacheBuffer);
     takeFromCache(buffer, len, address & (SDCARD_SECTOR_SIZE - 1));
+
+    // debugHexdump(buffer, len);
 }
 
 // Read len bytes (len <= 512) at address
 void sdcardRead(uint32_t address, void* buffer, uint16_t len)
 {
     if (!initOk) return;
+    // PRINTF("sdcardRead %u bytes at %lu\n", len, address);
 
     uint8_t *buf = (uint8_t *)buffer;
     uint16_t pageOffset = (uint16_t) (address & (SDCARD_SECTOR_SIZE - 1));
@@ -586,12 +605,19 @@ void sdcardRead(uint32_t address, void* buffer, uint16_t len)
 
 static inline void putInCache(const void* buffer, uint16_t len, uint16_t offset)
 {
+    //ASSERT(offset < SDCARD_SECTOR_SIZE);
+    //ASSERT(cacheAddress % SDCARD_SECTOR_SIZE == 0);
+    //PRINTF("sd card put in cache %u bytes at %lu\n", len, cacheAddress + offset);
+
     memcpy(cacheBuffer + offset, buffer, len);
     cacheChanged = true;
 }
 
 static void sdcardWriteInBlock(uint32_t address, const void* buffer, uint16_t len)
 {
+    // PRINTF("sdcardWriteInBlock %u bytes at %lu\n", len, address);
+    // debugHexdump(buffer, len);
+
     if (IN_SECTOR(address, cacheAddress)) {
         putInCache(buffer, len, address & (SDCARD_SECTOR_SIZE - 1));
         return;
@@ -609,6 +635,8 @@ static void sdcardWriteInBlock(uint32_t address, const void* buffer, uint16_t le
 void sdcardWrite(uint32_t address, const void *buffer, uint16_t len)
 {
     if (!initOk) return;
+
+    // PRINTF("sdcardWrite %u bytes at %lu\n", len, address);
 
     const uint8_t *buf = (const uint8_t *)buffer;
     uint16_t pageOffset = (uint16_t) (address & (SDCARD_SECTOR_SIZE - 1));
