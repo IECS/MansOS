@@ -1,0 +1,15 @@
+#
+# Application specific config file
+#
+
+USE_EXT_FLASH=y
+USE_ADDRESSING=y
+
+# for apds & isl
+USE_SOFT_I2C=y
+CONST_SDA_PORT=2
+CONST_SDA_PIN=3
+CONST_SCL_PORT=2
+CONST_SCL_PIN=4
+
+#DEBUG=y
