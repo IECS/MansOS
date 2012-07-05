@@ -28,7 +28,9 @@
 #include <lib/codec/crc.h>
 #include <lib/assert.h>
 
-#include "../datalogger-06-jul/datapacket.h"
+#include "../datalogger/datapacket.h"
+
+#define ERASE_ALL_AFTER 1
 
 uint32_t extFlashAddress;
 
@@ -40,6 +42,7 @@ void printPacket1(DataPacket_t *packet)
     PRINTF("src=%#04x\n", packet->sourceAddress);
     PRINTF("dataSeqnum=%#x\n", packet->dataSeqnum);
     PRINTF("islLight=%#x\n", packet->islLight);
+    PRINTF("sq100Light=%#x\n", packet->sq100Light);
     PRINTF("internalVoltage=%u\n", packet->internalVoltage);
     PRINTF("internalTemperature=%u\n", packet->internalTemperature);
     PRINTF("sht75Humidity=%#x\n", packet->sht75Humidity);
@@ -48,11 +51,12 @@ void printPacket1(DataPacket_t *packet)
 
 void printPacket(DataPacket_t *packet)
 {
-    PRINTF("%lu 0x%04x %#x %#x %#x %#x %#x %#x\n",
+    PRINTF("%lu 0x%04x %#x %#x %#x %#x %#x %#x %#x\n",
             packet->timestamp,
             packet->sourceAddress,
             packet->dataSeqnum,
             packet->islLight,
+            packet->sq100Light,
             packet->internalVoltage,
             packet->internalTemperature,
             packet->sht75Humidity,
@@ -66,7 +70,15 @@ void readExtFlash(void)
 
     while (extFlashAddress < EXT_FLASH_SIZE) {
         extFlashRead(extFlashAddress, &packet, sizeof(packet));
-        if (packet.crc == crc16((uint8_t *)&packet, sizeof(packet) - sizeof(uint16_t))) {
+
+        bool valid = true;
+        if (packet.crc != crc16((uint8_t *)&packet, sizeof(packet) - sizeof(uint16_t))) {
+            valid = false;
+        } else {
+            if (packet.dataSeqnum == 0) valid = false;
+        }
+
+        if (valid) {
             if (prevMissed) {
                 PRINT("corrupt packet\n");
             }
@@ -99,5 +111,12 @@ void appMain(void)
     prepareExtFlash();
     readExtFlash();
     //PRINTF("External flash is empty!\n");
+
+#if ERASE_ALL_AFTER
+    PRINTF("erasing...\n");
+    extFlashBulkErase();
+#endif
+
     ledOff();
+    PRINTF("done...\n");
 }

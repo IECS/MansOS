@@ -4,6 +4,7 @@ struct DataPacket_s {
     uint16_t dataSeqnum;
     uint16_t sourceAddress;
     uint16_t islLight;
+    uint16_t sq100Light;
     uint16_t internalVoltage;
     uint16_t internalTemperature;
     uint16_t sht75Humidity;

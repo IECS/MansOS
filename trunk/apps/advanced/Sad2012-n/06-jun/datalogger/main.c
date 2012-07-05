@@ -29,6 +29,7 @@
 #include <lib/codec/crc.h>
 #include <lib/assert.h>
 #include <isl29003/isl29003.h>
+#include <ads1115/ads1115.h>
 
 #include "datapacket.h"
 
@@ -53,6 +54,20 @@ uint16_t dataSeqnum;
 
 // ---------------------------------------------
 
+#if PRINT_PACKET
+void printPacket(DataPacket_t *packet)
+{
+    PRINT("===========================\n");
+    PRINTF("dataSeqnum=%#x\n", packet->dataSeqnum);
+    PRINTF("islLight=%#x\n", packet->islLight);
+    PRINTF("sq100Light=%#x\n", packet->sq100Light);
+    PRINTF("internalVoltage=%u\n", packet->internalVoltage);
+    PRINTF("internalTemperature=%u\n", packet->internalTemperature);
+    PRINTF("sht75Humidity=%#x\n", packet->sht75Humidity);
+    PRINTF("sht75Temperature=%#x\n", packet->sht75Temperature);
+}
+#endif
+
 #if WRITE_TO_FLASH
 void prepareExtFlash(void)
 {
@@ -65,7 +80,16 @@ void prepareExtFlash(void)
     extFlashAddress = EXT_FLASH_RESERVED;
     while (extFlashAddress < EXT_FLASH_SIZE) {
         extFlashRead(extFlashAddress, &packet, sizeof(packet));
-        if (packet.crc == crc16((uint8_t *)&packet, sizeof(packet) - sizeof(uint16_t))) {
+        // PRINT("read packet:\n");
+        // printPacket(&packet);
+        bool valid = true;
+        if (packet.crc != crc16((uint8_t *)&packet, sizeof(packet) - sizeof(uint16_t))) {
+            valid = false;
+        } else {
+            if (packet.dataSeqnum == 0) valid = false;
+        }
+
+        if (valid) {
             oneInvalid = false;
         } else {
             // XXX: this is supposed to find first non-packet, but it will find first two invalid packets!!
@@ -73,14 +97,6 @@ void prepareExtFlash(void)
                 oneInvalid = true;
             } else {
                 extFlashAddress -= sizeof(packet);
-                if (extFlashAddress > EXT_FLASH_RESERVED) {
-                    // write special zero packets until end of sector to mark reboot
-                    memset(&packet, 0, sizeof(packet)); // zero crc
-                    while (extFlashAddress % EXT_FLASH_SECTOR_SIZE) {
-                        extFlashWrite(extFlashAddress, &packet, sizeof(packet));
-                        extFlashAddress += sizeof(packet);
-                    }
-                }
                 break;
             }
         }
@@ -101,10 +117,20 @@ void readSensors(DataPacket_t *packet)
     packet->sourceAddress = localAddress;
     packet->dataSeqnum = ++dataSeqnum;
 
-    if (!islRead(&packet->islLight, true)) {
-        PRINT("islRead failed\n");
+    if (localAddress != 0x0796) {
+        if (!islRead(&packet->islLight, true)) {
+            PRINT("islRead failed\n");
+            packet->islLight = 0xffff;
+        }
+        packet->sq100Light = 0xffff;
+    } else {
         packet->islLight = 0xffff;
+        if (!readAds(&packet->sq100Light)) {
+            PRINT("readAdsRegister failed\n");
+            packet->sq100Light = 0xffff;
+        }
     }
+
     packet->internalVoltage = adcRead(ADC_INTERNAL_VOLTAGE);
     packet->internalTemperature = adcRead(ADC_INTERNAL_TEMPERATURE);
 
@@ -133,19 +159,6 @@ void readSensors(DataPacket_t *packet)
     ledOff();
 }
 
-#if PRINT_PACKET
-void printPacket(DataPacket_t *packet)
-{
-    PRINT("===========================\n");
-    PRINTF("dataSeqnum=%#x\n", packet->dataSeqnum);
-    PRINTF("islLight=%#x\n", packet->islLight);
-    PRINTF("internalVoltage=%u\n", packet->internalVoltage);
-    PRINTF("internalTemperature=%u\n", packet->internalTemperature);
-    PRINTF("sht75Humidity=%#x\n", packet->sht75Humidity);
-    PRINTF("sht75Temperature=%#x\n", packet->sht75Temperature);
-}
-#endif
-
 void appMain(void)
 {
     uint16_t i;
@@ -159,10 +172,18 @@ void appMain(void)
 #endif
 
     // ------------------------- light sensors
-    islInit();
-    islOn();
+    if (localAddress != 0x0796) {
+        PRINT("init isl\n");
+        islInit();
+        islOn();
+    } else {
+        PRINT("init ads\n");
+        adsInit();
+        adsSelectInput(0);
+    }
 
     // ------------------------- main loop
+    mdelay(3000);
     DPRINTF("starting main loop...\n");
     for (i = 0; i < 6; ++i) {
         redLedToggle();
