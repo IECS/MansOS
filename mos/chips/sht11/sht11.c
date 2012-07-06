@@ -45,6 +45,13 @@
     SHT11_CLK_HI(); \
     SHT11_CLK_LO();
 
+// End current transmission
+#define SHT11_SKIP_ACK() \
+    SHT11_SDA_OUT(); \
+    SHT11_SDA_HI(); \
+    SHT11_CLK_HI(); \
+    SHT11_CLK_LO();
+
 // wait for operation (measurement) to complete
 // SHT11 signals completion of measurement by pulling data low
 // TODO: should add maximal timeout to this!
@@ -125,6 +132,7 @@ uint16_t sht11_cmd(uint_t cmd) {
         res = sht11_recv_byte() << 8;
         SHT11_SEND_ACK();
         res |= sht11_recv_byte();
+        SHT11_SKIP_ACK();
     }
     // CRC not used
 
