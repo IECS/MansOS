@@ -167,6 +167,7 @@
           <state>USE_KERNEL_MAIN</state>
           <state>USE_HARDWARE_TIMERS</state>
           <state>USE_ADC</state>
+          <state>USE_HUMIDITY</state>
           <state>USE_SERIAL</state>
           <state>USE_SPI</state>
           <state>USE_SERIAL_NUMBER</state>
@@ -2001,12 +2002,6 @@
     <name>$PROJ_DIR$\..\..\..\mos\hil\errors.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\..\..\..\mos\hil\i2c_soft.c</name>
-    <excluded>
-      <configuration>Debug</configuration>
-    </excluded>
-  </file>
-  <file>
     <name>$PROJ_DIR$\..\..\..\mos\kernel\kernelmain.c</name>
   </file>
   <file>
@@ -2031,7 +2026,13 @@
     <name>$PROJ_DIR$\..\..\..\mos\chips\msp430\msp430x1xx_clock.c</name>
   </file>
   <file>
-    <name>$PROJ_DIR$\..\..\..\mos\platforms\farmmote\platform.c</name>
+    <name>$PROJ_DIR$\..\..\..\mos\PLATFORMS\farmmote\platform.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\..\..\..\mos\chips\sht11\sht11.c</name>
+  </file>
+  <file>
+    <name>$PROJ_DIR$\..\..\..\mos\chips\sht11\sht11_conv.c</name>
   </file>
   <file>
     <name>$PROJ_DIR$\..\..\..\mos\kernel\sleep.c</name>
