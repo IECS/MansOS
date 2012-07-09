@@ -59,4 +59,10 @@ void initPlatform(void);
 #define DS18B20_PORT 2
 #define DS18B20_PIN  4
 
+// ADC channel for the soil humidity sensor
+#define ADC_SOIL_HUMIDITY 12
+
+// Analog input enable bit for the soil humidity sensor input
+#define SOIL_HUMIDITY_AE_BIT  4 // In ADC10AE1
+
 #endif
