@@ -42,6 +42,10 @@ void initPlatform(void)
 #if USE_HARDWARE_TIMERS
     msp430InitClocks();
 #endif
+#if USE_ADC
+    hplAdcUse2V5VRef(); // Soil humidity sensor outputs ~0--2.5 V
+    ADC10AE1 |= BV(SOIL_HUMIDITY_AE_BIT);
+#endif
 #if USE_SERIAL_NUMBER
     // Set up Vcc for the DS2411
     pinAsOutput(DS2411_VCC_PORT, DS2411_VCC_PIN);
@@ -57,7 +61,7 @@ void initPlatform(void)
     pinClear(DS2411_VCC_PORT, DS2411_VCC_PIN);
 #endif
 
-    // This is needed by DS18B20
+    // This is needed by DS18B20 and SHT10
     pinAsOutput(VDD_SWITCH_PORT, VDD_SWITCH_PIN);
     pinSet(VDD_SWITCH_PORT, VDD_SWITCH_PIN);
 

@@ -40,7 +40,8 @@ static inline void hplAdcInit(void)
 {
     // SREF_1:      VR+ = VRef+ and VR- = Vss
     // ADC10SHT_3:  64 ADC10CLKs sample-and-hold time
-    ADC10CTL0 = ADC10SHT_3 | SREF_1;
+    // Quirk: preserve the value of the REF2_5V bit
+    ADC10CTL0 = ADC10SHT_3 | SREF_1 | (ADC10CTL0 & REF2_5V);
 }
 
 // Switch to 2.5V reference instead of 1.5V
@@ -114,7 +115,7 @@ static inline bool hplAdcIsBusy(void)
     return ADC10CTL1 & ADC10BUSY;
 }
 
-#define hplAdcUse2V5VRef() 
+#define hplAdcUse2V5VRef()
 
 #define hplAdcUseSupplyRef()
 
