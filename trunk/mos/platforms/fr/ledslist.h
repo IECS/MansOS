@@ -54,8 +54,8 @@
 #undef LEDS_DEFINE
 
 // LEDs attached to VDD on this platform
-// to turn LED on, corresponding PIN must be set LOW
-#define LEDS_ON_PIN_VALUE 0 
+// to turn LED on, corresponding PIN must be set HIGH
+#define LEDS_ON_PIN_VALUE 1
 #define LEDS_PORT_3 3
 #define LEDS_PORT_J J
 
