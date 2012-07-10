@@ -64,3 +64,16 @@ END = 5
 # Upload targets
 SHELL = 0
 USB = 1
+
+# C keywords
+C_KEYWORDS = ["void", "const", "struct", "char", "enum", "return",
+              "uint8_t", "int8_t", "uint16_t", "int16_t", "int",
+              "uint32_t", "int32_t", "bool",
+              "if", "do", "while", "until", "for"]
+
+# SEAL keywords
+SEAL_KEYWORDS = ["use", "read", "output"]
+
+# SEAL parameter names
+SEAL_PARAMETERS = ['period', 'on', 'off', 'once', 'baudrate', 'id', 'cache',
+                   'timestamp', 'crc', 'aggregate', 'address']
