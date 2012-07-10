@@ -70,7 +70,7 @@ uint8_t i2cWrite(uint8_t addr, const void *buf, uint8_t len)
         // Wait for either transmission clearance or error
         while (1)
         {
-            if (UCB0STAT & UCNACKIFG)
+            if (UCB0STATW & UCNACKIFG)
             {
                 // No ack
                 ret = I2C_ACK_ERROR;
@@ -107,7 +107,7 @@ uint8_t i2cRead(uint8_t addr, void *buf, uint8_t len)
         // Wait for next character or error
         while (1)
         {
-            if (UCB0STAT & UCNACKIFG) // No ack
+            if (UCB0STATW & UCNACKIFG) // No ack
             {
                 goto end;
             }
