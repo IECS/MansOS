@@ -115,8 +115,6 @@ static inline bool hplAdcIsBusy(void)
     return ADC10CTL1 & ADC10BUSY;
 }
 
-#define hplAdcUse2V5VRef()
-
 #define hplAdcUseSupplyRef()
 
 #endif // _MSP430_ADC10_H_
