@@ -114,7 +114,7 @@ typedef uint32_t ticks_t;
 // Atmel has straight decimal MHz
 #define CPU_HZ (CPU_MHZ * 1000000ul)
 #else
-// msp430-based devices usally has binary MHz
+// msp430-based devices usally have binary MHz
 #define CPU_HZ (CPU_MHZ * 1024ul * 1024)
 #endif
 

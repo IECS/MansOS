@@ -37,7 +37,6 @@ static void msp430CalibrateDCO(void) {
     UCSCTL3 |= SELREF_2;                      // Set DCO FLL reference = REFO
     UCSCTL4 |= SELA_2;                        // Set ACLK = REFO
 
-    
 #ifdef __IAR_SYSTEMS_ICC__
     __bis_SR_register(SCG0);                  // Disable the FLL control loop
 #else

@@ -23,88 +23,77 @@
  */
 
 /**
- * msp430_usci.h -- USCI module (UART/SPI/I2C modes) on MSP430
- *
- * There are two modules with a similar set of registers. Module A supports
- * UART and SPI modes, module B supports SPI and I2C modes. To reduce code
- * duplication we use name-composing macros for register manipulation. This
- * may increase code size, but at the same time it also improves execution
- * speed when compared to run-time register selection.
+ * msp430_usci.h -- USCI module (UART/SPI/I2C modes) on MSP430FR57xx
  */
 
-#ifndef _MSP430_USCI_H_
-#define _MSP430_USCI_H_
+#ifndef _MSP430FR57XX_USCI_H_
+#define _MSP430FR57XX_USCI_H_
 
 #include <kernel/defines.h>
 
-#define USCI_A0_RXTX_PORT 3
-#define USCI_A0_TX_PIN    4
-#define USCI_A0_RX_PIN    5
+#define USCI_A0_RXTX_PORT 2
+#define USCI_A0_TX_PIN    0
+#define USCI_A0_RX_PIN    1
 #define USCI_A0_SIMO_PIN  USCI_A0_TX_PIN
 #define USCI_A0_SOMI_PIN  USCI_A0_RX_PIN
-#define USCI_A0_CLK_PORT  3
-#define USCI_A0_CLK_PIN   0
-#define USCI_A0_STE_PORT  3
-#define USCI_A0_STE_PIN   3
+#define USCI_A0_CLK_PORT  1
+#define USCI_A0_CLK_PIN   5
+#define USCI_A0_STE_PORT  1
+#define USCI_A0_STE_PIN   4
 
-#define USCI_A1_RXTX_PORT 3
-#define USCI_A1_TX_PIN    6
-#define USCI_A1_RX_PIN    7
+#define USCI_A1_RXTX_PORT 2
+#define USCI_A1_TX_PIN    5
+#define USCI_A1_RX_PIN    6
 #define USCI_A1_SIMO_PIN  USCI_A1_TX_PIN
 #define USCI_A1_SOMI_PIN  USCI_A1_RX_PIN
-#define USCI_A1_CLK_PORT  5
-#define USCI_A1_CLK_PIN   0
-#define USCI_A1_STE_PORT  5
+#define USCI_A1_CLK_PORT  2
+#define USCI_A1_CLK_PIN   4
+#define USCI_A1_STE_PORT  2
 #define USCI_A1_STE_PIN   3
 
-#define USCI_B0_RXTX_PORT 3
-#define USCI_B0_SIMO_PIN  1
-#define USCI_B0_SOMI_PIN  2
-#define USCI_B0_CLK_PORT  3
-#define USCI_B0_CLK_PIN   3
-#define USCI_B0_STE_PORT  3
-#define USCI_B0_STE_PIN   0
 
-#define USCI_B0_I2C_PORT  3
-#define USCI_B0_SDA_PIN   1
-#define USCI_B0_SCL_PIN   2
+#define USCI_B0_RXTX_PORT 1
+#define USCI_B0_SIMO_PIN  6
+#define USCI_B0_SOMI_PIN  7
+#define USCI_B0_CLK_PORT  2
+#define USCI_B0_CLK_PIN   2
+#define USCI_B0_STE_PORT  1
+#define USCI_B0_STE_PIN   3
 
-#define USCI_B1_I2C_PORT  5
-#define USCI_B1_SDA_PIN   1
-#define USCI_B1_SCL_PIN   2
+#define USCI_B0_I2C_PORT  1
+#define USCI_B0_SDA_PIN   6
+#define USCI_B0_SCL_PIN   7
 
 
-#if PLATFORM_XM1000
 #define USART_COUNT       2
 #define PRINTF_USART_ID   1
-#define UART_ON_USCI_A1   1
-#else
-#define USART_COUNT       1
-#define PRINTF_USART_ID   0
 #define UART_ON_USCI_A0   1
-#endif
+
+
+#define UC0IE     UCA0IE
+#define UC0IFG    UCA0IFG
+#define UCA0RXIE  UCRXIE
+#define UCA0TXIE  UCTXIE
+#define UCA0RXIFG UCRXIFG
+#define UCA0TXIFG UCTXIFG
+#define UCB0RXIE  UCRXIE
+#define UCB0TXIE  UCTXIE
+#define UCB0RXIFG UCRXIFG
+#define UCB0TXIFG UCTXIFG
 
 
 // This module enables and disables components automatically
 static inline uint_t USARTEnableTX(uint8_t id) { return 0; }
 static inline uint_t USARTDisableTX(uint8_t id) { return 0; }
 static inline uint_t USARTEnableRX(uint8_t id) {
-#if UART_ON_USCI_A0
     UC0IE |= UCA0RXIE;     // Enable receive interrupt
-#else
-    UC1IE |= UCA1RXIE;     // Enable receive interrupt
-#endif
     return 0;
 }
 static inline uint_t USARTDisableRX(uint8_t id) {
-#if UART_ON_USCI_A0
     UC0IE &= ~UCA0RXIE;    // Disable receive interrupt
-#else
-    UC1IE &= ~UCA1RXIE;    // Disable receive interrupt
-#endif
     return 0;
 }
 static inline void hw_spiBusOn(uint8_t busId) { }
 static inline void hw_spiBusOff(uint8_t busId) { }
 
-#endif // _MSP430_USCI_H_
+#endif

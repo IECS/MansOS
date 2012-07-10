@@ -103,6 +103,12 @@ upload-tilib:
 # TODO: device name!
 	$(MSPDEBUG) tilib -d /dev/ttyACM0 "prog $(EXECUTABLE)"
 
+upload-arturs:
+	$(MOS)/make/scripts/arturs-bsl.py --telosb -D -c $(BSLPORT) -r -e -I -p $(EXECUTABLE)
+
+upload-arturs-msp430:
+	$(MOS)/make/scripts/arturs-bsl.py --invert-reset --invert-test -c $(BSLPORT) $(SLOW) -r -e -I -p $(EXECUTABLE)
+
 memdump: build
 	$(MEMDUMP) $(OUTDIR)/$(APPMOD).elf msp430
 
