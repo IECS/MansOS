@@ -81,15 +81,16 @@
 #define UCB0RXIFG UCRXIFG
 #define UCB0TXIFG UCTXIFG
 
-
 // This module enables and disables components automatically
 static inline uint_t USARTEnableTX(uint8_t id) { return 0; }
 static inline uint_t USARTDisableTX(uint8_t id) { return 0; }
 static inline uint_t USARTEnableRX(uint8_t id) {
+    // TODO: A1?
     UC0IE |= UCA0RXIE;     // Enable receive interrupt
     return 0;
 }
 static inline uint_t USARTDisableRX(uint8_t id) {
+    // TODO: A1?
     UC0IE &= ~UCA0RXIE;    // Disable receive interrupt
     return 0;
 }
