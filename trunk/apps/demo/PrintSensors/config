@@ -3,3 +3,4 @@
 #
 
 USE_ADC=y
+USE_HUMIDITY=y

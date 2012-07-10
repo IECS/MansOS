@@ -29,9 +29,15 @@
 
 void appMain(void)
 {
-    while(1) {
+    humidityOn();
+
+    while (1) {
         uint16_t light = readLight();
+        uint16_t humidity = readHumidity();
+        uint16_t temperature = readHTemperature();
         PRINTF("light = %u\n", light);
-        msleep(1000); // sleep one second
+        PRINTF("humidity = %u\n", humidity);
+        PRINTF("temperature = %u\n", temperature);
+        msleep(2000); // sleep two seconds
     }
 }
