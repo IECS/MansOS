@@ -98,7 +98,7 @@ upload-xm1000:
 upload-launchpad:
 	$(MSPDEBUG) rf2500 "prog $(EXECUTABLE)"
 
-upload-em:
+upload-tilib:
 # note: this is valid for version 3 firmware only
 # TODO: device name!
 	$(MSPDEBUG) tilib -d /dev/ttyACM0 "prog $(EXECUTABLE)"

@@ -33,7 +33,7 @@ ARCH = msp430
 MCU_MODEL = msp430f1611
 
 # Upload target specifically for EM board
-UPLOAD_TARGET=upload-em
+UPLOAD_TARGET=upload-tilib
 
 # Default clock speed: 1MHz
 ifeq ($(USE_HARDWARE_TIMERS),y)

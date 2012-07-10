@@ -1,6 +1,5 @@
 /**
- * Copyright (c) 2011, Institute of Electronics and Computer Science
- * All rights reserved.
+ * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -20,43 +19,31 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * flash.h -- Internal flash memory constants
  */
 
-#ifndef _PLATFORM_FLASH_H_
-#define _PLATFORM_FLASH_H_
+#ifndef _PLATFORM_FR_H_
+#define _PLATFORM_FR_H_
 
-#include "../telosb/flash.h"
+#include <msp430/msp430_clock.h>
+#include <msp430/msp430_timers.h>
+#include <msp430/msp430_int.h>
+#include <msp430/msp430_adc.h>
+#include <msp430/msp430_usci.h>
 
-// //
-// // On MSP430F5438 256kb internal flash memory is present (including extended memory)
-// //
-// #define MSP430_FLASH_START 0x5c00
-// #define MSP430_FLASH_END   0xFFE0 // End of the flash memory: interrupt vector start
-// #define MSP430_FLASH_SIZE  (0xFFFF - MSP430_FLASH_START + 1)
+//===========================================================
+// Functions
+//===========================================================
 
-// // TODO: extended memory!
+void initPlatform(void);
 
-// //
-// // Flash segment size (this is the minimal flash area that can be erased)
-// //
-// #define MSP430_FLASH_SEGMENT_SIZE  512
-// //
-// // Flash block size (this is the maximal flash area that can be written at once)
-// //
-// #define MSP430_FLASH_BLOCK_SIZE    64
+//===========================================================
+// Data types and constants
+//===========================================================
 
-// //
-// // Flash Information Memory range: 512 bytes in four 128-byte segments
-// //
-// #define MSP430_FLASH_INFOMEM_START 0x1800
-// #define MSP430_FLASH_INFOMEM_END   0x19FF
-// //
-// // Flash Information Memory segment size
-// //
-// #define MSP430_FLASH_INFOMEM_SEGMENT_SIZE  128
+// #define EXT_FLASH_CHIP FLASH_CHIP_SDCARD
 
-// // TODO: BSL memory - from 0x1000 to 0x17FF in four 512 byte segments!
+// #define RADIO_CHIP RADIO_CHIP_AMB8420
+
+// #define SNUM_CHIP SNUM_DS2401
 
 #endif
