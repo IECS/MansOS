@@ -55,7 +55,6 @@ PSOURCES += $(MOS)/platforms/fr/platform.c
 
 PSOURCES += $(MOS)/chips/msp430/msp430fr57xx_clock.c
 
-PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
-# TODO: SPI present, but not supported at the moment
-#PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
-#PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c
+PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430fr57xx_usci_uart.c
+PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430fr57xx_usci_spi.c
+PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430fr57xx_usci_i2c.c

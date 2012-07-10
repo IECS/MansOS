@@ -22,16 +22,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * msp430_usci_spi.c -- USCI module on MSP430, SPI mode
- */
-
-#include <hil/gpio.h>
-#include <kernel/defines.h>
-#include <kernel/stdtypes.h>
-
-#include "msp430_usci.h"
-
+#include "msp430fr57xx_usci.h"
 
 //
 // Initialization
@@ -43,12 +34,10 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
 #define SPI_MODE  (UCCKPH | UCMSB | UCMST | UCMODE_0 | UCSYNC)
 #define SPI_SPEED (CPU_HZ / 2)
 
-#define SETUP_SPI_PINS(letterid) (                           \
-    pinAsFunction(USCI_##letterid##_RXTX_PORT, USCI_##letterid##_SIMO_PIN), \
-    pinAsFunction(USCI_##letterid##_RXTX_PORT, USCI_##letterid##_SOMI_PIN), \
-    pinAsFunction(USCI_##letterid##_CLK_PORT, USCI_##letterid##_CLK_PIN),   \
-    pinAsOutput(USCI_##letterid##_RXTX_PORT, USCI_##letterid##_SOMI_PIN),   \
-    pinAsOutput(USCI_##letterid##_CLK_PORT, USCI_##letterid##_CLK_PIN) )
+#define SETUP_SPI_PINS(letterid)                           \
+    P1SEL1 |= BV(USCI_A0_CLK_PIN);                         \
+    P2SEL1 |= BV(USCI_A0_RX_PIN) + BV(USCI_A0_TX_PIN);     \
+
 #define SETUP_USCI(id, letterid) (                                                   \
     UC##letterid##CTL1 = UCSWRST,             /* Hold the module in reset state */   \
     UC##letterid##CTL1 |= UCSSEL_2,           /* SMCLK clock source */               \
@@ -58,15 +47,9 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
     UC##id##IE &= ~UC##letterid##RXIE,        /* Disable receive interrupt */        \
     UC##letterid##CTL1 &= ~UCSWRST)           /* Release hold */
 
-    if (busId == 0) {
-        SETUP_SPI_PINS(A0);
-        SETUP_USCI(0, A0);
-    }
-    else // busId == 1
-    {
-        SETUP_SPI_PINS(B0);
-        SETUP_USCI(0, B0);
-    }
+    (void) busId;
+    SETUP_SPI_PINS(A0);
+    SETUP_USCI(0, A0);
 
     return 0;
 }
@@ -80,11 +63,6 @@ uint8_t hw_spiExchByte(uint8_t busId, uint8_t b)
     while (!(UC##id##IFG & UC##letterid##RXIFG)); /* Wait for reply */ \
     return UC##letterid##RXBUF; }                 /* Return reply */
 
-    if (busId == 0) {
-        SPI_EXCH_BYTE(0, A0)
-    }
-    else // busId == 1
-    {
-        SPI_EXCH_BYTE(0, B0)
-    }
+    (void) busId;
+    SPI_EXCH_BYTE(0, A0)
 }

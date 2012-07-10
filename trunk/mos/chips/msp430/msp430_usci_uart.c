@@ -50,8 +50,8 @@ uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf)
 
     // XXX: ugly!
     if (id == 0) {
-        pinAsFunction(USCI_A0_RXTX_PORT, UCA0TX_PIN);
-        pinAsFunction(USCI_A0_RXTX_PORT, UCA0RX_PIN);
+        pinAsFunction(USCI_A0_RXTX_PORT, USCI_A0_TX_PIN);
+        pinAsFunction(USCI_A0_RXTX_PORT, USCI_A0_RX_PIN);
 
         UCA0CTL1  = UCSWRST;   // Hold the module in reset state
         UCA0CTL1 |= UCSSEL_2;  // SMCLK clock source
@@ -72,8 +72,8 @@ uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf)
     }
     else {
 #ifdef UCA1CTL1_
-        pinAsFunction(USCI_A1_RXTX_PORT, UCA1TX_PIN);
-        pinAsFunction(USCI_A1_RXTX_PORT, UCA1RX_PIN);
+        pinAsFunction(USCI_A1_RXTX_PORT, USCI_A1_TX_PIN);
+        pinAsFunction(USCI_A1_RXTX_PORT, USCI_A1_RX_PIN);
 
         UCA1CTL1  = UCSWRST;   // Hold the module in reset state
         UCA1CTL1 |= UCSSEL_2;  // SMCLK clock source
@@ -124,11 +124,11 @@ uint_t USARTSendByte(uint8_t id, uint8_t data)
 // UART mode receive handler
 #if UART_ON_USCI_A0
 
-#if defined(__msp430x54xA) // || defined __IAR_SYSTEMS_ICC__
-ISR(USCI_A0, USCIAInterruptHandler)
-#else
+// #if defined(__msp430x54xA) // || defined __IAR_SYSTEMS_ICC__
+// ISR(USCI_A0, USCIAInterruptHandler)
+// #else
 ISR(USCIAB0RX, USCIAInterruptHandler)
-#endif
+// #endif
 {
     bool error = UCA0STAT & UCRXERR;
     uint8_t data = UCA0RXBUF;

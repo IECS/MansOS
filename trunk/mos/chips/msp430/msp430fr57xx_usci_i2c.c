@@ -22,16 +22,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * msp430_usci_i2c.c -- USCI module on MSP430, I2C mode
- */
-
-#include <hil/gpio.h>
 #include <hil/i2c.h>
-#include <kernel/defines.h>
-#include <kernel/stdtypes.h>
-
-#include "msp430_usci.h"
+#include "msp430fr57xx_usci.h"
 
 
 //
@@ -40,21 +32,18 @@
 
 void i2cInit(void)
 {
-    // I2C mode: master, 7-bit addressing, 100 kbaud
+     // I2C mode: master, 7-bit addressing, 100 kbaud
 #define I2C_MODE (UCMST | UCMODE_3 | UCSYNC)
 #define I2C_SPEED 100000UL
 
-    pinAsFunction(USCI0_I2C_PORT, USCI_B0_SDA_PIN);
-    pinAsFunction(USCI0_I2C_PORT, USCI_B0_SCL_PIN);
+    P1SEL1 |= BV(USCI_B0_SDA_PIN) + BV(USCI_B0_SCL_PIN);
 
     UCB0CTL1 = UCSWRST;                    // Hold the module in reset state
     UCB0CTL1 |= UCSSEL_2;                  // SMCLK clock source
     UCB0BR0 = (CPU_HZ / I2C_SPEED) & 0xFF; // Clock divider, lower part
     UCB0BR1 = (CPU_HZ / I2C_SPEED) >> 8;   // Clock divider, higher part
     UCB0CTL0 = I2C_MODE;                   // Set specified mode
-#ifndef __IAR_SYSTEMS_ICC__
-    IE2 &= ~UCB0RXIE;                      // Disable receive interrupt
-#endif
+    UCB0IE &= ~UCB0RXIE;                   // Disable receive interrupt
     UCB0CTL1 &= ~UCSWRST;                  // Release hold
 }
 

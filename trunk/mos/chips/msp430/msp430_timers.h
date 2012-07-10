@@ -99,7 +99,7 @@ enum {
 // Macros
 //===========================================================
 
-#if defined(__msp430x54xA) || defined(__MSP430FR5739) // || defined __IAR_SYSTEMS_ICC__
+#if defined(PLATFORM_FR)
 #define TACTL TA0CTL
 #define TACCTL0 TA0CCTL0
 #define TACCTL1 TA0CCTL1
