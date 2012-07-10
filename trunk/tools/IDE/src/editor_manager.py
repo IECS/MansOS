@@ -112,8 +112,10 @@ class EditorManager(wx.Panel):
     def detectSEAL(self):
         if self.fileName[-2:] == "sl":
             self.projectType = SEAL_PROJECT
+            self.code.highlightSeal()
         else:
             self.projectType = MANSOS_PROJECT
+            self.code.highlightC()
 
     def yieldChanges(self):
         if self.code.GetText() != self.lastSaved:
