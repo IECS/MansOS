@@ -20,8 +20,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * msp430_usci.h -- USCI module (UART/SPI/I2C modes) on MSP430 x2xx
+ */
+
+/**
+ * msp430_usci.h -- USCI module (UART/SPI/I2C modes) on MSP430
  *
  * There are two modules with a similar set of registers. Module A supports
  * UART and SPI modes, module B supports SPI and I2C modes. To reduce code
@@ -75,15 +77,17 @@
 #define UCB1SDA_PIN      1
 #define UCB1SCL_PIN      2
 
-#if PLATFORM_XM1000
+#if PLATFORM_XM1000 || PLATFORM_FR
 #define USART_COUNT 2
 #define PRINTF_USART_ID 1
+#define UART_ON_USCI_A1 1
 #else
 #define USART_COUNT 1
 #define PRINTF_USART_ID 0
+#define UART_ON_USCI_A0 1
 #endif
 
-#if defined(__msp430x54xA) // || defined __IAR_SYSTEMS_ICC__
+#if defined(__msp430x54xA) || defined(__MSP430FR5739) // || defined __IAR_SYSTEMS_ICC__
 # define UC0IE     UCA0IE
 # define UC0IFG    UCA0IFG
 # define UCA0RXIE  UCRXIE

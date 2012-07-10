@@ -23,46 +23,39 @@
 #
 
 #############################################
-# Testbed mote
+# MSP430RF57xx based devices
 #############################################
 
 #############################################
 # Define platform variables
 
 ARCH = msp430
-MCU_MODEL = msp430f2618
+MCU_MODEL = msp430fr5739
 
 # Upload target
-UPLOAD_TARGET=upload-msp430
+#UPLOAD_TARGET=upload-launchpad
+UPLOAD_TARGET=upload-tilib
 
-# Default clock speed: 4MHz
+# Default clock speed: 8MHz
 ifeq ($(USE_HARDWARE_TIMERS),y)
 CPU_MHZ ?= 8
 else
-CPU_MHZ ?= 1  # TODO?
+CPU_MHZ ?= 1
 endif
 
-INTERRUPT_VECTOR_COUNT=32
+INTERRUPT_VECTOR_COUNT=64
 
-CFLAGS += -DPLATFORM_TESTBED=1 -mivcnt=$(INTERRUPT_VECTOR_COUNT)
-
-# TODO: this will not work on Mac or Windows!
-MOTELIST = $(MOS)/make/scripts/motelist
+CFLAGS += -DPLATFORM_FR=1 -mivcnt=$(INTERRUPT_VECTOR_COUNT)
 
 #############################################
 # Define platform-specific sources
 # (excluding architecture-specific sources)
 
-PSOURCES += $(MOS)/platforms/testbed/platform.c
+PSOURCES += $(MOS)/platforms/fr/platform.c
 
-PSOURCES += $(MOS)/chips/msp430/msp430x2xx_clock.c
-
-#PSOURCES-$(USE_RADIO) += $(MOS)/chips/cc2420/cc2420.c
-#PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
+PSOURCES += $(MOS)/chips/msp430/msp430fr57xx_clock.c
 
 PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
-PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
-PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c
-
-PSOURCES-$(USE_ADS8638) += $(MOS)/chips/ads8638/ads8638.c
-PSOURCES-$(USE_DAC7718) += $(MOS)/chips/dac7718/dac7718.c
+# TODO: SPI present, but not supported at the moment
+#PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
+#PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c

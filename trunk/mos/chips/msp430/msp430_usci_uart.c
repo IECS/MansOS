@@ -20,8 +20,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * msp430_usci_uart.c -- USCI module on MSP430 x2xx, UART mode
+ */
+
+/**
+ * msp430_usci_uart.c -- USCI module on MSP430, UART mode
  */
 
 #include <hil/gpio.h>
@@ -30,14 +32,6 @@
 #include <kernel/stdtypes.h>
 
 #include "msp430_usci.h"
-
-#if PLATFORM_XM1000
-// for xm1000: use A1
-#define UART_ON_USCI_A1 1
-#else
-// the default: use A0
-#define UART_ON_USCI_A0 1
-#endif
 
 USARTCallback_t usartRecvCb[USART_COUNT];
 
@@ -77,7 +71,7 @@ uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf)
         UCA0CTL1 &= ~UCSWRST;  // Release hold
     }
     else {
-#ifdef UCA1CTL1
+#ifdef UCA1CTL1_
         pinAsFunction(USCI_A1_RXTX_PORT, UCA1TX_PIN);
         pinAsFunction(USCI_A1_RXTX_PORT, UCA1RX_PIN);
 
@@ -117,7 +111,7 @@ uint_t USARTSendByte(uint8_t id, uint8_t data)
         UCA0TXBUF = data;
     }
     else {
-#ifdef UCA1CTL1
+#ifdef UCA1CTL1_
         while (!(UC1IFG & UCA1TXIFG));
         // Send data
         UCA1TXBUF = data;
@@ -149,7 +143,7 @@ ISR(USCIAB0RX, USCIAInterruptHandler)
     }
 }
 
-#else
+#else // !UART_ON_USCI_A0
 
 ISR(USCIAB1RX, USCIAInterruptHandler)
 {
@@ -166,4 +160,4 @@ ISR(USCIAB1RX, USCIAInterruptHandler)
     }
 }
 
-#endif // !UART_ON_USCI_A0
+#endif // UART_ON_USCI_A0

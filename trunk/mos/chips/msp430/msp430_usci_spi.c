@@ -20,8 +20,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * msp430_usci_spi.c -- USCI module on MSP430 x2xx, SPI mode
+ */
+
+/**
+ * msp430_usci_spi.c -- USCI module on MSP430, SPI mode
  */
 
 #include <hil/gpio.h>
