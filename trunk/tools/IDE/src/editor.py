@@ -198,13 +198,13 @@ class Editor(wx.stc.StyledTextCtrl):
         self.RegisterImage(3,
             wx.ArtProvider.GetBitmap(wx.ART_COPY, size = (16, 16)))
 
-        # bind some events ...
+        # Bind some events ...
         self.Bind(wx.stc.EVT_STC_UPDATEUI, self.onUpdateUI)
         self.Bind(wx.stc.EVT_STC_MARGINCLICK, self.onMarginClick)
-        self.Bind(wx.EVT_KEY_DOWN, self.onKeyPressed)
+        self.Bind(wx.EVT_KEY_UP, self.doGrammarCheck)
+        self.Bind(wx.EVT_LEFT_UP, self.doGrammarCheck)
 
     def onKeyPressed(self, event):
-        return
         if self.CallTipActive():
             self.CallTipCancel()
         key = event.GetKeyCode()
@@ -262,7 +262,7 @@ class Editor(wx.stc.StyledTextCtrl):
 
         if self.GetParent().projectType == SEAL_PROJECT:
             self.highlightSealManual()
-        self.doGrammarCheck(evt)
+        #self.doGrammarCheck(evt)
 
     def onMarginClick(self, evt):
         # fold and unfold as needed
@@ -386,9 +386,9 @@ class Editor(wx.stc.StyledTextCtrl):
         self.SetMarginWidth(1, 0)
 
     def doGrammarCheck(self, event):
+        event.Skip()
         # Mark that file has possibly changed
         self.GetParent().yieldChanges()
-        self.API.clearInfoArea()
 
         if self.GetParent().projectType == SEAL_PROJECT:
             if self.lastText != self.GetText():

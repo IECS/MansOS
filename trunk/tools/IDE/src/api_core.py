@@ -32,10 +32,13 @@ from seal_syntax import SealSyntax
 from translater import Translater
 from output_area import OutputArea
 from tab_manager import TabManager
-from upload_core import UploadCore
 from output_tools import OutputTools
 from listen_module import ListenModule
 from editor_manager import EditorManager
+from popenManager import PopenManager
+from get_motelist import GetMotelist
+from do_compile import DoCompile
+from do_upload import DoUpload
 from blockly import Blockly
 from globals import * #@UnusedWildImport
 
@@ -84,6 +87,17 @@ class ApiCore:
             "atmega",
             "waspmote"
             ]
+        self.activePlatform = 0
+        #
+        self.motelist = []
+        self.motelistCallbacks = []
+
+        self.targets = [None]
+        self.targetType = "USB"
+
+        # [ID, Popen, callback, recievedString]
+        self.activeThreads = []
+        self.onExit.append(self.killAllThreads)
 
         if LOG_TO_FILE:
             path = os.getcwd()
@@ -91,6 +105,9 @@ class ApiCore:
             self.logFile = open(LOG_FILE_NAME, "a")
             os.chdir(path)
             self.onExit.append(self.logFile.close)
+
+        # this is path from /mansos/tools/IDE
+        self.pathToMansos = os.path.join(self.path, "../..")
 
 ### Shortcuts etc
 
@@ -130,7 +147,6 @@ class ApiCore:
         # Init tab manager 
         self.tabManager = TabManager(self.emptyFrame, self)
 
-        self.uploadCore = UploadCore(self, self.printInfo)
         self.uploadTargets = ([], self.tr('the default device'))
 
         # Init listenModule
@@ -150,11 +166,17 @@ class ApiCore:
 
         self.onExit.append(self.frame.Close)
 
+        self.motelistClass = GetMotelist(self.pathToMansos, self)
+        self.compiler = DoCompile(self)
+        self.uploader = DoUpload(self)
+
         assert len(self.emptyFrame.GetChildren()) == 0, \
             "There are parentless objects after API initialization."
 
         self.tabManager.loadRememberedTabs()
         self.frame.auiManager.Update()
+        self.populateMotelist()
+
 
     def getStatementType(self, line):
         possibleSplitters = [None, ",", ";"]
@@ -237,3 +259,81 @@ class ApiCore:
         for function in self.onExit:
             print "    Calling ", str(function)
             function()
+
+    def killAllThreads(self):
+        for x in self.activeThreads:
+            if x[1]:
+                x[1].proc.terminate()
+
+    def searchEmptyID(self):
+        # [ID, thread, callback]
+        for x in range(len(self.activeThreads)):
+            if self.activeThreads[x][1] == None:
+                return x
+        # Define notification event for thread completion
+        self.activeThreads.append([wx.NewId(), None, None, "", False])
+        return len(self.activeThreads) - 1
+
+    def searchCorrespondingID(self, ID):
+        # [ID, thread, callback]
+        for x in range(len(self.activeThreads)):
+            if self.activeThreads[x][0] == ID:
+                return x
+        assert False, "ERROR! NO ID FOUND " + str(ID)
+        return 0
+
+    def populateMotelist(self, event = None):
+        self.printInfo("Populating motelist ... ", False)
+        self.motelistClass.getMotelist()
+
+    def doCompile(self, event = None):
+        self.printInfo("Starting to compile ... \n", False)
+        self.compiler.doCompile()
+
+    def doUpload(self, event = None):
+        self.printInfo("Starting to upload ... \n", False)
+        self.uploader.doUpload()
+
+    def startPopen(self, target, name, callback, verbouse):
+        nr = self.searchEmptyID()
+        self.activeThreads[nr][2] = callback
+        self.activeThreads[nr][4] = verbouse
+        self.frame.Connect(-1, -1, self.activeThreads[nr][0], self.onResult)
+        self.activeThreads[nr][1] = PopenManager(self, self.frame, self.activeThreads[nr][0], target, name)
+        self.activeThreads[nr][1].run()
+
+    def onResult(self, event):
+        nr = self.searchCorrespondingID(event.GetEventType())
+        if event.data is None:
+            # Call callback
+            if self.activeThreads[nr][2]:
+                self.activeThreads[nr][2](self.activeThreads[nr][3])
+            # Clear info about this thread
+            self.activeThreads[nr][1] = None
+            self.activeThreads[nr][2] = None
+            self.activeThreads[nr][3] = ""
+            self.activeThreads[nr][4] = False
+        elif type(event.data) is str:
+            if event.data.find("Execution failed") == 0:
+                self.infoArea.printLine(event.data)
+                return
+            if self.activeThreads[nr][4]:
+                self.infoArea.printLine(event.data)
+            self.activeThreads[nr][3] += event.data
+        elif type(event.data) is list:
+            if event.data[0] == 0:
+                # If no callback defined, no Done printed!
+                if self.activeThreads[nr][2]:
+                    self.printInfo("Done!\n")
+            else:
+                self.printInfo("Failed!\n")
+        else:
+            self.infoArea.printLine("Wrong format recieved {}\n".format(type(event.data)))
+
+    def motelistChangeCallback(self):
+        for x in self.motelistCallbacks:
+            x()
+
+    def changePlatform(self, event):
+        self.platform = event.GetEventObject().GetValue()
+        self.printInfo(self.tr("Changed platform to") + " " + self.platform + "\n")

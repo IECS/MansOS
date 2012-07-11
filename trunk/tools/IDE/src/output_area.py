@@ -44,7 +44,9 @@ class OutputArea(wx.Panel):
         #self.API.outputTools.SetSelection(self.nr)
         if clear:
             self.clear()
-        self.outputArea.AppendText(text.strip() + '\n\n')
+        if not text:
+            text = "\n"
+        self.outputArea.AppendText(text)
         self.outputArea.ScrollLines(1)
 
     def clear(self):

@@ -23,46 +23,36 @@
 #
 
 import os
-from subprocess import Popen, PIPE, STDOUT
+from generate_makefile import GenerateMakefile
 
 from globals import * #@UnusedWildImport
 
 class DoUpload():
-    def __init__(self, pathToMansos):
-        self.pathToMansos = pathToMansos
+    def __init__(self, API):
+        self.API = API
+        self.generateMakefile = GenerateMakefile()
+        self.editor = self.API.tabManager.getPageObject
 
-    def doUpload(self, targets, compiler, targetType, platform):
-        res = compiler([])
-        if res[0] == False:
-            return res
-        if targetType == SHELL:
-            return self.shellUpload(targets, platform)
+    def doUpload(self):
+        self.targets = list(self.API.targets)
+        # If no target specified, use default
+        if len(self.targets) == 0:
+            self.targets.append(None)
+        if self.API.targetType == SHELL:
+            return self.shellUpload()
         else:
             os.unsetenv("BSLPORT")
-            return self.usbUpload(targets, platform)
+            self.usbUpload()
 
-    def usbUpload(self, targets, platform):
-        if targets == []:
-            targets.append(None)
-        for target in targets:
-            if target != []:
-                self.changeTarget(target)
-            try:
-                upload = Popen(["make", platform, "upload"],
-                                          stderr = STDOUT,
-                                          stdout = PIPE)
-                out = upload.communicate()[0]
-
-                if upload.returncode != 0:
-                    return [False, out]
-
-            except OSError, e:
-                print "execution failed:", e
-                return [False, e]
-
-        return [True, '']
+    def usbUpload(self, data = None):
+        platform = self.API.platforms[self.API.activePlatform]
+        if len(self.targets):
+            target = self.targets.pop()
+            self.changeTarget(target)
+            self.API.startPopen(["make", platform, "upload"], "Upload", self.usbUpload, True)
 
     def shellUpload(self, targets, platform):
+        assert False, "Currently not supported"
         startDir = os.getcwd()
         os.chdir(self.pathToMansos + "/tools/shell")
         ihex = startDir + "/build/" + platform + "/image.ihex"
@@ -98,6 +88,7 @@ class DoUpload():
         if newTarget == None:
             os.unsetenv("BSLPORT")
         else:
+            newTarget = self.API.motelist[newTarget][1]
             # Windows puts "\x00" at port end and it is not allowed in 
             # environment variable
             os.environ["BSLPORT"] = str(newTarget.strip().strip("\x00"))
