@@ -35,7 +35,9 @@
 #define ADC_INTERNAL_TEMPERATURE 10
 #define ADC_INTERNAL_VOLTAGE     11
 
-#if !defined ENC && !defined __IAR_SYSTEMS_ICC__
+#ifndef __IAR_SYSTEMS_ICC__
+
+#ifndef ENC
 #define ENC         ADC10ENC
 #define SHP         ADC10SHP
 #define CSTARTADD_2 ADC10CSTARTADD2
@@ -46,6 +48,8 @@
 #define ADC10MEM_ ADC10MEM0_
 #define ADC10MEM  ADC10MEM0
 #endif
+
+#endif // !__IAR_SYSTEMS_ICC__
 
 // Initialize ADC
 static inline void hplAdcInit(void)
