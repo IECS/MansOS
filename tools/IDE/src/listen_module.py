@@ -40,6 +40,7 @@ class ListenModule(wx.Panel):
 
         self.API.outputArea.Reparent(self)
         self.updateStatus = self.API.printOutput
+        self.API.motelistCallbacks.append(self.updateMotelist)
 
         self.SetBackgroundColour("white")
         self.main = wx.BoxSizer(wx.VERTICAL)
@@ -56,8 +57,6 @@ class ListenModule(wx.Panel):
         self.main.Add(self.listenControls, 0,
                       wx.EXPAND | wx.wx.TOP | wx.LEFT | wx.RIGHT, 10);
         self.main.Add(self.API.outputArea, 1, wx.EXPAND | wx.ALL, 5);
-
-        self.getMotelist()
 
         self.Bind(wx.EVT_BUTTON, self.doClear, self.clear)
         self.Bind(wx.EVT_BUTTON, self.getMotelist, self.refresh)
@@ -113,14 +112,17 @@ class ListenModule(wx.Panel):
             pass
 
     def getMotelist(self, event = None):
-        self.updateStatus("Refreshing...", False)
+        self.updateStatus("Populating motelist ... ", False)
         self.ports.Clear()
         self.ports.Append(self.tr("Searching devices") + "...", 0)
         self.ports.Disable()
+        self.API.populateMotelist()
 
-        motelist = self.API.uploadCore.populateMotelist(None, "USB", True)
-
+    def updateMotelist(self):
         self.ports.Clear()
+        motelist = self.API.motelist
+        if not self.ports.IsEnabled():
+            self.updateStatus("Done!\n")
         if len(motelist) > 0:
             for x in motelist:
                 if len(x) > 2:

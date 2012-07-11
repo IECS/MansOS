@@ -31,6 +31,7 @@ class UploadModule(wx.Panel):
         self.API = API
         self.editorManager = self.API.tabManager.GetCurrentPage()
         self.filename = self.editorManager.fileName
+        self.API.motelistCallbacks.append(self.updateMotelist)
         # Just a shorter name
         self.tr = self.API.translater.translate
         self.tmpDir = self.API.path + '/temp/'
@@ -65,47 +66,41 @@ class UploadModule(wx.Panel):
         self.main.Add(self.controls, 0, wx.EXPAND | wx.ALL, 3);
         self.main.Add(self.list, 0, wx.EXPAND | wx.ALL, 3);
 
-        self.Bind(wx.EVT_BUTTON, self.API.uploadCore.manageCompile, self.compile)
-        self.Bind(wx.EVT_BUTTON, self.API.uploadCore.manageUpload, self.upload)
+        self.Bind(wx.EVT_BUTTON, self.API.doCompile, self.compile)
+        self.Bind(wx.EVT_BUTTON, self.API.doUpload, self.upload)
         self.Bind(wx.EVT_BUTTON, self.populateMotelist, self.refresh)
         self.Bind(wx.EVT_COMBOBOX, self.populateMotelist, self.source)
-        self.Bind(wx.EVT_COMBOBOX, self.API.uploadCore.changePlatform, self.platforms)
+        self.Bind(wx.EVT_COMBOBOX, self.API.changePlatform, self.platforms)
         self.Bind(wx.EVT_CHECKLISTBOX, self.modifyTargets, self.list)
 
         self.SetSizerAndFit(self.main)
         self.SetAutoLayout(1)
         self.Show()
 
-        self.populateMotelist()
+        self.updateMotelist()
+
+    def __del__(self):
+        self.API.motelistCallbacks.remove(self.updateMotelist)
 
     def populateMotelist(self, event = None):
         self.list.Clear()
         self.list.Insert(self.tr("Searching devices") + "...", 0)
         self.list.Disable()
+        self.API.populateMotelist()
 
-        motelist = self.API.uploadCore.populateMotelist(None, self.source.GetValue())
-
+    def updateMotelist(self):
+        motelist = self.API.motelist
         self.list.Clear()
 
         if len(motelist) == 0:
             self.list.Insert(self.tr("No devices found!"), 0)
         else:
-            for i in range(0, len (motelist)):
+            for i in range(len(motelist)):
             #    print motelist[i][0] + "(" + motelist[i][2] + ") @ " + motelist[i][1], i, motelist[i]
                 self.list.Insert(motelist[i][0] + "(" + motelist[i][2] +
                                  ") @ " + motelist[i][1], i)
             self.list.Enable()
 
     def modifyTargets(self, event):
-        checked = self.list.GetChecked()
-        targets = []
-        targetText = ''
-        for x in checked:
-            targets.append(self.API.uploadCore.motes[x])
-        if targets == []:
-            targets = [None]
-            targetText = self.tr('default device')
-        else:
-            targetText = str(targets)
-        self.API.uploadTargets = (targets, targetText)
+        self.API.targets = list(self.list.GetChecked())
 

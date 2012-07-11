@@ -35,7 +35,6 @@ from globals import * #@UnusedWildImport
 class Frame(wx.Frame):
     def __init__(self, parent, title, size, pos, API):
         super(Frame, self).__init__(parent, wx.ID_ANY, title, size = size, pos = pos)
-
         # Get path, here must use only file name, __file__ sometimes contains more than that
         self.path = os.path.dirname(os.path.realpath(os.path.split(__file__)[1]))
         self.API = API
@@ -271,11 +270,11 @@ class Frame(wx.Frame):
 
     def OnCompile(self, event):
         if self.tabManager.doPopupSave(None) == True:
-            self.API.uploadCore.manageCompile()
+            self.API.doCompile()
 
     def OnUpload(self, event):
         if self.tabManager.doPopupSave(None) == True:
-            self.API.uploadCore.manageUpload()
+            self.API.doUpload()
 
     def OnOutput(self, event):
         if self.tabManager.doPopupSave(None) == True:

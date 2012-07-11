@@ -30,12 +30,14 @@ from subprocess import Popen, PIPE, STDOUT
 
 class GetMotelist(object):
 
-    def __init__(self, pathToMansos):
+    def __init__(self, pathToMansos, API):
         self.pathToMansos = pathToMansos
         self.shellRegex = compile(
                         r"Mote type: \".\" \((.*)\)\n PAN address: \"(.*)\"")
+        self.API = API
 
     def getShellMotelist(self):
+        assert False, "Shell usage currently is not supported!"
         motelist = []
         oldPath = os.getcwd()
         try:
@@ -66,32 +68,27 @@ class GetMotelist(object):
             os.chdir(oldPath)
             return [False, e]
 
-    def getMotelist(self, data):
+    def getMotelist(self):
+        # Get motelist output as string... |-(
+        target = os.path.normcase(self.pathToMansos + "/mos/make/scripts/motelist")
+        if system() == 'Windows':
+            target += ".exe"
+        elif system() == "Linux":
+            target += "" # Empty, for if's sake, so mac can be else, cus I don't know what Mac returns
+        else:
+            print "No Linux or Win detected, assuming Mac, output = {}".format(system())
+            target += ".apple"
+
+        self.API.startPopen([target, "-c"], "Motelist", self.parseMotelist, False)
+
+    def parseMotelist(self, rawMotelist):
         motelist = []
-        try:
-            # Get motelist output as string... |-(
-            target = os.path.normcase(self.pathToMansos + "/mos/make/scripts/motelist")
-            if system() == 'Windows':
-                target += ".exe"
-            elif system() == "Linux":
-                target += "" # Empty, for if's sake, so mac can be else, cus I don't know what Mac returns
-            else:
-                print "No Linux or Win detected, assuming Mac, output = {}".format(system())
-                target += ".apple"
-
-            process = Popen([target, "-c"], stderr = STDOUT, stdout = PIPE)
-            motes = process.communicate()[0]
-
-            if motes.find("No devices found") == False:
-                return [True, []]
-
-            for line in motes.split("\n"):
+        if rawMotelist.find("No devices found") != False:
+            for line in rawMotelist.split("\n"):
                 # Seperate ID, port, description
                 data = line.split(',')
                 if data != ['']:
                     motelist.append(data)
-            return [True, motelist]
+        self.API.motelist = list(motelist)
+        self.API.motelistChangeCallback()
 
-        except OSError, e:
-            print "execution failed:", e
-            return [False, e]

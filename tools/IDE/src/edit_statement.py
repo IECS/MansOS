@@ -42,7 +42,7 @@ class EditStatement(wx.Panel):
         self.text = list()
 
         if statement == None:
-            self.statement = (ComponentUseCase('', '', list()), 0, 0, 0, 0)
+            self.statement = (ComponentUseCase('', '', list(), None), 0, 0, 0, 0)
             self.newMode = 2
         else:
             self.statement = statement
@@ -210,8 +210,10 @@ class EditStatement(wx.Panel):
                     self.statement[0].parameters.append(newParam)
                 self.choices[nr] = newParam
         self.saveCallback(self.statement)
+        print "got here"
         # Place cursor in last edited place(works only on manual edit)
-        if type(obj) != wx.CheckBox:
-            obj.SetFocus()
-            obj.SetInsertionPoint(insertionPoint + 1)
+        #if type(obj) != wx.CheckBox:
+        #    obj.SetFocus()
+        #    obj.SetInsertionPoint(insertionPoint + 1)
+        print "got here2"
         return

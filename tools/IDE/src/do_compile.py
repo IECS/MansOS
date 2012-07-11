@@ -23,40 +23,25 @@
 #
 
 from os import chdir, path, getcwd
-from subprocess import Popen, PIPE, STDOUT
-
 from generate_makefile import GenerateMakefile
 
 class DoCompile():
     def __init__(self, API):
         self.API = API
         self.generateMakefile = GenerateMakefile()
+        self.editor = self.API.tabManager.getPageObject
 
-    def doCompile(self, sourceFileName, platform, filePath, projectType,
-                  cleanAfter = True):
-        curPath = getcwd()
-        chdir(path.split(path.realpath(filePath))[0])
+    def doCompile(self):
+        self.curPath = getcwd()
+        chdir(path.split(path.realpath(self.editor().filePath))[0])
 
-        self.generateMakefile.generate(sourceFileName, projectType,
-                                       self.API.path + "/../../")
-        try:
-            compiler = Popen(["make", platform],
-                                      stderr = STDOUT,
-                                      stdout = PIPE)
-            out = compiler.communicate()[0]
-            if cleanAfter:
-                self.clean()
-            if compiler.returncode == 0:
-                return [True, out]
-            else:
-                return [False, out]
+        self.generateMakefile.generate(self.editor().fileName,
+                                       self.editor().projectType,
+                                       self.API.pathToMansos)
 
-        except OSError, e:
-            print "execution failed @ compile:", e
-            return [False, e]
-        finally:
-            chdir(curPath)
+        platform = self.API.platforms[self.API.activePlatform]
+        self.API.startPopen(["make", platform], "Compile", self.clean, True)
 
-    def clean(self):
-        clean = Popen(["make", "clean"], stderr = STDOUT, stdout = PIPE)
-        clean.communicate()
+    def clean(self, data = None):
+        self.API.startPopen(["make", "clean"], "Compile", None, False)
+        chdir(self.curPath)
