@@ -23,6 +23,8 @@
 
 #include <kernel/stdtypes.h>
 
+#include <platform.h> // For chip version and voltage override
+
 //-------------------------------------------
 // SHT11 Humidity sensor conversion formulas
 //-------------------------------------------
@@ -58,8 +60,12 @@
 // TD =  --------------
 //            100
 
-
-#define SHT11_VER 3
+#ifndef SHT11_VER
+#  define SHT11_VER 3
+#endif
+#ifndef SHT11_VCC
+#  define SHT11_VCC 25 // 2.5 V
+#endif
 
 // constants for conversion
 #if SHT11_VER == 3
@@ -69,8 +75,15 @@
 #define SHT11_C1 -40000ll
 #define SHT11_C2 405ll
 #define SHT11_C3 -28000ll
+#if SHT11_VCC == 25
 // temperature @ 2.5V VCC
-#define SHT11_D1 -3960ll
+#  define SHT11_D1 -3955ll
+#elif SHT11_VCC == 35
+// temperature @ 3.5V VCC
+#  define SHT11_D1 -3966ll
+#else
+#  error D1 not defined for this voltage
+#endif // SHT11_VCC
 #define SHT11_D2 1ll
 
 #else
@@ -79,8 +92,15 @@
 #define SHT11_C1 -20468ll
 #define SHT11_C2 367ll
 #define SHT11_C3 -15955ll
+#if SHT11_VCC == 25
 // temperature @ 2.5V VCC
-#define SHT11_D1 -3940ll
+#  define SHT11_D1 -3940ll
+#elif SHT11_VCC == 35
+// temperature @ 3.5V VCC
+#  define SHT11_D1 -3970ll
+#else
+#  error D1 not defined for this voltage
+#endif // SHT11_VCC
 #define SHT11_D2 4ll
 
 #endif
