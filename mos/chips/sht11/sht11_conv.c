@@ -101,7 +101,7 @@
 #else
 #  error D1 not defined for this voltage
 #endif // SHT11_VCC
-#define SHT11_D2 4ll
+#define SHT11_D2 1ll
 
 #endif
 
