@@ -36,6 +36,8 @@
 #define RADIO_CHIP RADIO_CHIP_CC1101
 #define SNUM_CHIP  SNUM_DS2411
 
+// The actual chip is SHT10
+#define SHT11_VER  4  // FIXME: We don't know whether it's v3 or v4!
 #define SHT11_VCC  35 // 3.5 V
 
 //===========================================================
