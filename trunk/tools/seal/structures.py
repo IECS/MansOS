@@ -486,6 +486,24 @@ class ParametersDefineStatement(object):
         componentRegister.parameterDefines[self.name] = self
 
 ########################################################
+class LoadStatement(object):
+    def __init__(self, filename):
+        self.filename = filename
+
+    def getCode(self, indent):
+        return 'load "' + self.filename + '"'
+
+    def load(self, componentRegister):
+        fixedFilename = string.split(self.filename, ".")
+        if len(fixedFilename) > 1:
+            if fixedFilename[-1] == 'c':
+                # it's a C file
+                componentRegister.extraSourceFiles.append(self.filename)
+                return
+        # it should be a Python file
+        componentRegister.loadExtModule(fixedFilename[0])
+
+########################################################
 #class ProcessStatement(object):
 #    def __init__(self, name, target, parameters):
 #        self.name = name.lower()
@@ -703,6 +721,13 @@ class CodeBlock(object):
                     or type(d) is ParametersDefineStatement \
                     or type(d) is ComponentDefineStatement:
                 d.addComponents(componentRegister, conditionCollection)
+
+            if type(d) is LoadStatement:
+                if self.blockType != CODE_BLOCK_TYPE_PROGRAM:
+                    componentRegister.userError("Load statements supported only in top level, ignoring '{0}'\n".format(
+                            d.getConfigLine()))
+                else:
+                    d.load(componentRegister)
 
         # finish adding all virtual components
         for d in self.declarations:

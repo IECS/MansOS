@@ -205,6 +205,9 @@ class Generator(object):
                     components.componentRegister.numCachedSensors))
 
     def generateMakefile(self, outputFile, outputFileName, pathToOS):
+        sources = os.path.basename(outputFileName)
+        for s in components.componentRegister.extraSourceFiles:
+            sources += " " + s
         outputFile.write('''
 SOURCES = {0}
 APPMOD = App
@@ -212,7 +215,7 @@ PROJDIR = $(CURDIR)
 ifndef MOSROOT
   MOSROOT = $(PROJDIR)/../{1}
 endif
-'''.format(os.path.basename(outputFileName), pathToOS))
+'''.format(sources, pathToOS))
         outputFile.write("include ${MOSROOT}/mos/make/Makefile")
 
 ###############################################

@@ -63,6 +63,7 @@ class SealParser():
       "const": "CONST_TOKEN",
       "set": "SET_TOKEN",
       "pattern": "PATTERN_TOKEN",
+      "load": "LOAD_TOKEN",
       "true": "TRUE_TOKEN",
       "false": "FALSE_TOKEN",
       "not": "NOT_TOKEN",
@@ -162,6 +163,7 @@ class SealParser():
                        | set_statement
                        | define_statement
                        | parameters_statement
+                       | load_statement
                        | ';'
                        | error END_TOKEN
                        | error ';'
@@ -215,6 +217,11 @@ class SealParser():
         '''define_statement : DEFINE_TOKEN IDENTIFIER_TOKEN functional_expression parameter_list ';'
         '''
         p[0] = ComponentDefineStatement(p[2], p[3], p[4])
+
+    def p_load_statement(self, p):
+        '''load_statement : LOAD_TOKEN STRING_LITERAL ';'
+        '''
+        p[0] = LoadStatement(p[2].strip('"'))
 
     def p_functional_expression(self, p):
         '''functional_expression : IDENTIFIER_TOKEN '(' argument_list ')'

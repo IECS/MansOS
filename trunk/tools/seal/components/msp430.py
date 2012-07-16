@@ -7,6 +7,7 @@ from component_hierarchy import *
 serial = SerialOutput()
 radio = RadioOutput()
 internalFlash = InternalFlashOutput()
+localStorage = LocalStorageOutput()
 
 printing = PrintAct()
 
@@ -23,13 +24,16 @@ nullSensor = SealSensor("Null") # hack: for virtual use, e.g. min of two sensors
 command = CommandSensor()
 
 constant = ConstantSensor()
+counter = CounterSensor()
 random = RandomSensor()
 
-counter = CounterSensor()
+timecounter = TimeCounterSensor()
 systime = SystemTimeSensor()
+uptime = UptimeSensor()
 
 squarewave = SquareWaveSensor()
 trianglewave = TriangleWaveSensor()
 sawwave = SawtoothWaveSensor()
 sinewave = SineWaveSensor()
+
 
