@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <pthread.h>
-#include <semaphore.h>
+#include <sem_hal.h>
 #include <fcntl.h>
 #include <hil/radio.h>
 #include "dprint.h"
