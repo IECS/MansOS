@@ -210,7 +210,15 @@ class SealValue(object):
         self.secondPart = secondPart
 
     def getCode(self):
-        result = self.firstPart
+        # This is wrong!!!
+        # But this fixes some parser error
+        # It somehow puts Value object inside SealValue and there is no 
+        # processing for that. As I understand it shouldn't happen.
+        result = ''
+        if type(self.firstPart) is Value:
+            result = self.firstPart.getCode()
+        else:
+            result = self.firstPart
         if self.secondPart:
             result += '.'
             result += self.secondPart
