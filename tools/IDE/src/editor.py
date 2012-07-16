@@ -59,9 +59,8 @@ class Editor(wx.stc.StyledTextCtrl):
         self.SetTabIndents(True)
 
         # Set style
-        font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
-        self.StyleSetSpec(wx.stc.STC_STYLE_DEFAULT, "face:%s,size:10" % font.GetFaceName())
-        self.StyleSetSpec(wx.stc.STC_STYLE_LINENUMBER, "back:green,face:%s,size:10" % font.GetFaceName())
+        self.StyleSetSpec(wx.stc.STC_STYLE_DEFAULT, "face:%s,size:10" % self.API.fontName)
+        self.StyleSetSpec(wx.stc.STC_STYLE_LINENUMBER, "back:green,face:%s,size:10" % self.API.fontName)
 
         # Set captured events
         self.SetModEventMask(wx.stc.STC_PERFORMED_UNDO | wx.stc.STC_PERFORMED_REDO \
@@ -101,32 +100,18 @@ class Editor(wx.stc.StyledTextCtrl):
         self.MarkerDefine(wx.stc.STC_MARKNUM_FOLDERMIDTAIL,
             wx.stc.STC_MARK_TCORNER, "white", "#808080")
 
-        if wx.Platform == '__WXMSW__':
-            # for windows OS
-            faces = {
-                'times': 'Times New Roman',
-                'mono' : 'Courier New',
-                # try temporary switch to mono
-                'helv' : 'Courier New',
-                #'helv' : 'Arial',
-                'other': 'Comic Sans MS',
-                'size' : 10,
-                'size2': 8,
-                }
-        else:
-            faces = {
-                'times': 'Times',
-                'mono' : 'Courier',
-                'helv' : 'Helvetica',
-                'other': 'new century schoolbook',
-                'size' : 12,
-                'size2': 10,
-                }
+        # Default font used for highlighting
+        faces = {
+            'mono' : self.API.fontName,
+            'size' : 10,
+            'size2': 8,
+            }
+
         # make some general styles ...
         # global default styles for all languages
         # set default font
         self.StyleSetSpec(wx.stc.STC_STYLE_DEFAULT,
-            "face:%(helv)s,size:%(size)d" % faces)
+            "face:%(mono)s,size:%(size)d" % faces)
         # set default background color
         backgroundColor = '#F5F5DC'
         self.StyleSetBackground(style = wx.stc.STC_STYLE_DEFAULT,
@@ -136,9 +121,9 @@ class Editor(wx.stc.StyledTextCtrl):
 
         # more global default styles for all languages
         self.StyleSetSpec(wx.stc.STC_STYLE_LINENUMBER,
-            "back:#C0C0C0,face:%(helv)s,size:%(size2)d" % faces)
+            "back:#C0C0C0,face:%(mono)s,size:%(size2)d" % faces)
         self.StyleSetSpec(wx.stc.STC_STYLE_CONTROLCHAR,
-            "face:%(other)s" % faces)
+            "face:%(mono)s" % faces)
         self.StyleSetSpec(wx.stc.STC_STYLE_BRACELIGHT,
             "fore:#FFFFFF,back:#0000FF,bold")
         self.StyleSetSpec(wx.stc.STC_STYLE_BRACEBAD,
@@ -147,19 +132,19 @@ class Editor(wx.stc.StyledTextCtrl):
         # make the Python styles ...
         # default
         self.StyleSetSpec(wx.stc.STC_P_DEFAULT,
-            "fore:#000000,face:%(helv)s,size:%(size)d" % faces)
+            "fore:#000000,face:%(mono)s,size:%(size)d" % faces)
         # comments
         self.StyleSetSpec(wx.stc.STC_P_COMMENTLINE,
-            "fore:#007F00,face:%(other)s,size:%(size)d" % faces)
+            "fore:#007F00,face:%(mono)s,size:%(size)d" % faces)
         # number
         self.StyleSetSpec(wx.stc.STC_P_NUMBER,
             "fore:#007F7F,size:%(size)d" % faces)
         # string
         self.StyleSetSpec(wx.stc.STC_P_STRING,
-            "fore:#7F007F,face:%(helv)s,size:%(size)d" % faces)
+            "fore:#7F007F,face:%(mono)s,size:%(size)d" % faces)
         # single quoted string
         self.StyleSetSpec(wx.stc.STC_P_CHARACTER,
-            "fore:#7F007F,face:%(helv)s,size:%(size)d" % faces)
+            "fore:#7F007F,face:%(mono)s,size:%(size)d" % faces)
         # keyword
         self.StyleSetSpec(wx.stc.STC_P_WORD,
             "fore:#00007F,bold,size:%(size)d" % faces)
@@ -180,7 +165,7 @@ class Editor(wx.stc.StyledTextCtrl):
             "bold,size:%(size)d" % faces)
         # identifiers
         self.StyleSetSpec(wx.stc.STC_P_IDENTIFIER,
-            "fore:#000000,face:%(helv)s,size:%(size)d" % faces)
+            "fore:#000000,face:%(mono)s,size:%(size)d" % faces)
         # comment-blocks
         self.StyleSetSpec(wx.stc.STC_P_COMMENTBLOCK,
             "fore:#7F7F7F,size:%(size)d" % faces)
@@ -365,13 +350,13 @@ class Editor(wx.stc.StyledTextCtrl):
         for x in SEAL_PARAMETERS:
             for a in list(finditer(" " + x.lower() + " ", text)):
                 self.StartStyling(a.start() + 1, 0x1F)
-                self.SetStyling(len(x), wx.stc.STC_P_CLASSNAME)
+                self.SetStyling(len(x), wx.stc.STC_P_TRIPLEDOUBLE)
             for a in list(finditer(" " + x.lower() + ";", text)):
                 self.StartStyling(a.start() + 1, 0x1F)
-                self.SetStyling(len(x), wx.stc.STC_P_CLASSNAME)
+                self.SetStyling(len(x), wx.stc.STC_P_TRIPLEDOUBLE)
             for a in list(finditer(" " + x.lower() + ",", text)):
                 self.StartStyling(a.start() + 1, 0x1F)
-                self.SetStyling(len(x), wx.stc.STC_P_CLASSNAME)
+                self.SetStyling(len(x), wx.stc.STC_P_TRIPLEDOUBLE)
 
     def setLineNumbers(self, enable = True):
         if enable:
@@ -389,6 +374,10 @@ class Editor(wx.stc.StyledTextCtrl):
             event.Skip()
         # Mark that file has possibly changed
         self.GetParent().yieldChanges()
+        # Update line numbers, needed if digit count changed, margin width changes
+        if len(str(self.lastText.count("\n") + 1)) != \
+           len(str(self.GetText().count("\n") + 1)):
+            self.setLineNumbers()
 
         if self.GetParent().projectType == SEAL_PROJECT:
             if self.lastText != self.GetText():

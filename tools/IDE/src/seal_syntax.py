@@ -64,6 +64,9 @@ class SealSyntax():
                         self.syntax[x.typeCode][-1].append((p, x.__getattribute__(p).valueList))
                     else:
                         self.syntax[x.typeCode][-1].insert(0, (p, x.__getattribute__(p).valueList))
+                    # Bad thing to do...
+                    if p not in SEAL_PARAMETERS:
+                        SEAL_PARAMETERS.append(p)
 
         #self.printAllSyntax()
 
