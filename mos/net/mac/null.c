@@ -29,6 +29,18 @@
 #include <kernel/threads/radio.h>
 #include <net/net-stats.h>
 
+#if DEBUG
+#define MAC_DEBUG 1
+#endif
+
+#if MAC_DEBUG
+#include "dprint.h"
+#define MPRINTF(...) PRINTF(__VA_ARGS__)
+#else
+#define MPRINTF(...) do {} while (0)
+#endif
+
+
 static void initNullMac(RecvFunction cb);
 static int8_t sendNullMac(MacInfo_t *mi, const uint8_t *data, uint16_t length);
 static void pollNullMac(void);
@@ -78,7 +90,7 @@ static void pollNullMac(void) {
     }
     else if (isRadioPacketError(*radioPacketBuffer)) {
         INC_NETSTAT(NETSTAT_PACKETS_DROPPED_RX, EMPTY_ADDR);
-        PRINTF("got an error from radio: %s\n",
+        MPRINTF("got an error from radio: %s\n",
                 strerror(-radioPacketBuffer->receivedLength));
     }
     radioBufferReset(*radioPacketBuffer);
