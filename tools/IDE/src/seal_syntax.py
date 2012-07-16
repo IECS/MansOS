@@ -94,8 +94,8 @@ class SealSyntax():
         if target2Nr == 0:
             return []
 
-        assert target2 in self.syntax[target1Nr][0], \
-            "'{}' not found in {}".format(target2, self.syntax[target1Nr])
+        #assert target2 in self.syntax[target1Nr][0], \
+        #    "'{}' not found in {}".format(target2, self.syntax[target1Nr][0])
 
         return self.syntax[target1Nr]\
             [target2Nr]
@@ -103,6 +103,6 @@ class SealSyntax():
     def findRealIndex(self, myList, entry):
         #assert entry in myList, "{} not found in {}".format(entry, myList)
         for x in range(len(myList)):
-            if myList[x] == entry:
+            if myList[x].lower() == entry.lower():
                 return x + 1
         return 0

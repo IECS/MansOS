@@ -68,14 +68,15 @@ class DoUpload():
                 actualCmd.append("-s")
                 actualCmd.append(target)
             try:
-                upload = Popen(actualCmd, stdin = PIPE,
-                               stderr = STDOUT, stdout = PIPE)
+                pass
+                #upload = Popen(actualCmd, stdin = PIPE,
+                #               stderr = STDOUT, stdout = PIPE)
+                #
+                #out = upload.communicate("program")[0]
 
-                out = upload.communicate("program")[0]
-
-                if out.find("File uploaded") == -1:
-                    os.chdir(startDir)
-                    return [False, out]
+                #if out.find("File uploaded") == -1:
+                #    os.chdir(startDir)
+                #    return [False, out]
             except OSError, e:
                 print "execution failed:", e
                 os.chdir(startDir)
