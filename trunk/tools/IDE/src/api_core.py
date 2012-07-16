@@ -39,6 +39,7 @@ from popenManager import PopenManager
 from get_motelist import GetMotelist
 from do_compile import DoCompile
 from do_upload import DoUpload
+from edit_statement import EditStatement
 from blockly import Blockly
 from globals import * #@UnusedWildImport
 
@@ -153,6 +154,8 @@ class ApiCore:
         self.listenModule = ListenModule(self.emptyFrame, self)
 
         self.editPanel = ScrolledPanel(self.emptyFrame)
+
+        self.editWindow = EditStatement(self.editPanel, self)
 
         self.frame = Frame(None, "MansOS IDE", (800, 500), (100, 100), self)
 

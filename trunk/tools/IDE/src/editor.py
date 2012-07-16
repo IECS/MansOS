@@ -25,7 +25,6 @@
 import wx.stc
 import time
 
-from edit_statement import EditStatement
 from edit_condition import EditCondition
 from structures import ComponentUseCase
 from component_hierarchy import components
@@ -386,7 +385,8 @@ class Editor(wx.stc.StyledTextCtrl):
         self.SetMarginWidth(1, 0)
 
     def doGrammarCheck(self, event):
-        event.Skip()
+        if event is not None:
+            event.Skip()
         # Mark that file has possibly changed
         self.GetParent().yieldChanges()
 
@@ -402,38 +402,36 @@ class Editor(wx.stc.StyledTextCtrl):
     def getAction(self, event):
         if self.newMode:
             return
-
-        dialog = None
         # Get statement and corresponding lines
         self.lastEdit = self.findAllStatement(self.GetCurrentLine())
 
-        if self.lastEdit[0] != None:
-            if self.lastEdit[4] == STATEMENT:
-                dialog = EditStatement(self.API.editPanel,
-                        self.API, self.lastEdit, self.statementUpdateClbk)
-            elif self.lastEdit[4] == CONDITION:
-                dialog = EditCondition(self.API.editPanel,
+        if self.lastEdit['statementStruct'] != None:
+            if self.lastEdit['type'] == STATEMENT:
+                self.API.editWindow.updateStatement(self.lastEdit, self.statementUpdateClbk)
+            elif self.lastEdit['type'] == CONDITION:
+                EditCondition(self.API.editPanel,
                         self.API, self.lastEdit, self.conditionUpdateClbk)
-        # Show or hide splash window
-        self.clearUpDialogs(dialog)
+
+                self.API.editWindow.updateStatement(self.lastEdit)
 
     def statementUpdateClbk(self, newStatement):
         if self.newMode:
             self.SetTargetStart(self.GetCurrentPos())
             self.SetTargetEnd(self.GetCurrentPos())
-            self.ReplaceTarget(newStatement[0].getCode(0))
+            self.ReplaceTarget(newStatement['statementStruct'].getCode(0))
             self.lastEdit = self.findAllStatement(self.GetCurrentLine())
             self.newMode = False
         else:
-            self.SetTargetStart(self.PositionFromLine(newStatement[1]))
-            endPos = self.PositionFromLine(newStatement[3] + 1)
+            self.SetTargetStart(self.PositionFromLine(newStatement['firstLine']))
+            endPos = self.PositionFromLine(newStatement['lastLine'] + 1)
             if self.GetCharAt(endPos) == '\n':
                 self.SetTargetEnd(endPos - 1)
-                self.ReplaceTarget(newStatement[0].getCode(0))
+                self.ReplaceTarget(newStatement['statementStruct'].getCode(0))
             else:
                 self.SetTargetEnd(endPos)
-                self.ReplaceTarget(newStatement[0].getCode(0) + '\n')
-            self.lastEdit = self.findAllStatement(newStatement[2])
+                self.ReplaceTarget(newStatement['statementStruct'].getCode(0) + '\n')
+            self.lastEdit = self.findAllStatement(newStatement['currentLine'])
+        self.doGrammarCheck(None)
 
     def conditionUpdateClbk(self, name, value):
         if self.newMode:
@@ -443,7 +441,7 @@ class Editor(wx.stc.StyledTextCtrl):
             self.newMode = False
         else:
             # Attribute error here because of seal failing on unknown condition
-            row = self.lastEdit[0].getCode(0).rstrip()
+            row = self.lastEdit['statementStruct'].getCode(0).rstrip()
             if name == 'when':
                 start = row.find("when") + len("when")
                 end = row[start:].find(":")
@@ -456,8 +454,8 @@ class Editor(wx.stc.StyledTextCtrl):
                 end = row[start:].find(":")
             # +1 is space after keyword
             row = "{} {}{}".format(row[:start], value, row[start + end:])
-            self.SetTargetStart(self.PositionFromLine(self.lastEdit[1]))
-            self.SetTargetEnd(self.PositionFromLine(self.lastEdit[3]) - 1)
+            self.SetTargetStart(self.PositionFromLine(self.lastEdit['firstLine']))
+            self.SetTargetEnd(self.PositionFromLine(self.lastEdit['lastLine']) - 1)
             self.ReplaceTarget(row)
             # No need to recheck for condition, because no new lines are added
             # and no lines have been deleted.
@@ -467,8 +465,14 @@ class Editor(wx.stc.StyledTextCtrl):
         self.getPlaceForAdding()
         self.lastAutoEdit = time.time()
         self.newMode = True
-        self.clearUpDialogs(EditStatement(self.API.editPanel,
-                               self.API, None, self.statementUpdateClbk), True)
+        res = {
+               "statementStruct": ComponentUseCase('', '', [], None),
+               "firstLine":-1,
+               "currentLine":-1,
+               "lastLine":-1,
+               "type":-1
+               }
+        self.API.editWindow.updateStatement(res, self.statementUpdateClbk)
 
     def addCondition(self):
         self.getPlaceForAdding()
@@ -478,66 +482,51 @@ class Editor(wx.stc.StyledTextCtrl):
                                self.API, None, self.conditionUpdateClbk), True)
 
     def findAllStatement(self, lineNr):
+        res = {
+               "statementStruct": None,
+               "firstLine":-1,
+               "currentLine": lineNr,
+               "lastLine":-1,
+               "type":-1
+               }
         # Check for empty line
         line = self.GetLine(lineNr).strip()
         if line == '':
-            return (None, -1, lineNr, -1)
-
+            return res
         # Try find statement in this line
         for x in self.lineTracking["Statement"]:
             if lineNr + 1 >= x[0] and lineNr + 1 <= x[1]:
-                return (x[2], x[0] - 1, lineNr, x[1] - 1, STATEMENT)
+                res['statementStruct'] = x[2]
+                res['firstLine'] = x[0] - 1
+                res['lastLine'] = x[1] - 1
+                res['type'] = STATEMENT
+                return res
 
         # If no component error is throwed we dont get so far :(
         statementType, actuator, obj = self.API.getStatementType(line)
 
         if statementType == STATEMENT:
-            return (ComponentUseCase(actuator, obj, [], None), lineNr,
-                   lineNr, lineNr, STATEMENT)
+            res['statementStruct'] = ComponentUseCase(actuator, obj, [], None)
+            res['firstLine'] = lineNr
+            res['lastLine'] = lineNr
+            res['type'] = STATEMENT
+            return res
 
         for x in self.lineTracking["Condition"]:
             if lineNr + 1 >= x[0] and lineNr + 1 <= x[1]:
-                return (x[2], x[0] - 1, lineNr, x[1], CONDITION)
+                res['statementStruct'] = x[2]
+                res['firstLine'] = x[0] - 1
+                res['lastLine'] = x[1]
+                res['type'] = CONDITION
+                return res
 
         # Try find condition in this line
         # TODO
 
-        return (None, -1, lineNr, -1)
+        return res
 
     def getPlaceForAdding(self):
         self.LineEndDisplay()
         self.AddText("\n\n")
-        # Smtng's wrong here...
+        #TODO: Smtng's wrong here...
 
-    def clearUpDialogs(self, dialog, mustReplace = False):
-        # If we are on the same line, no need to change anything
-        if self.lastLine == self.lastEdit[2] and not mustReplace:
-            if type(self.lastEdit[0]) is ComponentUseCase:
-                if self.lastName == self.lastEdit[0].name and self.lastType == self.lastEdit[0].type:
-                    if dialog:
-                        dialog.Destroy()
-                    return
-            else:
-                if dialog:
-                    dialog.Destroy()
-                return
-
-        self.lastLine = self.lastEdit[2]
-        if type(self.lastEdit[0]) is ComponentUseCase:
-            self.lastType = self.lastEdit[0].type
-            self.lastName = self.lastEdit[0].name
-        else:
-            self.lastType = ''
-            self.lastName = ''
-
-        # Don't destroy if typing in dialog caused statement to become invalid
-        if not dialog and self.GetCurLine()[0].strip() != '':
-                return
-
-        #if self.API.editorSplitter.GetWindow2() is None:
-        #    self.API.editorSplitter.SplitVertically(self.API.tabManager,
-        #                                            self.API.editPanel, -305)
-
-        for x in self.API.editPanel.GetChildren():
-            if x != dialog:
-                x.Destroy()
