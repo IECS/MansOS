@@ -3,10 +3,11 @@ from structures import *
 
 # pre-allocated packet field ID
 PACKET_FIELD_ID_COMMAND    = 0
-PACKET_FIELD_ID_TIMESTAMP  = 1
-PACKET_FIELD_ID_ADDRESS    = 2
+PACKET_FIELD_ID_SEQNUM     = 1
+PACKET_FIELD_ID_TIMESTAMP  = 2
+PACKET_FIELD_ID_ADDRESS    = 3
 # first free packet field ID (note that ID 31, 63, 95, 127 etc. are reserved for extension)
-PACKET_FIELD_ID_FIRST_FREE = 3
+PACKET_FIELD_ID_FIRST_FREE = 4
 
 ######################################################
 
@@ -628,8 +629,8 @@ class Sensor(Component):
         if root and root.cacheNeeded: cacheNeeded = True
         if cacheNeeded:
             dataFormat = str(self.getDataSize() * 8)
-            return "cacheReadSensorU{0}({1}, &{2}, {3})".format(
-                dataFormat, self.cacheNumber, rawReadFunc, self.minUpdatePeriod)
+            return "cacheReadSensor{0}({1}, &{2}, {3})".format(
+                dataFormat, self.cacheNumber, rawReadFunc.strip("()"), self.minUpdatePeriod)
         return rawReadFunc
 
     def getGeneratedFunctionName(self, fun):
@@ -1170,7 +1171,8 @@ class Output(Component):
         self.isAggregateCached = None
         self.packetFields = []
         self.headerMasks = []
-        self.useOnlyFields = None
+        self.useOnlyFields = []
+        self.usedIds = set()
         self.numSensorFields = 0
 
     def setFields(self, fields):
@@ -1198,13 +1200,16 @@ class Output(Component):
                 self.addPacketTypes(subsensor)
             return
         # normal case
+        assert s.systemwideID not in self.usedIds
         self.packetFields.append(PacketField(
                 s.systemwideID, s.getNameCC(), s.getDataSize(), s.getDataType()))
+        self.usedIds.add(s.systemwideID)
         self.numSensorFields += 1
 
     def definePacketType(self):
         # TODO: handle the case of multiple use cases of the same sensor with different value params! (marginal)
         self.packetFields = []
+        self.usedIds = set()
         self.numSensorFields = 0
         for s in componentRegister.sensors.itervalues():
             if not s.isUsed():
@@ -1215,15 +1220,23 @@ class Output(Component):
                     continue
             self.addPacketTypes(s)
 
-        if self.getParameterValue("timestamp"):
+        if self.getParameterValue("timestamp") or "timestamp" in self.useOnlyFields:
             # 4-byte timestamp (seconds since system uptime)
             self.packetFields.append(PacketField(
                     PACKET_FIELD_ID_TIMESTAMP, "timestamp", 4, "uint32_t", False))
+            self.usedIds.add(PACKET_FIELD_ID_TIMESTAMP)
 
-        if self.getParameterValue("address"):
+        if self.getParameterValue("address") or "address" in self.useOnlyFields:
             # 2-byte address
             self.packetFields.append(PacketField(
                     PACKET_FIELD_ID_ADDRESS, "address", 2, "uint16_t", False))
+            self.usedIds.add(PACKET_FIELD_ID_ADDRESS)
+
+        if self.getParameterValue("sequencenumber") or "sequencenumber" in self.useOnlyFields:
+            # 4-byte seqnum
+            self.packetFields.append(PacketField(
+                    PACKET_FIELD_ID_SEQNUM, "sequenceNumber", 4, "uint32_t", False))
+            self.usedIds.add(PACKET_FIELD_ID_SEQNUM)
 
         self.packetFields = sorted(self.packetFields, key=lambda f: f.sensorID)
 
@@ -1318,9 +1331,12 @@ class Output(Component):
         for i in range(len(self.headerMasks)):
             outputFile.write("    {0}Packet.typeMask{1} = 0x{2:x};\n".format(
                     self.getNameCC(), i + 1, self.headerMasks[i]))
-        if self.getParameterValue("timestamp"):
+        if PACKET_FIELD_ID_SEQNUM in self.usedIds:
+            outputFile.write("    static uint32_t seqnum;\n")
+            outputFile.write("    {0}Packet.sequenceNumber = ++seqnum;\n".format(self.getNameCC()))
+        if PACKET_FIELD_ID_TIMESTAMP in self.usedIds:
             outputFile.write("    {0}Packet.timestamp = getUptime();\n".format(self.getNameCC()))
-        if self.getParameterValue("address"):
+        if PACKET_FIELD_ID_ADDRESS in self.usedIds:
             outputFile.write("    {0}Packet.address = localAddress;\n".format(self.getNameCC()))
             componentRegister.additionalConfig.add("addressing")
         if True:
@@ -1427,6 +1443,7 @@ class ComponentRegister(object):
         self.patterns = {}
         self.numCachedSensors = 0
         self.additionalConfig = set()
+        self.extraSourceFiles = []
         self.isError = False
         self.architecture = architecture
         # import the module (residing in "components" directory and named "<architecture>.py")
@@ -1439,6 +1456,18 @@ class ComponentRegister(object):
             if not c:
                 componentRegister.userError("Component '{0}' duplicated for platform '{1}', ignoring\n".format(
                         spec.name, architecture))
+
+    def loadExtModule(self, filename):
+        try:
+            extModule = __import__(filename)
+        except Exception as ex:
+            print "failed to load " + filename + ":", ex
+            return
+
+        for p in dir(extModule):
+            spec = extModule.__getattribute__(p)
+            if isinstance(spec, self.module.SealComponent):
+                c = self.addComponent(spec.name.lower(), spec)
 
     #######################################################################
     def findComponentByName(self, componentName):

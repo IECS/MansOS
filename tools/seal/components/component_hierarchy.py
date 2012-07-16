@@ -76,6 +76,26 @@ class ConstantSensor(SealSensor):
     def calculateParameterValue(self, parameter, useCaseParameters):
         return self.getParameterValue("value", useCaseParameters)
 
+class CounterSensor(SealSensor):
+    def __init__(self):
+        super(CounterSensor, self).__init__("Counter")
+        self.useFunction.value = "0"
+        self.readFunction.value = self.useFunction.value
+        # the values used in read function
+        self.start = SealParameter(0, ["0", "1", "2", "5", "10", "100", "1000"])
+        self.max = SealParameter(0xffffffff, ["1", "2", "5", "10", "100", "1000", "0xffffffff"])
+        self.readFunctionDependsOnParams = True
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        start = int(self.getParameterValue("start", useCaseParameters))
+        max = int(self.getParameterValue("max", useCaseParameters))
+        if max >= 0x80000000: suffix = "u"
+        else: suffix = ""
+
+        # use GCC statement-as-expression extension
+        return "({" + "static uint32_t counter = {}; counter = (counter + 1) % {}{};".format(
+            start, max, suffix) + "})"
+
 class RandomSensor(SealSensor):
     def __init__(self):
         super(RandomSensor, self).__init__("Random")
@@ -104,9 +124,9 @@ class RandomSensor(SealSensor):
 # A time-based counter value.
 # Be careful about wraparound: use 64-bit jiffies if possible!
 #
-class CounterSensor(SealSensor):
+class TimeCounterSensor(SealSensor):
     def __init__(self):
-        super(CounterSensor, self).__init__("Counter")
+        super(TimeCounterSensor, self).__init__("TimeCounter")
         self.useFunction.value = "0"
         self.readFunction.value = "0"
         self.counterperiod = SealParameter(1000, ["100", "200", "500", "1000", "2000"])
@@ -123,6 +143,13 @@ class CounterSensor(SealSensor):
 class SystemTimeSensor(SealSensor):
     def __init__(self):
         super(SystemTimeSensor, self).__init__("SystemTime")
+        self.useFunction.value = "getUptime()"
+        self.readFunction.value = "getUptime()"
+
+# TODO: allow aliases!
+class UptimeSensor(SealSensor):
+    def __init__(self):
+        super(UptimeSensor, self).__init__("Uptime")
         self.useFunction.value = "getUptime()"
         self.readFunction.value = "getUptime()"
 
@@ -368,6 +395,7 @@ class SealOutput(SealComponent):
         self.crc = SealParameter(False, [False, True])
         self.address = SealParameter(False, [False, True])
         self.timestamp = SealParameter(True, [False, True])
+        self.sequencenumber = SealParameter(False, [False, True])
 
 class SerialOutput(SealOutput):
     def __init__(self):
@@ -393,6 +421,15 @@ class ExternalFlashOutput(SealOutput):
         super(ExternalFlashOutput, self).__init__("ExternalFlash")
         self.useFunction.value = "extFlashWrite(&externalFlashPacket, sizeof(externalFlashPacket))"
 
-# TODO: SD card
+class SdCardOutput(SealOutput):
+    def __init__(self):
+        super(SdCardOutput, self).__init__("SdCard")
+        self.useFunction.value = "sdcardWrite(&sdCardPacket, sizeof(sdCardPacket))"
 
-# TODO: "local storage" (i.e. [external] flash or SD card, depending on platform
+# "local storage" (i.e. [external] flash or SD card is defined depending on platform
+# on telosb, local storage is synonym for external flash
+class LocalStorageOutput(SealOutput):
+    def __init__(self):
+        super(LocalStorageOutput, self).__init__("LocalStorage")
+        # ext flash by default
+        self.useFunction.value = "extFlashWrite(&externalFlashPacket, sizeof(externalFlashPacket))"

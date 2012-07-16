@@ -111,8 +111,11 @@ def main():
 
     # import pathname where seal package is located
     dirname = os.path.dirname(os.path.realpath(__file__))
-    sys.path.append(dirname + '/..')
-    sys.path.append(dirname + '/../seal/components')
+    sys.path.append(dirname + '/' + pathToOS)
+    sys.path.append(dirname + '/' + pathToOS + '/seal/components')
+    # for extension modules
+    sys.path.append(os.getcwd() + os.path.dirname(inputFileName))
+
     from seal import generator
     # in case tis is used multiple times
     generator.components.clearGlobals()
@@ -149,7 +152,7 @@ def main():
         with open(outputFileName, 'w') as outputFile:
             g.generate(outputFile)
         with open(outputDirName + "Makefile", 'w') as outputFile:
-            g.generateMakefile(outputFile, outputFileName, pathToOS)
+            g.generateMakefile(outputFile, outputFileName, os.path.dirname(sys.argv[0]) + '/' + pathToOS)
         with open(outputDirName + "config", 'w') as outputFile:
             g.generateConfigFile(outputFile)
         if generator.components.componentRegister.isError:

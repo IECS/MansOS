@@ -8,7 +8,11 @@
 // read Counter, start 5, max 10;
 // output Serial;
 
-load "UncommonExtension.py";
+//load "UncommonExtension.py";
+//read UncommonSensor;
+//output Serial;
 
-use UncommonSensor;
+load "CLangExtension"; // python file
+load "ext.c"; // C file
+read CLangExtSensor;
 output Serial;
