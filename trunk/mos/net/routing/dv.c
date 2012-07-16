@@ -59,10 +59,12 @@ static void markForwardTimerActive(uint16_t times)
     roForwardTimer.data = (void *) times;
 }
 
+#if MULTIHOP_FORWARDER
 static bool isForwardTimerActive(void)
 {
     return (bool) roForwardTimer.data;
 }
+#endif
 
 static inline bool isRoutingInfoValid(void)
 {
@@ -79,7 +81,7 @@ void initRouting(void)
     alarmInit(&roForwardTimer, roForwardTimerCb, NULL);
 #endif
     alarmInit(&roRequestTimer, roRequestTimerCb, NULL);
-    alarmSchedule(&roRequestTimer, randomInRange(2000, 3000);
+    alarmSchedule(&roRequestTimer, randomInRange(2000, 3000));
 }
 
 #if MULTIHOP_FORWARDER
