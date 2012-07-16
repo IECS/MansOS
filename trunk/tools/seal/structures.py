@@ -57,6 +57,17 @@ class FunctionTree(object):
             result += "_" + a.generateSensorName()
         return result
 
+    def getCode(self):
+        if type(self.function) is Value:
+            return self.function.asString()
+        args = []
+        for a in self.arguments:
+            args.append(a.getCode())
+        return self.function.lower() + "(" + args.join(',') + ")"
+
+    def collectImplicitDefines(self):
+        return []
+
 ########################################################
 class ConditionCollection(object):
     def __init__(self):
@@ -210,12 +221,8 @@ class SealValue(object):
         self.secondPart = secondPart
 
     def getCode(self):
-        # This is wrong!!!
-        # But this fixes some parser error
-        # It somehow puts Value object inside SealValue and there is no 
-        # processing for that. As I understand it shouldn't happen.
-        result = ''
-        if type(self.firstPart) is Value:
+        # Value object can be inside SealValue
+        if "getCode" in dir(self.firstPart):
             result = self.firstPart.getCode()
         else:
             result = self.firstPart
@@ -273,12 +280,17 @@ class Expression(object):
         return result
 
     def getCode(self):
+        #print self.left
+        #print self.op
+        #print self.right
         if self.left != None and self.right != None:
             return self.left.getCode() + " " + self.op + " " + self.right.getCode()
         if self.op != None:
             return self.op + " " + self.right.getCode()
         if type(self.right) is Expression:
             return "(" + self.right.getCode() + ")"
+        if "getCode" in dir(self.right):
+            return self.right.getCode()
         return self.right
 
     def getCodeForGenerator(self, componentRegister, condition):
