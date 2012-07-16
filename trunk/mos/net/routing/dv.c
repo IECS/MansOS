@@ -107,7 +107,7 @@ static void roForwardTimerCb(void *x)
     markForwardTimerActive(timesLeft);
     if (timesLeft) {
         // reschedule alarm
-        alarmSchedule(&roForwardTimer, randomInRange(100, 300);
+        alarmSchedule(&roForwardTimer, randomInRange(100, 300));
     }
 }
 #endif
