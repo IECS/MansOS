@@ -37,9 +37,9 @@ class EditStatement(wx.Panel):
         self.data = wx.GridBagSizer(hgap = 2, vgap = 1)
         self.main.Add(self.data, 1, wx.EXPAND | wx.ALL, 5)
 
-        # type combo list
+        # Type combo list
         self.type = None
-        # name combo list
+        # Name combo list
         self.name = None
         # 3rd tier checkbox list[(text, checkbox), (text, checkbox), .. ]
         self.check = list()
@@ -63,7 +63,7 @@ class EditStatement(wx.Panel):
         _type = statement['statementStruct'].type
         _name = statement['statementStruct'].name
 
-        # Check  if 3rd tier needs to be recreated or updated
+        # Check if 3rd tier needs to be recreated or updated
         changed = True
         if self.newMode == 0:
             if self.type != self.name:
@@ -73,7 +73,7 @@ class EditStatement(wx.Panel):
         changed = self.forceChange or changed
         # Clear flag
         self.forceChange = False
-        # Don't remember why.. :(
+        # Clear everything because "Add statement pressed"
         if statement['type'] == -1:
             self.data.Clear(True)
             self.type = self.name = None
@@ -303,9 +303,9 @@ class EditStatement(wx.Panel):
             self.statement['statementStruct'].type = value
         elif name == "object":
             self.statement['statementStruct'].name = value
-        else: # parameters
+        else: # Parameters
             found = False
-            # try to find this parameter in struct, it might not be there if 
+            # Try to find this parameter in struct, it might not be there if 
             # it is used for the first time
             for param in self.statement['statementStruct'].parameters:
                 # Check if current parameter is the one changed

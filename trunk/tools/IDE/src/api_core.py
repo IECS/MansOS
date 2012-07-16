@@ -110,6 +110,16 @@ class ApiCore:
         # this is path from /mansos/tools/IDE
         self.pathToMansos = os.path.join(self.path, "../..")
 
+        # Try to get system default font
+        font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        self.fontName = font.GetFaceName()
+        if self.fontName != "":
+            print "Using system default font: {}".format(self.fontName)
+        else:
+            self.fontName = "Courier"
+            print "Can't find system default font, defaulting to {}".\
+                        format(self.fontName)
+
 ### Shortcuts etc
 
 # Visual objects here can be used in forms only after they have been re-parented 
