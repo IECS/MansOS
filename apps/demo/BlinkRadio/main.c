@@ -30,11 +30,7 @@
 // For use on other platforms it must be recalibrated.
 // --------------------------------------------------------------
 
-#include "mansos.h"
-#include "leds.h"
-#include "udelay.h"
-#include "dprint.h"
-#include "radio.h"
+#include "stdmansos.h"
 #include "timers.h"
 
 // calibrate this - the RSSI range we are interested in
