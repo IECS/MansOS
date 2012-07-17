@@ -59,6 +59,7 @@ class ApiCore:
                    "blocklyPort" : '8090',
                    "blocklyHost" : "localhost",
                    "blocklyLocation" : "../../../seal-blockly/blockly/seal/playground-seal.html",
+                   "recentlyOpenedMaxCount": 10
                }
         # Read settings from file
         if os.path.exists(SETTING_FILE) and os.path.isfile(SETTING_FILE):
