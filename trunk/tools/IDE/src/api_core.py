@@ -74,7 +74,7 @@ class ApiCore:
                             continue
                     else:
                         continue
-                    if key in self.__settings and value != self.__settings[key]:
+                    if key in self.__settings and str(value) != str(self.__settings[key]):
                         # print because logging is not initialized yet :(
                         print "Replacing setting '{0}' with '{1}'."\
                             .format(self.__settings[key], value)
@@ -110,14 +110,14 @@ class ApiCore:
         self.pathToMansos = os.path.join(self.path, "../..")
 
         # Try to get system default font
-        font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
-        self.fontName = font.GetFaceName()
-        if self.fontName != "":
-            print "Using system default font: {}".format(self.fontName)
-        else:
-            self.fontName = "Courier"
-            print "Can't find system default font, defaulting to {}".\
-                        format(self.fontName)
+        #font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        #self.fontName = font.GetFaceName()
+        #if self.fontName != "":
+        #    print "Using system default font: {}".format(self.fontName)
+        #else:
+        self.fontName = "Courier New"
+        #    print "Can't find system default font, defaulting to {}".\
+        #                format(self.fontName)
 
 ### Shortcuts etc
 
