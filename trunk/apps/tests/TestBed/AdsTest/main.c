@@ -29,14 +29,21 @@ void appMain(void)
     uint16_t val;
     uint16_t i;
 
-    ads8638Init();
-    ads8638SelectChannel(ADS8638_CHANNEL_0, ADS8638_RANGE_2_5V);
+//    ads8638Init();
+//    ads8638SelectChannel(ADS8638_CHANNEL_0, ADS8638_RANGE_2_5V);
 
     for (i = 0; ; i++) {
         i %= 8;
+
+        ads8638Init();
+        mdelay(1);
         ads8638SelectChannel(i, ADS8638_RANGE_2_5V);
         ads8638Read(&val);
+
+        USARTInit(PRINTF_USART_ID, SERIAL_PORT_BAUDRATE, 0);
+        USARTEnableTX(PRINTF_USART_ID);
         PRINTF("Conversion result from AIN%d: %#x\n", i, val);
+
         sleep(1);
     }
 }
