@@ -23,8 +23,10 @@
 #
 
 import os
-from generate_makefile import GenerateMakefile
 
+from generate_makefile import GenerateMakefile
+from helperFunctions import doPopen
+from myThread import MyThread
 from globals import * #@UnusedWildImport
 
 class DoUpload():
@@ -52,7 +54,9 @@ class DoUpload():
         if len(self.targets):
             target = self.targets.pop()
             self.changeTarget(target)
-            self.API.startPopen(["make", platform, "upload"], "Upload", self.usbUpload, True)
+            thread = MyThread(doPopen, ["make", platform, "upload"], \
+                              self.usbUpload, True, False, "Upload")
+            self.API.startThread(thread)
         else:
             pass
             #self.clean()

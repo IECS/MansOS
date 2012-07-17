@@ -35,7 +35,6 @@ from tab_manager import TabManager
 from output_tools import OutputTools
 from listen_module import ListenModule
 from editor_manager import EditorManager
-from popenManager import PopenManager
 from get_motelist import GetMotelist
 from do_compile import DoCompile
 from do_upload import DoUpload
@@ -95,8 +94,8 @@ class ApiCore:
         self.targets = [None]
         self.targetType = "USB"
 
-        # [ID, Popen, callback, recievedString]
-        self.activeThreads = []
+        self.activeThreads = {}
+
         self.onExit.append(self.killAllThreads)
 
         if LOG_TO_FILE:
@@ -285,25 +284,8 @@ class ApiCore:
 
     def killAllThreads(self):
         for x in self.activeThreads:
-            if x[1]:
-                x[1].proc.terminate()
-
-    def searchEmptyID(self):
-        # [ID, thread, callback]
-        for x in range(len(self.activeThreads)):
-            if self.activeThreads[x][1] == None:
-                return x
-        # Define notification event for thread completion
-        self.activeThreads.append([wx.NewId(), None, None, "", False])
-        return len(self.activeThreads) - 1
-
-    def searchCorrespondingID(self, ID):
-        # [ID, thread, callback]
-        for x in range(len(self.activeThreads)):
-            if self.activeThreads[x][0] == ID:
-                return x
-        assert False, "ERROR! NO ID FOUND " + str(ID)
-        return 0
+            if self.activeThreads[x]:
+                self.activeThreads[x].process.terminate()
 
     def populateMotelist(self, event = None):
         self.printInfo("Populating motelist ... ", False)
@@ -317,36 +299,38 @@ class ApiCore:
         self.printInfo("Starting to upload ... \n", False)
         self.uploader.doUpload()
 
-    def startPopen(self, target, name, callback, verbouse):
-        nr = self.searchEmptyID()
-        self.activeThreads[nr][2] = callback
-        self.activeThreads[nr][4] = verbouse
-        self.frame.Connect(-1, -1, self.activeThreads[nr][0], self.onResult)
-        self.activeThreads[nr][1] = PopenManager(self, self.frame, self.activeThreads[nr][0], target, name)
-        self.activeThreads[nr][1].run()
+    def startThread(self, thread):
+        thread.EVT_ID = wx.NewId()
+        thread.notifyWindow = self.frame
+        self.frame.Connect(-1, -1, thread.EVT_ID, self.onResult)
+        self.activeThreads[thread.EVT_ID] = thread
+        thread.run()
+
+    def stopThread(self, name):
+        for x in self.activeThreads:
+            if self.activeThreads[x].name == name:
+                self.activeThreads[x].stop = True
+                return
+        print "Thread '{}' is not running, can't stop!".format(name)
 
     def onResult(self, event):
-        nr = self.searchCorrespondingID(event.GetEventType())
+        thread = self.activeThreads[event.GetEventType()]
         if event.data is None:
             # Call callback
-            if self.activeThreads[nr][2]:
-                self.activeThreads[nr][2](self.activeThreads[nr][3])
+            if thread.callbackFunction:
+                thread.callbackFunction(thread.output)
             # Clear info about this thread
-            self.activeThreads[nr][1] = None
-            self.activeThreads[nr][2] = None
-            self.activeThreads[nr][3] = ""
-            self.activeThreads[nr][4] = False
+            self.activeThreads.pop(thread.EVT_ID)
         elif type(event.data) is str:
-            if event.data.find("Execution failed") == 0:
+            if thread.printToInfo:
                 self.infoArea.printLine(event.data)
-                return
-            if self.activeThreads[nr][4]:
-                self.infoArea.printLine(event.data)
-            self.activeThreads[nr][3] += event.data
-        elif type(event.data) is list:
-            if event.data[0] == 0:
+            if thread.printToListen:
+                self.outputArea.printLine(event.data)
+            thread.output += event.data
+        elif type(event.data) is int:
+            if event.data == 0:
                 # If no callback defined, no Done printed!
-                if self.activeThreads[nr][2]:
+                if thread.callbackFunction:
                     self.printInfo("Done!\n")
             else:
                 self.printInfo("Failed!\n")
