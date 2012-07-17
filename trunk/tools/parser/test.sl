@@ -1,5 +1,5 @@
-// read Uptime, period 2;
-// output Serial (Uptime, SequenceNumber);
+read Uptime, period 2s;
+output Serial (Uptime, SequenceNumber);
 // output Serial, SequenceNumber;
 // output Serial, SequenceNumber True;
 
@@ -8,7 +8,7 @@
 // read Counter, start 5, max 10;
 // output Serial;
 
-load "UncommonExtension.py";
+//load "UncommonExtension.py";
 
-use UncommonSensor;
-output Serial;
+//use UncommonSensor;
+//output Serial;

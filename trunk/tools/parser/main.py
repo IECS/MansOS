@@ -8,7 +8,7 @@ outputFileName = 'main.c'
 architecture = 'testarch'
 #architecture = 'telosb'
 targetOS = 'mansos'
-pathToOS = '..'
+pathToOS = '../..'
 verboseMode = False
 testMode = False
 
@@ -67,7 +67,8 @@ def parseCommandLine(argv):
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "a:eho:p:t:Vv",
-                                   ["arch=", "errors", "help", "output=", "path=", "target=" "verbose", "version"])
+                   ["arch=", "errors", "help", "output=",
+                    "path=", "target=", "verbose", "version"])
     except getopt.GetoptError, err:
         # print help information and exit:
         print str(err) # will print something like "option -a not recognized"
@@ -111,8 +112,8 @@ def main():
 
     # import pathname where seal package is located
     dirname = os.path.dirname(os.path.realpath(__file__))
-    sys.path.append(dirname + '/' + pathToOS)
-    sys.path.append(dirname + '/' + pathToOS + '/seal/components')
+    sys.path.append(dirname + '/' + pathToOS + '/tools')
+    sys.path.append(dirname + '/' + pathToOS + '/tools/seal/components')
     # for extension modules
     sys.path.append(os.getcwd() + os.path.dirname(inputFileName))
 
@@ -152,7 +153,11 @@ def main():
         with open(outputFileName, 'w') as outputFile:
             g.generate(outputFile)
         with open(outputDirName + "Makefile", 'w') as outputFile:
-            g.generateMakefile(outputFile, outputFileName, os.path.dirname(sys.argv[0]) + '/' + pathToOS)
+            # TODO: should normalize, else '././' or '../this' and similar breaks build
+            numDirs = len(outputFileName.split('/'))
+            path = '../' + os.path.dirname(sys.argv[0]) + ('/..' * numDirs)
+            g.generateMakefile(outputFile, outputFileName, path)
+            
         with open(outputDirName + "config", 'w') as outputFile:
             g.generateConfigFile(outputFile)
         if generator.components.componentRegister.isError:
