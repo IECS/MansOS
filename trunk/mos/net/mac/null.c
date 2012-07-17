@@ -26,7 +26,7 @@
 #include <hil/radio.h>
 #include <hil/errors.h>
 #include <lib/dprint.h>
-#include <kernel/threads/radio.h>
+#include <lib/radio_packet_buffer.h>
 #include <net/net-stats.h>
 
 #if DEBUG
@@ -58,7 +58,6 @@ MacProtocol_t macProtocol = {
 
 static void initNullMac(RecvFunction cb)
 {
-    RADIO_PACKET_BUFFER(radioBuffer, RADIO_MAX_PACKET);
     macProtocol.recvCb = cb;
     // turn on radio listening
     radioOn();
@@ -75,11 +74,11 @@ static void pollNullMac(void) {
     MacInfo_t mi;
     memset(&mi, 0, sizeof(mi));
     INC_NETSTAT(NETSTAT_RADIO_RX, EMPTY_ADDR);
-    if (isRadioPacketReceived(*radioPacketBuffer)) {
-        // PRINTF("got a packet from radio, size=%u, first bytes=0x%02x 0x%02x 0x%02x 0x%02x\n",
-        //         radioPacketBuffer->receivedLength,
-        //         radioPacketBuffer->buffer[0], radioPacketBuffer->buffer[1],
-        //         radioPacketBuffer->buffer[2], radioPacketBuffer->buffer[3]);
+    if (isRadioPacketReceived()) {
+//        MPRINTF("got a packet from radio, size=%u, first bytes=0x%02x 0x%02x 0x%02x 0x%02x\n",
+//                 radioPacketBuffer->receivedLength,
+//                 radioPacketBuffer->buffer[0], radioPacketBuffer->buffer[1],
+//                 radioPacketBuffer->buffer[2], radioPacketBuffer->buffer[3]);
         if (macProtocol.recvCb) {
             //INC_NETSTAT(NETSTAT_PACKETS_RECV, EMPTY_ADDR);    // done @ dv.c
             // call user callback
@@ -88,12 +87,12 @@ static void pollNullMac(void) {
             INC_NETSTAT(NETSTAT_PACKETS_DROPPED_RX, EMPTY_ADDR);
         }
     }
-    else if (isRadioPacketError(*radioPacketBuffer)) {
+    else if (isRadioPacketError()) {
         INC_NETSTAT(NETSTAT_PACKETS_DROPPED_RX, EMPTY_ADDR);
         MPRINTF("got an error from radio: %s\n",
                 strerror(-radioPacketBuffer->receivedLength));
     }
-    radioBufferReset(*radioPacketBuffer);
+    radioBufferReset();
 }
 
 static bool nullMacBuildHeader(MacInfo_t *mi, const uint8_t **header /* out */, uint16_t *headerLength /* out */) {
