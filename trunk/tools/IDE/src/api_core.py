@@ -85,12 +85,8 @@ class ApiCore:
         self.onExit = [self.saveSettings]
 
         # All defined platforms
-        self.platforms = [
-            "telosb",
-            "sadmote",
-            "atmega",
-            "waspmote"
-            ]
+        self.platforms = self.getPlatformsFromMakefile()
+
         self.activePlatform = 0
         #
         self.motelist = []
@@ -192,6 +188,18 @@ class ApiCore:
         self.tabManager.loadRememberedTabs()
         self.frame.auiManager.Update()
         self.populateMotelist()
+
+    def getPlatformsFromMakefile(self):
+        makefile = os.path.join(self.path, "../../mos/make/Makefile.options")
+        if os.path.exists(makefile) and os.path.isfile(makefile):
+            f = open(makefile, "r")
+            for line in f.readlines():
+                if line.startswith("PLATFORMS"):
+                    line = line.split("?=")[1].strip()
+                    return line.split(" ")
+        return [
+            "No platforms found! Check MansOS installation."
+            ]
 
     def getStatementType(self, line):
         possibleSplitters = [None, ",", ";"]
