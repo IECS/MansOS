@@ -32,7 +32,7 @@
 #include <lib/dprint.h>
 #include <lib/random.h>
 #include <lib/assert.h>
-#include <kernel/threads/radio.h>
+#include <lib/radio_packet_buffer.h>
 #include <net/net-stats.h>
 
 #define TEST_FILTERS 1
@@ -57,7 +57,6 @@ static uint8_t sendTries;
 // -----------------------------------------------
 
 static void initCsmaMac(RecvFunction recvCb) {
-    RADIO_PACKET_BUFFER(radioBuffer, RADIO_MAX_PACKET);
     macProtocol.recvCb = recvCb;
 
     alarmInit(&sendTimer, sendTimerCb, NULL);
@@ -170,7 +169,7 @@ static bool filterPass(MacInfo_t *mi)
 static void pollCsmaMac(void) {
     MacInfo_t mi;
     INC_NETSTAT(NETSTAT_RADIO_RX, EMPTY_ADDR);
-    if (isRadioPacketReceived(*radioPacketBuffer)) {
+    if (isRadioPacketReceived()) {
         // PRINTF("got a packet from radio, size=%u\n", radioPacketBuffer->receivedLength);
         
         if (macProtocol.recvCb) {
@@ -191,10 +190,10 @@ static void pollCsmaMac(void) {
            INC_NETSTAT(NETSTAT_PACKETS_DROPPED_RX, EMPTY_ADDR);
         }
     }
-    else if (isRadioPacketError(*radioPacketBuffer)) {
+    else if (isRadioPacketError()) {
         INC_NETSTAT(NETSTAT_PACKETS_DROPPED_RX, EMPTY_ADDR);
         PRINTF("got an error from radio: %s\n",
                 strerror(-radioPacketBuffer->receivedLength));
     }
-    radioBufferReset(*radioPacketBuffer);
+    radioBufferReset();
 }

@@ -21,37 +21,35 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdmansos.h"
-#include <lib/radio_packet_buffer.h>
+#ifndef MANSOS_RADIO_PACKET_BUFFER_H
+#define MANSOS_RADIO_PACKET_BUFFER_H
 
-uint8_t data[] = "hello world";
+#include <hil/radio.h>
 
-void appMain(void)
-{
-    // turn on radio listening
-    radioOn();
+typedef struct RadioPacketBuffer_s {
+    uint8_t bufferLength;     // length of the buffer
+    int8_t receivedLength;    // length of data stored in the packet, or error code if negative
+    uint8_t buffer[0];        // pointer to a buffer where the packet is stored
+} RadioPacketBuffer_t;
 
-    for (;;) {
-        PRINT("in appMain...\n");
+// One buffer used for radio packet handling in all networking layers
+extern RadioPacketBuffer_t *radioPacketBuffer;
 
-        if (isRadioPacketReceived()) {
-            PRINTF("got a packet from radio, size=%u, first bytes=0x%02x 0x%02x 0x%02x 0x%02x\n",
-                    radioPacketBuffer->receivedLength,
-                    radioPacketBuffer->buffer[0],
-                    radioPacketBuffer->buffer[1],
-                    radioPacketBuffer->buffer[2],
-                    radioPacketBuffer->buffer[3]);
-        }
-        else if (isRadioPacketError()) {
-            PRINTF("got an error from radio: %s\n",
-                    strerror(-radioPacketBuffer->receivedLength));
-        }
-        radioBufferReset();
 
-        // send out own packet
-        radioSend(data, sizeof(data));
+// ----------------------------------------------------------------
+// User API
+// ----------------------------------------------------------------
 
-        redLedToggle();
-        mdelay(1000);
-    }
-}
+#define isRadioPacketEmpty()         \
+    (radioPacketBuffer->receivedLength == 0)
+
+#define isRadioPacketReceived()         \
+    (radioPacketBuffer->receivedLength > 0)
+
+#define isRadioPacketError()         \
+    (radioPacketBuffer->receivedLength < 0)
+
+#define radioBufferReset()         \
+    radioPacketBuffer->receivedLength = 0;
+
+#endif

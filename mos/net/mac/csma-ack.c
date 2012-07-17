@@ -32,7 +32,7 @@
 #include <lib/dprint.h>
 #include <lib/random.h>
 #include <lib/assert.h>
-#include <kernel/threads/radio.h>
+#include <lib/radio_packet_buffer.h>
 #include <kernel/threads/timing.h>
 #include <net/net-stats.h>
 
@@ -61,7 +61,6 @@ static uint8_t mySeqnum;
 // -----------------------------------------------
 
 static void initCsmaMac(RecvFunction recvCb) {
-    RADIO_PACKET_BUFFER(radioBuffer, RADIO_MAX_PACKET);
     macProtocol.recvCb = recvCb;
 
     alarmInit(&sendTimer, sendTimerCb, NULL);
@@ -119,7 +118,7 @@ static void sendTimerCb(void *x) {
 
     if (STAILQ_EMPTY(&packetQueue)) return;
 
-    uint32_t now = (uint32)getJiffies();
+    uint32_t now = (uint32_t) getJiffies();
     uint16_t nextTimerTime = MAC_PROTOCOL_ACK_TIME;
     STAILQ_FOREACH(p, &packetQueue, chain) {
         // for this packet ack time has not yet come
@@ -198,7 +197,7 @@ static bool matchPacketBySeqnum(QueuedPacket_t *p, void *userData)
 static void pollCsmaMac(void)
 {
     INC_NETSTAT(NETSTAT_RADIO_RX, EMPTY_ADDR);
-    if (isRadioPacketReceived(*radioPacketBuffer)) {
+    if (isRadioPacketReceived()) {
         //PRINTF("got a packet from radio, size=%u\n", radioPacketBuffer->receivedLength);
         //debugHexdump(radioPacketBuffer->buffer, radioPacketBuffer->receivedLength);
 
@@ -232,12 +231,12 @@ static void pollCsmaMac(void)
             INC_NETSTAT(NETSTAT_PACKETS_DROPPED_RX, EMPTY_ADDR);
         }
     }
-    else if (isRadioPacketError(*radioPacketBuffer)) {
+    else if (isRadioPacketError()) {
         INC_NETSTAT(NETSTAT_PACKETS_DROPPED_RX, EMPTY_ADDR);
         PRINTF("got an error from radio: %s\n",
                 strerror(-radioPacketBuffer->receivedLength));
     }
-    radioBufferReset(*radioPacketBuffer);
+    radioBufferReset();
 }
 
 static bool ackMacBuildHeader(MacInfo_t *mi, uint8_t **header /* out */,

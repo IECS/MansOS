@@ -21,37 +21,17 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdmansos.h"
 #include <lib/radio_packet_buffer.h>
+#include <hil/radio.h>
 
-uint8_t data[] = "hello world";
+#ifndef RADIO_BUFFER_SIZE
+#define RADIO_BUFFER_SIZE RADIO_MAX_PACKET
+#endif
 
-void appMain(void)
-{
-    // turn on radio listening
-    radioOn();
+static struct RadioPacketBufferReal_s {
+    uint8_t bufferLength;     // length of the buffer
+    int8_t receivedLength;    // length of data stored in the packet, or error code if negative
+    uint8_t buffer[RADIO_BUFFER_SIZE]; // a buffer where the packet is stored
+} realBuf = {RADIO_BUFFER_SIZE, 0, {0}};
 
-    for (;;) {
-        PRINT("in appMain...\n");
-
-        if (isRadioPacketReceived()) {
-            PRINTF("got a packet from radio, size=%u, first bytes=0x%02x 0x%02x 0x%02x 0x%02x\n",
-                    radioPacketBuffer->receivedLength,
-                    radioPacketBuffer->buffer[0],
-                    radioPacketBuffer->buffer[1],
-                    radioPacketBuffer->buffer[2],
-                    radioPacketBuffer->buffer[3]);
-        }
-        else if (isRadioPacketError()) {
-            PRINTF("got an error from radio: %s\n",
-                    strerror(-radioPacketBuffer->receivedLength));
-        }
-        radioBufferReset();
-
-        // send out own packet
-        radioSend(data, sizeof(data));
-
-        redLedToggle();
-        mdelay(1000);
-    }
-}
+RadioPacketBuffer_t *radioPacketBuffer = (RadioPacketBuffer_t *) &realBuf;
