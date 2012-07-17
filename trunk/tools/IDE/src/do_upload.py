@@ -45,11 +45,20 @@ class DoUpload():
             self.usbUpload()
 
     def usbUpload(self, data = None):
+        self.curPath = os.getcwd()
+        os.chdir(os.path.split(os.path.realpath(self.editor().filePath))[0])
+
         platform = self.API.platforms[self.API.activePlatform]
         if len(self.targets):
             target = self.targets.pop()
             self.changeTarget(target)
             self.API.startPopen(["make", platform, "upload"], "Upload", self.usbUpload, True)
+        else:
+            self.clean()
+
+    def clean(self, data = None):
+        self.API.startPopen(["make", "clean"], "Clean", None, False)
+        os.chdir(self.curPath)
 
     def shellUpload(self, targets, platform):
         assert False, "Currently not supported"
