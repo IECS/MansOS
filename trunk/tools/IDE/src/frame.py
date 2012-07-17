@@ -109,6 +109,63 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
 
     def initUI(self):
+        self.generateMenu()
+        # Check if we need to update existing toolbar(for rerun)
+        if self.toolbar == None:
+            self.toolbar = self.CreateToolBar()
+            self.toolbar.SetToolBitmapSize((32, 32))
+        else:
+            self.toolbar.ClearTools()
+
+        # Note that all icons must be 32x32, so they look good :)
+        self.toolbar.AddLabelTool(wx.ID_NEW, self.tr('New'),
+                                wx.Bitmap(self.path + '/src/Icons/new.png'),
+                                shortHelp = self.tr('New'))
+        self.toolbar.AddSeparator()
+        self.toolbar.AddLabelTool(wx.ID_OPEN, self.tr('Open'),
+                                wx.Bitmap(self.path + '/src/Icons/open.png'),
+                                shortHelp = self.tr('Open'))
+        self.toolbar.AddLabelTool(wx.ID_SAVE, self.tr('Save'),
+                                wx.Bitmap(self.path + '/src/Icons/save.png'),
+                                shortHelp = self.tr('Save'))
+        self.toolbar.AddSeparator()
+        addStatementTool = self.toolbar.AddLabelTool(wx.ID_ADD, self.tr('Add statement'),
+                                wx.Bitmap(self.path + '/src/Icons/add_statement.png'),
+                                shortHelp = self.tr('Add statement'))
+        # Used ID_APPLY for identification, hope nothing else uses it
+        addConditionTool = self.toolbar.AddLabelTool(wx.ID_APPLY, self.tr('Add condition'),
+                                wx.Bitmap(self.path + '/src/Icons/add_condition.png'),
+                                shortHelp = self.tr('Add condition'))
+        #self.toolbar.AddSeparator()
+        #addBlocklyTool = self.toolbar.AddLabelTool(wx.ID_MORE, self.tr('Open Seal-Blockly editor'),
+        #                        wx.Bitmap(self.path + '/src/Icons/Seal_blockly.png'),
+        #                        shortHelp = self.tr('Open Seal-Blockly editor'))
+        self.toolbar.AddSeparator()
+        compileTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW, self.tr('Compile'),
+                                wx.Bitmap(self.path + '/src/Icons/compile.png'),
+                                shortHelp = self.tr('Compile'))
+        uplTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW_GOTO, self.tr('Upload'),
+                                wx.Bitmap(self.path + '/src/Icons/upload.png'),
+                                shortHelp = self.tr('Upload'))
+        outputTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW_ZOOM, self.tr('Configure upload and compile'),
+                                wx.Bitmap(self.path + '/src/Icons/read.png'),
+                                shortHelp = self.tr('Configure upload and compile'))
+        self.toolbar.AddSeparator()
+        self.toolbar.AddLabelTool(wx.ID_EXIT, self.tr('Exit'),
+                                wx.Bitmap(self.path + '/src/Icons/exit.png'),
+                                shortHelp = self.tr('Exit'))
+        self.toolbar.Realize()
+
+        # Second bind to toolbar, but only items with ID_ANY, because all
+        # defined ID already binded from menu, weird side effect.
+        self.Bind(wx.EVT_TOOL, self.OnCompile, compileTool)
+        self.Bind(wx.EVT_TOOL, self.OnUpload, uplTool)
+        self.Bind(wx.EVT_TOOL, self.OnOutput, outputTool)
+        self.Bind(wx.EVT_TOOL, self.OnAddStatement, addStatementTool)
+        self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
+        #self.Bind(wx.EVT_TOOL, self.OnBlocklyTool, addBlocklyTool)
+
+    def generateMenu(self):
         fileMenu = wx.Menu()
         new = fileMenu.Append(wx.ID_NEW, '&' + self.tr('New') + '\tCtrl+N',
                               self.tr('Create empty document'))
@@ -122,6 +179,12 @@ class Frame(wx.Frame):
                               self.tr('Open upload window'))
         close = fileMenu.Append(wx.ID_EXIT, '&' + self.tr('Exit') + '\tCtrl+Q',
                               self.tr('Exit application'))
+
+        self.recentlyMenu = wx.FileHistory(int(self.API.getSetting('recentlyOpenedMaxCount')))
+        self.recentlyMenu.Load(self.API.config)
+        self.recentlyMenu.UseMenu(fileMenu)
+        self.recentlyMenu.AddFilesToMenu()
+        self.Bind(wx.EVT_MENU_RANGE, self.on_file_history, id = wx.ID_FILE1, id2 = wx.ID_FILE9)
 
         # show menu with mansos demo applications
         pathToMansosApps = self.API.path + os.path.normcase("/../../apps/")
@@ -195,60 +258,11 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnNew, new)
         self.Bind(wx.EVT_MENU, self.OnAbout, about)
 
-        # Check if we need to update existing toolbar(for rerun)
-        if self.toolbar == None:
-            self.toolbar = self.CreateToolBar()
-            self.toolbar.SetToolBitmapSize((32, 32))
-        else:
-            self.toolbar.ClearTools()
-
-        # Note that all icons must be 32x32, so they look good :)
-        self.toolbar.AddLabelTool(wx.ID_NEW, self.tr('New'),
-                                wx.Bitmap(self.path + '/src/Icons/new.png'),
-                                shortHelp = self.tr('New'))
-        self.toolbar.AddSeparator()
-        self.toolbar.AddLabelTool(wx.ID_OPEN, self.tr('Open'),
-                                wx.Bitmap(self.path + '/src/Icons/open.png'),
-                                shortHelp = self.tr('Open'))
-        self.toolbar.AddLabelTool(wx.ID_SAVE, self.tr('Save'),
-                                wx.Bitmap(self.path + '/src/Icons/save.png'),
-                                shortHelp = self.tr('Save'))
-        self.toolbar.AddSeparator()
-        addStatementTool = self.toolbar.AddLabelTool(wx.ID_ADD, self.tr('Add statement'),
-                                wx.Bitmap(self.path + '/src/Icons/add_statement.png'),
-                                shortHelp = self.tr('Add statement'))
-        # Used ID_APPLY for identification, hope nothing else uses it
-        addConditionTool = self.toolbar.AddLabelTool(wx.ID_APPLY, self.tr('Add condition'),
-                                wx.Bitmap(self.path + '/src/Icons/add_condition.png'),
-                                shortHelp = self.tr('Add condition'))
-        #self.toolbar.AddSeparator()
-        #addBlocklyTool = self.toolbar.AddLabelTool(wx.ID_MORE, self.tr('Open Seal-Blockly editor'),
-        #                        wx.Bitmap(self.path + '/src/Icons/Seal_blockly.png'),
-        #                        shortHelp = self.tr('Open Seal-Blockly editor'))
-        self.toolbar.AddSeparator()
-        compileTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW, self.tr('Compile'),
-                                wx.Bitmap(self.path + '/src/Icons/compile.png'),
-                                shortHelp = self.tr('Compile'))
-        uplTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW_GOTO, self.tr('Upload'),
-                                wx.Bitmap(self.path + '/src/Icons/upload.png'),
-                                shortHelp = self.tr('Upload'))
-        outputTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW_ZOOM, self.tr('Configure upload and compile'),
-                                wx.Bitmap(self.path + '/src/Icons/read.png'),
-                                shortHelp = self.tr('Configure upload and compile'))
-        self.toolbar.AddSeparator()
-        self.toolbar.AddLabelTool(wx.ID_EXIT, self.tr('Exit'),
-                                wx.Bitmap(self.path + '/src/Icons/exit.png'),
-                                shortHelp = self.tr('Exit'))
-        self.toolbar.Realize()
-
-        # Second bind to toolbar, but only items with ID_ANY, because all
-        # defined ID already binded from menu, weird side effect.
-        self.Bind(wx.EVT_TOOL, self.OnCompile, compileTool)
-        self.Bind(wx.EVT_TOOL, self.OnUpload, uplTool)
-        self.Bind(wx.EVT_TOOL, self.OnOutput, outputTool)
-        self.Bind(wx.EVT_TOOL, self.OnAddStatement, addStatementTool)
-        self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
-        #self.Bind(wx.EVT_TOOL, self.OnBlocklyTool, addBlocklyTool)
+    def on_file_history(self, event):
+            fileNum = event.GetId() - wx.ID_FILE1
+            path = self.recentlyMenu.GetHistoryFile(fileNum)
+            self.recentlyMenu.AddFileToHistory(path)  # move up the list
+            self.tabManager.addPage(path)
 
     def OnQuit(self, event):
         # Workaround, because wx.exit calls wx.ON_CLOSE, which is binded to this 
@@ -294,10 +308,12 @@ class Frame(wx.Frame):
         open_ = wx.FileDialog(self,
             self.tr("Open new document"),
             wildcard = 'Seal or MansOS ' + self.tr('files') + ' (*.sl, *.c)|*.sl;*.c|' +
-                    self.tr('All files') + '|*',
-            style = wx.FD_OPEN)
+                    self.tr('All files') + '(.*)|*',
+            style = wx.FD_OPEN | wx.FD_MULTIPLE)
         if open_.ShowModal() == wx.ID_OK:
-            self.tabManager.addPage(open_.GetPath())
+            for x in open_.GetPaths():
+                if os.path.exists(x) and os.path.isfile(x):
+                    self.tabManager.addPage(x)
         open_.Destroy()
 
     def findFirstSourceFile(self, path):

@@ -47,6 +47,8 @@ from seal_parser import SealParser
 
 class ApiCore:
     def __init__(self):
+        self.config = wx.Config("MansOS-IDE", style = wx.CONFIG_USE_LOCAL_FILE)
+
         self.path = os.getcwd()
         # All variables placed here will be saved to configuration file and 
         # reloaded next run time. See setSetting() and getSetting()
@@ -56,7 +58,7 @@ class ApiCore:
                    "platform" : "telosb",
                    "blocklyPort" : '8090',
                    "blocklyHost" : "localhost",
-                   "blocklyLocation" : "../../../seal-blockly/blockly/seal/playground-seal.html"
+                   "blocklyLocation" : "../../../seal-blockly/blockly/seal/playground-seal.html",
                }
         # Read settings from file
         if os.path.exists(SETTING_FILE) and os.path.isfile(SETTING_FILE):
@@ -189,7 +191,6 @@ class ApiCore:
         self.tabManager.loadRememberedTabs()
         self.frame.auiManager.Update()
         self.populateMotelist()
-
 
     def getStatementType(self, line):
         possibleSplitters = [None, ",", ";"]
