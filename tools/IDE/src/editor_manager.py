@@ -51,7 +51,9 @@ class EditorManager(wx.Panel):
         self.projectType = SEAL_PROJECT
 
     def update (self, initFilePath = ''):
-        print initFilePath
+        self.API.frame.recentlyMenu.AddFileToHistory(initFilePath)
+        self.API.frame.recentlyMenu.Save(self.API.config)
+        self.API.config.Flush()
         if initFilePath == '':
             initFilePath = self.filePath
         if os.path.exists(initFilePath) and os.path.isfile(initFilePath):
