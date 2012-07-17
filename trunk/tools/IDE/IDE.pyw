@@ -29,10 +29,11 @@ import time
 import wx.lib.inspection
 
 def main():
+    # Go to real directory for imports to work
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
+    # Check if all imports are found
     if not importsOk():
         exit(1)
-    # Go to real directory for import to work
-    os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
     from src import api_core
     import wx
@@ -68,11 +69,11 @@ def importsOk():
 
     try:
         # Add SEAL parser to python path
-        sealPath = os.path.join(os.path.dirname(\
-                                os.path.realpath(__file__))[:-4], "seal")
+        sealPath = os.path.join(os.getcwd()[:-4], "seal")
         path.append(sealPath)
         path.append(os.path.join(sealPath, 'components'))
         from seal_parser import SealParser
+        import seal_parser
     except ImportError:
         sealParserOK = False
     except OSError:
