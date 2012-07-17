@@ -63,7 +63,7 @@ class FunctionTree(object):
         args = []
         for a in self.arguments:
             args.append(a.getCode())
-        return self.function.lower() + "(" + args.join(',') + ")"
+        return self.function.lower() + "(" + ",".join(args) + ")"
 
     def collectImplicitDefines(self):
         return []
