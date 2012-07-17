@@ -23,8 +23,8 @@
 #
 
 import wx
-import serial
-import time
+from helperFunctions import listenSerialPort
+from myThread import MyThread
 
 class ListenModule(wx.Panel):
     def __init__(self, parent, API):
@@ -35,8 +35,10 @@ class ListenModule(wx.Panel):
         self.tr = self.API.translater.translate
         self.haveMote = False
         self.listening = False
-        self.baudrate = 38400
-        self.serialPort = '/dev/ttyUSB0'
+        self.args = {
+             'serialPort': '/dev/ttyUSB0',
+             'baudrate': 38400
+         }
 
         self.API.outputArea.Reparent(self)
         self.updateStatus = self.API.printOutput
@@ -67,49 +69,30 @@ class ListenModule(wx.Panel):
         self.Show()
 
     def doClear(self, event = None):
+        # String is returned when callback triggers, so by that we always know
+        # that we do not listen now
+        if type(event) is str:
+            if self.listening:
+                self.listening = False
+                self.clear.SetLabel(self.tr('Start listening'))
+                self.updateStatus("\nListening stopped.\n", False)
+            return
+
         self.listening = not self.listening
         if self.listening:
             self.clear.SetLabel(self.tr('Stop listening'))
-            self.updateStatus("Listening started.", False)
-            #self.API.onExit.insert(0, self.doClear)
+            self.updateStatus("\nListening started.\n", False)
         else:
             self.clear.SetLabel(self.tr('Start listening'))
-            self.updateStatus("Listening stopped.", False)
-            #self.API.onExit.remove(self.doClear)
+            self.updateStatus("\nListening stopped.\n", False)
         # Redraw button if size have changed
         self.clear.SetSize(self.clear.GetEffectiveMinSize())
-
         if self.listening:
-            if self.listenSerialPort() == False:
-                self.updateStatus(self.tr("Error conecting to device") + '\n',
-                                  False)
-                self.doClear(None)
-
-
-    # Can't use threading, some kind of memory error
-    def listenSerialPort(self):
-        try:
-            ser = serial.Serial(self.serialPort, self.baudrate, timeout = 0,
-                               parity = serial.PARITY_NONE, rtscts = 1)
-            while self.listening:
-                s = ser.read(1000)
-                if len(s) > 0:
-                    self.updateStatus(s, False)
-                # Keep interface alive, long sleep makes it to delay responses.
-                # Listen once every .1 sec
-                for _ in range(0, 100):
-                    wx.YieldIfNeeded()
-                    time.sleep(0.001)
-                    if not self.listening:
-                        break
-            ser.close()
-            return True
-        except serial.SerialException, msg:
-            print "\nSerial exception:\n\t", msg
-            return False
-        # Hides error if Exit is pressed while listening!
-        except wx._core.PyDeadObjectError:
-            pass
+            thread = MyThread(listenSerialPort, self.args, \
+                              self.doClear, False, True, "Serial port listener")
+            self.API.startThread(thread)
+        else:
+            self.API.stopThread("Serial port listener")
 
     def getMotelist(self, event = None):
         self.updateStatus("Populating motelist ... ", False)
@@ -130,7 +113,7 @@ class ListenModule(wx.Panel):
             self.haveMote = True
             self.ports.SetValue(self.tr("Use default device"))
             if len(motelist[0]) > 1:
-                self.serialPort = motelist[0][1]
+                self.args['serialPort'] = motelist[0][1]
             self.ports.Enable()
         else:
             self.ports.SetValue(self.tr("No devices found"))
@@ -141,4 +124,4 @@ class ListenModule(wx.Panel):
         if self.listening:
             self.doClear(None)
         target = event.GetEventObject().GetValue()
-        self.serialPort = target[:target.find(" ")]
+        self.args['serialPort'] = target[:target.find(" ")]

@@ -22,7 +22,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from subprocess import Popen, PIPE, STDOUT
+from multiprocessing import Process, Pipe
 import wx
 
 class ResultEvent(wx.PyEvent):
@@ -33,27 +33,53 @@ class ResultEvent(wx.PyEvent):
         self.SetEventType(EVT_RESULT_ID)
         self.data = data
 
-class PopenManager():
-    def __init__(self, API, notify_window, EVT_ID, target, name):
-        self.API = API
-        self._notify_window = notify_window
-        self.EVT_ID = EVT_ID
+class MyThread():
+    def __init__(self, target = None, args = None, callbackFunction = None,
+                 printToInfo = False, printToListen = False, name = ''):
+        # Initial values
         self.target = target
-        self.name = name
+        self.args = args
+        self.callbackFunction = callbackFunction
+        self.printToInfo = printToInfo
+        self.printToListen = printToListen
+        self.name = name if name != '' else str(callbackFunction)
 
+        # Background values
+        self.EVT_ID = -1
+        self.output = str()
+        self.notifyWindow = None
+        self.process = None
+        # This is used to terminate thread, simply set to True.
+        self.stop = False
+
+    # Check that all needed values are acceptable for thread to run!
+    def isRunnable(self):
+        return (self.target is not None and self.EVT_ID != -1 and not self.stop \
+                and self.notifyWindow is not None and self.process is None)
+
+    # Run this thread
     def run(self):
+        if not self.isRunnable():
+            print "Can't run thread '{}'".format(self.name)
+            print self.target, self.EVT_ID, self.notifyWindow, self.process
+            return
         try:
-            self.proc = Popen(self.target, stderr = STDOUT, stdout = PIPE)
-            out = self.proc.stdout.readline()
-            while out:
-                wx.PostEvent(self._notify_window, ResultEvent(out, self.EVT_ID))
+            parentPipe, childPipe = Pipe()
+            self.process = Process(target = self.target, args = (childPipe, self.args))
+            self.process.name = self.name
+            self.process.daemon = False
+            self.process.start()
+            while self.process.is_alive():
+                if parentPipe.poll(0.001):
+                    out = parentPipe.recv()
+                    wx.PostEvent(self.notifyWindow, ResultEvent(out, self.EVT_ID))
+                if self.stop:
+                    self.process.terminate()
                 wx.YieldIfNeeded()
-                out = self.proc.stdout.readline()
-            self.proc.wait()
-            wx.PostEvent(self._notify_window, ResultEvent([self.proc.returncode], self.EVT_ID))
         except OSError, e:
-                wx.PostEvent(self._notify_window, ResultEvent(\
+                wx.PostEvent(self.notifyWindow, ResultEvent(\
                 "Execution failed in thread '{}', message: {}".format(\
                                                 self.name, e), self.EVT_ID))
         finally:
-            wx.PostEvent(self._notify_window, ResultEvent(None, self.EVT_ID))
+            wx.PostEvent(self.notifyWindow, ResultEvent(None, self.EVT_ID))
+

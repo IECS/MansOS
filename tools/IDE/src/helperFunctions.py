@@ -22,35 +22,41 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from os import chdir, path, getcwd
-from generate_makefile import GenerateMakefile
-from helperFunctions import doPopen
-from myThread import MyThread
+"""
+ -> Functions here are usually running in other threads and they can't be part 
+ -> of any wx class, because it is impossible to pickle them. 
+ -> Communication to outside uses pipes only!
+ -> Output is string while running and int when done: 0 - success, other - fail!
+"""
 
-class DoCompile():
-    def __init__(self, API):
-        self.API = API
-        self.generateMakefile = GenerateMakefile()
-        self.editor = self.API.tabManager.getPageObject
+from subprocess import Popen, PIPE, STDOUT
+from time import sleep
+def doPopen(pipe, args):
+    try:
+        proc = Popen(args, stderr = STDOUT, stdout = PIPE)
+        out = proc.stdout.readline()
+        while out:
+            pipe.send(out)
+            out = proc.stdout.readline()
+        proc.wait()
+        pipe.send(proc.returncode)
+    except OSError, e:
+            print e
 
-    def doCompile(self):
-        self.curPath = getcwd()
-        chdir(path.split(path.realpath(self.editor().filePath))[0])
+from serial import Serial, PARITY_NONE, SerialException
 
-        self.generateMakefile.generate(self.editor().fileName,
-                                       self.editor().projectType,
-                                       self.API.pathToMansos)
+def listenSerialPort(pipe, args):
+    try:
+        ser = Serial(args['serialPort'], args['baudrate'], timeout = 0,
+                           parity = PARITY_NONE, rtscts = 1)
+        while True:
+            s = ser.read(100)
+            if len(s) > 0:
+                print s
+                pipe.send(s)
+            sleep(0.01)
+        ser.close()
+    except SerialException as msg:
+        print "\nSerial exception:\n\t", msg
+        pipe.send("\nError conecting to device '{}'!\n".format(args['serialPort']))
 
-        platform = self.API.getActivePlatform()
-        thread = MyThread(doPopen, ["make", platform], \
-                              self.dummy, True, False, "Compile")
-        self.API.startThread(thread)
-
-    def clean(self, data = None):
-        self.API.startPopen(["make", "clean"], "Compile", None, False)
-        chdir(self.curPath)
-
-    # Passes to thread start as callback, because without callback 
-    # there is no Done msg.
-    def dummy(self, output):
-        pass

@@ -26,6 +26,8 @@
 import os
 from platform import system
 from re import compile
+from helperFunctions import doPopen
+from myThread import MyThread
 from subprocess import Popen, PIPE, STDOUT
 
 class GetMotelist(object):
@@ -78,8 +80,9 @@ class GetMotelist(object):
         else:
             print "No Linux or Win detected, assuming Mac, output = {}".format(system())
             target += ".apple"
-
-        self.API.startPopen([target, "-c"], "Motelist", self.parseMotelist, False)
+        thread = MyThread(doPopen, [target, "-c"], \
+                              self.parseMotelist, False, False, "Motelist")
+        self.API.startThread(thread)
 
     def parseMotelist(self, rawMotelist):
         motelist = []
