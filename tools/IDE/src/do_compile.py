@@ -39,8 +39,8 @@ class DoCompile():
                                        self.editor().projectType,
                                        self.API.pathToMansos)
 
-        platform = self.API.platforms[self.API.activePlatform]
-        self.API.startPopen(["make", platform], "Compile", self.clean, True)
+        platform = self.API.getActivePlatform()
+        self.API.startPopen(["make", platform], "Compile", None, True)
 
     def clean(self, data = None):
         self.API.startPopen(["make", "clean"], "Compile", None, False)

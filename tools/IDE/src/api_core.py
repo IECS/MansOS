@@ -87,7 +87,7 @@ class ApiCore:
         # All defined platforms
         self.platforms = self.getPlatformsFromMakefile()
 
-        self.activePlatform = 0
+        self.activePlatform = self.platforms.index("telosb")
         #
         self.motelist = []
         self.motelistCallbacks = []
@@ -358,5 +358,15 @@ class ApiCore:
             x()
 
     def changePlatform(self, event):
-        self.platform = event.GetEventObject().GetValue()
-        self.printInfo(self.tr("Changed platform to") + " " + self.platform + "\n")
+        if event is not None:
+            platform = event.GetEventObject().GetValue()
+        else:
+            platform = "telosb"
+        if platform in self.platforms:
+            self.activePlatform = self.platforms.index(platform)
+        else:
+            self.activePlatform = self.platforms.index("telosb")
+        self.printInfo(self.tr("Changed platform to") + " " + self.getActivePlatform() + "\n")
+
+    def getActivePlatform(self):
+        return self.platforms[self.activePlatform]

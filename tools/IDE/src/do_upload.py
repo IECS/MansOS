@@ -48,13 +48,14 @@ class DoUpload():
         self.curPath = os.getcwd()
         os.chdir(os.path.split(os.path.realpath(self.editor().filePath))[0])
 
-        platform = self.API.platforms[self.API.activePlatform]
+        platform = self.API.getActivePlatform()
         if len(self.targets):
             target = self.targets.pop()
             self.changeTarget(target)
             self.API.startPopen(["make", platform, "upload"], "Upload", self.usbUpload, True)
         else:
-            self.clean()
+            pass
+            #self.clean()
 
     def clean(self, data = None):
         self.API.startPopen(["make", "clean"], "Clean", None, False)
