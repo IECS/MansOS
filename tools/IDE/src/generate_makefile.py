@@ -32,7 +32,7 @@ class GenerateMakefile():
 
     def generate(self, fileName = 'main.c', projectType = MANSOS_PROJECT,
                  pathToMansos = '', appName = ''):
-        #if not path.exists("Makefile") or not path.isfile("Makefile"):
+        if not path.exists("Makefile") or not path.isfile("Makefile"):
             if projectType == SEAL_PROJECT:
                 sourceType = "SEAL_SOURCES"
                 if appName == '': appName = 'SealApp'
