@@ -28,6 +28,14 @@
 
 #include "stdmansos.h"
 
+void appMainx(void);
+void appMainLong(void);
+void appMainTimesave(void);
+
+void appMain(void) {
+    appMainx();
+}
+
 //
 // Simple time accounting, no tricks
 //
