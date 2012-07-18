@@ -91,6 +91,10 @@ class ApiCore:
         self.motelist = []
         self.motelistCallbacks = []
 
+        # Flag indicates that next thread's output shouldn't trigger 
+        # force switching to info area tab.
+        self.supressTabSwitching = False
+
         self.targets = [None]
         self.targetType = "USB"
 
@@ -147,7 +151,7 @@ class ApiCore:
         self.printOutput = self.outputArea.printLine
         self.clearOutputArea = self.outputArea.clear
 
-        # Init blockly handler XXX: Preemptive ftw?
+        # Init blockly handler
         self.blockly = Blockly(self.emptyFrame, self)
 
         # Init seal parser
@@ -288,7 +292,7 @@ class ApiCore:
                 self.activeThreads[x].process.terminate()
 
     def populateMotelist(self, event = None):
-        self.printInfo("Populating motelist ... ", False)
+        self.printInfo("Populating motelist ... ", False, not self.supressTabSwitching)
         self.motelistClass.getMotelist()
 
     def doCompile(self, event = None):
@@ -331,9 +335,10 @@ class ApiCore:
             if event.data == 0:
                 # If no callback defined, no Done printed!
                 if thread.callbackFunction:
-                    self.printInfo("Done!\n")
+                    self.printInfo("Done!\n", False, not self.supressTabSwitching)
             else:
-                self.printInfo("Failed!\n")
+                self.printInfo("Failed!\n", False, not self.supressTabSwitching)
+            self.supressTabSwitching = False
         else:
             self.infoArea.printLine("Wrong format recieved {}\n".format(type(event.data)))
 

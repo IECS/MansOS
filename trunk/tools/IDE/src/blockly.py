@@ -30,6 +30,8 @@ import webbrowser
 
 from blockly_handler import listen
 
+
+# TODO: If support is needed convert to using MyThread and OutputArea classes!
 class Blockly(wx.Panel):
     def __init__(self, parent, API):
         wx.Panel.__init__(self, parent)
@@ -108,7 +110,8 @@ class Blockly(wx.Panel):
                 p1.terminate()
         except:
             self.printLine("Exception occurred, terminating...")
-            self.API.onExit.remove(p1.terminate)
+            if p1.terminate in self.API.onExit:
+                self.API.onExit.remove(p1.terminate)
 
     def handleRecievedCode(self, code):
         self.printLine("\nGot code:\n" + code + "\n")
@@ -132,12 +135,11 @@ class Blockly(wx.Panel):
         self.API.uploadCore.manageUpload()
 
     def printLine(self, text, clear = False):
-        # TODO moves cursor to output area, away from editor if cursor was there!
-        # self.API.outputTools.SetSelection(self.nr)
         if clear:
             self.clear()
         self.outputArea.AppendText(text.strip() + '\n')
         self.outputArea.ScrollLines(1)
+        self.API.frame.auiManager.ShowPane(self.API.blockly, True)
 
     def clear(self):
         self.outputArea.Clear()
