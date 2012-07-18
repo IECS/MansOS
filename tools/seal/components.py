@@ -226,7 +226,7 @@ class UseCase(object):
 #            outputFile.write("}\n\n")
 
         if self.generateAlarm or self.component.isRemote:
-            if self.generateAlarm: argumentType = "void *" 
+            if self.generateAlarm: argumentType = "void *"
             else: argumentType = "uint32_t"
             outputFile.write("void {0}{1}Callback({2} __unused)\n".format(
                     ccname, self.numInBranch, argumentType))
@@ -790,7 +790,7 @@ class Sensor(Component):
         outputFile.write("    return value;\n")
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
-    
+
 
     def generateAvgFunction(self, outputFile, functionTree, root):
         if not functionTree.checkArgs(1, componentRegister):
@@ -1124,7 +1124,7 @@ class Sensor(Component):
                 componentRegister.userError("sync() function only allowed at the top level!\n")
             else:
                 return self.generateSyncFunction(outputFile, useCase, functionTree, root)
-        if functionTree.function == "take":        
+        if functionTree.function == "take":
             componentRegister.userError("take() function can be used only as an argument to one of the following:\n" +
                       "    min(), max(), sum(), avg(), stdev()!\n")
             return "0"
@@ -1156,7 +1156,7 @@ class Sensor(Component):
 
 ######################################################
 class PacketField(object):
-    def __init__(self, sensorID, sensorName, dataSize, dataType, isRealSensor=True):
+    def __init__(self, sensorID, sensorName, dataSize, dataType, isRealSensor = True):
         self.sensorID = sensorID
         self.sensorName = sensorName
         # always use 4 bytes, because decoding otherwise is too messy
@@ -1238,7 +1238,7 @@ class Output(Component):
                     PACKET_FIELD_ID_SEQNUM, "sequenceNumber", 4, "uint32_t", False))
             self.usedIds.add(PACKET_FIELD_ID_SEQNUM)
 
-        self.packetFields = sorted(self.packetFields, key=lambda f: f.sensorID)
+        self.packetFields = sorted(self.packetFields, key = lambda f: f.sensorID)
 
     def generateConstants(self, outputFile):
         super(Output, self).generateConstants(outputFile)
@@ -1504,7 +1504,7 @@ class ComponentRegister(object):
     def addVirtualComponent(self, c):
         if self.virtualComponents.get(c.name, None) is not None:
             self.userError("Virtual component '{0}' duplicated for platform '{1}', ignoring\n".format(
-                    c.name, architecture))
+                    c.name, self.architecture))
             c.isError = True
             return
         if self.findComponentByName(c.name) is not None:
@@ -1555,7 +1555,7 @@ class ComponentRegister(object):
             # inherit parameters from parent virtual sensor
             c.parameterDictionary = immediateBase.parameterDictionary
             # inherit the base too
-            c.base = immediateBase.base  
+            c.base = immediateBase.base
         else:
             c.base = self.findComponentByName(immediateBaseName)
         assert c.base
