@@ -254,12 +254,19 @@ class SealParser():
         else: p[0] = p[2]
 
     def p_output_field_list(self, p):
-        '''output_field_list : IDENTIFIER_TOKEN ',' output_field_list
-                             | IDENTIFIER_TOKEN
+        '''output_field_list : output_field_spec ',' output_field_list
+                             | output_field_spec
         '''
         if len(p) == 4: p[0] = p[3]
         else: p[0] = []
         p[0].append(p[1])
+
+    def p_output_field_spec(self, p):
+        '''output_field_spec : IDENTIFIER_TOKEN
+                             | IDENTIFIER_TOKEN integer_literal
+        '''
+        if len(p) == 2: p[0] = (p[1], 1)
+        else: p[0] = (p[1], p[2].value)
 
     def p_parameters_statement(self, p):
         '''parameters_statement : PARAMETERS_TOKEN IDENTIFIER_TOKEN parameter_list ';'

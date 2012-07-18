@@ -1,14 +1,26 @@
-read Uptime, period 2s;
-output Serial (Uptime, SequenceNumber);
-// output Serial, SequenceNumber;
-// output Serial, SequenceNumber True;
+read Light;
+output Serial;
 
+// -- binary file
+//read Light;
+//output File, filename "lightData.bin", binary;
 
-// read Counter;
-// read Counter, start 5, max 10;
-// output Serial;
+// ---------------------------------
 
-//load "UncommonExtension.py";
+// -- text file
+// read Light;
+// output File, filename "lightData.csv", text;
 
-//use UncommonSensor;
-//output Serial;
+// ---------------------------------
+
+// -- automatically generate name and type
+// read Light;
+// output File;
+
+// ---------------------------------
+
+// -- mutltiple files
+// read Light;
+// read Humidity;
+// output File (Light, SequenceNumber);
+// output File (Humidity, SequenceNumber);

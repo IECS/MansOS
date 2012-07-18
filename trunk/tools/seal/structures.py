@@ -28,6 +28,13 @@ def toTitleCase(s):
 def isConstant(s):
     return s[0] >= '0' and s[0] <= '9'
 
+# a decorator that allows to set up and use static variables
+def static_var(varname, value = 0):
+    def decorate(func):
+        setattr(func, varname, value)
+        return func
+    return decorate
+
 ######################################################
 class FunctionTree(object):
     def __init__(self, function, arguments):
@@ -589,14 +596,16 @@ class ComponentUseCase(object):
         self.parameters = parameters
         self.fields = []
         if fields:
-            for f in fields: self.fields.append(f.lower())
+            # f[0] - name, f[1] - count (integer)
+            for f in fields: self.fields.append((f[0].lower(), f[1]))
 
     def getCode(self, indent):
         result = self.type + " " + self.name
         if len(self.fields):
             result += " ("
             for f in self.fields:
-                result += f
+                result += f[0]
+                if f[1] != 1: result += str(f[1])
                 result += ", "
             result = result[:-2] # remove last comma
             result += ")"
