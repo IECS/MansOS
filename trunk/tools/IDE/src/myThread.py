@@ -69,7 +69,7 @@ class MyThread():
             self.process.name = self.name
             self.process.daemon = False
             self.process.start()
-            while self.process.is_alive():
+            while self.process.is_alive() or parentPipe.poll(0.001):
                 if parentPipe.poll(0.001):
                     out = parentPipe.recv()
                     wx.PostEvent(self.notifyWindow, ResultEvent(out, self.EVT_ID))

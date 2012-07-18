@@ -31,7 +31,9 @@
 
 from subprocess import Popen, PIPE, STDOUT
 from time import sleep
+
 def doPopen(pipe, args):
+    retcode = -1
     try:
         proc = Popen(args, stderr = STDOUT, stdout = PIPE)
         out = proc.stdout.readline()
@@ -39,9 +41,11 @@ def doPopen(pipe, args):
             pipe.send(out)
             out = proc.stdout.readline()
         proc.wait()
-        pipe.send(proc.returncode)
-    except OSError, e:
-            print e
+        retcode = proc.returncode
+    except OSError as e:
+        print e
+    finally:
+        pipe.send(retcode)
 
 from serial import Serial, PARITY_NONE, SerialException
 
