@@ -95,6 +95,7 @@ class ListenModule(wx.Panel):
             self.API.stopThread("Serial port listener")
 
     def getMotelist(self, event = None):
+        self.API.supressTabSwitching = True
         self.updateStatus("Populating motelist ... ", False)
         self.ports.Clear()
         self.ports.Append(self.tr("Searching devices") + "...", 0)

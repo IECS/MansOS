@@ -39,7 +39,7 @@ class OutputArea(wx.Panel):
         self.SetSizerAndFit(sizer)
         self.SetAutoLayout(1)
 
-    def printLine(self, text, clear = False):
+    def printLine(self, text, clear = False, forceSwitching = True):
         # TODO moves cursor to output area, away from editor if cursor was there!
         #self.API.outputTools.SetSelection(self.nr)
         if clear:
@@ -48,6 +48,13 @@ class OutputArea(wx.Panel):
             text = "\n"
         self.outputArea.AppendText(text)
         self.outputArea.ScrollLines(1)
+        if forceSwitching:
+            if self == self.API.infoArea:
+                self.API.frame.auiManager.ShowPane(self, True)
+            elif self == self.API.outputArea:
+                self.API.frame.auiManager.ShowPane(self.API.listenModule, True)
+            else:
+                assert False, "Output window identity crysis!"
 
     def clear(self):
         self.outputArea.Clear()

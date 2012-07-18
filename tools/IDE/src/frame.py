@@ -163,7 +163,6 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_TOOL, self.OnOutput, outputTool)
         self.Bind(wx.EVT_TOOL, self.OnAddStatement, addStatementTool)
         self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
-        #self.Bind(wx.EVT_TOOL, self.OnBlocklyTool, addBlocklyTool)
 
     def generateMenu(self):
         fileMenu = wx.Menu()
