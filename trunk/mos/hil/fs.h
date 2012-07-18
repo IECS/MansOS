@@ -24,8 +24,8 @@
  * fs.h -- user-level file system interface
  */
 
-#ifndef _FS_H_
-#define _FS_H_
+#ifndef _MANSOS_FS_H_
+#define _MANSOS_FS_H_
 
 #include <stdbool.h>
 #include <stdint.h>

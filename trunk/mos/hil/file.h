@@ -21,21 +21,37 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_BLINK_H
-#define MANSOS_BLINK_H
+#ifndef MANSOS_FILE_H
+#define MANSOS_FILE_H
 
-#include <hil/udelay.h>
-#include <hil/leds.h>
+#include <kernel/defines.h>
 
-static inline void blink(uint16_t count, uint16_t interval)
+//
+// File system top level interface
+//
+
+#if PLATFORM_PC
+
+// use FILE * defined in C library
+#include <stdio.h>
+
+static inline bool writeToFile(const char *fileName, const void *data, uint16_t length)
 {
-    uint16_t i;
-    for (i = 0; i < count; i++) {
-        ledOn();
-        mdelay(interval);
-        ledOff();
-        mdelay(interval);
+    bool result = false;
+    FILE *f = fopen(fileName);
+    if (f) {
+        if (fwrite(data, 1, length, f) == length) {
+            result = true;
+        }
+        fclose(f);
     }
+    return result;
 }
+
+#else // PLATFORM_PC
+
+#error TODO
+
+#endif // !PLATFORM_PC
 
 #endif
