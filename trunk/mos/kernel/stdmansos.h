@@ -56,5 +56,6 @@
 #include <hil/humidity.h>
 #endif
 #include <hil/light.h>
+#include <hil/blink.h>
 
 #endif
