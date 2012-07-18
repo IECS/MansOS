@@ -433,3 +433,12 @@ class LocalStorageOutput(SealOutput):
         super(LocalStorageOutput, self).__init__("LocalStorage")
         # ext flash by default
         self.useFunction.value = "extFlashWrite(&externalFlashPacket, sizeof(externalFlashPacket))"
+
+class FileOutput(SealOutput):
+    def __init__(self):
+        super(FileOutput, self).__init__("File")
+        self.useFunction.value = "filePrint()"
+        self.filename = SealParameter(None, [])
+        # a file can be text or binary - allow both parameter names wih inverse meaning
+        self.text = SealParameter(False, [False, True])
+        self.binary = SealParameter(True, [False, True])

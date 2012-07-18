@@ -422,7 +422,10 @@ class Component(object):
                     componentRegister.userError("Parameter '{0}' already specified for component '{1}'\n".format(p[0], self.name))
                 else:
                     finalParameters[p[0]] = p[1]
-        self.useCases.append(UseCase(self, list(finalParameters.iteritems()), conditions, branchNumber, numInBranch))
+
+        uc = UseCase(self, list(finalParameters.iteritems()), conditions, branchNumber, numInBranch)
+        self.useCases.append(uc)
+        return uc
 
     # XXX: replacement for "getParamValue"
     def getSpecialValue(self, parameter):
@@ -1170,32 +1173,43 @@ class Sensor(Component):
 
 ######################################################
 class PacketField(object):
-    def __init__(self, sensorID, sensorName, dataSize, dataType, isRealSensor = True):
+    def __init__(self, sensorID, sensorName, dataSize, dataType, count, isRealSensor = True):
         self.sensorID = sensorID
         self.sensorName = sensorName
         # always use 4 bytes, because decoding otherwise is too messy
         # (could and should be optimized if the need arises...)
         self.dataSize = 4
         self.dataType = "uint32_t"
+        self.count = count   # how many of this field?
         self.isRealSensor = isRealSensor
 
-class Output(Component):
-    def __init__(self, name, specification):
-        super(Output, self).__init__(name, specification)
+######################################################
+class OutputUseCase(object):
+    def __init__(self, parent, useCase, number, fields):
+        self.parent = parent
+        self.useCase = useCase
         self.isAggregateCached = None
         self.packetFields = []
         self.headerMasks = []
-        self.useOnlyFields = []
+        self.useOnlyFields = dict()
         self.usedIds = set()
         self.numSensorFields = 0
+        self.name = parent.name
+        if number != 0:
+            self.name += str(number)
+        self.useOnlyFields = dict(fields)
 
-    def setFields(self, fields):
-        self.useOnlyFields = set(fields)
+    def getNameTC(self):
+        return toTitleCase(self.name)
+
+    def getNameCC(self):
+        return toCamelCase(self.name)
+
+    def getNameUC(self):
+        return self.name.upper()
 
     def getParameterValue(self, parameter, defaultValue = None):
-        if len(self.useCases) != 0 and parameter in self.useCases[0].parameters:
-            return self.useCases[0].parameters[parameter]
-        return super(Output, self).getParameterValue(parameter, defaultValue)
+        return self.useCase.getParameterValue(parameter, defaultValue)
 
     def isAggregate(self):
         if self.isAggregateCached is None:
@@ -1207,18 +1221,18 @@ class Output(Component):
             outputFile.write("{0}Packet_t {1}Packet;\n".format(self.getNameTC(), self.getNameCC()))
             outputFile.write("uint_t {0}PacketNumFieldsFull;\n".format(self.getNameCC()))
 
-    def addPacketTypes(self, s):
+    def addPacketTypes(self, s, count):
         # special case for dummy sync sensors
         if s.syncOnlySensor:
             for subsensor in s.subsensors:
-                self.addPacketTypes(subsensor)
+                self.addPacketTypes(subsensor, count)
             return
         # normal case
         assert s.systemwideID not in self.usedIds
         self.packetFields.append(PacketField(
-                s.systemwideID, s.getNameCC(), s.getDataSize(), s.getDataType()))
+                s.systemwideID, s.getNameCC(), s.getDataSize(), s.getDataType(), count))
         self.usedIds.add(s.systemwideID)
-        self.numSensorFields += 1
+        self.numSensorFields += 1 # yes, aggregate fields are counted as one
 
     def definePacketType(self):
         # TODO: handle the case of multiple use cases of the same sensor with different value params! (marginal)
@@ -1228,34 +1242,35 @@ class Output(Component):
         for s in componentRegister.sensors.itervalues():
             if not s.isUsed():
                 continue
+            count = 1
             if self.useOnlyFields:
                 # check if this field is used
-                if s.name.lower() not in self.useOnlyFields:
+                count = self.useOnlyFields.get(s.name.lower())
+                if count is None:
                     continue
-            self.addPacketTypes(s)
+            self.addPacketTypes(s, count)
 
-        if self.getParameterValue("timestamp") or "timestamp" in self.useOnlyFields:
+        if self.getParameterValue("timestamp") or ("timestamp" in self.useOnlyFields):
             # 4-byte timestamp (seconds since system uptime)
             self.packetFields.append(PacketField(
-                    PACKET_FIELD_ID_TIMESTAMP, "timestamp", 4, "uint32_t", False))
+                    PACKET_FIELD_ID_TIMESTAMP, "timestamp", 4, "uint32_t", 1, False))
             self.usedIds.add(PACKET_FIELD_ID_TIMESTAMP)
 
-        if self.getParameterValue("address") or "address" in self.useOnlyFields:
+        if self.getParameterValue("address") or ("address" in self.useOnlyFields):
             # 2-byte address
             self.packetFields.append(PacketField(
-                    PACKET_FIELD_ID_ADDRESS, "address", 2, "uint16_t", False))
+                    PACKET_FIELD_ID_ADDRESS, "address", 2, "uint16_t", 1, False))
             self.usedIds.add(PACKET_FIELD_ID_ADDRESS)
 
-        if self.getParameterValue("sequencenumber") or "sequencenumber" in self.useOnlyFields:
+        if self.getParameterValue("sequencenumber") or ("sequencenumber" in self.useOnlyFields):
             # 4-byte seqnum
             self.packetFields.append(PacketField(
-                    PACKET_FIELD_ID_SEQNUM, "sequenceNumber", 4, "uint32_t", False))
+                    PACKET_FIELD_ID_SEQNUM, "sequenceNumber", 4, "uint32_t", 1, False))
             self.usedIds.add(PACKET_FIELD_ID_SEQNUM)
 
         self.packetFields = sorted(self.packetFields, key = lambda f: f.sensorID)
 
     def generateConstants(self, outputFile):
-        super(Output, self).generateConstants(outputFile)
         if self.numSensorFields:
             outputFile.write("#define {0}_PACKET_NUM_FIELDS    {1}\n".format(
                     self.getNameUC(), self.numSensorFields))
@@ -1295,48 +1310,31 @@ class Output(Component):
                         paddingNeeded * 8, reservedNum))
                 packetLen += paddingNeeded
                 reservedNum += 1
-            outputFile.write("    {} {};\n".format(f.dataType, f.sensorName))
-            packetLen += f.dataSize
+            if f.count == 1:
+                outputFile.write("    {0} {1};\n".format(f.dataType, f.sensorName))
+            else:
+                outputFile.write("    {0} {1}[{2}];\n".format(f.dataType, f.sensorName, f.count))
+            packetLen += f.dataSize * f.count
 
         # --- finish the packet
         outputFile.write("} PACKED;\n\n")
         # add a typedef
         outputFile.write("typedef struct {0}Packet_s {0}Packet_t;\n\n".format(self.getNameTC()))
 
-    def generateSerialOutputCode(self, outputFile, sensorsUsed):
-        usedSizes = set()
-        if self.isAggregate():
-            for f in self.packetFields:
-                usedSizes.add((f.dataSize, f.dataType))
-        else:
-            for s in sensorsUsed:
-                usedSizes.add((s.getDataSize(), s.getDataType()))
-        generateSerialFunctions(usedSizes, outputFile)
-
-        if self.isAggregate():
-            outputFile.write("static inline void serialPacketPrint(void)\n")
-            outputFile.write("{\n")
-            outputFile.write("    PRINT(\"======================\\n\");\n")
-            for f in self.packetFields:
-                outputFile.write("    serialPrint_{0}(\"{1}\", serialPacket.{2});\n".format(
-                        f.dataType, toTitleCase(f.sensorName), f.sensorName))
-            outputFile.write("}\n\n")
-
 
     def generateOutputCode(self, outputFile, sensorsUsed):
-        if self.name.lower() == "serial":
-            # special code for serial sink
-            self.generateSerialOutputCode(outputFile, sensorsUsed)
-            if not self.isAggregate():
-                return
-
         outputFile.write("static inline void {0}PacketInit(void)\n".format(self.getNameCC()))
         outputFile.write("{\n")
         outputFile.write("    {0}PacketNumFieldsFull = 0;\n".format(self.getNameCC()))
         for f in self.packetFields:
             if f.isRealSensor:
-                outputFile.write("    {0}Packet.{1} = {2}_NO_VALUE;\n".format(
-                        self.getNameCC(), f.sensorName, f.sensorName.upper()))
+                if f.count == 1:
+                    outputFile.write("    {0}Packet.{1} = {2}_NO_VALUE;\n".format(
+                            self.getNameCC(), f.sensorName, f.sensorName.upper()))
+                else:
+                    for i in range(f.count):
+                        outputFile.write("    {0}Packet.{1}[{3}] = {2}_NO_VALUE;\n".format(
+                                self.getNameCC(), f.sensorName, f.sensorName.upper(), i))
         outputFile.write("}\n\n")
 
         outputFile.write("static inline void {0}PacketSend(void)\n".format(self.getNameCC()))
@@ -1358,8 +1356,8 @@ class Output(Component):
                     self.getNameCC()))
 
         useFunction = self.getParameterValue("useFunction")
-        if useFunction and useFunction.value:
-            outputFile.write("    {0};\n".format(useFunction.value))
+        if useFunction:
+            outputFile.write("    {0};\n".format(useFunction.strip('"'))) # XXX
         outputFile.write("    {0}PacketInit();\n".format(self.getNameCC()))
         outputFile.write("}\n\n")
 
@@ -1386,21 +1384,160 @@ class Output(Component):
                 break
         if not found: return
 
-        outputFile.write("        if ({0}Packet.{1} == {2}_NO_VALUE) {3}\n".format(
-                self.getNameCC(), sensor.getNameCC(), sensor.getNameUC(), '{'))
+        if f.count == 1:
+            outputFile.write("        if ({0}Packet.{1} == {2}_NO_VALUE) {3}\n".format(
+                    self.getNameCC(), sensor.getNameCC(), sensor.getNameUC(), '{'))
+        else:
+            outputFile.write("        static uint16_t lastIdx;\n")
+            outputFile.write("        if (lastIdx == {4} && {0}Packet.{1}[lastIdx] == {2}_NO_VALUE) {3}\n".format(
+                        self.getNameCC(), sensor.getNameCC(), sensor.getNameUC(), '{', f.count - 1))
+
         outputFile.write("            {0}PacketNumFieldsFull++;\n".format(self.getNameCC()))
+
         outputFile.write("        }\n")
 
-        outputFile.write("        {0}Packet.{1} = {1}Value;\n".format(
-                self.getNameCC(), sensor.getNameCC()))
+        if f.count == 1:
+            outputFile.write("        {0}Packet.{1} = {1}Value;\n".format(
+                    self.getNameCC(), sensor.getNameCC()))
+        else:
+            outputFile.write("        {0}Packet.{1}[lastIdx] = {1}Value;\n".format(
+                    self.getNameCC(), sensor.getNameCC()))
+
+        if f.count > 1:
+            outputFile.write("        lastIdx = (lastIdx + 1) % {};\n".format(f.count))
 
         outputFile.write("        if ({0}PacketIsFull()) {1}\n".format(self.getNameCC(), '{'))
         outputFile.write("            {0}PacketSend();\n".format(self.getNameCC()))
         outputFile.write("        }\n\n")
 
     def generateAppMainCode(self, outputFile):
-        if self.isUsed() and self.isAggregate():
+        if self.isAggregate():
             outputFile.write("    {0}PacketInit();\n".format(self.getNameCC()))
+
+######################################################
+class SerialOutputUseCase(OutputUseCase):
+    def __init__(self, parent, useCase, number, fields):
+        super(SerialOutputUseCase, self).__init__(parent, useCase, number, fields)
+
+    def generateOutputCode(self, outputFile, sensorsUsed):
+        usedSizes = set()
+        if self.isAggregate():
+            for f in self.packetFields:
+                usedSizes.add((f.dataSize, f.dataType))
+        else:
+            for s in sensorsUsed:
+                usedSizes.add((s.getDataSize(), s.getDataType()))
+        generateSerialFunctions(usedSizes, outputFile)
+
+        if not self.isAggregate():
+            # done
+            return
+
+        outputFile.write("static inline void {}PacketPrint(void)\n".format(self.getNameCC()))
+        outputFile.write("{\n")
+        outputFile.write("    PRINT(\"======================\\n\");\n")
+        for f in self.packetFields:
+            if f.count == 1:
+                outputFile.write("    serialPrint_{0}(\"{1}\", serialPacket.{2});\n".format(
+                        f.dataType, toTitleCase(f.sensorName), f.sensorName))
+            else:
+                for i in range(f.count):
+                    outputFile.write("    serialPrint_{0}(\"{1}[{3}]\", serialPacket.{2}[{3}]);\n".format(
+                            f.dataType, toTitleCase(f.sensorName), f.sensorName, i))
+        outputFile.write("}\n\n")
+
+        # call superclass function too
+        super(SerialOutputUseCase, self).generateOutputCode(outputFile, sensorsUsed)
+
+
+######################################################
+class FileOutputUseCase(OutputUseCase):
+    def __init__(self, parent, useCase, number, fields):
+        super(FileOutputUseCase, self).__init__(parent, useCase, number, fields)
+
+        self.filename = "file{0:03d}".format(number)
+        self.isBinary = True
+
+    def generateBinaryOutputCode(self, outputFile, f):
+        if f.count == 1:
+            outputFile.write("    fwrite(&filePacket.{0}, sizeof(filePacket.{0}), 1, out);\n".format(
+                    f.sensorName))
+        else:
+            for i in range(f.count):
+                outputFile.write("    fwrite(&filePacket.{0}[{1}], sizeof(filePacket.{0}[{1}]), 1, out);\n".format(
+                        f.sensorName, i))
+
+    def generateTextOutputCode(self, outputFile, f):
+        if f.count == 1:
+            outputFile.write('    fprintf(out, "%lu, ", filePacket.{0});\n'.format(
+                    f.sensorName))
+        else:
+            for i in range(f.count):
+                outputFile.write('    fprintf(out, "%lu, ", filePacket.{0}[{1}]);\n'.format(
+                        f.sensorName, i))
+
+    def generateOutputCode(self, outputFile, sensorsUsed):
+        outputFile.write("static inline void {}Print(void)\n".format(self.getNameCC()))
+        outputFile.write("{\n")
+
+        outputFile.write('    FILE *out = fopen("{}", "a");\n')
+        outputFile.write('    if (!out) return;\n')
+
+        for f in self.packetFields:
+            if self.isBinary:
+                self.generateBinaryOutputCode(outputFile, f)
+            else:
+                self.generateTextOutputCode(outputFile, f)
+
+        outputFile.write("    fclose(out);\n")
+        outputFile.write("}\n\n")
+
+
+######################################################
+class Output(Component):
+    def __init__(self, name, specification):
+        super(Output, self).__init__(name, specification)
+        self.outputUseCases = []
+
+    def addOutputUseCase(self, useCase, fields):
+        id = len(self.outputUseCases)
+        if self.name == "file":
+            ouc = FileOutputUseCase(self, useCase, id, fields)
+        elif self.name == "serial":
+            ouc = SerialOutputUseCase(self, useCase, id, fields)
+        else:
+            ouc = OutputUseCase(self, useCase, id, fields)
+        self.outputUseCases.append(ouc)
+
+    def definePacketType(self):
+        for ouc in self.outputUseCases:
+            ouc.definePacketType()
+
+    def generatePacketType(self, outputFile):
+        for ouc in self.outputUseCases:
+            ouc.generatePacketType(outputFile)
+
+    def generateVariables(self, outputFile):
+        for ouc in self.outputUseCases:
+            ouc.generateVariables(outputFile)
+
+    def generateConstants(self, outputFile):
+        super(Output, self).generateConstants(outputFile)
+        for ouc in self.outputUseCases:
+            ouc.generateConstants(outputFile)
+
+    def generateOutputCode(self, outputFile, sensorsUsed):
+        for ouc in self.outputUseCases:
+            ouc.generateOutputCode(outputFile, sensorsUsed)
+
+    def generateCallbackCode(self, sensor, outputFile, suffix):
+        for ouc in self.outputUseCases:
+            ouc.generateCallbackCode(sensor, outputFile, suffix)
+
+    def generateAppMainCode(self, outputFile):
+        for ouc in self.outputUseCases:
+            ouc.generateAppMainCode(outputFile)
+
 
 ######################################################
 class StateUseCase(object):
@@ -1625,13 +1762,16 @@ class ComponentRegister(object):
                         name, self.architecture))
                 return
         # check if it can be used
-        if type(o) is Output:
-            if len(o.useCases):
-                self.userError("Output component '{0}': can be used just once in whole program!\n".format(name))
-                return
-            o.setFields(fields)
+#        if type(o) is Output:
+#            if len(o.useCases):
+#                self.userError("Output component '{0}': can be used just once in whole program!\n".format(name))
+#                return
+#            o.setFields(fields)
         # add use case to the component
-        o.addUseCase(parameters, conditions, branchNumber)
+        uc = o.addUseCase(parameters, conditions, branchNumber)
+
+        if type(o) is Output:
+            o.addOutputUseCase(uc, fields)
 
     def setState(self, name, value, conditions, branchNumber):
         # add the state itself, if not already

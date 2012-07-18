@@ -186,7 +186,7 @@ class Generator(object):
         # put all config in a set
         for c in self.components:
             cfg = c.getConfig(outputFile)
-            if cfg: config.add(cfg)
+            if cfg: config.add(cfg + '\n')
         for x in components.componentRegister.additionalConfig:
             if x.find('=') != -1:
                 config.add("{}\n".format(x.upper()))
