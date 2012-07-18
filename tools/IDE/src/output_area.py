@@ -40,14 +40,14 @@ class OutputArea(wx.Panel):
         self.SetAutoLayout(1)
 
     def printLine(self, text, clear = False, forceSwitching = True):
-        # TODO moves cursor to output area, away from editor if cursor was there!
-        #self.API.outputTools.SetSelection(self.nr)
         if clear:
             self.clear()
         if not text:
             text = "\n"
         self.outputArea.AppendText(text)
         self.outputArea.ScrollLines(1)
+        # Disable switching, unable to write in editor!
+        return
         if forceSwitching:
             if self == self.API.infoArea:
                 self.API.frame.auiManager.ShowPane(self, True)
