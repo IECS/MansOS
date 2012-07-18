@@ -177,13 +177,16 @@ class Frame(wx.Frame):
                               self.tr('Save document as'))
         upload = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Upload') + '\tCtrl+U',
                               self.tr('Open upload window'))
+        recent = wx.Menu()
+        fileMenu.AppendMenu(wx.ID_ANY, '&' + self.tr('Recently used files'),
+                               recent, self.tr('Recently used files'))
         close = fileMenu.Append(wx.ID_EXIT, '&' + self.tr('Exit') + '\tCtrl+Q',
                               self.tr('Exit application'))
 
-        self.recentlyMenu = wx.FileHistory(int(self.API.getSetting('recentlyOpenedMaxCount')))
-        self.recentlyMenu.Load(self.API.config)
-        self.recentlyMenu.UseMenu(fileMenu)
-        self.recentlyMenu.AddFilesToMenu()
+        self.fileHistory = wx.FileHistory(int(self.API.getSetting('recentlyOpenedMaxCount')))
+        self.fileHistory.Load(self.API.config)
+        self.fileHistory.UseMenu(recent)
+        self.fileHistory.AddFilesToMenu()
         self.Bind(wx.EVT_MENU_RANGE, self.on_file_history, id = wx.ID_FILE1, id2 = wx.ID_FILE9)
 
         # show menu with mansos demo applications

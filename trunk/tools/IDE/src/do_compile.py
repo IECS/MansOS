@@ -50,7 +50,7 @@ class DoCompile():
         self.API.startPopen(["make", "clean"], "Compile", None, False)
         chdir(self.curPath)
 
-    # Passes to thread start as callback, because without callback 
+    # Passed to thread start as callback, because without callback 
     # there is no Done msg.
     def dummy(self, output):
         pass
