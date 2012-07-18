@@ -846,6 +846,14 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
+    def generateSmoothenFunction(self, outputFile, functionTree, root):
+        # TODO
+        return "0"
+
+    def generateSharpenFunction(self, outputFile, functionTree, root):
+        # TODO
+        return "0"
+
     def generateSumFunction(self, outputFile, functionTree, root):
         if len(functionTree.arguments) == 1 and functionTree.arguments[0].function == "take":
             return self.generateTakeFunction(outputFile, functionTree.arguments[0], "sum")
@@ -1095,16 +1103,18 @@ class Sensor(Component):
             return self.generateMinFunction(outputFile, functionTree, root)
         if functionTree.function == "max":
             return self.generateMaxFunction(outputFile, functionTree, root)
-        if functionTree.function == "square":
-            return self.generateSquareFunction(outputFile, functionTree, root)
-        if functionTree.function == "sqrt":
-            return self.generateSqrtFunction(outputFile, functionTree, root)
         if functionTree.function == "avg":
             return self.generateAvgFunction(outputFile, functionTree, root)
         if functionTree.function == "stdev":
             return self.generateStdevFunction(outputFile, functionTree, root)
+        if functionTree.function == "smoothen" or functionTree.function == "blur":
+            return self.generateSmoothenFunction(outputFile, functionTree, root)
+        if functionTree.function == "sharpen" or functionTree.function == "contrast":
+            return self.generateSharpenFunction(outputFile, functionTree, root)
         if functionTree.function == "sum":
             return self.generateSumFunction(outputFile, functionTree, root)
+        if functionTree.function == "plus": # synonym to one use of sum()
+            return self.generateArithmeticFunction(outputFile, functionTree, '+', root)
         if functionTree.function == "minus":
             return self.generateArithmeticFunction(outputFile, functionTree, '-', root)
         if functionTree.function == "multiply":
@@ -1113,6 +1123,10 @@ class Sensor(Component):
             return self.generateArithmeticFunction(outputFile, functionTree, '/', root)
         if functionTree.function == "modulo":
             return self.generateArithmeticFunction(outputFile, functionTree, '%', root)
+        if functionTree.function == "square":
+            return self.generateSquareFunction(outputFile, functionTree, root)
+        if functionTree.function == "sqrt":
+            return self.generateSqrtFunction(outputFile, functionTree, root)
         if functionTree.function == "power":
             return self.generatePowerFunction(outputFile, functionTree, root)
         if functionTree.function == "filterRange":
