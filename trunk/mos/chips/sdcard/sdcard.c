@@ -77,6 +77,8 @@ static bool cacheChanged;
 // Shortcuts
 #if SDCARD_SPI_ID == 0
 
+#warning using SadMote
+
 // Chip Select
 #define MMC_CS_PxOUT      P3OUT
 #define MMC_CS_PxDIR      P3DIR
@@ -125,10 +127,17 @@ void halSPISetup(void)
 
 #else
 
+#warning using CarMote
+
 // Chip Select
 #define MMC_CS_PxOUT      P5OUT
 #define MMC_CS_PxDIR      P5DIR
 #define MMC_CS            0x01
+
+// Card Detect
+#define MMC_CD_PxIN       P5IN
+#define MMC_CD_PxDIR      P5DIR
+#define MMC_CD            0x40
 
 #define SPI_PxSEL         P5SEL
 #define SPI_PxDIR         P5DIR
@@ -156,10 +165,12 @@ void halSPISetup(void)
     MMC_CS_PxOUT |= MMC_CS;
     MMC_CS_PxDIR |= MMC_CS;
 
-    UCTL1 = SWRST;
-    UCTL1 |= CHAR + SYNC + MM;                // 8-bit SPI Master **SWRST**
+    // Card Detect
+    MMC_CD_PxDIR &=  ~MMC_CD;
+
+    UCTL1 = CHAR + SYNC + MM + SWRST;         // 8-bit SPI Master **SWRST**
     UTCTL1 = CKPL + SSEL1 + SSEL0 + STC;      // SMCLK, 3-pin mode
-    UBR01 = 0x08;                             // UCLK/2
+    UBR01 = 0x02;                             // UCLK/2
     UBR11 = 0x00;                             // 0
     UMCTL1 = 0x00;                            // No modulation
     ME2 |= USPIE1;                            // Enable USART1 SPI mode
@@ -262,8 +273,9 @@ static uint8_t sdcardCommand(uint8_t cmd, uint32_t arg, uint8_t crc)
     uint8_t status;
     for (i = 0; i != 0xFF; i++) {
         status = SDCARD_RD_BYTE();
-//        SPRINTF("status=%x\n", status);
-        if (!(status & 0x80)) break;
+        // SPRINTF("status=%x\n", status);
+        // if (!(status & 0x80)) break;
+        if (status == 0 || status == 1) break;
     }
     
     // do not disable SPI here!
@@ -306,15 +318,14 @@ bool sdcardInit(void)
     halSPISetup();
 
     SPRINTF("1\n");
-    mdelay(1);
+    // mdelay(1);
 
     // must supply min of 74 clock cycles with CS high.
     SDCARD_SPI_DISABLE();
     for (i = 0; i < 10; i++) SDCARD_RD_BYTE();
 
-    mdelay(1);
-
     SPRINTF("2\n");
+    // mdelay(1);
 
     BUSYWAIT_UNTIL_NOINTS(sdcardCommand(CMD_GO_IDLE_STATE, 0, 0x95) == R1_IDLE_STATE, INIT_TIMEOUT_TICKS / 2, ok);
     if (!ok) {
@@ -324,6 +335,16 @@ bool sdcardInit(void)
         }
     }
 
+    uint8_t response = 0x1;
+    while (response == 0x01) {
+        SDCARD_SPI_DISABLE();
+        SDCARD_WR_BYTE(0xff);
+        response = sdcardCommand(CMD_SEND_OP_COND, 0x00, 0xff);
+    }
+    SDCARD_SPI_DISABLE();
+    SDCARD_WR_BYTE(0xff);
+
+#if PLATFORM_SM3
     SPRINTF("3\n");
 
     // check SD version
@@ -367,6 +388,8 @@ bool sdcardInit(void)
     }
     SDCARD_SPI_DISABLE();
     SPRINTF("sdcard init OK\n");
+
+#endif // PLATFORM_SM3
 
     // make cache valid
     mdelay(1);
