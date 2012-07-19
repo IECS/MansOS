@@ -42,6 +42,8 @@
 // SD card commands
 /** GO_IDLE_STATE - init card in spi mode if CS low */
 #define CMD_GO_IDLE_STATE 0x00
+/** SEND_OP_COND */
+#define CMD_SEND_OP_COND  0x01
 /** SEND_IF_COND - verify SD Memory Card interface operating condition.*/
 #define CMD_SEND_IF_COND 0x08
 /** SEND_CSD - read the Card Specific Data (CSD register) */
