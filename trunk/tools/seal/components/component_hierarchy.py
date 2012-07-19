@@ -438,7 +438,9 @@ class FileOutput(SealOutput):
     def __init__(self):
         super(FileOutput, self).__init__("File")
         self.useFunction.value = "filePrint()"
+        # the name of the file (automatically generated if None)
         self.filename = SealParameter(None, [])
         # a file can be text or binary - allow both parameter names wih inverse meaning
-        self.text = SealParameter(False, [False, True])
-        self.binary = SealParameter(True, [False, True])
+        # XXX: make text files by default - more intuitive
+        self.text = SealParameter(True, [False, True])
+        self.binary = SealParameter(False, [False, True])

@@ -64,6 +64,7 @@ class SealParser():
       "set": "SET_TOKEN",
       "pattern": "PATTERN_TOKEN",
       "load": "LOAD_TOKEN",
+      "input": "INPUT_TOKEN",
       "true": "TRUE_TOKEN",
       "false": "FALSE_TOKEN",
       "not": "NOT_TOKEN",
@@ -164,6 +165,7 @@ class SealParser():
                        | define_statement
                        | parameters_statement
                        | load_statement
+                       | input_statement
                        | ';'
                        | error END_TOKEN
                        | error ';'
@@ -186,6 +188,11 @@ class SealParser():
         else:
             p[0] = ComponentUseCase(p[1], p[2], p[4], p[3])
         self.lineTracking["Statement"].append((p.lineno(1), p.lineno(4), p[0]))
+
+    def p_input_statement(self, p):
+        '''input_statement : INPUT_TOKEN IDENTIFIER_TOKEN output_fields ';'
+        '''
+        p[0] = InputStatement(p[2], p[3])
 
     def p_system_config(self, p):
         '''system_config : CONFIG_TOKEN value ';'

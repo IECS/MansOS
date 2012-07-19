@@ -1,26 +1,12 @@
-read Light;
-output Serial;
+//
+// input syntax
+//
 
-// -- binary file
-//read Light;
-//output File, filename "lightData.bin", binary;
+const COMMAND_GET 17;
 
-// ---------------------------------
+input CommandWithSeqnum (command, seqnum);
 
-// -- text file
-// read Light;
-// output File, filename "lightData.csv", text;
-
-// ---------------------------------
-
-// -- automatically generate name and type
-// read Light;
-// output File;
-
-// ---------------------------------
-
-// -- mutltiple files
-// read Light;
-// read Humidity;
-// output File (Light, SequenceNumber);
-// output File (Humidity, SequenceNumber);
+when CommandWithId.command = COMMAND_GET:
+//    use print, format "%d\n", arg1 CommandWithSeqnum.seqnum;
+    use print, format "hello world\n";
+end
