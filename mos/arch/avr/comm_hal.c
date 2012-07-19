@@ -21,10 +21,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void initCommHal() {
-    // TODO
-}
-
 void initArchComm() {
     // ?
 }
