@@ -168,6 +168,10 @@ class ConditionCollection(object):
         for s in condition.dependentOnSensors:
             outputFile.write("    sealCommRegisterInterest({}, condition{}Callback);\n".format(
                     s.systemwideID, condition.id))
+        for i in condition.dependentOnInputs:
+            if i.isError: continue
+            outputFile.write("    sealCommPacketRegisterInterest({:#x}, condition{}Callback, (uint32_t*)&{}PacketBuffer);\n".format(
+                    i.typemask, condition.id, i.getNameCC()))
 
     def generateAppMainCode(self, outputFile):
         for c in self.conditionList:
@@ -224,8 +228,13 @@ class Value(object):
 ########################################################
 class SealValue(object):
     def __init__(self, firstPart, secondPart = None):
-        self.firstPart = firstPart
-        self.secondPart = secondPart
+        if type(firstPart) is SealValue:
+            # XXX: decapsulate it
+            self.firstPart = firstPart.firstPart
+            self.secondPart = firstPart.secondPart
+        else:
+            self.firstPart = firstPart
+            self.secondPart = secondPart
 
     def getCode(self):
         # Value object can be inside SealValue
@@ -247,6 +256,7 @@ class SealValue(object):
 ########################################################
 class Expression(object):
     def __init__(self, left = None, op = None, right = None):
+        # print "Expression: ", left, " ", op, " ", right
         if op == '=': op = '==' # hehe
         elif op == '<>': op = '!='
         self.op = op
@@ -269,15 +279,15 @@ class Expression(object):
         else:
             self.right = right
         # because expression in some contexts == condition
-        self.dependentOnSensors = []
+        self.dependentOnSensors = set()
+        self.dependentOnInputs = set()
 
     def isEventBased(self):
-        return bool(len(self.dependentOnSensors))
+        return bool(len(self.dependentOnSensors)) \
+            or bool(len(self.dependentOnInputs))
 
     def collectImplicitDefines(self):
         result = []
-#       print "left  = ", self.left
-#       print "right = ", self.right
         if self.funcExpressionLeft:
             result.append(ComponentDefineStatement(self.left.value.firstPart, self.funcExpressionLeft, []))
         else:
@@ -393,7 +403,7 @@ class SetStatement(object):
         return "set " + self.name + " " + self.value.getCode() + ';'
 
 ########################################################
-class InputStatement(object):
+class InputCommandStatement(object):
     def __init__(self, name, fields):
         self.name = name.lower()
         self.fields = []
@@ -404,7 +414,7 @@ class InputStatement(object):
             self.fields.append(f[0].lower())
 
     def addComponents(self, componentRegister, conditionCollection):
-        pass # TODO
+        componentRegister.addInput(self.name, self.fields)
 
     def getCode(self, indent):
         result = "input " + self.name
@@ -757,7 +767,7 @@ class CodeBlock(object):
             if type(d) is SetStatement \
                     or type(d) is ParametersDefineStatement \
                     or type(d) is ComponentDefineStatement \
-                    or type(d) is InputStatement:
+                    or type(d) is InputCommandStatement:
                 d.addComponents(componentRegister, conditionCollection)
 
             if type(d) is LoadStatement:

@@ -57,16 +57,22 @@ class Generator(object):
     def definePacketTypes(self):
         for o in self.outputs:
             o.definePacketType()
+        for i in self.inputs:
+            i.sortFields()
 
     def generateTypes(self):
-       for o in self.outputs:
-           o.generatePacketType(self.outputFile)
+        for o in self.outputs:
+            o.generatePacketType(self.outputFile)
+        for i in self.inputs:
+            i.generatePacketType(self.outputFile)
 
     def generateVariables(self):
         self.outputFile.write("bool oldConditionStatus[NUM_CONDITIONS + 1];\n")
         components.componentRegister.generateVariables(self.outputFile)
         for c in self.components:
             c.generateVariables(self.outputFile)
+        for i in self.inputs:
+            i.generateVariables(self.outputFile)
 
     def generateOutputCode(self):
         sensorsUsed = []
@@ -78,6 +84,8 @@ class Generator(object):
     def generateCallbacks(self):
         for c in self.components:
             c.generateCallbacks(self.outputFile, self.outputs)
+        for i in self.inputs:
+            i.generateReadFunctions(self.outputFile)
 
     def generateBranchCode(self):
         components.branchCollection.generateCode(self.outputFile)
@@ -142,7 +150,7 @@ class Generator(object):
         components.conditionCollection.generateCode(components.componentRegister)
         # find out the sensors that should be cached
         components.componentRegister.markCachedSensors()
-        # find out the sensors that should syned
+        # find out the sensors that should synched
         components.componentRegister.markSyncSensors()
 
         self.components = components.componentRegister.getAllComponents()
@@ -150,6 +158,7 @@ class Generator(object):
         for c in self.components:
             if type(c) is components.Output and len(c.useCases):
                 self.outputs.append(c)
+        self.inputs = components.componentRegister.inputs.values()
         # generate packet types now, for later use
         self.definePacketTypes()
 

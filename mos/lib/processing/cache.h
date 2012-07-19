@@ -31,14 +31,14 @@
 // Config file should define CONST_TOTAL_CACHEABLE_SENSORS before useing this.
 //
 
-typedef uint8_t (*ReadFunctionU8)(void);
-typedef uint16_t (*ReadFunctionU16)(void);
-typedef uint32_t (*ReadFunctionU32)(void);
+typedef int8_t (*ReadFunction8)(void);
+typedef int16_t (*ReadFunction16)(void);
+typedef int32_t (*ReadFunction32)(void);
 
-uint8_t cacheReadSensorU8(uint16_t code, ReadFunctionU8 func, uint16_t expireTime);
+int8_t cacheReadSensor8(uint16_t code, ReadFunction8 func, uint16_t expireTime);
 
-uint16_t cacheReadSensorU16(uint16_t code, ReadFunctionU16 func, uint16_t expireTime);
+int16_t cacheReadSensor16(uint16_t code, ReadFunction16 func, uint16_t expireTime);
 
-uint32_t cacheReadSensorU32(uint16_t code, ReadFunctionU32 func, uint16_t expireTime);
+int32_t cacheReadSensor32(uint16_t code, ReadFunction32 func, uint16_t expireTime);
 
 #endif

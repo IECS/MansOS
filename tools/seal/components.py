@@ -9,6 +9,12 @@ PACKET_FIELD_ID_ADDRESS    = 3
 # first free packet field ID (note that ID 31, 63, 95, 127 etc. are reserved for extension)
 PACKET_FIELD_ID_FIRST_FREE = 4
 
+commonFields = {
+    "sequencenumber": PACKET_FIELD_ID_SEQNUM,
+    "timestamp": PACKET_FIELD_ID_TIMESTAMP,
+    "address": PACKET_FIELD_ID_ADDRESS
+}
+
 ######################################################
 
 def generateSerialFunctions(intSizes, outputFile):
@@ -568,7 +574,7 @@ class Sensor(Component):
         super(Sensor, self).generateConstants(outputFile)
         if self.isUsed() or self.doGenerateSyncCallback:
             outputFile.write("#define {0}_NO_VALUE    {1}\n".format(self.getNameUC(), self.getNoValue()))
-            outputFile.write("#define {0}_TYPE_ID     0x{1:x}\n".format(self.getNameUC(), (1 << self.systemwideID)))
+            outputFile.write("#define {0}_TYPE_ID     {1:#x}\n".format(self.getNameUC(), (1 << self.systemwideID)))
 
     def isCacheNeeded(self, numCachedSensors):
         if self.cacheNeeded: return True
@@ -1349,7 +1355,7 @@ class OutputUseCase(object):
         outputFile.write("{\n")
         outputFile.write("    {0}Packet.magic = SEAL_MAGIC;\n".format(self.getNameCC()))
         for i in range(len(self.headerMasks)):
-            outputFile.write("    {0}Packet.typeMask{1} = 0x{2:x};\n".format(
+            outputFile.write("    {0}Packet.typeMask{1} = {2:#x};\n".format(
                     self.getNameCC(), i + 1, self.headerMasks[i]))
         if PACKET_FIELD_ID_SEQNUM in self.usedIds:
             outputFile.write("    static uint32_t seqnum;\n")
@@ -1615,6 +1621,94 @@ class StateUseCase(object):
 
 
 ######################################################
+class InputStruct(object):
+    def __init__(self, name, fields):
+        self.name = name
+        self.fields = set(fields)
+        self.fieldsUsedInConditions = set()
+        self.sortedFields = []
+        self.typemask = 0
+        self.isError = False
+
+    def getNameCC(self):
+        return self.name # XXX
+
+    def getNameTC(self):
+        return toTitleCase(self.name)
+
+    def replaceCode(self, fieldName):
+        if fieldName not in self.fields:
+            componentRegister.userError("Input '{0}' has no field named '{1}'\n".format(
+                    self.name, fieldName))
+            return "0"
+        self.fieldsUsedInConditions.add(fieldName)
+        # return the name of the field in the packet
+        return self.getNameCC() + "PacketBuffer." + fieldName
+
+    def sortFields(self):
+        for f in self.fields:
+            cf = commonFields.get(f)
+            if cf:
+                self.sortedFields.append((cf, f))
+                continue
+
+            s = componentRegister.sensors.get(f)
+            if s is None:
+                componentRegister.userError("Field '{0}' not known for input {1}\n".format(
+                        f, self.name))
+                self.isError = True
+                return
+            self.sortedFields.append((s.systemwideID, f))
+        # sort the fields by ID
+        self.sortedFields.sort()
+
+        for s in self.sortedFields:
+            self.typemask |= (1 << s[0])
+
+    def generatePacketType(self, outputFile):
+        if self.isError: return
+
+        outputFile.write("struct {0}PacketBuffer_s {1}\n".format(self.getNameTC(), '{'))
+        for f in self.sortedFields:
+            outputFile.write("    uint32_t {};\n".format(f[1]))
+        outputFile.write("} PACKED;\n\n")
+        outputFile.write("typedef struct {0}PacketBuffer_s {0}PacketBuffer_t;\n\n".format(self.getNameTC()))
+    def generateVariables(self, outputFile):
+        if self.isError: return
+
+        outputFile.write("{0}PacketBuffer_t {1}PacketBuffer;\n\n".format(
+                self.getNameTC(), self.getNameCC()))
+
+    def generateReadFunction(self, field, outputFile):
+        pass
+        # find ID
+#        id = -1
+#        for f in sortedFields:
+#            if f[1] == field:
+#                id = f[0]
+#                break
+        # generate the function
+#        outputFile.write("static inline uint32_t {}{}ReadProcess(void) {}\n".format(
+#                self.getNameCC(), toTitleCase(field), '{'))
+#        outputFile.write("{\n")
+#        outputFile.write("    return sealCommReadValue({:#x})".format(id))
+#        outputFile.write("}\n\n")
+
+    def generateReadFunctions(self, outputFile):
+        # generate a getter function for each fields used in conditions
+        # (they can be used ONLY in conditions or where clauses, not in regular outputs)
+        for f in self.fieldsUsedInConditions:
+            self.generateReadFunction(f, outputFile)
+
+    # app main code is generated in conditions
+
+#    def generateAppMainCode(self, outputFile):
+#        if self.isError: return
+        
+#        outputFile.write("    sealCommPacketRegisterInterest({}, {}, {}PacketBuffer);\n".format())
+
+
+######################################################
 class ComponentRegister(object):
     module = None
 
@@ -1640,6 +1734,7 @@ class ComponentRegister(object):
         self.actuators = {}
         self.sensors = {}
         self.outputs = {}
+        self.inputs = {}
         self.systemParams = []
         self.systemStates = {}
         self.systemConstants = {}
@@ -1659,7 +1754,7 @@ class ComponentRegister(object):
             # print "load", spec.name
             c = self.addComponent(spec.name.lower(), spec)
             if not c:
-                componentRegister.userError("Component '{0}' duplicated for platform '{1}', ignoring\n".format(
+                self.userError("Component '{0}' duplicated for platform '{1}', ignoring\n".format(
                         spec.name, architecture))
 
     def loadExtModule(self, filename):
@@ -1781,7 +1876,7 @@ class ComponentRegister(object):
 
         s = self.addComponent(c.name, c.base.specification)
         if not s:
-            componentRegister.userError("Virtual component '{0}' duplicated, ignoring\n".format(
+            self.userError("Virtual component '{0}' duplicated, ignoring\n".format(
                     c.name))
             return
 
@@ -1801,6 +1896,13 @@ class ComponentRegister(object):
         o.isRemote = True
         componentRegister.additionalConfig.add("seal_comm")
         return o
+
+    def addInput(self, name, fields):
+        if name in self.inputs:
+            self.userError("Input '{0}' duplicated, ignoring\n".format(name))
+            return
+        componentRegister.additionalConfig.add("seal_comm")
+        self.inputs[name] = InputStruct(name, fields)
 
     def useComponent(self, keyword, name, parameters, fields, conditions, branchNumber):
         # find the component
@@ -1876,6 +1978,8 @@ class ComponentRegister(object):
                 self.numCachedSensors += 1
 
     def replaceCode(self, componentName, parameterName, condition):
+        # print "replace Code: " + componentName + "." + parameterName
+
         if type(componentName) is Value:
             return componentName.getCode()
 
@@ -1893,6 +1997,11 @@ class ComponentRegister(object):
             # check if this is a remote component
             if componentName[:6] == "remote":
                 c = self.addRemote(componentName)
+            else:
+                i = self.inputs.get(componentName)
+                if i:
+                    if condition: condition.dependentOnInputs.add(i)
+                    return i.replaceCode(parameterName)
         if c == None:
             if parameterName == 'ispresent':
                 return "false"
@@ -1903,7 +2012,7 @@ class ComponentRegister(object):
         # in case the component is remote: make condition dependent on it
         if c.isRemote:
             assert condition
-            condition.dependentOnSensors.append(c)
+            condition.dependentOnSensors.add(c)
 
         # found
         if parameterName == 'ispresent':
