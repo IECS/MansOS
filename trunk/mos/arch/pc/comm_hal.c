@@ -86,16 +86,8 @@ void decAndFireAlarm(); // decrementing alarms timeout and fire if needed
 
 //----------------------------------------------------------
 // function implementation
-//-----------------------------cd-----------------------------
+//----------------------------------------------------------
 static pthread_t intThread;
-
-void initCommHal() {
-    mos_sem_init(&alarmMutex, 0);
-    // this is a "specific thread", not part of the scheduler
-    // create it even, when threads are turned off
-    pthread_create(&intThread, NULL, intHandler, NULL);
-    // initialization of alarmIntHandler moved to alarms_hal.c
-}
 
 // simulate interrupt handler in separate thread
 void *intHandler(void *dummy) {
@@ -278,5 +270,9 @@ void closeSocket(int sock) {
 
 
 void initArchComm(void) {
-    // ?
+    mos_sem_init(&alarmMutex, 0);
+    // this is a "specific thread", not part of the scheduler
+    // create it even, when threads are turned off
+    pthread_create(&intThread, NULL, intHandler, NULL);
+    // initialization of alarmIntHandler moved to alarms_hal.c
 }
