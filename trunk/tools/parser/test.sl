@@ -1,12 +1,7 @@
-//
-// input syntax
-//
-
 const COMMAND_GET 17;
 
-input CommandWithSeqnum (command, seqnum);
+InputCommand CommandWithSeqnum (Command, SequenceNumber);
 
-when CommandWithId.command = COMMAND_GET:
-//    use print, format "%d\n", arg1 CommandWithSeqnum.seqnum;
-    use print, format "hello world\n";
+when CommandWithSeqnum.Command = COMMAND_GET:
+   use print, format "got seqnum %d\n", arg1 CommandWithSeqnum.SequenceNumber, once;
 end

@@ -90,16 +90,11 @@ SEAL_TARGETS = \
 	Custom					\
 	Sensors					\
 
-#COMMON_TARGETS = \
-#	$(foreach t,$(DEMO_TARGETS),demo/$(t)) \
-#	$(foreach t,$(ADVANCED_TARGETS),advanced/$(t)) \
-#	$(foreach t,$(TEST_TARGETS),tests/$(t)) \
-#	$(foreach t,$(SEAL_TARGETS),seal/$(t))
-
 COMMON_TARGETS = \
 	$(foreach t,$(DEMO_TARGETS),demo/$(t)) \
 	$(foreach t,$(ADVANCED_TARGETS),advanced/$(t)) \
-	$(foreach t,$(TEST_TARGETS),tests/$(t))
+	$(foreach t,$(TEST_TARGETS),tests/$(t)) \
+	$(foreach t,$(SEAL_TARGETS),seal/$(t))
 
 # -- generic part follows
 

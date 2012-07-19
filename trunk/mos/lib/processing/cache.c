@@ -26,6 +26,9 @@
 
 typedef struct SensorCache_s {
     union {
+        int8_t i8;
+        int16_t i16;
+        int32_t i32;
         uint8_t u8;
         uint16_t u16;
         uint32_t u32;
@@ -39,52 +42,52 @@ typedef struct SensorCache_s {
 #endif
 static SensorCache_t sensorCache[TOTAL_CACHEABLE_SENSORS];
 
-uint8_t cacheReadSensorU8(uint16_t code, ReadFunctionU8 func, uint16_t expireTime)
+int8_t cacheReadSensor8(uint16_t code, ReadFunction8 func, uint16_t expireTime)
 {
     ticks_t now = getJiffies();
     SensorCache_t *cacheValue = &sensorCache[code];
     if (cacheValue->expireTime && !timeAfter(now, cacheValue->expireTime)) {
         // take from cache
-        return cacheValue->value.u8;
+        return cacheValue->value.i8;
     }
-    uint8_t result = func();
+    int8_t result = func();
     if (expireTime) {
         // add to cache
-        cacheValue->value.u8 = result;
+        cacheValue->value.i8 = result;
         cacheValue->expireTime = now + expireTime;
     }
     return result;
 }
 
-uint16_t cacheReadSensorU16(uint16_t code, ReadFunctionU16 func, uint16_t expireTime)
+int16_t cacheReadSensor16(uint16_t code, ReadFunction16 func, uint16_t expireTime)
 {
     ticks_t now = getJiffies();
     SensorCache_t *cacheValue = &sensorCache[code];
     if (cacheValue->expireTime && !timeAfter(now, cacheValue->expireTime)) {
         // take from cache
-        return cacheValue->value.u16;
+        return cacheValue->value.i16;
     }
-    uint16_t result = func();
+    int16_t result = func();
     if (expireTime) {
         // add to cache
-        cacheValue->value.u16 = result;
+        cacheValue->value.i16 = result;
         cacheValue->expireTime = now + expireTime;
     }
     return result;
 }
 
-uint32_t cacheReadSensorU32(uint16_t code, ReadFunctionU32 func, uint16_t expireTime)
+int32_t cacheReadSensor32(uint16_t code, ReadFunction32 func, uint16_t expireTime)
 {
     ticks_t now = getJiffies();
     SensorCache_t *cacheValue = &sensorCache[code];
     if (cacheValue->expireTime && !timeAfter(now, cacheValue->expireTime)) {
         // take from cache
-        return cacheValue->value.u32;
+        return cacheValue->value.i32;
     }
-    uint32_t result = func();
+    int32_t result = func();
     if (expireTime) {
         // add to cache
-        cacheValue->value.u32 = result;
+        cacheValue->value.i32 = result;
         cacheValue->expireTime = now + expireTime;
     }
     return result;

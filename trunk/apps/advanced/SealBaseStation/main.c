@@ -25,17 +25,34 @@
 #include "net/seal_comm.h"
 
 #define COMMAND_TO_SEND 17
+#define SEQNUM_TO_SEND 3
 
-//-------------------------------------------
-//      Entry point for the application
-//-------------------------------------------
-
-void appMain(void)
+// send a single command
+void appMainSimpleCommand(void)
 {
-    // sealCommRegisterInterest(uint16_t code, CallbackFunction callback);
-
     for (;;) {
         sealCommSendCommand(COMMAND_TO_SEND);
+        mdelay(1000);
+    }
+}
+
+// send command and sequence nunber
+void appMain(void)
+{
+    struct MyPacket_s {
+        SealHeader_t header;
+        uint32_t fields[2];
+    } PACKED;
+    typedef struct MyPacket_s MyPacket_t;
+
+    MyPacket_t myPacket;
+
+    for (;;) {
+        sealCommPacketStart((SealPacket_t *)&myPacket);
+        sealCommPacketAddField(PACKET_FIELD_ID_COMMAND, COMMAND_TO_SEND);
+        sealCommPacketAddField(PACKET_FIELD_ID_SEQNUM, SEQNUM_TO_SEND);
+        sealCommPacketFinish();
+
         mdelay(1000);
     }
 }
