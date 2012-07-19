@@ -23,8 +23,8 @@
 
 #include "seal_comm.h"
 #include "addr.h"
-
-#define UNUSED 0xffff
+#include <lib/codec/crc.h>
+#include <lib/assert.h>
 
 #if DEBUG
 #define SEAL_DEBUG 1
@@ -40,14 +40,24 @@
 // TODO: use a mac protocol for energy saving!
 #define USE_MAC 0
 
-static SealCommListener_t listeners[MAX_SEAL_LISTENERS];
+// local variables
 
-static void sealRecv(MacInfo_t *mi, uint8_t *data, uint16_t length);
+static SealCommListener_t listeners[MAX_SEAL_LISTENERS];
+static SealCommListener_t *listenerBeingProcessed;
+
+static SealPacket_t *packetInProgress;
+uint8_t packetInProgressNumFields;
+
+struct MacInfo_s;
+
+// local functions
+
+static void sealRecv(struct MacInfo_s *mi, uint8_t *data, uint16_t length);
 
 #define for_all_listeners(op)                                           \
     do {                                                                \
         const SealCommListener_t *end = listeners + MAX_SEAL_LISTENERS; \
-        const SealCommListener_t *l = listeners;                        \
+        SealCommListener_t *l = listeners;                              \
         for (; l != end; ++l) { op; }                                   \
     } while (0)
 
@@ -72,25 +82,59 @@ void sealCommInit(void)
     radioSetReceiveHandle(sealRecvRaw);
     radioOn();
 #endif
-    for_all_listeners(l->code = UNUSED);
 }
 
-static inline void rxSensorValue(uint16_t code, uint32_t value)
+static inline bool isSingleValued(SealCommListener_t *l)
 {
-    for_all_listeners(
-            if (l->code == code) {
-                l->value = value;
-                l->callback(value);
-            });
+    uint32_t bit;
+    uint_t cnt = 0;
+    for (bit = 1; bit; bit <<= 1) {
+        if (l->typeMask & bit) {
+            if (cnt) return false;
+            else cnt = 1;
+        }
+    }
+    return true;
 }
 
-static void sealRecv(MacInfo_t *mi, uint8_t *data, uint16_t length)
+static inline uint32_t *getDataPointer(SealCommListener_t *l, bool isSingleValued)
+{
+    if (isSingleValued) {
+        // in place (room for one...)
+        return &l->u.lastValue;
+    }
+    return l->u.buffer;
+}
+
+static void receivePacketData(SealCommListener_t *l, uint32_t typeMask, const uint8_t *data)
+{
+    uint32_t bit;
+    bool sv = isSingleValued(l);
+    uint32_t *read = (uint32_t *) data;
+    uint32_t *write = getDataPointer(l, sv);
+
+    for (bit = 1; ; bit <<= 1) {
+        if (typeMask & bit) {
+            if (l->typeMask & bit) {
+                // read memory can be unaligned!
+                memcpy(write, read, 4);
+                write++;
+            }
+            read++;
+        }
+        if (bit == (1 << 31)) break;
+    }
+    listenerBeingProcessed = l;
+    l->callback(getDataPointer(l, sv));
+    listenerBeingProcessed = NULL;
+}
+
+static void sealRecv(struct MacInfo_s *mi, uint8_t *data, uint16_t length)
 {
     if (length < sizeof(SealHeader_t)) {
         DPRINTF("sealRecv: too short!\n");
         return;
     }
-
     SealHeader_t h;
     memcpy(&h, data, sizeof(h));
     if (h.magic != SEAL_MAGIC) {
@@ -103,92 +147,103 @@ static void sealRecv(MacInfo_t *mi, uint8_t *data, uint16_t length)
         return;
     }
     uint32_t typeMask = h.typeMask;
-    uint16_t valueOffset = sizeof(SealHeader_t);
+    uint8_t valueOffset = sizeof(SealHeader_t);
     while (typeMask & (1 << 31)) {
+        // TODO: support multiple typemask extension!
         // TODO: check len
         memcpy(&typeMask, data + valueOffset, sizeof(typeMask));
         valueOffset += sizeof(typeMask);
     }
-
-    uint16_t code;
     typeMask = h.typeMask;
-    for (code = 0; ; code++) {
-        uint16_t bit = code % 32;
-        if (bit == 31) {
-            uint16_t numField = code / 32;
-            memcpy(&typeMask, data + sizeof(SealHeader_t) + numField * 4, sizeof(typeMask));
-        }
-        if (typeMask & (1 << bit)) {
-            uint32_t value;
-            // TODO: check len
-            memcpy(&value, data + valueOffset, sizeof(value));
-            valueOffset += sizeof(value)
-            rxSensorValue(code, value);
-        }
-    }
+
+    for_all_listeners(
+            if (l->typeMask && (l->typeMask & typeMask) == l->typeMask) {
+                receivePacketData(l, typeMask, data + valueOffset);
+            });
 }
 
-// register a listener to specific sensor (determined by code)
-bool sealCommRegisterInterest(uint16_t code, CallbackFunction callback)
+bool sealCommPacketRegisterInterest(uint32_t typeMask, CallbackFunction callback,
+                                    uint32_t *buffer)
 {
     for_all_listeners(
-            if (l->code == UNUSED) {
-                l->code = code;
+            if (l->typeMask == 0) {
+                l->typeMask = typeMask;
                 l->callback = callback;
+                l->u.buffer = buffer;
                 return true;
             });
     DPRINTF("sealCommRegisterInterest: all full!\n");
     return false;
 }
 
-// unregister a listener
-bool sealCommUnregisterInterest(uint16_t code, CallbackFunction callback)
+bool sealCommPacketUnregisterInterest(uint32_t typeMask, CallbackFunction callback)
 {
-    for_all_listeners(
-            if (l->code == code && l->callback == callback) {
-                l->code = UNUSED;
-                return true;
-            });
+   for_all_listeners(
+           if (l->typeMask == typeMask && l->callback == callback) {
+               l->typeMask = 0;
+               return true;
+           });
     DPRINTF("sealCommUnregisterInterest: not found!\n");
     return false;
 }
 
-void sealCommSendValue(uint16_t code, uint32_t value)
+void sealCommPacketStart(SealPacket_t *buffer)
 {
-    struct SealPacket_s {
-        SealHeader_t header;
-        uint32_t address;
-        uint32_t value;
-    } packet;
+    packetInProgress = buffer;
+    packetInProgress->header.magic = SEAL_MAGIC;
+    packetInProgress->header.typeMask = 0;
+    packetInProgressNumFields = 0;
+}
 
+void sealCommPacketAddField(uint16_t code, uint32_t value)
+{
+    ASSERT(packetInProgress);
     ASSERT(code < 31); // XXX TODO: add support for larger codes
 
-    packet.header.magic = SEAL_MAGIC;
-    packet.header.typeMask = (1 << code);
-    packet.header.typeMask |= (1 << PACKET_FIELD_ID_ADDRESS);
-    if (code < PACKET_FIELD_ID_ADDRESS) {
-        // hack
-        packet.address = value;
-        packet.value = localAddress;
-    } else {
-        packet.address = localAddress;
-        packet.value = value;
-    }
-    packet.header.crc = crc16((const uint8_t *) &packet + 4, sizeof(packet) - 4);
+    packetInProgress->header.typeMask |= (1 << code);
+    memcpy(packetInProgress->fields + packetInProgressNumFields, &value, sizeof(value));
+    packetInProgressNumFields++;
+}
+
+void sealCommPacketFinish(void)
+{
+    ASSERT(packetInProgress);
+    uint16_t length = 8 + packetInProgressNumFields * 4;
+    packetInProgress->header.crc = 
+            crc16((const uint8_t *) packetInProgress + 4, length - 4);
 
 #if USE_MAC
     const static MosAddr bcastAddr = {MOS_ADDR_TYPE_SHORT, {MOS_ADDR_BROADCAST}};
-    macSend(&bcastAddr, &packet, sizeof(packet));
+    macSend(&bcastAddr, packetInProgress, length);
 #else
-    radioSend(&packet, sizeof(packet));
+    radioSend(packetInProgress, length);
 #endif
+}
+
+void sealCommSendValue(uint16_t code, uint32_t value)
+{
+    SealPacket_t packet;
+    sealCommPacketStart(&packet);
+    sealCommPacketAddField(code, value);
+    sealCommPacketFinish();
 }
 
 uint32_t sealCommReadValue(uint16_t code) 
 {
-    for_all_listeners(
-            if (l->code == code) {
-                return l->value;
-            });
-    return ~0u;
+    ASSERT(listenerBeingProcessed);
+    ASSERT(listenerBeingProcessed->typeMask & (1 << code));
+
+    uint32_t *read = getDataPointer(
+            listenerBeingProcessed, isSingleValued(listenerBeingProcessed));
+    uint32_t bit;
+    for (bit = 1; bit; bit <<= 1) {
+        if (bit == 1 << code) {
+            return *read;
+        }
+        if (listenerBeingProcessed->typeMask & bit) {
+            read++;
+        }
+    }
+    ASSERT(false);
+    return 0;
 }

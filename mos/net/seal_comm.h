@@ -30,10 +30,11 @@
 #define SEAL_MAGIC    0xABCD
 #endif
 
-// some default field codes
+// some default field codes (also in file seal/components.py)
 #define PACKET_FIELD_ID_COMMAND   0
-#define PACKET_FIELD_ID_TIMESTAMP 1
-#define PACKET_FIELD_ID_ADDRESS   2
+#define PACKET_FIELD_ID_SEQNUM    1
+#define PACKET_FIELD_ID_TIMESTAMP 2
+#define PACKET_FIELD_ID_ADDRESS   3
 
 //
 // Each packet must have this header; data fields (if any) follow it.
@@ -45,27 +46,63 @@ struct SealHeader_s {
 } PACKED;
 typedef struct SealHeader_s SealHeader_t;
 
-// use uint32_t to hold all integral types (string and other types are not supported)
-typedef void (*CallbackFunction)(uint32_t value);
+struct SealPacket_s {
+    SealHeader_t header;
+    uint32_t fields[1];
+} PACKED;
+typedef struct SealPacket_s SealPacket_t;
+
+typedef void (*CallbackFunction)(uint32_t *packet);
 
 //
-// Register a listener to specific sensor (determined by code).
+// Register a listener to multiple sensors (determined by typemask).
 // Multiple listeners are possible (determined by different callbacks!)
 //
-bool sealCommRegisterInterest(uint16_t code, CallbackFunction callback);
+bool sealCommPacketRegisterInterest(uint32_t typemask, CallbackFunction callback,
+                                    uint32_t *buffer);
+
+//
+// Register a listener to specific sensor (determined by sensor code).
+// Multiple listeners are possible (determined by different callbacks!)
+//
+static inline bool sealCommRegisterInterest(uint16_t code, CallbackFunction callback) {
+    return sealCommPacketRegisterInterest(1 << code, callback, NULL);
+}
 
 //
 // Unregister a listener
 //
-bool sealCommUnregisterInterest(uint16_t code, CallbackFunction callback);
+bool sealCommPacketUnregisterInterest(uint32_t typemask, CallbackFunction callback);
 
 //
-// Send a seal packet with specific sensor ID
+// Unregister a listener to a single event
+//
+static inline bool sealCommUnregisterInterest(uint16_t code, CallbackFunction callback) {
+    return sealCommPacketUnregisterInterest(1 << code, callback);
+}
+
+//
+// Start building a SEAL packet
+//
+void sealCommPacketStart(SealPacket_t *buffer);
+
+//
+// Add a value to SEAL packet
+//
+void sealCommPacketAddField(uint16_t code, uint32_t value);
+
+//
+// End building & send a SEAL packet
+//
+void sealCommPacketFinish(void);
+
+//
+// Shortcut function: send a SEAL packet with specific sensor ID
 //
 void sealCommSendValue(uint16_t code, uint32_t value);
 
 //
-// Send a seal packet with command
+// Shortcut function: send a SEAL packet with command
 //
 static inline void sealCommSendCommand(uint16_t command)
 {
@@ -78,14 +115,18 @@ static inline void sealCommSendCommand(uint16_t command)
 uint32_t sealCommReadValue(uint16_t code);
 
 // ----------------------------------
-// system & private API
+// System & private API
 
 void sealCommInit(void);
 
 typedef struct SealCommListener_s {
-    uint16_t code;
+    uint32_t typeMask;
     CallbackFunction callback;
-    uint32_t lastValue;
+    union {
+        uint32_t *buffer;
+        uint32_t lastValue;
+    } u;
+//    uint32_t values[1];
 } SealCommListener_t;
 
 #ifndef MAX_SEAL_LISTENERS

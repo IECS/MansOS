@@ -127,7 +127,7 @@ class ConditionCollection(object):
             self.codeList.append(self.generateCodeForCondition(i, componentRegister))
 
     def writeOutCodeForEventBasedCondition(self, condition, outputFile):
-        outputFile.write("static void condition{0}Callback(uint32_t value)\n".format(condition.id))
+        outputFile.write("static void condition{0}Callback(uint32_t *values)\n".format(condition.id))
         outputFile.write("{\n")
         outputFile.write("    bool isFilteredOut = false;\n")
         outputFile.write(self.codeList[condition.id - 1])
@@ -247,6 +247,8 @@ class SealValue(object):
 ########################################################
 class Expression(object):
     def __init__(self, left = None, op = None, right = None):
+        if op == '=': op = '==' # hehe
+        elif op == '<>': op = '!='
         self.op = op
         self.funcExpressionLeft = None
         self.funcExpressionRight = None
@@ -389,6 +391,31 @@ class SetStatement(object):
 
     def getCode(self, indent):
         return "set " + self.name + " " + self.value.getCode() + ';'
+
+########################################################
+class InputStatement(object):
+    def __init__(self, name, fields):
+        self.name = name.lower()
+        self.fields = []
+        # f[0] - name, f[1] - count (integer)
+        for f in fields:
+            if f[1] != 1:
+                componentRegister.userError("Field {} specified multiple times in input {}\n".format(f[0], name))
+            self.fields.append(f[0].lower())
+
+    def addComponents(self, componentRegister, conditionCollection):
+        pass # TODO
+
+    def getCode(self, indent):
+        result = "input " + self.name
+        if len(self.fields):
+            result += " ("
+            for f in self.fields:
+                result += f[0] + ", "
+            result = result[:-2] # remove last comma
+            result += ")"
+        result += ';'
+        return result
 
 ########################################################
 class ComponentDefineStatement(object):
@@ -720,6 +747,7 @@ class CodeBlock(object):
                             d.name))
                 else:
                     d.addComponents(componentRegister, conditionCollection)
+
 #            if type(d) is ComponentDefineStatement:
 #                if self.blockType != CODE_BLOCK_TYPE_PROGRAM:
 #                    componentRegister.userError("Define supported only in top level, ignoring define '{0}'\n".format(
@@ -728,7 +756,8 @@ class CodeBlock(object):
 #                    d.addComponents(componentRegister, conditionCollection)
             if type(d) is SetStatement \
                     or type(d) is ParametersDefineStatement \
-                    or type(d) is ComponentDefineStatement:
+                    or type(d) is ComponentDefineStatement \
+                    or type(d) is InputStatement:
                 d.addComponents(componentRegister, conditionCollection)
 
             if type(d) is LoadStatement:

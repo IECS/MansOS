@@ -234,8 +234,8 @@ class UseCase(object):
             if type(self.component) is Actuator:
                 if self.component.name.lower() == "print":
                     # special handling for print statements
-                    formatString = self.getParameterValue("format", "")
-                    outputFile.write("    PRINTF(\"{0}\"".format(formatString.strip('"')))
+                    formatString = self.getParameterValueValue("format", "")
+                    outputFile.write("    PRINTF({0}".format(formatString))
                     for i in range(100):
                         param = self.getParameterValue("arg{0}".format(i))
                         if param:
@@ -353,6 +353,11 @@ class UseCase(object):
     def getParameterValue(self, parameter, defaultValue = None):
         if parameter in self.parameters:
             return self.parameters[parameter].getCodeForGenerator(componentRegister, None)
+        return self.component.getParameterValue(parameter, defaultValue)
+
+    def getParameterValueValue(self, parameter, defaultValue = None):
+        if parameter in self.parameters:
+            return self.parameters[parameter].value
         return self.component.getParameterValue(parameter, defaultValue)
 
 
@@ -1209,7 +1214,10 @@ class OutputUseCase(object):
         return self.name.upper()
 
     def getParameterValue(self, parameter, defaultValue = None):
-        return self.useCase.getParameterValue(parameter, defaultValue)
+        result = self.useCase.getParameterValueValue(parameter, defaultValue)
+        if type(result) is str:
+            return result.strip('"')
+        return result
 
     def isAggregate(self):
         if self.isAggregateCached is None:
@@ -1222,7 +1230,7 @@ class OutputUseCase(object):
             outputFile.write("uint_t {0}PacketNumFieldsFull;\n".format(self.getNameCC()))
 
     def addPacketTypes(self, s, count):
-        # special case for dummy sync sensors
+        # special case for a dummy sync-only "sensor"
         if s.syncOnlySensor:
             for subsensor in s.subsensors:
                 self.addPacketTypes(subsensor, count)
@@ -1355,9 +1363,12 @@ class OutputUseCase(object):
             outputFile.write("    {0}Packet.crc = crc16((const uint8_t *) &{0}Packet + 4, sizeof({0}Packet) - 4);\n".format(
                     self.getNameCC()))
 
-        useFunction = self.getParameterValue("useFunction")
+        if isinstance(self, FileOutputUseCase):
+            useFunction = self.getNameCC() + "Print()"
+        else:
+            useFunction = self.getParameterValue("useFunction")
         if useFunction:
-            outputFile.write("    {0};\n".format(useFunction.strip('"'))) # XXX
+            outputFile.write("    {0};\n".format(useFunction))
         outputFile.write("    {0}PacketInit();\n".format(self.getNameCC()))
         outputFile.write("}\n\n")
 
@@ -1455,42 +1466,85 @@ class FileOutputUseCase(OutputUseCase):
     def __init__(self, parent, useCase, number, fields):
         super(FileOutputUseCase, self).__init__(parent, useCase, number, fields)
 
-        self.filename = "file{0:03d}".format(number)
-        self.isBinary = True
+        self.isText = True
+        if self.getParameterValue("binary", False): self.isText = False
+
+        self.filename = self.getParameterValue("filename")
+        if self.filename is None: 
+            # extension is determined by type
+            if self.isText: suffix = "csv"
+            else: suffix = "bin"
+            self.filename = "file{0:03d}.{1}".format(number, suffix)
+        elif self.getParameterValue("binary") is None and self.getParameterValue("text") is None:
+            # type is determined by extension
+            if f[-4:] == '.txt' or f[-4:] == '.csv':
+                self.isText = True
+            else:
+                self.isText = False
+
+        if self.filename.find('.') == -1:
+            # attach an extesion automatically
+            if self.isText: self.filename += ".csv"
+            else: self.filename += ".bin"
 
     def generateBinaryOutputCode(self, outputFile, f):
         if f.count == 1:
-            outputFile.write("    fwrite(&filePacket.{0}, sizeof(filePacket.{0}), 1, out);\n".format(
-                    f.sensorName))
+            outputFile.write("    fwrite(&{0}Packet.{1}, sizeof({0}Packet.{1}), 1, out);\n".format(
+                    self.getNameCC(), f.sensorName))
         else:
             for i in range(f.count):
-                outputFile.write("    fwrite(&filePacket.{0}[{1}], sizeof(filePacket.{0}[{1}]), 1, out);\n".format(
-                        f.sensorName, i))
+                outputFile.write("    fwrite(&{0}Packet.{1}[{2}], sizeof({0}Packet.{1}[{2}]), 1, out);\n".format(
+                        self.getNameCC(), f.sensorName, i))
 
     def generateTextOutputCode(self, outputFile, f):
         if f.count == 1:
-            outputFile.write('    fprintf(out, "%lu, ", filePacket.{0});\n'.format(
-                    f.sensorName))
+            outputFile.write('    fprintf(out, "%lu ", {0}Packet.{1});\n'.format(
+                    self.getNameCC(), f.sensorName))
         else:
             for i in range(f.count):
-                outputFile.write('    fprintf(out, "%lu, ", filePacket.{0}[{1}]);\n'.format(
-                        f.sensorName, i))
+                outputFile.write('    fprintf(out, "%lu ", {0}Packet.{1}[{2}]);\n'.format(
+                        self.getNameCC(), f.sensorName, i))
+
+    def generateTextHeading(self, outputFile, f):
+        if f.count == 1:
+            outputFile.write('        fputs("{} ", out);\n'.format(f.sensorName))
+        else:
+            for i in range(f.count):
+                outputFile.write('        fputs("{}[{}] ", out);\n'.format(f.sensorName, i))
 
     def generateOutputCode(self, outputFile, sensorsUsed):
         outputFile.write("static inline void {}Print(void)\n".format(self.getNameCC()))
         outputFile.write("{\n")
 
-        outputFile.write('    FILE *out = fopen("{}", "a");\n')
+        if self.isText:
+            outputFile.write('    bool accessOk = access("{}", F_OK) == 0;\n'.format(self.filename))
+        outputFile.write('    FILE *out = fopen("{}", "a");\n'.format(self.filename))
         outputFile.write('    if (!out) return;\n')
 
+        if self.isText:
+            outputFile.write('    if (!accessOk) { // new file created\n')
+
+            for f in self.packetFields:
+                self.generateTextHeading(outputFile, f)
+            outputFile.write("        fputc('\\r', out);\n")
+            outputFile.write("        fputc('\\n', out);\n")
+            outputFile.write('    };\n')
+
         for f in self.packetFields:
-            if self.isBinary:
-                self.generateBinaryOutputCode(outputFile, f)
-            else:
+            if self.isText:
                 self.generateTextOutputCode(outputFile, f)
+            else:
+                self.generateBinaryOutputCode(outputFile, f)
+
+        if self.isText:
+            outputFile.write("    fputc('\\r', out);\n")
+            outputFile.write("    fputc('\\n', out);\n")
 
         outputFile.write("    fclose(out);\n")
         outputFile.write("}\n\n")
+
+        # call superclass function too
+        super(FileOutputUseCase, self).generateOutputCode(outputFile, sensorsUsed)
 
 
 ######################################################
