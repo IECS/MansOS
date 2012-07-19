@@ -56,7 +56,9 @@ void initPlatform(void);
 #define ADC_LIGHT_PHOTOSYNTHETIC 4
 #define ADC_LIGHT_TOTAL 5
 
+#ifndef EXT_FLASH_CHIP
 #define EXT_FLASH_CHIP FLASH_CHIP_M25P80
+#endif
 
 #define RADIO_CHIP RADIO_CHIP_CC2420
 
