@@ -32,12 +32,12 @@ void appMainSimpleCommand(void)
 {
     for (;;) {
         sealCommSendCommand(COMMAND_TO_SEND);
-        mdelay(1000);
+        mdelay(5000);
     }
 }
 
 // send command and sequence nunber
-void appMain(void)
+void appMainPacket(void)
 {
     struct MyPacket_s {
         SealHeader_t header;
@@ -53,7 +53,13 @@ void appMain(void)
         sealCommPacketAddField(PACKET_FIELD_ID_SEQNUM, SEQNUM_TO_SEND);
         sealCommPacketFinish();
 
-        mdelay(1000);
+        mdelay(5000);
     }
 }
 
+
+void appMain(void)
+{
+//	appMainSimpleCommand();
+	appMainPacket();
+}

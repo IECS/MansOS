@@ -12,7 +12,7 @@ class SlowReadSensor1(SealSensor):
         self.cacheable = True
         self.useFunction.value = "slowRead1()"
         self.readFunction.value = "slowRead1()"
-        self.prereadFunction.value = "slowPreread1()"
+        self.preReadFunction.value = "slowPreread1()"
         # update readings no faster than once in 10 seconds
         self.minUpdatePeriod = 10000
         # deterministic upper bound of time-to-read in milliseconds
@@ -24,7 +24,7 @@ class SlowReadSensor2(SealSensor):
         self.cacheable = True
         self.useFunction.value = "slowRead2()"
         self.readFunction.value = "slowRead2()"
-        self.prereadFunction.value = "slowPreread2()"
+        self.preReadFunction.value = "slowPreread2()"
         # update readings no faster than once in 5 seconds
         self.minUpdatePeriod = 5000
         # deterministic upper bound of time-to-read in milliseconds
@@ -36,7 +36,7 @@ class SlowReadSensor3(SealSensor):
         self.cacheable = True
         self.useFunction.value = "slowRead3()"
         self.readFunction.value = "slowRead3()"
-        self.prereadFunction.value = "slowPreread3()"
+        self.preReadFunction.value = "slowPreread3()"
         # update readings no faster than once in 1 seconds (the default)
         # self.minUpdatePeriod = 1000
         # deterministic upper bound of time-to-read in milliseconds

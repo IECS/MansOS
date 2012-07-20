@@ -1,1 +1,2 @@
 USE_SEAL_COMM=y
+DEBUG=y

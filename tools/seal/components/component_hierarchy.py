@@ -22,6 +22,8 @@ class SealComponent(object):
         self.period = SealParameter(1000, ['100', '200', '500', '1000', '2000'])
         self.pattern = SealParameter(None)
         self.once = SealParameter(False, [False, True])
+        # how many times to use/read this? ("times 1" is the same as "once")
+        self.times = SealParameter(None, [1, 2, 3, 4, 5, 10, 20, 50, 100])
         self.useFunction = SealParameter(None)   # each usable component must define this
         self.readFunction = SealParameter(None)  # each readable component must define this
         components.append(self)
@@ -52,7 +54,7 @@ class SealSensor(SealComponent):
 #        self.filter = SealParameter('', ['> 100'])
 #        self.average = SealParameter('', ['10'])
 #        self.stdev = SealParameter('', ['10'])
-        self.prereadFunction = SealParameter(None)
+        self.preReadFunction = SealParameter(None)
         self.minUpdatePeriod = 1000 # milliseconds
         self.readTime = 0 # read instanttly
         self.readFunctionDependsOnParams = False
@@ -396,6 +398,12 @@ class SealOutput(SealComponent):
         self.address = SealParameter(False, [False, True])
         self.timestamp = SealParameter(True, [False, True])
         self.sequencenumber = SealParameter(False, [False, True])
+        self.issent = SealParameter(False, [False, True])
+        # file FROM which to output;
+        # "File" outputs has "filename" parameter TO which to output; do not confuse!
+        self.file = SealParameter(None)
+        # for FromFile outputs
+        self.where = SealParameter(None)
 
 class SerialOutput(SealOutput):
     def __init__(self):
