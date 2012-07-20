@@ -1,4 +1,4 @@
-// -- multiple files
+// shows using  multiple files
 read Light;
 read Humidity;
 output File (Light, SequenceNumber);

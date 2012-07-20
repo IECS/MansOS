@@ -30,11 +30,18 @@
 #define SEAL_MAGIC    0xABCD
 #endif
 
-// some default field codes (also in file seal/components.py)
-#define PACKET_FIELD_ID_COMMAND   0
-#define PACKET_FIELD_ID_SEQNUM    1
-#define PACKET_FIELD_ID_TIMESTAMP 2
-#define PACKET_FIELD_ID_ADDRESS   3
+//
+// Some default field codes (also in file seal/components.py).
+// All codes belong pseudo sensors. Real sensor codes follow,
+// but they are platform (and application?) specific,
+// and cannot be declared here.
+//
+#define PACKET_FIELD_ID_COMMAND   0 // remote command
+#define PACKET_FIELD_ID_SEQNUM    1 // sequence numne
+#define PACKET_FIELD_ID_TIMESTAMP 2 // time stamp
+#define PACKET_FIELD_ID_ADDRESS   3 // short network address
+#define PACKET_FIELD_ID_IS_SENT   4 // false if the measurement
+                                    // is in local storage only
 
 //
 // Each packet must have this header; data fields (if any) follow it.

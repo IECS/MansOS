@@ -73,4 +73,4 @@ uint_t parseGSA(const void *buf, uint_t len, GPSFix_t *fix);
 uint_t parseRMC(const void *buf, uint_t len, GPSFix_t *fix);
 
 
-#endif /* MANSOS_GPS_H */
+#endif

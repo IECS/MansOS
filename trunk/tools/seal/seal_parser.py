@@ -64,7 +64,8 @@ class SealParser():
       "set": "SET_TOKEN",
       "pattern": "PATTERN_TOKEN",
       "load": "LOAD_TOKEN",
-      "inputCommand": "INPUT_TOKEN",
+      "inputcommand": "INPUT_TOKEN",
+      "where": "WHERE_TOKEN",
       "true": "TRUE_TOKEN",
       "false": "FALSE_TOKEN",
       "not": "NOT_TOKEN",
@@ -346,11 +347,11 @@ class SealParser():
         '''parameter : IDENTIFIER_TOKEN
                      | IDENTIFIER_TOKEN value
                      | PATTERN_TOKEN value
+                     | WHERE_TOKEN condition
         '''
         if len(p) == 2:
             p[0] = (p[1], None)
         else:
-            # Works for both cases, in condition case parameter's name is "when" :)
             p[0] = (p[1], p[2])
 
     def p_value_list(self, p):

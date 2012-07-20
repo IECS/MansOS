@@ -1,3 +1,3 @@
-// -- automatically generate name and type
+// using automatically generated name and type
 read Light;
 output File;

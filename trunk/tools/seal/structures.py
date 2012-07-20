@@ -115,12 +115,7 @@ class ConditionCollection(object):
         # for optimization, should return as soon as isFilteredOut becomes true.
         condition = self.conditionList[i]
         condition.id = i + 1
-        return  "    bool result = " + \
-            string.replace(string.replace(string.replace(
-                    condition.getCodeForGenerator(componentRegister, condition),
-                    " and ", " && "),
-                    " or ", " || "),
-                    " not ", " ! ") + ";\n"
+        return condition.getEvaluationCode(componentRegister)
 
     def generateCode(self, componentRegister):
         for i in range(len(self.conditionList)):
@@ -166,8 +161,8 @@ class ConditionCollection(object):
 
     def generateAppMainCodeForCondition(self, condition, outputFile):
         for s in condition.dependentOnSensors:
-            outputFile.write("    sealCommRegisterInterest({}, condition{}Callback);\n".format(
-                    s.systemwideID, condition.id))
+            outputFile.write("    sealCommRegisterInterest({}_TYPE_ID, condition{}Callback);\n".format(
+                    s.getNameUC(), condition.id))
         for i in condition.dependentOnInputs:
             if i.isError: continue
             outputFile.write("    sealCommPacketRegisterInterest({:#x}, condition{}Callback, (uint32_t*)&{}PacketBuffer);\n".format(
@@ -248,6 +243,13 @@ class SealValue(object):
         return result
 
     def getCodeForGenerator(self, componentRegister, condition):
+        if isinstance(self.firstPart, Value):
+            return self.firstPart.getCode()
+
+        if condition.dependentOnComponent:
+            r = condition.dependentOnComponent.replaceCode(self.firstPart)
+            if r: return r
+
         sp = self.secondPart
         if sp is None:
             sp = "value"
@@ -281,6 +283,7 @@ class Expression(object):
         # because expression in some contexts == condition
         self.dependentOnSensors = set()
         self.dependentOnInputs = set()
+        self.dependentOnComponent = None
 
     def isEventBased(self):
         return bool(len(self.dependentOnSensors)) \
@@ -323,6 +326,15 @@ class Expression(object):
         if type(self.right) is Expression:
             return "(" + self.right.getCodeForGenerator(componentRegister, condition) + ")"
         return self.right
+
+    def getEvaluationCode(self, componentRegister):
+        code = self.getCodeForGenerator(componentRegister, self)
+        return "    bool result = " + \
+            string.replace(string.replace(string.replace(
+                    code,
+                    " and ", " && "),
+                    " or ", " || "),
+                    " not ", " ! ") + ";\n"
 
     def asString(self):
         temp = self.getCode().split(" ", 1)
@@ -622,9 +634,13 @@ class ComponentUseCase(object):
     def __init__(self, type_, name, parameters, fields):
         self.type = type_.lower()
         self.expression = None
-        if type(name) is FunctionTree:
+        if isinstance(name, FunctionTree):
             if len(name.arguments) == 0:
-                self.name = name.function.lower()
+                if isinstance(name.function, SealValue):
+                    self.name = name.function.firstPart
+                else:
+                    self.name = name.function
+                self.name = self.name.lower()
             else:
                 self.name = name.generateSensorName()
                 self.expression = name

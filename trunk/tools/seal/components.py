@@ -6,13 +6,15 @@ PACKET_FIELD_ID_COMMAND    = 0
 PACKET_FIELD_ID_SEQNUM     = 1
 PACKET_FIELD_ID_TIMESTAMP  = 2
 PACKET_FIELD_ID_ADDRESS    = 3
+PACKET_FIELD_ID_IS_SENT    = 4
 # first free packet field ID (note that ID 31, 63, 95, 127 etc. are reserved for extension)
-PACKET_FIELD_ID_FIRST_FREE = 4
+PACKET_FIELD_ID_FIRST_FREE = 5
 
 commonFields = {
     "sequencenumber": PACKET_FIELD_ID_SEQNUM,
     "timestamp": PACKET_FIELD_ID_TIMESTAMP,
-    "address": PACKET_FIELD_ID_ADDRESS
+    "address": PACKET_FIELD_ID_ADDRESS,
+    "issent": PACKET_FIELD_ID_IS_SENT,
 }
 
 ######################################################
@@ -60,9 +62,9 @@ class BranchCollection(object):
                 uc.generateBranchExitCode(outputFile)
         outputFile.write("}\n\n")
 
-    # Returns list of numbers [N] of conditions that must be fullfilled to enter this branch
-    # * number N > 0: condition N must be true
-    # * number N < 0: condition abs(N) must be false
+    # Returns list of numbers [N] of conditions that must be met to enter this branch
+    # * number N > 0: condition Nr. N must be TRUE
+    # * number N < 0: condition Nr. abs(N) must be FALSE
     def getConditions(self, branchNumber):
         branchUseCases = self.branches[branchNumber]
         assert len(branchUseCases)
@@ -122,6 +124,11 @@ class UseCase(object):
             if self.once: self.period = None
         else:
             self.once = None
+        p = self.parameters.get("times")
+        if p:
+            self.times = int(p.value)
+        else:
+            self.times = None
 
         self.on = False
         p = self.parameters.get("on")
@@ -155,8 +162,14 @@ class UseCase(object):
 #                componentRegister.userError("Both 'once' and 'period' or 'pattern' specified for component '{0}' use case\n".format(component.name))
         if (self.pattern and self.once):
             componentRegister.userError("Both 'once' and 'pattern' specified for component '{0}' use case\n".format(component.name))
+        if (self.times and self.once):
+            componentRegister.userError("Both 'once' and 'times' specified for component '{0}' use case\n".format(component.name))
 
-        if component.isRemote:
+        if (self.times and not self.period):
+            componentRegister.userError("'times', but not 'period' specified for component '{0}' use case\n".format(component.name))
+            self.times = None
+
+        if component.isRemote or isinstance(component, Output):
             self.generateAlarm = False
         else:
             self.generateAlarm = self.once or self.pattern or self.period
@@ -234,7 +247,7 @@ class UseCase(object):
         if self.generateAlarm or self.component.isRemote:
             if self.generateAlarm: argumentType = "void *"
             else: argumentType = "uint32_t"
-            outputFile.write("void {0}{1}Callback({2} __unused)\n".format(
+            outputFile.write("void {0}{1}Callback({2} isFromBranchStart)\n".format(
                     ccname, self.numInBranch, argumentType))
             outputFile.write("{\n")
             if type(self.component) is Actuator:
@@ -269,14 +282,14 @@ class UseCase(object):
                     outputFile.write("    if (!isFilteredOut) {\n")
                     for o in outputs:
                         o.generateCallbackCode(self.component, outputFile, self.readFunctionSuffix)
-                        outputFile.write("    }\n")
+                    outputFile.write("    }\n")
                 elif self.period:
                     for s in self.component.subsensors:
-                        if s.getParameterValue("prereadFunction") is None: continue
-                        prereadTime = s.specification.readTime
-                        if prereadTime == 0: continue
+                        if s.getParameterValue("preReadFunction") is None: continue
+                        preReadTime = s.specification.readTime
+                        if preReadTime == 0: continue
                         outputFile.write("    alarmSchedule(&{0}PreAlarm, {2}_PERIOD{1} - {3});\n".format(
-                                s.getNameCC(), self.numInBranch, ucname, prereadTime))
+                                s.getNameCC(), self.numInBranch, ucname, preReadTime))
 
 #                if self.filter:
 #                    filterName = "{}{}Filter{}".format(self.component.getNameCC(),
@@ -314,6 +327,13 @@ class UseCase(object):
                 pass
             elif self.once:
                 pass
+            elif self.times:
+                outputFile.write("    static uint32_t times;\n");
+                outputFile.write("    if (isFromBranchStart) times = 0;\n")
+                outputFile.write("    if (++times < {}) {}\n".format(self.times, '{'))
+                outputFile.write("        alarmSchedule(&{0}Alarm{1}, {2}_PERIOD{1});\n".format(
+                        ccname, self.numInBranch, ucname))
+                outputFile.write("    }\n")
             elif self.period:
                 outputFile.write("    alarmSchedule(&{0}Alarm{1}, {2}_PERIOD{1});\n".format(
                         ccname, self.numInBranch, ucname))
@@ -344,9 +364,13 @@ class UseCase(object):
                     self.component.systemwideID, self.component.getNameCC(), self.numInBranch))
 
     def generateBranchEnterCode(self, outputFile):
-        if type(self.component) is not Output and self.generateAlarm:
-            outputFile.write("    {0}{1}{2}Callback(NULL);\n".format(
-                    self.component.getNameCC(), self.branchName, self.numInBranch))
+        if self.generateAlarm:
+            if isinstance(self.component, Output):
+                outputFile.write("    {0}{1}{2}Process();\n".format(
+                        self.component.getNameCC(), self.branchName, self.numInBranch))
+            else:
+                outputFile.write("    {0}{1}{2}Callback((void *) 1);\n".format(
+                        self.component.getNameCC(), self.branchName, self.numInBranch))
 
     def generateBranchExitCode(self, outputFile):
         if type(self.component) is not Output and self.generateAlarm:
@@ -461,9 +485,13 @@ class Component(object):
             uc.generateVariables(outputFile)
 
     def generateCallbacks(self, outputFile, outputs):
-        if type(self) is Output:
+        if isinstance(self, Output):
+            for o in self.outputUseCases:
+                if isinstance(o, FromFileOutputUseCase):
+                    o.generateCallbacks(outputFile)
             return
-        if type(self) is Sensor:
+
+        if isinstance(self, Sensor):
 #            print self.specification.readFunctionDependsOnParams
 #            print self.useCases
 #            print self.usedForConditions
@@ -573,8 +601,8 @@ class Sensor(Component):
     def generateConstants(self, outputFile):
         super(Sensor, self).generateConstants(outputFile)
         if self.isUsed() or self.doGenerateSyncCallback:
-            outputFile.write("#define {0}_NO_VALUE    {1}\n".format(self.getNameUC(), self.getNoValue()))
-            outputFile.write("#define {0}_TYPE_ID     {1:#x}\n".format(self.getNameUC(), (1 << self.systemwideID)))
+            outputFile.write("#define {0}_TYPE_ID     {1:}\n".format(self.getNameUC(), self.systemwideID))
+            outputFile.write("#define {0}_TYPE_MASK   {1:#x}\n".format(self.getNameUC(), 1<< self.systemwideID))
 
     def isCacheNeeded(self, numCachedSensors):
         if self.cacheNeeded: return True
@@ -611,7 +639,7 @@ class Sensor(Component):
         outputFile.write("}\n")
 
     def generatePrereadCallback(self, outputFile):
-        func = self.getParameterValue("prereadFunction")
+        func = self.getParameterValue("preReadFunction")
         if func is None: func = ""
 
         outputFile.write("void {0}PreReadCallback(void *__unused)\n".format(self.getNameCC()))
@@ -634,7 +662,7 @@ class Sensor(Component):
     def getRawReadFunction(self, suffix, root):
         if self.isRemote:
             # remote sensors require specialHandling
-            return "sealCommReadValue({})".format(self.systemwideID)
+            return "sealCommReadValue({}_TYPE_ID)".format(self.getNameUC())
 
         rawReadFunc = "{}ReadRaw{}()".format(self.getNameCC(), suffix)
 #        if len(suffix) == 0 and self.cacheNeeded:
@@ -1199,7 +1227,6 @@ class OutputUseCase(object):
     def __init__(self, parent, useCase, number, fields):
         self.parent = parent
         self.useCase = useCase
-        self.isAggregateCached = None
         self.packetFields = []
         self.headerMasks = []
         self.useOnlyFields = dict()
@@ -1209,6 +1236,7 @@ class OutputUseCase(object):
         if number != 0:
             self.name += str(number)
         self.useOnlyFields = dict(fields)
+        self.isAggregate = self.getParameterValue("aggregate", False)
 
     def getNameTC(self):
         return toTitleCase(self.name)
@@ -1225,15 +1253,8 @@ class OutputUseCase(object):
             return result.strip('"')
         return result
 
-    def isAggregate(self):
-        if self.isAggregateCached is None:
-            self.isAggregateCached = self.getParameterValue("aggregate", False)
-        return self.isAggregateCached
-
     def generateVariables(self, outputFile):
-        if self.isAggregate() and len(self.packetFields) != 0:
-            outputFile.write("{0}Packet_t {1}Packet;\n".format(self.getNameTC(), self.getNameCC()))
-            outputFile.write("uint_t {0}PacketNumFieldsFull;\n".format(self.getNameCC()))
+        pass
 
     def addPacketTypes(self, s, count):
         # special case for a dummy sync-only "sensor"
@@ -1282,6 +1303,12 @@ class OutputUseCase(object):
                     PACKET_FIELD_ID_SEQNUM, "sequenceNumber", 4, "uint32_t", 1, False))
             self.usedIds.add(PACKET_FIELD_ID_SEQNUM)
 
+        if self.getParameterValue("issent") or ("issent" in self.useOnlyFields):
+            # boolean: sent/not
+            self.packetFields.append(PacketField(
+                    PACKET_FIELD_ID_IS_SENT, "isSent", 4, "uint32_t", 1, False))
+            self.usedIds.add(PACKET_FIELD_ID_IS_SENT)
+
         self.packetFields = sorted(self.packetFields, key = lambda f: f.sensorID)
 
     def generateConstants(self, outputFile):
@@ -1289,21 +1316,22 @@ class OutputUseCase(object):
             outputFile.write("#define {0}_PACKET_NUM_FIELDS    {1}\n".format(
                     self.getNameUC(), self.numSensorFields))
 
-    def generatePacketType(self, outputFile):
+    def generatePacketType(self, outputFile, indent):
         if len(self.packetFields) == 0: return
 
-        outputFile.write("struct {0}Packet_s {1}\n".format(self.getNameTC(), '{'))
+        outputFile.write(getIndent(indent) + "struct {0}Packet_s {1}\n".format(self.getNameTC(), '{'))
 
         # --- generate header
-        outputFile.write("    uint16_t magic;\n")  # 2-byte magic number
-        outputFile.write("    uint16_t crc;\n")    # 2-byte crc (always)
+        outputFile.write(getIndent(indent+1) + "uint16_t magic;\n")  # 2-byte magic number
+        outputFile.write(getIndent(indent+1) + "uint16_t crc;\n")    # 2-byte crc (always)
         # type masks
         headerField = 0
         numField = 1
         for f in self.packetFields:
             if f.sensorID >= numField * 32:
                 headerField |= 1 << 31
-                outputFile.write("    uint32_t typeMask{};\n".format(numField))
+                outputFile.write("#define {}_TYPE_MASK {:#x}\n".format(self.getNameUC(), headerField))
+                outputFile.write(getIndent(indent+1) + "uint32_t typeMask{};\n".format(numField))
                 self.headerMasks.append(headerField)
                 headerField = 0
                 numField += 1
@@ -1311,7 +1339,8 @@ class OutputUseCase(object):
             bit -= 32 * (numField - 1)
             headerField |= (1 << bit)
         if headerField:
-            outputFile.write("    uint32_t typeMask{};\n".format(numField))
+            outputFile.write("#define {}_TYPE_MASK {:#x}\n".format(self.getNameUC(), headerField))
+            outputFile.write(getIndent(indent+1) + "uint32_t typeMask{};\n".format(numField))
             self.headerMasks.append(headerField)
 
         # --- generate the body of the packet
@@ -1320,43 +1349,89 @@ class OutputUseCase(object):
         for f in self.packetFields:
             paddingNeeded = packetLen % f.dataSize
             if paddingNeeded:
-                outputFile.write("    uint{}_t __reserved{};\n".format(
+                outputFile.write(getIndent(indent+1) + "uint{}_t __reserved{};\n".format(
                         paddingNeeded * 8, reservedNum))
                 packetLen += paddingNeeded
                 reservedNum += 1
             if f.count == 1:
-                outputFile.write("    {0} {1};\n".format(f.dataType, f.sensorName))
+                outputFile.write(getIndent(indent+1) + "{0} {1};\n".format(f.dataType, f.sensorName))
             else:
-                outputFile.write("    {0} {1}[{2}];\n".format(f.dataType, f.sensorName, f.count))
+                outputFile.write(getIndent(indent+1) + "{0} {1}[{2}];\n".format(
+                        f.dataType, f.sensorName, f.count))
             packetLen += f.dataSize * f.count
 
         # --- finish the packet
-        outputFile.write("} PACKED;\n\n")
+        outputFile.write(getIndent(indent) + "} PACKED;\n")
         # add a typedef
-        outputFile.write("typedef struct {0}Packet_s {0}Packet_t;\n\n".format(self.getNameTC()))
+        outputFile.write(getIndent(indent) + "typedef struct {0}Packet_s {0}Packet_t;\n".format(
+                self.getNameTC()))
+
+        outputFile.write(getIndent(indent) + "{0}Packet_t {1}Packet;\n\n".format(
+                self.getNameTC(), self.getNameCC()))
+
+    def generateSerialOutputCode(self, outputFile, sensorsUsed):
+        usedSizes = set()
+        if self.isAggregate:
+            for f in self.packetFields:
+                usedSizes.add((f.dataSize, f.dataType))
+        else:
+            for s in sensorsUsed:
+                usedSizes.add((s.getDataSize(), s.getDataType()))
+        generateSerialFunctions(usedSizes, outputFile)
+
+        if not self.isAggregate:
+            # done
+            return
+
+        outputFile.write("static inline void {}PacketPrint(void)\n".format(self.getNameCC()))
+        outputFile.write("{\n")
+        outputFile.write("    PRINT(\"======================\\n\");\n")
+        for f in self.packetFields:
+            if f.count == 1:
+                outputFile.write("    serialPrint_{0}(\"{1}\", serialPacket.{2});\n".format(
+                        f.dataType, toTitleCase(f.sensorName), f.sensorName))
+            else:
+                for i in range(f.count):
+                    outputFile.write("    serialPrint_{0}(\"{1}[{3}]\", serialPacket.{2}[{3}]);\n".format(
+                            f.dataType, toTitleCase(f.sensorName), f.sensorName, i))
+        outputFile.write("}\n\n")
 
 
     def generateOutputCode(self, outputFile, sensorsUsed):
+        if self.getNameCC() == "serial":
+            self.generateSerialOutputCode(outputFile, sensorsUsed)
+            if not self.isAggregate: return
+
         outputFile.write("static inline void {0}PacketInit(void)\n".format(self.getNameCC()))
         outputFile.write("{\n")
-        outputFile.write("    {0}PacketNumFieldsFull = 0;\n".format(self.getNameCC()))
+#        outputFile.write("    {0}PacketNumFieldsFull = 0;\n".format(self.getNameCC()))
+        initialMask = 0
         for f in self.packetFields:
-            if f.isRealSensor:
-                if f.count == 1:
-                    outputFile.write("    {0}Packet.{1} = {2}_NO_VALUE;\n".format(
-                            self.getNameCC(), f.sensorName, f.sensorName.upper()))
-                else:
-                    for i in range(f.count):
-                        outputFile.write("    {0}Packet.{1}[{3}] = {2}_NO_VALUE;\n".format(
-                                self.getNameCC(), f.sensorName, f.sensorName.upper(), i))
+            if not f.isRealSensor:
+                initialMask |= (1 << f.sensorID)
+#                outputFile.write("    {0}Packet.typeMask1 |= {:#x};\n".format(
+#                        self.getNameCC(), f.systemwideID))
+
+#            if f.isRealSensor:
+#                if f.count == 1:
+#                    outputFile.write("    {0}Packet.{1} = {2}_NO_VALUE;\n".format(
+#                            self.getNameCC(), f.sensorName, f.sensorName.upper()))
+#                else:
+#                    for i in range(f.count):
+#                        outputFile.write("    {0}Packet.{1}[{3}] = {2}_NO_VALUE;\n".format(
+#                                self.getNameCC(), f.sensorName, f.sensorName.upper(), i))
+
+        outputFile.write("    {0}Packet.typeMask1 = {1:#x};\n".format(
+                self.getNameCC(), initialMask))
+
         outputFile.write("}\n\n")
 
         outputFile.write("static inline void {0}PacketSend(void)\n".format(self.getNameCC()))
         outputFile.write("{\n")
         outputFile.write("    {0}Packet.magic = SEAL_MAGIC;\n".format(self.getNameCC()))
-        for i in range(len(self.headerMasks)):
-            outputFile.write("    {0}Packet.typeMask{1} = {2:#x};\n".format(
-                    self.getNameCC(), i + 1, self.headerMasks[i]))
+#        for i in range(len(self.headerMasks)):
+#            outputFile.write("    {0}Packet.typeMask{1} = {2:#x};\n".format(
+#                    self.getNameCC(), i + 1, self.headerMasks[i]))
         if PACKET_FIELD_ID_SEQNUM in self.usedIds:
             outputFile.write("    static uint32_t seqnum;\n")
             outputFile.write("    {0}Packet.sequenceNumber = ++seqnum;\n".format(self.getNameCC()))
@@ -1365,6 +1440,8 @@ class OutputUseCase(object):
         if PACKET_FIELD_ID_ADDRESS in self.usedIds:
             outputFile.write("    {0}Packet.address = localAddress;\n".format(self.getNameCC()))
             componentRegister.additionalConfig.add("addressing")
+        if PACKET_FIELD_ID_IS_SENT in self.usedIds:
+            outputFile.write("    {0}Packet.isSent = false;\n".format(self.getNameCC()))
         if True:
             outputFile.write("    {0}Packet.crc = crc16((const uint8_t *) &{0}Packet + 4, sizeof({0}Packet) - 4);\n".format(
                     self.getNameCC()))
@@ -1380,8 +1457,11 @@ class OutputUseCase(object):
 
         outputFile.write("static inline bool {0}PacketIsFull(void)\n".format(self.getNameCC()))
         outputFile.write("{\n")
-        outputFile.write("    return {0}PacketNumFieldsFull >= {1}_PACKET_NUM_FIELDS;\n".format(
+        outputFile.write("    return ({0}Packet.typeMask1 & {1}_TYPE_MASK) == {1}_TYPE_MASK;\n".format(
                 self.getNameCC(), self.getNameUC()))
+
+#        outputFile.write("    return {0}PacketNumFieldsFull >= {1}_PACKET_NUM_FIELDS;\n".format(
+#                self.getNameCC(), self.getNameUC()))
         outputFile.write("}\n\n")
 
     def generateCallbackCode(self, sensor, outputFile, suffix):
@@ -1401,71 +1481,83 @@ class OutputUseCase(object):
                 break
         if not found: return
 
-        if f.count == 1:
-            outputFile.write("        if ({0}Packet.{1} == {2}_NO_VALUE) {3}\n".format(
-                    self.getNameCC(), sensor.getNameCC(), sensor.getNameUC(), '{'))
-        else:
-            outputFile.write("        static uint16_t lastIdx;\n")
-            outputFile.write("        if (lastIdx == {4} && {0}Packet.{1}[lastIdx] == {2}_NO_VALUE) {3}\n".format(
-                        self.getNameCC(), sensor.getNameCC(), sensor.getNameUC(), '{', f.count - 1))
+#        if f.count == 1:
+#            outputFile.write("        if (!({0}Packet.typeMask1 & {:#x}) {3}\n".format(
+#                    self.getNameCC(), sensor.systemwideID, '{'))
+#        else:
+#            outputFile.write("        static uint16_t lastIdx;\n")
+#            outputFile.write("        if (lastIdx == {4} && {0}Packet.{1}[lastIdx] == {2}_NO_VALUE) {3}\n".format(
+#                        self.getNameCC(), sensor.getNameCC(), sensor.getNameUC(), '{', f.count - 1))
 
-        outputFile.write("            {0}PacketNumFieldsFull++;\n".format(self.getNameCC()))
+#        outputFile.write("            {0}PacketNumFieldsFull++;\n".format(self.getNameCC()))
 
-        outputFile.write("        }\n")
+#        outputFile.write("        }\n")
+
+#        if f.count == 1:
+#            outputFile.write("        {0}Packet.{1} = {1}Value;\n".format(
+#                    self.getNameCC(), sensor.getNameCC()))
+#        else:
+#            outputFile.write("        {0}Packet.{1}[lastIdx] = {1}Value;\n".format(
+#                    self.getNameCC(), sensor.getNameCC()))
 
         if f.count == 1:
             outputFile.write("        {0}Packet.{1} = {1}Value;\n".format(
                     self.getNameCC(), sensor.getNameCC()))
         else:
+            outputFile.write("        static uint16_t lastIdx;\n")
             outputFile.write("        {0}Packet.{1}[lastIdx] = {1}Value;\n".format(
                     self.getNameCC(), sensor.getNameCC()))
-
-        if f.count > 1:
             outputFile.write("        lastIdx = (lastIdx + 1) % {};\n".format(f.count))
+
+        outputFile.write("        {0}Packet.typeMask1 |= {1}_TYPE_MASK;\n".format(
+                self.getNameCC(), sensor.getNameUC()))
 
         outputFile.write("        if ({0}PacketIsFull()) {1}\n".format(self.getNameCC(), '{'))
         outputFile.write("            {0}PacketSend();\n".format(self.getNameCC()))
         outputFile.write("        }\n\n")
 
     def generateAppMainCode(self, outputFile):
-        if self.isAggregate():
+        if self.isAggregate:
             outputFile.write("    {0}PacketInit();\n".format(self.getNameCC()))
 
-######################################################
-class SerialOutputUseCase(OutputUseCase):
-    def __init__(self, parent, useCase, number, fields):
-        super(SerialOutputUseCase, self).__init__(parent, useCase, number, fields)
-
-    def generateOutputCode(self, outputFile, sensorsUsed):
-        usedSizes = set()
-        if self.isAggregate():
-            for f in self.packetFields:
-                usedSizes.add((f.dataSize, f.dataType))
+    def generateBinaryOutputCode(self, outputFile, f, indent):
+        if f.count == 1:
+            outputFile.write(getIndent(indent) + "fwrite(&{0}Packet.{1}, sizeof({0}Packet.{1}), 1, out);\n".format(
+                    self.getNameCC(), f.sensorName))
         else:
-            for s in sensorsUsed:
-                usedSizes.add((s.getDataSize(), s.getDataType()))
-        generateSerialFunctions(usedSizes, outputFile)
+            for i in range(f.count):
+                outputFile.write(getIndent(indent) + "fwrite(&{0}Packet.{1}[{2}], sizeof({0}Packet.{1}[{2}]), 1, out);\n".format(
+                        self.getNameCC(), f.sensorName, i))
 
-        if not self.isAggregate():
-            # done
-            return
+    def generateTextOutputCode(self, outputFile, f, indent):
+        if f.count == 1:
+            outputFile.write(getIndent(indent) + 'fprintf(out, "%lu ", {0}Packet.{1});\n'.format(
+                    self.getNameCC(), f.sensorName))
+        else:
+            for i in range(f.count):
+                outputFile.write(getIndent(indent) + 'fprintf(out, "%lu ", {0}Packet.{1}[{2}]);\n'.format(
+                        self.getNameCC(), f.sensorName, i))
 
-        outputFile.write("static inline void {}PacketPrint(void)\n".format(self.getNameCC()))
-        outputFile.write("{\n")
-        outputFile.write("    PRINT(\"======================\\n\");\n")
-        for f in self.packetFields:
-            if f.count == 1:
-                outputFile.write("    serialPrint_{0}(\"{1}\", serialPacket.{2});\n".format(
-                        f.dataType, toTitleCase(f.sensorName), f.sensorName))
-            else:
-                for i in range(f.count):
-                    outputFile.write("    serialPrint_{0}(\"{1}[{3}]\", serialPacket.{2}[{3}]);\n".format(
-                            f.dataType, toTitleCase(f.sensorName), f.sensorName, i))
-        outputFile.write("}\n\n")
+    def generateBinaryInputCode(self, outputFile, f, indent):
+        if f.count == 1:
+            outputFile.write(getIndent(indent) + "fread(&{0}Packet.{1}, sizeof({0}Packet.{1}), 1, in);\n".format(
+                    self.getNameCC(), f.sensorName))
+        else:
+            for i in range(f.count):
+                outputFile.write(getIndent(indent) + "fread(&{0}Packet.{1}[{2}], sizeof({0}Packet.{1}[{2}]), 1, in);\n".format(
+                        self.getNameCC(), f.sensorName, i))
 
-        # call superclass function too
-        super(SerialOutputUseCase, self).generateOutputCode(outputFile, sensorsUsed)
-
+    def generateTextInputCode(self, outputFile, f, indent):
+        if f.count == 1:
+            outputFile.write(getIndent(indent) + 'fscanf(in, "%lu ", &{0}Packet.{1});\n'.format(
+                    self.getNameCC(), f.sensorName))
+            # XXX: for debugging
+            # outputFile.write('        PRINTF("%lu ", {0}Packet.{1});\n'.format(
+            #       self.getNameCC(), f.sensorName))
+        else:
+            for i in range(f.count):
+                outputFile.write(getIndent(indent) + 'fscanf(in, "%lu ", &{0}Packet.{1}[{2}]);\n'.format(
+                        self.getNameCC(), f.sensorName, i))
 
 ######################################################
 class FileOutputUseCase(OutputUseCase):
@@ -1483,33 +1575,12 @@ class FileOutputUseCase(OutputUseCase):
             self.filename = "file{0:03d}.{1}".format(number, suffix)
         elif self.getParameterValue("binary") is None and self.getParameterValue("text") is None:
             # type is determined by extension
-            if f[-4:] == '.txt' or f[-4:] == '.csv':
-                self.isText = True
-            else:
-                self.isText = False
+            self.isText = (f[-4:] == '.txt' or f[-4:] == '.csv')
 
         if self.filename.find('.') == -1:
             # attach an extesion automatically
             if self.isText: self.filename += ".csv"
             else: self.filename += ".bin"
-
-    def generateBinaryOutputCode(self, outputFile, f):
-        if f.count == 1:
-            outputFile.write("    fwrite(&{0}Packet.{1}, sizeof({0}Packet.{1}), 1, out);\n".format(
-                    self.getNameCC(), f.sensorName))
-        else:
-            for i in range(f.count):
-                outputFile.write("    fwrite(&{0}Packet.{1}[{2}], sizeof({0}Packet.{1}[{2}]), 1, out);\n".format(
-                        self.getNameCC(), f.sensorName, i))
-
-    def generateTextOutputCode(self, outputFile, f):
-        if f.count == 1:
-            outputFile.write('    fprintf(out, "%lu ", {0}Packet.{1});\n'.format(
-                    self.getNameCC(), f.sensorName))
-        else:
-            for i in range(f.count):
-                outputFile.write('    fprintf(out, "%lu ", {0}Packet.{1}[{2}]);\n'.format(
-                        self.getNameCC(), f.sensorName, i))
 
     def generateTextHeading(self, outputFile, f):
         if f.count == 1:
@@ -1524,7 +1595,7 @@ class FileOutputUseCase(OutputUseCase):
 
         if self.isText:
             outputFile.write('    bool accessOk = access("{}", F_OK) == 0;\n'.format(self.filename))
-        outputFile.write('    FILE *out = fopen("{}", "a");\n'.format(self.filename))
+        outputFile.write('    FILE *out = fopen("{}", "ab");\n'.format(self.filename))
         outputFile.write('    if (!out) return;\n')
 
         if self.isText:
@@ -1538,9 +1609,9 @@ class FileOutputUseCase(OutputUseCase):
 
         for f in self.packetFields:
             if self.isText:
-                self.generateTextOutputCode(outputFile, f)
+                self.generateTextOutputCode(outputFile, f, indent=1)
             else:
-                self.generateBinaryOutputCode(outputFile, f)
+                self.generateBinaryOutputCode(outputFile, f, indent=1)
 
         if self.isText:
             outputFile.write("    fputc('\\r', out);\n")
@@ -1551,6 +1622,172 @@ class FileOutputUseCase(OutputUseCase):
 
         # call superclass function too
         super(FileOutputUseCase, self).generateOutputCode(outputFile, sensorsUsed)
+
+######################################################
+class FromFileOutputUseCase(OutputUseCase):
+    def __init__(self, parent, useCase, number, fields):
+        super(FromFileOutputUseCase, self).__init__(parent, useCase, number, fields)
+        self.filename = self.getParameterValue("file")
+        if not self.filename: self.filename = self.getParameterValue("filename")
+        # TODO: detect by contents?
+        self.isText = (self.filename[-4:] == '.txt' or self.filename[-4:] == '.csv')
+
+        self.condition = useCase.parameters.get("where")
+        if not isinstance(self.condition, Expression): self.condition = None
+        if self.condition: self.condition.dependentOnComponent = self
+
+        self.isAggregate = True
+
+    def generateConstants(self, outputFile):
+        pass
+
+    def generateVariables(self, outputFile):
+        pass
+
+    def findFileType(self):
+        self.associatedFileOutputUseCase = None
+        fileComponent = componentRegister.outputs.get("file")
+        if fileComponent is None: return
+        for o in fileComponent.outputUseCases:
+            if o.filename == self.filename:
+                self.associatedFileOutputUseCase = o
+                return True
+        return False
+
+    def generateCallbacks(self, outputFile):
+        if not self.findFileType():
+            componentRegister.userError(("Output '{0}' has file as parameter," \
+               + "but the file is not used otherwise in the program and has unknown type\n").format(
+                    self.getNameCC()))
+            return
+
+        self.isText = self.associatedFileOutputUseCase.isText
+        self.packetFields = self.associatedFileOutputUseCase.packetFields
+        self.usedIds = self.associatedFileOutputUseCase.usedIds
+        self.numSensorFields = self.associatedFileOutputUseCase.numSensorFields
+
+        isSerial = self.getNameCC() == "serial"
+        doRewrite = PACKET_FIELD_ID_IS_SENT in self.usedIds
+
+        if isSerial:
+            # define packet type outside the function
+            self.generatePacketType(outputFile, indent=0)
+            self.generateSerialOutputCode(outputFile, sensorsUsed=[])
+
+        outputFile.write("void {0}{1}{2}Process(void)\n".format(
+                self.getNameCC(), self.useCase.branchName, self.useCase.numInBranch))
+        outputFile.write("{\n")
+
+        if not isSerial:
+            # define packet type right inside the function
+            self.generatePacketType(outputFile, indent=1)
+
+        outputFile.write("    {}Packet.typeMask1 = {}_TYPE_MASK;\n\n".format(
+                self.getNameCC(), self.getNameUC()))
+
+        outputFile.write('    FILE *in = fopen("{}", "rb");\n'.format(self.filename))
+        outputFile.write('    if (!in) return;\n')
+
+        if doRewrite:
+            outputFile.write('    FILE *out = fopen("{}.tmp", "wb");\n'.format(self.filename))
+            outputFile.write('    if (!out) return;\n')
+
+        if self.isText:
+            # skip first line
+            outputFile.write("\n    uint8_t c;\n")
+            outputFile.write("    do {\n")
+            outputFile.write("        c = fgetc(in);\n")
+            if doRewrite:
+                # copy first line to output file
+                outputFile.write("        fputc(c, out);\n")
+            outputFile.write("    } while (c != '\\n' && !feof(in));\n\n")
+
+        # main loop: read the file and print its contents
+        outputFile.write("    while (1) {\n")
+
+        # outputFile.write('        PRINT("enter loop\\n");\n')
+
+        for f in self.packetFields:
+            if self.isText:
+                self.generateTextInputCode(outputFile, f, indent=2)
+            else:
+                self.generateBinaryInputCode(outputFile, f, indent=2)
+
+        # if reading returned end of file, return here
+        outputFile.write("        if (feof(in)) break;\n")
+
+        # for debugging
+        # outputFile.write('        PRINT("\\n");\n')
+
+        if self.condition:
+            outputFile.write("\n    " + self.condition.getEvaluationCode(componentRegister))
+            outputFile.write("        if (!result) continue;\n\n")
+
+        # for debugging
+        # outputFile.write('        PRINT("OK\\n");\n')
+
+        # fill rest of packet fields
+        outputFile.write("        {0}Packet.magic = SEAL_MAGIC;\n".format(self.getNameCC()))
+        if PACKET_FIELD_ID_IS_SENT in self.usedIds:
+            # mark the packet as sent
+            outputFile.write("        {0}Packet.isSent = true;\n".format(self.getNameCC()))
+        if True:
+            outputFile.write("        {0}Packet.crc = crc16((const uint8_t *) &{0}Packet + 4, sizeof({0}Packet) - 4);\n".format(
+                    self.getNameCC()))
+
+        if isinstance(self, FileOutputUseCase):
+            useFunction = self.getNameCC() + "Print()"
+        else:
+            useFunction = self.getParameterValue("useFunction")
+        if useFunction:
+            outputFile.write("        {0};\n".format(useFunction))
+
+        if doRewrite:
+            for f in self.packetFields:
+                if self.isText:
+                    self.generateTextOutputCode(outputFile, f, indent=2)
+                else:
+                    self.generateBinaryOutputCode(outputFile, f, indent=2)
+            if self.isText:
+                outputFile.write("        fputc('\\r', out);\n")
+                outputFile.write("        fputc('\\n', out);\n")
+            outputFile.write("\n")
+
+        outputFile.write("        mdelay(10);\n")
+
+        outputFile.write("    }\n")
+        
+        # outputFile.write('        PRINT("close files\\n");\n')
+
+        # close the file
+        outputFile.write("    fclose(in);\n")
+
+        if doRewrite:
+            # replace input file with output file
+            outputFile.write("    fclose(out);\n")
+            outputFile.write('    rename("{0}.tmp", "{0}");\n'.format(self.filename))
+
+        outputFile.write("}\n\n")
+
+    # replace code for a condition
+    def replaceCode(self, parameterName):
+        for f in self.packetFields:
+            if f.sensorName.lower() == parameterName:
+                return self.getNameCC() + "Packet." + f.sensorName
+
+        # Not an error! Continue lookup in te regular way.
+        # componentRegister.userError(("Output '{0}': unknown parameter '{1}' in 'where' condition\n").format(
+        #            self.getNameCC(), parameterName))
+        return None
+
+    def generateOutputCode(self, outputFile, sensorsUsed):
+        pass
+
+    def generateCallbackCode(self, sensor, outputFile, suffix):
+        pass
+
+    def generateAppMainCode(self, outputFile):
+        pass
 
 
 ######################################################
@@ -1563,10 +1800,16 @@ class Output(Component):
         id = len(self.outputUseCases)
         if self.name == "file":
             ouc = FileOutputUseCase(self, useCase, id, fields)
-        elif self.name == "serial":
-            ouc = SerialOutputUseCase(self, useCase, id, fields)
         else:
-            ouc = OutputUseCase(self, useCase, id, fields)
+            filename = useCase.getParameterValue("file")
+            if not filename: filename = useCase.getParameterValue("filename")
+
+            if filename:
+                ouc = FromFileOutputUseCase(self, useCase, id, fields)
+                useCase.generateAlarm = True
+            else:
+                ouc = OutputUseCase(self, useCase, id, fields)
+
         self.outputUseCases.append(ouc)
 
     def definePacketType(self):
@@ -1575,7 +1818,10 @@ class Output(Component):
 
     def generatePacketType(self, outputFile):
         for ouc in self.outputUseCases:
-            ouc.generatePacketType(outputFile)
+            if isinstance(ouc, FromFileOutputUseCase):
+                pass
+            else:
+                ouc.generatePacketType(outputFile, 0)
 
     def generateVariables(self, outputFile):
         for ouc in self.outputUseCases:
@@ -1654,7 +1900,7 @@ class InputStruct(object):
 
             s = componentRegister.sensors.get(f)
             if s is None:
-                componentRegister.userError("Field '{0}' not known for input {1}\n".format(
+                componentRegister.userError("Field '{0}' not known for input '{1}'\n".format(
                         f, self.name))
                 self.isError = True
                 return
@@ -1671,28 +1917,18 @@ class InputStruct(object):
         outputFile.write("struct {0}PacketBuffer_s {1}\n".format(self.getNameTC(), '{'))
         for f in self.sortedFields:
             outputFile.write("    uint32_t {};\n".format(f[1]))
-        outputFile.write("} PACKED;\n\n")
-        outputFile.write("typedef struct {0}PacketBuffer_s {0}PacketBuffer_t;\n\n".format(self.getNameTC()))
-    def generateVariables(self, outputFile):
-        if self.isError: return
+        outputFile.write("} PACKED;\n")
+        outputFile.write("typedef struct {0}PacketBuffer_s {0}PacketBuffer_t;\n".format(
+                self.getNameTC()))
 
         outputFile.write("{0}PacketBuffer_t {1}PacketBuffer;\n\n".format(
                 self.getNameTC(), self.getNameCC()))
 
+    def generateVariables(self, outputFile):
+        pass
+
     def generateReadFunction(self, field, outputFile):
         pass
-        # find ID
-#        id = -1
-#        for f in sortedFields:
-#            if f[1] == field:
-#                id = f[0]
-#                break
-        # generate the function
-#        outputFile.write("static inline uint32_t {}{}ReadProcess(void) {}\n".format(
-#                self.getNameCC(), toTitleCase(field), '{'))
-#        outputFile.write("{\n")
-#        outputFile.write("    return sealCommReadValue({:#x})".format(id))
-#        outputFile.write("}\n\n")
 
     def generateReadFunctions(self, outputFile):
         # generate a getter function for each fields used in conditions
@@ -1701,12 +1937,6 @@ class InputStruct(object):
             self.generateReadFunction(f, outputFile)
 
     # app main code is generated in conditions
-
-#    def generateAppMainCode(self, outputFile):
-#        if self.isError: return
-        
-#        outputFile.write("    sealCommPacketRegisterInterest({}, {}, {}PacketBuffer);\n".format())
-
 
 ######################################################
 class ComponentRegister(object):
@@ -1979,9 +2209,6 @@ class ComponentRegister(object):
 
     def replaceCode(self, componentName, parameterName, condition):
         # print "replace Code: " + componentName + "." + parameterName
-
-        if type(componentName) is Value:
-            return componentName.getCode()
 
         c = self.findComponentByName(componentName)
 #        if c == None:

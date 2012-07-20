@@ -122,7 +122,7 @@ static void receivePacketData(SealCommListener_t *l, uint32_t typeMask, const ui
             }
             read++;
         }
-        if (bit == (1 << 31)) break;
+        if (bit == (1ul << 31)) break;
     }
     listenerBeingProcessed = l;
     l->callback(getDataPointer(l, sv));
@@ -148,7 +148,7 @@ static void sealRecv(struct MacInfo_s *mi, uint8_t *data, uint16_t length)
     }
     uint32_t typeMask = h.typeMask;
     uint8_t valueOffset = sizeof(SealHeader_t);
-    while (typeMask & (1 << 31)) {
+    while (typeMask & (1ul << 31)) {
         // TODO: support multiple typemask extension!
         // TODO: check len
         memcpy(&typeMask, data + valueOffset, sizeof(typeMask));
