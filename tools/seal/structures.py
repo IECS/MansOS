@@ -6,15 +6,27 @@ def getIndent(indent):
     # take indent string n times
     return INDENT_STRING * indent
 
-def toMilliseconds(x, componentRegister):
-    if type(x) is int: return x
-    value = x.value
-    if x.suffix is None or x.suffix == '' or x.suffix == "ms":
-        pass
-    elif x.suffix == "s" or x.suffix == "sec":
-        value *= 1000
-    else:
-        componentRegister.userError("Unknown suffix '{0}' for time value\n".format(x.suffix))
+#def toMilliseconds(x, componentRegister):
+#    if type(x) is int: return x
+#    value = x.value
+#    if x.suffix is None or x.suffix == '' or x.suffix == "ms":
+#        pass
+#    elif x.suffix == "s" or x.suffix == "sec":
+#        value *= 1000
+#    else:
+#        componentRegister.userError("Unknown suffix '{0}' for time value\n".format(x.suffix))
+#    return value
+
+def suffixTransform(value, suffix):
+    if suffix is None or suffix == '':
+        return value
+    if suffix == 's':
+        return value * 1000 # seconds to milliseconds
+    if suffix == 'ms':
+        return value        # milliseconds to milliseconds
+    # default case: ignore the suffix
+    print "Unknown suffix '{0}' for value {1}\n".format(suffix, value)
+    # TODO: componentRegister.userError("Unknown suffix '{0}' for value {1}\n".format(suffix, value))
     return value
 
 def toCamelCase(s):
@@ -38,7 +50,10 @@ def static_var(varname, value = 0):
 ######################################################
 class FunctionTree(object):
     def __init__(self, function, arguments):
-        self.function = function
+        if isinstance(function, SealValue):
+            self.function = function.firstPart
+        else:
+            self.function = function
         self.arguments = arguments
 
     def checkArgs(self, argCount, componentRegister):
@@ -51,14 +66,20 @@ class FunctionTree(object):
     def asConstant(self):
         if len(self.arguments):
             return None
-        try:
-            return int(self.function.value)
-        except Exception:
-            return None
+        const = self.function.getRawValue()
+        if isinstance(const, int):
+            return const
+        return None
+#        try:
+#            return int(self.function.value)
+#        except Exception:
+#            return None
 
     def generateSensorName(self):
         if type(self.function) is Value:
             return self.function.asString()
+#        if type(self.function) is SealValue:
+#            return self.function.firstPart # XXX
         result = self.function.lower()
         for a in self.arguments:
             result += "_" + a.generateSensorName()
@@ -67,10 +88,15 @@ class FunctionTree(object):
     def getCode(self):
         if type(self.function) is Value:
             return self.function.asString()
+#        if type(self.function) is SealValue:
+#            return self.function.firstPart # XXX
         args = []
         for a in self.arguments:
             args.append(a.getCode())
         return self.function.lower() + "(" + ",".join(args) + ")"
+
+#    def getEvaluationCode(self, componentRegister):
+#        return self.getCode()
 
     def collectImplicitDefines(self):
         return []
@@ -184,15 +210,22 @@ class Value(object):
             self.value = value
             self.suffix = suffix
 
+    def getRawValue(self):
+        if not isinstance(self.value, int):
+            return self.value
+        return suffixTransform(self.value, self.suffix, )
+
     def getCode(self):
+#        print "getCode for", self.value, self.suffix
         if self.value is None:
             return None
-        if type(self.value) is SealValue:
+        assert not isinstance(self.value, Value)
+        if isinstance(self.value, SealValue):
             return self.value.getCode()
-        if type(self.value) is str:
+        if isinstance(self.value, str):
             return '"' + self.value + '"'
         # integer or boolean
-        s = string.lower("{0}".format(self.value))
+        s = string.lower(str(self.value))
         if not (self.suffix is None):
             s += self.suffix
         return s
@@ -243,6 +276,7 @@ class SealValue(object):
         return result
 
     def getCodeForGenerator(self, componentRegister, condition):
+        # print "getCodeForGenerator", self
         if isinstance(self.firstPart, Value):
             return self.firstPart.getCode()
 
@@ -280,9 +314,13 @@ class Expression(object):
                 self.funcExpressionRight = right
         else:
             self.right = right
-        # because expression in some contexts == condition
+
+        # -- the rest are for conditiions opnly (expression in some contexts is a condition)
+        # dependent on these self-reading sensors
         self.dependentOnSensors = set()
+        # dependent on these interactive inputs
         self.dependentOnInputs = set()
+        # used for "where" conditions, contains the output use case that has this condition
         self.dependentOnComponent = None
 
     def isEventBased(self):
@@ -293,11 +331,11 @@ class Expression(object):
         result = []
         if self.funcExpressionLeft:
             result.append(ComponentDefineStatement(self.left.value.firstPart, self.funcExpressionLeft, []))
-        else:
+        elif self.left:
             result += self.left.collectImplicitDefines()
         if self.funcExpressionRight:
             result.append(ComponentDefineStatement(self.right.value.firstPart, self.funcExpressionRight, []))
-        else:
+        elif self.right:
             result += self.right.collectImplicitDefines()
         return result
 
@@ -316,6 +354,7 @@ class Expression(object):
         return self.right
 
     def getCodeForGenerator(self, componentRegister, condition):
+        # print "getCodeForGenerator", self
         if self.left != None and self.right != None:
             result = self.left.getCodeForGenerator(componentRegister, condition)
             result += " " + self.op + " "
@@ -325,9 +364,18 @@ class Expression(object):
             return self.op + " " + self.right.getCodeForGenerator(componentRegister, condition)
         if type(self.right) is Expression:
             return "(" + self.right.getCodeForGenerator(componentRegister, condition) + ")"
+#        print "self.right=", self.right, "[", self.right.asString(), "]"
+#        if type(self.right) is Value:
+#            print "self.right.value", self.right.value
+#            return self.right.asString()
+        if type(self.right) is Value:
+            return self.right.getCodeForGenerator(componentRegister, condition)
         return self.right
 
     def getEvaluationCode(self, componentRegister):
+#        print "getEvaluationCode for", self.right, self.left
+#        print "getEvaluationCode for", self.right.right.right.value.firstPart
+#        print "getEvaluationCode for", self
         code = self.getCodeForGenerator(componentRegister, self)
         return "    bool result = " + \
             string.replace(string.replace(string.replace(
@@ -482,8 +530,13 @@ class ComponentDefineStatement(object):
         if len(functionTree.arguments) == 0:
             # in this (default) case of 0-ary function, function name = sensor or constant name
             # TODO: replace CONST defines before this!
-            if type(functionTree.function) is Value:
-                return ["__const" + str(functionTree.function.value)]
+#            print "  get basename functionTree.function:" ,functionTree.function
+            if isinstance(functionTree.function, Value):
+#                print "    ", functionTree.function.getRawValue()
+                return ["__const" + str(functionTree.function.getRawValue())]
+            if isinstance(functionTree.function, SealValue):
+#                print "    seal value", functionTree.function.firstPart
+                return [functionTree.function.firstPart]
             return [functionTree.function]
         basenames = []
         for a in functionTree.arguments:
@@ -496,8 +549,13 @@ class ComponentDefineStatement(object):
     def getImmediateBasenameRecursively(self, functionTree):
         # no function
         if len(functionTree.arguments) == 0:
-            if type(functionTree.function) is Value:
+#            print "  get immed functionTree.function:" ,functionTree.function
+            if isinstance(functionTree.function, Value):
+#                print "    ", functionTree.function.value
                 return "constant"
+            if isinstance(functionTree.function, SealValue):
+#                print "    seal value", functionTree.function.firstPart
+                return functionTree.function.firstPart
             return functionTree.function
         # unary function
         if len(functionTree.arguments) == 1:
@@ -505,11 +563,6 @@ class ComponentDefineStatement(object):
         # n-ary function; may return null sensor as base, if more than one are used
         # TODO: not all n-ary functions use multiple sensors!!!
         return "null"
-#        subsensors = []
-#        for a in functionTree.arguments:
-#            if len(a.arguments) > 0:
-#                subsensors.add(a)
-#        if len(subsensors) == 1
 
     def getImmediateBasename(self):
         return self.getImmediateBasenameRecursively(self.functionTree)

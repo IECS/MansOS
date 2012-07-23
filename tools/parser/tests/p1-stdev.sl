@@ -1,6 +1,3 @@
-
-config "CONST_CONDITION_EVALUATION_INTERVAL=100";
-
 const ACCEL_Z 2; // channel number
 
 define AccelZ AnalogIn, channel ACCEL_Z;

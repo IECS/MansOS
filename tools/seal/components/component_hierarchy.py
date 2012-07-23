@@ -267,6 +267,8 @@ class DigitalInputSensor(SealSensor):
         super(DigitalInputSensor, self).__init__("DigitalIn")
         self.useFunction.value = "pinRead(1, 0)"
         self.readFunction.value = "pinRead(1, 0)"
+        self.pin = SealParameter(0, ["0", "1", "2", "3", "4", "5", "6", "7"])
+        self.port = SealParameter(1, ["1", "2", "3", "4", "5", "6"])
         self.readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):

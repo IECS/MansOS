@@ -43,12 +43,14 @@ class Generator(object):
     def generateConstants(self):
         # main loop is executed once in second by default
         self.outputFile.write("#ifndef CONDITION_EVALUATION_INTERVAL\n")
-        self.outputFile.write("#define CONDITION_EVALUATION_INTERVAL  1000\n") # ms
+        self.outputFile.write("#define CONDITION_EVALUATION_INTERVAL  100\n") # ms
         self.outputFile.write("#endif\n\n")
 
         self.outputFile.write("#define NUM_CONDITIONS {0}\n".format(
                 components.conditionCollection.totalConditions()))
         self.outputFile.write("#define DEFAULT_CONDITION 0\n\n")
+
+        self.outputFile.write("#define IS_FROM_BRANCH_START ((void *) 1)\n\n")
 
         for c in self.components:
             c.generateConstants(self.outputFile)

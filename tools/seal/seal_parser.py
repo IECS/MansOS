@@ -309,7 +309,8 @@ class SealParser():
                      | NOT_TOKEN condition_factor
         '''
         if len(p) == 2: # logical_statement
-            p[0] = p[1]
+#            p[0] = p[1]
+            p[0] = Expression(right=p[1])
         elif len(p) == 3: # NOT condition
             p[0] = Expression(None, p[1], p[2])
         else:
