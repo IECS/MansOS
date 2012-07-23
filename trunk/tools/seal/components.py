@@ -78,6 +78,7 @@ class BranchCollection(object):
 ######################################################
 class UseCase(object):
     def __init__(self, component, parameters, conditions, branchNumber, numInBranch):
+#        print "new use case of " + component.name + ": ", parameters
         self.component = component
         self.parameters = {}
         # use component's parameters as defaults
@@ -109,7 +110,8 @@ class UseCase(object):
         # TODO: automate this using reflection!
         p = self.parameters.get("period")
         if p:
-            self.period = toMilliseconds(p, componentRegister)
+#            self.period = toMilliseconds(p, componentRegister)
+            self.period = p.getRawValue()
         else:
             self.period = None
         p = self.parameters.get("pattern")
@@ -125,7 +127,7 @@ class UseCase(object):
         else:
             self.once = None
         p = self.parameters.get("times")
-        if p:
+        if p and p.value is not None:
             self.times = int(p.value)
         else:
             self.times = None
@@ -369,7 +371,7 @@ class UseCase(object):
                 outputFile.write("    {0}{1}{2}Process();\n".format(
                         self.component.getNameCC(), self.branchName, self.numInBranch))
             else:
-                outputFile.write("    {0}{1}{2}Callback((void *) 1);\n".format(
+                outputFile.write("    {0}{1}{2}Callback(IS_FROM_BRANCH_START);\n".format(
                         self.component.getNameCC(), self.branchName, self.numInBranch))
 
     def generateBranchExitCode(self, outputFile):
@@ -407,6 +409,9 @@ class Component(object):
         self.specification = specification
         self.functionTree = None
         self.isRemote = False
+
+    def isVirtual(self):
+        return self.functionTree is not None
 
     def markAsUsed(self):
         self.markedAsUsed = True
@@ -533,9 +538,12 @@ class Component(object):
         return defaultValue
 
     def getDependentParameterValue(self, parameter, useCaseParameters):
+#        print "getDependentParameterValue", parameter
+#        print "params:", self.parameters
         if parameter not in self.parameters:
             return None
-        return self.specification.calculateParameterValue(parameter, useCaseParameters)
+        return self.specification.calculateParameterValue(
+            parameter, useCaseParameters)
 
 ######################################################
 class Actuator(Component):
@@ -888,13 +896,121 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
+    # first arg: sensor
+    # second arg: window size WinSize
+    # thrist ard: strength (multiplied by WinSize, 1 * WinSize by default)
     def generateSmoothenFunction(self, outputFile, functionTree, root):
-        # TODO
-        return "0"
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
 
+        numSamples = None
+        adjustmentWeight = None
+
+        if len(functionTree.arguments) > 1:
+            numSamples = functionTree.arguments[1].asConstant()
+        if len(functionTree.arguments) > 2:
+            adjustmentWeight = functionTree.arguments[2].asConstant()
+
+        if numSamples == None: numSamples = 3
+        if adjustmentWeight == None: adjustmentWeight = numSamples # already multiplied by num samples
+        medianPos = numSamples / 2
+
+        funName = self.getGeneratedFunctionName("smoothen")
+        outputFile.write("static inline {0} {1}(bool *__unused)\n".format(self.getDataType(), funName))
+        outputFile.write("{\n")
+        outputFile.write("    enum {} ARRAY_SIZE = {} {};\n".format('{', numSamples, '}'))
+        outputFile.write("    static {0} array[ARRAY_SIZE];\n".format(self.getDataType()))
+        outputFile.write("    static uint16_t arrayCursor = {};\n".format(numSamples - 1))
+        outputFile.write("    {0} value = {1};\n".format(self.getDataType(), subReadFunction))
+        # outputFile.write('    PRINTF("got %ld\\n", value);\n')
+        outputFile.write("    array[arrayCursor] = value;\n")
+        outputFile.write("    {0} median = array[(arrayCursor + ARRAY_SIZE - {1}) % ARRAY_SIZE];\n".format(
+                self.getDataType(), medianPos))
+        #outputFile.write('    PRINTF("median = %ld\\n", median);\n')
+        outputFile.write("    int32_t adjustment = 0;\n")
+        outputFile.write("    uint16_t i;\n")
+        outputFile.write("    for (i = 1; i <= ARRAY_SIZE; ++i) {\n")
+        outputFile.write("        adjustment += array[(arrayCursor + i) % ARRAY_SIZE] - median;\n")
+        # outputFile.write('        PRINTF("array[%u] = %ld\\n", (arrayCursor + i) % ARRAY_SIZE, array[(arrayCursor + i) % ARRAY_SIZE]);\n')
+        outputFile.write("    }\n")
+        # outputFile.write('    PRINTF("adjustment = %ld\\n", adjustment);\n')
+        outputFile.write("    arrayCursor = (arrayCursor + 1) % ARRAY_SIZE;\n")
+        outputFile.write("    return median + adjustment * {} / {} / {};\n".format(
+                adjustmentWeight, numSamples, numSamples))
+        outputFile.write("}\n\n")
+        return funName + "(isFilteredOut)"
+
+    # TODO: join this with smoothen
     def generateSharpenFunction(self, outputFile, functionTree, root):
-        # TODO
-        return "0"
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
+
+        numSamples = None
+        adjustmentWeight = None
+
+        if len(functionTree.arguments) > 1:
+            numSamples = functionTree.arguments[1].asConstant()
+        if len(functionTree.arguments) > 2:
+            adjustmentWeight = functionTree.arguments[2].asConstant()
+
+        if numSamples == None: numSamples = 3
+        if adjustmentWeight == None: adjustmentWeight = numSamples # already multiplied by num samples
+        medianPos = numSamples / 2
+
+        funName = self.getGeneratedFunctionName("sharpen")
+        outputFile.write("static inline {0} {1}(bool *__unused)\n".format(self.getDataType(), funName))
+        outputFile.write("{\n")
+        outputFile.write("    enum {} ARRAY_SIZE = {} {};\n".format('{', numSamples, '}'))
+        outputFile.write("    static {0} array[ARRAY_SIZE];\n".format(self.getDataType()))
+        outputFile.write("    static uint16_t arrayCursor = {};\n".format(numSamples - 1))
+        outputFile.write("    {0} value = {1};\n".format(self.getDataType(), subReadFunction))
+        #outputFile.write('    PRINTF("got %ld\\n", value);\n')
+        outputFile.write("    array[arrayCursor] = value;\n")
+        outputFile.write("    {0} median = array[(arrayCursor + ARRAY_SIZE - {1}) % ARRAY_SIZE];\n".format(
+                self.getDataType(), medianPos))
+        # outputFile.write('    PRINTF("median = %ld\\n", median);\n')
+        outputFile.write("    int32_t adjustment = 0;\n")
+        outputFile.write("    uint16_t i;\n")
+        outputFile.write("    for (i = 1; i <= ARRAY_SIZE; ++i) {\n")
+        outputFile.write("        adjustment += array[(arrayCursor + i) % ARRAY_SIZE] - median;\n")
+        #outputFile.write('        PRINTF("array[%u] = %ld\\n", (arrayCursor + i) % ARRAY_SIZE, array[(arrayCursor + i) % ARRAY_SIZE]);\n')
+        outputFile.write("    }\n")
+        #outputFile.write('    PRINTF("adjustment = %ld\\n", adjustment);\n')
+        outputFile.write("    arrayCursor = (arrayCursor + 1) % ARRAY_SIZE;\n")
+        outputFile.write("    return median - adjustment * {} / {} / {};\n".format(
+                adjustmentWeight, numSamples, numSamples))
+        outputFile.write("}\n\n")
+        return funName + "(isFilteredOut)"
+
+    def generateChangedFunction(self, outputFile, functionTree, root):
+        if not functionTree.checkArgs(2, componentRegister):
+            return ""
+
+        milliseconds = functionTree.arguments[1].asConstant()
+        if milliseconds is None:
+            componentRegister.userError("Second argument of changed() function is expected to be a constant!\n")
+            return ""
+
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
+
+        funName = self.getGeneratedFunctionName("changed")
+        outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
+        outputFile.write("{\n")
+        outputFile.write("    static {0} lastValue;\n".format(self.getDataType()))
+        #outputFile.write("    static ticks_t changedIntervalBound = {};\n".format(milliseconds))
+        outputFile.write("    static ticks_t changedIntervalBound;\n")
+        outputFile.write("    {0} value = {1};\n".format(self.getDataType(), subReadFunction))
+        outputFile.write("    if (value == lastValue) {\n")
+        outputFile.write("        // return true if changed during the interval\n")
+        outputFile.write("        return timeAfter(changedIntervalBound, getJiffies());\n")
+        outputFile.write("    }\n")
+        outputFile.write("    lastValue = value;\n")
+        outputFile.write("    changedIntervalBound = getJiffies() + {};\n".format(milliseconds))
+        outputFile.write("    // return true even if the interval is zero\n")
+        outputFile.write("    return true; \n")
+        outputFile.write("}\n\n")
+        return funName + "(isFilteredOut)"
 
     def generateSumFunction(self, outputFile, functionTree, root):
         if len(functionTree.arguments) == 1 and functionTree.arguments[0].function == "take":
@@ -1063,13 +1179,13 @@ class Sensor(Component):
             outputFile.write("    int i; for (i = 0; i < {}; ++i)\n".format(numToTake))
             outputFile.write("        value += values[i];\n")
         # AVERAGE
-        elif aggregateFunction == "avg":
+        elif aggregateFunction == "avg" or aggregateFunction == "average":
             outputFile.write("    value = 0;\n")
             outputFile.write("    int i; for (i = 0; i < {}; ++i)\n".format(numToTake))
             outputFile.write("        value += values[i];\n")
             outputFile.write("    value /= {};\n".format(numToTake))
         # STANDARD DEVIATION
-        elif aggregateFunction == "stdev":
+        elif aggregateFunction == "std" or aggregateFunction == "stdev":
             outputFile.write("    int32_t avg = 0;\n")
             outputFile.write("    int i; for (i = 0; i < {}; ++i)\n".format(numToTake))
             outputFile.write("        avg += values[i];\n")
@@ -1102,6 +1218,9 @@ class Sensor(Component):
             outputFile.write("{\n")
 
             if self.specification.readFunctionDependsOnParams:
+#                print "useCase", useCase
+#                print "root", root.name
+#                print "self", self.name
                 if useCase: params = useCase.parameters
                 else: params = root.parameters
                 specifiedReadFunction = self.getDependentParameterValue("readFunction", params)
@@ -1145,14 +1264,16 @@ class Sensor(Component):
             return self.generateMinFunction(outputFile, functionTree, root)
         if functionTree.function == "max":
             return self.generateMaxFunction(outputFile, functionTree, root)
-        if functionTree.function == "avg":
+        if functionTree.function == "avg" or functionTree.function == "average":
             return self.generateAvgFunction(outputFile, functionTree, root)
-        if functionTree.function == "stdev":
+        if functionTree.function == "std" or functionTree.function == "stdev":
             return self.generateStdevFunction(outputFile, functionTree, root)
         if functionTree.function == "smoothen" or functionTree.function == "blur":
             return self.generateSmoothenFunction(outputFile, functionTree, root)
         if functionTree.function == "sharpen" or functionTree.function == "contrast":
             return self.generateSharpenFunction(outputFile, functionTree, root)
+        if functionTree.function == "changed":
+            return self.generateChangedFunction(outputFile, functionTree, root)
         if functionTree.function == "sum":
             return self.generateSumFunction(outputFile, functionTree, root)
         if functionTree.function == "plus": # synonym to one use of sum()
@@ -1218,7 +1339,7 @@ class PacketField(object):
         # always use 4 bytes, because decoding otherwise is too messy
         # (could and should be optimized if the need arises...)
         self.dataSize = 4
-        self.dataType = "uint32_t"
+        self.dataType = "int32_t"
         self.count = count   # how many of this field?
         self.isRealSensor = isRealSensor
 
@@ -2048,11 +2169,12 @@ class ComponentRegister(object):
         assert not c.isError
         if c.added: return
 
+#        print "continue adding " + c.name
+
         c.added = True
         c.base = None
 
         basenames = c.getAllBasenames()
-
         for basename in basenames:
             if c.name == basename:
                 self.userError("Virtual component '{0}' depends on self, ignoring\n".format(self.name))
@@ -2061,13 +2183,14 @@ class ComponentRegister(object):
 
         numericalValue = None
         for basename in basenames:
+            # print "    process", basename
             # constant value
             if basename[:7] == '__const':
                 numericalValue = int(basename[7:], 0)
                 continue
             # a real sensor
             base = self.findComponentByName(basename)
-            if base is not None:
+            if base is not None and not base.isVirtual():
                 continue
             # a virtual sensor
             virtualBase = self.virtualComponents.get(basename, None)
@@ -2076,19 +2199,26 @@ class ComponentRegister(object):
                         c.name, basename))
                 c.isError = True
                 return
-            # add the base virtau first (because of parameters)
+            # add the virtual base first (because of parameters)
             self.continueAddingVirtualComponent(virtualBase)
+#            print "    got params", virtualBase.parameterDictionary
+            c.parameterDictionary.update(virtualBase.parameterDictionary)
 
         immediateBaseName = c.getImmediateBasename()
+#        print "  immediateBaseName=" + immediateBaseName
         immediateBase = self.virtualComponents.get(immediateBaseName, None)
         if immediateBase is not None:
+#            print "  immed base is virtual"
             # inherit parameters from parent virtual sensor
-            c.parameterDictionary = immediateBase.parameterDictionary
+            # c.parameterDictionary = immediateBase.parameterDictionary
             # inherit the base too
             c.base = immediateBase.base
         else:
+ #           print "  immed base is real"
             c.base = self.findComponentByName(immediateBaseName)
         assert c.base
+
+#        print "finish adding " + c.name + ", base=", c.base.name
 
         # fill the parameter dictionary
         for p in c.parameterList:
@@ -2097,6 +2227,7 @@ class ComponentRegister(object):
             else:
                 c.parameterDictionary[p[0]] = Value(True)
 
+        # used for pseudocomponents that are based on integer literals or constants
         if numericalValue is not None:
             c.parameterDictionary["value"] = Value(numericalValue)
 
@@ -2109,6 +2240,8 @@ class ComponentRegister(object):
             self.userError("Virtual component '{0}' duplicated, ignoring\n".format(
                     c.name))
             return
+
+#        print "c.parameterDictionary:" , c.parameterDictionary
 
         s.updateParameters(c.parameterDictionary)
         s.functionTree = c.functionTree
@@ -2208,7 +2341,7 @@ class ComponentRegister(object):
                 self.numCachedSensors += 1
 
     def replaceCode(self, componentName, parameterName, condition):
-        # print "replace Code: " + componentName + "." + parameterName
+#        print "replace code: " + componentName + "." + parameterName
 
         c = self.findComponentByName(componentName)
 #        if c == None:

@@ -1,5 +1,3 @@
-config "CONST_CONDITION_EVALUATION_INTERVAL=100";
-
 // Z measurements:
 // 1680 - norm       (1g)
 // 2080 - weightless (0g)
