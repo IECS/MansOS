@@ -14,7 +14,7 @@ class SealParameter(object):
 class SealComponent(object):
     def __init__(self, typeCode, name):
         self.typeCode = typeCode
-        self.name = name
+        self.name_ = name
         # parameters
         self.id = SealParameter(0, ["0", "1"])
         self.extraConfig = SealParameter(None)  # config file line(s)
@@ -50,7 +50,7 @@ class SealSensor(SealComponent):
         super(SealSensor, self).__init__(TYPE_SENSOR, name)
         self.cache = SealParameter(False, [False, True])
         self.cacheable = True # whether can be kept in cache
-        self.dataSize = 2 # in bytes
+        self.dataSize = 4 # in bytes
 #        self.filter = SealParameter('', ['> 100'])
 #        self.average = SealParameter('', ['10'])
 #        self.stdev = SealParameter('', ['10'])
@@ -65,6 +65,20 @@ class CommandSensor(SealSensor):
         super(CommandSensor, self).__init__("Command")
         self.useFunction.value = "0"
         self.readFunction.value = self.useFunction.value
+
+# to read C variables (pseudo sensor)
+class VariableSensor(SealSensor):
+    def __init__(self):
+        super(VariableSensor, self).__init__("Variables")
+        self.useFunction.value = "0"
+        self.readFunction.value = self.useFunction.value
+        self.cacheable = False
+        # the name of C variable
+        self.name = SealParameter(None, [])
+        self.readFunctionDependsOnParams = True
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        return self.getParameterValue("name", useCaseParameters)
 
 class ConstantSensor(SealSensor):
     def __init__(self):
@@ -426,17 +440,21 @@ class RadioOutput(SealOutput):
 class InternalFlashOutput(SealOutput):
     def __init__(self):
         super(InternalFlashOutput, self).__init__("InternalFlash")
-        self.useFunction.value = "flashWrite(&internalFlashPacket, sizeof(internalFlashPacket))"
+        self.useFunction.value = "flashWrite(&internalflashPacket, sizeof(internalflashPacket))"
 
 class ExternalFlashOutput(SealOutput):
     def __init__(self):
         super(ExternalFlashOutput, self).__init__("ExternalFlash")
-        self.useFunction.value = "extFlashWrite(&externalFlashPacket, sizeof(externalFlashPacket))"
+        self.useFunction.value = "extFlashWrite(0, &externalflashPacket, sizeof(externalflashPacket))"
+        self.extraIncludes = SealParameter("#include <hil/extflash.h>")
+        self.extraConfig = SealParameter("USE_EXT_FLASH=y")
 
 class SdCardOutput(SealOutput):
     def __init__(self):
         super(SdCardOutput, self).__init__("SdCard")
-        self.useFunction.value = "sdcardWrite(&sdCardPacket, sizeof(sdCardPacket))"
+        self.useFunction.value = "sdcardWrite(0, &sdcardPacket, sizeof(sdcardPacket))"
+        self.extraIncludes = SealParameter("#include <sdcard/sdcard.h>")
+        self.extraConfig = SealParameter("USE_SDCARD=y")
 
 # "local storage" (i.e. [external] flash or SD card is defined depending on platform
 # on telosb, local storage is synonym for external flash
@@ -444,7 +462,9 @@ class LocalStorageOutput(SealOutput):
     def __init__(self):
         super(LocalStorageOutput, self).__init__("LocalStorage")
         # ext flash by default
-        self.useFunction.value = "extFlashWrite(&externalFlashPacket, sizeof(externalFlashPacket))"
+        self.useFunction.value = "extFlashWrite(0, &localstoragePacket, sizeof(localstoragePacket))"
+        self.extraIncludes = SealParameter("#include <hil/extflash.h>")
+        self.extraConfig = SealParameter("USE_EXT_FLASH=y")
 
 class FileOutput(SealOutput):
     def __init__(self):
@@ -456,9 +476,13 @@ class FileOutput(SealOutput):
         # XXX: make text files by default - more intuitive
         self.text = SealParameter(None, [False, True])
         self.binary = SealParameter(None, [False, True])
+        self.extraIncludes = SealParameter("#include <hil/fs.h>")
+        self.extraConfig = SealParameter("USE_FS=y")
 
 class NetworkOutput(SealOutput):
     def __init__(self):
         super(NetworkOutput, self).__init__("Network")
         self.useFunction.value = "radioSend(&networkPacket, sizeof(networkPacket))" # TODO
         self.protocol = SealParameter("CSMA", ["CSMA", "CSMA-ACK"])
+        self.extraIncludes = SealParameter("#include <net/mac.h>")
+        self.extraConfig = SealParameter("USE_NET=y")

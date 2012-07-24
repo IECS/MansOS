@@ -1277,15 +1277,22 @@ class Sensor(Component):
 
         # if this is a sensor name with no arguments, find the sensor and recurse
         if len(functionTree.arguments) == 0:
-            # TODO: add special case for constants!
             # print "functionTree.function =", functionTree.function
-            if type(functionTree.function) is Value:
+            name = functionTree.function
+            if isinstance(functionTree.function, Value):
+                # special case for constants
                 return functionTree.function.asString()
-            else:
-                sensor = componentRegister.findComponentByName(functionTree.function)
-                assert sensor
-                assert type(sensor) is Sensor
-                return sensor.generateSubReadFunctions(outputFile, useCase, None, root)
+            if isinstance(functionTree.function, SealValue):
+                name = functionTree.function.firstPart
+                if name in componentRegister.systemStates:
+                    # special case for variables ("states")
+                    # TODO: should replace code here for X.Y type values
+                    return name
+
+            sensor = componentRegister.findComponentByName(name)
+            assert sensor
+            assert type(sensor) is Sensor
+            return sensor.generateSubReadFunctions(outputFile, useCase, None, root)
 
         # run through the tree and generate all needed
         if functionTree.function == "abs":
@@ -1310,9 +1317,9 @@ class Sensor(Component):
             return self.generateChangedFunction(outputFile, functionTree, root)
         if functionTree.function == "sum":
             return self.generateSumFunction(outputFile, functionTree, root)
-        if functionTree.function == "plus": # synonym to one use of sum()
+        if functionTree.function == "plus" or functionTree.function == "add": # synonyms to one use of sum()
             return self.generateArithmeticFunction(outputFile, functionTree, '+', root)
-        if functionTree.function == "minus":
+        if functionTree.function == "minus" or functionTree.function == "subtract":
             return self.generateArithmeticFunction(outputFile, functionTree, '-', root)
         if functionTree.function == "multiply":
             return self.generateArithmeticFunction(outputFile, functionTree, '*', root)
@@ -2159,10 +2166,10 @@ class ComponentRegister(object):
         # construct empty components from descriptions
         for spec in self.module.components:
             # print "load", spec.name
-            c = self.addComponent(spec.name.lower(), spec)
+            c = self.addComponent(spec.name_.lower(), spec)
             if not c:
                 self.userError("Component '{0}' duplicated for platform '{1}', ignoring\n".format(
-                        spec.name, architecture))
+                        spec.name_, architecture))
 
     def loadExtModule(self, filename):
         try:
@@ -2174,7 +2181,7 @@ class ComponentRegister(object):
         for p in dir(extModule):
             spec = extModule.__getattribute__(p)
             if isinstance(spec, self.module.SealComponent):
-                c = self.addComponent(spec.name.lower(), spec)
+                c = self.addComponent(spec.name_.lower(), spec)
 
     #######################################################################
     def findComponentByName(self, componentName):
@@ -2517,6 +2524,9 @@ class ComponentRegister(object):
 #            return "get{}Value(&{}{})".format(toTitleCase(parameterName),
 #                                              componentName,
 #                                              toTitleCase(parameterName))
+        if componentName == 'variables':
+            # a global C variable, return its name (the user is responsible for correctness)
+            return parameterName
 
         self.userError("Unknown parameter '{0}' for component '{1}'\n".format(parameterName, componentName))
         return "false"
