@@ -328,6 +328,8 @@ class DigitalOutputAct(SealActuator):
         self.readFunction.value = "pinRead(1, 0)"
         self.onFunction.value = "pinSet(1, 0)"
         self.offFunction.value = "pinClear(1, 0)"
+        self.pin = SealParameter(0, ["0", "1", "2", "3", "4", "5", "6", "7"])
+        self.port = SealParameter(1, ["1", "2", "3", "4", "5", "6"])
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" \
@@ -452,5 +454,11 @@ class FileOutput(SealOutput):
         self.filename = SealParameter(None, [])
         # a file can be text or binary - allow both parameter names wih inverse meaning
         # XXX: make text files by default - more intuitive
-        self.text = SealParameter(True, [False, True])
-        self.binary = SealParameter(False, [False, True])
+        self.text = SealParameter(None, [False, True])
+        self.binary = SealParameter(None, [False, True])
+
+class NetworkOutput(SealOutput):
+    def __init__(self):
+        super(NetworkOutput, self).__init__("Network")
+        self.useFunction.value = "radioSend(&networkPacket, sizeof(networkPacket))" # TODO
+        self.protocol = SealParameter("CSMA", ["CSMA", "CSMA-ACK"])
