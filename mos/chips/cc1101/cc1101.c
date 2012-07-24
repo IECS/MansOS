@@ -31,6 +31,7 @@
 #include <hil/errors.h>
 #include <hil/spi.h>
 #include <cc1101_pins.h>
+#include <kernel/threads/threads.h>
 
 #include "cc1101.h"
 
@@ -336,6 +337,10 @@ void cc1101InitSpi(void)
 
 void cc1101Init(void)
 {
+    Handle_t h;
+
+    ATOMIC_START(h);
+
     cc1101InitSpi();
 
     chipSelect();
@@ -362,6 +367,8 @@ void cc1101Init(void)
     strobe(STROBE_SPWD);
 
     chipRelease();
+
+    ATOMIC_END(h);
 }
 
 
@@ -371,19 +378,27 @@ void cc1101Init(void)
 
 void cc1101On(void)
 {
+    Handle_t h;
+
+    ATOMIC_START(h);
     chipSelect();       // Wakes the radio up
     waitForReady();
     strobe(STROBE_SRX); // Go into receive mode
     chipRelease();
+    ATOMIC_END(h);
 }
 
 void cc1101Off(void)
 {
+    Handle_t h;
+
+    ATOMIC_START(h);
     chipSelect();
     waitForListen();
     strobe(STROBE_SIDLE); // Might drop a partially received packet
     strobe(STROBE_SPWD);  // Will also flush FIFOs
     chipRelease();
+    ATOMIC_END(h);
 }
 
 
@@ -458,11 +473,14 @@ int8_t cc1101Send(const uint8_t *header, uint8_t hlen,
                   const uint8_t *data,   uint8_t dlen)
 {
     uint8_t len = hlen + dlen; // FIXME: might overflow
+    Handle_t h;
 
     if (len > CC1101_MAX_PACKET_LEN)
     {
         return -EMSGSIZE;
     }
+
+    ATOMIC_START(h);
 
     chipSelect();
     waitForListen();
@@ -481,6 +499,8 @@ int8_t cc1101Send(const uint8_t *header, uint8_t hlen,
 
     chipRelease();
 
+    ATOMIC_END(h);
+
     return 0;
 }
 
@@ -495,6 +515,9 @@ int8_t cc1101Read(uint8_t *buf, uint8_t buflen)
 {
     uint8_t res, len;
     uint8_t aux[2];
+    Handle_t h;
+
+    ATOMIC_START(h);
 
     chipSelect();
 
@@ -521,14 +544,19 @@ int8_t cc1101Read(uint8_t *buf, uint8_t buflen)
 
 end:
     chipRelease();
+    ATOMIC_END(h);
     return res;
 }
 
 void cc1101Discard(void)
 {
+    Handle_t h;
+
+    ATOMIC_START(h);
     chipSelect();
     flushrx();
     chipRelease();
+    ATOMIC_END(h);
 }
 
 bool cc1101IsChannelClear(void)
@@ -545,6 +573,9 @@ XISR(CC1101_INTR_PORT, cc1011Interrupt)
     if (pinReadIntFlag(CC1101_INTR_PORT, CC1101_INTR_PIN))
     {
         pinClearIntFlag(CC1101_INTR_PORT, CC1101_INTR_PIN);
+#if USE_THREADS
+        processFlags.bits.radioProcess = true;
+#else
         if (!callback)
         {
             cc1101Discard();
@@ -553,5 +584,6 @@ XISR(CC1101_INTR_PORT, cc1011Interrupt)
         {
             callback();
         }
+#endif
     }
 }
