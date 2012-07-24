@@ -36,3 +36,5 @@ squarewave = SquareWaveSensor()
 trianglewave = TriangleWaveSensor()
 sawwave = SawtoothWaveSensor()
 sinewave = SineWaveSensor()
+
+variables = VariableSensor()

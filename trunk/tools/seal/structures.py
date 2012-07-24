@@ -255,7 +255,7 @@ class Value(object):
             return "const char *"
         if type(self.value) is bool:
             return "bool"
-        return "int_t"
+        return "int32_t"
 
     def asString(self):
         return self.getCode()

@@ -91,13 +91,14 @@ class SealParser():
     #   - avoid different kind of braces and brackets (as in C),
     #     instead use "(" and ")" for everything
     #   - avoid arithmetic operators, use functions instead
-    literals = ['.', ',', ':', ';', '(', ')', '<', '>']
+    #   - allow unary + and -
+    literals = ['.', ',', ':', ';', '(', ')', '<', '>', '+', '-']
 
     t_ignore = " \t\r"
 
     def t_IDENTIFIER_TOKEN(self, t):
         r'[a-zA-Z_][0-9a-zA-Z_]*'
-        t.value = t.value.lower()
+        # t.value = t.value.lower()
         # This checks if reserved token is met.
         t.type = self.reserved.get(t.value, "IDENTIFIER_TOKEN")
         return t
@@ -108,17 +109,27 @@ class SealParser():
         return t
 
     def t_DECIMAL_INTEGER_LITERAL(self, t):
-        r'[0-9]+[a-zA-Z_]*'
+        r'[+-]?[0-9]+[a-zA-Z_]*'
         prefix, suffix = '', ''
-        parsingPrefix = True
+        parsingSign = True
+        parsingPrefix = False
+        sign = 1
         for c in t.value:
+            if parsingSign:
+                parsingSign = False
+                parsingPrefix = True
+                if c == '+':
+                    continue
+                if c == '-':
+                    sign = -1
+                    continue
             if parsingPrefix:
                 if c >= '0' and c <= '9':
                     prefix += c
                     continue
                 parsingPrefix = False
-            suffix += c
-        t.value = (int(prefix), suffix)
+            suffix += c.lower()
+        t.value = (int(prefix) * sign, suffix)
         return t
 
     t_STRING_LITERAL = r'"[^"\n]*"'
@@ -392,6 +403,7 @@ class SealParser():
         '''identifier : IDENTIFIER_TOKEN
                       | IDENTIFIER_TOKEN '.' IDENTIFIER_TOKEN
         '''
+        p[1] = p[1].lower() # leave p[3] alone
         if len(p) == 2:
             # try to resolve constant
             const = components.componentRegister.systemConstants.get(p[1], None)
