@@ -27,6 +27,8 @@
 #define COMMAND_TO_SEND 17
 #define SEQNUM_TO_SEND 3
 
+uint8_t buffer[200];
+
 // send a single command
 void appMainSimpleCommand(void)
 {
@@ -57,9 +59,19 @@ void appMainPacket(void)
     }
 }
 
+void valueRxCallback(uint16_t code, int32_t value)
+{
+    PRINTF("received sensor %d data %ld\n", code, value);
+}
 
 void appMain(void)
 {
-//	appMainSimpleCommand();
-	appMainPacket();
+    // register interest to all kind of SEAL packets
+    uint16_t i;
+    for (i = 0; i < 31; ++i) {
+        sealCommRegisterInterest(i, valueRxCallback);
+    }
+
+//  appMainSimpleCommand();
+    appMainPacket();
 }
