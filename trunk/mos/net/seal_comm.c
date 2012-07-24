@@ -97,22 +97,17 @@ static inline bool isSingleValued(SealCommListener_t *l)
     return true;
 }
 
-static inline uint32_t *getDataPointer(SealCommListener_t *l, bool isSingleValued)
-{
-    if (isSingleValued) {
-        // in place (room for one...)
-        return &l->u.lastValue;
-    }
-    return l->u.buffer;
-}
-
 static void receivePacketData(SealCommListener_t *l, uint32_t typeMask, const uint8_t *data)
 {
-    uint32_t bit;
-    bool sv = isSingleValued(l);
-    uint32_t *read = (uint32_t *) data;
-    uint32_t *write = getDataPointer(l, sv);
+    uint16_t code = ffs(l->typeMask) - 1;
+    bool isSingleValued = !(l->typeMask & ~(1 << code));
 
+    int32_t *read = (int32_t *) data;
+    int32_t *write;
+    if (isSingleValued) write = &l->u.lastValue;
+    else write = l->u.buffer;
+
+    uint32_t bit;
     for (bit = 1; ; bit <<= 1) {
         if (typeMask & bit) {
             if (l->typeMask & bit) {
@@ -125,7 +120,11 @@ static void receivePacketData(SealCommListener_t *l, uint32_t typeMask, const ui
         if (bit == (1ul << 31)) break;
     }
     listenerBeingProcessed = l;
-    l->callback(getDataPointer(l, sv));
+    if (isSingleValued) {
+        l->callback.sv(code, l->u.lastValue);
+    } else {
+        l->callback.mv(l->u.buffer);
+    }
     listenerBeingProcessed = NULL;
 }
 
@@ -162,13 +161,14 @@ static void sealRecv(struct MacInfo_s *mi, uint8_t *data, uint16_t length)
             });
 }
 
-bool sealCommPacketRegisterInterest(uint32_t typeMask, CallbackFunction callback,
-                                    uint32_t *buffer)
+bool sealCommPacketRegisterInterest(uint32_t typeMask,
+                                    MultiValueCallbackFunction callback,
+                                    int32_t *buffer)
 {
     for_all_listeners(
-            if (l->typeMask == 0) {
+            if (l->callback.mv == NULL) {
+                l->callback.mv = callback;
                 l->typeMask = typeMask;
-                l->callback = callback;
                 l->u.buffer = buffer;
                 return true;
             });
@@ -176,13 +176,41 @@ bool sealCommPacketRegisterInterest(uint32_t typeMask, CallbackFunction callback
     return false;
 }
 
-bool sealCommPacketUnregisterInterest(uint32_t typeMask, CallbackFunction callback)
+bool sealCommRegisterInterest(uint16_t code,
+                              SingleValueCallbackFunction callback)
 {
-   for_all_listeners(
-           if (l->typeMask == typeMask && l->callback == callback) {
-               l->typeMask = 0;
-               return true;
-           });
+    for_all_listeners(
+            if (l->callback.sv == NULL) {
+                l->callback.sv = callback;
+                l->typeMask = 1 << code;
+                l->u.buffer = NULL;
+                return true;
+            });
+    DPRINTF("sealCommRegisterInterest: all full!\n");
+    return false;
+}
+
+bool sealCommPacketUnregisterInterest(uint32_t typeMask,
+                                      MultiValueCallbackFunction callback)
+{
+    for_all_listeners(
+            if (l->typeMask == typeMask && l->callback.mv == callback) {
+                l->callback.sv = NULL;
+                return true;
+            });
+    DPRINTF("sealCommUnregisterInterest: not found!\n");
+    return false;
+}
+
+bool sealCommUnregisterInterest(uint16_t code,
+                                SingleValueCallbackFunction callback)
+{
+    uint32_t typeMask = 1 << code;
+    for_all_listeners(
+            if (l->typeMask == typeMask && l->callback.sv == callback) {
+                l->callback.sv = NULL;
+                return true;
+            });
     DPRINTF("sealCommUnregisterInterest: not found!\n");
     return false;
 }
@@ -195,7 +223,7 @@ void sealCommPacketStart(SealPacket_t *buffer)
     packetInProgressNumFields = 0;
 }
 
-void sealCommPacketAddField(uint16_t code, uint32_t value)
+void sealCommPacketAddField(uint16_t code, int32_t value)
 {
     ASSERT(packetInProgress);
     ASSERT(code < 31); // XXX TODO: add support for larger codes
@@ -220,7 +248,7 @@ void sealCommPacketFinish(void)
 #endif
 }
 
-void sealCommSendValue(uint16_t code, uint32_t value)
+void sealCommSendValue(uint16_t code, int32_t value)
 {
     SealPacket_t packet;
     sealCommPacketStart(&packet);
@@ -228,13 +256,18 @@ void sealCommSendValue(uint16_t code, uint32_t value)
     sealCommPacketFinish();
 }
 
-uint32_t sealCommReadValue(uint16_t code) 
+int32_t sealCommReadValue(uint16_t code) 
 {
     ASSERT(listenerBeingProcessed);
     ASSERT(listenerBeingProcessed->typeMask & (1 << code));
 
-    uint32_t *read = getDataPointer(
-            listenerBeingProcessed, isSingleValued(listenerBeingProcessed));
+//    int32_t *read; = getDataPointer(listenerBeingProcessed, );
+    int32_t *read;
+    if (isSingleValued(listenerBeingProcessed)) {
+        read = &listenerBeingProcessed->u.lastValue;
+    } else {
+        read = listenerBeingProcessed->u.buffer;
+    }
     uint32_t bit;
     for (bit = 1; bit; bit <<= 1) {
         if (bit == 1 << code) {

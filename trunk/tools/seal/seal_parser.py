@@ -52,6 +52,7 @@ class SealParser():
     reserved = {
       "use": "USE_TOKEN",
       "read": "READ_TOKEN",
+      "networkread": "NETWORK_READ_TOKEN",
       "output": "OUTPUT_TOKEN",
       "when": "WHEN_TOKEN",
       "else": "ELSE_TOKEN",
@@ -64,7 +65,6 @@ class SealParser():
       "set": "SET_TOKEN",
       "pattern": "PATTERN_TOKEN",
       "load": "LOAD_TOKEN",
-      "inputcommand": "INPUT_TOKEN",
       "where": "WHERE_TOKEN",
       "true": "TRUE_TOKEN",
       "false": "FALSE_TOKEN",
@@ -88,8 +88,9 @@ class SealParser():
     t_LEQ_TOKEN = r'<='
 
     # Rules:
-    #   - avoid different kind of braces and brackets (as in C), use "(" and ")" for everything
-    #   - avoid arithmetic operators
+    #   - avoid different kind of braces and brackets (as in C),
+    #     instead use "(" and ")" for everything
+    #   - avoid arithmetic operators, use functions instead
     literals = ['.', ',', ':', ';', '(', ')', '<', '>']
 
     t_ignore = " \t\r"
@@ -158,6 +159,7 @@ class SealParser():
 
     def p_declaration(self, p):
         '''declaration : component_use_case
+                       | network_read_statement
                        | when_block
                        | system_config
                        | pattern_declaration
@@ -166,7 +168,6 @@ class SealParser():
                        | define_statement
                        | parameters_statement
                        | load_statement
-                       | input_statement
                        | ';'
                        | error END_TOKEN
                        | error ';'
@@ -190,10 +191,10 @@ class SealParser():
             p[0] = ComponentUseCase(p[1], p[2], p[4], p[3])
         self.lineTracking["Statement"].append((p.lineno(1), p.lineno(4), p[0]))
 
-    def p_input_statement(self, p):
-        '''input_statement : INPUT_TOKEN IDENTIFIER_TOKEN output_fields ';'
+    def p_network_read_statement(self, p):
+        '''network_read_statement : NETWORK_READ_TOKEN IDENTIFIER_TOKEN output_fields ';'
         '''
-        p[0] = InputCommandStatement(p[2], p[3])
+        p[0] = NetworkReadStatement(p[2], p[3])
 
     def p_system_config(self, p):
         '''system_config : CONFIG_TOKEN value ';'

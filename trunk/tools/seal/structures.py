@@ -24,6 +24,8 @@ def suffixTransform(value, suffix):
         return value * 1000 # seconds to milliseconds
     if suffix == 'ms':
         return value        # milliseconds to milliseconds
+    if suffix == 'us':
+        return value / 1000.  # milliseconds to microeconds
     # default case: ignore the suffix
     print "Unknown suffix '{0}' for value {1}\n".format(suffix, value)
     # TODO: componentRegister.userError("Unknown suffix '{0}' for value {1}\n".format(suffix, value))
@@ -50,10 +52,12 @@ def static_var(varname, value = 0):
 ######################################################
 class FunctionTree(object):
     def __init__(self, function, arguments):
-        if isinstance(function, SealValue):
-            self.function = function.firstPart
-        else:
-            self.function = function
+#        if isinstance(function, SealValue):
+#            print "  FunctionTree from SealValue!"
+#            self.function = function.firstPart
+#        else:
+#            self.function = function
+        self.function = function
         self.arguments = arguments
 
     def checkArgs(self, argCount, componentRegister):
@@ -148,7 +152,10 @@ class ConditionCollection(object):
             self.codeList.append(self.generateCodeForCondition(i, componentRegister))
 
     def writeOutCodeForEventBasedCondition(self, condition, outputFile):
-        outputFile.write("static void condition{0}Callback(uint32_t *values)\n".format(condition.id))
+        if condition.dependentOnSensors:
+            outputFile.write("static void condition{0}Callback(uint16_t code, int32_t values)\n".format(condition.id))
+        else:
+            outputFile.write("static void condition{0}Callback(int32_t *values)\n".format(condition.id))
         outputFile.write("{\n")
         outputFile.write("    bool isFilteredOut = false;\n")
         outputFile.write(self.codeList[condition.id - 1])
@@ -186,13 +193,20 @@ class ConditionCollection(object):
             self.writeOutCodeForCondition(c, outputFile)
 
     def generateAppMainCodeForCondition(self, condition, outputFile):
-        for s in condition.dependentOnSensors:
-            outputFile.write("    sealCommRegisterInterest({}_TYPE_ID, condition{}Callback);\n".format(
-                    s.getNameUC(), condition.id))
-        for i in condition.dependentOnInputs:
-            if i.isError: continue
-            outputFile.write("    sealCommPacketRegisterInterest({:#x}, condition{}Callback, (uint32_t*)&{}PacketBuffer);\n".format(
-                    i.typemask, condition.id, i.getNameCC()))
+        for code in condition.dependentOnSensors:
+            outputFile.write("    sealCommRegisterInterest({}, condition{}Callback);\n".format(
+                    code, condition.id))
+
+        for component in condition.dependentOnPackets:
+            outputFile.write("    {\n")
+            outputFile.write("        static int32_t buffer[{}];\n".format(len(component.remoteFields)))
+            outputFile.write("        const uint32_t typeMask = 0")
+            for f in component.remoteFields:
+                outputFile.write("\n            | {}_TYPE_MASK".format(f.upper()))
+            outputFile.write(";\n")
+            outputFile.write("        sealCommPacketRegisterInterest(typeMask, condition{}Callback, buffer);\n".format(
+                    condition.id))
+            outputFile.write("    }\n")
 
     def generateAppMainCode(self, outputFile):
         for c in self.conditionList:
@@ -231,7 +245,7 @@ class Value(object):
         return s
 
     def getCodeForGenerator(self, componentRegister, condition):
-        # print "getCodeForGenerator for ", self.value
+#        print "getCodeForGenerator for ", self.value
         if type(self.value) is SealValue:
             return self.value.getCodeForGenerator(componentRegister, condition)
         return self.getCode()
@@ -263,6 +277,8 @@ class SealValue(object):
         else:
             self.firstPart = firstPart
             self.secondPart = secondPart
+#        print "seal value: ", self.firstPart, self.secondPart
+#        print "  (args: ", firstPart, secondPart, ")"
 
     def getCode(self):
         # Value object can be inside SealValue
@@ -276,9 +292,10 @@ class SealValue(object):
         return result
 
     def getCodeForGenerator(self, componentRegister, condition):
-        # print "getCodeForGenerator", self
         if isinstance(self.firstPart, Value):
             return self.firstPart.getCode()
+
+#        print "SealValue: getCodeForGenerator", self.firstPart
 
         if condition.dependentOnComponent:
             r = condition.dependentOnComponent.replaceCode(self.firstPart)
@@ -292,7 +309,7 @@ class SealValue(object):
 ########################################################
 class Expression(object):
     def __init__(self, left = None, op = None, right = None):
-        # print "Expression: ", left, " ", op, " ", right
+        #  print "Expression: ", left, " ", op, " ", right
         if op == '=': op = '==' # hehe
         elif op == '<>': op = '!='
         self.op = op
@@ -318,14 +335,14 @@ class Expression(object):
         # -- the rest are for conditiions opnly (expression in some contexts is a condition)
         # dependent on these self-reading sensors
         self.dependentOnSensors = set()
-        # dependent on these interactive inputs
-        self.dependentOnInputs = set()
+        # dependent on these network data sources
+        self.dependentOnPackets = set()
         # used for "where" conditions, contains the output use case that has this condition
         self.dependentOnComponent = None
 
     def isEventBased(self):
         return bool(len(self.dependentOnSensors)) \
-            or bool(len(self.dependentOnInputs))
+            or bool(len(self.dependentOnPackets))
 
     def collectImplicitDefines(self):
         result = []
@@ -354,7 +371,7 @@ class Expression(object):
         return self.right
 
     def getCodeForGenerator(self, componentRegister, condition):
-        # print "getCodeForGenerator", self
+        #print "getCodeForGenerator", self
         if self.left != None and self.right != None:
             result = self.left.getCodeForGenerator(componentRegister, condition)
             result += " " + self.op + " "
@@ -380,8 +397,8 @@ class Expression(object):
         return "    bool result = " + \
             string.replace(string.replace(string.replace(
                     code,
-                    " and ", " && "),
-                    " or ", " || "),
+                    " and ", "\n        && "),
+                    " or ", "\n        || "),
                     " not ", " ! ") + ";\n"
 
     def asString(self):
@@ -412,6 +429,11 @@ class PatternDeclaration(object):
     def __init__(self, name, values):
         self.name = name.lower()
         self.values = values
+        self.isUsec = False
+        for v in self.values:
+            if v.suffix == "us":
+                self.isUsec = True
+                break
 
     def addComponents(self, componentRegister, conditionCollection):
         if self.name in componentRegister.patterns:
@@ -429,11 +451,11 @@ class PatternDeclaration(object):
         return result
 
     def generateVariables(self, outputFile):
-        outputFile.write("int_t __pattern_{0}[] = {1}\n".format(self.name, '{'));
-        for v in self.values[:-1]:
-            outputFile.write("    {0},\n".format(v.asString()))
-        outputFile.write("    {0}\n".format(self.values[-1].asString()))
-        outputFile.write("};\n");
+        if self.isUsec: arrayType = "double"
+        else: arrayType = "uint32_t"
+        outputFile.write("{} __pattern_{}[] = {}\n".format(arrayType, self.name, '{'));
+        outputFile.write(string.join(map(lambda x: "    " + str(x.getRawValue()), self.values), ",\n"))
+        outputFile.write("\n};\n");
         outputFile.write("uint_t __pattern_{0}Cursor = 0;\n".format(self.name));
 
 ########################################################
@@ -463,21 +485,23 @@ class SetStatement(object):
         return "set " + self.name + " " + self.value.getCode() + ';'
 
 ########################################################
-class InputCommandStatement(object):
+class NetworkReadStatement(object):
     def __init__(self, name, fields):
         self.name = name.lower()
         self.fields = []
         # f[0] - name, f[1] - count (integer)
         for f in fields:
             if f[1] != 1:
-                componentRegister.userError("Field {} specified multiple times in input {}\n".format(f[0], name))
+                componentRegister.userError("Field '{}' specified multiple times in NetworkRead '{}'\n".format(f[0], name))
             self.fields.append(f[0].lower())
 
     def addComponents(self, componentRegister, conditionCollection):
-        componentRegister.addInput(self.name, self.fields)
+        componentRegister.addNetworkComponent(self.name, self.fields,
+                                              conditionCollection.conditionStack,
+                                              conditionCollection.branchNumber)
 
     def getCode(self, indent):
-        result = "input " + self.name
+        result = "NetworkRead " + self.name
         if len(self.fields):
             result += " ("
             for f in self.fields:
@@ -836,7 +860,7 @@ class CodeBlock(object):
             if type(d) is SetStatement \
                     or type(d) is ParametersDefineStatement \
                     or type(d) is ComponentDefineStatement \
-                    or type(d) is InputCommandStatement:
+                    or type(d) is NetworkReadStatement:
                 d.addComponents(componentRegister, conditionCollection)
 
             if type(d) is LoadStatement:

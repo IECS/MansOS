@@ -6,6 +6,7 @@ from component_hierarchy import *
 
 serial = SerialOutput()
 radio = RadioOutput()
+network = NetworkOutput()
 internalFlash = InternalFlashOutput()
 localStorage = LocalStorageOutput()
 
@@ -35,5 +36,3 @@ squarewave = SquareWaveSensor()
 trianglewave = TriangleWaveSensor()
 sawwave = SawtoothWaveSensor()
 sinewave = SineWaveSensor()
-
-
