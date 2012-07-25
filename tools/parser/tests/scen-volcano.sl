@@ -14,13 +14,13 @@ const EVENT_DETECTION_THRESHOLD 0x1234;
 // sample acoustic and seismic sensors
 read AcousticSensor, period SAMPLING_PERIOD;
 read SeismicSensor, period SAMPLING_PERIOD;
-Output File (AcousticSensor, SeismicSensor, Timestamp), filename "SensorData.bin";
+Output File (AcousticSensor, SeismicSensor, Timestamp), name "SensorData.bin";
 
 // event is detected when the difference between two EWMA becomes large enough
-define CombinedSensor sum(AcousticSensor, SeismicSensor); // just something that combines both
+define CombinedSensor sum(AcousticSensor, SeismicSensor); // just something
 define EventDetectionFunction difference(
-         EWMA(CombinedSensor, EWMA_COEFF_1_NUMERATOR, EWMA_COEFF_1_DENOMINATOR),
-         EWMA(CombinedSensor, EWMA_COEFF_2_NUMERATOR, EWMA_COEFF_2_DENOMINATOR));
+    EWMA(CombinedSensor, EWMA_COEFF_1_NUMERATOR, EWMA_COEFF_1_DENOMINATOR),
+    EWMA(CombinedSensor, EWMA_COEFF_2_NUMERATOR, EWMA_COEFF_2_DENOMINATOR));
 when EventDetectionFunction > EVENT_DETECTION_THRESHOLD:
     // event detected (locally), send info to base station
     // (timestamp is appended automatically)
@@ -32,7 +32,7 @@ NetworkRead RemoteCommand(Command, Timestamp);
 when RemoteCommand.Command == COMMAND_REQUEST_DATA:
     // collect all data that was read in interval [Timestamp, Timestamp + 60]
     Output Network, file "SensorData.bin",
-        where 
-            RemoteCommand.Timestamp >= Timestamp
-            and RemoteCommand.Timestamp <= add(Timestamp, DATA_COLLECTION_INTERVAL);
+    where 
+        RemoteCommand.Timestamp >= Timestamp
+        and RemoteCommand.Timestamp <= add(Timestamp, DATA_COLLECTION_INTERVAL);
 end
