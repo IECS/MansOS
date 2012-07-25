@@ -260,6 +260,31 @@ class HumiditySensor(SealSensor):
         self.extraConfig = SealParameter("USE_HUMIDITY=y")
         self.extraIncludes = SealParameter("#include <hil/humidity.h>")
 
+# the following for are not implemented
+class TemperatureSensor(SealSensor):
+    def __init__(self):
+        super(TemperatureSensor, self).__init__("Temperature")
+        self.useFunction.value = "temperatureRead()"
+        self.readFunction.value = "temperatureRead()"
+
+class InternalTemperatureSensor(SealSensor):
+    def __init__(self):
+        super(InternalTemperatureSensor, self).__init__("InternalTemperature")
+        self.useFunction.value = "internalTemperatureRead()"
+        self.readFunction.value = "internalTemperatureRead()"
+
+class SoilHumiditySensor(SealSensor):
+    def __init__(self):
+        super(SoilHumiditySensor, self).__init__("SoilHumidity")
+        self.useFunction.value = "soilHumidityRead()"
+        self.readFunction.value = "soilHumidityRead()"
+
+class SoilTemperatureSensor(SealSensor):
+    def __init__(self):
+        super(SoilTemperatureSensor, self).__init__("SoilTemperature")
+        self.useFunction.value = "soilTemperatureRead()"
+        self.readFunction.value = "soilTemperatureRead()"
+
 class AnalogInputSensor(SealSensor):
     def __init__(self):
         super(AnalogInputSensor, self).__init__("AnalogIn")
@@ -407,6 +432,11 @@ class PrintAct(SealActuator):
         self.arg8 = SealParameter(None)
         self.arg9 = SealParameter(None)
 
+# not implemented
+class WateringAct(SealActuator):
+    def __init__(self):
+        super(WateringAct, self).__init__("Watering")
+
 #######################################################
 class SealOutput(SealComponent):
     def __init__(self, name):
@@ -417,9 +447,12 @@ class SealOutput(SealComponent):
         self.timestamp = SealParameter(True, [False, True])
         self.sequencenumber = SealParameter(False, [False, True])
         self.issent = SealParameter(False, [False, True])
-        # file FROM which to output;
-        # "File" outputs has "filename" parameter TO which to output; do not confuse!
+        # The name of the file, FROM which to output
+        # but "File" outputs has "filename" parameter TO which to output; do not confuse!
+        # Automatically generated if None.
         self.file = SealParameter(None)
+        self.name = SealParameter(None) # synonym
+        self.filename = SealParameter(None) # synonym
         # for FromFile outputs
         self.where = SealParameter(None)
 
@@ -470,8 +503,6 @@ class FileOutput(SealOutput):
     def __init__(self):
         super(FileOutput, self).__init__("File")
         self.useFunction.value = "filePrint()"
-        # the name of the file (automatically generated if None)
-        self.filename = SealParameter(None, [])
         # a file can be text or binary - allow both parameter names wih inverse meaning
         # XXX: make text files by default - more intuitive
         self.text = SealParameter(None, [False, True])

@@ -84,8 +84,16 @@ class Generator(object):
             c.generateOutputCode(self.outputFile, sensorsUsed)
 
     def generateCallbacks(self):
-        for c in self.components:
-            c.generateCallbacks(self.outputFile, self.outputs)
+        for o in self.outputs:
+            o.prepareToGenerateCallbacks(self.outputFile)
+
+        for s in components.componentRegister.sensors.itervalues():
+            s.generateCallbacks(self.outputFile, self.outputs)
+        for a in components.componentRegister.actuators.itervalues():
+            a.generateCallbacks(self.outputFile, self.outputs)
+        for o in components.componentRegister.outputs.itervalues():
+            o.generateCallbacks(self.outputFile, self.outputs)
+
         for n in self.networkComponents:
             n.generateReadFunctions(self.outputFile)
 

@@ -57,7 +57,7 @@ class FunctionTree(object):
 #            self.function = function.firstPart
 #        else:
 #            self.function = function
-        self.function = function
+        self.function = function.lower()
         self.arguments = arguments
 
     def checkArgs(self, argCount, componentRegister):
@@ -82,8 +82,8 @@ class FunctionTree(object):
     def generateSensorName(self):
         if type(self.function) is Value:
             return self.function.asString()
-#        if type(self.function) is SealValue:
-#            return self.function.firstPart # XXX
+        if type(self.function) is SealValue:
+            return self.function.firstPart # XXX
         result = self.function.lower()
         for a in self.arguments:
             result += "_" + a.generateSensorName()
@@ -102,7 +102,7 @@ class FunctionTree(object):
 #    def getEvaluationCode(self, componentRegister):
 #        return self.getCode()
 
-    def collectImplicitDefines(self):
+    def collectImplicitDefines(self, containingComponent):
         return []
 
 ########################################################
@@ -224,6 +224,9 @@ class Value(object):
             self.value = value
             self.suffix = suffix
 
+    def lower(self):
+        return self # already lower()'ed
+
     def getRawValue(self):
         if not isinstance(self.value, int):
             return self.value
@@ -264,7 +267,7 @@ class Value(object):
 #        # TODO: convert time values to milliseconds?
 #        return str(self.value)
 
-    def collectImplicitDefines(self):
+    def collectImplicitDefines(self, containingComponent):
         return []
 
 ########################################################
@@ -279,6 +282,9 @@ class SealValue(object):
             self.secondPart = secondPart
 #        print "seal value: ", self.firstPart, self.secondPart
 #        print "  (args: ", firstPart, secondPart, ")"
+
+    def lower(self):
+        return SealValue(self.firstPart.lower(), self.secondPart)
 
     def getCode(self):
         # Value object can be inside SealValue
@@ -344,16 +350,18 @@ class Expression(object):
         return bool(len(self.dependentOnSensors)) \
             or bool(len(self.dependentOnPackets))
 
-    def collectImplicitDefines(self):
+    def collectImplicitDefines(self, containingComponent):
         result = []
         if self.funcExpressionLeft:
-            result.append(ComponentDefineStatement(self.left.value.firstPart, self.funcExpressionLeft, []))
+            result.append(ComponentDefineStatement(
+                    self.left.value.firstPart, self.funcExpressionLeft, [], containingComponent))
         elif self.left:
-            result += self.left.collectImplicitDefines()
+            result += self.left.collectImplicitDefines(containingComponent)
         if self.funcExpressionRight:
-            result.append(ComponentDefineStatement(self.right.value.firstPart, self.funcExpressionRight, []))
+            result.append(ComponentDefineStatement(
+                    self.right.value.firstPart, self.funcExpressionRight, [], containingComponent))
         elif self.right:
-            result += self.right.collectImplicitDefines()
+            result += self.right.collectImplicitDefines(containingComponent)
         return result
 
     def getCode(self):
@@ -513,7 +521,7 @@ class NetworkReadStatement(object):
 
 ########################################################
 class ComponentDefineStatement(object):
-    def __init__(self, name, functionTree, parameters):
+    def __init__(self, name, functionTree, parameters, containingOutputComponent = None):
         self.name = name.lower()
 #        self.basename = basename.lower()
         self.functionTree = functionTree
@@ -522,6 +530,7 @@ class ComponentDefineStatement(object):
         self.added = False
         self.isError = False
         self.base = None # underlying "real" component
+        self.containingOutputComponent = containingOutputComponent
 #        self.bases = []
 
     def getCode(self, indent):
@@ -543,12 +552,10 @@ class ComponentDefineStatement(object):
         componentRegister.addVirtualComponent(self)
 
     def continueAdding(self, componentRegister):
-        if not self.isError:
-            componentRegister.continueAddingVirtualComponent(self)
+        componentRegister.continueAddingVirtualComponent(self)
 
     def finishAdding(self, componentRegister):
-        if not self.isError:
-            componentRegister.finishAddingVirtualComponent(self)
+        componentRegister.finishAddingVirtualComponent(self)
 
     def getAllBasenamesRecursively(self, functionTree):
         if len(functionTree.arguments) == 0:
@@ -723,11 +730,12 @@ class ComponentUseCase(object):
                 self.expression = name
         else:
             self.name = name.lower()
-        self.parameters = parameters
+        self.parameters = dict(parameters)
         self.fields = []
         if fields:
             # f[0] - name, f[1] - count (integer)
             for f in fields: self.fields.append((f[0].lower(), f[1]))
+        self.componentUseCase = None
 
     def getCode(self, indent):
         result = self.type + " " + self.name
@@ -739,7 +747,7 @@ class ComponentUseCase(object):
                 result += ", "
             result = result[:-2] # remove last comma
             result += ")"
-        for p in self.parameters:
+        for p in self.parameters.iteritems():
             result += ", "
             result += p[0]
             if p[1] != None:
@@ -749,10 +757,20 @@ class ComponentUseCase(object):
         return result
 
     def addComponents(self, componentRegister, conditionCollection):
-        componentRegister.useComponent(self.type, self.name,
+        self.componentUseCase = \
+            componentRegister.useComponent(self.type, self.name,
                                        self.parameters, self.fields,
                                        conditionCollection.conditionStack,
                                        conditionCollection.branchNumber)
+
+    def collectImplicitDefines(self):
+        implicitDefines = []
+        if self.expression: 
+            implicitDefines.append(ComponentDefineStatement(self.name, self.expression, []))
+        if self.type == "output" and "where" in self.parameters:
+            implicitDefines += self.parameters["where"].collectImplicitDefines(self)
+        return implicitDefines
+
 
 ########################################################
 CODE_BLOCK_TYPE_PROGRAM = 0
@@ -829,12 +847,12 @@ class CodeBlock(object):
         # add implicitly declared virtual senosrs
         implicitDefines = []
         for d in self.declarations:
-            if (type(d) is ComponentUseCase) and d.expression:
-                implicitDefines.append(ComponentDefineStatement(d.name, d.expression, []))
+            if isinstance(d, ComponentUseCase):
+                implicitDefines += d.collectImplicitDefines()
         self.declarations += implicitDefines
         # collect implicit defines from conditions too...
         if self.condition:
-            self.declarations += self.condition.collectImplicitDefines()
+            self.declarations += self.condition.collectImplicitDefines(None)
 
         # add components - use cases always first, "when ..." blocks afterwards!
         for d in self.declarations:

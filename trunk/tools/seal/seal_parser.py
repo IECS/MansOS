@@ -91,16 +91,15 @@ class SealParser():
     #   - avoid different kind of braces and brackets (as in C),
     #     instead use "(" and ")" for everything
     #   - avoid arithmetic operators, use functions instead
-    #   - allow unary + and -
+    #   - but allow unary + and -
     literals = ['.', ',', ':', ';', '(', ')', '<', '>', '+', '-']
 
     t_ignore = " \t\r"
 
     def t_IDENTIFIER_TOKEN(self, t):
         r'[a-zA-Z_][0-9a-zA-Z_]*'
-        # t.value = t.value.lower()
         # This checks if reserved token is met.
-        t.type = self.reserved.get(t.value, "IDENTIFIER_TOKEN")
+        t.type = self.reserved.get(t.value.lower(), "IDENTIFIER_TOKEN")
         return t
 
     def t_HEX_INTEGER_LITERAL(self, t):
@@ -215,7 +214,7 @@ class SealParser():
     def p_const_statement(self, p):
         '''const_statement : CONST_TOKEN IDENTIFIER_TOKEN value ';'
         '''
-        name = p[2]
+        name = p[2].lower()
         value = p[3]
         p[0] = ConstStatement(name, value)
         if name in components.componentRegister.systemConstants:
@@ -251,7 +250,7 @@ class SealParser():
             # hacks...
             if type(p[1].value) is str: v = p[1].value
             # XXX: for now just ignore structure.field syntax inside functions
-#            elif type(p[1].value) is SealValue: v = p[1].value.firstPart
+            # elif type(p[1].value) is SealValue: v = p[1].value.firstPart
             elif type(p[1].value) is SealValue: v = p[1].value
             else: v = p[1]
             p[0] = FunctionTree(v, [])
