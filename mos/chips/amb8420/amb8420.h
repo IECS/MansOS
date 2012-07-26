@@ -31,6 +31,32 @@
 #define AMB8420_TX_POWER_MIN        0  // -38.75 dBm
 #define AMB8420_TX_POWER_MAX        31 // 0 dBm
 
+#define AMB8420_TRANSPARENT_MODE    0x00 // default
+#define AMB8420_COMMAND_MODE        0x10 // configuration mode
+
+#define AMB8420_WAIT_FOR_RTS_READY() while(pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN))udelay(100)
+#define AMB8420_ENTER_ACTIVE_MODE() do{\
+                pinClear(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN); \
+                pinClear(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);             \
+                }while(0)
+#define AMB8420_ENTER_STAND_BY_MODE() do{\
+                pinSet(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);   \
+                pinClear(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);             \
+                }while(0)
+#define AMB8420_ENTER_WOR_MODE() do{\
+                pinClear(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN); \
+                pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);               \
+                }while(0)
+#define AMB8420_ENTER_SLEEP_MODE() do{\
+                pinSet(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);   \
+                pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);               \
+                }while(0)
+
+#define AMB8420_SWITCH_TO_TRANSPARENT_MODE() if(amb8420OperationMode == AMB8420_COMMAND_MODE) amb8420ChangeMode()
+#define AMB8420_SWITCH_TO_COMMAND_MODE() if(amb8420OperationMode == AMB8420_TRANSPARENT_MODE) amb8420ChangeMode()
+
+uint8_t amb8420OperationMode;
+
 void amb8420Init(void) WEAK_SYMBOL;
 
 void amb8420On(void);
@@ -39,6 +65,14 @@ void amb8420Off(void);
 int amb8420Read(void *buf, uint16_t bufsize);
 int amb8420Send(const void *header, uint16_t headerLen,
                  const void *data, uint16_t dataLen);
+
+uint8_t amb8420GetXor(uint8_t len, uint8_t* data);
+void amb8420ChangeModeCb();
+void amb8420ChangeMode();
+void amb8420SetCb();
+int amb8420Set(uint8_t len, uint8_t* data, uint8_t position);
+void amb8420GetCb();
+int amb8420Get(uint8_t memoryPosition, uint8_t numberOfBytes);
 
 void amb8420Discard(void);
 
@@ -66,4 +100,4 @@ bool amb8420IsChannelClear(void);
 
 void amb8420InitUsart(void);
 
-#endif
+#endif //MANSOS_AMB8420_H

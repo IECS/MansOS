@@ -53,10 +53,8 @@ void amb8420Init(void)
 
     pinSet(AMB8420_CONFIG_PORT, AMB8420_CONFIG_PIN);
     pinClear(AMB8420_DATA_REQUEST_PORT, AMB8420_DATA_REQUEST_PIN);
-    // disable transmissions via serial port
-    pinSet(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);
-    // and enter sleep mode
-    pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);
+
+    AMB8420_ENTER_SLEEP_MODE();
 
     pinIntRising(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
     pinEnableInt(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
@@ -67,10 +65,9 @@ void amb8420Init(void)
     pinSet(AMB8420_RESET_PORT, AMB8420_RESET_PIN);
     mdelay(2);
     // wait for initialization to complete
-    while (pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN)) {
-        udelay(100);
-    }
+    AMB8420_WAIT_FOR_RTS_READY();
 
+    amb8420OperationMode = AMB8420_TRANSPARENT_MODE;
     RPRINTF("..done\n");
 }
 
@@ -83,9 +80,8 @@ void amb8420On(void)
     USARTSetReceiveHandle(AMB8420_UART_ID, usartReceive);
 
     if (!isOn) {
-        pinClear(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);
-        pinClear(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);
-        mdelay(2); // found empirically
+        AMB8420_ENTER_ACTIVE_MODE();
+        AMB8420_WAIT_FOR_RTS_READY();
         isOn = true;
     }
 }
@@ -94,8 +90,7 @@ void amb8420Off(void)
 {
     RPRINTF("amb842Off\n");
     if (isOn) {
-        pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);
-        pinSet(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);
+        AMB8420_ENTER_SLEEP_MODE();
         isOn = false;
     }
 }
@@ -138,6 +133,110 @@ int amb8420Send(const void *header_, uint16_t headerLen,
 
     if (!wasOn) amb8420Off();
 
+    return 0;
+}
+
+uint8_t amb8420GetXor(uint8_t len, uint8_t* data)
+{
+    uint8_t crc = 0;
+    while(len != 255) // -1 == 255
+    {
+        crc ^= data[len--];
+    }
+    return crc;
+}
+
+void amb8420ChangeModeCb()
+{
+    debugHexdump(rxBuffer, rxCursor);
+    if (rxBuffer[4] == amb8420GetXor(3, (uint8_t*)rxBuffer))
+    {
+        // 0x02 0x44 0x01 < newly configured operating mode > < CS >
+        amb8420OperationMode = rxBuffer[3];
+    }
+    rxCursor = 0;
+}
+
+void amb8420ChangeMode()
+{
+    // Wait for device to become ready
+    AMB8420_WAIT_FOR_RTS_READY();
+    AMB8420RxHandle old = amb8420SetReceiver(amb8420ChangeModeCb);
+    // Generate falling front
+    pinClear(AMB8420_CONFIG_PORT, AMB8420_CONFIG_PIN);
+    mdelay(1);
+    pinSet(AMB8420_CONFIG_PORT, AMB8420_CONFIG_PIN);
+
+    // Wait for device to become ready
+    AMB8420_WAIT_FOR_RTS_READY();
+    amb8420SetReceiver(old);
+}
+
+void amb8420SetCb()
+{
+    //0x02 0x49 0x01 < status > < CS >
+    PRINTF("amb8420 set answer: ");
+    debugHexdump(rxBuffer, rxCursor);
+    rxCursor = 0;
+}
+
+int amb8420Set(uint8_t len, uint8_t* data, uint8_t position)
+{
+    if (amb8420OperationMode == AMB8420_TRANSPARENT_MODE)
+    {
+        return -1;
+    }
+    AMB8420RxHandle old = amb8420SetReceiver(amb8420SetCb);
+    uint8_t crc = 0x02 ^ 0x09, i;
+    // Wait for device to become ready
+    AMB8420_WAIT_FOR_RTS_READY();
+    USARTSendByte(AMB8420_UART_ID, 0x02);
+    USARTSendByte(AMB8420_UART_ID, 0x09);
+    USARTSendByte(AMB8420_UART_ID, len +2 );
+    USARTSendByte(AMB8420_UART_ID, position);
+    USARTSendByte(AMB8420_UART_ID, len);
+    crc ^= (len + 2) ^ position ^ len;
+    for (i = 0; i < len; i++)
+    {
+        USARTSendByte(AMB8420_UART_ID, data[i]);
+        crc ^= data[i];
+    }
+    USARTSendByte(AMB8420_UART_ID, crc);
+
+    // Wait for device to become ready
+    AMB8420_WAIT_FOR_RTS_READY();
+    amb8420SetReceiver(old);
+    return 0;
+}
+
+void amb8420GetCb()
+{
+    PRINTF("amb8420 set answer: ");
+    //0x02 0x4A < number of bytes + 2 > < memory position > < number of bytes >
+    //< parameter > < CS >
+    debugHexdump(rxBuffer, rxCursor);
+    rxCursor = 0;
+}
+
+int amb8420Get(uint8_t memoryPosition, uint8_t numberOfBytes)
+{
+    if (amb8420OperationMode == AMB8420_TRANSPARENT_MODE)
+    {
+        return -1;
+    }
+    AMB8420RxHandle old = amb8420SetReceiver(amb8420GetCb);
+    // Wait for device to become ready
+    AMB8420_WAIT_FOR_RTS_READY();
+    USARTSendByte(AMB8420_UART_ID, 0x02);
+    USARTSendByte(AMB8420_UART_ID, 0x0A);
+    USARTSendByte(AMB8420_UART_ID, 0x02);
+    USARTSendByte(AMB8420_UART_ID, memoryPosition);
+    USARTSendByte(AMB8420_UART_ID, numberOfBytes);
+    USARTSendByte(AMB8420_UART_ID, 0x02 ^ 0x0A ^ 0x02 ^ memoryPosition ^ numberOfBytes);
+
+    // Wait for device to become ready
+    AMB8420_WAIT_FOR_RTS_READY();
+    amb8420SetReceiver(old);
     return 0;
 }
 
