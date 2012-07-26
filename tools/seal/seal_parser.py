@@ -14,7 +14,7 @@ class SealParser():
         # Lex & yacc
         self.lex = lex.lex(module = self, debug = verboseMode, reflags = re.IGNORECASE)
         self.yacc = yacc.yacc(module = self, debug = verboseMode)
-        # current condtion (for context)
+        # current condition (for context)
         self.currentCondition = None
         self.newCode = True
         self.lineTracking = {"Condition": [], "Statement": []}
@@ -223,9 +223,10 @@ class SealParser():
             components.componentRegister.systemConstants[name] = value
 
     def p_set_statement(self, p):
-        '''set_statement : SET_TOKEN IDENTIFIER_TOKEN value ';'
+#        '''set_statement : SET_TOKEN IDENTIFIER_TOKEN value ';'
+        '''set_statement : SET_TOKEN IDENTIFIER_TOKEN functional_expression ';'
         '''
-        p[0] = SetStatement(p[2], p[3])
+        p[0] = SetStatement(p[2], Expression(right=p[3]))
 
     def p_pattern_declaration(self, p):
         '''pattern_declaration : PATTERN_TOKEN IDENTIFIER_TOKEN '(' value_list ')' ';'

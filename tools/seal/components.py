@@ -154,6 +154,22 @@ class UseCase(object):
         else:
             self.once = None
 
+        p = self.parameters.get("interrupt")
+        if p:
+            self.interruptBased = bool(p.value)
+        else:
+            self.interruptBased = False
+
+        if self.interruptBased:
+            self.risingEdge = True
+            p = self.parameters.get("rising")
+            if p: self.risingEdge = bool(p.value)
+            else:
+                p = self.parameters.get("falling")
+                if p: self.risingEdge = not bool(p.value)
+            self.port = self.getParameterValueValue("port")
+            self.pin = self.getParameterValueValue("pin")
+
 #        for x in ['average', 'stdev', 'filter']:
 #            p = self.parameters.get(x)
 #            if p and p.value != '':
@@ -175,7 +191,7 @@ class UseCase(object):
             componentRegister.userError("'times', but not 'period' specified for component '{0}' use case\n".format(component.name))
             self.times = None
 
-        if component.isRemote or isinstance(component, Output):
+        if component.isRemote or isinstance(component, Output) or self.interruptBased:
             self.generateAlarm = False
         else:
             self.generateAlarm = self.once or self.pattern or self.period
@@ -191,6 +207,16 @@ class UseCase(object):
 
         #print "after conditions =", branchCollection.branches[branchNumber][0][0].conditions
         #print "after conditions[1] =", branchCollection.branches[branchNumber][0][1]
+
+    def getParameterValue(self, parameter, defaultValue = None):
+        if parameter in self.parameters:
+            return self.parameters[parameter].getCodeForGenerator(componentRegister, None)
+        return self.component.getParameterValue(parameter, defaultValue)
+
+    def getParameterValueValue(self, parameter, defaultValue = None):
+        if parameter in self.parameters:
+            return self.parameters[parameter].value
+        return self.component.getParameterValue(parameter, defaultValue)
 
     def generateConstants(self, outputFile):
         ucname = self.component.getNameUC()
@@ -250,14 +276,25 @@ class UseCase(object):
 #                pass
 #            outputFile.write("}\n\n")
 
-        if self.generateAlarm or self.component.isRemote:
-            if self.generateAlarm: argument = "void *isFromBranchStart"
-            elif self.component.isRemote:
-                if self.component.remoteFields: argument = "int32_t *buffer"
-                else: argument = "uint16_t code, int32_t value"
-            outputFile.write("void {0}{1}Callback({2})\n".format(
-                    ccname, self.numInBranch, argument))
-            outputFile.write("{\n")
+        if self.generateAlarm or self.interruptBased or self.component.isRemote:
+            if self.interruptBased:
+                # TODO: multiple sensor can share the same port!
+                outputFile.write("ISR(PORT{0}, port{0}Interrupt)\n".format(self.port))
+                outputFile.write("{\n")
+                outputFile.write("    if (!pinReadIntFlag({0}, {1}))\n".format(self.port, self.pin))
+                outputFile.write("        return;\n")
+                outputFile.write("    pinClearIntFlag({0}, {1});\n".format(self.port, self.pin))
+            else:
+                if self.generateAlarm:
+                    argument = "void *isFromBranchStart"
+                elif self.component.isRemote:
+                    if self.component.remoteFields: argument = "int32_t *buffer"
+                    else: argument = "uint16_t code, int32_t value"
+
+                outputFile.write("void {0}{1}Callback({2})\n".format(
+                        ccname, self.numInBranch, argument))
+                outputFile.write("{\n")
+
             if type(self.component) is Actuator:
                 if self.component.name.lower() == "print":
                     # special handling for print statements
@@ -280,6 +317,7 @@ class UseCase(object):
                     useFunction = self.component.getDependentParameterValue(
                         "useFunction", self.parameters)
                     outputFile.write("    {0};\n".format(useFunction))
+
             elif type(self.component) is Sensor:
                 intTypeName = self.component.getDataType()
                 if self.component.syncOnlySensor:
@@ -350,7 +388,7 @@ class UseCase(object):
 #                    for o in outputs:
 #                        o.generateCallbackCode(self.component, outputFile)
 
-            if self.component.isRemote:
+            if self.component.isRemote or self.interruptBased:
                 pass
             elif self.once:
                 pass
@@ -399,7 +437,11 @@ class UseCase(object):
                 outputFile.write("    }\n")
             else:
                 outputFile.write("    sealCommRegisterInterest({}, {}{}Callback);\n".format(
-                        self.component.systemwideID, self.component.getNameCC(), self.numInBranch))
+                        self.component.getSystemwideID(), self.component.getNameCC(), self.numInBranch))
+        elif self.interruptBased:
+            outputFile.write("    pinEnableInt({}, {});\n".format(self.port, self.pin))
+            if self.risingEdge: outputFile.write("    pinIntRising({}, {});\n".format(self.port, self.pin))
+            else: outputFile.write("    pinIntFalling({}, {});\n".format(self.port, self.pin))
 
     def generateBranchEnterCode(self, outputFile):
         if self.generateAlarm:
@@ -418,15 +460,6 @@ class UseCase(object):
                 # reset cursor position (TODO XXX: really?)
                 outputFile.write("    __pattern_{0}Cursor = 0;\n".format(self.pattern))
 
-    def getParameterValue(self, parameter, defaultValue = None):
-        if parameter in self.parameters:
-            return self.parameters[parameter].getCodeForGenerator(componentRegister, None)
-        return self.component.getParameterValue(parameter, defaultValue)
-
-    def getParameterValueValue(self, parameter, defaultValue = None):
-        if parameter in self.parameters:
-            return self.parameters[parameter].value
-        return self.component.getParameterValue(parameter, defaultValue)
 
 
 ######################################################
@@ -472,6 +505,10 @@ class Component(object):
     def getNameTC(self):
         assert self.name != ''
         return string.upper(self.name[0]) + self.name[1:]
+
+    def updateParameters(self, dictionary):
+        for p in dictionary.iteritems():
+            self.parameters[p[0]] = p[1].value
 
     def addUseCase(self, parameters, conditions, branchNumber):
         numInBranch = 0
@@ -606,12 +643,13 @@ class Sensor(Component):
         if cnParam is not None: self.cacheNeeded = cnParam
         self.cacheNumber = 0
         self.readFunctionNum = 0
-        if name.lower() == "command":
-            self.systemwideID = PACKET_FIELD_ID_COMMAND
-        else:
-            self.systemwideID = componentRegister.allocateSensorId()
-            if self.systemwideID >= 31:
-                componentRegister.userError("Too many sensors! Sensor '{}' has id {}, but at the moment onl ID up to 30 ar supported.\n".format(name, self.systemwideID))
+        self.systemwideID = None
+#        if name.lower() == "command":
+#            self.systemwideID = PACKET_FIELD_ID_COMMAND
+#        else:
+#            self.systemwideID = componentRegister.allocateSensorId()
+#            if self.systemwideID >= 31:
+#                componentRegister.userError("Too many sensors! Sensor '{}' has id {}, but at the moment only ID up to 30 are supported.\n".format(name, self.systemwideID))
 
         self.doGenerateSyncCallback = False
         self.syncOnlySensor = False
@@ -620,9 +658,18 @@ class Sensor(Component):
         self.containingOutputComponent = None
         self.generatedDefaultRawReadFunction = False
 
+    def getSystemwideID(self):
+        if self.systemwideID is not None: return self.systemwideID
+        if self.name.lower() in commonFields:
+            self.systemwideID = commonFields[self.name.lower()]
+        else:
+            self.systemwideID = componentRegister.allocateSensorId()
+            if self.systemwideID >= 31:
+                componentRegister.userError("Too many sensors! Sensor '{}' has id {}, but at the moment only ID up to 30 are supported.\n".format(name, self.systemwideID))
+        return self.systemwideID
+
     def updateParameters(self, dictionary):
-        for p in dictionary.iteritems():
-            self.parameters[p[0]] = p[1].value
+        super(Sensor, self).updateParameters(dictionary)
         cnParam = self.getParameterValue("cache")
         if cnParam is not None: self.cacheNeeded = cnParam
 
@@ -646,8 +693,8 @@ class Sensor(Component):
     def generateConstants(self, outputFile):
         super(Sensor, self).generateConstants(outputFile)
         if self.isUsed() or self.doGenerateSyncCallback:
-            outputFile.write("#define {0}_TYPE_ID     {1:}\n".format(self.getNameUC(), self.systemwideID))
-            outputFile.write("#define {0}_TYPE_MASK   {1:#x}\n".format(self.getNameUC(), 1<< self.systemwideID))
+            outputFile.write("#define {0}_TYPE_ID     {1:}\n".format(self.getNameUC(), self.getSystemwideID()))
+            outputFile.write("#define {0}_TYPE_MASK   {1:#x}\n".format(self.getNameUC(), 1<< self.getSystemwideID()))
 
     def isCacheNeeded(self, numCachedSensors):
         if not self.specification._cacheable: return False
@@ -1596,10 +1643,10 @@ class OutputUseCase(object):
                 self.addPacketTypes(subsensor, count)
             return
         # normal case
-        assert s.systemwideID not in self.usedIds
+        assert s.getSystemwideID() not in self.usedIds
         self.packetFields.append(PacketField(
-                s.systemwideID, s.getNameCC(), s.getDataSize(), s.getDataType(), count))
-        self.usedIds.add(s.systemwideID)
+                s.getSystemwideID(), s.getNameCC(), s.getDataSize(), s.getDataType(), count))
+        self.usedIds.add(s.getSystemwideID())
         self.numSensorFields += 1 # yes, aggregate fields are counted as one
 
     def hasPacketField(self, fieldName):
@@ -1656,7 +1703,7 @@ class OutputUseCase(object):
             if f in commonFields:
                 systemwideID = commonFields[f]
             elif f in componentRegister.sensors:
-                systemwideID = componentRegister.sensors.get(fieldName).systemwideID
+                systemwideID = componentRegister.sensors.get(fieldName).getSystemwideID()
             else:
                 continue
             paramValue = self.getParameterValue(f) 
@@ -2022,8 +2069,7 @@ class FromFileOutputUseCase(OutputUseCase):
         self.numSensorFields = self.associatedFileOutputUseCase.numSensorFields
 
         # needed to mark the correspodning sensors as used;
-        # XXX optimize: this is evaluated twice
-        self.condition.getEvaluationCode(componentRegister)
+        self.conditionEvaluationCode = self.condition.getEvaluationCode(componentRegister)
 
         # define packet type
         self.generatePacketType(outputFile, indent=0)
@@ -2079,8 +2125,9 @@ class FromFileOutputUseCase(OutputUseCase):
         # outputFile.write('        PRINT("\\n");\n')
 
         if self.condition:
-            outputFile.write("\n    " + self.condition.getEvaluationCode(componentRegister))
-            outputFile.write("        if (!result) continue;\n\n")
+            outputFile.write("\n")
+            outputFile.write("        if (!{}) continue;\n\n".format(
+                    self.conditionEvaluationCode))
 
         # for debugging
         # outputFile.write('        PRINT("OK\\n");\n')
@@ -2205,21 +2252,34 @@ class Output(Component):
 
 
 ######################################################
-class StateUseCase(object):
-    def __init__(self, name, value, conditions, branchNumber):
+class SetUseCase(object):
+    def __init__(self, name, expression, conditions, branchNumber, isNew):
         self.name = name
-        self.value = value
-        self.conditions = list(conditions)
+        self.expressionCode = expression.getEvaluationCode(componentRegister)
+        self.conditions = list(conditions) # deep copy!
+        self.branchNumber = branchNumber
         if branchNumber in branchCollection.branches:
             branchCollection.branches[branchNumber].append(self)
         else:
             branchCollection.branches[branchNumber] = [self]
+        self.isNew = isNew
+
+    def getType(self):
+        return "int32_t"
 
     def generateVariables(self, outputFile):
-        outputFile.write("{0} {1} = {2};\n".format(self.value.getType(), self.name, self.value.asString()))
+        if self.isNew:
+            outputFile.write("{0} {1};\n".format(self.getType(), self.name))
 
     def generateBranchEnterCode(self, outputFile):
-        outputFile.write("    {0} = {1};\n".format(self.name, self.value.asString()))
+        if self.expressionCode.find("isFilteredOut") != -1:
+            # TODO: semantic problem - what to do when isFilteredOut happens to be true?
+            outputFile.write("    {\n")
+            outputFile.write("        bool isFilteredOut = false;\n")
+            outputFile.write("        {0} = {1}".format(self.name, self.expressionCode))
+            outputFile.write("    }\n")
+        else:
+            outputFile.write("    {0} = {1}".format(self.name, self.expressionCode))
 
     def generateBranchExitCode(self, outputFile):
         pass
@@ -2251,7 +2311,7 @@ class NetworkComponent(object):
 
         if len(self.fields) == 1:
             code = commonFields.get(fieldName)
-            if code is None: code = componentRegister.sensors.get(fieldName).systemwideID
+            if code is None: code = componentRegister.sensors.get(fieldName).getSystemwideID()
             condition.dependentOnSensors.add(code)
             return "value"
 
@@ -2283,7 +2343,7 @@ class NetworkComponent(object):
                 self.isError = True
                 return
             s.markAsUsed()
-            self.sortedFields.append((s.systemwideID, f))
+            self.sortedFields.append((s.getSystemwideID(), f))
         # sort the fields by ID
         self.sortedFields.sort()
 
@@ -2412,8 +2472,9 @@ class ComponentRegister(object):
     #######################################################################
     def addVirtualComponent(self, c):
         if self.virtualComponents.get(c.name, None) is not None:
-            self.userError("Virtual component '{0}' duplicated for platform '{1}', ignoring\n".format(
-                    c.name, self.architecture))
+            # be silent - this is perfectrly norrmal!
+            # self.userError("Virtual component '{0}' duplicated for platform '{1}', ignoring\n".format(
+            #        c.name, self.architecture))
             c.isError = True
             return
         if self.findComponentByName(c.name) is not None:
@@ -2579,9 +2640,11 @@ class ComponentRegister(object):
             o.addOutputUseCase(uc, fields)
         return uc
 
-    def setState(self, name, value, conditions, branchNumber):
+    def setState(self, name, expression, conditions, branchNumber):
         # add the state itself, if not already
+        isNew = False
         if name not in self.systemStates:
+            isNew = True
             self.systemStates[name] = []
             # also add a kind of sensor, to later allow these state values to be read
             if name in self.sensors:
@@ -2592,11 +2655,12 @@ class ComponentRegister(object):
             spec = componentRegister.module.SealSensor("Null")
             spec.useFunction.value = name
             spec.readFunction.value = spec.useFunction.value
-            spec.dataType = componentRegister.module.SealParameter(value.getType())
+            # spec.dataType = componentRegister.module.SealParameter(value.getType())
             # add the sensor to array
             self.sensors[name] = Sensor(name, spec)
         # add new use case for this state
-        self.systemStates[name].append(StateUseCase(name, value, conditions, branchNumber))
+        self.systemStates[name].append(
+            SetUseCase(name, expression, conditions, branchNumber, isNew))
 
     def generateVariables(self, outputFile):
         for s in self.systemStates.itervalues():
