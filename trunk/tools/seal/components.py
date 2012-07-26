@@ -285,7 +285,7 @@ class UseCase(object):
                     if self.period:
                         for s in self.component.subsensors:
                             if s.getParameterValue("preReadFunction") is None: continue
-                            preReadTime = s.specification.readTime
+                            preReadTime = s.specification._readTime
                             if preReadTime == 0: continue
                             outputFile.write("    alarmSchedule(&{0}PreAlarm, {2}_PERIOD{1} - {3});\n".format(
                                     s.getNameCC(), self.numInBranch, ucname, preReadTime))
@@ -541,7 +541,7 @@ class Component(object):
 #            print self.specification.readFunctionDependsOnParams
 #            print self.useCases
 #            print self.usedForConditions
-            if self.specification.readFunctionDependsOnParams:
+            if self.specification._readFunctionDependsOnParams:
                 for uc in self.useCases:
                     self.generateReadFunctions(outputFile, uc)
                 if self.usedForConditions:
@@ -595,14 +595,13 @@ class Actuator(Component):
 class Sensor(Component):
     def __init__(self, name, specification):
         super(Sensor, self).__init__(name, specification)
-        if self.specification.minUpdatePeriod is None:
+        if self.specification._minUpdatePeriod is None:
             self.minUpdatePeriod = 1000 # default value
         else:
-            self.minUpdatePeriod = self.specification.minUpdatePeriod
+            self.minUpdatePeriod = self.specification._minUpdatePeriod
         self.cacheNeeded = False
         cnParam = self.getParameterValue("cache")
-        if cnParam is not None:
-            self.cacheNeeded = cnParam
+        if cnParam is not None: self.cacheNeeded = cnParam
         self.cacheNumber = 0
         self.readFunctionNum = 0
         if name.lower() == "command":
@@ -623,22 +622,13 @@ class Sensor(Component):
         for p in dictionary.iteritems():
             self.parameters[p[0]] = p[1].value
         cnParam = self.getParameterValue("cache")
-        if cnParam is not None:
-            self.cacheNeeded = cnParam
+        if cnParam is not None: self.cacheNeeded = cnParam
 
     def getDataSize(self):
-#        size = self.getParameterValue("dataSize")
-#        if size is None:
-#            size = 2 # TODO: issue warning
-#        return size
-        return 4 # TODO: optimize
+        return self.specification._dataSize
 
     def getDataType(self):
-#        dataType = self.getParameterValue("dataType")
-#        if dataType is not None:
-#            return dataType
-#        return "uint{}_t".format(self.getDataSize() * 8)
-        return "int32_t" # TODO: optimize
+        return self.specification._dataType
 
     def getMaxValue(self):
         # return "0x" + "ff" * self.getDataSize()
@@ -658,6 +648,7 @@ class Sensor(Component):
             outputFile.write("#define {0}_TYPE_MASK   {1:#x}\n".format(self.getNameUC(), 1<< self.systemwideID))
 
     def isCacheNeeded(self, numCachedSensors):
+        if not self.specification._cacheable: return False
         if self.cacheNeeded: return True
         for uc in self.useCases:
             if uc.period is not None and uc.period < self.minUpdatePeriod:
@@ -668,7 +659,7 @@ class Sensor(Component):
         return self.cacheNeeded
 
     def isCacheNeededForCondition(self):
-        global componentRegister
+        if not self.specification._cacheable: return False
         if self.cacheNeeded: return True
         conditionEvaluatePeriod = 1000 # once in second
         if conditionEvaluatePeriod < self.minUpdatePeriod:
@@ -1392,7 +1383,7 @@ class Sensor(Component):
     def generateSubReadFunctions(self, outputFile, useCase, functionTree, root):
         if functionTree is None:
             # a physical sensor; generate just raw read function
-            if self.specification.readFunctionDependsOnParams:
+            if self.specification._readFunctionDependsOnParams:
                 readFunctionSuffix = str(self.readFunctionNum)
                 self.readFunctionNum += 1
             else:
@@ -1408,7 +1399,7 @@ class Sensor(Component):
                     self.getDataType(), self.getNameCC(), readFunctionSuffix))
             outputFile.write("{\n")
 
-            if self.specification.readFunctionDependsOnParams:
+            if self.specification._readFunctionDependsOnParams:
 #                print "useCase", useCase
 #                print "root", root.name
 #                print "self", self.name
@@ -2330,15 +2321,15 @@ class ComponentRegister(object):
 
     def addComponent(self, name, spec):
         s = None
-        if spec.typeCode == self.module.TYPE_ACTUATOR:
+        if spec._typeCode == self.module.TYPE_ACTUATOR:
             if name in self.actuators:
                 return None
             s = self.actuators[name] = Actuator(name, spec)
-        elif spec.typeCode == self.module.TYPE_SENSOR:
+        elif spec._typeCode == self.module.TYPE_SENSOR:
             if name in self.sensors:
                 return None
             s = self.sensors[name] = Sensor(name, spec)
-        elif spec.typeCode == self.module.TYPE_OUTPUT:
+        elif spec._typeCode == self.module.TYPE_OUTPUT:
             if name in self.outputs:
                 return None
             s = self.outputs[name] = Output(name, spec)
@@ -2368,10 +2359,10 @@ class ComponentRegister(object):
         # construct empty components from descriptions
         for spec in self.module.components:
             # print "load", spec.name
-            c = self.addComponent(spec.name_.lower(), spec)
+            c = self.addComponent(spec._name.lower(), spec)
             if not c:
                 self.userError("Component '{0}' duplicated for platform '{1}', ignoring\n".format(
-                        spec.name_, architecture))
+                        spec._name, architecture))
 
     def loadExtModule(self, filename):
         try:
@@ -2383,7 +2374,7 @@ class ComponentRegister(object):
         for p in dir(extModule):
             spec = extModule.__getattribute__(p)
             if isinstance(spec, self.module.SealComponent):
-                c = self.addComponent(spec.name_.lower(), spec)
+                c = self.addComponent(spec._name.lower(), spec)
 
     #######################################################################
     def findComponentByName(self, componentName):

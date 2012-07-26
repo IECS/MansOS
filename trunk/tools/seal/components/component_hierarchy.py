@@ -13,8 +13,8 @@ class SealParameter(object):
 #######################################################
 class SealComponent(object):
     def __init__(self, typeCode, name):
-        self.typeCode = typeCode
-        self.name_ = name
+        self._typeCode = typeCode
+        self._name = name
         # parameters
         self.id = SealParameter(0, ["0", "1"])
         self.extraConfig = SealParameter(None)  # config file line(s)
@@ -49,15 +49,16 @@ class SealSensor(SealComponent):
     def __init__(self, name):
         super(SealSensor, self).__init__(TYPE_SENSOR, name)
         self.cache = SealParameter(False, [False, True])
-        self.cacheable = True # whether can be kept in cache
-        self.dataSize = 4 # in bytes
+        self._cacheable = True # whether can be kept in cache
+        self._dataSize = 4 # in bytes
+        self._dataType = "int32_t"
 #        self.filter = SealParameter('', ['> 100'])
 #        self.average = SealParameter('', ['10'])
 #        self.stdev = SealParameter('', ['10'])
         self.preReadFunction = SealParameter(None)
-        self.minUpdatePeriod = 1000 # milliseconds
-        self.readTime = 0 # read instanttly
-        self.readFunctionDependsOnParams = False
+        self._minUpdatePeriod = 1000 # milliseconds
+        self._readTime = 0 # read instanttly
+        self._readFunctionDependsOnParams = False
 
 # for remote use only
 class CommandSensor(SealSensor):
@@ -72,10 +73,10 @@ class VariableSensor(SealSensor):
         super(VariableSensor, self).__init__("Variables")
         self.useFunction.value = "0"
         self.readFunction.value = self.useFunction.value
-        self.cacheable = False
+        self._cacheable = False
         # the name of C variable
         self.name = SealParameter(None, [])
-        self.readFunctionDependsOnParams = True
+        self._readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         return self.getParameterValue("name", useCaseParameters)
@@ -87,7 +88,7 @@ class ConstantSensor(SealSensor):
         self.readFunction.value = self.useFunction.value
         # the value used in read function
         self.value = SealParameter(5, ["0", "1", "2", "5", "10", "100", "1000"])
-        self.readFunctionDependsOnParams = True
+        self._readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         return self.getParameterValue("value", useCaseParameters)
@@ -100,7 +101,7 @@ class CounterSensor(SealSensor):
         # the values used in read function
         self.start = SealParameter(0, ["0", "1", "2", "5", "10", "100", "1000"])
         self.max = SealParameter(0xffffffff, ["1", "2", "5", "10", "100", "1000", "0xffffffff"])
-        self.readFunctionDependsOnParams = True
+        self._readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         start = int(self.getParameterValue("start", useCaseParameters))
@@ -122,7 +123,7 @@ class RandomSensor(SealSensor):
         # parameters
         self.min = SealParameter(0, ["0", "1", "2", "5", "10", "100", "1000"])
         self.max = SealParameter(0xffff, ["1", "2", "5", "10", "100", "1000", "65535"])
-        self.readFunctionDependsOnParams = True
+        self._readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         #if parameter != "readFunction" and parameter != "useFunction":
@@ -146,7 +147,7 @@ class TimeCounterSensor(SealSensor):
         self.useFunction.value = "0"
         self.readFunction.value = "0"
         self.counterperiod = SealParameter(1000, ["100", "200", "500", "1000", "2000"])
-        self.readFunctionDependsOnParams = True
+        self._readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         counterPeriod = self.getParameterValue("counterperiod", useCaseParameters)
@@ -181,7 +182,7 @@ class WaveSensor(SealSensor):
         self.low = SealParameter(0, ["0", "1", "2", "5", "10", "100", "1000"])
         self.high = SealParameter(100, ["0", "1", "2", "5", "10", "100", "1000"])
         self.waveperiod = SealParameter(1000, ["100", "200", "500", "1000", "2000"])
-        self.readFunctionDependsOnParams = True
+        self._readFunctionDependsOnParams = True
 
 #
 # Predefined waveform sensor: 
@@ -291,7 +292,7 @@ class AnalogInputSensor(SealSensor):
         self.useFunction.value = "adcRead(1)"
         self.readFunction.value = "adcRead(1)"
         self.channel = SealParameter(0, ["0", "1", "2", "3", "4", "5", "6", "7"])
-        self.readFunctionDependsOnParams = True
+        self._readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         # print "calculateParameterValue: ", parameter
@@ -308,7 +309,7 @@ class DigitalInputSensor(SealSensor):
         self.readFunction.value = "pinRead(1, 0)"
         self.pin = SealParameter(0, ["0", "1", "2", "3", "4", "5", "6", "7"])
         self.port = SealParameter(1, ["1", "2", "3", "4", "5", "6"])
-        self.readFunctionDependsOnParams = True
+        self._readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
