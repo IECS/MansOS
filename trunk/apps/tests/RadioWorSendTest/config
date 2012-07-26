@@ -1,0 +1,9 @@
+#
+# Application specific config file
+#
+
+USE_RANDOM=y
+USE_ADDRESSING=y
+DEBUG=y
+
+#CONST_RADIO_CHANNEL=11
