@@ -182,10 +182,11 @@ class EditStatement(wx.Panel):
                 param = self.API.getParamByName(realParams, parameter[0])
                 value = None
                 if param != None:
-                    if param[1] == None:
+                    print param.getCode()
+                    if param == None:
                         value = True
                     else:
-                        value = param[1].getCode()
+                        value = param.getCode()
 
                 # Create combobox or checkbox
                 if type(parameter[1][0]) is not bool:
@@ -225,10 +226,10 @@ class EditStatement(wx.Panel):
                 param = self.API.getParamByName(realParams, parameter[0])
                 value = None
                 if param != None:
-                    if param[1] == None:
+                    if param.getCode() == None:
                         value = True
                     else:
-                        value = param[1].getCode()
+                        value = param.getCode()
                 # Update checkbox
                 if type(value) is bool:
                     # Search right box
@@ -317,20 +318,21 @@ class EditStatement(wx.Panel):
                         param[1].value = value
                         param[1].suffix = None
                     else:
-                        self.statement['statementStruct'].parameters.remove(param)
+                        self.statement['statementStruct'].parameters.pop(name)
                     continue
             # If such parameter don't exist we need to add it
             if not found:
+                print "not"
                 newParam = None
                 # Boolean value
                 if value == True:
                     newParam = (name, None)
-                    self.statement['statementStruct'].parameters.append(newParam)
+                    self.statement['statementStruct'].parameters[name] = None
                 # String value
                 else:
                     # TODO: make suffix right
                     newParam = (name, Value(value, None))
-                    self.statement['statementStruct'].parameters.append(newParam)
+                    self.statement['statementStruct'].parameters[name] = Value(value, None)
         self.saveCallback(self.statement)
         # Place cursor in last edited place(works only on manual edit)
         # TODO: sometimes hangs entire app... :(
