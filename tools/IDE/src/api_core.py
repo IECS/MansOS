@@ -240,10 +240,10 @@ class ApiCore:
         return self.sealSyntax.actuators.keys()
 
     def getParamByName(self, parameters, name):
-        assert type(parameters) is list, "List expected."
+        assert type(parameters) is dict, "Dict expected."
         for x in parameters:
-            if x[0].lower() == name.lower():
-                return x
+            if x.lower() == name.lower():
+                return parameters[x]
         return None
 
     def getDefaultConditions(self):

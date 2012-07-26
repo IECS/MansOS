@@ -52,18 +52,18 @@ class SealSyntax():
         ]
 
         for x in component_hierarchy.components:
-            if x.name not in self.syntax[x.typeCode][0]:
+            if x._name not in self.syntax[x._typeCode][0]:
                 # Create a new object entry
-                self.syntax[x.typeCode][0].append(x.name)
-                self.syntax[x.typeCode].append(list())
+                self.syntax[x._typeCode][0].append(x._name)
+                self.syntax[x._typeCode].append(list())
             for p in dir(x):
                 # Fill object entry with keywords
                 if type(x.__getattribute__(p)) is component_hierarchy.SealParameter:
                     # Temp fix
                     if p in ['filter', 'average', 'stdev']:
-                        self.syntax[x.typeCode][-1].append((p, x.__getattribute__(p).valueList))
+                        self.syntax[x._typeCode][-1].append((p, x.__getattribute__(p).valueList))
                     else:
-                        self.syntax[x.typeCode][-1].insert(0, (p, x.__getattribute__(p).valueList))
+                        self.syntax[x._typeCode][-1].insert(0, (p, x.__getattribute__(p).valueList))
                     # Bad thing to do...
                     if p not in SEAL_PARAMETERS:
                         SEAL_PARAMETERS.append(p)

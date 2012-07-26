@@ -343,9 +343,9 @@ class Editor(wx.stc.StyledTextCtrl):
         # TODO: filter out comment lines
         text = self.GetText().lower()
         for x in components:
-            for a in list(finditer(" " + x.name.lower(), text)):
+            for a in list(finditer(" " + x._name.lower(), text)):
                 self.StartStyling(a.start() + 1, 0x1F)
-                self.SetStyling(len(x.name), wx.stc.STC_P_DEFNAME)
+                self.SetStyling(len(x._name), wx.stc.STC_P_DEFNAME)
 
         for x in SEAL_PARAMETERS:
             for a in list(finditer(" " + x.lower() + " ", text)):
