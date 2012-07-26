@@ -23,7 +23,7 @@ class SealComponent(object):
         self.pattern = SealParameter(None)
         self.once = SealParameter(False, [False, True])
         # how many times to use/read this? ("times 1" is the same as "once")
-        self.times = SealParameter(None, [1, 2, 3, 4, 5, 10, 20, 50, 100])
+        self.times = SealParameter(None, ['1', '2', '3', '4', '5', '10', '20', '50', '100'])
         self.useFunction = SealParameter(None)   # each usable component must define this
         self.readFunction = SealParameter(None)  # each readable component must define this
         self.aliases = dict() # alias name -> parameter name
