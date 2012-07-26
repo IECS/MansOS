@@ -88,17 +88,18 @@ class UseCase(object):
 
         # add user's parameters
         for p in parameters:
+            paramName = component.specification.resolveAlias(p[0])
             if not isinstance(component, Output): # outputs are allowed all fields as params
-                if p[0] not in component.parameters:
+                if paramName not in component.parameters:
                     componentRegister.userError("Parameter '{0}' not known for component {1}\n".format(
-                            p[0], component.name))
+                            paramName, component.name))
                     continue
             # update parameters with user's value, if given. If no value given, only name: treat it as 'True',
             # because value 'None' means that the parameter is supported, but not specified by the user.
             if p[1] is not None:
-                self.parameters[p[0]] = p[1]
+                self.parameters[paramName] = p[1]
             else:
-                self.parameters[p[0]] = Value(True)
+                self.parameters[paramName] = Value(True)
         self.readFunctionSuffix = ""
         self.conditions = list(conditions)
         self.branchNumber = branchNumber
@@ -479,6 +480,7 @@ class Component(object):
                 numInBranch += 1
         finalParameters = {}
         for p in parameters.iteritems():
+            # resolve "parameters" parametes (should point to a define)
             if p[0].lower() == "parameters":
                 #print "p[1] = ", p[1].asString()
                 #print "componentRegister = ", componentRegister.defines.keys()
@@ -2475,10 +2477,11 @@ class ComponentRegister(object):
 
         # fill the parameter dictionary
         for p in c.parameterList:
+            paramName = c.base.specification.resolveAlias(p[0])
             if p[1] is not None:
-                c.parameterDictionary[p[0]] = p[1]
+                c.parameterDictionary[paramName] = p[1]
             else:
-                c.parameterDictionary[p[0]] = Value(True)
+                c.parameterDictionary[paramName] = Value(True)
 
         # used for pseudocomponents that are based on integer literals or constants
         if numericalValue is not None:

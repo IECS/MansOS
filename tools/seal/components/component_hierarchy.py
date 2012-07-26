@@ -26,7 +26,13 @@ class SealComponent(object):
         self.times = SealParameter(None, [1, 2, 3, 4, 5, 10, 20, 50, 100])
         self.useFunction = SealParameter(None)   # each usable component must define this
         self.readFunction = SealParameter(None)  # each readable component must define this
+        self.aliases = dict() # alias name -> parameter name
         components.append(self)
+
+    def resolveAlias(self, possibleAliasName):
+        if possibleAliasName in self.aliases:
+            return self.aliases[possibleAliasName]
+        return possibleAliasName
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         # default implementation
@@ -451,9 +457,9 @@ class SealOutput(SealComponent):
         # The name of the file, FROM which to output
         # but "File" outputs has "filename" parameter TO which to output; do not confuse!
         # Automatically generated if None.
-        self.file = SealParameter(None)
-        self.name = SealParameter(None) # synonym
-        self.filename = SealParameter(None) # synonym
+        self.filename = SealParameter(None)
+        self.aliases["file"] = "filename" # synonym Nr.1 
+        self.aliases["name"] = "filename" # synonym Nr.2
         # for FromFile outputs
         self.where = SealParameter(None)
 
