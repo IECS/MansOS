@@ -145,7 +145,7 @@ class ConditionCollection(object):
         # for optimization, should return as soon as isFilteredOut becomes true.
         condition = self.conditionList[i]
         condition.id = i + 1
-        return condition.getEvaluationCode(componentRegister)
+        return "    bool result = " + condition.getEvaluationCode(componentRegister)
 
     def generateCode(self, componentRegister):
         for i in range(len(self.conditionList)):
@@ -402,8 +402,7 @@ class Expression(object):
 #        print "getEvaluationCode for", self.right.right.right.value.firstPart
 #        print "getEvaluationCode for", self
         code = self.getCodeForGenerator(componentRegister, self)
-        return "    bool result = " + \
-            string.replace(string.replace(string.replace(
+        return string.replace(string.replace(string.replace(
                     code,
                     " and ", "\n        && "),
                     " or ", "\n        || "),
@@ -480,17 +479,20 @@ class ConstStatement(object):
 
 ########################################################
 class SetStatement(object):
-    def __init__(self, name, value):
+    def __init__(self, name, expression):
         self.name = name.lower()
-        self.value = value
+        self.expression = expression
 
     def addComponents(self, componentRegister, conditionCollection):
-        componentRegister.setState(self.name, self.value,
+        componentRegister.setState(self.name, self.expression,
                                    conditionCollection.conditionStack,
                                    conditionCollection.branchNumber)
 
     def getCode(self, indent):
-        return "set " + self.name + " " + self.value.getCode() + ';'
+        return "set " + self.name + " " + self.expression.getCode() + ';'
+
+    def collectImplicitDefines(self):
+        return self.expression.collectImplicitDefines(None)
 
 ########################################################
 class NetworkReadStatement(object):
@@ -847,7 +849,7 @@ class CodeBlock(object):
         # add implicitly declared virtual senosrs
         implicitDefines = []
         for d in self.declarations:
-            if isinstance(d, ComponentUseCase):
+            if isinstance(d, ComponentUseCase) or isinstance(d, SetStatement):
                 implicitDefines += d.collectImplicitDefines()
         self.declarations += implicitDefines
         # collect implicit defines from conditions too...
@@ -875,8 +877,7 @@ class CodeBlock(object):
 #                            d.name))
 #                else:
 #                    d.addComponents(componentRegister, conditionCollection)
-            if type(d) is SetStatement \
-                    or type(d) is ParametersDefineStatement \
+            if type(d) is ParametersDefineStatement \
                     or type(d) is ComponentDefineStatement \
                     or type(d) is NetworkReadStatement:
                 d.addComponents(componentRegister, conditionCollection)
@@ -895,6 +896,11 @@ class CodeBlock(object):
         for d in self.declarations:
             if type(d) is ComponentDefineStatement:
                 d.finishAdding(componentRegister)
+
+        # add set statements (may depend on virtual components)
+        for d in self.declarations:
+            if type(d) is SetStatement:
+                d.addComponents(componentRegister, conditionCollection)
 
         # add use cases
         for d in self.declarations:
