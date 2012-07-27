@@ -373,17 +373,17 @@ endif
 # .sl -> .c, SEAL sources
 $(BUILDDIR)/%.c : %.sl
 	$(Print) "SEAL $<"
-	$(_QUIET) $(SEAL) -o $@ $<
+	$(_QUIET) $(SEAL) --arch $(ARCH) -o $@ $<
 
 # .o -> .elf
 $(OUTDIR)/$(APPMOD).elf : $(OBJS)
 	$(Print) "LD $@"
-	$(_QUIET) $(LINKER_SCRIPT) $(ARCH) $@ "$(CFLAGS) $(LDFLAGS)" "$(APP_OBJS)" "$(POBJS)"
+	$(_QUIET) $(LINKER_SCRIPT) $(ARCH) $@ '$(CFLAGS) $(LDFLAGS)' '$(APP_OBJS)' '$(POBJS)'
 
 # .o -> .exe
 $(OUTDIR)/$(APPMOD).exe : $(OBJS)
 	$(Print) "LD $@"
-	$(_QUIET) $(LINKER_SCRIPT) "pc" $@ "$(CFLAGS) $(LDFLAGS)" "$(APP_OBJS)" "$(POBJS)"
+	$(_QUIET) $(LINKER_SCRIPT) 'pc' $@ '$(CFLAGS) $(LDFLAGS)' '$(APP_OBJS)' '$(POBJS)'
 
 # .c -> .rel
 $(OUTDIR)/%.rel : $(MOSROOT)/%.c 
