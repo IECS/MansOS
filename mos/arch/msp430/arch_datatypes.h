@@ -37,7 +37,7 @@ typedef uint16_t uint_t;
 typedef int16_t int_t;
 #endif
 
-/* Signed counterpart of size_t */
+// Signed counterpart of size_t
 #ifndef SSIZE_MAX
 typedef int ssize_t;
 #define SSIZE_MAX INT_MAX
