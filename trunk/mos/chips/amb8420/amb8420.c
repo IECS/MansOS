@@ -39,6 +39,7 @@ void amb8420InitUsart(void)
 
 void amb8420Init(void)
 {
+    bool ok;
     RPRINTF("amb8420Init...\n");
 
     amb8420InitUsart();
@@ -65,7 +66,7 @@ void amb8420Init(void)
     pinSet(AMB8420_RESET_PORT, AMB8420_RESET_PIN);
     mdelay(2);
     // wait for initialization to complete
-    AMB8420_WAIT_FOR_RTS_READY();
+    AMB8420_WAIT_FOR_RTS_READY(ok);
 
     amb8420OperationMode = AMB8420_TRANSPARENT_MODE;
     RPRINTF("..done\n");
@@ -75,14 +76,13 @@ void amb8420On(void)
 {
     RPRINTF("amb842On\n");
 
-    USARTInit(AMB8420_UART_ID, AMB8420_SERIAL_BAUDRATE, 0);
-    USARTEnableTX(AMB8420_UART_ID);
-    USARTSetReceiveHandle(AMB8420_UART_ID, usartReceive);
+    amb8420InitUsart(); // XXX
 
     if (!isOn) {
-        AMB8420_ENTER_ACTIVE_MODE();
-        AMB8420_WAIT_FOR_RTS_READY();
         isOn = true;
+        AMB8420_ENTER_ACTIVE_MODE();
+        // if the waiting fails, will retry next time when "on" is called
+        AMB8420_WAIT_FOR_RTS_READY(isOn);
     }
 }
 
@@ -90,8 +90,8 @@ void amb8420Off(void)
 {
     RPRINTF("amb842Off\n");
     if (isOn) {
-        AMB8420_ENTER_SLEEP_MODE();
         isOn = false;
+        AMB8420_ENTER_SLEEP_MODE();
     }
 }
 
@@ -159,8 +159,11 @@ void amb8420ChangeModeCb()
 
 void amb8420ChangeMode()
 {
+    bool ok;
     // Wait for device to become ready
-    AMB8420_WAIT_FOR_RTS_READY();
+    AMB8420_WAIT_FOR_RTS_READY(ok);
+    if (!ok) return;
+
     AMB8420RxHandle old = amb8420SetReceiver(amb8420ChangeModeCb);
     // Generate falling front
     pinClear(AMB8420_CONFIG_PORT, AMB8420_CONFIG_PIN);
@@ -168,7 +171,7 @@ void amb8420ChangeMode()
     pinSet(AMB8420_CONFIG_PORT, AMB8420_CONFIG_PIN);
 
     // Wait for device to become ready
-    AMB8420_WAIT_FOR_RTS_READY();
+    AMB8420_WAIT_FOR_RTS_READY(ok);
     amb8420SetReceiver(old);
 }
 
@@ -182,14 +185,15 @@ void amb8420SetCb()
 
 int amb8420Set(uint8_t len, uint8_t* data, uint8_t position)
 {
-    if (amb8420OperationMode == AMB8420_TRANSPARENT_MODE)
-    {
+    if (amb8420OperationMode == AMB8420_TRANSPARENT_MODE) {
         return -1;
     }
+    bool ok;
     AMB8420RxHandle old = amb8420SetReceiver(amb8420SetCb);
     uint8_t crc = 0x02 ^ 0x09, i;
     // Wait for device to become ready
-    AMB8420_WAIT_FOR_RTS_READY();
+    AMB8420_WAIT_FOR_RTS_READY(ok);
+    if (!ok) goto end;
     USARTSendByte(AMB8420_UART_ID, 0x02);
     USARTSendByte(AMB8420_UART_ID, 0x09);
     USARTSendByte(AMB8420_UART_ID, len +2 );
@@ -204,9 +208,10 @@ int amb8420Set(uint8_t len, uint8_t* data, uint8_t position)
     USARTSendByte(AMB8420_UART_ID, crc);
 
     // Wait for device to become ready
-    AMB8420_WAIT_FOR_RTS_READY();
+    AMB8420_WAIT_FOR_RTS_READY(ok);
+  end:
     amb8420SetReceiver(old);
-    return 0;
+    return ok ? 0 : -1;
 }
 
 void amb8420GetCb()
@@ -220,13 +225,14 @@ void amb8420GetCb()
 
 int amb8420Get(uint8_t memoryPosition, uint8_t numberOfBytes)
 {
-    if (amb8420OperationMode == AMB8420_TRANSPARENT_MODE)
-    {
+    if (amb8420OperationMode == AMB8420_TRANSPARENT_MODE) {
         return -1;
     }
+    bool ok;
     AMB8420RxHandle old = amb8420SetReceiver(amb8420GetCb);
     // Wait for device to become ready
-    AMB8420_WAIT_FOR_RTS_READY();
+    AMB8420_WAIT_FOR_RTS_READY(ok);
+    if (!ok) goto end;
     USARTSendByte(AMB8420_UART_ID, 0x02);
     USARTSendByte(AMB8420_UART_ID, 0x0A);
     USARTSendByte(AMB8420_UART_ID, 0x02);
@@ -235,7 +241,8 @@ int amb8420Get(uint8_t memoryPosition, uint8_t numberOfBytes)
     USARTSendByte(AMB8420_UART_ID, 0x02 ^ 0x0A ^ 0x02 ^ memoryPosition ^ numberOfBytes);
 
     // Wait for device to become ready
-    AMB8420_WAIT_FOR_RTS_READY();
+    AMB8420_WAIT_FOR_RTS_READY(ok);
+  end:
     amb8420SetReceiver(old);
     return 0;
 }

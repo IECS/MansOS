@@ -25,6 +25,7 @@
 #define MANSOS_AMB8420_H
 
 #include <kernel/defines.h>
+#include <hil/busywait.h>
 
 #define AMB8420_MAX_PACKET_LEN      128
 
@@ -34,26 +35,32 @@
 #define AMB8420_TRANSPARENT_MODE    0x00 // default
 #define AMB8420_COMMAND_MODE        0x10 // configuration mode
 
-#define AMB8420_WAIT_FOR_RTS_READY() while(pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN))udelay(100)
-#define AMB8420_ENTER_ACTIVE_MODE() do{\
-                pinClear(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN); \
-                pinClear(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);             \
-                }while(0)
-#define AMB8420_ENTER_STAND_BY_MODE() do{\
-                pinSet(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);   \
-                pinClear(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);             \
-                }while(0)
-#define AMB8420_ENTER_WOR_MODE() do{\
-                pinClear(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN); \
-                pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);               \
-                }while(0)
-#define AMB8420_ENTER_SLEEP_MODE() do{\
-                pinSet(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);   \
-                pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);               \
-                }while(0)
+#define RTS_WAIT_TIMEOUT_TICKS      TIMER_100_MS
 
-#define AMB8420_SWITCH_TO_TRANSPARENT_MODE() if(amb8420OperationMode == AMB8420_COMMAND_MODE) amb8420ChangeMode()
-#define AMB8420_SWITCH_TO_COMMAND_MODE() if(amb8420OperationMode == AMB8420_TRANSPARENT_MODE) amb8420ChangeMode()
+#define AMB8420_WAIT_FOR_RTS_READY(ok) \
+    BUSYWAIT_UNTIL(pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN) == 0, RTS_WAIT_TIMEOUT_TICKS, ok)
+
+#define AMB8420_ENTER_ACTIVE_MODE() do{\
+        pinClear(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);    \
+        pinClear(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);                \
+    } while(0)
+#define AMB8420_ENTER_STAND_BY_MODE() do{\
+        pinSet(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);      \
+        pinClear(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);                \
+    } while(0)
+#define AMB8420_ENTER_WOR_MODE() do{\
+        pinClear(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);    \
+        pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);                  \
+    } while(0)
+#define AMB8420_ENTER_SLEEP_MODE() do{\
+        pinSet(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);      \
+        pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);                  \
+    } while(0)
+
+#define AMB8420_SWITCH_TO_TRANSPARENT_MODE() \
+    if (amb8420OperationMode == AMB8420_COMMAND_MODE) amb8420ChangeMode()
+#define AMB8420_SWITCH_TO_COMMAND_MODE() \
+    if (amb8420OperationMode == AMB8420_TRANSPARENT_MODE) amb8420ChangeMode()
 
 uint8_t amb8420OperationMode;
 
@@ -100,4 +107,4 @@ bool amb8420IsChannelClear(void);
 
 void amb8420InitUsart(void);
 
-#endif //MANSOS_AMB8420_H
+#endif

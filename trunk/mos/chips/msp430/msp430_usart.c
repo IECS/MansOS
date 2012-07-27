@@ -30,6 +30,7 @@
 #include <hil/gpio.h>
 #include <hil/usart.h>
 #include <hil/spi.h>
+#include <hil/busywait.h>
 #include <kernel/defines.h>
 #include "msp430_timers.h"
 #include <kernel/threads/threads.h>
@@ -331,6 +332,10 @@ uint_t USARTSendByte(uint8_t id, uint8_t data)
     *UxTXBUF[id] = data;
     while (((*UxTCTL[id]) & (TXEPT)) == 0);  // Is byte sent ?
     return 0;
+
+    // uint_t ok;
+    // BUSYWAIT_UNTIL(*UxTCTL[id] & TXEPT, 10, ok);
+    // return ok;
 }
 
 

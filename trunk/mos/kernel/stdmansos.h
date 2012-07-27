@@ -56,6 +56,8 @@
 #include <hil/humidity.h>
 #endif
 #include <hil/light.h>
+#ifdef USE_LEDS
 #include <hil/blink.h>
+#endif
 
 #endif

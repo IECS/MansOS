@@ -21,8 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LEDS_H_
-#define _LEDS_H_
+#ifndef _MANSOS_LEDS_H_
+#define _MANSOS_LEDS_H_
 
 #include <kernel/defines.h>
 #include "gpio.h"
@@ -190,5 +190,5 @@ LED_ALIAS(led, LED_DEFAULT)
 #endif
 
 
-#endif // _LEDS_H_
+#endif
 

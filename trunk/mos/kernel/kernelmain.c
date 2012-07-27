@@ -108,13 +108,13 @@ static inline void initSystem(void)
     INIT_PRINTF("init RNG...\n");
     randomInit();
 #endif
-#ifdef USE_RADIO
-    INIT_PRINTF("init radio...\n");
-    radioInit();
-#endif
 #if USE_ALARMS
     INIT_PRINTF("init alarms...\n");
     initAlarms();
+#endif
+#ifdef USE_RADIO
+    INIT_PRINTF("init radio...\n");
+    radioInit();
 #endif
 #ifdef USE_ADDRESSING
     INIT_PRINTF("init communication stack...\n");
@@ -180,7 +180,7 @@ int main(void)
     //
     // Do not allow to quit from main(). This code is needed because
     // GCC 4.5+ disables interrupts after completion of main() function,
-    // while sensor programs may want to use main() for initialization only
+    // while applications may want to use main() for initialization only
     // and do the "real work" in interrupt handlers.
     //
     for (;;);

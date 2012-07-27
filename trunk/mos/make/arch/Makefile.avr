@@ -58,11 +58,12 @@ PSOURCES-$(USE_THREADS) += $(MOS)/kernel/threads/avr/timing.c
 
 #===== Build and Upload Rules =====
 
-EXECUTABLE = $(OUTDIR)/image.ihex
+EXECUTABLE = image.ihex
+SEAL_EXECUTABLE = image.ihex
 
-$(EXECUTABLE) : $(OUTDIR)/$(APPMOD).elf
+$(OUTDIR)/$(EXECUTABLE) : $(OUTDIR)/$(APPMOD).elf
 	$(Print) ""
-	$(OBJCOPY) -O ihex $(OUTDIR)/$(APPMOD).elf $(EXECUTABLE)
+	$(OBJCOPY) -O ihex $(OUTDIR)/$(APPMOD).elf $(OUTDIR)/$(EXECUTABLE)
 
 # TODO
 UPLOAD_TARGET=upload-atmega
@@ -73,7 +74,7 @@ upload-atmega:
 	$(Print) ""
 	$(MOTELIST)
 	$(Print) ""
-	$(BSL) $(BSLCONFIG) -q -q -p $(MCU_MODEL) -c $(PROGRAMMER) -P $(BSLPORT) -b $(BAUDRATE) -D -Uflash:w:$(EXECUTABLE):i
+	$(BSL) $(BSLCONFIG) -q -q -p $(MCU_MODEL) -c $(PROGRAMMER) -P $(BSLPORT) -b $(BAUDRATE) -D -Uflash:w:$(OUTDIR)/$(EXECUTABLE):i
 
 memdump : build
 	$(MEMDUMP) $(OUTDIR)/$(APPMOD).elf avr

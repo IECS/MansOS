@@ -262,14 +262,21 @@ all: build
 platform_build: build saveplatform
 	$(Print) ""
 
-platform_build_seal: $(GENERATED_SOURCES)
 # SEAL code compiled successfully, now build C sources.
+ifeq ($(SHORT_UNAME),MINGW3)
+platform_build_seal: $(GENERATED_SOURCES)
 # Sorry for this mess - needed to compile at all on MinGW...  
 	(cd $(BUILDDIR);\
 	echo "TARGET=$(TARGET)">Makefile.target;\
 	MAKECMDGOALS="$(TARGET)" $(MAKE) $(TARGET);\
 	$(MakeDir) $(TARGET);\
-	$(Copy) build/$(TARGET)/image.ihex $(TARGET)/image.ihex)
+	$(Copy) build/$(TARGET)/$(SEAL_EXECUTABLE) $(TARGET)/$(EXECUTABLE))
+else
+platform_build_seal: $(GENERATED_SOURCES)
+	$(MAKE) -C $(BUILDDIR) $(TARGET)
+	$(MakeDir) $(OUTDIR)
+	$(Copy) build/$(OUTDIR)/$(SEAL_EXECUTABLE) $(OUTDIR)/$(EXECUTABLE)
+endif
 
 platform_skip:
 	$(Print) "Skipping $(PROJDIR)/$(APPMOD) for $(TARGET): not for this platform!"
@@ -306,7 +313,7 @@ saveplatform:
 	$(_QUIET) @echo "saving Makefile.target"
 	$(_QUIET) @echo >$(BUILDDIR)/Makefile.target "TARGET = $(TARGET)"
 
-build: $(BUILDDIR)/config.saved objDirs $(EXECUTABLE)
+build: $(BUILDDIR)/config.saved objDirs $(OUTDIR)/$(EXECUTABLE)
 
 #
 # "config" file is required for building. An empty file is created it doesn't exist
