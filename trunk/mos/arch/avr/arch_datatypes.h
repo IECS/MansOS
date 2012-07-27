@@ -36,6 +36,12 @@ typedef uint8_t uint_t;
 typedef int8_t int_t;
 #endif
 
+// Signed counterpart of size_t
+#ifndef SSIZE_MAX
+typedef int ssize_t;
+#define SSIZE_MAX INT_MAX
+#endif
+
 // storage for status register
 typedef uint8_t Handle_t;
 
