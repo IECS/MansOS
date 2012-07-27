@@ -57,8 +57,8 @@ int pinReadPc(int port, int pin);
 #define PIN_SET_MASK( portnum, mask )
 #define PIN_CLEAR( portnum, pinnum ) pinClearPc(portnum, pinnum)
 #define PIN_CLEAR_MASK( portnum, mask )
-#define PIN_TOGGLE( portnum, pinnum ) \
-    if (pinReadPc(portnum, pinnum)) pinClearPc(portnum, pinnum); \
+#define PIN_TOGGLE( portnum, pinnum )                          \
+    if (pinReadPc(portnum, pinnum)) pinClearPc(portnum, pinnum);  \
     else pinSetPc(portnum, pinnum);
 
 // interrupts

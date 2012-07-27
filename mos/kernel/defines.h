@@ -126,4 +126,8 @@ typedef uint32_t ticks_t;
 #define TIMER_INTERRUPT_HZ  100
 #endif
 
+// timer A feeds from from ACLK (32'768 Hz)
+#define TIMER_SECOND ACLK_SPEED 
+#define TIMER_100_MS (ACLK_SPEED / 10 + 1)
+
 #endif

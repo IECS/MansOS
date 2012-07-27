@@ -60,16 +60,18 @@ PSOURCES-$(USE_EEPROM) += $(PLATFORM_HAL)/eeprom_hal.c
 
 #===== Build and upload rules =====
 
-EXECUTABLE = $(OUTDIR)/$(APPMOD).exe
+EXECUTABLE = $(APPMOD).exe
+SEAL_EXECUTABLE = App.exe # always called App.exe, sorry
 
-run: build
+#run: build
+run:
 	$(Print) "  ==RUN==> $(EXECUTABLE)"
-	$(EXECUTABLE)
+	$(OUTDIR)/$(EXECUTABLE)
 
 platform-upload: run 
 
 memdump: build
-	$(MEMDUMP) $(EXECUTABLE) pc
+	$(MEMDUMP) $(OUTDIR)/$(EXECUTABLE) pc
 
 size: build
-	size $(EXECUTABLE)
+	size $(OUTDIR)/$(EXECUTABLE)

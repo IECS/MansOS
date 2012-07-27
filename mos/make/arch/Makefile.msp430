@@ -72,11 +72,12 @@ PSOURCES-$(USE_HUMIDITY) += $(MOS)/chips/sht11/sht11_conv.c
 
 #===== Build and Upload Rules =====
 
-EXECUTABLE = $(OUTDIR)/image.ihex
+EXECUTABLE = image.ihex
+SEAL_EXECUTABLE = image.ihex
 
-$(EXECUTABLE): $(OUTDIR)/$(APPMOD).elf
+$(OUTDIR)/$(EXECUTABLE): $(OUTDIR)/$(APPMOD).elf
 	$(Print) ""
-	$(OBJCOPY) -O ihex $(OUTDIR)/$(APPMOD).elf $(EXECUTABLE)
+	$(OBJCOPY) -O ihex $(OUTDIR)/$(APPMOD).elf $(OUTDIR)/$(EXECUTABLE)
 
 platform-upload: build $(UPLOAD_TARGET)
 
@@ -84,30 +85,24 @@ upload-tmote:
 	$(Print) ""
 	$(MOTELIST)
 	$(Print) ""
-	$(BSL) --telosb -c $(BSLPORT) $(SLOW) -r -e -I -p $(EXECUTABLE)
+	$(BSL) --telosb -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-msp430: 
-	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) $(SLOW) -r -e -I -p $(EXECUTABLE)
+	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-z1:
-	$(Z1-BSL) --z1 -c $(BSLPORT) -r -e -I -p $(EXECUTABLE)
+	$(Z1-BSL) --z1 -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-xm1000:
-	$(XM1000-BSL) --telosb -c $(BSLPORT) -r -e -I -p $(EXECUTABLE)
+	$(XM1000-BSL) --telosb -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-launchpad:
-	$(MSPDEBUG) rf2500 "prog $(EXECUTABLE)"
+	$(MSPDEBUG) rf2500 "prog $(OUTDIR)/$(EXECUTABLE)"
 
 upload-tilib:
 # note: this is valid for version 3 firmware only
 # TODO: device name!
-	$(MSPDEBUG) tilib -d /dev/ttyACM0 "prog $(EXECUTABLE)"
-
-upload-arturs:
-	$(MOS)/make/scripts/arturs-bsl.py --telosb -D -c $(BSLPORT) -r -e -I -p $(EXECUTABLE)
-
-upload-arturs-msp430:
-	$(MOS)/make/scripts/arturs-bsl.py --invert-reset --invert-test -c $(BSLPORT) $(SLOW) -r -e -I -p $(EXECUTABLE)
+	$(MSPDEBUG) tilib -d /dev/ttyACM0 "prog $(OUTDIR)/$(EXECUTABLE)"
 
 memdump: build
 	$(MEMDUMP) $(OUTDIR)/$(APPMOD).elf msp430

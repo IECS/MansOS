@@ -100,6 +100,7 @@ rtimer_clock_t rtimer_arch_now(void)
 #define RTIMER_NOW() rtimer_arch_now()
 #define RTIMER_CLOCK_LT(a,b)     ((signed short)((a)-(b)) < 0)
 
+#undef BUSYWAIT_UNTIL
 #define BUSYWAIT_UNTIL(cond, max_time)                                     \
     do {                                                                   \
         uint32_t t0;                                                       \

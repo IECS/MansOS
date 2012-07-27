@@ -27,6 +27,7 @@
 #include <hil/udelay.h>
 #include <hil/timers.h>
 #include <hil/blink.h>
+#include <hil/busywait.h>
 #include <lib/assert.h>
 #include <string.h>
 
@@ -49,10 +50,6 @@
 
 // same timeouts in timer A ticks
 #define INIT_TIMEOUT_TICKS  (2 * TIMER_SECOND)
-
-// timer A feeds from from ACLK (32'768 Hz)
-#define TIMER_SECOND ACLK_SPEED 
-#define TIMER_100_MS (ACLK_SPEED / 10 + 1)
 
 // card types
 enum {
@@ -200,51 +197,17 @@ void halSPISetup(void)
 
 static bool sdcardReadData(void* buffer, uint16_t len);
 
-static uint16_t timerTicksRead(void)
-{
-    uint16_t t1, t2;
-    do {
-        t1 = TAR;
-        t2 = TAR;
-    } while (t1 != t2);
-    return t1;
-}
-
-#define BUSYWAIT_UNTIL_NOINTS(cond, maxTime, ok)                        \
-    do {                                                                \
-        uint16_t endTime = timerTicksRead() + maxTime;                  \
-        ok = false;                                                     \
-        do {                                                            \
-            if (cond) {                                                 \
-                ok = true;                                              \
-                break;                                                  \
-            }                                                           \
-        } while (timeAfter16(endTime, timerTicksRead()));               \
-    } while (0)
-
-#define BUSYWAIT_UNTIL(cond, maxTime, ok)                               \
-    do {                                                                \
-        uint32_t endTime = getRealTime() + maxTime;                     \
-        ok = false;                                                     \
-        do {                                                            \
-            if (cond) {                                                 \
-                ok = true;                                              \
-                break;                                                  \
-            }                                                           \
-        } while (timeAfter32(endTime, getRealTime()));                  \
-    } while (0)
-
 static bool waitCardNotBusy(uint16_t timeout)
 {
     bool result;
-    BUSYWAIT_UNTIL(SDCARD_RD_BYTE() == 0xff, timeout, result);
+    BUSYWAIT_UNTIL_LONG(SDCARD_RD_BYTE() == 0xff, timeout, result);
     return result;
 }
 
 static bool waitCardNotBusyNoints(uint16_t timeout)
 {
     bool result;
-    BUSYWAIT_UNTIL_NOINTS(SDCARD_RD_BYTE() == 0xff, timeout, result);
+    BUSYWAIT_UNTIL(SDCARD_RD_BYTE() == 0xff, timeout, result);
     return result;
 }
 
@@ -327,9 +290,9 @@ bool sdcardInit(void)
     SPRINTF("2\n");
     // mdelay(1);
 
-    BUSYWAIT_UNTIL_NOINTS(sdcardCommand(CMD_GO_IDLE_STATE, 0, 0x95) == R1_IDLE_STATE, INIT_TIMEOUT_TICKS / 2, ok);
+    BUSYWAIT_UNTIL(sdcardCommand(CMD_GO_IDLE_STATE, 0, 0x95) == R1_IDLE_STATE, INIT_TIMEOUT_TICKS / 2, ok);
     if (!ok) {
-        BUSYWAIT_UNTIL_NOINTS(sdcardCommand(CMD_GO_IDLE_STATE, 0, 0x95) == R1_IDLE_STATE, INIT_TIMEOUT_TICKS / 2, ok);
+        BUSYWAIT_UNTIL(sdcardCommand(CMD_GO_IDLE_STATE, 0, 0x95) == R1_IDLE_STATE, INIT_TIMEOUT_TICKS / 2, ok);
         if (!ok) {
             goto fail;
         }
@@ -365,10 +328,10 @@ bool sdcardInit(void)
     // initialize card and send host supports SDHC if SD2
     arg = (cardType == SD_CARD_TYPE_SD2 ? 0x40000000 : 0);
 
-    BUSYWAIT_UNTIL_NOINTS(sdcardAppCommand(ACMD_SD_SEND_OP_COMD, arg) == R1_READY_STATE,
+    BUSYWAIT_UNTIL(sdcardAppCommand(ACMD_SD_SEND_OP_COMD, arg) == R1_READY_STATE,
             INIT_TIMEOUT_TICKS / 2, ok);
     if (!ok) {
-        BUSYWAIT_UNTIL_NOINTS(sdcardAppCommand(ACMD_SD_SEND_OP_COMD, arg) == R1_READY_STATE,
+        BUSYWAIT_UNTIL(sdcardAppCommand(ACMD_SD_SEND_OP_COMD, arg) == R1_READY_STATE,
                 INIT_TIMEOUT_TICKS / 2, ok);
         if (!ok) {
             goto fail;
@@ -493,7 +456,7 @@ static bool sdcardReadData(void* buffer, uint16_t len)
     bool ok;
 
     // wait for start block token
-    BUSYWAIT_UNTIL((status = SDCARD_RD_BYTE()) != 0xFF, READ_TIMEOUT, ok);
+    BUSYWAIT_UNTIL_LONG((status = SDCARD_RD_BYTE()) != 0xFF, READ_TIMEOUT, ok);
     if (!ok) {
         goto fail;
     }
