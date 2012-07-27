@@ -6,7 +6,7 @@ import os, sys, getopt
 inputFileName = 'test.sl'
 outputFileName = 'main.c'
 architecture = 'testarch'
-#architecture = 'telosb'
+#architecture = 'msp430'
 #architecture = 'pc'
 targetOS = 'mansos'
 pathToOS = '../..'
@@ -154,9 +154,9 @@ def main():
         with open(outputFileName, 'w') as outputFile:
             g.generate(outputFile)
         with open(outputDirName + "Makefile", 'w') as outputFile:
-            # TODO: should normalize, else '././' or '../this' and similar breaks build
-            numDirs = len(outputFileName.split('/'))
-            path = '../' + os.path.dirname(sys.argv[0]) + ('/..' * numDirs)
+            numDirs = len(os.path.normpath(outputFileName).split(os.sep)) - 1
+            dirname = os.path.dirname(os.path.realpath(outputFileName))
+            path = os.path.normpath(dirname + '/' + pathToOS + ('/..' * numDirs))
             g.generateMakefile(outputFile, outputFileName, path)
             
         with open(outputDirName + "config", 'w') as outputFile:

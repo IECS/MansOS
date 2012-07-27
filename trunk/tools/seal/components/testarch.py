@@ -2,7 +2,7 @@
 # Test platform components
 #
 
-from telosb import *
+from msp430 import *
 
 foobar = SealActuator('Foobar')
 foobar1 = SealActuator('Foobar1')

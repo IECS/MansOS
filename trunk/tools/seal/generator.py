@@ -232,7 +232,7 @@ SOURCES = {0}
 APPMOD = App
 PROJDIR = $(CURDIR)
 ifndef MOSROOT
-  MOSROOT = $(PROJDIR)/{1}
+  MOSROOT = {1}
 endif
 '''.format(sources, pathToOS))
         outputFile.write("include ${MOSROOT}/mos/make/Makefile")

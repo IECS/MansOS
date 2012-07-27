@@ -2,7 +2,7 @@
 # Scheduling test platform components
 #
 
-from telosb import *
+from msp430 import *
 
 ######################################################
 # component definition
