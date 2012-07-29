@@ -21,42 +21,38 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_SDCARD_H
-#define MANSOS_SDCARD_H
+//
+// SD card stream module interface.
+// Similar to flash stream, but simpler as data can be rewritten.
+//
 
-#include <kernel/stdtypes.h>
+#ifndef MANSOS_SDSTREAM_H
+#define MANSOS_SDSTREAM_H
 
-// minimal unit that can be erased
-#define SDCARD_SECTOR_SIZE    512
+#include <kernel/defines.h>
 
-// maximal unit that can be written
-#define SDCARD_PAGE_SIZE      512
+//
+// Initialize
+//
+static inline void sdStreamInit(void) {}
 
-// 1 GB total (the minimal size - use this only for compatibility with flash drivers)
-// The maximal size is 4GB due to addressing constraints (32 bit)
-#define SDCARD_SECTOR_COUNT   (2 * 1024 * 1024ul)
+//
+// Reset the stream back to start
+//
+void sdStreamReset(void);
 
-#define SDCARD_SIZE  (SDCARD_SECTOR_SIZE * SDCARD_SECTOR_COUNT)
+//
+// Write a record
+//
+bool sdStreamWriteRecord(void *data, uint16_t length, bool crc);
 
-// initialize pin directions and SPI in general. Enter low power mode afterwards
-bool sdcardInit(void);
-// Enter low power mode (wait for last instruction to complete)
-void sdcardSleep(void);
-// Exit low power mode
-void sdcardWake(void);
-// Read a block of data from addr
-void sdcardRead(uint32_t addr, void* buffer, uint16_t len);
-// Write len bytes (len <= 256) to flash at addr
-// Block can split over multiple sectors/pages
-void sdcardWrite(uint32_t addr, const void *buf, uint16_t len);
-// Erase the entire flash
-void sdcardBulkErase(void);
-// Erase on sector, containing address addr. Addr is not the number of sector,
-// rather an address (any) inside the sector
-void sdcardEraseSector(uint32_t addr);
+//
+// Read a record
+//
+bool sdStreamReadRecord(void *data, uint16_t length, bool crc);
 
-// internal
-bool sdcardReadBlock(uint32_t addr, void* buffer);
-bool sdcardWriteBlock(uint32_t addr, const void *buf);
+#ifndef SDCARD_RESERVED
+#define SDCARD_RESERVED  (256 * 1024ul) // 256kb
+#endif
 
 #endif

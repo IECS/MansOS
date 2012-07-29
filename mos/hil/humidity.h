@@ -51,5 +51,6 @@
 // uint16_t readHTemperature();  // read temperature value from humidity sensor
 
 #define humidityRead readHumidity
+#define temperatureRead readHTemperature
 
 #endif
