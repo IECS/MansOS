@@ -50,7 +50,6 @@ USE_USER_BUTTON ?= n
 USE_FLASH ?= n
 USE_EXT_FLASH ?= n
 USE_EEPROM ?= n
-USE_SD_CARD ?= n
 USE_WATCHDOG ?= n
 USE_SOFT_I2C ?= n
 USE_I2C ?= n
@@ -75,6 +74,15 @@ USE_RAM_EXECUTION ?= n
 # run this code on long-living systems? affects time value wraparound,
 # e.g. by default timestamps will repeat after ~40 days.
 USE_LONG_LIFETIME ?= n
+
+# SD card stream interface
+USE_SD_STREAM ?= n
+
+# SD card
+ifeq ($(USE_SD_STREAM),y)
+USE_SD_CARD ?= y
+endif
+USE_SD_CARD ?= n
 
 #TODO:
 #USE_PRINT_SERIAL ?= y

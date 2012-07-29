@@ -45,7 +45,7 @@ void userButtonDisable(void) {
     pinDisableInt(USER_BUTTON_PORT, USER_BUTTON_PIN);
 }
 
-XISR(USER_BUTTON_PORT, userNuttonInterrupt)
+XISR(USER_BUTTON_PORT, userButtonInterrupt)
 {
     if (pinReadIntFlag(USER_BUTTON_PORT, USER_BUTTON_PIN)) {
         // PIN generated interrupt
