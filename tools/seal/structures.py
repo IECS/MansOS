@@ -22,6 +22,8 @@ def suffixTransform(value, suffix):
         return value
     if suffix == 's':
         return value * 1000 # seconds to milliseconds
+    if suffix == 'min':
+        return value * 60 * 1000 # minutes to milliseconds
     if suffix == 'ms':
         return value        # milliseconds to milliseconds
     if suffix == 'us':
@@ -121,13 +123,13 @@ class ConditionCollection(object):
         self.conditionList.append(condition)
         currentConditionNumber = len(self.conditionList)
         self.conditionStack.append(currentConditionNumber)
-        self.branchChanged = True
+#        self.branchChanged = True
 
     def invertLast(self):
         last = self.conditionStack.pop()
         # signal *logical* negation by negative *integer* value
         self.conditionStack.append(-last)
-        self.branchChanged = True
+#        self.branchChanged = True
 
     def size(self):
         return len(self.conditionStack)
@@ -212,6 +214,18 @@ class ConditionCollection(object):
         for c in self.conditionList:
             self.generateAppMainCodeForCondition(c, outputFile)
 
+    def ensureBranchIsPresent(self, componentRegister):
+        print "  ensureBranchIsPresent"
+#        if self.branchChanged:
+        componentRegister.branchCollection.addBranch(
+            self.branchNumber,
+            self.conditionStack)
+        self.branchChanged = True
+
+    def nextBranch(self):
+        if self.branchChanged:
+            self.branchNumber += 1
+#            self.branchChanged = False
 
 ########################################################
 class Value(object):
@@ -354,12 +368,12 @@ class Expression(object):
         result = []
         if self.funcExpressionLeft:
             result.append(ComponentDefineStatement(
-                    self.left.value.firstPart, self.funcExpressionLeft, [], containingComponent))
+                    self.left.value.firstPart, self.funcExpressionLeft, [], True, containingComponent))
         elif self.left:
             result += self.left.collectImplicitDefines(containingComponent)
         if self.funcExpressionRight:
             result.append(ComponentDefineStatement(
-                    self.right.value.firstPart, self.funcExpressionRight, [], containingComponent))
+                    self.right.value.firstPart, self.funcExpressionRight, [], True, containingComponent))
         elif self.right:
             result += self.right.collectImplicitDefines(containingComponent)
         return result
@@ -523,7 +537,8 @@ class NetworkReadStatement(object):
 
 ########################################################
 class ComponentDefineStatement(object):
-    def __init__(self, name, functionTree, parameters, containingOutputComponent = None):
+    def __init__(self, name, functionTree, parameters, isImplicit, containingOutputComponent = None):
+        print "new ComponentDefineStatement, name", name, self
         self.name = name.lower()
 #        self.basename = basename.lower()
         self.functionTree = functionTree
@@ -532,8 +547,12 @@ class ComponentDefineStatement(object):
         self.added = False
         self.isError = False
         self.base = None # underlying "real" component
+        self.isImplicit = isImplicit
         self.containingOutputComponent = containingOutputComponent
-#        self.bases = []
+        # to deal with multiple defines inside branches
+        self.alsoInBranches = set()
+        self.alsoInBranchesConditions = {}
+        self.customVirtualBase = None
 
     def getCode(self, indent):
         result = "define " + self.name
@@ -551,6 +570,8 @@ class ComponentDefineStatement(object):
 #        return result
 
     def addComponents(self, componentRegister, conditionCollection):
+        self.conditions = list(conditionCollection.conditionStack)
+        self.branchNumber = conditionCollection.branchNumber
         componentRegister.addVirtualComponent(self)
 
     def continueAdding(self, componentRegister):
@@ -576,8 +597,14 @@ class ComponentDefineStatement(object):
             basenames += self.getAllBasenamesRecursively(a)
         return basenames
 
+    def correctBasename(self, name):
+        if name == self.customVirtualBase:
+            return "__copy" + str(self.branchNumber) + "_" + name;
+        return name
+
     def getAllBasenames(self):
-        return self.getAllBasenamesRecursively(self.functionTree)
+        basenames = self.getAllBasenamesRecursively(self.functionTree)
+        return map(lambda x: self.correctBasename(x), basenames)
 
     def getImmediateBasenameRecursively(self, functionTree):
         # no function
@@ -758,7 +785,7 @@ class ComponentUseCase(object):
         result += ';'
         return result
 
-    def addComponents(self, componentRegister, conditionCollection):
+    def addUseCase(self, componentRegister, conditionCollection):
         self.componentUseCase = \
             componentRegister.useComponent(self.type, self.name,
                                        self.parameters, self.fields,
@@ -768,7 +795,7 @@ class ComponentUseCase(object):
     def collectImplicitDefines(self):
         implicitDefines = []
         if self.expression: 
-            implicitDefines.append(ComponentDefineStatement(self.name, self.expression, []))
+            implicitDefines.append(ComponentDefineStatement(self.name, self.expression, [], True))
         if self.type == "output" and "where" in self.parameters:
             implicitDefines += self.parameters["where"].collectImplicitDefines(self)
         return implicitDefines
@@ -822,13 +849,12 @@ class CodeBlock(object):
 
         return result
 
-    def addComponents(self, componentRegister, conditionCollection):
+    def enterCodeBlock(self, componentRegister, conditionCollection):
+        stackStartSize = conditionCollection.size()
         if self.blockType == CODE_BLOCK_TYPE_PROGRAM:
             # reset all
             conditionCollection.reset()
-            # TODO: system parameters!
         elif self.blockType == CODE_BLOCK_TYPE_WHEN:
-            stackStartSize = conditionCollection.size()
             # append new
             conditionCollection.add(self.condition)
         elif self.blockType == CODE_BLOCK_TYPE_ELSEWHEN:
@@ -842,9 +868,25 @@ class CodeBlock(object):
 
         # if there are some declarations present for this code branch,
         # make sure it gets unique number
-        if conditionCollection.branchChanged and len(self.declarations):
-            conditionCollection.branchNumber += 1
-            conditionCollection.branchChanged = False
+
+        anyUsefulDeclarations = False
+        for d in self.declarations:
+            if not isinstance(d, CodeBlock):
+                anyUsefulDeclarations = True
+                break
+        if anyUsefulDeclarations:
+            conditionCollection.ensureBranchIsPresent(componentRegister)
+
+        return stackStartSize
+
+    def exitCodeBlock(self, componentRegister, conditionCollection, stackStartSize):
+        if self.blockType == CODE_BLOCK_TYPE_WHEN:
+            # pop all conditions from this code block
+            conditionCollection.pop(conditionCollection.size() - stackStartSize)
+
+
+    def addComponents(self, componentRegister, conditionCollection):
+        ss = self.enterCodeBlock(componentRegister, conditionCollection)
 
         # add implicitly declared virtual senosrs
         implicitDefines = []
@@ -890,22 +932,19 @@ class CodeBlock(object):
                     d.load(componentRegister)
 
         # finish adding all virtual components
-        for d in self.declarations:
-            if type(d) is ComponentDefineStatement:
-                d.continueAdding(componentRegister)
-        for d in self.declarations:
-            if type(d) is ComponentDefineStatement:
-                d.finishAdding(componentRegister)
+#        for d in self.declarations:
+#            if type(d) is ComponentDefineStatement:
+#                d.continueAdding(componentRegister)
+#        for d in self.declarations:
+#            if type(d) is ComponentDefineStatement:
+#                d.finishAdding(componentRegister)
 
         # add set statements (may depend on virtual components)
         for d in self.declarations:
             if type(d) is SetStatement:
                 d.addComponents(componentRegister, conditionCollection)
 
-        # add use cases
-        for d in self.declarations:
-            if type(d) is ComponentUseCase:
-                d.addComponents(componentRegister, conditionCollection)
+        conditionCollection.nextBranch()
 
         # recursive call (for included "when" statements)
         for d in self.declarations:
@@ -916,6 +955,50 @@ class CodeBlock(object):
         if self.next != None:
             self.next.addComponents(componentRegister, conditionCollection)
 
-        if self.blockType == CODE_BLOCK_TYPE_WHEN:
-            # pop all conditions from this code block
-            conditionCollection.pop(conditionCollection.size() - stackStartSize)
+        self.exitCodeBlock(componentRegister, conditionCollection, ss)
+
+
+    def addVirtualComponents(self, componentRegister, conditionCollection):
+        ss = self.enterCodeBlock(componentRegister, conditionCollection)
+
+        for d in self.declarations:
+            if type(d) is ComponentDefineStatement:
+                d.continueAdding(componentRegister)
+#        for d in self.declarations:
+#            if type(d) is ComponentDefineStatement:
+                d.finishAdding(componentRegister)
+
+        conditionCollection.nextBranch()
+
+        # recursive call (for included "when" statements)
+        for d in self.declarations:
+            if type(d) is CodeBlock:
+                d.addVirtualComponents(componentRegister, conditionCollection)
+
+        # recursive call (for next "elsewhen" or "else" branch)
+        if self.next != None:
+            self.next.addVirtualComponents(componentRegister, conditionCollection)
+
+        self.exitCodeBlock(componentRegister, conditionCollection, ss)
+
+
+    def addUseCases(self, componentRegister, conditionCollection):
+        ss = self.enterCodeBlock(componentRegister, conditionCollection)
+
+        # add use cases
+        for d in self.declarations:
+            if type(d) is ComponentUseCase:
+                d.addUseCase(componentRegister, conditionCollection)
+
+        conditionCollection.nextBranch()
+
+        # recursive call (for included "when" statements)
+        for d in self.declarations:
+            if type(d) is CodeBlock:
+                d.addUseCases(componentRegister, conditionCollection)
+
+        # recursive call (for next "elsewhen" or "else" branch)
+        if self.next != None:
+            self.next.addUseCases(componentRegister, conditionCollection)
+
+        self.exitCodeBlock(componentRegister, conditionCollection, ss)

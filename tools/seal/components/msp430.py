@@ -50,9 +50,10 @@ greenled = GreenLedAct()
 
 light = LightSensor()
 humidity = HumiditySensor()
+temperature = TemperatureSensor()
 
 externalFlash = ExternalFlashOutput()
-
+sdcard = SdCardOutput()
 
 #
 # MSP430FRxx platform-specific components

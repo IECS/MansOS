@@ -65,6 +65,10 @@ class SealSensor(SealComponent):
         self._minUpdatePeriod = 1000 # milliseconds
         self._readTime = 0 # read instanttly
         self._readFunctionDependsOnParams = False
+        # if true, call on and off functions before/after reading
+        self.turnonoff = SealParameter(False, [False, True])
+        self.onFunction = SealParameter(None)
+        self.offFunction = SealParameter(None)
 
 # for remote use only
 class CommandSensor(SealSensor):
@@ -263,6 +267,8 @@ class HumiditySensor(SealSensor):
         super(HumiditySensor, self).__init__("Humidity")
         self.useFunction.value = "humidityRead()"
         self.readFunction.value = "humidityRead()"
+        self.onFunction.value = "humidityOn()"
+        self.offFunction.value = "humidityOff()"
         self.errorFunction = SealParameter("humidityIsError()")
         self.extraConfig = SealParameter("USE_HUMIDITY=y")
         self.extraIncludes = SealParameter("#include <hil/humidity.h>")
@@ -334,6 +340,8 @@ class SealActuator(SealComponent):
         self.offFunction = SealParameter(None)
         self.on = SealParameter(False, [False, True])
         self.off = SealParameter(False, [False, True])
+        # "blink X" is shortcut syntax for "times 2, period X"
+        self.blink = SealParameter(None, [50, 100, 200])
 
 class LedAct(SealActuator):
     def __init__(self):
@@ -497,9 +505,9 @@ class ExternalFlashOutput(SealOutput):
 class SdCardOutput(SealOutput):
     def __init__(self):
         super(SdCardOutput, self).__init__("SdCard")
-        self.useFunction.value = "sdcardWrite(0, &sdcardPacket, sizeof(sdcardPacket))"
-        self.extraIncludes = SealParameter("#include <sdcard/sdcard.h>")
-        self.extraConfig = SealParameter("USE_SDCARD=y")
+        self.useFunction.value = "sdStreamWriteRecord(&sdcardPacket, sizeof(sdcardPacket), true)"
+        self.extraIncludes = SealParameter("#include <hil/sdstream.h>")
+        self.extraConfig = SealParameter("USE_SDCARD_STREAM=y")
 
 # "local storage" (i.e. [external] flash or SD card is defined depending on platform
 # on telosb, local storage is synonym for external flash
