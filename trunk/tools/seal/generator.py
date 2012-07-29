@@ -3,9 +3,6 @@ import os
 
 SEPARATOR = "// -----------------------------\n"
 
-# a random 2-byte number
-#SEAL_MAGIC = 0xABCD  # 43981
-
 def formatCondition(condition, isNew):
     if isNew:
         prefix = "new"
@@ -87,10 +84,10 @@ class Generator(object):
         for o in self.outputs:
             o.prepareToGenerateCallbacks(self.outputFile)
 
-        for s in components.componentRegister.sensors.itervalues():
-            s.generateCallbacks(self.outputFile, self.outputs)
         for a in components.componentRegister.actuators.itervalues():
             a.generateCallbacks(self.outputFile, self.outputs)
+        for s in components.componentRegister.sensors.itervalues():
+            s.generateCallbacks(self.outputFile, self.outputs)
         for o in components.componentRegister.outputs.itervalues():
             o.generateCallbacks(self.outputFile, self.outputs)
 
@@ -98,7 +95,7 @@ class Generator(object):
             n.generateReadFunctions(self.outputFile)
 
     def generateBranchCode(self):
-        components.branchCollection.generateCode(self.outputFile)
+        components.componentRegister.branchCollection.generateCode(self.outputFile)
 
     def generateAppMain(self):
         self.outputFile.write("void appMain(void)\n")
@@ -124,17 +121,17 @@ class Generator(object):
         self.outputFile.write("\n")
 
         self.outputFile.write("        bool branch0OldStatus = oldConditionStatus[DEFAULT_CONDITION];\n")
-        for i in range(1, components.branchCollection.getNumBranches()):
-            conditions = components.branchCollection.getConditions(i)
+        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
+            conditions = components.componentRegister.branchCollection.getConditions(i)
             self.outputFile.write("        bool branch{0}OldStatus = {1};\n".format(i, formatConditions(conditions, False)))
         self.outputFile.write("\n")
 
         self.outputFile.write("        bool branch0NewStatus = newConditionStatus[DEFAULT_CONDITION];\n")
-        for i in range(1, components.branchCollection.getNumBranches()):
-            conditions = components.branchCollection.getConditions(i)
+        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
+            conditions = components.componentRegister.branchCollection.getConditions(i)
             self.outputFile.write("        bool branch{0}NewStatus = {1};\n".format(i, formatConditions(conditions, True)))
 
-        for i in range(components.branchCollection.getNumBranches()):
+        for i in range(components.componentRegister.branchCollection.getNumBranches()):
             s = '''
         if (branch{0}OldStatus != branch{0}NewStatus) {1}
             if (branch{0}NewStatus) branch{0}Start();

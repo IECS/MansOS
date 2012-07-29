@@ -44,6 +44,10 @@ class SealParser():
         if self.result:
             self.result.addComponents(components.componentRegister,
                                       components.conditionCollection)
+            self.result.addVirtualComponents(components.componentRegister,
+                                             components.conditionCollection)
+            self.result.addUseCases(components.componentRegister,
+                                    components.conditionCollection)
         return self.result
 
 ### Lex
@@ -223,7 +227,6 @@ class SealParser():
             components.componentRegister.systemConstants[name] = value
 
     def p_set_statement(self, p):
-#        '''set_statement : SET_TOKEN IDENTIFIER_TOKEN value ';'
         '''set_statement : SET_TOKEN IDENTIFIER_TOKEN functional_expression ';'
         '''
         p[0] = SetStatement(p[2], Expression(right=p[3]))
@@ -236,7 +239,7 @@ class SealParser():
     def p_define_statement(self, p):
         '''define_statement : DEFINE_TOKEN IDENTIFIER_TOKEN functional_expression parameter_list ';'
         '''
-        p[0] = ComponentDefineStatement(p[2], p[3], p[4])
+        p[0] = ComponentDefineStatement(p[2], p[3], p[4], False)
 
     def p_load_statement(self, p):
         '''load_statement : LOAD_TOKEN STRING_LITERAL ';'
