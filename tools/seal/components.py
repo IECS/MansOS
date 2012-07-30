@@ -38,7 +38,6 @@ class BranchCollection(object):
         self.conditions = {0 : []}
 
     def addBranch(self, n, conditions):
-        print "ADD BRANCH", n
         # if the branch does not exist, it is initialized to empty list
         self.branches.setdefault(n, [])
         self.conditions.setdefault(n, list(conditions))
@@ -112,6 +111,7 @@ class UseCase(object):
                 self.parameters[paramName] = p[1]
             else:
                 self.parameters[paramName] = Value(True)
+
         self.readFunctionSuffix = ""
         self.conditions = list(conditions)
         self.branchNumber = branchNumber
@@ -292,6 +292,35 @@ class UseCase(object):
 #                    self.component.getNameCC(), self.branchName, self.numInBranch,
 #                    self.stdev))
 
+
+    def generateOutCode(self, outputFile):
+        # for o in outputs:
+        #    o.generateCallbackCode(f, outputFile, self.readFunctionSuffix)
+
+        p = self.parameters.get("out")
+        if p:
+            outName = p.value.asString()
+        else:
+            outName = None
+        if outName is None: return
+
+        outComp = componentRegister.findComponentByName(outName)
+        if outComp is None:
+            componentRegister.userError("Component '{0}': 'out' parameter must point to a valid component!\n".format(component.name))
+            return
+        
+        writeFunction = outComp.getDependentParameterValue("writeFunction", outComp.parameters)
+        if writeFunction is None:
+            componentRegister.userError("Component '{0}': 'out' parameter points to a component with write function!\n".format(component.name))
+            return
+
+        outputFile.write("    {\n")
+        outputFile.write("        {0} value = {1}Value;\n".format(
+                self.component.getDataType(), self.component.getNameCC()))
+        outputFile.write("        {};\n".format(writeFunction))
+        outputFile.write("    }\n")
+
+
     def generateCallbacks(self, outputFile, outputs):
         ccname = self.component.getNameCC()
         ccname += self.branchName
@@ -371,6 +400,7 @@ class UseCase(object):
                                     intTypeName, toCamelCase(f)))
                             for o in outputs:
                                 o.generateCallbackCode(f, outputFile, self.readFunctionSuffix)
+                            self.generateOutCode(outputFile)
                             outputFile.write("    }\n")
                             outputFile.write("    read++;\n")
                     else:
@@ -378,6 +408,7 @@ class UseCase(object):
                                 intTypeName, self.component.getNameCC()))
                         for o in outputs:
                             o.generateCallbackCode(self.component.name, outputFile, self.readFunctionSuffix)
+                        self.generateOutCode(outputFile)
                 else:
                     if self.onCode: outputFile.write("    {};\n".format(self.onCode))
                     outputFile.write("    bool isFilteredOut = false;\n")
@@ -387,6 +418,7 @@ class UseCase(object):
                     outputFile.write("    if (!isFilteredOut) {\n")
                     for o in outputs:
                         o.generateCallbackCode(self.component.name, outputFile, self.readFunctionSuffix)
+                    self.generateOutCode(outputFile)
                     outputFile.write("    }\n")
                     if self.offCode: outputFile.write("    {};\n".format(self.offCode))
 #                elif self.period:
@@ -439,10 +471,10 @@ class UseCase(object):
                 outputFile.write("    alarmSchedule(&{0}Alarm{1}, {2}_PERIOD{1});\n".format(
                         ccname, self.numInBranch, ucname))
             elif self.pattern:
-                outputFile.write("    alarmSchedule(&{0}Alarm{1}, __pattern_{2}[__pattern_{2}Cursor]);\n".format(
+                outputFile.write("    alarmSchedule(&{0}Alarm{1}, pattern_{2}[pattern_{2}Cursor]);\n".format(
                         ccname, self.numInBranch, self.pattern))
-                outputFile.write("    __pattern_{0}Cursor++;\n".format(self.pattern))
-                outputFile.write("    __pattern_{0}Cursor %= sizeof(__pattern_{0}) / sizeof(*__pattern_{0});\n".format(
+                outputFile.write("    pattern_{0}Cursor++;\n".format(self.pattern))
+                outputFile.write("    pattern_{0}Cursor %= sizeof(pattern_{0}) / sizeof(*pattern_{0});\n".format(
                         self.pattern))
             outputFile.write("}\n\n")
 
@@ -500,7 +532,7 @@ class UseCase(object):
                     self.component.getNameCC(), self.branchName, self.numInBranch))
             if self.pattern:
                 # reset cursor position (TODO XXX: really?)
-                outputFile.write("    __pattern_{0}Cursor = 0;\n".format(self.pattern))
+                outputFile.write("    pattern_{0}Cursor = 0;\n".format(self.pattern))
 
     def generateAssociatedStartCode(self, outputFile):
         assert self.parentUseCase
@@ -789,6 +821,7 @@ class Sensor(Component):
         outputFile.write("    if (!isFilteredOut) {\n")
         for o in outputs:
             o.generateCallbackCode(self.name, outputFile, "")
+        # XXX: generateOutCode ?
         outputFile.write("    }\n")
         outputFile.write("}\n")
 
@@ -1277,6 +1310,41 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
+    def generateMatchFunction(self, outputFile, functionTree, root):
+        if not functionTree.checkArgs(2, componentRegister):
+            return ""
+
+        patternName = functionTree.arguments[1].asString()
+        pattern = componentRegister.patterns.get(patternName)
+        if pattern is None:
+            componentRegister.userError("Second argument of match() function must be a pattern name!\n")
+            return ""
+
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
+
+        numToTake = pattern.getSize()
+
+        funName = self.getGeneratedFunctionName("match")
+        outputFile.write("static inline {0} {1}(bool *__unused)\n".format(self.getDataType(), funName))
+        outputFile.write("{\n")
+        outputFile.write("    static {0} values[{1}];\n".format(self.getDataType(), numToTake))
+        outputFile.write("    static uint16_t valuesCursor;\n")
+        outputFile.write("    bool b = false, *isFilteredOut = &b;\n")
+        outputFile.write("    {0} tmp = {1};\n".format(self.getDataType(), subReadFunction))
+        outputFile.write("    if (!*isFilteredOut) {\n")
+        outputFile.write("        values[valuesCursor] = tmp;\n")
+        outputFile.write("        valuesCursor = (valuesCursor + 1) % {};\n".format(numToTake))
+        outputFile.write("    }\n")
+        outputFile.write("    uint16_t i;\n")
+        outputFile.write("    for (i = 0; i < {}; ++i) {}\n".format(numToTake, '{'))
+        outputFile.write("        if (values[i] != {}[i])\n".format(pattern.getVariableName()))
+        outputFile.write("            return false;\n")
+        outputFile.write("    }\n")
+        outputFile.write("    return true;\n")
+        outputFile.write("}\n\n")
+        return funName + "(isFilteredOut)"
+
     def generateFilterRangeFunction(self, outputFile, functionTree, op, root):
         if not functionTree.checkArgs(3, componentRegister):
             return ""
@@ -1330,6 +1398,47 @@ class Sensor(Component):
             componentRegister.userError("Unhandled kind of filter: '{}'\n".format(functionTree.function))
             op = '=='
         outputFile.write("    if (!(value {0} {1})) *isFilteredOut = true;\n".format(op, threshold))
+        outputFile.write("    return value;\n")
+        outputFile.write("}\n\n")
+        return funName + "(isFilteredOut)"
+
+    #
+    # This is something like negation for sensor values
+    #
+    def generateInvertFunction(self, outputFile, functionTree, root):
+        if not functionTree.checkArgs(1, componentRegister):
+            return ""
+
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
+
+        funName = self.getGeneratedFunctionName("invert")
+        outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
+        outputFile.write("{\n")
+        outputFile.write("    {0} value = {1};\n".format(
+                self.getDataType(), subReadFunction))
+        # invert the value
+        outputFile.write("    return !value;\n")
+        outputFile.write("}\n\n")
+        return funName + "(isFilteredOut)"
+
+    #
+    # This is not negation in the usual sense, but a negation of filter
+    #
+    def generateInvertFilterFunction(self, outputFile, functionTree, root):
+        if not functionTree.checkArgs(1, componentRegister):
+            return ""
+
+        subReadFunction = self.generateSubReadFunctions(
+            outputFile, None, functionTree.arguments[0], root)
+
+        funName = self.getGeneratedFunctionName("InvertFilter")
+        outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
+        outputFile.write("{\n")
+        outputFile.write("    {0} value = {1};\n".format(
+                self.getDataType(), subReadFunction))
+        # invert the filter
+        outputFile.write("    *isFilteredOut = !*isFilteredOut;\n")
         outputFile.write("    return value;\n")
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
@@ -1599,10 +1708,16 @@ class Sensor(Component):
             return self.generateSqrtFunction(outputFile, functionTree, root)
         if functionTree.function == "power":
             return self.generatePowerFunction(outputFile, functionTree, root)
-        if functionTree.function == "filterRange":
+        if functionTree.function == "match":
+            return self.generateMatchFunction(outputFile, functionTree, root)
+        if functionTree.function == "filterrange":
             return self.generateFilterRangeFunction(outputFile, functionTree, root)
         if functionTree.function[:6] == "filter":
             return self.generateFilterFunction(outputFile, functionTree, root)
+        if functionTree.function == "invert":
+            return self.generateInvertFunction(outputFile, functionTree, root)
+        if functionTree.function == "invertfilter":
+            return self.generateInvertFilterFunction(outputFile, functionTree, root)
         if functionTree.function == "sync":
             if functionTree != self.functionTree:
                 componentRegister.userError("sync() function only allowed at the top level!\n")
@@ -2529,6 +2644,12 @@ class ComponentRegister(object):
         return result
 
     #######################################################################
+    def lookupVirtualBase(self, basename, branchNumber):
+        copyName = "__copy" + str(branchNumber) + "_" + basename
+        result = self.virtualComponents.get(copyName)
+        if result: return result
+        return self.virtualComponents.get(basename)
+
     def addVirtualComponent(self, c):
         if self.virtualComponents.get(c.name, None) is None:
             if self.findComponentByName(c.name) is not None:
@@ -2561,21 +2682,23 @@ class ComponentRegister(object):
         # same name, different branch. allow this; will add two or more use cases.
         other.alsoInBranches.add(c.branchNumber)
         other.alsoInBranchesConditions[c.branchNumber] = c.conditions
-        print other.name, "other.alsoInBranches: ", other.alsoInBranches
+        other.alsoInCodeBlocks[c.branchNumber] = c.containingCodeBlock
+#        print other.name, "other.alsoInBranches: ", other.alsoInBranches
         self.virtualComponents[c.name].alsoInBranches.add(c.branchNumber)
-        print self.virtualComponents[c.name]
+        #print self.virtualComponents[c.name]
         # generate unique name
         c.name = "__copy" + str(c.branchNumber) + "_" + c.name
         # add it to components as usual
         self.virtualComponents[c.name] = c
 
     def continueAddingVirtualComponent(self, c):
-        print "continue adding", c.name
         if c.isError or c.added: return
+        #print "continue adding", c.name, "branch", c.branchNumber
 
         c.added = True
         c.base = None
 
+        # this is required because copy component don't have bases[] set up
         basenames = c.getAllBasenames()
         for basename in basenames:
             if c.name == basename:
@@ -2590,44 +2713,48 @@ class ComponentRegister(object):
             if basename[:7] == '__const':
                 numericalValue = int(basename[7:], 0)
                 continue
+            if basename in self.patterns: continue
             # a real sensor?
             base = self.findComponentByName(basename)
             if base is None or base.isVirtual():
                 # a virtual sensor
-                virtualBase = self.virtualComponents.get(basename, None)
-                if virtualBase is None:
-                    if c.containingOutputComponent is not None:
-                        # normal
-                        continue
-                    self.userError("Virtual component '{0}' has unknown base component '{1}', ignoring\n".format(
-                            c.name, basename))
-                    c.isError = True
-                    return
+                # virtualBase = self.virtualComponents.get(basename, None)
+                virtualBase = self.lookupVirtualBase(basename, c.branchNumber)
+                assert virtualBase
+                if virtualBase.name != basename:
+                    c.fixBasename(basename, virtualBase.name)
                 # add the virtual base first (because of parameters)
                 self.continueAddingVirtualComponent(virtualBase)
-                self.finishAddingVirtualComponent(virtualBase) # XXX
-                c.parameterDictionary.update(virtualBase.parameterDictionary)
-                for br in virtualBase.alsoInBranches:
-                    print "add virtual component to other branches too, branch", br
-                    cc = copy.copy(c)
-                    cc.alsoInBranches = set()
-                    cc.alsoInBranchesConditions = dict()
-                    cc.added = False
-                    cc.branchNumber = br
-                    cc.conditions = list(virtualBase.alsoInBranchesConditions[br])
-                    cc.customVirtualBase = basename
-                    self.addVirtualComponent(cc)
-                    self.continueAddingVirtualComponent(cc)
-                    self.finishAddingVirtualComponent(cc) # XXX
+
+#                self.finishAddingVirtualComponent(virtualBase) # XXX
+#                c.parameterDictionary.update(virtualBase.parameterDictionary)
+#                for br in virtualBase.alsoInBranches:
+#                    print "add virtual component to other branches too, branch", br
+#                    cc = copy.copy(c)
+#                    cc.alsoInBranches = set()
+#                    cc.alsoInBranchesConditions = dict()
+#                    cc.added = False
+#                    cc.branchNumber = br
+#                    cc.conditions = list(virtualBase.alsoInBranchesConditions[br])
+#                    cc.customVirtualBase = basename
+#                    self.addVirtualComponent(cc)
+#                    self.continueAddingVirtualComponent(cc)
+#                    self.finishAddingVirtualComponent(cc) # XXX
 #                c.alsoInBranches.update(virtualBase.alsoInBranches)
 #                c.alsoInBranchesConditions.update(virtualBase.alsoInBranchesConditions)
 
+#        for b in c.bases:
+#            self.continueAddingVirtualComponent(b)
+
         immediateBaseName = c.getImmediateBasename()
-        immediateBase = self.virtualComponents.get(immediateBaseName, None)
+        immediateBase = self.lookupVirtualBase(immediateBaseName, c.branchNumber)
         if immediateBase is not None:
-#            print "  immed base is virtual"
+            # print "  immed base is virtual, in branch", immediateBase.branchNumber
             # inherit parameters from parent virtual sensor
             # c.parameterDictionary = immediateBase.parameterDictionary
+
+            # copy the branch number from base (XXX: scoping semantics?)
+            c.branchNumber = immediateBase.branchNumber
             # inherit the base too
             c.base = immediateBase.base
         else:
@@ -2646,8 +2773,8 @@ class ComponentRegister(object):
                 c.parameterDictionary[paramName] = Value(True)
 
         # used for pseudocomponents that are based on integer literals or constants
-        if numericalValue is not None:
-            c.parameterDictionary["value"] = Value(numericalValue)
+        if c.numericalValue is not None:
+            c.parameterDictionary["value"] = Value(c.numericalValue)
 
 #        for br in c.alsoInBranches:
 #            other = self.virtualComponents.get("__copy" + str(br) + "_" + c.name, None)
@@ -2655,7 +2782,7 @@ class ComponentRegister(object):
 #                self.continueAddingVirtualComponent(other)
 
     def finishAddingVirtualComponent(self, c):
-        print "+++ finish adding", c.name
+        #print "+++ finish adding", c.name, "base", c.base.name
         if c.isError: return
         assert c.base
 
@@ -2667,8 +2794,6 @@ class ComponentRegister(object):
             return
         s.containingOutputComponent = c.containingOutputComponent
 
-#        print "c.parameterDictionary:" , c.parameterDictionary
-
         s.updateParameters(c.parameterDictionary)
         s.functionTree = c.functionTree
         if s.functionTree.function == "sync":
@@ -2679,7 +2804,99 @@ class ComponentRegister(object):
 #            if other:
 #                self.finishAddingVirtualComponent(other)
 
-   #######################################################################
+    #######################################################################
+    def chainVirtualComponentBases(self, c):
+        basenames = c.getAllBasenames()
+        for basename in basenames:
+            if c.name == basename:
+                self.userError("Virtual component '{0}' depends on self, ignoring\n".format(self.name))
+                c.isError = True
+                return
+
+        c.numericalValue = None
+        c.bases = set()
+
+        for basename in basenames:
+            if basename[:7] == '__const':
+                c.numericalValue = int(basename[7:], 0)
+                continue
+            if basename in self.patterns: continue
+            base = self.findComponentByName(basename)
+            if base is None or base.isVirtual():
+                # a virtual sensor
+                virtualBase = self.virtualComponents.get(basename, None)
+                if virtualBase is None:
+                    if c.containingOutputComponent is not None:
+                        # normal
+                        continue
+                    self.userError("Virtual component '{0}' has unknown base component '{1}', ignoring\n".format(
+                            c.name, basename))
+                    c.isError = True
+                    return
+                c.bases.add(virtualBase)
+
+    def addAndPropagateDerived(self, base, derived):
+        oldDerived = base.derived
+        base.derived.update(derived)
+        if oldDerived == base.derived: return # to avoid loops
+        for b in base.bases:
+            newDerived = b.derived
+            newDerived.add(b)
+            self.addAndPropagateDerived(b, newDerived)
+
+    def chainVirtualComponentDerived(self, c):
+        for b in c.bases:
+            newDerived = c.derived
+            newDerived.add(c)
+            self.addAndPropagateDerived(b, newDerived)
+
+    def addVirtualComponentsToBaseBranches(self, c):
+        if len(c.alsoInBranches) == 0: return
+        for br in c.alsoInBranches:
+            # XXX: OK, semantics here is totally unclear.
+            # Is something like true scoping required?
+            # The problem in that cae is that ATM we cannot know which branches
+            # of a component are "native" and which inherited
+            for b in c.derived:
+                b.alsoInBranches.add(br)
+                b.alsoInBranchesConditions[br] = c.alsoInBranchesConditions[br]
+                b.alsoInCodeBlocks[br] = c.alsoInCodeBlocks[br]
+
+    def addVirtualComponentsToCodeBlocks(self, c):
+        result = {}
+        if len(c.alsoInBranches) == 0: return result
+        for (branch, block) in c.alsoInCodeBlocks.iteritems():
+            if c.name not in block.componentDefines:
+                cp = copy.copy(c)
+                cp.name = "__copy" + str(branch) + "_" + c.name
+                cp.alsoInBranches = set()
+                cp.alsoInBranchesConditions = {}
+                cp.alsoInCodeBlocks = {}
+                cp.bases = set()
+                cp.derived = set()
+                cp.branchNumber = branch
+                cp.addedByPreprocessor = True
+                block.componentDefines[c.name] = cp
+                result[cp.name] = cp
+        return result
+
+    def chainVirtualComponents(self):
+        for c in self.virtualComponents.itervalues():
+            if c.name[:6] == '__copy': continue
+            self.chainVirtualComponentBases(c)
+        for c in self.virtualComponents.itervalues():
+            if c.name[:6] == '__copy': continue
+            self.chainVirtualComponentDerived(c)
+        for c in self.virtualComponents.itervalues():
+            if c.name[:6] == '__copy': continue
+            self.addVirtualComponentsToBaseBranches(c)
+        newVC = {}
+        for c in self.virtualComponents.itervalues():
+            if c.name[:6] == '__copy': continue
+            newVC.update(self.addVirtualComponentsToCodeBlocks(c))
+        self.virtualComponents.update(newVC)
+
+    #######################################################################
     def addRemote(self, name, basename):
         # print "add new component with name", name, "basename", basename
         base = self.sensors.get(basename, None)
@@ -2753,24 +2970,21 @@ class ComponentRegister(object):
         return uc
 
     def useComponent(self, keyword, name, parameters, fields, conditions, branchNumber):
-        print "useComponent", name
-        print "self.virtualComponents = ", self.virtualComponents
+#        print "useComponent", name
+#        print "self.virtualComponents = ", self.virtualComponents
         virtual = self.virtualComponents.get(name)
-        print self.virtualComponents[name]
-        print virtual.alsoInBranches
+#        print self.virtualComponents[name]
+#        print virtual.alsoInBranches
         if virtual is None or len(virtual.alsoInBranches) == 0:
             return self.reallyUseComponent(keyword, name, parameters, fields, conditions, branchNumber)
 
         if branchNumber == 0:
-            print "use for all"
             # use for all the branches specied by component)
-            print "b", virtual.branchNumber, "cond=", virtual.conditions
             self.reallyUseComponent(keyword, name, parameters, fields,
                                     virtual.conditions,
                                     virtual.branchNumber)
             for b in virtual.alsoInBranches:
                 vname = "__copy" + str(b) + "_" + name
-                print "b", b, "copy cond=", virtual.alsoInBranchesConditions[b]
                 self.reallyUseComponent(keyword, vname, parameters, fields,
                                         virtual.alsoInBranchesConditions[b], b)
         else:

@@ -108,7 +108,13 @@ class Generator(object):
 #        for p in components.processStructInits:
 #            self.outputFile.write(p)
 
-        self.outputFile.write("\n\n")
+        self.outputFile.write("\n")
+        self.outputFile.write("    bool branch0OldStatus = false;\n")
+        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
+            conditions = components.componentRegister.branchCollection.getConditions(i)
+            self.outputFile.write("    bool branch{0}OldStatus = false;\n".format(i))
+        self.outputFile.write("\n")
+
         self.outputFile.write("    for (;;) {\n")
         self.outputFile.write("        uint32_t iterationEndTime = getRealTime() + CONDITION_EVALUATION_INTERVAL;\n")
         self.outputFile.write("\n")
@@ -118,12 +124,6 @@ class Generator(object):
         self.outputFile.write("        newConditionStatus[DEFAULT_CONDITION] = true;\n")
         for i in range(totalConditions):
             self.outputFile.write("        newConditionStatus[{0}] = condition{0}Check(oldConditionStatus[{0}]);\n".format(i + 1))
-        self.outputFile.write("\n")
-
-        self.outputFile.write("        bool branch0OldStatus = oldConditionStatus[DEFAULT_CONDITION];\n")
-        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
-            conditions = components.componentRegister.branchCollection.getConditions(i)
-            self.outputFile.write("        bool branch{0}OldStatus = {1};\n".format(i, formatConditions(conditions, False)))
         self.outputFile.write("\n")
 
         self.outputFile.write("        bool branch0NewStatus = newConditionStatus[DEFAULT_CONDITION];\n")
@@ -139,13 +139,17 @@ class Generator(object):
         {2}\n'''
             self.outputFile.write(s.format(i, '{', '}'))
 
-        self.outputFile.write('''
-        memcpy(oldConditionStatus, newConditionStatus, sizeof(oldConditionStatus));
+        self.outputFile.write("\n")
+        self.outputFile.write("        memcpy(oldConditionStatus, newConditionStatus, sizeof(oldConditionStatus));\n")
 
-        uint32_t now = getRealTime();
-        if (timeAfter32(iterationEndTime, now)) {
-            msleep(iterationEndTime - now);
-        }\n''')
+        for i in range(components.componentRegister.branchCollection.getNumBranches()):
+            self.outputFile.write("        branch{0}OldStatus = branch{0}NewStatus;\n".format(i))
+        self.outputFile.write("\n")
+
+        self.outputFile.write("        uint32_t now = getRealTime();\n")
+        self.outputFile.write("        if (timeAfter32(iterationEndTime, now)) {\n")
+        self.outputFile.write("            msleep(iterationEndTime - now);\n")
+        self.outputFile.write("        }\n")
         self.outputFile.write("    }\n")
         self.outputFile.write("}\n")
 

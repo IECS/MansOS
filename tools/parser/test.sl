@@ -1,33 +1,28 @@
 // define HumRedLed RedLed, blink;
+
 // use Humidity, associate HumRedLed, turnOnOff;
 
-when 1 < 2:
-    define DemoSensor Light;
-else:
-    define DemoSensor Humidity;
-end
-//define TheSensor DemoSensor;
-//read TheSensor;
+// pattern FooPattern (1, 1, 1, 0);
+// define MyInput DigitalIn, port 2, pin 0;
 
-//read DemoSensor;
-
-
-// simple version:
-// read Light, period 10min;
-// read Humidity, period 10min;
-// read Temperature, period 10min;
-// output SdCard;
-// output Network, protocol CSMA;
-
-// real version:
-// config "USE_LONG_LIFETIME=y";
-// define HelperLed RedLed, blink;
-// when variables.localAddress == 0x0796:
-// 	define TheLight SQ100Light;
+// when match(invert(MyInput), FooPattern):
+//     use Print, format "matched!\n";
 // else:
-//  	define TheLight Light;
+//     use Print, format "not matched!\n";
 // end
-// define AllSensors sync(TheLight, Humidity, Temperature);
-// read AllSensors, period 10min, associate HelperLed, turnOnOff;
-// output SdCard;
-// output Network, protocol CSMA;
+
+// when invertFilter(filterEqual(MyInput, 1)):
+//    use Print, format "is zero!\n";
+// else:
+//    use Print, format "is one!\n";
+// end
+
+
+//define HumRedLed RedLed, blink;
+
+define MyInput DigitalIn, port 1, pin 2;
+define MyOutput DigitalOut, port 5, pin 4;
+define MyLed BlueLed;
+
+read MyInput, out MyOutput;
+read MyInput, out MyLed;
