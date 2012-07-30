@@ -123,7 +123,7 @@ PSOURCES-$(USE_ADDRESSING) += $(MOS)/net/nonet.c
 endif
 
 #PSOURCES-$(USE_EXT_FLASH) += $(MOS)/hil/fstream.c
-PSOURCES-$(USE_SD_STREAM) += $(MOS)/hil/sdstream.c
+PSOURCES-$(USE_SDCARD_STREAM) += $(MOS)/hil/sdstream.c
 
 PSOURCES-$(USE_FS) += \
 	$(MOSROOT)$(PDFS)/core.c        \

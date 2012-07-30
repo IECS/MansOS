@@ -65,4 +65,4 @@ PSOURCES-$(USE_APDS9300) += $(MOS)/chips/apds9300/apds9300.c
 PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usart.c
 PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usart_spi.c
 
-PSOURCES-$(USE_SD_CARD) += $(MOS)/chips/sdcard/sdcard.c
+PSOURCES-$(USE_SDCARD) += $(MOS)/chips/sdcard/sdcard.c

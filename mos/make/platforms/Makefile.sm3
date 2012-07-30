@@ -76,5 +76,5 @@ PSOURCES-$(USE_ADS1115) += $(MOS)/chips/ads1115/ads1115.c
 PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usart.c
 PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usart_spi.c
 
-PSOURCES-$(USE_SD_CARD) += $(MOS)/chips/sdcard/sdcard.c
+PSOURCES-$(USE_SDCARD) += $(MOS)/chips/sdcard/sdcard.c
 PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/sdcard/sdcard.c
