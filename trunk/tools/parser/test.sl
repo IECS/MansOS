@@ -1,28 +1,24 @@
-// define HumRedLed RedLed, blink;
+const SAMPLING_INTERVAL 5s;
+const INTERIOR_REPORT_INTERVAL 5min;
+const ENTRANCE_REPORT_INTERVAL 30s;
+const SATURATED_VALUE 0xffff;
 
-// use Humidity, associate HumRedLed, turnOnOff;
+// choose the sampling interval depending on system variables
+// (assume that 'moteIsInInterior' is a var that can be chaged via management protocol)
+when Variables.moteIsInInterior:
+    set reportInterval INTERIOR_REPORT_INTERVAL; // TODO: convert to ms!
+else:
+    set reportInterval ENTRANCE_REPORT_INTERVAL; // TODO: convert to ms!
+end
 
-// pattern FooPattern (1, 1, 1, 0);
-// define MyInput DigitalIn, port 2, pin 0;
-
-// when match(invert(MyInput), FooPattern):
-//     use Print, format "matched!\n";
-// else:
-//     use Print, format "not matched!\n";
-// end
-
-// when invertFilter(filterEqual(MyInput, 1)):
-//    use Print, format "is zero!\n";
-// else:
-//    use Print, format "is one!\n";
-// end
-
-
-//define HumRedLed RedLed, blink;
-
-define MyInput DigitalIn, port 1, pin 2;
-define MyOutput DigitalOut, port 5, pin 4;
-define MyLed BlueLed;
-
-read MyInput, out MyOutput;
-read MyInput, out MyLed;
+// tyere are 4 light sensors; ignore the ones that are saturated
+define Light1 filterLess(LightWithId, SATURATED_VALUE), id 1;
+define Light2 filterLess(LightWithId, SATURATED_VALUE), id 2;
+define Light3 filterLess(LightWithId, SATURATED_VALUE), id 3;
+define Light4 filterLess(LightWithId, SATURATED_VALUE), id 4;
+// one measurement is an average of all valid light sensors
+define LightAvg average(tuple(Light1, Light2, Light3, Light4));
+// read the average value with 5 second period
+read LightAvg, period SAMPLING_INTERVAL; // TODO: convert to ms!
+// use a custom data collector component
+//output DataCollector, interval reportInterval;

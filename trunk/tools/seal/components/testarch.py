@@ -57,3 +57,19 @@ class SQ100LightSensor(SealSensor):
         self.readFunction.value = "sq100LightRead()"
 
 sq100 = SQ100LightSensor()
+
+class LightWithIdSensor(SealSensor):
+    def __init__(self):
+        super(LightWithIdSensor, self).__init__("LightWithId")
+        self.useFunction.value = "lightRead()"
+        self.readFunction.value = "lightRead()"
+        self._readFunctionDependsOnParams = True
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "readFunction" and parameter != "useFunction":
+            return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
+        id = int(self.getParameterValue("id", useCaseParameters))
+        if id is None: id = 0
+        return "lightWithIdRead(" + str(id) + ")"
+
+lightWithId = LightWithIdSensor()

@@ -16,6 +16,7 @@ analogIn = AnalogInputSensor()
 digitalIn = DigitalInputSensor()
 
 digitalout = DigitalOutputAct()
+analogoput = AnalogOutputAct()
 beeper = BeeperAct()
 
 # all kind of pseudo sensors follow

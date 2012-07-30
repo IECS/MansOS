@@ -90,6 +90,8 @@ class VariableSensor(SealSensor):
         self._readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "readFunction" and parameter != "useFunction":
+            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
         return self.getParameterValue("name", useCaseParameters)
 
 class ConstantSensor(SealSensor):
@@ -102,6 +104,8 @@ class ConstantSensor(SealSensor):
         self._readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "readFunction" and parameter != "useFunction":
+            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
         return self.getParameterValue("value", useCaseParameters)
 
 class CounterSensor(SealSensor):
@@ -115,6 +119,8 @@ class CounterSensor(SealSensor):
         self._readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "readFunction" and parameter != "useFunction":
+            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
         start = int(self.getParameterValue("start", useCaseParameters))
         max = int(self.getParameterValue("max", useCaseParameters))
         if max >= 0x80000000: suffix = "u"
@@ -137,8 +143,8 @@ class RandomSensor(SealSensor):
         self._readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
-        #if parameter != "readFunction" and parameter != "useFunction":
-        #    return SealSensor.calculateParameterValue(parameter, useCaseParameters)
+        if parameter != "readFunction" and parameter != "useFunction":
+            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
         min = int(self.getParameterValue("min", useCaseParameters))
         max = int(self.getParameterValue("max", useCaseParameters))
         modulo = max - min + 1
@@ -161,6 +167,8 @@ class TimeCounterSensor(SealSensor):
         self._readFunctionDependsOnParams = True
 
     def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "readFunction" and parameter != "useFunction":
+            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
         counterPeriod = self.getParameterValue("counterperiod", useCaseParameters)
         return "getJiffies() / {0}".format(counterPeriod)
 
@@ -205,6 +213,8 @@ class SquareWaveSensor(WaveSensor):
         super(SquareWaveSensor, self).__init__("SquareWave")
 
     def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "readFunction" and parameter != "useFunction":
+            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
         wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
         low = self.getParameterValue("low", useCaseParameters)
         high = self.getParameterValue("high", useCaseParameters)
@@ -222,6 +232,8 @@ class TriangleWaveSensor(WaveSensor):
         self.extraIncludes = SealParameter("#include <lib/algo.h>")
 
     def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "readFunction" and parameter != "useFunction":
+            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
         wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
         low = self.getParameterValue("low", useCaseParameters)
         high = self.getParameterValue("high", useCaseParameters)
@@ -239,6 +251,8 @@ class SawtoothWaveSensor(WaveSensor):
         self.extraIncludes = SealParameter("#include <lib/algo.h>")
 
     def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "readFunction" and parameter != "useFunction":
+            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
         wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
         low = self.getParameterValue("low", useCaseParameters)
         high = self.getParameterValue("high", useCaseParameters)
@@ -252,6 +266,8 @@ class SineWaveSensor(WaveSensor):
         super(SineWaveSensor, self).__init__("SineWave")
 
     def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "readFunction" and parameter != "useFunction":
+            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
         wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
         low = self.getParameterValue("low", useCaseParameters)
         high = self.getParameterValue("high", useCaseParameters)
@@ -323,6 +339,10 @@ class DigitalInputSensor(SealSensor):
         self.pin = SealParameter(0, ["0", "1", "2", "3", "4", "5", "6", "7"])
         self.port = SealParameter(1, ["1", "2", "3", "4", "5", "6"])
         self._readFunctionDependsOnParams = True
+        # interrupt related configuration
+        self.interrupt = SealParameter(False, [False, True])
+        self.risingEdge = SealParameter(False, [False, True])
+        self.fallingEdge = SealParameter(False, [False, True]) # inverse of rising edge
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
@@ -391,10 +411,6 @@ class DigitalOutputAct(SealActuator):
         self.writeFunction.value = "if (value) pinSet(1, 0); else pinClear(1, 0)"
         self.pin = SealParameter(0, ["0", "1", "2", "3", "4", "5", "6", "7"])
         self.port = SealParameter(1, ["1", "2", "3", "4", "5", "6"])
-        # interrupt related configuration
-        self.interrupt = SealParameter(False, [False, True])
-        self.risingEdge = SealParameter(False, [False, True])
-        self.fallingEdge = SealParameter(False, [False, True]) # inverse of rising edge
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" \
@@ -418,6 +434,43 @@ class DigitalOutputAct(SealActuator):
             return "pinClear" + args
         if parameter == "writeFunction":
             return "if (value) pinSet" + args + "; else pinClear" + args
+        return None
+
+class AnalogOutputAct(SealActuator):
+    def __init__(self):
+        super(AnalogOutputAct, self).__init__("AnalogOut")
+        self.useFunction.value = "pwmWrite(1, 0, 128)"
+        self.readFunction.value = "0"
+        self.onFunction.value = "pwmWrite(1, 0, 255)"
+        self.offFunction.value = "pwmWrite(1, 0, 0)"
+        #self.writeFunction.value = "pwmWrite(1, 0, value ? 255 : 0)"
+        self.writeFunction.value = "pwmWrite(1, 0, value)"
+        self.pin = SealParameter(0, ["0", "1", "2", "3", "4", "5", "6", "7"])
+        self.port = SealParameter(1, ["1", "2", "3", "4", "5", "6"])
+        self.value = SealParameter(128, ["0", "64", "128", "196", "255"])
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "readFunction" \
+                and parameter != "onFunction" \
+                and parameter != "offFunction" \
+                and parameter != "writeFunction":
+            return SealActuator.calculateParameterValue(self, parameter, useCaseParameters)
+        port = int(self.getParameterValue("port", useCaseParameters))
+        pin = int(self.getParameterValue("pin", useCaseParameters))
+        value = int(self.getParameterValue("value", useCaseParameters))
+        if port is None: port = 1
+        if pin is None: pin = 0
+        if value is None: value = 128
+        args = "(" + str(port) + ", " + str(pin) + ", "
+        if parameter == "useFunction":
+            return "pwmWrite" + args  + str(value) + ")"
+        if parameter == "onFunction":
+            return "pinSet" + args + "255)"
+        if parameter == "offFunction":
+            return "pinClear" + args + "0)"
+        if parameter == "writeFunction":
+            # return "pwmWrite" + args + "value ? 255 : 0)"
+            return "pwmWrite" + args + "value)"
         return None
 
 class BeeperAct(SealActuator):
@@ -543,6 +596,16 @@ class NetworkOutput(SealOutput):
     def __init__(self):
         super(NetworkOutput, self).__init__("Network")
         self.useFunction.value = "radioSend(&networkPacket, sizeof(networkPacket))" # TODO
-        self.protocol = SealParameter("CSMA", ["CSMA", "CSMA-ACK"])
+        self.protocol = SealParameter("NULL", ["NULL", "CSMA", "CSMA_ACK"])
         self.extraIncludes = SealParameter("#include <net/mac.h>")
         self.extraConfig = SealParameter("USE_NET=y")
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "extraConfig":
+            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
+        protocol = self.getParameterValue("protocol", useCaseParameters)
+        if protocol is None: protocol = "NULL"
+        else:
+            if "asString" in dir(protocol): protocol = protocol.asString()
+            protocol = protocol.upper()
+        return "USE_NET=y\n" + "CONST_MAC_PROTOCOL=MAC_PROTOCOL_" + protocol

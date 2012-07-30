@@ -53,6 +53,9 @@ else:
 # From MSP-GCC FAQ, page 23
 lib_exported = ['abort', 'abort', 'abs', 'atoi', 'atol', 'atol', 'bcmp', 'bcopy', 'bsearch', 'bzero', 'errno', 'exit', 'ffs', 'labs', 'ldiv', 'malloc', 'memccpy', 'memchr', 'memcmp', 'memcpy', 'memmove', 'memset', 'qsort', 'rand', 'rindex', 'setjmp', 'snprintf', 'sprintf', 'strcasecmp', 'strcat', 'strchr', 'strcmp', 'strcpy', 'strcspn', 'strdup', 'strlcat', 'strlcpy', 'strlen', 'strncat', 'strncmp', 'strncpy', 'strpbrk', 'strrchr', 'strsep', 'strspn', 'strstr', 'strtok', 'strtol', 'strtoul', 'swab', 'vsnprintf', 'vsprintf', 'vprintf']
 
+# apparently there is free() too
+lib_exported.append('free')
+
 if arch == 'pc':
     lib_exported.extend(['atexit', 'sleep', 'usleep', 'pthread_exit', 'stdout', 'fgetc', 'sem_post', 'sem_trywait', 'fclose', 'pthread_mutex_lock', 'pthread_attr_init', 'printf', '__printf_chk', '__fprintf_chk', '__vsprintf_chk', 'pthread_create', 'fflush', 'fopen', 'feof', 'pthread_cond_init', 'pthread_attr_setschedparam', 'sem_getvalue', 'pthread_equal', 'sem_destroy', 'perror', 'puts', 'sem_wait', '__stack_chk_fail', 'pthread_mutex_init', 'pthread_cond_wait', 'sem_init', 'pthread_mutex_unlock', 'pthread_self', 'htonl', 'read', 'gettimeofday', 'abort', 'connect', 'getsockname', 'close', 'htons', 'setsockopt', 'poll', 'putchar', 'socket', 'fwrite', 'fseek', 'fread', '__xstat', 'rewind', '__errno_location', 'strerror', 'write', 'ntohs', 'stderr', 'socketpair', 'free', '__memcpy_chk', '__vsnprintf_chk', 'fileno', 'ferror', '__memset_chk', 'ftruncate', 'select', 'pthread_join', '__snprintf_chk'])
 elif arch == 'msp430':

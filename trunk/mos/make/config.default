@@ -65,9 +65,6 @@ USE_SOFT_I2C ?= n
 # timers are needed for e.g. USART communication and alarms; disable with care!
 USE_HARDWARE_TIMERS ?= y
 
-# threads
-USE_THREADS ?= n
-
 # execute from RAM, not from flash?
 USE_RAM_EXECUTION ?= n
 
@@ -76,13 +73,13 @@ USE_RAM_EXECUTION ?= n
 USE_LONG_LIFETIME ?= n
 
 # SD card stream interface
-USE_SD_STREAM ?= n
+USE_SDCARD_STREAM ?= n
 
 # SD card
-ifeq ($(USE_SD_STREAM),y)
-USE_SD_CARD ?= y
+ifeq ($(USE_SDCARD_STREAM),y)
+USE_SDCARD ?= y
 endif
-USE_SD_CARD ?= n
+USE_SDCARD ?= n
 
 #TODO:
 #USE_PRINT_SERIAL ?= y
@@ -96,12 +93,16 @@ USE_BEEPER ?= n
 ifeq ($(USE_NET),y)
    USE_ADDRESSING ?= y
    USE_RANDOM ?= y
+   USE_THREADS ?= y
 endif
 ifeq ($(USE_SEAL_COMM),y)
    USE_ADDRESSING ?= y
 endif
 USE_ADDRESSING ?= n
 USE_RANDOM ?= n
+
+# threads
+USE_THREADS ?= n
 
 ifeq ($(USE_ADDRESSING),y)
     USE_SERIAL_NUMBER ?= y

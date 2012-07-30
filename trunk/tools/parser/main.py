@@ -113,16 +113,17 @@ def main():
 
     # import pathname where seal package is located
     dirname = os.path.dirname(os.path.realpath(__file__))
-    sys.path.append(dirname + '/' + pathToOS + '/tools')
-    sys.path.append(dirname + '/' + pathToOS + '/tools/seal/components')
-    # for extension modules
-    sys.path.append(os.getcwd() + os.path.dirname(inputFileName))
+    sys.path.append(os.path.join(dirname, pathToOS, 'tools'))
+    sys.path.append(os.path.join(dirname, pathToOS, 'tools', 'seal', 'components'))
 
     from seal import generator
     # in case tis is used multiple times
     generator.components.clearGlobals()
 
     parseCommandLine(sys.argv)
+
+    # for extension modules
+    sys.path.append(os.path.join(os.getcwd(), os.path.dirname(inputFileName)))
 
     # read file to-be-parsed
     with open(inputFileName, 'r') as inputFile:
@@ -148,7 +149,7 @@ def main():
     else:
         outputDirName = os.path.dirname(outputFileName)
         if len(outputDirName):
-            outputDirName += '/'
+            outputDirName += os.sep
             if not os.path.exists(outputDirName):
                 os.makedirs(outputDirName)
         with open(outputFileName, 'w') as outputFile:

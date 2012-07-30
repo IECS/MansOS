@@ -27,6 +27,8 @@
 
 #include "sdstream.h"
 #include <sdcard/sdcard.h>
+#include <lib/assert.h>
+#include <lib/codec/crc.h>
 
 #if DEBUG
 #define SPRINTF PRINTF
@@ -97,7 +99,7 @@ bool sdStreamWriteRecord(void *data, uint16_t length, bool crc)
         free(buffer);
     }
     if (crc) {
-        uint16_t calcCrc = crc16((uint8_t *)data + sizeof(headerWithCrc), length - sizeof(headerWithCrc));
+        uint16_t calcCrc = crc16((uint8_t *)data + sizeof(HeaderWithCrc_t), length - sizeof(HeaderWithCrc_t));
         memcpy((uint8_t *)data + 2, &calcCrc, sizeof(calcCrc));
     }
     sdcardWrite(sdCardAddress, data, length);
