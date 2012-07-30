@@ -60,7 +60,6 @@ class Frame(wx.Frame):
         self.auiManager.SetAGWFlags(self.auiManager.GetAGWFlags() ^ flag)
         self.auiManager.SetAutoNotebookStyle(aui.AUI_NB_TOP | aui.AUI_NB_SMART_TABS)
 
-        #self.API.outputTools.Reparent(self)
         self.API.tabManager.Reparent(self)
         self.API.editPanel.Reparent(self)
         self.API.blockly.Reparent(self)
@@ -73,8 +72,7 @@ class Frame(wx.Frame):
                 CloseButton(False).
                 Caption("Editors").CaptionVisible(False).
                 MinimizeButton(True).MaximizeButton(True).
-                BestSize(wx.Size(400, 400))
-                                )
+                BestSize(wx.Size(400, 400)))
         self.auiManager.UpdateNotebook()
         rightPane = (aui.AuiPaneInfo().Floatable(True).
                 Right().
@@ -353,9 +351,14 @@ class Frame(wx.Frame):
     def OnAbout(self, event):
         versionFile = os.path.join("../..", "doc/VERSION")
         f = open(versionFile, "r")
-        version = f.readline()
+        lines = f.readlines()
         f.close()
-        mtime = os.path.getmtime(versionFile)
+        release = "Unknown"
+        date = "Unknown"
+        if len(lines) > 0:
+            release = lines[0].strip()
+        if len(lines) > 1:
+            date = lines[1].strip()
         text = """
 MansOS
 
@@ -369,7 +372,9 @@ The emphasis is on easy use and fast adoption time. Therefore, MansOS supports c
 Some of the supported target platforms are based on MSP430 and Atmega microcontrollers (Nordic MCU support is in development). Popular and supported platform names include Tmote Sky and other Telosb clones, Waspmote, Arduino.
 
 Should you have questions or suggestions about the support, please contact info@mansos.net 
-""".format(version, strftime("%d.%m.%Y %H:%M", localtime(mtime)))
+
+Developed by: Jānis Judvaitis, janis.judvaitis@gmail.com
+""".format(release, date)
         wx.MessageBox(text, 'Info',
             wx.OK | wx.ICON_INFORMATION)
 
@@ -406,13 +411,13 @@ Should you have questions or suggestions about the support, please contact info@
     def loadPositioning(self):
         width = self.API.getSetting("Width")
         if width == '':
-            width = 600
+            width = 800
         else:
             width = int(width)
 
         height = self.API.getSetting("Height")
         if height == '':
-            height = 800
+            height = 600
         else:
             height = int(height)
 
@@ -420,13 +425,15 @@ Should you have questions or suggestions about the support, please contact info@
 
         locX = self.API.getSetting("LocX")
         if locX == '':
-            locX = wx.GetDisplaySize()[0] / 2
+            # Center
+            locX = (wx.GetDisplaySize()[0] - width) / 2
         else:
             locX = int(locX)
 
         locY = self.API.getSetting("LocY")
         if locY == '':
-            locY = wx.GetDisplaySize()[1] / 2
+            # Center
+            locY = (wx.GetDisplaySize()[1] - height) / 2
         else:
             locY = int(locY)
 
