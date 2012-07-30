@@ -24,6 +24,7 @@
 
 from multiprocessing import Process, Pipe
 import wx
+from time import sleep, time
 
 class ResultEvent(wx.PyEvent):
     """Simple event to carry arbitrary result data."""
@@ -51,6 +52,8 @@ class MyThread():
         self.process = None
         # This is used to terminate thread, simply set to True.
         self.stop = False
+        # Stop signal time, process have 0.5s to stop or it will be terminated.
+        self.stopSignalTime = 0
 
     # Check that all needed values are acceptable for thread to run!
     def isRunnable(self):
@@ -74,8 +77,13 @@ class MyThread():
                     out = parentPipe.recv()
                     wx.PostEvent(self.notifyWindow, ResultEvent(out, self.EVT_ID))
                 if self.stop:
-                    self.process.terminate()
+                    if self.stopSignalTime == 0:
+                        self.stopSignalTime = time() + 0.5
+                        parentPipe.send(False)
+                    if time() > self.stopSignalTime:
+                        self.process.terminate()
                 wx.YieldIfNeeded()
+                sleep(0.01)
         except OSError, e:
                 wx.PostEvent(self.notifyWindow, ResultEvent(\
                 "Execution failed in thread '{}', message: {}".format(\

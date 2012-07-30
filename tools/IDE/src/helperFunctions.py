@@ -40,10 +40,11 @@ def doPopen(pipe, args):
         while out:
             pipe.send(out)
             out = proc.stdout.readline()
+            sleep(0.01)
         proc.wait()
         retcode = proc.returncode
     except OSError as e:
-        print e
+        print "OSError:", e
     finally:
         pipe.send(retcode)
 
@@ -56,9 +57,11 @@ def listenSerialPort(pipe, args):
         while True:
             s = ser.read(100)
             if len(s) > 0:
-                print s
                 pipe.send(s)
-            sleep(0.01)
+            if pipe.poll(0.01):
+                out = pipe.recv()
+                if out is False:
+                    break
         ser.close()
     except SerialException as msg:
         print "\nSerial exception:\n\t", msg
