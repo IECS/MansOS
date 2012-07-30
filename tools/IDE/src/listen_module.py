@@ -124,5 +124,4 @@ class ListenModule(wx.Panel):
         # Stop listening
         if self.listening:
             self.doClear(None)
-        target = event.GetEventObject().GetValue()
-        self.args['serialPort'] = target[:target.find(" ")]
+        self.args['serialPort'] = event.GetEventObject().GetValue()
