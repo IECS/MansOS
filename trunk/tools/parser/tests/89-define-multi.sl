@@ -1,5 +1,5 @@
 //
-// Multiple defines with the name name (dependent on conditions)
+// Multiple defines with the same name (dependent on conditions)
 //
 
 when 1 < 2:

@@ -69,6 +69,7 @@ class SealSensor(SealComponent):
         self.turnonoff = SealParameter(False, [False, True])
         self.onFunction = SealParameter(None)
         self.offFunction = SealParameter(None)
+        self.out = SealParameter(None)
 
 # for remote use only
 class CommandSensor(SealSensor):
@@ -338,6 +339,7 @@ class SealActuator(SealComponent):
         super(SealActuator, self).__init__(TYPE_ACTUATOR, name)
         self.onFunction = SealParameter(None)
         self.offFunction = SealParameter(None)
+        self.writeFunction = SealParameter(None)
         self.on = SealParameter(False, [False, True])
         self.off = SealParameter(False, [False, True])
         # "blink X" is shortcut syntax for "times 2, period X"
@@ -350,6 +352,7 @@ class LedAct(SealActuator):
         self.readFunction.value = "ledGet()"
         self.onFunction.value = "ledOn()"
         self.offFunction.value = "ledOff()"
+        self.writeFunction.value = "if (value) ledOn(); else ledOff()"
 
 class RedLedAct(SealActuator):
     def __init__(self):
@@ -358,6 +361,7 @@ class RedLedAct(SealActuator):
         self.readFunction.value = "redLedGet()"
         self.onFunction.value = "redLedOn()"
         self.offFunction.value = "redLedOff()"
+        self.writeFunction.value = "if (value) redLedOn(); else redLedOff()"
 
 class BlueLedAct(SealActuator):
     def __init__(self):
@@ -366,6 +370,7 @@ class BlueLedAct(SealActuator):
         self.readFunction.value = "blueLedGet()"
         self.onFunction.value = "blueLedOn()"
         self.offFunction.value = "blueLedOff()"
+        self.writeFunction.value = "if (value) blueLedOn(); else blueLedOff()"
 
 class GreenLedAct(SealActuator):
     def __init__(self):
@@ -374,6 +379,7 @@ class GreenLedAct(SealActuator):
         self.readFunction.value = "greenLedGet()"
         self.onFunction.value = "greenLedOn()"
         self.offFunction.value = "greenLedOff()"
+        self.writeFunction.value = "if (value) greenLedOn(); else greenLedOff()"
 
 class DigitalOutputAct(SealActuator):
     def __init__(self):
@@ -382,19 +388,20 @@ class DigitalOutputAct(SealActuator):
         self.readFunction.value = "pinRead(1, 0)"
         self.onFunction.value = "pinSet(1, 0)"
         self.offFunction.value = "pinClear(1, 0)"
+        self.writeFunction.value = "if (value) pinSet(1, 0); else pinClear(1, 0)"
         self.pin = SealParameter(0, ["0", "1", "2", "3", "4", "5", "6", "7"])
         self.port = SealParameter(1, ["1", "2", "3", "4", "5", "6"])
         # interrupt related configuration
         self.interrupt = SealParameter(False, [False, True])
         self.risingEdge = SealParameter(False, [False, True])
         self.fallingEdge = SealParameter(False, [False, True]) # inverse of rising edge
-        #self.onChange = SealParameter(False, [False, True])
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" \
                 and parameter != "useFunction" \
                 and parameter != "onFunction" \
-                and parameter != "offFunction":
+                and parameter != "offFunction" \
+                and parameter != "writeFunction":
             return SealActuator.calculateParameterValue(self, parameter, useCaseParameters)
         port = int(self.getParameterValue("port", useCaseParameters))
         pin = int(self.getParameterValue("pin", useCaseParameters))
@@ -409,6 +416,8 @@ class DigitalOutputAct(SealActuator):
             return "pinSet" + args
         if parameter == "offFunction":
             return "pinClear" + args
+        if parameter == "writeFunction":
+            return "if (value) pinSet" + args + "; else pinClear" + args
         return None
 
 class BeeperAct(SealActuator):

@@ -81,6 +81,13 @@ class FunctionTree(object):
 #        except Exception:
 #            return None
 
+    def asString(self):
+        if len(self.arguments):
+            return None
+        if isinstance(self.function, str):
+            return self.function
+        return self.function.asString()
+
     def generateSensorName(self):
         if type(self.function) is Value:
             return self.function.asString()
@@ -215,8 +222,6 @@ class ConditionCollection(object):
             self.generateAppMainCodeForCondition(c, outputFile)
 
     def ensureBranchIsPresent(self, componentRegister):
-        print "  ensureBranchIsPresent"
-#        if self.branchChanged:
         componentRegister.branchCollection.addBranch(
             self.branchNumber,
             self.conditionStack)
@@ -299,6 +304,9 @@ class SealValue(object):
 
     def lower(self):
         return SealValue(self.firstPart.lower(), self.secondPart)
+
+    def asString(self):
+        return self.firstPart
 
     def getCode(self):
         # Value object can be inside SealValue
@@ -471,13 +479,19 @@ class PatternDeclaration(object):
         result += ');'
         return result
 
+    def getSize(self):
+        return len(self.values)
+
+    def getVariableName(self):
+        return "pattern_" + self.name
+
     def generateVariables(self, outputFile):
         if self.isUsec: arrayType = "double"
         else: arrayType = "uint32_t"
-        outputFile.write("{} __pattern_{}[] = {}\n".format(arrayType, self.name, '{'));
+        outputFile.write("{} {}[] = {}\n".format(arrayType, self.getVariableName(), '{'));
         outputFile.write(string.join(map(lambda x: "    " + str(x.getRawValue()), self.values), ",\n"))
         outputFile.write("\n};\n");
-        outputFile.write("uint_t __pattern_{0}Cursor = 0;\n".format(self.name));
+        outputFile.write("uint_t pattern_{0}Cursor = 0;\n".format(self.name));
 
 ########################################################
 class ConstStatement(object):
@@ -538,7 +552,6 @@ class NetworkReadStatement(object):
 ########################################################
 class ComponentDefineStatement(object):
     def __init__(self, name, functionTree, parameters, isImplicit, containingOutputComponent = None):
-        print "new ComponentDefineStatement, name", name, self
         self.name = name.lower()
 #        self.basename = basename.lower()
         self.functionTree = functionTree
@@ -547,12 +560,19 @@ class ComponentDefineStatement(object):
         self.added = False
         self.isError = False
         self.base = None # underlying "real" component
+        self.numericalValue = None # in case this a constant
         self.isImplicit = isImplicit
         self.containingOutputComponent = containingOutputComponent
         # to deal with multiple defines inside branches
         self.alsoInBranches = set()
         self.alsoInBranchesConditions = {}
-        self.customVirtualBase = None
+        self.alsoInCodeBlocks = {}
+#        self.customVirtualBase = None
+        # underlying virtual components
+        self.bases = set()
+        # derived virtual components
+        self.derived = set()
+        self.addedByPreprocessor = True
 
     def getCode(self, indent):
         result = "define " + self.name
@@ -597,14 +617,25 @@ class ComponentDefineStatement(object):
             basenames += self.getAllBasenamesRecursively(a)
         return basenames
 
-    def correctBasename(self, name):
-        if name == self.customVirtualBase:
-            return "__copy" + str(self.branchNumber) + "_" + name;
-        return name
+    def fixBasenameRecursively(self, functionTree, old, new):
+        newTree = FunctionTree(functionTree.function, [])
+        if isinstance(newTree.function, SealValue):
+            if newTree.function.firstPart == old:
+                newTree.function.firstPart = new
+        elif isinstance(newTree.function, str):
+            if newTree.function == old:
+                newTree.function = new
+        for a in functionTree.arguments:
+            newTree.arguments.append(self.fixBasenameRecursively(a, old, new))
+        return newTree
+
+    def fixBasename(self, old, new):
+        self.functionTree = self.fixBasenameRecursively(self.functionTree, old, new)
 
     def getAllBasenames(self):
-        basenames = self.getAllBasenamesRecursively(self.functionTree)
-        return map(lambda x: self.correctBasename(x), basenames)
+#        basenames = self.getAllBasenamesRecursively(self.functionTree)
+#        return map(lambda x: self.correctBasename(x), basenames)
+        return self.getAllBasenamesRecursively(self.functionTree)
 
     def getImmediateBasenameRecursively(self, functionTree):
         # no function
@@ -812,6 +843,7 @@ class CodeBlock(object):
         self.blockType = blockType
         self.condition = condition
         self.declarations = declarations
+        self.componentDefines = dict()
         self.next = next
 
     def getCode(self, indent):
@@ -913,14 +945,12 @@ class CodeBlock(object):
                 else:
                     d.addComponents(componentRegister, conditionCollection)
 
-#            if type(d) is ComponentDefineStatement:
-#                if self.blockType != CODE_BLOCK_TYPE_PROGRAM:
-#                    componentRegister.userError("Define supported only in top level, ignoring define '{0}'\n".format(
-#                            d.name))
-#                else:
-#                    d.addComponents(componentRegister, conditionCollection)
+            if type(d) is ComponentDefineStatement:
+                self.componentDefines[d.name] = d
+                d.containingCodeBlock = self
+                d.addComponents(componentRegister, conditionCollection)
+
             if type(d) is ParametersDefineStatement \
-                    or type(d) is ComponentDefineStatement \
                     or type(d) is NetworkReadStatement:
                 d.addComponents(componentRegister, conditionCollection)
 
@@ -961,12 +991,10 @@ class CodeBlock(object):
     def addVirtualComponents(self, componentRegister, conditionCollection):
         ss = self.enterCodeBlock(componentRegister, conditionCollection)
 
-        for d in self.declarations:
-            if type(d) is ComponentDefineStatement:
-                d.continueAdding(componentRegister)
-#        for d in self.declarations:
-#            if type(d) is ComponentDefineStatement:
-                d.finishAdding(componentRegister)
+        for d in self.componentDefines.itervalues():
+            d.continueAdding(componentRegister)
+        for d in self.componentDefines.itervalues():
+            d.finishAdding(componentRegister)
 
         conditionCollection.nextBranch()
 
@@ -1002,3 +1030,12 @@ class CodeBlock(object):
             self.next.addUseCases(componentRegister, conditionCollection)
 
         self.exitCodeBlock(componentRegister, conditionCollection, ss)
+
+    def add(self, componentRegister, conditionCollection):
+        self.addComponents(componentRegister,
+                           conditionCollection)
+        componentRegister.chainVirtualComponents()
+        self.addVirtualComponents(componentRegister,
+                                  conditionCollection)
+        self.addUseCases(componentRegister,
+                         conditionCollection)

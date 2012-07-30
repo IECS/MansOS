@@ -42,12 +42,8 @@ class SealParser():
         if self.verboseMode:
             print "Parsing done in %.4f s" % (time.time() - start)
         if self.result:
-            self.result.addComponents(components.componentRegister,
-                                      components.conditionCollection)
-            self.result.addVirtualComponents(components.componentRegister,
-                                             components.conditionCollection)
-            self.result.addUseCases(components.componentRegister,
-                                    components.conditionCollection)
+            self.result.add(components.componentRegister,
+                            components.conditionCollection)
         return self.result
 
 ### Lex
