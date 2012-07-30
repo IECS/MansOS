@@ -343,7 +343,7 @@ class SealActuator(SealComponent):
         self.on = SealParameter(False, [False, True])
         self.off = SealParameter(False, [False, True])
         # "blink X" is shortcut syntax for "times 2, period X"
-        self.blink = SealParameter(None, [50, 100, 200])
+        self.blink = SealParameter(None, ['50', '100', '200'])
 
 class LedAct(SealActuator):
     def __init__(self):
