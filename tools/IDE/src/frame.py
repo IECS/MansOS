@@ -27,7 +27,7 @@ import os
 import wx
 from stat import S_ISDIR
 from wx.lib.agw import aui
-from time import strftime, localtime
+from time import time
 
 from upload_module import UploadModule
 from globals import * #@UnusedWildImport
@@ -267,9 +267,10 @@ class Frame(wx.Frame):
     def OnQuit(self, event):
         # Workaround, because wx.exit calls wx.ON_CLOSE, which is binded to this 
         # function, result is recursive calling of this function.
-        if self.exitCalled:
+        # Time used, because cancel on file save dialog makes exit unresponsive.
+        if self.exitCalled + 0.5 > time():
             return
-        self.exitCalled = True
+        self.exitCalled = time()
         self.API.tabManager.rememberOpenedTabs()
         self.rememberPositioning()
         if self.tabManager.onQuitCheck() == True:
