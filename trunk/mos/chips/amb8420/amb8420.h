@@ -27,15 +27,33 @@
 #include <kernel/defines.h>
 #include <hil/busywait.h>
 
-#define AMB8420_MAX_PACKET_LEN      128
+#define AMB8420_MAX_PACKET_LEN        128
 
-#define AMB8420_TX_POWER_MIN        0  // -38.75 dBm
-#define AMB8420_TX_POWER_MAX        31 // 0 dBm
+#define AMB8420_TX_POWER_MIN          0  // -38.75 dBm
+#define AMB8420_TX_POWER_MAX          31 // 0 dBm
 
-#define AMB8420_TRANSPARENT_MODE    0x00 // default
-#define AMB8420_COMMAND_MODE        0x10 // configuration mode
+#define AMB8420_TRANSPARENT_MODE      0x00
+#define AMB8420_COMMAND_MODE          0x10
 
-#define RTS_WAIT_TIMEOUT_TICKS      TIMER_100_MS
+#define AMB8420_CMD_DATA_REQ          0x00
+#define AMB8420_CMD_DATAEX_REQ        0x01
+#define AMB8420_CMD_DATAEX_IND        0x81
+#define AMB8420_CMD_SET_MODE_REQ      0x04
+#define AMB8420_CMD_RESET_REQ         0x05
+#define AMB8420_CMD_SET_CHANNEL_REQ   0x06
+#define AMB8420_CMD_SET_DESTNETID_REQ 0x07
+#define AMB8420_CMD_SET_DESTADDR_REQ  0x08
+#define AMB8420_CMD_SET_REQ           0x09
+#define AMB8420_CMD_GET_REQ           0x0A
+#define AMB8420_CMD_SERIALNO_REQ      0x0B
+#define AMB8420_CMD_RSSI_REQ          0x0D
+#define AMB8420_CMD_ERRORFLAGS_REQ    0x0E
+
+#define AMB8420_REPLY_FLAG            0x40
+
+#define AMB8420_START_DELIMITER       0x02
+
+#define RTS_WAIT_TIMEOUT_TICKS        TIMER_100_MS
 
 #define AMB8420_WAIT_FOR_RTS_READY(ok) \
     BUSYWAIT_UNTIL(pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN) == 0, RTS_WAIT_TIMEOUT_TICKS, ok)
@@ -57,12 +75,10 @@
         pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);                  \
     } while(0)
 
-#define AMB8420_SWITCH_TO_TRANSPARENT_MODE() \
-    if (amb8420OperationMode == AMB8420_COMMAND_MODE) amb8420ChangeMode()
-#define AMB8420_SWITCH_TO_COMMAND_MODE() \
-    if (amb8420OperationMode == AMB8420_TRANSPARENT_MODE) amb8420ChangeMode()
-
-uint8_t amb8420OperationMode;
+#define AMB8420_SWITCH_TO_TRANSPARENT_MODE(currentMode) \
+    if ((currentMode) == AMB8420_COMMAND_MODE) amb8420ChangeMode()
+#define AMB8420_SWITCH_TO_COMMAND_MODE(currentMode) \
+    if ((currentMode) == AMB8420_TRANSPARENT_MODE) amb8420ChangeMode()
 
 void amb8420Init(void) WEAK_SYMBOL;
 
@@ -106,5 +122,7 @@ int amb8420GetRSSI(void);
 bool amb8420IsChannelClear(void);
 
 void amb8420InitUsart(void);
+
+void amb8420Reset(void);
 
 #endif
