@@ -341,8 +341,12 @@ class DigitalInputSensor(SealSensor):
         self._readFunctionDependsOnParams = True
         # interrupt related configuration
         self.interrupt = SealParameter(False, [False, True])
-        self.risingEdge = SealParameter(False, [False, True])
-        self.fallingEdge = SealParameter(False, [False, True]) # inverse of rising edge
+        self.rising = SealParameter(False, [False, True])
+        self.falling = SealParameter(False, [False, True]) # inverse of rising edge
+        self.aliases["rising"] = "risingedge"
+        self.aliases["falling"] = "fallingedge"
+        self.interruptPin = SealParameter(0, ["0", "1", "2", "3", "4", "5", "6", "7"])
+        self.interruptPort = SealParameter(1, ["1", "2", "3", "4", "5", "6"])
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":

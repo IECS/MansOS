@@ -163,6 +163,8 @@ class ConditionCollection(object):
     def writeOutCodeForEventBasedCondition(self, condition, outputFile):
         if condition.dependentOnSensors:
             outputFile.write("static void condition{0}Callback(uint16_t code, int32_t values)\n".format(condition.id))
+        elif condition.dependentOnInterrupts:
+            outputFile.write("static void condition{0}Callback(void)\n".format(condition.id))
         else:
             outputFile.write("static void condition{0}Callback(int32_t *values)\n".format(condition.id))
         outputFile.write("{\n")
@@ -360,9 +362,11 @@ class Expression(object):
         else:
             self.right = right
 
-        # -- the rest are for conditiions opnly (expression in some contexts is a condition)
+        # -- the rest are for conditions only (expression in some contexts is a condition)
         # dependent on these self-reading sensors
         self.dependentOnSensors = set()
+        # dependent on these interrupts sensors
+        self.dependentOnInterrupts = set()
         # dependent on these network data sources
         self.dependentOnPackets = set()
         # used for "where" conditions, contains the output use case that has this condition
@@ -370,6 +374,7 @@ class Expression(object):
 
     def isEventBased(self):
         return bool(len(self.dependentOnSensors)) \
+            or bool(len(self.dependentOnInterrupts)) \
             or bool(len(self.dependentOnPackets))
 
     def collectImplicitDefines(self, containingComponent):
@@ -653,6 +658,20 @@ class ComponentDefineStatement(object):
             return self.getImmediateBasenameRecursively(functionTree.arguments[0])
         # n-ary function; may return null sensor as base, if more than one are used
         # TODO: not all n-ary functions use multiple sensors!!!
+        if functionTree.function == "match" \
+                or functionTree.function == "neg" \
+                or functionTree.function == "abs" \
+                or functionTree.function == "map" \
+                or functionTree.function == "power" \
+                or functionTree.function == "square" \
+                or functionTree.function == "sqrt" \
+                or functionTree.function == "take" \
+                or functionTree.function == "takeRecent" \
+                or functionTree.function == "avg" \
+                or functionTree.function == "stdev" \
+                or functionTree.function[:6] == "filter" \
+                or functionTree.function[:6] == "invert":
+            return self.getImmediateBasenameRecursively(functionTree.arguments[0])
         return "null"
 
     def getImmediateBasename(self):
@@ -960,14 +979,6 @@ class CodeBlock(object):
                             d.getConfigLine()))
                 else:
                     d.load(componentRegister)
-
-        # finish adding all virtual components
-#        for d in self.declarations:
-#            if type(d) is ComponentDefineStatement:
-#                d.continueAdding(componentRegister)
-#        for d in self.declarations:
-#            if type(d) is ComponentDefineStatement:
-#                d.finishAdding(componentRegister)
 
         # add set statements (may depend on virtual components)
         for d in self.declarations:

@@ -189,8 +189,10 @@ class UseCase(object):
             else:
                 p = self.parameters.get("falling")
                 if p: self.risingEdge = not bool(p.value)
-            self.port = self.getParameterValueValue("port")
-            self.pin = self.getParameterValueValue("pin")
+            self.port = self.getParameterValueValue("interruptPort")
+            if self.port is None: self.port = self.getParameterValueValue("port")
+            self.pin = self.getParameterValueValue("interruptPin")
+            if self.pin is None: self.pin = self.getParameterValueValue("pin")
 
         p = self.parameters.get("turnonoff")
         if p and bool(p.value):
@@ -529,6 +531,12 @@ class UseCase(object):
             if self.risingEdge: outputFile.write("    pinIntRising({}, {});\n".format(self.port, self.pin))
             else: outputFile.write("    pinIntFalling({}, {});\n".format(self.port, self.pin))
 
+        if self.component.specification._name == "DigitalOut":
+            port = self.getParameterValueValue("port")
+            pin = self.getParameterValueValue("pin")
+            if port is not None and pin is not None:
+                outputFile.write("    pinAsOutput({}, {});\n".format(port, pin))
+
     def generateBranchEnterCode(self, outputFile):
         # if this UC has parent, the parent will generate first call instead
         if self.parentUseCase: return
@@ -576,6 +584,7 @@ class Component(object):
         self.specification = specification
         self.functionTree = None
         self.isRemote = False
+        self.conditionsDependentOnInterrupt = []
 
     def isVirtual(self):
         return self.functionTree is not None
@@ -607,6 +616,26 @@ class Component(object):
     def updateParameters(self, dictionary):
         for p in dictionary.iteritems():
             self.parameters[p[0]] = p[1].value
+
+    def getParameterValue(self, parameter, defaultValue = None):
+        if parameter in self.parameters:
+            value = self.parameters[parameter]
+            if value is not None: return value
+        return defaultValue
+
+    def getDependentParameterValue(self, parameter, useCaseParameters):
+        if parameter not in self.parameters:
+            return None
+        return self.specification.calculateParameterValue(
+            parameter, useCaseParameters)
+
+    def getConfig(self, outputFile):
+        if not self.isUsed(): return None
+        if len(self.useCases):
+            params = self.useCases[0].parameters
+        else:
+            params = self.parameters
+        return self.getDependentParameterValue("extraConfig", params)
 
     def addUseCase(self, parameters, conditions, branchNumber):
         numInBranch = 0
@@ -659,6 +688,24 @@ class Component(object):
             if value is not None: return value
         return None
 
+    def isInterruptBased(self):
+        if not self.getParameterValue("interrupt", False): return
+
+        # TODO: optimize
+        risingEdge = self.getParameterValue("rising", False)
+        fallingEdge = self.getParameterValue("falling", False)
+        if not risingEdge and not fallingEdge:
+            risingEdge = True
+        port = self.getParameterValue("interruptPort")
+        if port is None: port = self.getParameterValue("port")
+        pin = self.getParameterValue("interruptPin")
+        if pin is None: pin = self.getParameterValue("pin")
+
+        self.intPin = pin
+        self.intPort = port
+        self.risingEdge = risingEdge
+        return True
+
     def generateIncludes(self, outputFile):
         # if self.isUsed():
             includes = self.getSpecialValue("extraIncludes")
@@ -708,32 +755,37 @@ class Component(object):
         for uc in self.useCases:
             uc.generateCallbacks(outputFile, outputs)
 
+        if self.isInterruptBased() and len(self.conditionsDependentOnInterrupt):
+            for c in self.conditionsDependentOnInterrupt:
+                outputFile.write("static void condition{}Callback(void);\n".format(c.id))
+            outputFile.write("\n")
+            outputFile.write("ISR(PORT{0}, port{0}Interrupt)\n".format(self.intPort))
+            outputFile.write("{\n")
+            outputFile.write("    if (!pinReadIntFlag({0}, {1}))\n".format(self.intPort, self.intPin))
+            outputFile.write("        return;\n")
+            outputFile.write("    pinClearIntFlag({0}, {1});\n".format(self.intPort, self.intPin))
+            for c in self.conditionsDependentOnInterrupt:
+                outputFile.write("    condition{}Callback();\n".format(c.id))
+            outputFile.write("}\n")
+
     def generateAppMainCode(self, outputFile):
         for uc in self.useCases:
             uc.generateAppMainCode(outputFile)
-#        if self.isRemote:
-#            outputFile.write("    sealCommRegisterInterest({}, {}Callback);\n".format(
-#                    self.systemwideID, self.getNameCC()))
 
-    def getParameterValue(self, parameter, defaultValue = None):
-        if parameter in self.parameters:
-            value = self.parameters[parameter]
-            if value is not None: return value
-        return defaultValue
+#        if len(self.useCases) == 0 and self.usedForConditions:
+        if len(self.useCases) == 0:
+            if self.specification._name == "DigitalIn" and self.isInterruptBased() \
+                    and len(self.conditionsDependentOnInterrupt):
+                outputFile.write("    pinEnableInt({}, {});\n".format(self.intPort, self.intPin))
+                if self.risingEdge: outputFile.write("    pinIntRising({}, {});\n".format(self.intPort, self.intPin))
+                else: outputFile.write("    pinIntFalling({}, {});\n".format(self.intPort, self.intPin))
 
-    def getDependentParameterValue(self, parameter, useCaseParameters):
-        if parameter not in self.parameters:
-            return None
-        return self.specification.calculateParameterValue(
-            parameter, useCaseParameters)
+#            if self.specification._name == "DigitalOut":
+#                port = self.getParameterValueValue("port")
+#                pin = self.getParameterValueValue("pin")
+#                if port is not None and pin is not None:
+#                    outputFile.write("    pinAsOutput({}, {});\n".format(port, pin))
 
-    def getConfig(self, outputFile):
-        if not self.isUsed(): return None
-        if len(self.useCases):
-            params = self.useCases[0].parameters
-        else:
-            params = self.parameters
-        return self.getDependentParameterValue("extraConfig", params)
 
 ######################################################
 class Actuator(Component):
@@ -2596,13 +2648,6 @@ class NetworkComponent(object):
             condition.dependentOnSensors.add(code)
             return "value"
 
-#        if code is None:
-#            code = componentRegister.sensors.get(fieldName).systemwideID
-#            condition.dependentOnSensors.add(code)
-#        else:
-#            condition.dependentOnPackets.add(code)
-
-#        code = commonFields.get(fieldName)
         s = componentRegister.sensors.get(self.name)
         assert s
         condition.dependentOnPackets.add(s)
@@ -2791,7 +2836,6 @@ class ComponentRegister(object):
         other.alsoInBranches.add(c.branchNumber)
         other.alsoInBranchesConditions[c.branchNumber] = c.conditions
         other.alsoInCodeBlocks[c.branchNumber] = c.containingCodeBlock
-#        print other.name, "other.alsoInBranches: ", other.alsoInBranches
         self.virtualComponents[c.name].alsoInBranches.add(c.branchNumber)
         #print self.virtualComponents[c.name]
         # generate unique name
@@ -2859,18 +2903,16 @@ class ComponentRegister(object):
         if immediateBase is not None:
             # print "  immed base is virtual, in branch", immediateBase.branchNumber
             # inherit parameters from parent virtual sensor
-            # c.parameterDictionary = immediateBase.parameterDictionary
+            c.parameterDictionary = immediateBase.parameterDictionary
 
             # copy the branch number from base (XXX: scoping semantics?)
             c.branchNumber = immediateBase.branchNumber
             # inherit the base too
             c.base = immediateBase.base
         else:
-#            print "  immed base is real"
+            # print "  immed base is real"
             c.base = self.findComponentByName(immediateBaseName)
         assert c.base
-
-#        print "finish adding " + c.name + ", base=", c.base.name
 
         # fill the parameter dictionary
         for p in c.parameterList:
@@ -2884,13 +2926,8 @@ class ComponentRegister(object):
         if c.numericalValue is not None:
             c.parameterDictionary["value"] = Value(c.numericalValue)
 
-#        for br in c.alsoInBranches:
-#            other = self.virtualComponents.get("__copy" + str(br) + "_" + c.name, None)
-#            if other:
-#                self.continueAddingVirtualComponent(other)
-
     def finishAddingVirtualComponent(self, c):
-        #print "+++ finish adding", c.name, "base", c.base.name
+        # print "+++ finish adding", c.name, "base", c.base.name
         if c.isError: return
         assert c.base
 
@@ -2906,11 +2943,6 @@ class ComponentRegister(object):
         s.functionTree = c.functionTree
         if s.functionTree.function == "sync":
             s.syncOnlySensor = True
-
-#        for br in c.alsoInBranches:
-#            other = self.virtualComponents.get("__copy" + str(br) + "_" + c.name, None)
-#            if other:
-#                self.finishAddingVirtualComponent(other)
 
     #######################################################################
     def chainVirtualComponentBases(self, c):
@@ -3171,6 +3203,18 @@ class ComponentRegister(object):
 
         #return n.replaceCode(parameterName)
 
+    # find the first base component that has interrupts enabled
+    def getInterruptBase(self, comp):
+        if comp.name not in self.virtualComponents: return comp
+        virt = self.virtualComponents[comp.name]
+        immediateBaseName = virt.getImmediateBasename()
+        immediateBase = self.lookupVirtualBase(immediateBaseName, virt.branchNumber)
+        if not immediateBase: return comp
+        c = self.findComponentByName(immediateBase.name)
+        assert c
+        if not c.isInterruptBased(): return comp
+        return self.getInterruptBase(c)
+
     def replaceCode(self, componentName, parameterName, condition):
         # print "replace code: " + componentName + "." + parameterName
 
@@ -3179,40 +3223,18 @@ class ComponentRegister(object):
             return n.replaceCode(parameterName, condition)
 
         c = self.findComponentByName(componentName)
-#        if c == None:
-#            c = self.process.get(componentName, None)
-#            if c != None:
-#                if parameterName == 'value':
-#                    return c.name
-
-        # not found?
-#        if c == None:
-            # check for network components
-#            code = replaceCodeForNetworkComponent(componentName, parameterName, condition)
-#            if code: return code
-
-            # ind ti agian, in case remote component added it
-#            c = self.findComponentByName(componentName)
-
-#            n = self.networkComponents.get(componentName)
-#            if n:
-#                return n.replaceCode(parameterName, condition)
-#                if n.isSingleValued:
-#                    c = self.addRemote(componentName)
-#                    # make condition dependent on it
-#                    assert condition
-#                    condition.dependentOnSensors.add(c)
-#                else:
-#                    # make condition dependent on it
-#                    if condition: condition.dependentOnNetworkComponents.add(n)
-#                    return n.replaceCode(parameterName)
-
         if c == None:
             if parameterName == 'ispresent':
                 return "false"
             else:
                 self.userError("Component '{0}' not known\n".format(componentName))
                 return "false"
+
+        if c.isInterruptBased() and condition:
+            b = self.getInterruptBase(c)
+            print "got ", b.name
+            condition.dependentOnInterrupts.add(b)
+            b.conditionsDependentOnInterrupt.append(condition)
 
         # found
         if parameterName == 'ispresent':
