@@ -46,8 +46,20 @@ void appMain(void)
             RECV ? "Receiver" : "Sender", localAddress);
 
 #if RECV
+    // PRINTF("recvCounter = %p\n", recvCounter);
     radioSetReceiveHandle(recvCounter);
     radioOn();
+
+    for (;;) {
+        mdelay(1000);
+        blueLedOn();
+        mdelay(100);
+        blueLedOff();
+        // radioSend("hello world\n", sizeof("hello world\n"));
+        // int rssi = amb8420GetRSSI();
+        // int8_t rssi = radioGetRSSI();
+        // PRINTF("+++ rssi = %d\n", rssi);
+    }
 #else
 //  radioSetReceiveHandle(radioDiscard);
 //  radioOn();
@@ -62,22 +74,28 @@ void recvCounter(void)
     int16_t len;
     uint16_t sender;
     uint8_t counter;
+    int8_t rssi = 0;
 
-    redLedToggle();
+//    PRINT("recvCounter\n");
+
+    greenLedToggle();
     len = radioRecv(buffer, sizeof(buffer));
+    rssi = radioGetLastRSSI();
     if (len < 0) {
-        PRINTF("radio recv failed\n");
+        PRINT("radio recv failed\n");
+        //blueLedToggle();
         return;
     }
     if (len == 0) {
-        PRINTF("0 len!\n");
+        PRINT("0 len!\n");
     }
     // debugHexdump(buffer, len);
     if (len > 0) {
+//        greenLedToggle();
         memcpy(&sender, buffer + 1, sizeof(sender));
         counter = buffer[0];
-        PRINTF("received counter %u (%d bytes)\n", counter, len);
-        ledsSet(counter);
+        PRINTF("received counter %u (%d bytes), rssi=%d\n", counter, len, rssi);
+//        ledsSet(counter);
     }
 }
 
@@ -87,13 +105,24 @@ void sendCounter(void) {
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
         10, 11, 12, 13, 14, 15, 16, 17, 18, 19
     };
+
+    radioOn(); // XXX: more stable when radio is on
+
     uint8_t *counter = &sendBuffer[0];
     // memcpy(sendBuffer + 1, &localAddress, 2);
     while (1) {
-        PRINTF("0x%04x: sending counter %i\n", localAddress, *counter);
-        redLedToggle();
-        radioSend(sendBuffer, sizeof(sendBuffer));
-        mdelay(3000);
+        // PRINTF("0x%04x: sending counter %i\n", localAddress, *counter);
+        redLedOn();
+        int8_t result = radioSend(sendBuffer, sizeof(sendBuffer));
+        if (result != 0) {
+            PRINTF("radio send failed\n"); 
+#if PLATFROM_SM3
+            amb8420Reset();
+#endif
+        }
+        mdelay(100);
+        redLedOff();
+        mdelay(1000);
         ++(*counter);
     }
 }

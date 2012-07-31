@@ -37,7 +37,7 @@ void randomInit() {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     randomKey = tv.tv_usec + tv.tv_sec;
-#elif PLATFORM_TELOSB || PLATFORM_SADMOTE
+#elif PLATFORM_TELOSB || PLATFORM_SADMOTE || PLATFORM_SM3
     // generate a random key from serial number
     uint32_t snum[2];
     halGetSerialNumber((uint8_t *) snum);

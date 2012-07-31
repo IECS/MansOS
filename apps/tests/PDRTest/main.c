@@ -30,18 +30,27 @@
 
 #define TEST_ID 01
 
-#define RECV 0
-
-#define EXT_FLASH_RESERVED 0
+#define RECV 1
 
 #define TEST_PACKET_SIZE            30
-//#define PAUSE_BETWEEN_TESTS_MS      3000 // ms
-#define PAUSE_BETWEEN_TESTS_MS      0 // ms
+
+#if PLATFORM_SM3
+// AMB8420 is MUCH slower on the default settings
+#define PACKETS_IN_TEST             10u
+#define SEND_INTERVAL               20
+#define MAX_TEST_TIME               ((SEND_INTERVAL + 100) *  PACKETS_IN_TEST)
+#define PAUSE_BETWEEN_TESTS_MS      1000 // ms
+#else
 #define PACKETS_IN_TEST             100u
-//#define SEND_INTERVAL               20
 #define SEND_INTERVAL               5
 #define MAX_TEST_TIME               ((SEND_INTERVAL + 20) *  PACKETS_IN_TEST)
+#define PAUSE_BETWEEN_TESTS_MS      0 // ms
+#endif
 
+#define PERCENT (100 / PACKETS_IN_TEST)
+
+#define WRITE_TO_FLASH 0
+#define EXT_FLASH_RESERVED 0
 
 #define NUM_AVG_RUNS  10
 
@@ -53,6 +62,7 @@ uint32_t extFlashAddress;
 void sendCounter(void);
 void recvCounter(void);
 
+#if WRITE_TO_FLASH
 void extFlashPrepare(void)
 {
     extFlashWake();
@@ -86,6 +96,7 @@ void extFlashPrepare(void)
     }
     PRINTF("flash packet offset=%lu\n", extFlashAddress - EXT_FLASH_RESERVED);
 }
+#endif
 
 //-------------------------------------------
 //      Entry point for the application
@@ -95,10 +106,13 @@ void appMain(void)
 #if RECV
 //    alarmInit(&alarm, alarmCb, NULL);
 //    alarmSchedule(&alarm, 1000);
-    PRINTF("starting recv...\n");
+    PRINTF("starting Rx...\n");
+#if WRITE_TO_FLASH
     extFlashPrepare();
+#endif
     recvCounter();
 #else
+    PRINTF("starting Tx...\n");
     testId = TEST_ID;
     radioOn(); // XXX
     sendCounter();
@@ -224,7 +238,8 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx,
 //    mdelay(10);
 //    radioSetChannel(TEST_CHANNEL);
 
-   radioOff();
+#if WRITE_TO_FLASH
+    radioOff();
     extFlashWrite(extFlashAddress, &packet, sizeof(packet));
     RadioInfoPacket_t verifyRecord;
     memset(&verifyRecord, 0, sizeof(verifyRecord));
@@ -235,6 +250,7 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx,
 //  PRINT("written!\n");
     extFlashAddress += sizeof(packet);
     radioOn();
+#endif
 }
 
 void endTest(void) {
@@ -257,10 +273,14 @@ void startTest(uint16_t newTestNumber) {
 
 void recvCallback(uint8_t *data, int16_t len)
 {
+    // PRINTF("recvCallback, len=%d\n", len);
+
     if (len != TEST_PACKET_SIZE) {
         PRINTF("rcvd length=%d\n", len);
         return;
     }
+    
+    // debugHexdump(data, len);
 
     uint16_t calcCrc, recvCrc;
     calcCrc = crc16(data, TEST_PACKET_SIZE - 2);
@@ -302,6 +322,7 @@ void recvCallback(uint8_t *data, int16_t len)
     ++currentTestPacketsRx;
 }
 
+#if USE_THREADS
 void recvCounter(void)
 {
     RADIO_PACKET_BUFFER(radioBuffer, RADIO_MAX_PACKET);
@@ -337,7 +358,8 @@ void recvCounter(void)
                     avgRssi = rssiSum / prevTestPacketsRx;
                     avgLqi = lqiSum / prevTestPacketsRx;
                 }
-                PRINTF("Test %u: %d%%, %d avg RSSI\n", prevTestNumber, prevTestPacketsRx, avgRssi, avgLqi);
+                PRINTF("Test %u: %d%%, %d avg RSSI\n",
+                        prevTestNumber, prevTestPacketsRx * PERCENT, avgRssi, avgLqi);
                 addAvgStatistics(prevTestNumber, prevTestPacketsRx, avgRssi, avgLqi);
             }
             if (testInProgress) {
@@ -354,6 +376,63 @@ void recvCounter(void)
         yield(); // yield manually
     }
 }
+#else
+void recvCallback1(void)
+{
+    static uint8_t buffer[128];
+    int16_t len;
+
+    len = radioRecv(buffer, sizeof(buffer));
+    if (len > 0) {
+        recvCallback(buffer, len);
+    } else {
+        PRINTF("radio rx error: %s\n", strerror(-len));
+    }
+}
+
+void recvCounter(void)
+{
+    bool prevTestInProgress = false;
+    uint16_t prevTestNumber = 0;
+
+    radioSetReceiveHandle(recvCallback1);
+    radioOn();
+
+    for (;;) {
+        if (testInProgress) {
+            if (timeAfter32(getJiffies(), testStartTime + MAX_TEST_TIME)) {
+                endTest();
+            }
+        }
+        if (testInProgress != prevTestInProgress
+                || prevTestNumber != currentTestNumber) {
+            if (prevTestInProgress) {
+                uint16_t avgRssi, avgLqi;
+                if (prevTestPacketsRx == 0) {
+                    avgRssi = 0;
+                    avgLqi = 0;
+                } else {
+                    avgRssi = rssiSum / prevTestPacketsRx;
+                    avgLqi = lqiSum / prevTestPacketsRx;
+                }
+                PRINTF("Test %u: %d%%, %d avg RSSI\n",
+                        prevTestNumber, prevTestPacketsRx * PERCENT, avgRssi, avgLqi);
+                addAvgStatistics(prevTestNumber, prevTestPacketsRx, avgRssi, avgLqi);
+            }
+            if (testInProgress) {
+                // PRINT("\n===================================\n");
+                // PRINTF("Starting test %u...\n", currentTestNumber);
+            }
+        }
+        prevTestInProgress = testInProgress;
+        if (testInProgress) {
+            prevTestNumber = currentTestNumber;
+        } else {
+            prevTestNumber = 0;
+        }
+    }
+}
+#endif // !USE_THREADS
 
 #else
 
@@ -368,14 +447,20 @@ void sendCounter(void)
         PRINTF("Send test %u packets\n", testNumber);
         redLedOn();
         for (i = 0; i < PACKETS_IN_TEST; ++i) {
-//            memcpy(sendBuffer, &testNumber, sizeof(testNumber));
-//            memcpy(sendBuffer + 2, &testId, sizeof(testId));
-//            sendBuffer[4] = i;
-//            crc = crc16(sendBuffer, TEST_PACKET_SIZE - 2);
-//            memcpy(sendBuffer + TEST_PACKET_SIZE - 2, &crc, sizeof(crc));
+            memcpy(sendBuffer, &testNumber, sizeof(testNumber));
+            memcpy(sendBuffer + 2, &testId, sizeof(testId));
+            sendBuffer[4] = i;
+            crc = crc16(sendBuffer, TEST_PACKET_SIZE - 2);
+            memcpy(sendBuffer + TEST_PACKET_SIZE - 2, &crc, sizeof(crc));
 
-            radioSend(sendBuffer, sizeof(sendBuffer));
+            int result = radioSend(sendBuffer, sizeof(sendBuffer));
             mdelay(SEND_INTERVAL);
+            if (result != 0) {
+                PRINTF("radio send failed\n"); 
+#if PLATFROM_SM3
+                amb8420Reset();
+#endif
+            }
         }
         redLedOff();
 
@@ -383,4 +468,4 @@ void sendCounter(void)
     }
 }
 
-#endif
+#endif // !RECV
