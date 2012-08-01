@@ -25,6 +25,7 @@
 import wx
 import os
 from multiprocessing import Pipe, Process
+from subprocess import Popen
 import time
 import webbrowser
 
@@ -86,8 +87,12 @@ class Blockly(wx.Panel):
             p1.start()
             self.printLine("Service started successfully.")
             if p1.is_alive():
-                #self.printLine('Try to open "{}"'.format(filename))
-                webbrowser.open(filename)
+                # Damn linux
+                if os.name == 'posix':
+                    Popen(['xdg-open', filename])
+                # other OS
+                else:
+                    webbrowser.open_new_tab(filename)
             else:
                 self.printLine("Failed to open {}:{}, port might be in use.".format(host, port))
             lastSync = time.time() + 10
