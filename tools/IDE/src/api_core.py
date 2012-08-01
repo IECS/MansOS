@@ -155,7 +155,7 @@ class ApiCore:
         self.blockly = Blockly(self.emptyFrame, self)
 
         # Init seal parser
-        self.sealParser = SealParser("telosb", self.printInfo, False, True)
+        self.sealParser = SealParser("msp430", self.printInfo, False, True)
 
         # Init tab manager 
         self.tabManager = TabManager(self.emptyFrame, self)
@@ -169,7 +169,7 @@ class ApiCore:
 
         self.editWindow = EditStatement(self.editPanel, self)
 
-        self.frame = Frame(None, "MansOS IDE", (800, 500), (100, 100), self)
+        self.frame = Frame(None, "MansOS IDE", (0, 0), (0, 0), self)
 
         #self.outputTools.addTools()
 
@@ -243,8 +243,8 @@ class ApiCore:
         assert type(parameters) is dict, "Dict expected."
         for x in parameters:
             if x.lower() == name.lower():
-                return parameters[x]
-        return None
+                return (x, parameters[x])
+        return (None, None)
 
     def getDefaultConditions(self):
         return self.sealSyntax.predefinedConditions
