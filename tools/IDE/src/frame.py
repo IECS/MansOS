@@ -389,7 +389,6 @@ Developed by: Jānis Judvaitis, janis.judvaitis@gmail.com
 
     def OnSealHelp(self, event):
         filename = "http://mansos.net/wiki/index.php/Declarative_programming_with_MansOS"
-        print filename
         # Damn linux
         if os.name == 'posix':
             Popen(['xdg-open', filename])
