@@ -24,7 +24,7 @@
 #
 
 import os
-from sys import path
+from sys import path, argv
 import time
 import wx.lib.inspection
 
@@ -39,7 +39,7 @@ def main():
     import wx
 
     ex = wx.App(redirect = False)
-    API = api_core.ApiCore()
+    API = api_core.ApiCore(argv[1:])
     API.frame.Show()
     #wx.lib.inspection.InspectionTool().Show()
     ex.MainLoop()

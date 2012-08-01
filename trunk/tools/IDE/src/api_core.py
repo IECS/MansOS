@@ -45,7 +45,7 @@ from globals import * #@UnusedWildImport
 from seal_parser import SealParser
 
 class ApiCore:
-    def __init__(self):
+    def __init__(self, argv):
         self.config = wx.Config("MansOS-IDE", style = wx.CONFIG_USE_LOCAL_FILE)
 
         self.path = os.getcwd()
@@ -189,6 +189,8 @@ class ApiCore:
             "There are parentless objects after API initialization."
 
         self.tabManager.loadRememberedTabs()
+        for x in argv:
+            self.tabManager.addPage(x)
         self.frame.auiManager.Update()
         self.populateMotelist()
 
