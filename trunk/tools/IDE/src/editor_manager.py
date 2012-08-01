@@ -59,6 +59,7 @@ class EditorManager(wx.Panel):
         if os.path.exists(initFilePath) and os.path.isfile(initFilePath):
             # Load file into editor
             self.code.LoadFile(initFilePath)
+            self.code.SetText(self.code.GetText().replace("\r\n", "\n"))
             # Draw margins
             self.changeCode('', False)
             # Update editor info

@@ -39,7 +39,6 @@ def main():
     import wx
 
     ex = wx.App(redirect = False)
-
     API = api_core.ApiCore()
     API.frame.Show()
     #wx.lib.inspection.InspectionTool().Show()
@@ -84,8 +83,8 @@ def importsOk():
         mansOSOK = False
     else:
         f = open(versionFile, "r")
-        version = f.readline()
-        print ("MansOS version: {}".format(version))
+        print ("Using MansOS:\n\tVersion: {}\n\tRelease date: {}".format(\
+                                 f.readline().strip(), f.readline().strip()))
         f.close()
 
     if not (wxModuleOK and serialModuleOK and plyModuleOK and sealParserOK and mansOSOK):

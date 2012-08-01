@@ -23,10 +23,7 @@
 #
 
 import wx.stc
-import time
 
-from edit_condition import EditCondition
-from structures import ComponentUseCase
 from component_hierarchy import components
 from re import finditer
 from globals import * #@UnusedWildImport
@@ -46,6 +43,7 @@ class Editor(wx.stc.StyledTextCtrl):
         self.lastType = ''
         self.lastName = ''
         self.lastLineNr = -1
+        self.forcedType = UNKNOWN
 
         self._styles = [None] * 32
         self._free = 1
@@ -53,6 +51,7 @@ class Editor(wx.stc.StyledTextCtrl):
         self.SetEndAtLastLine(True)
         self.SetIndentationGuides(True)
         self.SetUseAntiAliasing(True)
+        self.SetEOLMode(wx.stc.STC_EOL_LF)
 
         # Manage tabs
         self.SetTabWidth(4)
@@ -187,6 +186,7 @@ class Editor(wx.stc.StyledTextCtrl):
         self.Bind(wx.stc.EVT_STC_MARGINCLICK, self.onMarginClick)
         self.Bind(wx.EVT_KEY_UP, self.doGrammarCheck)
         self.Bind(wx.EVT_LEFT_UP, self.doGrammarCheck)
+
 
     def onKeyPressed(self, event):
         if self.CallTipActive():
@@ -392,127 +392,106 @@ class Editor(wx.stc.StyledTextCtrl):
         if self.newMode:
             return
         # Get statement and corresponding lines
-        self.lastEdit = self.findAllStatement(self.GetCurrentLine())
-
-        if self.lastEdit['statementStruct'] != None:
-            if self.lastEdit['type'] == STATEMENT:
-                self.API.editWindow.updateStatement(self.lastEdit, self.statementUpdateClbk)
-            elif self.lastEdit['type'] == CONDITION:
-                EditCondition(self.API.editPanel,
-                        self.API, self.lastEdit, self.conditionUpdateClbk)
-
-                self.API.editWindow.updateStatement(self.lastEdit)
-
-    def statementUpdateClbk(self, newStatement):
-        if self.newMode:
-            self.SetTargetStart(self.GetCurrentPos())
-            self.SetTargetEnd(self.GetCurrentPos())
-            self.ReplaceTarget(newStatement['statementStruct'].getCode(0))
-            self.lastEdit = self.findAllStatement(self.GetCurrentLine())
-            self.newMode = False
-        else:
-            self.SetTargetStart(self.PositionFromLine(newStatement['firstLine']))
-            endPos = self.PositionFromLine(newStatement['lastLine'] + 1)
-            if self.GetCharAt(endPos) == '\n':
-                self.SetTargetEnd(endPos - 1)
-                self.ReplaceTarget(newStatement['statementStruct'].getCode(0))
-            else:
-                self.SetTargetEnd(endPos)
-                self.ReplaceTarget(newStatement['statementStruct'].getCode(0) + '\n')
-            self.lastEdit = self.findAllStatement(newStatement['currentLine'])
-        self.doGrammarCheck(None)
-
-    def conditionUpdateClbk(self, name, value):
-        if self.newMode:
-            self.AddText("when " + value + ":\nend")
-            self.doGrammarCheck(None)
-            self.lastEdit = self.findAllStatement(self.GetCurrentLine())
-            self.newMode = False
-        else:
-            # Attribute error here because of seal failing on unknown condition
-            row = self.lastEdit['statementStruct'].getCode(0).rstrip()
-            if name == 'when':
-                start = row.find("when") + len("when")
-                end = row[start:].find(":")
-            else:
-                name = int(name)
-                start = 0
-                while name > 0:
-                    start += row[start:].find("elsewhen") + len("elsewhen")
-                    name -= 1
-                end = row[start:].find(":")
-            # +1 is space after keyword
-            row = "{} {}{}".format(row[:start], value, row[start + end:])
-            self.SetTargetStart(self.PositionFromLine(self.lastEdit['firstLine']))
-            self.SetTargetEnd(self.PositionFromLine(self.lastEdit['lastLine']) - 1)
-            self.ReplaceTarget(row)
-            # No need to recheck for condition, because no new lines are added
-            # and no lines have been deleted.
-            #self.lastEdit = self.findAllStatement(self.lastEdit[2])
+        self.API.editWindow.update()
+        # Make sure we can continue to write here :)
+        self.SetFocus()
 
     def addStatement(self):
         self.getPlaceForAdding()
-        self.lastAutoEdit = time.time()
-        self.newMode = True
-        res = {
-               "statementStruct": ComponentUseCase('', '', [], None),
-               "firstLine":-1,
-               "currentLine":-1,
-               "lastLine":-1,
-               "type":-1
-               }
-        self.API.editWindow.updateStatement(res, self.statementUpdateClbk)
+        self.forcedType = STATEMENT
+        self.API.editWindow.update()
 
     def addCondition(self):
         self.getPlaceForAdding()
-        self.lastAutoEdit = time.time()
-        self.newMode = True
-        self.clearUpDialogs(EditCondition(self.API.editPanel,
-                               self.API, None, self.conditionUpdateClbk), True)
+        emptyCond = "when :\nend"
+        sel = self.GetSelection()
+        self.AddText(emptyCond)
+        self.SetSelection(sel[0], sel[1])
+        self.API.editWindow.update()
 
-    def findAllStatement(self, lineNr):
-        res = {
-               "statementStruct": None,
-               "firstLine":-1,
-               "currentLine": lineNr,
-               "lastLine":-1,
-               "type":-1
-               }
-        # Check for empty line
-        line = self.GetLine(lineNr).strip()
-        if line == '':
-            return res
-        # Try find statement in this line
-        for x in self.lineTracking["Statement"]:
-            if lineNr + 1 >= x[0] and lineNr + 1 <= x[1]:
-                res['statementStruct'] = x[2]
-                res['firstLine'] = x[0] - 1
-                res['lastLine'] = x[1] - 1
-                res['type'] = STATEMENT
-                return res
+    def findStatement(self):
+        statements = ["use", "read", "output"]
+        conditions = ["when", "elsewhen"]
+        endDelimiters = [";", ":", "end"]
+        cursor = 0
+        type_ = UNKNOWN
+        target = self.GetCurrentLine()
+        text = self.GetText().lower()
+        while cursor != len(text):
+            start = len(text)
+            # Try to find next start of statement
+            for x in statements:
+                wannabe = text[cursor:].find(x)
+                if wannabe != -1:
+                    start = min(start, wannabe + cursor)
+                    type_ = STATEMENT
+            for x in conditions:
+                wannabe = text[cursor:].find(x)
+                if wannabe != -1:
+                    start = min(start, wannabe + cursor)
+                    if start == wannabe + cursor:
+                        type_ = CONDITION
 
-        # If no component error is throwed we dont get so far :(
-        statementType, actuator, obj = self.API.getStatementType(line)
+            if start != len(text):
+                # Try to find next end of statement
+                end = len(text)
+                for x in endDelimiters:
+                    wannabe = text[start:].find(x)
+                    if wannabe != -1:
+                        end = min(end, wannabe + start)
 
-        if statementType == STATEMENT:
-            res['statementStruct'] = ComponentUseCase(actuator, obj, [], None)
-            res['firstLine'] = lineNr
-            res['lastLine'] = lineNr
-            res['type'] = STATEMENT
-            return res
+                # Try to find a new start before first end, in case of no ';'
+                offset = 1
+                # elsewhen ends with when otherwise
+                if type_ == CONDITION:
+                    offset = 5
+                for x in statements + conditions:
+                    wannabe = text[start + offset:end].find(x)
+                    if wannabe != -1:
+                        end = min(end, wannabe + start + offset)
 
-        for x in self.lineTracking["Condition"]:
-            if lineNr + 1 >= x[0] and lineNr + 1 <= x[1]:
-                res['statementStruct'] = x[2]
-                res['firstLine'] = x[0] - 1
-                res['lastLine'] = x[1]
-                res['type'] = CONDITION
-                return res
+            # rstrip :)
+            end = start + len(text[start:end].rstrip())
+            # Check if found something
+            if start != len(text):
+                if self.LineFromPosition(start) <= target and \
+                   self.LineFromPosition(end) >= target:
+                    return {
+                            "start": start,
+                            "end": end,
+                            "text": self.GetText()[start:end],
+                            "type": type_
+                        }
+                cursor = end
+            else:
+                break
+        if self.forcedType != UNKNOWN:
+            retVal = {
+                            "start": self.GetCurrentPos(),
+                            "end": self.GetCurrentPos(),
+                            "text": "",
+                            "type": self.forcedType
+                        }
+            self.forcedType = UNKNOWN
+            return retVal
+        else:
+            return None
 
-        # Try find condition in this line
-        # TODO
+    def change(self, data):
+        textAfter = self.GetText()[data['end']:].strip()
+        if data['type'] == STATEMENT:
+            if not textAfter.startswith(";"):
+                data['text'] = data['text'].replace(";", "") + ";"
 
-        return res
+        if data['type'] == CONDITION:
+            if not textAfter.startswith(":"):
+                data['text'] = data['text'].replace(":", "") + ":"
+
+        sel = self.GetSelection()
+        self.SetSelection(data['start'], data['end'])
+        self.ReplaceSelection(data['text'].strip())
+        self.SetSelection(sel[0], sel[1])
+
 
     def getPlaceForAdding(self):
         self.LineEndDisplay()

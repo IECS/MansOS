@@ -79,7 +79,7 @@ class Frame(wx.Frame):
                 CloseButton(False).
                 Caption("Visual edit").CaptionVisible(True).
                 MinimizeButton(True).MaximizeButton(True).
-                BestSize(wx.Size(250, 400)))
+                BestSize(wx.Size(320, 400)))
         self.auiManager.AddPane(self.API.editPanel, rightPane)
 
         self.bottomPane = (aui.AuiPaneInfo().
@@ -270,10 +270,10 @@ class Frame(wx.Frame):
         # Time used, because cancel on file save dialog makes exit unresponsive.
         if self.exitCalled + 0.5 > time():
             return
-        self.exitCalled = time()
         self.API.tabManager.rememberOpenedTabs()
         self.rememberPositioning()
         if self.tabManager.onQuitCheck() == True:
+            self.exitCalled = time()
             self.API.performExit()
             wx.Exit()
 

@@ -24,7 +24,7 @@
 
 import wx
 
-from structures import Value
+from globals import * #@UnusedWildImport
 
 class EditStatement(wx.Panel):
     def __init__(self, parent, API):
@@ -32,6 +32,38 @@ class EditStatement(wx.Panel):
         self.API = API
         # Just a shorter name
         self.tr = self.API.translater.translate
+
+        self.mode = UNKNOWN
+        # New mode flag
+        self.newMode = 0
+
+    def finishInit(self):
+        # Make form look nice and show it
+        self.SetBackgroundColour("white")
+        self.SetSizer(self.main)
+        self.SetAutoLayout(True)
+        self.main.Fit(self)
+        self.Show()
+
+### Update
+
+    def update(self):
+        self.editor = self.API.tabManager.getPageObject().code
+        self.source = self.editor.findStatement()
+        if self.source is not None:
+            if self.source['type'] == STATEMENT:
+                self.updateStatement()
+            if self.source['type'] == CONDITION:
+                self.updateCondition()
+        else:
+            self.clearStatement()
+            self.clearCondition()
+            self.mode = UNKNOWN
+
+### Statement processing
+
+    def initStatement(self):
+        self.clearCondition()
         # Form layout
         self.main = wx.BoxSizer(wx.VERTICAL)
         self.data = wx.GridBagSizer(hgap = 2, vgap = 1)
@@ -47,45 +79,84 @@ class EditStatement(wx.Panel):
         self.combo = list()
         # Force change on 3rd tier flag
         self.forceChange = False
-        # New mode flag
-        self.newMode = 0
+        self.finishInit()
 
-        # Make form look nice and show it
-        self.SetBackgroundColour("white")
-        self.SetSizer(self.main)
-        self.SetAutoLayout(1)
-        self.main.Fit(self)
-        self.Show()
+    def clearStatement(self):
+        if self.mode == STATEMENT:
+            self.main.Clear(True)
+            del(self.main)
+            del(self.data)
+            del(self.type)
+            del(self.name)
+            del(self.combo)
+            del(self.check)
+            del(self.forceChange)
+            self.mode = UNKNOWN
 
-    def updateStatement(self, statement, saveCallback):
-        self.statement = statement
-        self.saveCallback = saveCallback
-        _type = statement['statementStruct'].type
-        _name = statement['statementStruct'].name
-
+    def updateStatement(self):
+        # Check if we need do do a full erase
+        if self.mode != STATEMENT:
+            self.initStatement()
+        # Declare that we edit statement now
+        self.mode = STATEMENT
+        params = self.source['text'].split(",")
+        temp = (params[0].strip() + " ").split(None, 1)
+        if len(temp) > 0:
+            self._type = temp[0]
+        else:
+            self._type = ""
+        if len(temp) > 1:
+            self._name = temp[1]
+        else:
+            self._name = ""
+        self._type = self._type.strip()
+        self._name = self._name.strip()
+        parameters = dict()
+        if len(params) > 1:
+            for x in params[1:]:
+                temp = (x.strip() + " ").split(None, 1)
+                # only ','
+                if len(temp) == 0:
+                    pass
+                # bool
+                elif len(temp) == 1:
+                    parameters[temp[0].strip().lower()] = ''
+                else:
+                    temp[1] = temp[1].strip()
+                    if temp[1].startswith('"') or temp[1].startswith("'"):
+                        # Take all in quotation marks
+                        value = temp[1].split(temp[1][0])
+                        if len(value) > 1:
+                            value = value[1]
+                        else:
+                            value = ''
+                    else:
+                        # Take only first word as value.
+                        # Ignore any whitespace chars between name and value.
+                        value = (temp[1] + " ").split(None, 1)[0]
+                    parameters[temp[0].strip().lower()] = value
         # Check if 3rd tier needs to be recreated or updated
         changed = True
         if self.newMode == 0:
             if self.type != self.name:
-                changed = _type.lower() != self.type.GetValue().lower() or \
-                          _name.lower() != self.name.GetValue().lower()
+                changed = self._type.lower() != self.type.GetValue().lower() or \
+                          self._name.lower() != self.name.GetValue().lower()
         # Forced recreate?
         changed = self.forceChange or changed
         # Clear flag
         self.forceChange = False
         # Clear everything because "Add statement pressed"
-        if statement['type'] == -1:
-            self.data.Clear(True)
-            self.type = self.name = None
-            self.combo = self.check = list()
+        #if statement['type'] == -1:
+        #    self.clearAll()
         # Generate 1st tier, returns if second is needed
-        if self.generateFirstTier(_type):
-            names = self.API.getKeywords(_type)
+
+        if self.generateFirstTier(self._type):
+            names = self.API.getKeywords(self._type)
             # Generate 2nd tier, returns if 3rd is needed
-            if self.generateSecondTier(_name, names):
-                keywords = self.API.getKeywords(_type, _name)
+            if self.generateSecondTier(self._name, names):
+                keywords = self.API.getKeywords(self._type, self._name)
                 # Generate 3rd tier
-                self.generateThirdTier(keywords, statement['statementStruct'].parameters, changed)
+                self.generateThirdTier(keywords, parameters, changed)
                 self.newMode = 0
             else:
                 # Clear 3rd tier
@@ -93,9 +164,12 @@ class EditStatement(wx.Panel):
         else:
             # Activate new mode, means that "Add statement" was pressed
             self.newMode = 2
-
+        # Push changes to screen
         self.main.Fit(self)
-        self.Layout()
+
+        #self.Layout()
+        self.Refresh()
+        self.main.Layout()
 
     # Generate or update first comboBox, use, read output, etc...
     def generateFirstTier(self, value):
@@ -116,11 +190,11 @@ class EditStatement(wx.Panel):
         # Update value if needed
         if value is not None:
             if value.lower() != self.type.GetValue().lower():
-                self.type.SetValue(value)
+                self.type.SetValue(str(value))
         else:
             self.type.SetValue('')
         # Return if 2nd tier needs to be generated
-        return self.type.GetValue() != ''
+        return True#self.type.GetValue() != ''
 
     # Generate or update second comboBox, Led, Light, Radio, etc...
     def generateSecondTier(self, value, choices = None):
@@ -179,29 +253,24 @@ class EditStatement(wx.Panel):
                 text = wx.StaticText(self, label = self.tr(parameter[0]) + ":")
 
                 # Get real parameter associated with current name
-                param = self.API.getParamByName(realParams, parameter[0])
-                value = None
-                if param != None:
-                    print param.getCode()
-                    if param == None:
-                        value = True
-                    else:
-                        value = param.getCode()
+                value = self.API.getParamByName(realParams, parameter[0])[1]
 
                 # Create combobox or checkbox
                 if type(parameter[1][0]) is not bool:
                     box = wx.ComboBox(self, choices = [""] + parameter[1],
                                       style = wx.CB_DROPDOWN, size = (150, 25),
                                       name = str(parameter[0]))
-                    self.Bind(wx.EVT_TEXT, self.updateOriginal, box)
+                    self.Bind(wx.EVT_TEXT, self.onParamChange, box)
                     if value != None:
                         box.SetValue(str(value))
                     self.combo.append((text, box))
                 else:
                     box = wx.CheckBox(self, name = str(parameter[0]))
-                    self.Bind(wx.EVT_CHECKBOX, self.updateOriginal, box)
+                    self.Bind(wx.EVT_CHECKBOX, self.onParamChange, box)
                     if value != None:
-                        box.SetValue(value)
+                        box.SetValue(True)
+                    else:
+                        box.SetValue(False)
                     self.check.append((text, box))
             # Always starting @ 2nd row, enumeration starts from zero
             row = 2
@@ -217,126 +286,242 @@ class EditStatement(wx.Panel):
                 row += 1
         # Edit old objects
         else:
-            # Cycle all posible parameters and update according boxe's values
-            for parameter in keywords:
-                # This is advanced parameter, don't display it, so don't update
-                if parameter[1] == []:
-                    continue
-                # Get real parameter associated with current name
-                param = self.API.getParamByName(realParams, parameter[0])
-                value = None
-                if param != None:
-                    if param.getCode() == None:
-                        value = True
+            for x in self.check:
+                # Check that everything is ok before accessing values
+                if x[1] is not None:
+                    # Update if correct box found
+                    if x[1].GetName().lower() in realParams:
+                        x[1].SetValue(True)
                     else:
-                        value = param.getCode()
-                # Update checkbox
-                if type(value) is bool:
-                    # Search right box
-                    for x in self.check:
-                        # Check that everything is ok before accessing values
-                        if x[1] is not None and param is not None:
-                            # Update if correct box found
-                            if x[1].GetName() == param[0]:
-                                x[1].SetValue(value)
-                # Update combobox
-                else:
-                    # Search right box
-                    for x in self.combo:
-                        # Check that everything is ok before accessing values
-                        if x[1] is not None and param is not None:
-                            # Update if correct box found
-                            if x[1].GetName() == param[0]:
-                                x[1].SetValue(str(value))
+                        x[1].SetValue(False)
+            for x in self.combo:
+                    # Check that everything is ok before accessing values
+                    if x[1] is not None:
+                        # Update if correct box found
+                        if x[1].GetName().lower() in realParams:
+                            x[1].SetValue(str(realParams[x[1].GetName().lower()]))
+                        else:
+                            x[1].SetValue("")
 
     def onActuatorChange(self, event):
         actuator = self.type.GetValue()
         # Don't clear if this is already selected
-        if actuator == self.statement['statementStruct'].type:
-            return
-        # Update statement struct
-        self.statement['statementStruct'].parameters = list()
-        self.statement['statementStruct'].name = ''
-        # Force 3rd tier change
-        self.forceChange = True
-        # Activate callback
-        self.updateOriginal(event)
+        if self._type.startswith(actuator):
+            space = len(self.source['text'].split(None, 1)[0])
+            self.source['text'] = actuator + self.source['text'][space:]
+        else:
+            self.source['text'] = actuator
+            # Force 3rd tier change
+            self.forceChange = True
+            self.updateStatement()
+        self.editor.change(self.source)
+        self.source['end'] = self.source['start'] + len(self.source['text'])
 
     def onObjChange(self, event = None):
-        obj = self.name.GetValue()
+        name = self.name.GetValue()
         # Don't clear if this is already selected
-        if obj == self.statement['statementStruct'].name:
-            return
-        # Update statement struct
-        self.statement['statementStruct'].name = obj
-        # Force 3rd tier change
-        self.forceChange = True
-        # Activate callback
-        self.updateOriginal(event)
+        if self._name.startswith(name):
+            space = self.source['text'].split(None)
+            self.source['text'] = self.source['text'].replace(\
+                                          space[1].strip().strip(","), name)
+        else:
+            self.source['text'] = self.type.GetValue() + " " + name
+            # Force 3rd tier change
+            self.forceChange = True
+            self.updateStatement()
+        self.editor.change(self.source)
+        self.source['end'] = self.source['start'] + len(self.source['text'])
 
-    def updateOriginal(self, event):
-        obj = event.GetEventObject()
-        # If we are in combo box, it would be nice to place cursor back after 
-        # we mess with all the synchronizing, so save current cursor position
-        if type(obj) != wx.CheckBox:
-            insertionPoint = obj.GetInsertionPoint()
-        # Process newMode aka "Add statement" pressed
-        if self.newMode == 1:
-            if self.type.GetValue() != '':
-                self.statement['statementStruct'].type = self.type.GetValue()
-                # Decrease new mode flag, means that type and name 
-                # have been selected
-                self.newMode -= 1
-                self.saveCallback(self.statement)
-            return
-
-        name = obj.GetName()
-        value = obj.GetValue()
-
-        # Can't allow these values
-        if type(value) != bool:
-                value = value.replace(",", "")
-                value = value.replace(";", "")
-                obj.SetValue(value)
-
-        # Find what was changed and update statement struct accordingly
-        if name == "actuator":
-            self.statement['statementStruct'].type = value
-        elif name == "object":
-            self.statement['statementStruct'].name = value
-        else: # Parameters
-            found = False
-            # Try to find this parameter in struct, it might not be there if 
-            # it is used for the first time
-            for param in self.statement['statementStruct'].parameters:
-                # Check if current parameter is the one changed
-                if param[0] == name:
-                    found = True
-                    # check if parameter should be updated or removed
-                    if value != '' and value != False:
-                        # TODO: make suffix right
-                        param[1].value = value
-                        param[1].suffix = None
-                    else:
-                        self.statement['statementStruct'].parameters.pop(name)
+    def onParamChange(self, event):
+        value = event.GetEventObject().GetValue()
+        if type(value) is unicode:
+            # Can't allow this
+            value = str(value.replace(",", "").replace(";", ""))
+        name = event.GetEventObject().GetName()
+        changed = False
+        parts = self.source['text'].split(",")
+        # Add new Bool value
+        if value == True:
+            self.source['text'] += ", " + name
+            changed = True
+        else:
+            # Count part start position
+            start = len(parts[0]) + 1
+            for x in parts[1:]:
+                # Remove Bool value
+                if x.lower().strip() == name.lower():
+                    if value == False:
+                        self.source['text'] = self.source['text'][:start - 1] \
+                            + self.source['text'][start + len(x):]
+                        changed = True
+                        break
+                # Try to find edited parameter in this part
+                temp = (x.strip() + " ").split(None, 1)
+                if len(temp) == 0 or temp[0].lower() != name or len(temp) < 2:
+                    start += len(x) + 1
                     continue
-            # If such parameter don't exist we need to add it
-            if not found:
-                print "not"
-                newParam = None
-                # Boolean value
-                if value == True:
-                    newParam = (name, None)
-                    self.statement['statementStruct'].parameters[name] = None
-                # String value
+                temp[1] = temp[1].strip()
+                haveQm = False
+                if temp[1].startswith('"') or temp[1].startswith("'"):
+                    # Take all in quotation marks
+                    val = temp[1].split(temp[1][0])
+                    if len(val) > 1:
+                        val = val[1]
+                    else:
+                        val = ''
+                    haveQm = True
                 else:
-                    # TODO: make suffix right
-                    newParam = (name, Value(value, None))
-                    self.statement['statementStruct'].parameters[name] = Value(value, None)
-        self.saveCallback(self.statement)
-        # Place cursor in last edited place(works only on manual edit)
-        # TODO: sometimes hangs entire app... :(
-        # "and obj" should check if it is not deleted
-        if type(obj) != wx.CheckBox and obj:
-            obj.SetFocus()
-            obj.SetInsertionPoint(insertionPoint + 1)
+                    # Take only first word as value.
+                    # Ignore any whitespace chars between name and value.
+                    val = (temp[1] + " ").split(None, 1)[0]
+                # Remove if no value
+                if value.strip() == '':
+                    self.source['text'] = self.source['text'][:start - 1] + \
+                        self.source['text'][start + len(x):]
+                else:
+                    # Do not allow space if there is no QM
+                    if not haveQm:
+                        # Here we have 2 options:
+                        #    Discard all after first space.
+                        #    Add QM.
+                        value = (value + ' ').split(None, 1)[0]
+                        # value = '"{}"'.format(value)
+                    # Replace with new value
+                    self.source['text'] = self.source['text'][:start] + \
+                        x.replace(val, value) + self.source['text'][start + len(x):]
+                changed = True
+                start += len(x) + 1
+        # Add parameter if no such found
+        if not changed and value.strip() != '':
+            self.source['text'] += ", {} {}".format(name, value)
+        # Push changes to editor
+        self.editor.change(self.source)
+        # Update length
+        self.source['end'] = self.source['start'] + len(self.source['text'])
+
+### Condition processing
+
+    def initCondition(self):
+        self.clearStatement()
+        self.main = wx.BoxSizer(wx.VERTICAL)
+        self.condCreatorSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.main.Add(self.condCreatorSizer, 1, wx.EXPAND | wx.ALL, 5)
+        self.condCreador = None
+        self.updateCondCreator(None)
+        nextEditable = wx.Button(self, label = "Find next parameter")
+        self.Bind(wx.EVT_BUTTON, self.launchNextEditFinder, nextEditable)
+        self.main.Add(nextEditable, 0, wx.EXPAND | wx.ALL, 5)
+        self.textBox = None
+        self.finishInit()
+
+    def clearCondition(self):
+        if self.mode == CONDITION:
+            self.main.Clear(True)
+            del(self.main)
+            self.mode = UNKNOWN
+
+    def updateCondition(self):
+        self.activeField = None
+        # Check if we need do do a full erase
+        if self.mode != CONDITION:
+            self.initCondition()
+        # Declare that we edit statement now
+        self.mode = CONDITION
+        # Save passed values
+        # Process "Add condition" pressed
+        if self.source['type'] == UNKNOWN:
+            self.clearAll()
+            self.newMode = CONDITION
+
+        text, value = "when", ""
+        temp = self.source['text'].split(None, 1)
+        if len(temp) > 0:
+            text = temp[0]
+        if len(temp) > 1:
+            value = temp[1]
+        self.generateFirstLine(text, value)
+        self.updateCondCreator(None)
+        #self.generateElseWhenSelects()
+
+        # Push changes to screen
+        self.main.Fit(self)
+        self.condCreatorSizer.Layout()
+        self.Layout()
+
+    def generateFirstLine(self, text, value):
+        # Generate text and combobox
+        if self.textBox is None:
+            self.text = wx.StaticText(self, label = self.tr(text) + ":")
+            self.textBox = wx.TextCtrl(self, name = "first", size = (100, 100),
+                            style = wx.TE_PROCESS_TAB | wx.TE_PROCESS_ENTER | wx.TE_MULTILINE | wx.TE_AUTO_SCROLL)
+            self.textBox.Bind(wx.EVT_CHAR, self.processKeyUp)
+            self.textBox.Bind(wx.EVT_TEXT, self.onTextChange)
+            # Add them to layout
+            self.condCreatorSizer.Add(self.text)
+            self.condCreatorSizer.Add(self.textBox, 10, wx.EXPAND | wx.ALL, 5)
+
+        # Update entry with new value
+        if text is not None:
+            self.text.SetLabel(text)
+        if value is not None:
+            self.textBox.SetValue(value)
+        self.activeField = self.textBox
+
+    def updateCondCreator(self, event):
+        if self.condCreador is None:
+            condCreatorText = wx.StaticText(self, label = "Choose function:")
+            self.condCreador = wx.ComboBox(self, choices = [""] + self.API.sealSyntax.getFunctionBodys(),
+                                      style = wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SIMPLE,
+                                      name = "CondCreator")
+
+            self.Bind(wx.EVT_COMBOBOX, self.ekeCondition, self.condCreador)
+            self.main.Add(condCreatorText)
+            self.main.Add(self.condCreador, 0, wx.EXPAND | wx.ALL, 5)
+        else:
+            # In future I plan to adjust proposed function depending on selection
+            pass
+
+    def ekeCondition(self, event):
+        if self.textBox is not None:
+            start, end = self.textBox.GetSelection()#
+            text = self.textBox.GetString(start, end)
+            #print "@eke", "'" + str([text]) + "'", str([self.textBox.GetValue()]), len(self.textBox.GetValue())
+            newVal = self.condCreador.GetValue()
+            if text.strip() != '' and text.find("[") + text.find("]") == -2:
+                start_ = newVal.find("[")
+                end_ = newVal.find("]") + 1
+                newVal = newVal[:start_] + text + newVal[end_:]
+            self.textBox.Replace(start, end, newVal)
+            self.setNextEditingSelection(start - 1)
+            self.onTextChange(None)
+
+    def setNextEditingSelection(self, start = 0):
+        text = self.textBox.GetValue()
+        # Weird, but start comes with double newlines counted in
+        newLines = text.count("\n")
+        start = start - newLines
+        if start < 0:
+            start = 0
+        first = text.find("[", start)
+        last = text.find("]", first) + 1
+        if first == -1 or last == 0:
+            return
+        newLines = self.textBox.GetValue()[:last].count("\n")
+        self.textBox.SetSelection(first + newLines, last + newLines)
+        self.textBox.SetFocus()
+
+    # Catch TAB pressed
+    def processKeyUp(self, event):
+        keycode = event.GetKeyCode()
+        if keycode == wx.WXK_TAB:
+            self.launchNextEditFinder()
+        else:
+            event.Skip()
+
+    def launchNextEditFinder(self, event = None):
+        self.setNextEditingSelection(self.textBox.GetInsertionPoint())
+
+    def onTextChange(self, event):
+        self.source['text'] = "{} {}".format(self.text.GetLabel(), self.textBox.GetValue())
+        self.editor.change(self.source)
+        self.source['end'] = self.source['start'] + len(self.source['text'])
