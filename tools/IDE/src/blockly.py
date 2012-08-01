@@ -130,6 +130,7 @@ class Blockly(wx.Panel):
     def onOpen(self, code):
         self.API.tabManager.addPage()
         self.API.tabManager.GetCurrentPage().changeCode(code)
+        self.API.tabManager.Layout()
 
     def onSave(self, code):
         self.onOpen(code)

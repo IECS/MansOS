@@ -111,6 +111,7 @@ class TabManager(aui.AuiNotebook):
             if save.ShowModal() == wx.ID_OK:
                 self.getPageObject().updateInfo(path = save.GetPath())
                 self.getPageObject().save()
+                self.getPageObject().hasAFile = True
             save.Destroy()
         return self.getPageObject().hasAFile == True
 
@@ -174,6 +175,7 @@ class TabManager(aui.AuiNotebook):
         self.Layout()
         self.API.frame.deactivateNoEditorMode()
         self.onPageChanged(None)
+
 
     def GetCurrentPage(self):
         return self.getPageObject()
