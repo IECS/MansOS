@@ -28,6 +28,8 @@ import wx
 from stat import S_ISDIR
 from wx.lib.agw import aui
 from time import time
+from subprocess import Popen
+import webbrowser
 
 from upload_module import UploadModule
 from globals import * #@UnusedWildImport
@@ -233,6 +235,10 @@ class Frame(wx.Frame):
                               self.tr('Open read output window'))
 
         helpMenu = wx.Menu()
+        sealHelp = helpMenu.Append(wx.ID_ANY, '&' + self.tr('Seal documentation'),
+                              self.tr('About'))
+        mansosHelp = helpMenu.Append(wx.ID_ANY, '&' + self.tr('MansOS documentation'),
+                              self.tr('About'))
         about = helpMenu.Append(wx.ID_ABOUT, '&' + self.tr('About') + '\tCtrl+H',
                               self.tr('About'))
         # Check if we need to update existing menubar(for translate)
@@ -257,6 +263,8 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnOutput, output)
         self.Bind(wx.EVT_MENU, self.OnNew, new)
         self.Bind(wx.EVT_MENU, self.OnAbout, about)
+        self.Bind(wx.EVT_MENU, self.OnSealHelp, sealHelp)
+        self.Bind(wx.EVT_MENU, self.OnMansosHelp, mansosHelp)
 
     def on_file_history(self, event):
             fileNum = event.GetId() - wx.ID_FILE1
@@ -379,6 +387,24 @@ Developed by: Jānis Judvaitis, janis.judvaitis@gmail.com
         wx.MessageBox(text, 'Info',
             wx.OK | wx.ICON_INFORMATION)
 
+    def OnSealHelp(self, event):
+        filename = "http://mansos.net/wiki/index.php/Declarative_programming_with_MansOS"
+        print filename
+        # Damn linux
+        if os.name == 'posix':
+            Popen(['xdg-open', filename])
+        # other OS
+        else:
+            webbrowser.open_new_tab(filename)
+
+    def OnMansosHelp(self, event):
+        filename = "http://mansos.edi.lv/?page_id=5"
+        # Damn linux
+        if os.name == 'posix':
+            Popen(['xdg-open', filename])
+        # other OS
+        else:
+            webbrowser.open_new_tab(filename)
 
     def changeLanguage(self, event):
         for i in self.langs:
