@@ -49,7 +49,7 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
     pinAsFunction(USCI_##letterid##_CLK_PORT, USCI_##letterid##_CLK_PIN),   \
     pinAsOutput(USCI_##letterid##_RXTX_PORT, USCI_##letterid##_SOMI_PIN),   \
     pinAsOutput(USCI_##letterid##_CLK_PORT, USCI_##letterid##_CLK_PIN) )
-#define SETUP_USCI(id, letterid) (                                                   \
+#define SETUP_USCI(id, letterid) (                                      \
     UC##letterid##CTL1 = UCSWRST,             /* Hold the module in reset state */   \
     UC##letterid##CTL1 |= UCSSEL_2,           /* SMCLK clock source */               \
     UC##letterid##BR0 = (CPU_HZ / SPI_SPEED) & 0xFF, /* Clock divider, lower part */ \

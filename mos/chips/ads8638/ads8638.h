@@ -24,7 +24,7 @@
 #include "adc_dac_pins.h"
 #include <kernel/defines.h>
 
-#define ADS8638_SPI_ID             0
+#define ADS8638_SPI_ID             1  // id 0 is A0, id 1 is B0
 
 #define ADS8638_REG_MANUAL         0x04
 #define ADS8638_REG_AUTO           0x04
@@ -68,3 +68,7 @@ void ads8638Init(void);
 void ads8638SelectChannel(uint8_t channel, uint8_t range);
 
 bool ads8638Read(uint16_t *value);
+
+uint8_t ads8638RegRead(uint8_t address);
+
+void ads8638RegWrite(uint8_t address, uint8_t data);

@@ -78,6 +78,10 @@
 #define USART_COUNT       2
 #define PRINTF_USART_ID   1
 #define UART_ON_USCI_A1   1
+#elif PLATFORM_TESTBED
+#define USART_COUNT       2
+#define PRINTF_USART_ID   0
+#define UART_ON_USCI_A0   1
 #else
 #define USART_COUNT       1
 #define PRINTF_USART_ID   0
@@ -88,23 +92,29 @@
 // This module enables and disables components automatically
 static inline uint_t USARTEnableTX(uint8_t id) { return 0; }
 static inline uint_t USARTDisableTX(uint8_t id) { return 0; }
+// Enable receive interrupt
 static inline uint_t USARTEnableRX(uint8_t id) {
 #if UART_ON_USCI_A0
-    UC0IE |= UCA0RXIE;     // Enable receive interrupt
-#else
-    UC1IE |= UCA1RXIE;     // Enable receive interrupt
+    UC0IE |= UCA0RXIE;
+#elif UART_ON_USCI_A1
+    UC1IE |= UCA1RXIE;
+#elif UART_ON_USCI_B0
+    UC0IE |= UCB0RXIE;
 #endif
     return 0;
 }
+// Disable receive interrupt
 static inline uint_t USARTDisableRX(uint8_t id) {
 #if UART_ON_USCI_A0
-    UC0IE &= ~UCA0RXIE;    // Disable receive interrupt
-#else
-    UC1IE &= ~UCA1RXIE;    // Disable receive interrupt
+    UC0IE &= ~UCA0RXIE;
+#elif UART_ON_USCI_A1
+    UC1IE &= ~UCA1RXIE;
+#elif UART_ON_USCI_B0
+    UC0IE &= ~UCB0RXIE;
 #endif
     return 0;
 }
 static inline void hw_spiBusOn(uint8_t busId) { }
 static inline void hw_spiBusOff(uint8_t busId) { }
 
-#endif // _MSP430_USCI_H_
+#endif
