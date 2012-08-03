@@ -9,9 +9,9 @@
 config "USE_LONG_LIFETIME=y";
 define HelperLed RedLed, blink;
 when Variables.localAddress == 0x0796:
- 	define TheLight SQ100Light;
+    define TheLight SQ100Light;
 else:
-  	define TheLight Light;
+    define TheLight Light;
 end
 define AllSensors sync(TheLight, Humidity, Temperature);
 read AllSensors, period 10min, associate HelperLed, turnOnOff;

@@ -21,7 +21,7 @@
 // // read the average value with 5 second period
 // read LightAvg, period SAMPLING_INTERVAL; // TODO: convert to ms!
 // // use a custom data collector component
-// //output DataCollector, interval reportInterval;
+// //output TunnelDataCollector, interval reportInterval;
 
 pattern OnPattern (1, 1, 1, 1, 1, 1, 1, 1);
 pattern OffPattern (0, 0, 0, 0, 0, 0, 0, 0);

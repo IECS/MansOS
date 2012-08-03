@@ -7,7 +7,6 @@ const POWER_PORT 1; const POWER_PIN  2;
 const BATTERY_LOW_PORT 1; const BATTERY_LOW_PIN 3;
 const WATCHDOG_PORT 1; const WATCHDOG_PIN 4;
 
-// The logic is simple
 define ResetOut DigitalOut, port RESET_PORT, pin RESET_PIN;
 define PowerOut DigitalOut, port POWER_PORT, pin POWER_PIN;
 define BatteryLow DigitalIn, port BATTERY_LOW_PORT, pin BATTERY_LOW_PIN;
@@ -15,6 +14,7 @@ define Watchdog DigitalIn, port WATCHDOG_PORT, pin WATCHDOG_PIN, interrupt, risi
 
 set IsMainControllerOff false;
 
+// The logic is simple:
 // when battery of the main controller is low, turn it off,
 // but turn it back on after a while (however, lit the number of tries)
 set NextRetryTime 0;
@@ -32,7 +32,7 @@ when IsMainControllerOff and NumBatteryRetry < MAX_RETRY and NextRetryTime < Upt
     set IsMainControllerOff false;
 end
 
-// check for watchdog signal, and if none received
+// check for watchdog signal, and if none received, reset the main MCU
 const WATCHDOG_MAX_TIME 20; // seconds
 set NextWatchdogTime WATCHDOG_MAX_TIME;
 set NumWatchdogRetry 0;
@@ -54,7 +54,7 @@ when NumWatchdogRetry >= MAX_RETRY:
     use PowerOut, off;
 end
 
-// send out the emergency signal (more often if main MCU is dead)
+// send out the emergency signal periodically, shorter pulses if main MCU is dead
 const SHORT_SIGNAL_PERIOD 800ms;
 const NORMAL_SIGNAL_PERIOD 1600ms;
 when IsMainControllerOff:
