@@ -26,8 +26,8 @@
 
 // Testbed platform uses ADS8638 analog/digital converter
 
-#define ADS8638_CS_PORT 1
-#define ADS8638_CS_PIN  1
+#define ADS8638_CS_PORT 3
+#define ADS8638_CS_PIN  0
 
 // Testbed platform uses DAC7718 digital/analog converter
 
