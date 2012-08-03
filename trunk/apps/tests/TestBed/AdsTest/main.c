@@ -40,10 +40,10 @@ void appMain(void)
         ads8638SelectChannel(i, ADS8638_RANGE_2_5V);
         ads8638Read(&val);
 
-        USARTInit(PRINTF_USART_ID, SERIAL_PORT_BAUDRATE, 0);
-        USARTEnableTX(PRINTF_USART_ID);
+        // USARTInit(PRINTF_USART_ID, SERIAL_PORT_BAUDRATE, 0);
+        // USARTEnableTX(PRINTF_USART_ID);
         PRINTF("Conversion result from AIN%d: %#x\n", i, val);
 
-        sleep(1);
+        mdelay(1000);
     }
 }
