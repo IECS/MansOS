@@ -166,7 +166,7 @@ extern void msp430TimerBSet(uint16_t ms);
 #define ALARM_TIMER_STOP() msp430StopTimerA()
 #define ALARM_TIMER_EXPIRED() (TAIV == 10)
 #define ALARM_TIMER_VALUE() (TAR)
-#define RESET_ALARM_TIMER() (TAR = 0)
+#define RESET_ALARM_TIMER() {TAR = 0; TACCR0 = PLATFORM_ALARM_TIMER_PERIOD;}
 #define SET_NEXT_ALARM_TIMER(value) TACCR0 += value
 
 // TimerA interrupt enable/disable
