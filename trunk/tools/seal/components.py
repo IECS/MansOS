@@ -2430,6 +2430,7 @@ class FromFileOutputUseCase(OutputUseCase):
         outputFile.write('    if (!in) return;\n')
 
         if doRewriteFile:
+            # TODO XXX: copy the input file instead!
             outputFile.write('    FILE *out = fopen("{}.tmp", "wb");\n'.format(self.filename))
             outputFile.write('    if (!out) return;\n')
 

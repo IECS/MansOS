@@ -405,6 +405,15 @@ class GreenLedAct(SealActuator):
         self.offFunction.value = "greenLedOff()"
         self.writeFunction.value = "if (value) greenLedOn(); else greenLedOff()"
 
+class YellowLedAct(SealActuator):
+    def __init__(self):
+        super(YellowLedAct, self).__init__("YellowLed")
+        self.useFunction.value = "yellowLedToggle()"
+        self.readFunction.value = "yellowLedGet()"
+        self.onFunction.value = "yellowLedOn()"
+        self.offFunction.value = "yellowLedOff()"
+        self.writeFunction.value = "if (value) yellowLedOn(); else yellowLedOff()"
+
 class DigitalOutputAct(SealActuator):
     def __init__(self):
         super(DigitalOutputAct, self).__init__("DigitalOut")
