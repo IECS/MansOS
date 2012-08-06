@@ -36,6 +36,7 @@ SLEEP_TIMER_INTERRUPT()
     if (!SLEEP_TIMER_EXPIRED()) return;
 
     // restart alarm interrupts
+    RESET_ALARM_TIMER();
     ENABLE_ALARM_INTERRUPT();
 
     // sleep timer should not automatically restart
