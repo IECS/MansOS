@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -22,7 +22,11 @@
  */
 
 //
-// Distance-vector routing, mote side algorithm
+// SAD routing, collector functionality
+//
+
+//
+// TODO: turn on/off listening
 //
 
 #include "../mac.h"
@@ -35,40 +39,78 @@
 #include <lib/random.h>
 #include <net/net-stats.h>
 
+typedef struct MoteInfo_s {
+    MosShortAddr address;
+    uint32_t lastSeen;
+} MoteInfo_t;
+
+static MoteInfo_t motes[MAX_MOTES];
+
 static Socket_t roSocket;
 static Alarm_t roForwardTimer;
+static Alarm_t roOutOfOrderForwardTimer;
 static Alarm_t roRequestTimer;
+static Alarm_t roStartListeningTimer;
+static Alarm_t roStopListeningTimer;
 
-#if MULTIHOP_FORWARDER
 static void roForwardTimerCb(void *);
-#endif
+static void roOutOfOrderForwardTimerCb(void *);
 static void roRequestTimerCb(void *);
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len);
 
 static Seqnum_t lastSeenSeqnum;
-static uint16_t hopCountToRoot = MAX_HOP_COUNT;
+static uint8_t hopCountToRoot = MAX_HOP_COUNT;
 static uint32_t lastRootMessageTime = (uint32_t) -ROUTING_INFO_VALID_TIME;
 static MosShortAddr nexthopToRoot;
 MosShortAddr rootAddress;
 int32_t rootClockDelta;
 
+static void roStartListeningTimerCb(void *);
+static void roStopListeningTimerCb(void *);
+
+static uint8_t gotRreq = 0xff;
+
 // -----------------------------------------------
-
-static void markForwardTimerActive(uint16_t times)
-{
-    roForwardTimer.data = (void *) times;
-}
-
-#if MULTIHOP_FORWARDER
-static bool isForwardTimerActive(void)
-{
-    return (bool) roForwardTimer.data;
-}
-#endif
 
 static inline bool isRoutingInfoValid(void)
 {
-    return timeAfter32(lastRootMessageTime + ROUTING_INFO_VALID_TIME, (uint32_t)getJiffies());
+    if (hopCountToRoot >= MAX_HOP_COUNT) return false;
+    bool old = timeAfter32((uint32_t)getJiffies(), lastRootMessageTime + ROUTING_INFO_VALID_TIME);
+    if (old) {
+        hopCountToRoot = MAX_HOP_COUNT;
+        return false;
+    }
+    return true;
+}
+
+static uint32_t calcListenStartTime(void)
+{
+    // at start of frame
+    return SAD_SUPERFRAME_LENGTH - getFixedTime() % SAD_SUPERFRAME_LENGTH;
+}
+
+static uint32_t calcNextForwardTime(uint8_t moteProcessed)
+{
+    uint32_t t = getFixedTime() % SAD_SUPERFRAME_LENGTH;
+    if (moteProcessed == MAX_MOTES - 1) {
+        t = SAD_SUPERFRAME_LENGTH - t;
+        // leave 5 seconds for fwd stage
+        t += 5000;
+        // add random jitter
+        t += randomNumberBounded(1000);
+    } else {
+        uint32_t n = 5000; // 5 seconds for fwd stage
+        // one second for each mote
+        n += 1000 * moteProcessed;
+        // add random jitter
+        n += randomNumberBounded(1000);
+        if (n > t) {
+            t = n - t;
+        } else {
+            t = 0;
+        }
+    }
+    return t;
 }
 
 void initRouting(void)
@@ -77,58 +119,129 @@ void initRouting(void)
     socketBind(&roSocket, ROUTING_PROTOCOL_PORT);
     socketSetDstAddress(&roSocket, MOS_ADDR_BROADCAST);
 
-#if MULTIHOP_FORWARDER
     alarmInit(&roForwardTimer, roForwardTimerCb, NULL);
-#endif
+    alarmInit(&roOutOfOrderForwardTimer, roOutOfOrderForwardTimerCb, NULL);
     alarmInit(&roRequestTimer, roRequestTimerCb, NULL);
+    alarmInit(&roStopListeningTimer, roStopListeningTimerCb, NULL);
+    alarmInit(&roStartListeningTimer, roStartListeningTimerCb, NULL);
     alarmSchedule(&roRequestTimer, randomInRange(2000, 3000));
+    alarmSchedule(&roForwardTimer, calcNextForwardTime(0));
+    alarmSchedule(&roStartListeningTimer, 110);
 }
 
-#if MULTIHOP_FORWARDER
-static void roForwardTimerCb(void *x)
+static void roStartListeningTimerCb(void *x)
 {
-    if (hopCountToRoot >= MAX_HOP_COUNT) return;
+    PRINTF("start listening time slot, jiffies=%lu\n", getFixedTime());
+    alarmSchedule(&roStartListeningTimer, calcListenStartTime());
 
-    PRINT("forward routing packet\n");
+    radioOn();
+    alarmSchedule(&roStopListeningTimer, 5000 + 1000 * MAX_MOTES);
+}
+
+static void roStopListeningTimerCb(void *x)
+{
+    RADIO_OFF_ENERGSAVE();
+}
+
+static void forwardRoutingInfo(uint8_t moteNumber) {
+    PRINTF("forward routing packet to mote %u\n", moteNumber);
 
     RoutingInfoPacket_t routingInfo;
     routingInfo.packetType = ROUTING_INFORMATION;
-    routingInfo.__reserved = 0;
+    routingInfo.senderType = SENDER_COLLECTOR;
     routingInfo.rootAddress = rootAddress;
     routingInfo.hopCount = hopCountToRoot + 1;
     routingInfo.seqnum = lastSeenSeqnum;
     routingInfo.rootClock = getJiffies() + rootClockDelta;
-    routingInfo.moteNumber = 0;
+    routingInfo.moteNumber = moteNumber;
 
     // XXX: INC_NETSTAT(NETSTAT_PACKETS_SENT, EMPTY_ADDR);
     socketSend(&roSocket, &routingInfo, sizeof(routingInfo));
-
-    uint16_t timesLeft = (uint16_t)roForwardTimer.data;
-    --timesLeft;
-    markForwardTimerActive(timesLeft);
-    if (timesLeft) {
-        // reschedule alarm
-        alarmSchedule(&roForwardTimer, randomInRange(100, 300));
-    }
 }
-#endif
+
+static void roForwardTimerCb(void *x)
+{
+    static uint8_t moteToProcess;
+
+    bool roOK = isRoutingInfoValid();
+
+    PRINTF("roForwardTimerCb, roOK=%d\n", (int) roOK);
+
+    if (motes[moteToProcess].address != 0
+            && timeAfter32(motes[moteToProcess].lastSeen + MOTE_INFO_VALID_TIME, (uint32_t)getJiffies())
+            && hopCountToRoot < MAX_HOP_COUNT
+            && roOK) {
+        forwardRoutingInfo(moteToProcess);
+    }
+        
+    alarmSchedule(&roForwardTimer, calcNextForwardTime(moteToProcess));
+
+    moteToProcess++;
+    if (moteToProcess == MAX_MOTES) moteToProcess = 0;
+}
+
+static void roOutOfOrderForwardTimerCb(void *x)
+{
+    if (hopCountToRoot < MAX_HOP_COUNT && isRoutingInfoValid()) {
+        forwardRoutingInfo(gotRreq);
+    }
+    gotRreq = 0xff;
+}
 
 static void roRequestTimerCb(void *x)
 {
-    if (isRoutingInfoValid()) return;
+    alarmSchedule(&roRequestTimer, ROUTING_REQUEST_TIMEOUT + randomNumberBounded(1000));
 
-    // PRINT("send routing request\n");
+    if (isRoutingInfoValid()) {
+        return;
+    }
+
+    PRINT("send routing request\n");
+
+    radioOn(); // wait for response
 
     RoutingRequestPacket_t req;
     req.packetType = ROUTING_REQUEST;
-    req.__reserved = 0;
+    req.senderType = SENDER_COLLECTOR;
     socketSend(&roSocket, &req, sizeof(req));
-    markForwardTimerActive(0);
+
+    alarmSchedule(&roStopListeningTimer, ROUTING_REPLY_WAIT_TIMEOUT);
+}
+
+static void recvRreq(MosShortAddr address)
+{
+    // MOTE_INFO_VALID_TIME - ?
+    uint16_t i;
+    for (i = 0; i < MAX_MOTES; ++i) {
+        if (motes[i].address == address) {
+            break;
+        }
+    }
+    if (i == MAX_MOTES) {
+        uint32_t now = getJiffies();
+        for (i = 0; i < MAX_MOTES; ++i) {
+            if (motes[i].address == 0
+                    || timeAfter32(motes[i].lastSeen + MOTE_INFO_VALID_TIME, now)) {
+                break;
+            }
+        }
+        if (i == MAX_MOTES) {
+            PRINT("recv rreq: no more space!\n");
+            return;
+        }
+        motes[i].address = address;
+        motes[i].lastSeen = now;
+    }
+    if (gotRreq == 0xff) {
+        gotRreq = i;
+        alarmSchedule(&roOutOfOrderForwardTimer, randomInRange(100, 400));
+    }
 }
 
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 {
-    // PRINTF("routingReceive %d bytes\n", len);
+    PRINTF("routingReceive %d bytes from %#04x\n", len,
+            s->recvMacInfo->originalSrc.shortAddr);
 
     if (len == 0) {
         PRINT("routingReceive: no data!\n");
@@ -144,14 +257,11 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
     PRINTF("Got routing info from the nexthop\n");
 #endif
 
-    uint8_t type = *data;
+    uint8_t type = data[0];
     if (type == ROUTING_REQUEST) {
-#if MULTIHOP_FORWARDER
-        if (!isForwardTimerActive()) {
-            markForwardTimerActive(1);
-            alarmSchedule(&roForwardTimer, randomInRange(1000, 3000));
-        }
-#endif
+        uint8_t senderType = data[1];
+        if (senderType != SENDER_MOTE) return;
+        recvRreq(s->recvMacInfo->originalSrc.shortAddr);
         return;
     }
 
@@ -187,12 +297,6 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         nexthopToRoot = s->recvMacInfo->originalSrc.shortAddr;
         lastSeenSeqnum = ri.seqnum;
         hopCountToRoot = ri.hopCount;
-#if MULTIHOP_FORWARDER
-        if (!isForwardTimerActive()) {
-            markForwardTimerActive(1);
-            alarmSchedule(&roForwardTimer, randomInRange(1000, 3000));
-        }
-#endif
         lastRootMessageTime = getJiffies();
         rootClockDelta = (int32_t)(ri.rootClock - getJiffies());
     }
@@ -238,7 +342,6 @@ RoutingDecision_e routePacket(MacInfo_t *info)
         return RD_DROP;
     }
 
-#if MULTIHOP_FORWARDER
     if (dst->shortAddr == rootAddress) {
         if (isRoutingInfoValid()) {
             //PRINTF("using 0x%04x as nexthop to root\n", nexthopToRoot);
@@ -268,7 +371,6 @@ RoutingDecision_e routePacket(MacInfo_t *info)
             return RD_DROP;
         }
     }
-#endif
 
     if (IS_LOCAL(info)) {
         //INC_NETSTAT(NETSTAT_PACKETS_SENT, dst->shortAddr);        // Done @ comm.c

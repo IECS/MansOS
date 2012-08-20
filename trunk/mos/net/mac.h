@@ -35,10 +35,7 @@
 #define MAC_PROTOCOL_NULL 1
 #define MAC_PROTOCOL_CSMA 2
 #define MAC_PROTOCOL_CSMA_ACK 3
-
-// bool isLocallyOriginated;
-// bool more;
-// bool ackRequested;
+#define MAC_PROTOCOL_SAD 4
 
 #define MI_FLAG_LOCALLY_ORIGINATED  0x1
 #define MI_FLAG_MORE_DATA           0x2
@@ -58,9 +55,14 @@ typedef struct MacInfo_s {
     uint8_t flags;
     uint8_t *macHeader;
     uint16_t macHeaderLen;
+    uint32_t timeWhenSend;
 } MacInfo_t; 
 
 #define IS_LOCAL(mi) (mi->flags & MI_FLAG_LOCALLY_ORIGINATED)
+
+// return immed dst, if set, and original dst otherwise
+#define getNexthop(mi) \
+    (mi->immedDst.shortAddr ? : mi->originalDst.shortAddr)
 
 typedef void (*RecvFunction)(MacInfo_t *, uint8_t *data, uint16_t len);
 

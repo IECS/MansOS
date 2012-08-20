@@ -83,6 +83,11 @@
 #define bswap_16(x) ((x >> 8) | ((x & 0xff) << 8))
 #endif
 
+#ifndef bswap_32
+#define bswap_32(x) ((x >> 24) | ((x >> 8) & 0xff00) | ((x & 0xff00) << 8) | (x << 24))
+#define bswap_16(x) ((x >> 8) | ((x & 0xff) << 8))
+#endif
+
 // data reading & writing
 
 #define le16read(p)                             \

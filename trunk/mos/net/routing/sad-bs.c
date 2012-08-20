@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -22,7 +22,7 @@
  */
 
 //
-// Distance-vector routing, base station algorithm
+// SAD routing, base station functionality
 //
 
 #include "../mac.h"
@@ -55,6 +55,8 @@ void initRouting(void) {
 
     alarmInit(&roOriginateTimer, roOriginateTimerCb, NULL);
     alarmSchedule(&roOriginateTimer, 500);
+
+    radioOn();
 }
 
 static void roOriginateTimerCb(void *x) {
@@ -62,7 +64,7 @@ static void roOriginateTimerCb(void *x) {
 
     RoutingInfoPacket_t routingInfo;
     routingInfo.packetType = ROUTING_INFORMATION;
-    routingInfo.__reserved = 0;
+    routingInfo.senderType = SENDER_BS;
     routingInfo.rootAddress = localAddress;
     routingInfo.hopCount = 1;
     routingInfo.seqnum = ++mySeqnum;
@@ -89,8 +91,8 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
     uint8_t type = *data;
     if (type == ROUTING_REQUEST) {
         // reschedule the origination timer sooner
-        if (getAlarmTime(&roOriginateTimer) > 200) {
-            alarmSchedule(&roOriginateTimer, 200);
+        if (getAlarmTime(&roOriginateTimer) > 400) {
+            alarmSchedule(&roOriginateTimer, 400);
         }
     }
 }

@@ -44,34 +44,64 @@ enum {
     ROUTING_REQUEST,
 };
 
+enum {
+    SENDER_BS,
+    SENDER_FORWARDER,
+    SENDER_COLLECTOR,
+    SENDER_MOTE,
+};
+
 // routing information, sent out from base station, forwarded by nodes
 struct RoutingInfoPacket_s {
     uint8_t packetType;        // ROUTING_INFORMATION
-    uint8_t __reserved;
+    uint8_t senderType;
     MosShortAddr rootAddress;  // address of the base station / gateway
     uint16_t hopCount;         // distance from root
     Seqnum_t seqnum;           // sequence number
     uint32_t rootClock;        // used for time sync to calculate the delta
+    uint16_t moteNumber;
 } PACKED;
-
 typedef struct RoutingInfoPacket_s RoutingInfoPacket_t;
 
 typedef struct RoutingRequestPacket_s {
     uint8_t packetType;        // ROUTING_REQUEST
-    uint8_t __reserved;
+    uint8_t senderType;
 } RoutingRequestPacket_t;
 
 #define ROUTING_PROTOCOL_PORT  112
 
 #if 0
 #define ROUTING_ORIGINATE_TIMEOUT   (60 * 1000ul)
-#define ROUTING_INFO_VALID_TIME    (180 * 1000ul)
+#define ROUTING_REQUEST_TIMEOUT     (10 * 1000ul)
+#define SAD_SUPERFRAME_LENGTH       (10 * 60 * 1000ul)
+#define ROUTING_INFO_VALID_TIME     (180 * 1000ul)
 #else // for testing
 #define ROUTING_ORIGINATE_TIMEOUT    (5 * 1000ul)
-#define ROUTING_INFO_VALID_TIME     (30 * 1000ul)
+#define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
+#define SAD_SUPERFRAME_LENGTH        (30 * 1000ul)
+#define ROUTING_INFO_VALID_TIME      (70 * 1000ul)
+#endif
+
+#define MOTE_INFO_VALID_TIME         (5 * SAD_SUPERFRAME_LENGTH)
+
+#define ROUTING_REPLY_WAIT_TIMEOUT   500 // ms
+
+// during this time, radio is never turned off on forwarders and collectors
+#define NETWORK_STARTUP_TIME         (2 * 60 * 60) // 2h in seconds
+
+#ifndef MAX_MOTES
+#define MAX_MOTES 20 // max nodes this collector can serve
 #endif
 
 #define MAX_HOP_COUNT 16
+
+#if 1
+// turn off radio, but only after two hours of uninterrupted listening
+#define RADIO_OFF_ENERGSAVE() \
+    if (getUptime() > NETWORK_STARTUP_TIME)) radioOff()
+#else
+#define RADIO_OFF_ENERGSAVE() /* nothing */
+#endif
 
 extern MosShortAddr rootAddress;
 
@@ -84,5 +114,14 @@ extern int32_t rootClockDelta;
 void initRouting(void);
 
 RoutingDecision_e routePacket(MacInfo_t *info);
+
+// static inline ticks_t getFixedTime(void)
+// {
+//     return jiffies + rootClockDelta;
+// }
+
+#define getFixedTime() \
+    (jiffies + rootClockDelta)
+
 
 #endif

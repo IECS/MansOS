@@ -31,7 +31,7 @@
 #include <lib/random.h>
 #include <string.h>
 
-#define RECV 1
+#define RECV 0
 
 void sendCounter(void);
 void recvCounter(void);
@@ -46,6 +46,9 @@ void appMain(void)
             RECV ? "Receiver" : "Sender", localAddress);
 
 #if RECV
+#if PLATFORM_SM3
+	amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, 0x1);
+#endif
     // PRINTF("recvCounter = %p\n", recvCounter);
     radioSetReceiveHandle(recvCounter);
     radioOn();
@@ -62,7 +65,10 @@ void appMain(void)
     }
 #else
 //  radioSetReceiveHandle(radioDiscard);
-//  radioOn();
+    radioOn();
+#if PLATFORM_SM3
+	amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, 0x2);
+#endif
     sendCounter();
 #endif
 }
@@ -106,17 +112,18 @@ void sendCounter(void) {
         10, 11, 12, 13, 14, 15, 16, 17, 18, 19
     };
 
-    radioOn(); // XXX: more stable when radio is on
-
     uint8_t *counter = &sendBuffer[0];
     // memcpy(sendBuffer + 1, &localAddress, 2);
     while (1) {
         // PRINTF("0x%04x: sending counter %i\n", localAddress, *counter);
         redLedOn();
+#if PLATFORM_SM3
+		amb8420SetDstAddress(0x1);
+#endif
         int8_t result = radioSend(sendBuffer, sizeof(sendBuffer));
         if (result != 0) {
             PRINTF("radio send failed\n"); 
-#if PLATFROM_SM3
+#if PLATFORM_SM3
             amb8420Reset();
 #endif
         }

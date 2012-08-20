@@ -44,7 +44,10 @@ static inline uint16_t generateLocalAddress(void)
         result += snum[i];
     }
 
-    // set zero highest bit to zero
+    // XXX: do not allow the result to be 0
+    if (result == 0) result = 0x1;
+
+    // set highest bit to zero
     return result & ~0x8000;
 }
 

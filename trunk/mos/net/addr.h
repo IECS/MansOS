@@ -95,11 +95,14 @@ typedef uint16_t MosShortAddr;
 typedef uint8_t MosLongAddr[MOS_LONG_ADDR_SIZE];
 
 typedef struct MosAddr_s {
+#if SUPPORT_LONG_ADDR
     uint8_t type;
-    // uint8_t __padding;
+#endif
     union {
         MosShortAddr saddr;
+#if SUPPORT_LONG_ADDR
         MosLongAddr laddr;
+#endif
     } u;
 } MosAddr;
 
@@ -118,6 +121,7 @@ extern MosShortAddr localAddress;
 // Functions
 //----------------------------------------------------------
 
+#if SUPPORT_LONG_ADDR
 #define intToAddr(result, ia) do {             \
         result.type = MOS_ADDR_TYPE_SHORT;     \
         result.shortAddr = ia;                 \
@@ -130,5 +134,19 @@ extern MosShortAddr localAddress;
 #define isUnspecified(addr)                    \
     ((addr)->type == MOS_ADDR_TYPE_SHORT       \
             && ((addr)->shortAddr == 0))       \
+
+#else
+
+#define intToAddr(result, ia)                  \
+    result.shortAddr = ia;
+
+#define isBroadcast(addr)                      \
+    ((addr)->shortAddr & 0x8000)
+
+#define isUnspecified(addr)                    \
+    ((addr)->shortAddr == 0)
+
+
+#endif // SUPPORT_LONG_ADDR
 
 #endif

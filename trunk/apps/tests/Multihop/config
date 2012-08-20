@@ -1,0 +1,24 @@
+#
+# Application specific config file
+#
+
+USE_NET=y
+USE_THREADS=y
+
+#CONST_RADIO_CHANNEL=26
+
+CONST_MAC_PROTOCOL=MAC_PROTOCOL_SAD
+CONST_ROUTING_PROTOCOL=ROUTING_PROTOCOL_SAD
+
+# uncomment to compile for base station
+#USE_ROLE_BASE_STATION=y
+# uncomment to compile for forwarder
+#USE_ROLE_FORWARDER=y
+# uncomment to compile for collector
+#USE_ROLE_COLLECTOR=y
+
+#CONST_PRECONFIGURED_NH_TO_ROOT=0x5b5a
+#CONST_PRECONFIGURED_NH_TO_ROOT=0x4e64
+#CONST_PRECONFIGURED_NH_TO_ROOT=0x3c64
+
+#DEBUG=y
