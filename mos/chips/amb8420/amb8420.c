@@ -10,6 +10,8 @@
 #define RADIO_DEBUG 1
 #endif
 
+//#define RADIO_DEBUG 1
+
 #if RADIO_DEBUG
 #include "dprint.h"
 #define RPRINTF(...) PRINTF(__VA_ARGS__)
@@ -24,11 +26,11 @@ static bool isOn;
 static uint8_t rxBuffer[AMB8420_MAX_PACKET_LEN + 1];
 static uint8_t rxCursor;
 
-static uint8_t amb8420OperationMode; // TODO: get rid of
-
 static int8_t lastRssi;
 
-static volatile bool queryRssi;
+static volatile uint8_t commandInProgress;
+
+static AMB8420AddrMode_t currentAddressMode;
 
 static enum {
     STATE_READ_DELIMITER,
@@ -44,7 +46,7 @@ static uint8_t recvLength;
 static void rxPacket(uint8_t checksum)
 {
     int i;
-    // PRINTF("got command %#02x, len %d\n", recvCommand, recvLength);
+    RPRINTF("AMB: command %#02x, len %d\n", recvCommand, recvLength);
     recvState = STATE_READ_DELIMITER;
     // verify checksum
     checksum ^= AMB8420_START_DELIMITER;
@@ -55,7 +57,7 @@ static void rxPacket(uint8_t checksum)
         checksum ^= rxBuffer[i];
     }
     if (checksum) {
-        PRINTF("incorrect checksum %#02x!\n", checksum);
+        RPRINTF("incorrect checksum %#02x!\n", checksum);
         return;
     }
 
@@ -72,8 +74,18 @@ static void rxPacket(uint8_t checksum)
         }
         break;
     case (AMB8420_CMD_RSSI_REQ | AMB8420_REPLY_FLAG):
-        lastRssi = rxBuffer[0];
-        queryRssi = false;
+        if (commandInProgress == AMB8420_CMD_RSSI_REQ) {
+            lastRssi = rxBuffer[0];
+            commandInProgress = 0;
+        }
+        return;
+    case (AMB8420_CMD_SET_REQ |  AMB8420_REPLY_FLAG):
+    case (AMB8420_CMD_SET_DESTADDR_REQ | AMB8420_REPLY_FLAG):
+    case (AMB8420_CMD_SET_DESTNETID_REQ | AMB8420_REPLY_FLAG):
+    case (AMB8420_CMD_SET_CHANNEL_REQ | AMB8420_REPLY_FLAG):
+        if (commandInProgress == (recvCommand & ~AMB8420_REPLY_FLAG)) {
+            commandInProgress = 0;
+        }
         return;
     default:
         return;
@@ -81,7 +93,7 @@ static void rxPacket(uint8_t checksum)
 
 #if USE_THREADS
     // disable Rx interrupts
-    IE1 &= ~URXIE0;
+    USARTDisableRX(AMB8420_UART_ID);
     processFlags.bits.radioProcess = true;
 #else
     if (rxHandle) {
@@ -153,6 +165,10 @@ void amb8420InitUsart(void)
 void amb8420Reset(void)
 {
     bool ok;
+
+    bool wasOn = isOn;
+    if (!wasOn) amb8420On();
+
     pinClear(AMB8420_RESET_PORT, AMB8420_RESET_PIN);
     mdelay(10); // wait for some time
     pinSet(AMB8420_RESET_PORT, AMB8420_RESET_PIN);
@@ -164,12 +180,20 @@ void amb8420Reset(void)
     amb8420InitUsart();
     mdelay(100);
 
-    amb8420OperationMode = AMB8420_TRANSPARENT_MODE;
+    // Switch to command mode (generate falling front)
+    pinClear(AMB8420_CONFIG_PORT, AMB8420_CONFIG_PIN);
+    mdelay(1);
+    pinSet(AMB8420_CONFIG_PORT, AMB8420_CONFIG_PIN);
+
+    // Wait for device to become ready
+    AMB8420_WAIT_FOR_RTS_READY(ok);
+
+    // go to sleep
+    if (!wasOn) amb8420Off();
 }
 
 void amb8420Init(void)
 {
-    bool ok;
     RPRINTF("amb8420Init...\n");
 
     amb8420InitUsart();
@@ -185,62 +209,61 @@ void amb8420Init(void)
     pinSet(AMB8420_CONFIG_PORT, AMB8420_CONFIG_PIN);
     pinClear(AMB8420_DATA_REQUEST_PORT, AMB8420_DATA_REQUEST_PIN);
 
-    // TODO: go to sleep
-    // AMB8420_ENTER_SLEEP_MODE();
-    AMB8420_ENTER_ACTIVE_MODE();
-
-    // pinIntRising(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
-    // pinEnableInt(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
+    // in case interrupts are used (for non-command mode):
+    //pinIntRising(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
+    //pinEnableInt(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
 
     // put the system in reset
     amb8420Reset();
-
-    // Switch to command mode (generate falling front)
-    pinClear(AMB8420_CONFIG_PORT, AMB8420_CONFIG_PIN);
-    mdelay(1);
-    pinSet(AMB8420_CONFIG_PORT, AMB8420_CONFIG_PIN);
-
-    // Wait for device to become ready
-    AMB8420_WAIT_FOR_RTS_READY(ok);
-
+ 
     RPRINTF("..done\n");
 }
 
 void amb8420On(void)
 {
-    RPRINTF("amb842On\n");
     if (!isOn) {
+        RPRINTF("amb842On\n");
         isOn = true;
         AMB8420_ENTER_ACTIVE_MODE();
         // if the waiting fails, will retry next time when "on" is called
         AMB8420_WAIT_FOR_RTS_READY(isOn);
-        // TODO: switch to command mode
     }
 }
 
 void amb8420Off(void)
 {
-    RPRINTF("amb842Off\n");
     if (isOn) {
+        RPRINTF("amb842Off\n");
         isOn = false;
         AMB8420_ENTER_SLEEP_MODE();
-        mdelay(1);
     }
 }
 
 int amb8420Read(void *buf, uint16_t bufsize)
 {
     RPRINTF("amb8420Read\n");
-    if (recvLength > bufsize) {
-        recvLength = bufsize;
-    }
-    memcpy(buf, rxBuffer, recvLength);
+    uint8_t *src = rxBuffer;
     int len = recvLength;
+    switch (currentAddressMode) {
+    case AMB8420_ADDR_MODE_NONE:
+        break;
+    case AMB8420_ADDR_MODE_ADDR:
+        len--; src++;
+        break;
+    case AMB8420_ADDR_MODE_ADDRNET:
+        len -= 2; src += 2;
+        break;
+    }
+
+    if (len > bufsize) len = bufsize;
+    else if (len <= 0) return -1;
+
+    memcpy(buf, src, len);
     rxCursor = 0;
 
 #if USE_THREADS
     // enable Rx interrupts back
-    IE1 |= URXIE0;
+    USARTEnableRX(AMB8420_UART_ID);
 #endif
 
     return len;
@@ -249,7 +272,7 @@ int amb8420Read(void *buf, uint16_t bufsize)
 int amb8420Send(const void *header_, uint16_t headerLen,
                 const void *data_, uint16_t dataLen)
 {
-    RPRINTF("amb8420Send\n");
+    RPRINTF("amb8420Send, size=%u\n", headerLen + dataLen);
 
     int result = -1;
 
@@ -294,78 +317,6 @@ int amb8420Send(const void *header_, uint16_t headerLen,
     return result;
 }
 
-// void amb8420SetCb()
-// {
-//     //0x02 0x49 0x01 < status > < CS >
-//     PRINTF("amb8420 set answer: ");
-//     debugHexdump(rxBuffer, rxCursor);
-//     rxCursor = 0;
-// }
-
-// int amb8420Set(uint8_t len, uint8_t* data, uint8_t position)
-// {
-//     if (amb8420OperationMode == AMB8420_TRANSPARENT_MODE) {
-//         return -1;
-//     }
-//     bool ok;
-//     AMB8420RxHandle old = amb8420SetReceiver(amb8420SetCb);
-//     uint8_t crc = 0x02 ^ 0x09, i;
-//     // Wait for device to become ready
-//     AMB8420_WAIT_FOR_RTS_READY(ok);
-//     if (!ok) goto end;
-//     USARTSendByte(AMB8420_UART_ID, 0x02);
-//     USARTSendByte(AMB8420_UART_ID, 0x09);
-//     USARTSendByte(AMB8420_UART_ID, len + 2);
-//     USARTSendByte(AMB8420_UART_ID, position);
-//     USARTSendByte(AMB8420_UART_ID, len);
-//     crc ^= (len + 2) ^ position ^ len;
-//     for (i = 0; i < len; i++)
-//     {
-//         USARTSendByte(AMB8420_UART_ID, data[i]);
-//         crc ^= data[i];
-//     }
-//     USARTSendByte(AMB8420_UART_ID, crc);
-
-//     // Wait for device to become ready
-//     AMB8420_WAIT_FOR_RTS_READY(ok);
-//   end:
-//     amb8420SetReceiver(old);
-//     return ok ? 0 : -1;
-// }
-
-// void amb8420GetCb(void)
-// {
-//     PRINTF("amb8420 set answer: ");
-//     //0x02 0x4A < number of bytes + 2 > < memory position > < number of bytes >
-//     //< parameter > < CS >
-//     debugHexdump(rxBuffer, rxCursor);
-//     rxCursor = 0;
-// }
-
-// int amb8420Get(uint8_t memoryPosition, uint8_t numberOfBytes)
-// {
-//     if (amb8420OperationMode == AMB8420_TRANSPARENT_MODE) {
-//         return -1;
-//     }
-//     bool ok;
-//     AMB8420RxHandle old = amb8420SetReceiver(amb8420GetCb);
-//     // Wait for device to become ready
-//     AMB8420_WAIT_FOR_RTS_READY(ok);
-//     if (!ok) goto end;
-//     USARTSendByte(AMB8420_UART_ID, 0x02);
-//     USARTSendByte(AMB8420_UART_ID, 0x0A);
-//     USARTSendByte(AMB8420_UART_ID, 0x02);
-//     USARTSendByte(AMB8420_UART_ID, memoryPosition);
-//     USARTSendByte(AMB8420_UART_ID, numberOfBytes);
-//     USARTSendByte(AMB8420_UART_ID, 0x02 ^ 0x0A ^ 0x02 ^ memoryPosition ^ numberOfBytes);
-
-//     // Wait for device to become ready
-//     AMB8420_WAIT_FOR_RTS_READY(ok);
-//   end:
-//     amb8420SetReceiver(old);
-//     return 0;
-// }
-
 void amb8420Discard(void)
 {
     rxCursor = 0;
@@ -378,12 +329,84 @@ AMB8420RxHandle amb8420SetReceiver(AMB8420RxHandle handle)
     return old;
 }
 
+static int amb8420Set(uint8_t position, uint8_t len, uint8_t *data)
+{
+    bool ok;
+    uint8_t crc, i;
+    Handle_t handle;
+
+    // Wait for device to become ready
+    AMB8420_WAIT_FOR_RTS_READY(ok);
+    if (!ok) goto end;
+
+    commandInProgress = AMB8420_CMD_SET_REQ;
+
+    USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
+    USARTSendByte(AMB8420_UART_ID, AMB8420_CMD_SET_REQ);
+    USARTSendByte(AMB8420_UART_ID, len + 2);
+    USARTSendByte(AMB8420_UART_ID, position);
+    USARTSendByte(AMB8420_UART_ID, len);
+    crc = AMB8420_START_DELIMITER ^ AMB8420_CMD_SET_REQ
+            ^ (len + 2) ^ position ^ len;
+    for (i = 0; i < len; i++) {
+        USARTSendByte(AMB8420_UART_ID, data[i]);
+        crc ^= data[i];
+    }
+    USARTSendByte(AMB8420_UART_ID, crc);
+
+    // wait for reply
+    INTERRUPT_ENABLED_START(handle);
+    while (commandInProgress);
+    INTERRUPT_ENABLED_END(handle);
+
+    // Wait for device to become ready
+    AMB8420_WAIT_FOR_RTS_READY(ok);
+  end:
+    return ok ? 0 : -1;
+}
+
+static inline int amb8420Set1b(uint8_t position, uint8_t variable)
+{
+    return amb8420Set(position, 1, &variable);
+}
+
 void amb8420SetChannel(int channel)
 {
+    bool ok;
+    Handle_t handle;
+
+    channel &= 0xff; // one byte channels only
+    RPRINTF("set channel to %d\n", channel);
+
+    // Wait for device to become ready
+    AMB8420_WAIT_FOR_RTS_READY(ok);
+    if (!ok) goto end;
+
+    commandInProgress = AMB8420_CMD_SET_CHANNEL_REQ;
+
+    USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
+    USARTSendByte(AMB8420_UART_ID, AMB8420_CMD_SET_CHANNEL_REQ);
+    USARTSendByte(AMB8420_UART_ID, 0x1);
+    USARTSendByte(AMB8420_UART_ID, channel);
+    USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER
+            ^ AMB8420_CMD_SET_CHANNEL_REQ ^ 0x1 ^ channel);
+
+    // wait for reply
+    INTERRUPT_ENABLED_START(handle);
+    while (commandInProgress);
+    INTERRUPT_ENABLED_END(handle);
+
+    // Wait for device to become ready
+    AMB8420_WAIT_FOR_RTS_READY(ok);
+  end:
+    return;
 }
 
 void amb8420SetTxPower(uint8_t power)
 {
+    RPRINTF("set tx power to %d\n", power);
+    amb8420Set1b(PHY_DEFAULT_CHANNEL_POS, power);
+    amb8420Reset();
 }
 
 int8_t amb8420GetLastRSSI(void)
@@ -393,6 +416,7 @@ int8_t amb8420GetLastRSSI(void)
 
 uint8_t amb8420GetLastLQI(void)
 {
+    // not implemented in hardware
     return 0;
 }
 
@@ -400,37 +424,96 @@ int amb8420GetRSSI(void)
 {
     int result = 0;
     bool ok;
+    Handle_t handle;
 
     // Wait for device to become ready
     AMB8420_WAIT_FOR_RTS_READY(ok);
     if (!ok) goto end;
 
-    queryRssi = true;
+    commandInProgress = AMB8420_CMD_RSSI_REQ;
 
     USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
     USARTSendByte(AMB8420_UART_ID, AMB8420_CMD_RSSI_REQ);
     USARTSendByte(AMB8420_UART_ID, 0x00);
     USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER ^ AMB8420_CMD_RSSI_REQ);
 
-     // Wait for device to become ready
-     AMB8420_WAIT_FOR_RTS_READY(ok);
-     if (!ok) goto end;
+    // if this code is executed with interrupts disabled,
+    // the rx callback will never be called. so make sure
+    // interrupts are on.
+    INTERRUPT_ENABLED_START(handle);
 
-     ENABLE_INTS(); // nested interupts
+    // wait for reply
+    while (commandInProgress);
+    result = lastRssi;
 
-     while (queryRssi) {
-         // PRINT("wait for rssi...\n");
-         mdelay(10);
-     }
+    // disable interrups, if required
+    INTERRUPT_ENABLED_END(handle);
 
-     result = lastRssi;
-
+    // Wait for device to become ready
+    AMB8420_WAIT_FOR_RTS_READY(ok);
   end:
     return result;
 }
 
 bool amb8420IsChannelClear(void)
 {
+    return true;
+}
+
+int amb8420EnterAddressingMode(AMB8420AddrMode_t mode, uint8_t srcAddress)
+{
+    RPRINTF("set src addr to %#02x\n", srcAddress);
+
+    amb8420Set1b(MAC_ADDR_MODE_POS, mode);
+    switch (mode) {
+    case AMB8420_ADDR_MODE_NONE:
+        amb8420Set1b(MAC_NUM_RETRYS_POS, 0);
+        break;
+    case AMB8420_ADDR_MODE_ADDR:
+        amb8420Set1b(MAC_NUM_RETRYS_POS, 2);
+        amb8420Set1b(MAC_SRC_ADDR_POS, srcAddress);
+        break;
+    case AMB8420_ADDR_MODE_ADDRNET:
+        break; // not yet
+    }
+
+    amb8420Set1b(MAC_DST_ADDR_POS, 0xff); // XXX
+
+    amb8420Reset();
+    currentAddressMode = mode;
     return 0;
 }
 
+int amb8420SetDstAddress(uint8_t dstAddress)
+{
+    bool ok;
+    Handle_t handle;
+
+    RPRINTF("set dst addr to %#02x\n", dstAddress);
+
+    // better be safe than sorry - treat 0 as broadcast too
+    if (dstAddress == 0) dstAddress = 0xff;
+
+    // Wait for device to become ready
+    AMB8420_WAIT_FOR_RTS_READY(ok);
+    if (!ok) goto end;
+
+    commandInProgress = AMB8420_CMD_SET_DESTADDR_REQ;
+
+    USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
+    USARTSendByte(AMB8420_UART_ID, AMB8420_CMD_SET_DESTADDR_REQ);
+    USARTSendByte(AMB8420_UART_ID, 0x1);
+    USARTSendByte(AMB8420_UART_ID, dstAddress);
+    USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER
+            ^ AMB8420_CMD_SET_DESTADDR_REQ ^ 0x1 ^ dstAddress);
+
+    // wait for reply
+    INTERRUPT_ENABLED_START(handle);
+    while (commandInProgress);
+    INTERRUPT_ENABLED_END(handle);
+
+    // Wait for device to become ready
+    AMB8420_WAIT_FOR_RTS_READY(ok);
+  end:
+    return ok ? 0 : -1;
+}

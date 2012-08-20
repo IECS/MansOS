@@ -97,6 +97,17 @@
         SET_INTERRUPT_STATUS(handle);           \
     } while (0);
 
+#define INTERRUPT_ENABLED_START(handle) do {    \
+        GET_INTERRUPT_STATUS(handle);           \
+        ENABLE_INTS();                          \
+        MEMORY_BARRIER();                       \
+    } while (0)
+
+#define INTERRUPT_ENABLED_END(handle) do {      \
+        MEMORY_BARRIER();                       \
+        SET_INTERRUPT_STATUS(handle);           \
+    } while (0);
+
 // structure for saving state of all interrupts
 typedef struct Msp430InterruptContext {
     Handle_t interruptBit;

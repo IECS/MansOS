@@ -36,7 +36,7 @@ static Mutex_t macMutex;
 static uint8_t headerBuffer[MAX_MAC_HEADER_LEN]; // XXX: watch out for size
 
 int8_t macSend(MosAddr *dst, const uint8_t *data, uint16_t length) {
-    MacInfo_t mi;
+    static MacInfo_t mi;
     memset(&mi, 0, sizeof(mi));
     fillLocalAddress(&mi.originalSrc);
     if (dst) {
@@ -84,6 +84,7 @@ bool defaultBuildHeader(MacInfo_t *mi, uint8_t **header /* out */,
         ++p;
 //    }
 
+#if SUPPORT_LONG_ADDR
     if (mi->originalSrc.type == MOS_ADDR_TYPE_SHORT) {
         fcf1 += FCF_SRC_ADDR_SHORT;
         putU16(p, htons(mi->originalSrc.shortAddr));
@@ -105,6 +106,16 @@ bool defaultBuildHeader(MacInfo_t *mi, uint8_t **header /* out */,
     }
     if (mi->immedDst.type != MOS_ADDR_TYPE_SHORT
             || mi->immedSrc.type != MOS_ADDR_TYPE_SHORT) return false;
+#else
+    // src
+    fcf1 += FCF_SRC_ADDR_SHORT;
+    putU16(p, htons(mi->originalSrc.shortAddr));
+    p += MOS_SHORT_ADDR_SIZE;
+    // dst
+    fcf1 += FCF_DST_ADDR_SHORT;
+    putU16(p, htons(mi->originalDst.shortAddr));
+    p += MOS_SHORT_ADDR_SIZE;
+#endif
     if (mi->immedSrc.shortAddr) {
         fcf1 |= FCF_IMMED_SRC;
         putU16(p, htons(mi->immedSrc.shortAddr));
@@ -204,30 +215,38 @@ uint8_t *defaultParseHeader(uint8_t *data, uint16_t length, MacInfo_t *mi /* out
     case FCF_SRC_ADDR_NONE:
         break;
     case FCF_SRC_ADDR_SHORT:
+#if SUPPORT_LONG_ADDR
         mi->originalSrc.type = MOS_ADDR_TYPE_SHORT;
+#endif
         mi->originalSrc.shortAddr = ntohs(getU16(p));
         p += MOS_SHORT_ADDR_SIZE;
         break;
+#if SUPPORT_LONG_ADDR
     case FCF_SRC_ADDR_LONG:
         mi->originalSrc.type = MOS_ADDR_TYPE_LONG;
         memcpy(mi->originalSrc.longAddr, p, MOS_LONG_ADDR_SIZE);
         p += MOS_LONG_ADDR_SIZE;
         break;
+#endif
     }
 
     switch ((fcf1 & 0x7) / 3 * 3) {
     case FCF_DST_ADDR_NONE:
         break;
     case FCF_DST_ADDR_SHORT:
+#if SUPPORT_LONG_ADDR
         mi->originalDst.type = MOS_ADDR_TYPE_SHORT;
+#endif
         mi->originalDst.shortAddr = ntohs(getU16(p));
         p += MOS_SHORT_ADDR_SIZE;
         break;
+#if SUPPORT_LONG_ADDR
     case FCF_DST_ADDR_LONG:
         mi->originalDst.type = MOS_ADDR_TYPE_LONG;
         memcpy(mi->originalDst.longAddr, p, MOS_LONG_ADDR_SIZE);
         p += MOS_LONG_ADDR_SIZE;
         break;
+#endif
     }
 
     if (fcf1 & FCF_IMMED_SRC) {

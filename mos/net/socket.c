@@ -68,7 +68,7 @@ void socketInputData(MacInfo_t *macInfo, void *data, uint16_t len) {
     Socket_t *catchall;
     Socket_t *t;
 
-    //PRINT("socketInputData\n");
+    PRINTF("socketInputData, port=%u\n", macInfo->dstPort);
 
     s = NULL;
     catchall = NULL;

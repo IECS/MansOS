@@ -53,6 +53,26 @@
 
 #define AMB8420_START_DELIMITER       0x02
 
+// nonvolatile variable positions in memory
+#define MAC_NUM_RETRYS_POS            20
+#define MAC_ADDR_MODE_POS             21
+#define MAC_DST_NETID_POS             24
+#define MAC_DST_ADDR_POS              25
+#define MAC_SRC_NETID_POS             28
+#define MAC_SRC_ADDR_POS              29
+#define MAC_ACK_TIMEOUT_POS           32
+
+#define PHY_PA_POWER_POS              41
+#define PHY_DEFAULT_CHANNEL_POS       42
+#define PHY_CCA_LEVEL_POS             43
+
+// addressing modes
+typedef enum {
+    AMB8420_ADDR_MODE_NONE    = 0, // no address
+    AMB8420_ADDR_MODE_ADDR    = 1, // 1 byte address
+    AMB8420_ADDR_MODE_ADDRNET = 2, // 1 byte addr, 1 byte net
+} AMB8420AddrMode_t;
+
 #define RTS_WAIT_TIMEOUT_TICKS        TIMER_100_MS
 
 #define AMB8420_WAIT_FOR_RTS_READY(ok) \
@@ -89,14 +109,6 @@ int amb8420Read(void *buf, uint16_t bufsize);
 int amb8420Send(const void *header, uint16_t headerLen,
                  const void *data, uint16_t dataLen);
 
-uint8_t amb8420GetXor(uint8_t len, uint8_t* data);
-void amb8420ChangeModeCb();
-void amb8420ChangeMode();
-void amb8420SetCb();
-int amb8420Set(uint8_t len, uint8_t* data, uint8_t position);
-void amb8420GetCb();
-int amb8420Get(uint8_t memoryPosition, uint8_t numberOfBytes);
-
 void amb8420Discard(void);
 
 // set receive callback
@@ -124,5 +136,9 @@ bool amb8420IsChannelClear(void);
 void amb8420InitUsart(void);
 
 void amb8420Reset(void);
+
+int amb8420EnterAddressingMode(AMB8420AddrMode_t, uint8_t srcAddress);
+
+int amb8420SetDstAddress(uint8_t dstAddress);
 
 #endif

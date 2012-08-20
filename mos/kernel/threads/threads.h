@@ -40,7 +40,7 @@
 #if PLATFORM_FARMMOTE
 #define THREAD_STACK_SIZE 128
 #else
-#define THREAD_STACK_SIZE 256
+#define THREAD_STACK_SIZE 512
 #endif
 
 #if DEBUG

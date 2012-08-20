@@ -48,6 +48,7 @@ void initComm(void) {
 }
 
 void fillLocalAddress(MosAddr *result) {
+#if SUPPORT_LONG_ADDR
     if (localAddress) {
         result->type = MOS_ADDR_TYPE_SHORT;
         result->shortAddr = localAddress;
@@ -55,9 +56,13 @@ void fillLocalAddress(MosAddr *result) {
         result->type = MOS_ADDR_TYPE_LONG;
         halGetSerialNumber(result->longAddr);
     }
+#else
+    result->shortAddr = localAddress;
+#endif
 }
 
 bool isLocalAddress(MosAddr *addr) {
+#if SUPPORT_LONG_ADDR
     switch (addr->type) {
     case MOS_ADDR_TYPE_SHORT:
         return addr->shortAddr == localAddress;
@@ -66,6 +71,9 @@ bool isLocalAddress(MosAddr *addr) {
     default:
         return false;
     }
+#else
+    return addr->shortAddr == localAddress;
+#endif
 }
 
 #define NUM_SENDERS 10
