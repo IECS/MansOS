@@ -95,12 +95,14 @@ typedef struct RoutingRequestPacket_s {
 
 #define MAX_HOP_COUNT 16
 
-#if 1
+#if USE_ROLE_FORWARDER || USE_ROLE_COLLECTOR
 // turn off radio, but only after two hours of uninterrupted listening
 #define RADIO_OFF_ENERGSAVE() \
     if (getUptime() > NETWORK_STARTUP_TIME)) radioOff()
 #else
-#define RADIO_OFF_ENERGSAVE() /* nothing */
+// on mote: always turn off radio
+#define RADIO_OFF_ENERGSAVE() \
+    radioOff()
 #endif
 
 extern MosShortAddr rootAddress;

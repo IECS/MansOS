@@ -131,3 +131,8 @@ ifeq ($(USE_REPROGRAMMING),y)
     USE_WATCHDOG=y
     USE_SERIAL_NUMBER=y
 endif
+
+# network protocol roles
+USE_ROLE_BASE_STATION ?= n
+USE_ROLE_FORWARDER ?= n
+USE_ROLE_COLLECTOR ?= n
