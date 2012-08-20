@@ -30,6 +30,7 @@
 #include "extflash.h"
 #include "timers.h"
 #include <string.h>
+#include <hil/blink.h>
 #include <lib/assert.h>
 
 // Write <BYTE_COUNT> bytes to external flash memory, starting at
@@ -163,4 +164,5 @@ void appMain(void)
 #endif
 
     redLedOff();
+    blink(1000, 100);
 }
