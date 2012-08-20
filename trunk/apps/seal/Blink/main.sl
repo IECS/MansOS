@@ -1,3 +1,3 @@
 
 // blink a LED periodically
-use Led, period 1s;
+use Led, period 1000ms;

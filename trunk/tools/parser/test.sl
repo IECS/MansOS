@@ -23,19 +23,36 @@
 // // use a custom data collector component
 // //output TunnelDataCollector, interval reportInterval;
 
-pattern OnPattern (1, 1, 1, 1, 1, 1, 1, 1);
-pattern OffPattern (0, 0, 0, 0, 0, 0, 0, 0);
+// pattern OnPattern (1, 1, 1, 1, 1, 1, 1, 1);
+// pattern OffPattern (0, 0, 0, 0, 0, 0, 0, 0);
 
-define MyInput DigitalIn, port 2, pin 4, interrupt, risingEdge, interruptPort 2, interruptPin 0;
-define MyOutput DigitalOut, port 2, pin 5;
+// define MyInput DigitalIn, port 2, pin 4, interrupt, risingEdge, interruptPort 2, interruptPin 0;
+// define MyOutput DigitalOut, port 2, pin 5;
 
-use MyOutput, on; // by default on
+// use MyOutput, on; // by default on
 
-when match(MyInput, OffPattern):
-   // turn off
-   use MyOutput, off;
+// when match(MyInput, OffPattern):
+//    // turn off
+//    use MyOutput, off;
+// end
+// when match(MyInput, OnPattern):
+//    // turn on
+//    use MyOutput, on;
+// end
+
+
+
+const ACCEL_Z 2; // channel number
+
+const THRESHOLD 50;
+
+define AccelZ AnalogIn, channel ACCEL_Z;
+define Deviation stdev(take(AccelZ, 10));
+
+when Deviation > THRESHOLD:
+   use RedLed, on;
+   use Beeper, on, duration 200, frequency 1000;
+else:
+   use RedLed, off;
 end
-when match(MyInput, OnPattern):
-   // turn on
-   use MyOutput, on;
-end
+

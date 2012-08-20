@@ -36,18 +36,28 @@ void appMain(void)
 {
     uint16_t i;
 
-    beeperInit();
+    // beeperBeep(1000);
 
-    beeperBeep(1000);
-    
-    mdelay(100);
+    // mdelay(100);
 
-    beeperBeepEx(1000, 4000);
+    // beeperBeepEx(1000, 500);
 
-    mdelay(100);
+    // mdelay(100);
 
-    for (i = 0; i < 100; ++i) {
-        beeperToggle();
-        udelay(100);
-    }
+    // for (i = 0; i < 100; ++i) {
+    //     beeperToggle();
+    //     udelay(100);
+    // }
+
+    beeperBeepEx(1000, 20000);
+    mdelay(1000);
+    beeperBeepEx(1000, 10000);
+    mdelay(1000);
+    beeperBeepEx(1000, 1000);
+    mdelay(1000);
+    beeperBeepEx(1000, 500);
+    mdelay(1000);
+    beeperBeepEx(1000, 100);
+    mdelay(1000);
+    beeperBeepEx(1000, 50);
 }

@@ -119,6 +119,8 @@ void appMain(void)
     }
 
     if (status) {
+        blink(1000, 1000);
+    } else {
         blink(1000, 100);
     }
 
@@ -126,7 +128,7 @@ void appMain(void)
 
 //    blink(3, 100);
 
-    blink(1000, 1000);
+    blink(100, 100);
 
     // mdelay(2000);
     // panic();
