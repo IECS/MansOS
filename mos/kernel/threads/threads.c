@@ -170,6 +170,11 @@ void threadWakeup(uint16_t threadIndex, ThreadState_t newState)
         nextThread = tmpThread;                                         \
         break;                                                          \
     case THREAD_SLEEPING:                                               \
+        if (!timeAfter32(tmpThread->sleepEndTime, now)) {               \
+            tmpThread->state = THREAD_READY;                            \
+            nextThread = tmpThread;                                     \
+            break;                                                      \
+        }                                                               \
         if (currentThread->state < THREAD_SLEEPING) {                   \
             nextThread = tmpThread;                                     \
             break;                                                      \
@@ -179,9 +184,6 @@ void threadWakeup(uint16_t threadIndex, ThreadState_t newState)
         }                                                               \
         if (timeAfter32(nextThread->sleepEndTime, tmpThread->sleepEndTime)) { \
             nextThread = tmpThread;                                     \
-            if (!timeAfter32(tmpThread->sleepEndTime, now)) {           \
-                nextThread->state = THREAD_READY;                       \
-            }                                                           \
         }                                                               \
     default:                                                            \
         break;                                                          \

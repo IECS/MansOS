@@ -112,7 +112,7 @@ typedef union {
             KERNEL_STACK_BOTTOM :                                       \
             (MemoryAddress_t)threadStackBuffer + (currentThread->index * THREAD_STACK_SIZE))
 
-#if DEBUG_THREADS
+#if DEBUG_THREADS || 1
 #define STACK_GUARD() do {                                         \
         /* declare a stack pointer variable */                     \
         MemoryAddress_t currentSp;                                 \

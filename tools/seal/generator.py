@@ -35,6 +35,10 @@ class Generator(object):
         if components.componentRegister.numCachedSensors:
             self.outputFile.write("#include <lib/processing/cache.h>\n")
         self.outputFile.write("#include <net/seal_comm.h>\n")
+        # XXX: only when network is used
+        self.outputFile.write("#include <net/socket.h>\n")
+        # XXX: for getFixedTime() and getFixedUptime()
+        self.outputFile.write("#include <net/routing.h>\n")
         self.outputFile.write("\n")
 
     def generateConstants(self):
@@ -205,7 +209,7 @@ class Generator(object):
         config = set()
         # put all config in a set
         for c in self.components:
-            cfg = c.getConfig(outputFile)
+            cfg = c.getConfig()
             if cfg: config.add(cfg + '\n')
         for x in components.componentRegister.additionalConfig:
             if x.find('=') != -1:
@@ -237,6 +241,99 @@ ifndef MOSROOT
 endif
 '''.format(sources, pathToOS))
         outputFile.write("include ${MOSROOT}/mos/make/Makefile")
+
+    def isComponentUsed(self, componentName):
+        return components.componentRegister.isComponentUsed(componentName)
+
+    def generateBaseStationCode(self, path, pathToOS):
+        # print "generateBaseStationCode @", path
+        try:
+            os.makedirs(path)
+        except Exception:
+            pass
+        with open(os.path.join(path, 'Makefile'), 'w') as outputFile:
+            self.generateMakefile(outputFile, "main.c", pathToOS)
+
+        with open(os.path.join(path, 'config'), 'w') as outputFile:
+            outputFile.write("USE_SEAL_COMM=y\n")
+            outputFile.write("USE_ROLE_BASE_STATION=y\n")
+            c = components.componentRegister.findComponentByName("network")
+            if c: outputFile.write(c.getConfig())
+
+        with open(os.path.join(path, 'main.c'), 'w') as outputFile:
+            # TODO: named values!
+            outputFile.write("#include <stdmansos.h>\n")
+            outputFile.write("#include <net/seal_comm.h>\n")
+            outputFile.write("#include <net/socket.h>\n")
+            outputFile.write("\n")
+            outputFile.write("const char *sensorNames[32] = {\n")
+            for (name, id) in components.componentRegister.allSensorNames.iteritems():
+                outputFile.write('    [{}] = "{}",\n'.format(id, name))
+            outputFile.write("};\n")
+            outputFile.write("\n")
+            outputFile.write("void valueRxCallback(uint16_t code, int32_t value)\n")
+            outputFile.write("{\n")
+            outputFile.write('    PRINTF("  %s=%ld\\n", sensorNames[code], value);\n')
+            outputFile.write("}\n")
+            # XXX: temp
+            outputFile.write("static void recvData(Socket_t *socket, uint8_t *data, uint16_t len)\n")
+            outputFile.write("{\n")
+            outputFile.write('    PRINTF("got %d bytes from 0x%04x (0x%02x)\\n",\n')
+            outputFile.write("            len, socket->recvMacInfo->originalSrc.shortAddr, *data);\n")
+            outputFile.write("    redLedToggle();\n")
+            outputFile.write("}\n")
+            outputFile.write("\n")
+            outputFile.write("void appMain(void)\n")
+            outputFile.write("{\n")
+            outputFile.write("    static Socket_t socket;\n")
+            outputFile.write("    socketOpen(&socket, recvData);\n")
+            outputFile.write("    socketBind(&socket, SEAL_DATA_PORT);\n")
+            outputFile.write("\n")
+            outputFile.write("    uint16_t i;\n")
+            outputFile.write("    for (i = 0; i < 31; ++i) {\n")
+            outputFile.write("        sealCommRegisterInterest(i, valueRxCallback);\n")
+            outputFile.write("    }\n")
+            outputFile.write("}\n")
+
+    def generateForwarderCode(self, path, pathToOS):
+        # print "generateForwarderCode @", path
+        try:
+            os.makedirs(path)
+        except Exception:
+            pass
+        with open(os.path.join(path, 'Makefile'), 'w') as outputFile:
+            self.generateMakefile(outputFile, "main.c", pathToOS)
+
+        with open(os.path.join(path, 'config'), 'w') as outputFile:
+            outputFile.write("USE_ROLE_FORWARDER=y\n")
+            c = components.componentRegister.findComponentByName("network")
+            if c: outputFile.write(c.getConfig())
+
+        with open(os.path.join(path, 'main.c'), 'w') as outputFile:
+            outputFile.write("#include <stdmansos.h>\n")
+            outputFile.write("\n")
+            outputFile.write("void appMain(void) {\n")
+            outputFile.write("}\n")
+
+    def generateCollectorCode(self, path, pathToOS):
+        # print "generateCollectorCode @", path
+        try:
+            os.makedirs(path)
+        except Exception:
+            pass
+        with open(os.path.join(path, 'Makefile'), 'w') as outputFile:
+            self.generateMakefile(outputFile, "main.c", pathToOS)
+
+        with open(os.path.join(path, 'config'), 'w') as outputFile:
+            outputFile.write("USE_ROLE_COLLECTOR=y\n")
+            c = components.componentRegister.findComponentByName("network")
+            if c: outputFile.write(c.getConfig())
+
+        with open(os.path.join(path, 'main.c'), 'w') as outputFile:
+            outputFile.write("#include <stdmansos.h>\n")
+            outputFile.write("\n")
+            outputFile.write("void appMain(void) {\n")
+            outputFile.write("}\n")
 
 ###############################################
 class MansOSGenerator(Generator):

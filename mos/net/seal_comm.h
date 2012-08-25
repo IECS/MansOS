@@ -30,6 +30,10 @@
 #define SEAL_MAGIC    0xABCD
 #endif
 
+#ifndef SEAL_DATA_PORT
+#define SEAL_DATA_PORT 123
+#endif
+
 //
 // Some default field codes (also in file seal/components.py).
 // All codes belong pseudo sensors. Real sensor codes follow,

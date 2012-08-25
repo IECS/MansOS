@@ -90,7 +90,6 @@ static void sdStreamFindStart(void *buffer, uint16_t length, bool crc)
     }
 }
 
-
 bool sdStreamWriteRecord(void *data, uint16_t length, bool crc)
 {
     if (sdCardAddress == 0) {

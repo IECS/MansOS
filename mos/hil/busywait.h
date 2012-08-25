@@ -50,6 +50,15 @@ static inline uint16_t timerTicksRead(void)
         } while (timeAfter16(endTime, timerTicksRead()));               \
     } while (0)
 
+// buswait for courtesy only: do not care about the result
+#define BUSYWAIT_UNTIL_NORET(cond, maxTime)                             \
+    do {                                                                \
+        uint16_t endTime = timerTicksRead() + maxTime;                  \
+        do {                                                            \
+            if (cond) break;                                            \
+        } while (timeAfter16(endTime, timerTicksRead()));               \
+    } while (0)
+
 // interrupts must be enabled!
 #define BUSYWAIT_UNTIL_LONG(cond, maxTime, ok)                          \
     do {                                                                \

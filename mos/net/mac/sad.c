@@ -47,9 +47,9 @@ MacProtocol_t macProtocol = {
     .isKnownDstAddress = defaultIsKnownDstAddress,
 };
 
-static uint8_t  delayedData[RADIO_MAX_PACKET];
-static uint16_t delayedDataLength;
-static uint8_t delayedNexthop;
+static uint8_t delayedData[RADIO_MAX_PACKET];
+static volatile uint16_t delayedDataLength;
+static volatile uint8_t delayedNexthop;
 
 static Alarm_t delayTimer;
 
@@ -66,7 +66,8 @@ static void initSadMac(RecvFunction recvCb) {
 
 static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     int8_t ret;
-#if !USE_ROLE_BASE_STATION
+#if !(USE_ROLE_BASE_STATION || USE_ROLE_COLLECTOR || USE_ROLE_FORWARDER)
+    MESSAGE("mote's code included!")
     if (mi->timeWhenSend) {
         if (delayedDataLength) {
             return -1; // busy
@@ -83,8 +84,10 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
             return length;
         }
     }
+#else
+    MESSAGE("mote's code excluded!")
 #endif
-    // PRINTF("immed send\n");
+    PRINTF("%lu: mac tx %u bytes\n", getFixedTime(), length);
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
     // use least significant byte
     amb8420SetDstAddress(getNexthop(mi) & 0xff);
@@ -95,8 +98,9 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
 
 static void delayTimerCb(void *unused)
 {
-    // PRINT("send delayed data!\n");
+    PRINTF("%lu: mac tx %u bytes\n", getFixedTime(), delayedDataLength);
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
+    amb8420SetDstAddress(delayedNexthop);
     radioSendHeader(NULL, 0, delayedData, delayedDataLength);
     delayedDataLength = 0;
 }
@@ -108,14 +112,44 @@ static void delayTimerCb(void *unused)
 //
 static bool filterPass(MacInfo_t *mi)
 {
+#if USE_ROLE_BASE_STATION
+    PRINTF("filter: from=%#04x, orig=%#04x\n",
+            mi->immedSrc.shortAddr, mi->originalSrc.shortAddr);
+#endif
+
+    if (!mi->immedSrc.shortAddr) return true; // XXX
+
+#if 0
+    // 0x7BAA - base station
+    // 0x3B88 - forwarder
+    // 0x3BA5 - collector
     switch (localAddress) {
-    case 0x3BA5:
-        if (mi->originalSrc.shortAddr == 0x7BAA) return false;
-        break;
     case 0x7BAA:
-        if (mi->originalSrc.shortAddr == 0x3BA5) return false;
+        if (mi->immedSrc.shortAddr != 0x3BA5) return false;
+        break;
+    case 0x3B88:
+        if (mi->immedSrc.shortAddr != 0x7BAA
+                && mi->immedSrc.shortAddr != 0x3BA5) return false;
+        break;
+    case 0x3BA5:
+    default:
+        if (mi->immedSrc.shortAddr == 0x7BAA) return false;
         break;
     }
+#else
+    // 0x7BAA - base station
+    // 0x3B88 - collector
+    switch (localAddress) {
+    case 0x7BAA:
+        if (mi->immedSrc.shortAddr != 0x3B88) return false;
+        break;
+    case 0x3B88:
+        break;
+    default:
+        if (mi->immedSrc.shortAddr == 0x7BAA) return false;
+        break;
+    }
+#endif
     return true;
 }
 
@@ -125,13 +159,20 @@ static void pollSadMac(void) {
     static MacInfo_t mi;
     INC_NETSTAT(NETSTAT_RADIO_RX, EMPTY_ADDR);
     if (isRadioPacketReceived()) {
-        // PRINTF("got a packet from radio, size=%u\n", radioPacketBuffer->receivedLength);
+//#if USE_ROLE_BASE_STATION
+        PRINTF("%lu: mac rx %u bytes\n",
+                getFixedTime(),
+                radioPacketBuffer->receivedLength);
+//#endif
         
         if (macProtocol.recvCb) {
             uint8_t *data = defaultParseHeader(radioPacketBuffer->buffer,
                     radioPacketBuffer->receivedLength, &mi);
 #if TEST_FILTERS
-            if (!filterPass(&mi)) data = NULL;
+            if (!filterPass(&mi)) {
+                // PRINT("filtered out\n");
+                data = NULL;
+            }
 #endif
             if (data) {
                 //INC_NETSTAT(NETSTAT_PACKETS_RECV, mi.originalSrc.shortAddr);  // done @dv.c

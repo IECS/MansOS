@@ -117,7 +117,7 @@ def main():
     sys.path.append(os.path.join(dirname, pathToOS, 'tools', 'seal', 'components'))
 
     from seal import generator
-    # in case tis is used multiple times
+    # in case this is used multiple times
     generator.components.clearGlobals()
 
     parseCommandLine(sys.argv)
@@ -152,14 +152,16 @@ def main():
             outputDirName += os.sep
             if not os.path.exists(outputDirName):
                 os.makedirs(outputDirName)
+
+        numDirs = len(os.path.normpath(outputFileName).split(os.sep)) - 1
+        dirname = os.path.dirname(os.path.realpath(outputFileName))
+        makefilePathToOS = os.path.normpath(dirname + os.sep + pathToOS + ('/..' * numDirs))
+
         with open(outputFileName, 'w') as outputFile:
             g.generate(outputFile)
         with open(outputDirName + "Makefile", 'w') as outputFile:
-            numDirs = len(os.path.normpath(outputFileName).split(os.sep)) - 1
-            dirname = os.path.dirname(os.path.realpath(outputFileName))
-            path = os.path.normpath(dirname + '/' + pathToOS + ('/..' * numDirs))
-            g.generateMakefile(outputFile, outputFileName, path)
-            
+            g.generateMakefile(outputFile, outputFileName, makefilePathToOS)
+
         with open(outputDirName + "config", 'w') as outputFile:
             g.generateConfigFile(outputFile)
         if generator.components.componentRegister.isError:
@@ -167,6 +169,14 @@ def main():
             os.remove(outputFileName)
             os.remove(outputDirName + "Makefile")
             os.remove(outputDirName + "config")
+            return
+
+        if g.isComponentUsed("network"):
+            g.generateBaseStationCode(os.path.join(outputDirName, 'bs'), makefilePathToOS)
+            g.generateForwarderCode(os.path.join(outputDirName, 'fwd'), makefilePathToOS)
+            g.generateCollectorCode(os.path.join(outputDirName, 'coll'), makefilePathToOS)
+        elif g.isComponentUsed("radio"):
+            g.generateBaseStationCode(os.path.join(outputDirName, 'bs'), makefilePathToOS)
 
 if __name__ == '__main__':
     main()

@@ -179,8 +179,8 @@ class TimeCounterSensor(SealSensor):
 class SystemTimeSensor(SealSensor):
     def __init__(self):
         super(SystemTimeSensor, self).__init__("SystemTime")
-        self.useFunction.value = "getUptime()"
-        self.readFunction.value = "getUptime()"
+        self.useFunction.value = "getFixedUptime()"
+        self.readFunction.value = "getFixedUptime()"
 
 # TODO: allow aliases!
 class UptimeSensor(SealSensor):
@@ -556,7 +556,7 @@ class SerialOutput(SealOutput):
         super(SerialOutput, self).__init__("Serial")
         self.useFunction.value = "serialPacketPrint()"
         self.baudrate = SealParameter(38400, ['9600', '38400', '57600', '115200'])
-        self.aggregate.value = False # false by default
+        # TODO: self.aggregate.value = False # false by default
 
 class RadioOutput(SealOutput):
     def __init__(self):
@@ -608,8 +608,17 @@ class FileOutput(SealOutput):
 class NetworkOutput(SealOutput):
     def __init__(self):
         super(NetworkOutput, self).__init__("Network")
-        self.useFunction.value = "radioSend(&networkPacket, sizeof(networkPacket))" # TODO
-        self.protocol = SealParameter("NULL", ["NULL", "CSMA", "CSMA_ACK"])
+        # create a socket, if not alreay, and use it to send data to the root
+        self.useFunction.value = """
+    static Socket_t socket;
+    if (socket.port == 0) {
+        socketOpen(&socket, NULL);
+        socketBind(&socket, SEAL_DATA_PORT);
+        socketSetDstAddress(&socket, MOS_ADDR_ROOT);
+    }
+    socketSend(&socket, &networkPacket, sizeof(networkPacket))"""
+        self.protocol = SealParameter("NULL", ["NULL", "CSMA", "CSMA_ACK", "SAD"])
+        self.routing = SealParameter("DV", ["DV", "SAD"])
         self.extraIncludes = SealParameter("#include <net/mac.h>")
         self.extraConfig = SealParameter("USE_NET=y")
 
@@ -621,4 +630,11 @@ class NetworkOutput(SealOutput):
         else:
             if "asString" in dir(protocol): protocol = protocol.asString()
             protocol = protocol.upper()
-        return "USE_NET=y\n" + "CONST_MAC_PROTOCOL=MAC_PROTOCOL_" + protocol
+        macProto = "USE_NET=y\n" + "CONST_MAC_PROTOCOL=MAC_PROTOCOL_" + protocol
+        protocol = self.getParameterValue("routing", useCaseParameters)
+        if protocol is None: protocol = "DV"
+        else:
+            if "asString" in dir(protocol): protocol = protocol.asString()
+            protocol = protocol.upper()
+        routingProto = "\nCONST_ROUTING_PROTOCOL=ROUTING_PROTOCOL_" + protocol
+        return macProto + routingProto

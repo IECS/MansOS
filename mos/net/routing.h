@@ -75,19 +75,23 @@ typedef struct RoutingRequestPacket_s {
 #define ROUTING_REQUEST_TIMEOUT     (10 * 1000ul)
 #define SAD_SUPERFRAME_LENGTH       (10 * 60 * 1000ul)
 #define ROUTING_INFO_VALID_TIME     (180 * 1000ul)
+// during this time, radio is never turned off on forwarders and collectors
+#define NETWORK_STARTUP_TIME         (2 * 60 * 60) // 2h in seconds
 #else // for testing
 #define ROUTING_ORIGINATE_TIMEOUT    (5 * 1000ul)
 #define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
 #define SAD_SUPERFRAME_LENGTH        (30 * 1000ul)
 #define ROUTING_INFO_VALID_TIME      (70 * 1000ul)
+#define NETWORK_STARTUP_TIME         0
 #endif
 
 #define MOTE_INFO_VALID_TIME         (5 * SAD_SUPERFRAME_LENGTH)
 
-#define ROUTING_REPLY_WAIT_TIMEOUT   500 // ms
+#define ROUTING_REPLY_WAIT_TIMEOUT   2000 // ms
 
-// during this time, radio is never turned off on forwarders and collectors
-#define NETWORK_STARTUP_TIME         (2 * 60 * 60) // 2h in seconds
+// XXX: this must be chip-specific. For AMB8420 its quite large (all the serial comm)
+#define RADIO_TX_TIME 100
+
 
 #ifndef MAX_MOTES
 #define MAX_MOTES 20 // max nodes this collector can serve
@@ -98,7 +102,7 @@ typedef struct RoutingRequestPacket_s {
 #if USE_ROLE_FORWARDER || USE_ROLE_COLLECTOR
 // turn off radio, but only after two hours of uninterrupted listening
 #define RADIO_OFF_ENERGSAVE() \
-    if (getUptime() > NETWORK_STARTUP_TIME)) radioOff()
+    if (getUptime() > NETWORK_STARTUP_TIME) radioOff()
 #else
 // on mote: always turn off radio
 #define RADIO_OFF_ENERGSAVE() \
@@ -122,8 +126,12 @@ RoutingDecision_e routePacket(MacInfo_t *info);
 //     return jiffies + rootClockDelta;
 // }
 
-#define getFixedTime() \
-    (jiffies + rootClockDelta)
-
+#if USE_ROLE_BASE_STATION
+#define getFixedTime() getJiffies()
+#define getFixedUptime() getUptime()
+#else
+#define getFixedTime() ((uint32_t)((uint32_t)getJiffies() + rootClockDelta))
+#define getFixedUptime() ((uint32_t)(jiffies2ms(getFixedTime()) / 1000))
+#endif
 
 #endif

@@ -27,8 +27,6 @@
 #define COMMAND_TO_SEND 17
 #define SEQNUM_TO_SEND 3
 
-uint8_t buffer[200];
-
 // send a single command
 void appMainSimpleCommand(void)
 {

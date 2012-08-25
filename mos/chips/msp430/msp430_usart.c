@@ -326,7 +326,9 @@ uint_t msp430USARTInitI2C(uint8_t id) {
 
 uint_t USARTSendByte(uint8_t id, uint8_t data)
 {
-//    STACK_GUARD();
+    // extern bool initialized;
+    // if (initialized) STACK_GUARD();
+
     // USARTx not supported, x >= USART_COUNT
     if (id >= USART_COUNT) return NOT_IMPLEMENTED;
     *UxTXBUF[id] = data;

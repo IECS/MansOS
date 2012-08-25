@@ -74,23 +74,44 @@ typedef enum {
 } AMB8420AddrMode_t;
 
 #define RTS_WAIT_TIMEOUT_TICKS        TIMER_100_MS
+//#define RTS_WAIT_TIMEOUT_TICKS        TIMER_SECOND
 
 #define AMB8420_WAIT_FOR_RTS_READY(ok) \
     BUSYWAIT_UNTIL(pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN) == 0, RTS_WAIT_TIMEOUT_TICKS, ok)
 
-#define AMB8420_ENTER_ACTIVE_MODE() do{\
+// ----------------------------------------
+// mode switching
+
+typedef struct AMB8420ModeContext_s {
+    uint8_t sleepPin : 1, trxDisablePin : 1;
+} AMB8420ModeContext_t;
+
+#define AMB8420_SAVE_MODE(ctx) do {                                     \
+        ctx.sleepPin = pinRead(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);  \
+        ctx.trxDisablePin = pinRead(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN); \
+    } while (0)
+#define AMB8420_RESTORE_MODE(ctx) do {                                  \
+        pinWrite(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN, ctx.sleepPin);  \
+        pinWrite(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN, ctx.trxDisablePin); \
+    } while (0)
+
+#define AMB8420_ENTER_ACTIVE_MODE(ctx) do{ \
+        AMB8420_SAVE_MODE(ctx);                                         \
         pinClear(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);    \
         pinClear(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);                \
     } while(0)
-#define AMB8420_ENTER_STAND_BY_MODE() do{\
+#define AMB8420_ENTER_STANDBY_MODE(ctx) do{ \
+        AMB8420_SAVE_MODE(ctx);                                         \
         pinSet(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);      \
         pinClear(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);                \
     } while(0)
-#define AMB8420_ENTER_WOR_MODE() do{\
+#define AMB8420_ENTER_WOR_MODE(ctx) do{ \
+        AMB8420_SAVE_MODE(ctx);                                         \
         pinClear(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);    \
         pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);                  \
     } while(0)
-#define AMB8420_ENTER_SLEEP_MODE() do{\
+#define AMB8420_ENTER_SLEEP_MODE(ctx) do{ \
+        AMB8420_SAVE_MODE(ctx);                                         \
         pinSet(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);      \
         pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);                  \
     } while(0)

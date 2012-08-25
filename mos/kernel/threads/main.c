@@ -58,8 +58,12 @@ void systemMain(void)
             alarmsProcess();
         }
 
-        uint32_t now = getJiffies();
+        uint32_t now = (uint32_t) getJiffies();
         jiffiesToSleep = (uint16_t)(getNextAlarmTime() - now);
+        if ((int16_t) jiffiesToSleep < 0) {
+            // do not allow them to become negative
+            jiffiesToSleep = 0;
+        }
         // PRINTF("kernel main, sleepTime = %u\n", jiffiesToSleep);
         // PRINTF("  nextAlarm=%lu, jiffies=%lu\n", getNextAlarmTime(), getJiffies());
         schedule();
