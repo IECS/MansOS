@@ -99,7 +99,7 @@ static inline bool isSingleValued(SealCommListener_t *l)
 
 static void receivePacketData(SealCommListener_t *l, uint32_t typeMask, const uint8_t *data)
 {
-    uint16_t code = ffs(l->typeMask) - 1;
+    uint16_t code = ffs(l->typeMask) - 1; // XXX: warning on msp430
     bool isSingleValued = !(l->typeMask & ~(1 << code));
 
     int32_t *read = (int32_t *) data;

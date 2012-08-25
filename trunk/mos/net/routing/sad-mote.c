@@ -54,6 +54,19 @@ static uint8_t moteNumber;
 static void roStartListeningTimerCb(void *);
 static void roStopListeningTimerCb(void *);
 
+#if DEBUG
+#define ROUTE_DEBUG 1
+#endif
+
+#define ROUTE_DEBUG 1
+
+#if ROUTE_DEBUG
+#define RPRINTF(...) PRINTF(__VA_ARGS__)
+#else
+#define RPRINTF(...) do {} while (0)
+#endif
+
+
 // -----------------------------------------------
 
 static inline bool isRoutingInfoValid(void)
@@ -77,14 +90,14 @@ static uint32_t calcSendTime(void)
     uint32_t now = getFixedTime() % SAD_SUPERFRAME_LENGTH;
 
     if (t < now) {
-        if (t + 900 > now) {
+        if (t + 1000 > now) {
             return 0; // send immediately
         }
         t += SAD_SUPERFRAME_LENGTH;
     }
     t -= now;
-    // add random jitter
-    t += randomNumberBounded(1000);
+    // add random jitter [300..900]
+    t += randomInRange(300, 900);
     return t + getFixedTime();
 }
 
@@ -116,7 +129,7 @@ void initRouting(void)
 
 static void roStartListeningTimerCb(void *x)
 {
-    PRINTF("start listening time slot, jiffies=%lu\n", getFixedTime());
+    RPRINTF("start listening time slot, jiffies=%lu\n", getFixedTime());
     alarmSchedule(&roStartListeningTimer, calcListenStartTime());
 
     // listen to info only when routing info is already valid (?)
@@ -127,6 +140,7 @@ static void roStartListeningTimerCb(void *x)
 
 static void roStopListeningTimerCb(void *x)
 {
+    RPRINTF("%lu: turn radio off\n", getFixedTime());
     RADIO_OFF_ENERGSAVE();
 }
 
@@ -138,7 +152,7 @@ static void roRequestTimerCb(void *x)
         return;
     }
 
-    PRINT("send routing request\n");
+    RPRINTF("send routing request\n");
 
     radioOn(); // wait for response
 
@@ -152,21 +166,21 @@ static void roRequestTimerCb(void *x)
 
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 {
-    PRINTF("routingReceive %d bytes from %#04x\n", len,
-            s->recvMacInfo->originalSrc.shortAddr);
+    // RPRINTF("routingReceive %d bytes from %#04x\n", len,
+    //         s->recvMacInfo->originalSrc.shortAddr);
 
     if (len == 0) {
-        PRINT("routingReceive: no data!\n");
+        RPRINTF("routingReceive: no data!\n");
         return;
     }
 
 #if PRECONFIGURED_NH_TO_ROOT
     if (s->recvMacInfo->originalSrc.shortAddr != PRECONFIGURED_NH_TO_ROOT) {
-        PRINTF("Dropping routing info: not from the nexthop, but from %#04x\n",
+        RPRINTF("Dropping routing info: not from the nexthop, but from %#04x\n",
                 s->recvMacInfo->originalSrc.shortAddr);
         return;
     }
-    PRINTF("Got routing info from the nexthop\n");
+    RPRINTF("Got routing info from the nexthop\n");
 #endif
 
     uint8_t type = data[0];
@@ -175,12 +189,12 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
     }
 
     if (type != ROUTING_INFORMATION) {
-        PRINT("routingReceive: unknown type!\n");
+        RPRINTF("routingReceive: unknown type!\n");
         return;
     }
 
     if (len < sizeof(RoutingInfoPacket_t)) {
-        PRINT("routingReceive: too short for info packet!\n");
+        RPRINTF("routingReceive: too short for info packet!\n");
         return;
     }
 
@@ -192,11 +206,11 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         // XXX: theoretically should add some time to avoid switching to
         // worse path only because packets from it travel faster
         update = true;
-        //PRINT("update routing info - more recent seqnum\n");
+        //RPRINTF("update routing info - more recent seqnum\n");
     } else if (ri.seqnum == lastSeenSeqnum) {
         if (ri.hopCount < hopCountToRoot) {
             update = true;
-            //PRINT("update routing info - better metric\n");
+            //RPRINTF("update routing info - better metric\n");
         }
     }
     if (ri.hopCount > MAX_HOP_COUNT) update = false;
@@ -206,18 +220,20 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         nexthopToRoot = s->recvMacInfo->originalSrc.shortAddr;
         lastSeenSeqnum = ri.seqnum;
         hopCountToRoot = ri.hopCount;
-        lastRootMessageTime = getJiffies();
-        rootClockDelta = (int32_t)(ri.rootClock - getJiffies());
+        lastRootMessageTime = (uint32_t)getJiffies();
+        rootClockDelta = (int32_t)(ri.rootClock - (uint32_t)getJiffies());
         moteNumber = ri.moteNumber;
+        PRINTF("%lu: ++++++++++++ fixed local time\n", getFixedTime());
     }
 }
 
 RoutingDecision_e routePacket(MacInfo_t *info)
 {
     MosAddr *dst = &info->originalDst;
+    fillLocalAddress(&info->immedSrc);
 
-    // PRINTF("dst address=0x%04x, nexthop=0x%04x\n", dst->shortAddr, info->immedDst.shortAddr);
-    // PRINTF("  localAddress=0x%04x\n", localAddress);
+    // RPRINTF("dst address=0x%04x, nexthop=0x%04x\n", dst->shortAddr, info->immedDst.shortAddr);
+    // RPRINTF("  localAddress=0x%04x\n", localAddress);
 
     // fix root address if we are sending it to the root
     if (IS_LOCAL(info) && dst->shortAddr == MOS_ADDR_ROOT) {
@@ -240,7 +256,7 @@ RoutingDecision_e routePacket(MacInfo_t *info)
 
     if (dst->shortAddr == rootAddress) {
         if (isRoutingInfoValid()) {
-            //PRINTF("using 0x%04x as nexthop to root\n", nexthopToRoot);
+            //RPRINTF("using 0x%04x as nexthop to root\n", nexthopToRoot);
             if (!IS_LOCAL(info)) {
                 return RD_DROP;
             }
@@ -249,7 +265,7 @@ RoutingDecision_e routePacket(MacInfo_t *info)
             info->timeWhenSend = calcSendTime();
             return RD_UNICAST;
         } else {
-            PRINTF("root routing info not present or expired!\n");
+            RPRINTF("root routing info not present or expired!\n");
             return RD_DROP;
         }
     }

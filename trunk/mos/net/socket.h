@@ -62,15 +62,23 @@ int8_t socketOpen(Socket_t *, SocketRecvFunction cb);
 
 int8_t socketClose(Socket_t *);
 
-static inline void socketBind(Socket_t *s, NetPort_t port) {
+static inline void socketBind(Socket_t *s, NetPort_t port)
+{
     s->port = port;
 }
 
-static inline void socketSetDstAddress(Socket_t *s, MosShortAddr addr) {
+static inline void socketSetDstAddress(Socket_t *s, MosShortAddr addr)
+{
     s->dstAddress = addr;
 }
 
 int8_t socketSend(Socket_t *s, const void *data, uint16_t len);
+
+static inline int8_t socketSendEx(Socket_t *s, const void *data, uint16_t len, MosShortAddr addr)
+{
+    socketSetDstAddress(s, addr);
+    return socketSend(s, data, len);
+}
 
 //
 // Send a pakcet, using the MansOS network stack.

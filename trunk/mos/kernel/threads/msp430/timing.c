@@ -25,9 +25,14 @@
 #include "../timing.h"
 #include <lib/assert.h>
 
+#include <lib/dprint.h>
+
 void msp430TimerBSet(uint16_t ms)
 {
     // assume the 'ms' value passed here is correct (below maximum supported by HW)
+    if (ms >= 15984) {
+        PRINTF("ms=%u\n", ms);
+    }
     ASSERT(ms < 15984); // 15984 * 4.1 ~= 0xfffe
 
     uint16_t ocr;

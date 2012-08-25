@@ -74,6 +74,7 @@ static void roOriginateTimerCb(void *x) {
     } else {
         routingInfo.rootClock = getJiffies();
     }
+    routingInfo.rootClock += RADIO_TX_TIME;
     routingInfo.moteNumber = 0;
 
     socketSend(&roSocket, &routingInfo, sizeof(routingInfo));
@@ -91,8 +92,8 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
     uint8_t type = *data;
     if (type == ROUTING_REQUEST) {
         // reschedule the origination timer sooner
-        if (getAlarmTime(&roOriginateTimer) > 400) {
-            alarmSchedule(&roOriginateTimer, 400);
+        if (getAlarmTime(&roOriginateTimer) > 500) {
+            alarmSchedule(&roOriginateTimer, 500);
         }
     }
 }
@@ -101,6 +102,7 @@ RoutingDecision_e routePacket(MacInfo_t *info) {
     // This is simple. Base station never forwards packets,
     // just sends and receives.
     MosAddr *dst = &info->originalDst;
+    fillLocalAddress(&info->immedSrc);
 
     // PRINTF("dst address=0x%04x, nexthop=0x%04x\n", dst->shortAddr,
     //         info->immedDst.shortAddr);

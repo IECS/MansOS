@@ -27,7 +27,7 @@ void appMain(void)
     socketBind(&socket, DATA_PORT);
 
     for (;;) {
-        PRINT("BS: in app main\n");
+        PRINTF("%lu BS: in app main\n", getFixedTime());
         redLedToggle();
         mdelay(SLEEP_TIME_MS);
     }
@@ -42,9 +42,9 @@ void appMain(void)
 {
     for (;;) {
 #ifdef USE_ROLE_FORWARDER
-        PRINT("Forwarder: in app main\n");
+        PRINTF("%lu Forwarder: in app main\n", getFixedTime());
 #else
-        PRINT("Collector: in app main\n");
+        PRINTF("%lu Collector: in app main\n", getFixedTime());
 #endif
         redLedToggle();
         mdelay(1000);
@@ -58,6 +58,9 @@ void appMain(void)
 
 void appMain(void)
 {
+//    radioSetTxPower(50); // 195 is default, according to doc
+//    radioSetTxPower(195);
+
     Socket_t socket;
     socketOpen(&socket, NULL);
     socketBind(&socket, DATA_PORT);
@@ -65,15 +68,18 @@ void appMain(void)
 
     uint16_t counter = 0;
     for (;;) {
-        // PRINTF("sending counter %i\n", counter);
+        PRINTF("%lu sending counter %i\n", getFixedTime(), counter);
+        blueLedToggle();
+
         if (socketSend(&socket, &counter, sizeof(counter))) {
-			PRINT("socketSend failed\n");
+            PRINT("socketSend failed\n");
         }
-        mdelay(3000);
-		redLedOn();
+//        mdelay(3000);
+        mdelay(30000);
+        redLedOn();
         mdelay(100);
-		redLedOff();
-		++counter;
+        redLedOff();
+        ++counter;
     }
 }
 

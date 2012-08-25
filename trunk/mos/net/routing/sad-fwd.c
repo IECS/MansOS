@@ -131,7 +131,7 @@ static void roForwardTimerCb(void *x)
         return;
     }
 
-    PRINT("forward routing packet\n");
+    PRINTF("%lu: ++++++++++++ forward routing packet\n", getFixedTime());
 
     RoutingInfoPacket_t routingInfo;
     routingInfo.packetType = ROUTING_INFORMATION;
@@ -139,7 +139,7 @@ static void roForwardTimerCb(void *x)
     routingInfo.rootAddress = rootAddress;
     routingInfo.hopCount = hopCountToRoot + 1;
     routingInfo.seqnum = lastSeenSeqnum;
-    routingInfo.rootClock = getJiffies() + rootClockDelta;
+    routingInfo.rootClock = getFixedTime() + RADIO_TX_TIME;
     routingInfo.moteNumber = 0;
 
     // XXX: INC_NETSTAT(NETSTAT_PACKETS_SENT, EMPTY_ADDR);
@@ -168,8 +168,8 @@ static void roRequestTimerCb(void *x)
 
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 {
-    PRINTF("routingReceive %d bytes from %#04x\n", len,
-            s->recvMacInfo->originalSrc.shortAddr);
+    // PRINTF("routingReceive %d bytes from %#04x\n", len,
+    //         s->recvMacInfo->originalSrc.shortAddr);
 
     if (len == 0) {
         PRINT("routingReceive: no data!\n");
@@ -226,8 +226,8 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         nexthopToRoot = s->recvMacInfo->originalSrc.shortAddr;
         lastSeenSeqnum = ri.seqnum;
         hopCountToRoot = ri.hopCount;
-        lastRootMessageTime = getJiffies();
-        rootClockDelta = (int32_t)(ri.rootClock - getJiffies());
+        lastRootMessageTime = (uint32_t) getJiffies();
+        rootClockDelta = (int32_t)(ri.rootClock - (uint32_t)getJiffies());
     }
 }
 
@@ -242,6 +242,7 @@ static bool checkHoplimit(MacInfo_t *info)
 RoutingDecision_e routePacket(MacInfo_t *info)
 {
     MosAddr *dst = &info->originalDst;
+    fillLocalAddress(&info->immedSrc);
 
     // PRINTF("dst address=0x%04x, nexthop=0x%04x\n", dst->shortAddr, info->immedDst.shortAddr);
     // PRINTF("  localAddress=0x%04x\n", localAddress);

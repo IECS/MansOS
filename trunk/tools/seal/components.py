@@ -629,13 +629,19 @@ class Component(object):
         return self.specification.calculateParameterValue(
             parameter, useCaseParameters)
 
-    def getConfig(self, outputFile):
+    def getConfig(self):
         if not self.isUsed(): return None
-        if len(self.useCases):
-            params = self.useCases[0].parameters
+        result = ""
+        if isinstance(self, Output) and len(self.useCases):
+            for uc in self.useCases:
+                params = self.useCases[0].parameters
+                r = self.getDependentParameterValue("extraConfig", params)
+                if r: result += r
         else:
             params = self.parameters
-        return self.getDependentParameterValue("extraConfig", params)
+            r = self.getDependentParameterValue("extraConfig", params)
+            if r: result += r
+        return result
 
     def addUseCase(self, parameters, conditions, branchNumber):
         numInBranch = 0
@@ -825,7 +831,7 @@ class Sensor(Component):
         if self.name.lower() in commonFields:
             self.systemwideID = commonFields[self.name.lower()]
         else:
-            self.systemwideID = componentRegister.allocateSensorId()
+            self.systemwideID = componentRegister.allocateSensorID(self.name)
             if self.systemwideID >= 31:
                 componentRegister.userError("Too many sensors! Sensor '{}' has id {}, but at the moment only ID up to 30 are supported.\n".format(name, self.systemwideID))
         return self.systemwideID
@@ -2076,7 +2082,8 @@ class OutputUseCase(object):
                 numField += 1
             bit = f.sensorID
             bit -= 32 * (numField - 1)
-            headerField |= (1 << bit)
+            if (f.sensorID >= PACKET_FIELD_ID_FIRST_FREE):
+                headerField |= (1 << bit)
         if headerField:
             outputFile.write("#define {}_TYPE_MASK {:#x}\n".format(self.getNameUC(), headerField))
             outputFile.write(getIndent(indent+1) + "uint32_t typeMask{};\n".format(numField))
@@ -2155,7 +2162,7 @@ class OutputUseCase(object):
             outputFile.write("        {0}Packet.sequenceNumber = ++seqnum;\n".format(self.getNameCC()))
         if PACKET_FIELD_ID_TIMESTAMP in self.usedIds:
             outputFile.write("    if (!({0}Packet.typeMask1 & TIMESTAMP_TYPE_MASK))\n".format(self.getNameCC()))
-            outputFile.write("        {0}Packet.timestamp = getUptime();\n".format(self.getNameCC()))
+            outputFile.write("        {0}Packet.timestamp = getFixedUptime();\n".format(self.getNameCC()))
         if PACKET_FIELD_ID_ADDRESS in self.usedIds:
             outputFile.write("    if (!({0}Packet.typeMask1 & ADDRESS_TYPE_MASK))\n".format(self.getNameCC()))
             outputFile.write("        {0}Packet.address = localAddress;\n".format(self.getNameCC()))
@@ -2741,6 +2748,7 @@ class ComponentRegister(object):
         self.additionalConfig = set()
         self.extraSourceFiles = []
         self.branchCollection = BranchCollection()
+        self.allSensorNames = dict(commonFields)
         self.isError = False
         self.architecture = architecture
         # import the module (residing in "components" directory and named "<architecture>.py")
@@ -2789,8 +2797,14 @@ class ComponentRegister(object):
         #print "hasComponent? '" + keyword + "' '" + name + "'"
         return bool(self.findComponentByKeyword(keyword.lower(), name.lower()))
 
-    def allocateSensorId(self):
+    def isComponentUsed(self, componentName):
+        c = self.findComponentByKeyword("use", componentName.lower())
+        if c is None: return False
+        return c.isUsed()
+
+    def allocateSensorID(self, sensorName):
         result = self.nextFreeSensorID
+        self.allSensorNames[sensorName] = self.nextFreeSensorID
         self.nextFreeSensorID += 1
         # values 31, 63, 95, 127 are reserved
         if ((self.nextFreeSensorID + 1) & 31) == 0:

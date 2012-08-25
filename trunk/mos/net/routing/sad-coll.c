@@ -41,7 +41,7 @@
 
 typedef struct MoteInfo_s {
     MosShortAddr address;
-    uint32_t lastSeen;
+    uint32_t validUntil;
 } MoteInfo_t;
 
 static MoteInfo_t motes[MAX_MOTES];
@@ -85,25 +85,30 @@ static inline bool isRoutingInfoValid(void)
 
 static uint32_t calcListenStartTime(void)
 {
-    // at start of frame
-    return SAD_SUPERFRAME_LENGTH - getFixedTime() % SAD_SUPERFRAME_LENGTH;
+    uint32_t t = getFixedTime() % SAD_SUPERFRAME_LENGTH;
+    // at start of (next) frame
+    if (t + 1000 > SAD_SUPERFRAME_LENGTH) {
+        return 2 * SAD_SUPERFRAME_LENGTH - t;
+    } else {
+        return SAD_SUPERFRAME_LENGTH - t;
+    }
 }
 
-static uint32_t calcNextForwardTime(uint8_t moteProcessed)
+static uint32_t calcNextForwardTime(uint8_t moteToProcess)
 {
     uint32_t t = getFixedTime() % SAD_SUPERFRAME_LENGTH;
-    if (moteProcessed == MAX_MOTES - 1) {
+    if (moteToProcess == 0) {
         t = SAD_SUPERFRAME_LENGTH - t;
         // leave 5 seconds for fwd stage
         t += 5000;
         // add random jitter
-        t += randomNumberBounded(1000);
+        t += randomInRange(100, 200);
     } else {
         uint32_t n = 5000; // 5 seconds for fwd stage
         // one second for each mote
-        n += 1000 * moteProcessed;
+        n += 1000 * moteToProcess;
         // add random jitter
-        n += randomNumberBounded(1000);
+        n += randomInRange(100, 200);
         if (n > t) {
             t = n - t;
         } else {
@@ -117,7 +122,6 @@ void initRouting(void)
 {
     socketOpen(&roSocket, routingReceive);
     socketBind(&roSocket, ROUTING_PROTOCOL_PORT);
-    socketSetDstAddress(&roSocket, MOS_ADDR_BROADCAST);
 
     alarmInit(&roForwardTimer, roForwardTimerCb, NULL);
     alarmInit(&roOutOfOrderForwardTimer, roOutOfOrderForwardTimerCb, NULL);
@@ -140,11 +144,13 @@ static void roStartListeningTimerCb(void *x)
 
 static void roStopListeningTimerCb(void *x)
 {
+    PRINTF("### turn radio off\n");
     RADIO_OFF_ENERGSAVE();
 }
 
 static void forwardRoutingInfo(uint8_t moteNumber) {
-    PRINTF("forward routing packet to mote %u\n", moteNumber);
+    PRINTF("%lu: +++++++++++++++ forward routing packet to mote %u (%#04x)\n",
+            getFixedTime(), moteNumber, motes[moteNumber].address);
 
     RoutingInfoPacket_t routingInfo;
     routingInfo.packetType = ROUTING_INFORMATION;
@@ -152,11 +158,11 @@ static void forwardRoutingInfo(uint8_t moteNumber) {
     routingInfo.rootAddress = rootAddress;
     routingInfo.hopCount = hopCountToRoot + 1;
     routingInfo.seqnum = lastSeenSeqnum;
-    routingInfo.rootClock = getJiffies() + rootClockDelta;
+    routingInfo.rootClock = getFixedTime() + RADIO_TX_TIME;
     routingInfo.moteNumber = moteNumber;
 
     // XXX: INC_NETSTAT(NETSTAT_PACKETS_SENT, EMPTY_ADDR);
-    socketSend(&roSocket, &routingInfo, sizeof(routingInfo));
+    socketSendEx(&roSocket, &routingInfo, sizeof(routingInfo), motes[moteNumber].address);
 }
 
 static void roForwardTimerCb(void *x)
@@ -165,24 +171,26 @@ static void roForwardTimerCb(void *x)
 
     bool roOK = isRoutingInfoValid();
 
-    PRINTF("roForwardTimerCb, roOK=%d\n", (int) roOK);
+    if (moteToProcess == 0) {
+        PRINTF("roForwardTimerCb, roOK=%d\n", (int) roOK);
+    }
 
     if (motes[moteToProcess].address != 0
-            && timeAfter32(motes[moteToProcess].lastSeen + MOTE_INFO_VALID_TIME, (uint32_t)getJiffies())
+            && timeAfter32(motes[moteToProcess].validUntil, (uint32_t)getJiffies())
             && hopCountToRoot < MAX_HOP_COUNT
             && roOK) {
         forwardRoutingInfo(moteToProcess);
     }
         
-    alarmSchedule(&roForwardTimer, calcNextForwardTime(moteToProcess));
-
     moteToProcess++;
     if (moteToProcess == MAX_MOTES) moteToProcess = 0;
+
+    alarmSchedule(&roForwardTimer, calcNextForwardTime(moteToProcess));
 }
 
 static void roOutOfOrderForwardTimerCb(void *x)
 {
-    if (hopCountToRoot < MAX_HOP_COUNT && isRoutingInfoValid()) {
+    if (gotRreq != 0xff && isRoutingInfoValid()) {
         forwardRoutingInfo(gotRreq);
     }
     gotRreq = 0xff;
@@ -190,7 +198,7 @@ static void roOutOfOrderForwardTimerCb(void *x)
 
 static void roRequestTimerCb(void *x)
 {
-    alarmSchedule(&roRequestTimer, ROUTING_REQUEST_TIMEOUT + randomNumberBounded(1000));
+    alarmSchedule(&roRequestTimer, ROUTING_REQUEST_TIMEOUT + randomNumberBounded(100));
 
     if (isRoutingInfoValid()) {
         return;
@@ -203,45 +211,45 @@ static void roRequestTimerCb(void *x)
     RoutingRequestPacket_t req;
     req.packetType = ROUTING_REQUEST;
     req.senderType = SENDER_COLLECTOR;
-    socketSend(&roSocket, &req, sizeof(req));
+    socketSendEx(&roSocket, &req, sizeof(req), MOS_ADDR_BROADCAST);
 
     alarmSchedule(&roStopListeningTimer, ROUTING_REPLY_WAIT_TIMEOUT);
 }
 
-static void recvRreq(MosShortAddr address)
+static uint8_t markAsSeen(MosShortAddr address, bool addNew)
 {
+    uint32_t now = (uint32_t) getJiffies();
     // MOTE_INFO_VALID_TIME - ?
-    uint16_t i;
+    uint8_t i;
     for (i = 0; i < MAX_MOTES; ++i) {
         if (motes[i].address == address) {
             break;
         }
     }
-    if (i == MAX_MOTES) {
-        uint32_t now = getJiffies();
+    if (i == MAX_MOTES && addNew) {
         for (i = 0; i < MAX_MOTES; ++i) {
             if (motes[i].address == 0
-                    || timeAfter32(motes[i].lastSeen + MOTE_INFO_VALID_TIME, now)) {
+                    || timeAfter32(now, motes[i].validUntil)) {
                 break;
             }
         }
-        if (i == MAX_MOTES) {
-            PRINT("recv rreq: no more space!\n");
-            return;
-        }
+        // save its address
         motes[i].address = address;
-        motes[i].lastSeen = now;
     }
-    if (gotRreq == 0xff) {
-        gotRreq = i;
-        alarmSchedule(&roOutOfOrderForwardTimer, randomInRange(100, 400));
+    if (i == MAX_MOTES) {
+        if (addNew) PRINT("recv rreq: no more space!\n");
+        return 0xff;
     }
+
+    // mark it as seen
+    motes[i].validUntil = now + MOTE_INFO_VALID_TIME;
+    return i;
 }
 
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 {
-    PRINTF("routingReceive %d bytes from %#04x\n", len,
-            s->recvMacInfo->originalSrc.shortAddr);
+    // PRINTF("routingReceive %d bytes from %#04x\n", len,
+    //         s->recvMacInfo->originalSrc.shortAddr);
 
     if (len == 0) {
         PRINT("routingReceive: no data!\n");
@@ -261,7 +269,11 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
     if (type == ROUTING_REQUEST) {
         uint8_t senderType = data[1];
         if (senderType != SENDER_MOTE) return;
-        recvRreq(s->recvMacInfo->originalSrc.shortAddr);
+        uint8_t idx = markAsSeen(s->recvMacInfo->originalSrc.shortAddr, true);
+        if (gotRreq == 0xff) {
+            gotRreq = idx;
+            alarmSchedule(&roOutOfOrderForwardTimer, randomInRange(100, 400));
+        }
         return;
     }
 
@@ -297,8 +309,8 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         nexthopToRoot = s->recvMacInfo->originalSrc.shortAddr;
         lastSeenSeqnum = ri.seqnum;
         hopCountToRoot = ri.hopCount;
-        lastRootMessageTime = getJiffies();
-        rootClockDelta = (int32_t)(ri.rootClock - getJiffies());
+        lastRootMessageTime = (uint32_t) getJiffies();
+        rootClockDelta = (int32_t)(ri.rootClock - (uint32_t) getJiffies());
     }
 }
 
@@ -317,11 +329,15 @@ RoutingDecision_e routePacket(MacInfo_t *info)
     // PRINTF("dst address=0x%04x, nexthop=0x%04x\n", dst->shortAddr, info->immedDst.shortAddr);
     // PRINTF("  localAddress=0x%04x\n", localAddress);
 
-    // fix root address if we are sending it to the root
-    if (IS_LOCAL(info) && dst->shortAddr == MOS_ADDR_ROOT) {
-        intToAddr(info->originalDst, rootAddress);
-        // info->hoplimit = hopCountToRoot;
-        info->hoplimit = MAX_HOP_COUNT;
+    if (IS_LOCAL(info)) {
+        // fix root address if we are sending it to the root
+        if (dst->shortAddr == MOS_ADDR_ROOT) {
+            intToAddr(info->originalDst, rootAddress);
+            // info->hoplimit = hopCountToRoot;
+            info->hoplimit = MAX_HOP_COUNT;
+        }
+    } else {
+        markAsSeen(info->immedSrc.shortAddr, false);
     }
 
     if (isLocalAddress(dst)) {
@@ -341,6 +357,9 @@ RoutingDecision_e routePacket(MacInfo_t *info)
         PRINTF("hoplimit reached!\n");
         return RD_DROP;
     }
+
+    // fill address: may forward it
+    fillLocalAddress(&info->immedSrc);
 
     if (dst->shortAddr == rootAddress) {
         if (isRoutingInfoValid()) {

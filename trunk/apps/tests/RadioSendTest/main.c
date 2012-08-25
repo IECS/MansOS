@@ -47,7 +47,7 @@ void appMain(void)
 
 #if RECV
 #if PLATFORM_SM3
-	amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, 0x1);
+    amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, 0x1);
 #endif
     // PRINTF("recvCounter = %p\n", recvCounter);
     radioSetReceiveHandle(recvCounter);
@@ -67,7 +67,7 @@ void appMain(void)
 //  radioSetReceiveHandle(radioDiscard);
     radioOn();
 #if PLATFORM_SM3
-	amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, 0x2);
+    amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, 0x2);
 #endif
     sendCounter();
 #endif
@@ -97,11 +97,11 @@ void recvCounter(void)
     }
     // debugHexdump(buffer, len);
     if (len > 0) {
-//        greenLedToggle();
+        // greenLedToggle();
         memcpy(&sender, buffer + 1, sizeof(sender));
         counter = buffer[0];
         PRINTF("received counter %u (%d bytes), rssi=%d\n", counter, len, rssi);
-//        ledsSet(counter);
+        // ledsSet(counter);
     }
 }
 
@@ -118,14 +118,11 @@ void sendCounter(void) {
         // PRINTF("0x%04x: sending counter %i\n", localAddress, *counter);
         redLedOn();
 #if PLATFORM_SM3
-		amb8420SetDstAddress(0x1);
+        amb8420SetDstAddress(0x1);
 #endif
         int8_t result = radioSend(sendBuffer, sizeof(sendBuffer));
         if (result != 0) {
             PRINTF("radio send failed\n"); 
-#if PLATFORM_SM3
-            amb8420Reset();
-#endif
         }
         mdelay(100);
         redLedOff();
