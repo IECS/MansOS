@@ -69,7 +69,8 @@ ALARM_TIMER_INTERRUPT()
         scheduleProcessAlarms(jiffies);
     }
     if (processFlags.value) {
-        if (currentThread->index != KERNEL_THREAD_INDEX) {
+        if (currentThread->index != KERNEL_THREAD_INDEX
+                || currentThread->state == THREAD_SLEEPING) {
             // wake up the kernel thread to process all events that have happened
             threadWakeup(KERNEL_THREAD_INDEX, THREAD_READY);
             yield();
