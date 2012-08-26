@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,26 +21,38 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MOS_HIL_TIMERS_H
-#define MOS_HIL_TIMERS_H
+#ifndef MANSOS_SDSTREAM_H
+#define MANSOS_SDSTREAM_H
 
-#include <platform.h>
-#include <kernel/threads/timing.h>
-#include <hil/atomic.h>
+//
+// SD card stream module interface.
+// Similar to flash stream, but simpler, as data can be rewritten.
+//
 
-extern volatile ticks_t jiffies;
+#include <kernel/defines.h>
 
-// used when waking up from sleep during which the realtime
-// counter was not incremented
-static inline void incRealtime(uint32_t inc)
-{
-    atomic_inc(jiffies, inc);
-}
+//
+// Initialize
+//
+static inline void sdStreamInit(void) {}
 
-static inline uint16_t msToSleepCycles(uint16_t ms)
-{
-    return ms * SLEEP_CYCLES
-        + (uint16_t) ((uint32_t) ms * (uint32_t) SLEEP_CYCLES_DEC / 1000ull);
-}
+//
+// Reset the stream back to start
+//
+void sdStreamReset(void);
+
+//
+// Write a record
+//
+bool sdStreamWriteRecord(void *data, uint16_t length, bool crc);
+
+//
+// Read a record
+//
+bool sdStreamReadRecord(void *data, uint16_t length, bool crc);
+
+#ifndef SDCARD_RESERVED
+#define SDCARD_RESERVED  (256 * 1024ul) // 256kb
+#endif
 
 #endif

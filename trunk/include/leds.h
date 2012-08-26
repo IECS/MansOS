@@ -21,8 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MANSOS_LEDS_H_
-#define _MANSOS_LEDS_H_
+#ifndef MANSOS_LEDS_H
+#define MANSOS_LEDS_H
 
 #include <kernel/defines.h>
 #include "gpio.h"

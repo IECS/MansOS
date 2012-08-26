@@ -21,13 +21,13 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef MANSOS_DELAY_H
+#define MANSOS_DELAY_H
+
 //
-// Code for small software delays
-// (all this better be inline...)
+// This file provides interface for small software delays
 //
 
-#ifndef MANSOS_UDELAY_H
-#define MANSOS_UDELAY_H
 #include <kernel/stdtypes.h>
 #include <udelay_hal.h>
 

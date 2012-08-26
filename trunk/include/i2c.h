@@ -21,14 +21,14 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef MANSOS_I2C_H
+#define MANSOS_I2C_H
+
 //==============================================================================
 // Hardware controlled I2C, master mode only
 // The actual implementation is in HPL. HAL layer provides macros which
 // call the real code
 //==============================================================================
-
-#ifndef MANSOS_I2C_H
-#define MANSOS_I2C_H
 
 #ifndef USE_I2C_SOFT // TODO: this header is incompatible with software i2c!
 
@@ -98,4 +98,4 @@ uint8_t i2cRead(uint8_t addr, void *buf, uint8_t len);
 
 #endif // !USE_I2C_SOFT
 
-#endif  // MANSOS_I2C_H
+#endif

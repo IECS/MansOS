@@ -21,53 +21,35 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_RANDOM_H
-#define MANSOS_RANDOM_H
-
-#include <kernel/stdtypes.h>
-
-//===========================================================
-// Data types and constants
-//===========================================================
-
-#undef RANDOM_MAX
-#define RANDOM_MAX 65535u
-
-//===========================================================
-// Procedures
-//===========================================================
+#ifndef MANSOS_BIT_UTILS_H
+#define MANSOS_BIT_UTILS_H
 
 //
-// Initialize the random number with some random or unique bits from hardware
+// Bit masks by position
 //
-void randomInit(void);
+#define BIT_0   0x01
+#define BIT_1   0x02
+#define BIT_2   0x04
+#define BIT_3   0x08
+#define BIT_4   0x10
+#define BIT_5   0x20
+#define BIT_6   0x40
+#define BIT_7   0x80
+#define BIT_8   0x0100
+#define BIT_9   0x0200
+#define BIT_10  0x0400
+#define BIT_11  0x0800
+#define BIT_12  0x1000
+#define BIT_13  0x2000
+#define BIT_14  0x4000
+#define BIT_15  0x8000
 
 //
-// Seed the random number generator with a specific integer
+// Bit operations
 //
-void randomSeed(uint16_t seed);
+#define SetBit(field, mask)  field |= mask
+#define ClrBit(field, mask)  field &= (~mask)
+#define GetBit(field, mask)  (field & mask)
 
-//
-// Get a random integer between 0 and RANDOM_MAX (including)
-//
-uint16_t randomNumber(void);
-
-//
-// Get a random integer between 0 and limit
-//
-static inline uint16_t randomNumberBounded(uint16_t limit)
-{
-    if (limit == 0) return 0;
-    return randomNumber() % limit;
-}
-
-//
-// Get a random integer in a specific range
-//
-static inline uint16_t randomInRange(uint16_t low, uint16_t high)
-{
-    if (low >= high) return low;
-    return randomNumber() % (high - low) + low;
-}
 
 #endif

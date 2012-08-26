@@ -21,41 +21,37 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_HIL_ADC
-#define MANSOS_HIL_ADC
+#ifndef MANSOS_FILE_H
+#define MANSOS_FILE_H
+
+//
+// File system top level interface
+//
 
 #include <kernel/defines.h>
-#include <platform.h>
 
-// ADC channels which SHOULD be defined for each platform.
-// When a particular channel is not present on a platform,
-// -1 MUST be used for corresponding constant. These constants can be
-// also specified in application's config file
-#ifndef ADC_LIGHT_TOTAL
-#define ADC_LIGHT_TOTAL -1
-#endif
-#ifndef ADC_LIGHT_PHOTOSYNTHETIC
-#define ADC_LIGHT_PHOTOSYNTHETIC -1
-#endif
-#ifndef ADC_INTERNAL_VOLTAGE
-#define ADC_INTERNAL_VOLTAGE -1
-#endif
-#ifndef ADC_INTERNAL_TEMPERATURE
-#define ADC_INTERNAL_TEMPERATURE -1
-#endif
+#if PLATFORM_PC
 
-#define ADC_LIGHT ADC_LIGHT_TOTAL
+// use FILE * defined in C library
+#include <stdio.h>
 
-// User-level ADC functions
-void adcOn(void);
-void adcOff(void);
-uint16_t adcRead(uint8_t ch);
-void adcSetChannel(uint8_t ch);
-uint16_t adcReadFast(void);
-// channel count defined in platform-specific part
-// uint_t adcGetChannelCount();
+static inline bool writeToFile(const char *fileName, const void *data, uint16_t length)
+{
+    bool result = false;
+    FILE *f = fopen(fileName);
+    if (f) {
+        if (fwrite(data, 1, length, f) == length) {
+            result = true;
+        }
+        fclose(f);
+    }
+    return result;
+}
 
-void initAdc(void) WEAK_SYMBOL; // for kernel only
+#else // PLATFORM_PC
 
+#error TODO
+
+#endif // !PLATFORM_PC
 
 #endif
