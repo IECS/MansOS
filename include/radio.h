@@ -21,12 +21,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef MANSOS_RADIO_H
+#define MANSOS_RADIO_H
+
 /*
  * Radio chip API
  */
-
-#ifndef MANSOS_RADIO_H
-#define MANSOS_RADIO_H
 
 #include <kernel/defines.h>
 

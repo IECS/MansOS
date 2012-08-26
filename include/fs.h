@@ -20,12 +20,13 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef MANSOS_FS_H
+#define MANSOS_FS_H
+
 /*
  * fs.h -- user-level file system interface
  */
-
-#ifndef _MANSOS_FS_H_
-#define _MANSOS_FS_H_
 
 #include <stdbool.h>
 #include <stdint.h>

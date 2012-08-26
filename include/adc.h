@@ -21,52 +21,41 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Routines for putting the system in low power mode
- * (non-threaded execution only!)
- */
-
-#ifndef _MANSOS_SLEEP_H
-#define _MANSOS_SLEEP_H
+#ifndef MANSOS_ADC_H
+#define MANSOS_ADC_H
 
 #include <kernel/defines.h>
 #include <platform.h>
 
-#ifdef USE_THREADS
-// use thread specific sleep instead.
-#include <threads/threads.h>
+// ADC channels which SHOULD be defined for each platform.
+// When a particular channel is not present on a platform,
+// -1 MUST be used for corresponding constant. These constants can be
+// also specified in application's config file
+#ifndef ADC_LIGHT_TOTAL
+#define ADC_LIGHT_TOTAL -1
+#endif
+#ifndef ADC_LIGHT_PHOTOSYNTHETIC
+#define ADC_LIGHT_PHOTOSYNTHETIC -1
+#endif
+#ifndef ADC_INTERNAL_VOLTAGE
+#define ADC_INTERNAL_VOLTAGE -1
+#endif
+#ifndef ADC_INTERNAL_TEMPERATURE
+#define ADC_INTERNAL_TEMPERATURE -1
 #endif
 
-#ifdef PLATFORM_PC
-// sleep already defined on PC platform
-# include <unistd.h>
-# define msleep(ms) usleep((ms) * 1000)
-#else
+#define ADC_LIGHT ADC_LIGHT_TOTAL
 
-//
-// Milliseconds sleep
-//
-void msleep(uint16_t milliseconds);
+// User-level ADC functions
+void adcOn(void);
+void adcOff(void);
+uint16_t adcRead(uint8_t ch);
+void adcSetChannel(uint8_t ch);
+uint16_t adcReadFast(void);
+// channel count defined in platform-specific part
+// uint_t adcGetChannelCount();
 
-//
-// Sleep for n seconds. The signature is compatible with POSIX sleep().
-//
-static inline uint16_t sleep(uint16_t seconds)
-{
-    // 
-    // Maximal supported sleeping time is 15984 msec.
-    // XXX: we do not account for the time that was spent
-    // in the loop and in function calls.
-    // 
-    while (seconds > PLATFORM_MAX_SLEEP_SECONDS) {
-        seconds -= PLATFORM_MAX_SLEEP_SECONDS;
-        msleep(PLATFORM_MAX_SLEEP_MS);
-    }
-    msleep(seconds * 1000);
+void initAdc(void) WEAK_SYMBOL; // for kernel only
 
-    return 0; // keep this function compatible with sleep() on PC
-}
-
-#endif // !PLATFORM_PC
 
 #endif

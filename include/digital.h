@@ -21,6 +21,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef MANSOS_DIGITAL_H
+#define MANSOS_DIGITAL_H
+
 /*
   General, platform independant I/O interface.
 
@@ -60,9 +63,6 @@
 
  */
 
-#ifndef _MANSOS_GPIO_H_
-#define _MANSOS_GPIO_H_
-
 #define pinSet( po, pi ) PIN_SET( po, pi )
 #define pinSetMask( po, pi ) PIN_SET_MASK( po, pi )
 #define pinClear( po, pi ) PIN_CLEAR( po, pi )
@@ -91,6 +91,14 @@
 #define pinReadIntFlag( po, pi ) PIN_READ_INT_FLAG( po, pi )
 #define pinClearIntFlag( po, pi ) PIN_CLEAR_INT_FLAG( po, pi )
 
+#define digitalWrite(po, pi, value) do {        \
+        pinAsOutput(po, pi);                    \
+        pinWrite(po, pi, value);                \
+    } while (0)
+#define digitalRead(po, pi) ({                  \
+            pinAsInput(po, pi);                 \
+            pinRead(po, pi)                     \
+    })
 
 // include the platform-specific header
 #include "gpio_hal.h"

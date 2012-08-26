@@ -21,36 +21,50 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_FILE_H
-#define MANSOS_FILE_H
+#ifndef MANSOS_SLEEP_H
+#define MANSOS_SLEEP_H
+
+/*
+ * Routines for putting the system in low power mode
+ */
 
 #include <kernel/defines.h>
+#include <platform.h>
+
+#ifdef USE_THREADS
+// use thread specific sleep instead.
+#include <threads/threads.h>
+#endif
+
+#ifdef PLATFORM_PC
+// sleep already defined on PC platform
+# include <unistd.h>
+# define msleep(ms) usleep((ms) * 1000)
+#else
 
 //
-// File system top level interface
+// Milliseconds sleep
 //
+void msleep(uint16_t milliseconds);
 
-#if PLATFORM_PC
-
-// use FILE * defined in C library
-#include <stdio.h>
-
-static inline bool writeToFile(const char *fileName, const void *data, uint16_t length)
+//
+// Sleep for n seconds. The signature is compatible with POSIX sleep().
+//
+static inline uint16_t sleep(uint16_t seconds)
 {
-    bool result = false;
-    FILE *f = fopen(fileName);
-    if (f) {
-        if (fwrite(data, 1, length, f) == length) {
-            result = true;
-        }
-        fclose(f);
+    // 
+    // Maximal supported sleeping time is 15984 msec.
+    // XXX: we do not account for the time that was spent
+    // in the loop and in function calls.
+    // 
+    while (seconds > PLATFORM_MAX_SLEEP_SECONDS) {
+        seconds -= PLATFORM_MAX_SLEEP_SECONDS;
+        msleep(PLATFORM_MAX_SLEEP_MS);
     }
-    return result;
+    msleep(seconds * 1000);
+
+    return 0; // keep this function compatible with sleep() on PC
 }
-
-#else // PLATFORM_PC
-
-#error TODO
 
 #endif // !PLATFORM_PC
 

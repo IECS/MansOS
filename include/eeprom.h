@@ -20,36 +20,20 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * eeprom.h -- access to non-volatile configuration memory
+ */
 
-#ifndef _MANSOS_BIT_UTILS_H_
-#define _MANSOS_BIT_UTILS_H_
+#ifndef MANSOS_EEPROM_H
+#define MANSOS_EEPROM_H
 
-//
-// Bit masks by position
-//
-#define BIT_0   0x01
-#define BIT_1   0x02
-#define BIT_2   0x04
-#define BIT_3   0x08
-#define BIT_4   0x10
-#define BIT_5   0x20
-#define BIT_6   0x40
-#define BIT_7   0x80
-#define BIT_8   0x0100
-#define BIT_9   0x0200
-#define BIT_10  0x0400
-#define BIT_11  0x0800
-#define BIT_12  0x1000
-#define BIT_13  0x2000
-#define BIT_14  0x4000
-#define BIT_15  0x8000
+#include <stddef.h>
+#include <stdint.h>
 
-//
-// Bit operations
-//
-#define SetBit(field, mask)  field |= mask
-#define ClrBit(field, mask)  field &= (~mask)
-#define GetBit(field, mask)  (field & mask)
+#include <eeprom_hal.h> /* Will define EEPROM_SIZE */
 
+void eepromInit(void);
+void eepromRead(uint16_t addr, void *buf, size_t len);
+void eepromWrite(uint16_t addr, const void *buf, size_t len);
 
 #endif

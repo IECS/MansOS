@@ -21,15 +21,15 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef MANSOS_SPI_H
+#define MANSOS_SPI_H
+
 //==============================================================================
 // SPI bus protocol, master mode only.
 // Automatically chooses to use hardware or software SPI, depending on busId
 // The actual implementation is in HPL.
 // HAL layer provides macros and pin assignments
 //==============================================================================
-
-#ifndef MANSOS_SPI_H
-#define MANSOS_SPI_H
 
 #include <stdtypes.h>
 
@@ -160,4 +160,4 @@ void spiRead(uint8_t busId, void *buf, uint16_t len);
 uint8_t spiReadAndDiscard(uint8_t busId, uint16_t len);
 
 
-#endif  // MANSOS_SPI_H
+#endif

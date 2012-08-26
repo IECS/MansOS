@@ -20,20 +20,58 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- * eeprom.h -- access to non-volatile configuration memory
- */
 
-#ifndef _MANSOS_EEPROM_H_
-#define _MANSOS_EEPROM_H_
+#ifndef MANSOS_RANDOM_H
+#define MANSOS_RANDOM_H
 
-#include <stddef.h>
-#include <stdint.h>
+//
+// Pseudorandom number generator
+//
 
-#include <eeprom_hal.h> /* Will define EEPROM_SIZE */
+#include <kernel/stdtypes.h>
 
-void eepromInit(void);
-void eepromRead(uint16_t addr, void *buf, size_t len);
-void eepromWrite(uint16_t addr, const void *buf, size_t len);
+//===========================================================
+// Data types and constants
+//===========================================================
+
+#undef RANDOM_MAX
+#define RANDOM_MAX 65535u
+
+//===========================================================
+// Procedures
+//===========================================================
+
+//
+// Initialize the random number with some random or unique bits from hardware
+//
+void randomInit(void);
+
+//
+// Seed the random number generator with a specific integer
+//
+void randomSeed(uint16_t seed);
+
+//
+// Get a random integer between 0 and RANDOM_MAX (including)
+//
+uint16_t randomNumber(void);
+
+//
+// Get a random integer between 0 and limit
+//
+static inline uint16_t randomNumberBounded(uint16_t limit)
+{
+    if (limit == 0) return 0;
+    return randomNumber() % limit;
+}
+
+//
+// Get a random integer in a specific range
+//
+static inline uint16_t randomInRange(uint16_t low, uint16_t high)
+{
+    if (low >= high) return low;
+    return randomNumber() % (high - low) + low;
+}
 
 #endif

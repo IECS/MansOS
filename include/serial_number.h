@@ -21,12 +21,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// Serial number chip driver
-//
+#ifndef MANSOS_SERIAL_NUMBER_H
+#define MANSOS_SERIAL_NUMBER_H
 
-#ifndef MANSOS_SNUM_H
-#define MANSOS_SNUM_H
+//
+// Unuique serial number chip driver
+//
 
 //
 // List all supported serial number chips here (before including snum_hal.h)

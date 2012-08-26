@@ -21,38 +21,26 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// SD card stream module interface.
-// Similar to flash stream, but simpler as data can be rewritten.
-//
+#ifndef MOS_TIMERS_H
+#define MOS_TIMERS_H
 
-#ifndef MANSOS_SDSTREAM_H
-#define MANSOS_SDSTREAM_H
+#include <platform.h>
+#include <kernel/threads/timing.h>
+#include <hil/atomic.h>
 
-#include <kernel/defines.h>
+extern volatile ticks_t jiffies;
 
-//
-// Initialize
-//
-static inline void sdStreamInit(void) {}
+// used when waking up from sleep during which the realtime
+// counter was not incremented
+static inline void incRealtime(uint32_t inc)
+{
+    atomic_inc(jiffies, inc);
+}
 
-//
-// Reset the stream back to start
-//
-void sdStreamReset(void);
-
-//
-// Write a record
-//
-bool sdStreamWriteRecord(void *data, uint16_t length, bool crc);
-
-//
-// Read a record
-//
-bool sdStreamReadRecord(void *data, uint16_t length, bool crc);
-
-#ifndef SDCARD_RESERVED
-#define SDCARD_RESERVED  (256 * 1024ul) // 256kb
-#endif
+static inline uint16_t msToSleepCycles(uint16_t ms)
+{
+    return ms * SLEEP_CYCLES
+        + (uint16_t) ((uint32_t) ms * (uint32_t) SLEEP_CYCLES_DEC / 1000ull);
+}
 
 #endif

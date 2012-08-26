@@ -21,12 +21,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// USART HIL
-//
+#ifndef MANSOS_SERIAL_H
+#define MANSOS_SERIAL_H
 
-#ifndef _MANSOS_USART_H_
-#define _MANSOS_USART_H_
+//
+// Serial port interface
+//
 
 #include <platform.h>
 
