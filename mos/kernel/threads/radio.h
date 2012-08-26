@@ -21,10 +21,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_EXPTHREADS_RADIO_H
-#define MANSOS_EXPTHREADS_RADIO_H
+#ifndef MANSOS_THREADS_RADIO_H
+#define MANSOS_THREADS_RADIO_H
 
-#include <hil/radio.h>
+#include <radio.h>
 
 typedef struct RadioPacketBuffer_s {
     uint8_t bufferLength;     // length of the buffer

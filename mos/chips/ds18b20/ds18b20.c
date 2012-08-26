@@ -34,7 +34,7 @@
 
 #include <string.h>
 
-#include <hil/sleep.h>
+#include <sleep.h>
 #include <lib/codec/crc.h>
 
 #include "ds18b20.h"

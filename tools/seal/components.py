@@ -630,7 +630,7 @@ class Component(object):
             parameter, useCaseParameters)
 
     def getConfig(self):
-        if not self.isUsed(): return None
+        if not self.isUsed(): return ""
         result = ""
         if isinstance(self, Output) and len(self.useCases):
             for uc in self.useCases:

@@ -1,10 +1,10 @@
 #include "amb8420.h"
-#include <lib/dprint.h>
-#include <hil/udelay.h>
+#include <print.h>
+#include <delay.h>
 #include <string.h>
 #include <kernel/threads/threads.h>
 
-#include <hil/leds.h>
+#include <leds.h>
 
 #if DEBUG
 #define RADIO_DEBUG 1

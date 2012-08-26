@@ -34,7 +34,7 @@
 #include <kernel/defines.h>
 #include <kernel/stdtypes.h>
 
-#include <hil/fs/types.h>
+#include <fs/types.h>
 
 /*
  * Get information about a file.

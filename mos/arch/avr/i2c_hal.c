@@ -25,7 +25,7 @@
  * ATMega 2-wire is I2C-compatible
  */
 
-#include <hil/i2c.h>
+#include <i2c.h>
 #include "atmega/atmega_2wire.h"
 
 /**

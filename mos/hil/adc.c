@@ -23,7 +23,7 @@
 
 #include <stdbool.h>
 #include "adc.h"
-#include "gpio.h"
+#include "digital.h"
 
 //----------------------------------------------------------
 // types

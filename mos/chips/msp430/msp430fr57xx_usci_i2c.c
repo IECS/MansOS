@@ -22,7 +22,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <hil/i2c.h>
+#include <i2c.h>
 #include "msp430fr57xx_usci.h"
 
 

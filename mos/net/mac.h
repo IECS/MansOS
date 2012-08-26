@@ -25,7 +25,7 @@
 #define MANSOS_MAC_H
 
 #include "addr.h"
-#include <hil/radio.h>
+#include <radio.h>
 
 //===========================================================
 // Data types and constants

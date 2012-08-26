@@ -25,7 +25,7 @@
 //      Platform code
 //----------------------------------------------------------
 #include "platform.h"
-#include <hil/snum.h>
+#include <serial_number.h>
 
 //----------------------------------------------------------
 //      Init the platform as if on cold reset

@@ -22,8 +22,8 @@
  */
 
 #include "mansos.h"
-#include "udelay.h"
-#include "dprint.h"
+#include "delay.h"
+#include "print.h"
 #include "radio.h"
 #include "sleep.h"
 #include "leds.h"

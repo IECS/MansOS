@@ -28,8 +28,8 @@
 #include <pthread.h>
 #include <sem_hal.h>
 #include <fcntl.h>
-#include <hil/radio.h>
-#include "dprint.h"
+#include <radio.h>
+#include <print.h>
 
 RadioRecvFunction radioCallback = 0;
 unsigned char pcRadioBuf[MAX_PACKET_SIZE];

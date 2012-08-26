@@ -28,11 +28,11 @@
 #include "../mac.h"
 #include "../routing.h"
 #include "../socket.h"
-#include <hil/alarms.h>
+#include <alarms.h>
 #include <kernel/threads/timing.h>
 #include <lib/unaligned.h>
-#include <lib/dprint.h>
-#include <lib/random.h>
+#include <print.h>
+#include <random.h>
 #include <net/net-stats.h>
 
 static Socket_t roSocket;
@@ -49,8 +49,6 @@ static Seqnum_t lastSeenSeqnum;
 static uint16_t hopCountToRoot = MAX_HOP_COUNT;
 static uint32_t lastRootMessageTime = (uint32_t) -ROUTING_INFO_VALID_TIME;
 static MosShortAddr nexthopToRoot;
-MosShortAddr rootAddress;
-int32_t rootClockDelta;
 
 // -----------------------------------------------
 
@@ -93,7 +91,7 @@ static void roForwardTimerCb(void *x)
 
     RoutingInfoPacket_t routingInfo;
     routingInfo.packetType = ROUTING_INFORMATION;
-    routingInfo.__reserved = 0;
+    routingInfo.senderType = 0;
     routingInfo.rootAddress = rootAddress;
     routingInfo.hopCount = hopCountToRoot + 1;
     routingInfo.seqnum = lastSeenSeqnum;
@@ -121,7 +119,7 @@ static void roRequestTimerCb(void *x)
 
     RoutingRequestPacket_t req;
     req.packetType = ROUTING_REQUEST;
-    req.__reserved = 0;
+    req.senderType = 0;
     socketSend(&roSocket, &req, sizeof(req));
     markForwardTimerActive(0);
 }

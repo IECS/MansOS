@@ -28,7 +28,7 @@
 #ifdef WIN32
 #include <winsock.h>
 #endif
-#include <hil/usart.h>
+#include <serial.h>
 #include <string.h>
 #include <stdio.h>
 #include <pthread.h>

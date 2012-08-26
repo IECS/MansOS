@@ -27,7 +27,7 @@
 
 #include "msp430_clock.h"
 #include "msp430_timers.h"
-#include <hil/udelay.h>
+#include <delay.h>
 
 // DCO calibration approach is borrowed from TOS1.x
 enum

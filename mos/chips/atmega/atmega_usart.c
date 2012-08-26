@@ -26,7 +26,7 @@
 //
 
 #include "platform.h"
-#include <hil/usart.h>
+#include <serial.h>
 #include <avr/interrupt.h>
 
 enum ATMegaUSARTMode_e {

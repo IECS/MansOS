@@ -35,8 +35,8 @@
 // Note: timing may have to be adjusted for a different microcontroller
 //==============================================================================
 
-#include "gpio.h"
-#include "udelay.h"
+#include <digital.h>
+#include <delay.h>
 
 #ifndef SDA_PORT
 #error SDA_PORT not defined for software i2c!

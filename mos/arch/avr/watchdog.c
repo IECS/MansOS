@@ -21,7 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <hil/watchdog.h>
+#include <watchdog.h>
 #include <atmega/atmega_timers.h>
 #include <atmega/atmega_int.h>
 

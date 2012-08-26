@@ -26,9 +26,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include <hil/leds.h>
-#include <hil/fs/common.h>
-#include <hil/fs/types.h>
+#include <leds.h>
+#include <fs/common.h>
+#include <fs/types.h>
 #include <kernel/defines.h>
 #include <kernel/stdtypes.h>
 

@@ -23,7 +23,7 @@
 
 #include "../common.h"
 #include <stdio.h>
-#include <hil/snum.h>
+#include <serial_number.h>
 #include <kernel/expthreads/radio.h>
 
 enum {

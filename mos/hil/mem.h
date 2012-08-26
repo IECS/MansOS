@@ -26,23 +26,10 @@
 // Base taken from Mantis: http://mantis.cs.colorado.edu/
 //--------------------------------------------------------------------------------
 
-#ifndef _MOS_MANTIS_MEM_H_
-#define _MOS_MANTIS_MEM_H_
+#ifndef MANSOS_MEM_H
+#define MANSOS_MEM_H
 
 #include <kernel/stdtypes.h>
-
-//----------------------------------------------------------
-// types
-//----------------------------------------------------------
-/** @brief A node of managed memory */
-typedef struct Node_s {
-   /** @brief Size of blocks */
-   uint16_t size;
-   /** @brief Linked list of pointers */
-   struct Node_s *prev;
-   /** @brief Pointer to ned node */
-   struct Node_s *next;
-} Node_t;
 
 //----------------------------------------------------------
 // functions
@@ -51,17 +38,17 @@ typedef struct Node_s {
  * @param region Memory region to initialize
  * @param size Size of the memory region
  */
-void mantisMemInit(void *region, uint16_t size);
+void memoryInit(void *region, uint16_t size);
 
 /** @brief Try to allocate a region of memory.
  * @param size Size of the region to allocate.
  * @return NULL if not enough memory is available, else the allocated memory.
  */
-void *mantisMemAlloc(uint16_t size);
+void *memoryAlloc(uint16_t size);
 
 /** @brief Free a block of memory.
  * @param block Block of memory to free
  */
-void mantisMemFree(void *block);
+void memoryFree(void *block);
 
-#endif // _MOS_MEM_H_
+#endif

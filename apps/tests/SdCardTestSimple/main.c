@@ -89,12 +89,11 @@
 * ********************************************************* */
 
 
-#include <msp430x16x.h>
 #include "mmc.h"
 #include <stdio.h>
-#include "kernel/stdmansos.h"
-#include "hil/udelay.h"
-#include "hil/blink.h"
+#include <stdmansos.h>
+#include <delay.h>
+#include <utils.h>
 
 unsigned long cardSize = 0;
 unsigned char status = 1;

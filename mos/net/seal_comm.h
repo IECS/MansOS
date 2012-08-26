@@ -24,7 +24,7 @@
 #ifndef MANSOS_SEAL_COMM_H
 #define MANSOS_SEAL_COMM_H
 
-#include <hil/radio.h>
+#include <radio.h>
 
 #ifndef SEAL_MAGIC
 #define SEAL_MAGIC    0xABCD

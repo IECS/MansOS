@@ -26,7 +26,7 @@
 #============================================================================
 
 #===== Component locations =====
-PDFS      = /mos/hil/fs
+PDFS      = /mos/fs
 NET       = $(MOS)/net
 
 #===== Sources =====
@@ -34,7 +34,7 @@ NET       = $(MOS)/net
 PSOURCES += $(MOS)/hil/mem.c
 PSOURCES += $(MOS)/hil/errors.c
 PSOURCES-$(USE_SPI) += $(MOS)/hil/spi.c
-PSOURCES-$(USE_SERIAL) += $(MOS)/hil/usart.c
+PSOURCES-$(USE_SERIAL) += $(MOS)/hil/serial.c
 PSOURCES-$(USE_ADC) += $(MOS)/hil/adc.c
 PSOURCES-$(USE_LEDS) += $(MOS)/hil/leds.c
 PSOURCES-$(USE_SOFT_I2C) += $(MOS)/hil/i2c_soft.c
@@ -45,7 +45,7 @@ PSOURCES-$(USE_ALARMS) += $(MOS)/kernel/alarms.c
 
 PSOURCES-$(USE_PRINT) += $(MOS)/lib/dprint.c
 PSOURCES-$(USE_ASSERT) += $(MOS)/lib/assert.c
-PSOURCES-$(USE_RANDOM) += $(MOS)/lib/random.c
+PSOURCES-$(USE_RANDOM) += $(MOS)/hil/random.c
 PSOURCES-$(USE_PRINT) += $(MOS)/lib/usart_packet.c
 PSOURCES-$(USE_GPS) += $(MOS)/lib/nmea/nmea.c
 PSOURCES-$(USE_GPS) += $(MOS)/lib/nmea/nmea_stream.c

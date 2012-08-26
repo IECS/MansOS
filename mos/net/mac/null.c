@@ -23,9 +23,9 @@
 
 #include "../mac.h"
 #include <lib/buffer.h>
-#include <hil/radio.h>
-#include <hil/errors.h>
-#include <lib/dprint.h>
+#include <radio.h>
+#include <errors.h>
+#include <print.h>
 #include <lib/radio_packet_buffer.h>
 #include <net/net-stats.h>
 

@@ -21,10 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_WATCHDOG_HAL
-#define MANSOS_WATCHDOG_HAL
-
-#include <hil/watchdog.h>
+#include <watchdog.h>
 #include "watchdog_hal.h"
 
 #include <stdio.h>
@@ -35,5 +32,3 @@ void watchdogReboot(void)
     printf("reboot requested!\n");    
     exit(0); // ?
 }
-
-#endif

@@ -31,7 +31,7 @@
 
 #include <arch/null_spi.h>
 
-#include <hil/gpio.h>
+#include <digital.h>
 
 
 void initPlatform(void);
@@ -40,4 +40,4 @@ void initPlatform(void);
 #define PRINT_BUFFER_SIZE 127
 #endif
 
-#endif  // _PLATFORM_HPL_H_
+#endif

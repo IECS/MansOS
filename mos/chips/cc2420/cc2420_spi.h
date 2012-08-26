@@ -24,8 +24,8 @@
 #ifndef CC2420_SPI_H
 #define CC2420_SPI_H
 
-#include <hil/spi.h>
-#include <hil/udelay.h>
+#include <spi.h>
+#include <delay.h>
 #include "cc2420_pins.h"
 
 /*

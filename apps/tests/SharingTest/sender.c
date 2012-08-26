@@ -26,7 +26,7 @@
 //-----------------------------------------------------------------------------
 
 #include "stdmansos.h"
-#include <lib/random.h>
+#include <random.h>
 
 char sendBuffer[] = "hello world";
 

@@ -26,12 +26,12 @@
 #include <limits.h>
 #include <stdint.h>
 
-#include <hil/eeprom.h>
-#include <hil/extflash.h>
-#include <hil/fs/common.h>
-#include <hil/fs/types.h>
+#include <eeprom.h>
+#include <extflash.h>
+#include <fs/common.h>
+#include <fs/types.h>
 #include <kernel/defines.h>
-#include <lib/random.h>
+#include <random.h>
 
 #include "alloc.h"
 #include "common.h"

@@ -121,17 +121,13 @@ void initRouting(void);
 
 RoutingDecision_e routePacket(MacInfo_t *info);
 
-// static inline ticks_t getFixedTime(void)
-// {
-//     return jiffies + rootClockDelta;
-// }
-
-#if USE_ROLE_BASE_STATION
-#define getFixedTime() getJiffies()
-#define getFixedUptime() getUptime()
-#else
+// TODO: move this somewhere
+#if !USE_ROLE_BASE_STATION && USE_NET
 #define getFixedTime() ((uint32_t)((uint32_t)getJiffies() + rootClockDelta))
 #define getFixedUptime() ((uint32_t)(jiffies2ms(getFixedTime()) / 1000))
+#else
+#define getFixedTime() getJiffies()
+#define getFixedUptime() getUptime()
 #endif
 
 #endif

@@ -28,7 +28,7 @@
 
 #include "random.h"
 #include "stdmansos.h"
-#include <snum.h>
+#include <serial_number.h>
 #include <net/socket.h>
 #include <net/routing.h>
 #include <net/net-stats.h>

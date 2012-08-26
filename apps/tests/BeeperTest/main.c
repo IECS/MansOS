@@ -26,7 +26,7 @@
 //-------------------------------------------
 
 #include "mansos.h"
-#include "udelay.h"
+#include "delay.h"
 #include "beeper.h"
 
 //-------------------------------------------

@@ -22,7 +22,6 @@
  */
 
 #include <lib/radio_packet_buffer.h>
-#include <hil/radio.h>
 
 #ifndef RADIO_BUFFER_SIZE
 #define RADIO_BUFFER_SIZE RADIO_MAX_PACKET

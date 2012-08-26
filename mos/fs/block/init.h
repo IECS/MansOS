@@ -26,7 +26,7 @@
 #ifndef _FS_BLOCK_INIT_H_
 #define _FS_BLOCK_INIT_H_
 
-#include <hil/fs/prefix.h>
+#include <fs/prefix.h>
 
 /* Subsystem file operations */
 extern const struct fsOperations fsBlockOps;

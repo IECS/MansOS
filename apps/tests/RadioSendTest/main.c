@@ -28,7 +28,7 @@
 //-----------------------------------------------------------------------------
 
 #include "stdmansos.h"
-#include <lib/random.h>
+#include <random.h>
 #include <string.h>
 
 #define RECV 0

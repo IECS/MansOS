@@ -23,7 +23,7 @@
 
 #include "stdmansos.h"
 #include "dprint.h"
-#include <snum.h>
+#include <serial_number.h>
 
 void appMain(void)
 {

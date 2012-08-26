@@ -22,7 +22,7 @@
  */
 
 #include "cache.h"
-#include <hil/timers.h>
+#include <timers.h>
 
 typedef struct SensorCache_s {
     union {

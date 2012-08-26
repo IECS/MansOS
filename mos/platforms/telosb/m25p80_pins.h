@@ -24,7 +24,7 @@
 #ifndef M25P80_SPI_HAL_H
 #define M25P80_SPI_HAL_H
 
-#include <hil/spi.h>
+#include <spi.h>
 
 /*
  * M25P80 Flash SPI bus configuration for TelosB platform

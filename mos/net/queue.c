@@ -24,8 +24,8 @@
 #include "queue.h"
 #include <arch_mem.h>
 #include <lib/assert.h>
-#include <lib/dprint.h>
-#include <hil/errors.h>
+#include <print.h>
+#include <errors.h>
 #include <kernel/threads/mutex.h>
 
 #define DYNAMIC_ALLOCATION      0

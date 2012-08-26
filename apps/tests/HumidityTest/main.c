@@ -43,8 +43,8 @@ void appMain(void)
     sleep(8);
 
     while (1) {
-        uint16_t hum_raw = readHumidity();
-        uint16_t temp_raw = readHTemperature();
+        uint16_t hum_raw = humidityRead();
+        uint16_t temp_raw = temperatureRead();
         PRINTF("hum = %i\t temp = %i\n", hum_raw, temp_raw);
         sleep(1);
     }

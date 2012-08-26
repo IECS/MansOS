@@ -39,7 +39,7 @@
 #include <avr/interrupt.h>
 #include <util/twi.h>
 #include "atmega_2wire.h"
-#include <hil/i2c.h> // for error code constants
+#include <i2c.h> // for error code constants
 
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))

@@ -22,8 +22,8 @@
  */
 
 #include "dac7718.h"
-#include <hil/spi.h>
-#include <lib/dprint.h>
+#include <spi.h>
+#include <print.h>
 
 #define DAC7718_SPI_ENABLE()   spiSlaveEnable(DAC7718_CS_PORT, DAC7718_CS_PIN)
 #define DAC7718_SPI_DISABLE()  spiSlaveDisable(DAC7718_CS_PORT, DAC7718_CS_PIN)

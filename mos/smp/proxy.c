@@ -48,13 +48,13 @@
 #define USE_MAC 0
 
 #include "smp.h"
-#include <hil/usart.h>
-#include <hil/udelay.h>
-#include <lib/random.h>
+#include <serial.h>
+#include <delay.h>
+#include <random.h>
 #include <lib/unaligned.h>
 #include <lib/codec/crc.h>
-#include <lib/dprint.h>
-#include <hil/leds.h>
+#include <print.h>
+#include <leds.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -65,7 +65,7 @@ MacDriver_t *mac;
 static uint8_t macBuffer[400];
 #else
 #include <net/addr.h>
-#include <hil/radio.h>
+#include <radio.h>
 #endif
 
 bool isBaseStation;

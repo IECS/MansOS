@@ -24,8 +24,8 @@
 #ifndef MSP430_BEEPER_HAL_H
 #define MSP430_BEEPER_HAL_H
 
-#include <hil/udelay.h>
-#include <hil/gpio.h>
+#include <delay.h>
+#include <digital.h>
 
 #define beeperInit()  PIN_AS_OUTPUT(1, 2)
 #define beeperToggle()  PIN_TOGGLE(1, 2)

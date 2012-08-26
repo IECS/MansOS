@@ -26,7 +26,7 @@
 //-------------------------------------------
 
 #include "sht11.h"
-#include <hil/udelay.h>
+#include <delay.h>
 
 #define SHT11_SEND_START_SEQ() \
     SHT11_SDA_OUT(); \

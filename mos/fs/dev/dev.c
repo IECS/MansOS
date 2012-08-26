@@ -26,9 +26,9 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <hil/fs/common.h>
-#include <hil/fs/prefix.h>
-#include <hil/fs/types.h>
+#include <fs/common.h>
+#include <fs/prefix.h>
+#include <fs/types.h>
 #include <kernel/defines.h>
 
 #include "dev.h"

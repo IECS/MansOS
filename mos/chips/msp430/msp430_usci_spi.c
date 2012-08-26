@@ -26,7 +26,7 @@
  * msp430_usci_spi.c -- USCI module on MSP430, SPI mode
  */
 
-#include <hil/gpio.h>
+#include <digital.h>
 #include <kernel/defines.h>
 #include <kernel/stdtypes.h>
 

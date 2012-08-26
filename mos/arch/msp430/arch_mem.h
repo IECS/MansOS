@@ -29,7 +29,7 @@
 #define _MANSOS_ARCH_MEM_H_
 
 #include <kernel/defines.h>
-#include <hil/mem.h>
+#include <dynamic_memory.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 // Memory layout
@@ -71,9 +71,9 @@ extern uint8_t _end;
 // functions
 //--------------------------------------------------------------------------------
 
-#define memInit(region, size) mantisMemInit(region, size)
-#define memAlloc(size) mantisMemAlloc(size)
-#define memFree(ptr) mantisMemFree(ptr)
+#define memInit(region, size) memoryInit(region, size)
+#define memAlloc(size) memoryAlloc(size)
+#define memFree(ptr) memoryFree(ptr)
 
 static inline void platformMemInit(void) {
     int dummy;

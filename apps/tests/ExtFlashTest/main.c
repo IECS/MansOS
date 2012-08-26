@@ -30,7 +30,7 @@
 #include "extflash.h"
 #include "timers.h"
 #include <string.h>
-#include <hil/blink.h>
+#include <utils.h>
 #include <lib/assert.h>
 
 // Write <BYTE_COUNT> bytes to external flash memory, starting at

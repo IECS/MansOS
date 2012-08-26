@@ -28,7 +28,7 @@
 
 #include <kernel/defines.h>
 #include <lib/dprint.h>
-#include <hil/leds.h>
+#include <leds.h>
 
 #include "assert.h"
 

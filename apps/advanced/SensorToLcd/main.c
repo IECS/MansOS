@@ -39,7 +39,7 @@ void appMain(void)
     lcdOn();
     while(1) {
         redLedToggle();
-        uint16_t light = readLight();
+        uint16_t light = lightRead();
         // format buf string and print it
         snprintf(buf, sizeof(buf), "l = %i", light);
         lcdPrint(buf);

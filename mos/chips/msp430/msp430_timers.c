@@ -22,7 +22,7 @@
  */
 
 #include "msp430_timers.h"
-#include <hil/timers.h>
+#include <timers.h>
 
 //
 // Include this code only on platforms where timer B is available.

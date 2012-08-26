@@ -28,8 +28,6 @@
 #define lightInit()
 #define lightOn()
 #define lightOff()
-#define readVisibleLight() (0)
-#define readPARLight() (0)
-#define readLight() (0)
+#define lightRead() (0)
 
-#endif // !ATMEGA_LIGHT_HAL_H
+#endif

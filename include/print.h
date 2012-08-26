@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,21 +21,14 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_BLINK_H
-#define MANSOS_BLINK_H
+#ifndef MANSOS_PRINT_H
+#define MANSOS_PRINT_H
 
-#include <hil/udelay.h>
-#include <hil/leds.h>
+#include <lib/dprint.h>
 
-static inline void blink(uint16_t count, uint16_t interval)
-{
-    uint16_t i;
-    for (i = 0; i < count; i++) {
-        ledOn();
-        mdelay(interval);
-        ledOff();
-        mdelay(interval);
-    }
-}
+// functions / macros:
+// PRINT
+// PRINTF
+// void debugHexdump(void *data, unsigned len);
 
 #endif

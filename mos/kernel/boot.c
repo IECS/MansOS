@@ -23,7 +23,6 @@
 
 #include "mansos.h"
 #include "boot.h"
-#include <hil/intflash.h>
 
 // if reprogramming code is included, make sure bootloader is present
 #if USE_REPROGRAMMING

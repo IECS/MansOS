@@ -23,7 +23,7 @@
 
 #include <kernel/alarms_system.h>
 #include <platform.h>
-#include <hil/radio.h> // XXX
+//#include <radio.h>
 
 //----------------------------------------------------------
 // internal variables
@@ -60,9 +60,9 @@ ALARM_TIMER_INTERRUPT()
 #endif
 
     // TODO: remove this code!
-#if USE_RADIO && (RADIO_CHIP==RADIO_CHIP_MRF24J40)
-    if (mrf24j40PollForPacket) mrf24j40PollForPacket();
-#endif
+// #if USE_RADIO && (RADIO_CHIP==RADIO_CHIP_MRF24J40)
+//     if (mrf24j40PollForPacket) mrf24j40PollForPacket();
+// #endif
 }
 
 #endif // !CUSTOM_TIMER_INTERRUPT_HANDLERS

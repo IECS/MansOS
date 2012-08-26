@@ -72,9 +72,9 @@
 
 // TODO - implement SPI-slave mode
 
-#include "gpio.h"
-#include "udelay.h"
-#include <hil/spi.h>
+#include <digital.h>
+#include <delay.h>
+#include <spi.h>
 
 // Pin configuration
 #ifndef SW_MISO_PORT

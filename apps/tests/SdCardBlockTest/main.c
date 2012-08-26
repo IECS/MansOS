@@ -22,8 +22,8 @@
  */
 
 #include "stdmansos.h"
-#include <hil/extflash.h>
-#include <hil/blink.h>
+#include <extflash.h>
+#include <utils.h>
 //#include <sdcard/sdcard.h>
 #include <lib/assert.h>
 

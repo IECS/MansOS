@@ -26,8 +26,8 @@
  * msp430_usci_uart.c -- USCI module on MSP430, UART mode
  */
 
-#include <hil/gpio.h>
-#include <hil/usart.h>
+#include <digital.h>
+#include <serial.h>
 #include <kernel/defines.h>
 #include <kernel/stdtypes.h>
 

@@ -28,8 +28,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <hil/fs.h>
-#include <kernel/mansos.h>
+#include <fs.h>
+#include <mansos.h>
 #include <lib/assert.h>
 #include <lib/dprint.h>
 

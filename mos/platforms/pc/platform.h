@@ -33,7 +33,7 @@
 
 #include <arch/null_spi.h>
 
-#include <hil/gpio.h>
+#include <digital.h>
 
 // PC platform uses NO timers
 #define DISABLE_INTS() // nothing

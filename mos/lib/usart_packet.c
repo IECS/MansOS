@@ -21,7 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <hil/usart.h>
+#include <serial.h>
 
 #include <lib/dprint.h>
 

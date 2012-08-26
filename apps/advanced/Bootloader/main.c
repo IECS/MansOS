@@ -21,10 +21,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <hil/intflash.h>
-#include <hil/extflash.h>
-#include <hil/usart.h>
-#include <hil/watchdog.h>
+#include <intflash.h>
+#include <extflash.h>
+#include <serial.h>
+#include <watchdog.h>
 #include <lib/codec/crc.h>
 #include <kernel/reprogramming.h>
 #include <msp430/msp430_int.h>

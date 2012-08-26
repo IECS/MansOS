@@ -22,8 +22,8 @@
  */
 
 #include "random.h"
-#include <hil/timers.h>
-#include <hil/snum.h>
+#include <timers.h>
+#include <serial_number.h>
 
 #if PLATFORM_PC
 #include <sys/time.h>

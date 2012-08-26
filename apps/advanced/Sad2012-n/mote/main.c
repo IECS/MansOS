@@ -23,8 +23,8 @@
 
 #include "../common.h"
 #include <hil/i2c_soft.h>
-#include <hil/snum.h>
-#include <hil/extflash.h>
+#include <serial_number.h>
+#include <extflash.h>
 #include <lib/codec/crc.h>
 #include <lib/assert.h>
 #include <isl29003/isl29003.h>
@@ -262,8 +262,8 @@ void readSensors(DataPacket_t *packet)
     packet->internalVoltage = adcRead(ADC_INTERNAL_VOLTAGE);
     packet->internalTemperature = adcRead(ADC_INTERNAL_TEMPERATURE);
     //PRINT("read hum\n");
-    packet->sht75Humidity = readHumidity();
-    packet->sht75Temperature = readHTemperature();
+    packet->sht75Humidity = humidityRead();
+    packet->sht75Temperature = temperatureRead();
     // PRINT("read done\n");
     packet->crc = crc16((uint8_t *) packet, sizeof(*packet) - 2);
 

@@ -25,7 +25,7 @@
 #define MANSOS_BOOT_H
 
 #include "defines.h"
-#include <hil/intflash.h>
+#include <intflash.h>
 
 // This structure is stored in info flash memory
 struct BootParams_s {

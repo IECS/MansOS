@@ -23,7 +23,7 @@
 
 #include <string.h>
 #include <stdio.h>
-#include "usart.h"
+#include <serial.h>
 
 //===========================================================
 // Data types and constants

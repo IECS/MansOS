@@ -25,13 +25,16 @@
 #include "routing.h"
 #include "socket.h"
 #include "queue.h"
-#include <hil/snum.h>
-#include <lib/dprint.h>
+#include <serial_number.h>
+#include <print.h>
 #include <net/net-stats.h>
 
 // ---------- place for global net variables
 
 MosShortAddr localAddress;
+
+MosShortAddr rootAddress;
+int32_t rootClockDelta;
 
 #ifdef DEBUG
 uint32_t netstats[TOTAL_NETSTAT];

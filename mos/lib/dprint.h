@@ -39,7 +39,7 @@
 #ifndef MANSOS_DPRINT_H
 #define MANSOS_DPRINT_H
 
-#include <hil/usart.h>
+#include <serial.h>
 #include <kernel/stdtypes.h>
 
 //#define DPRINT_TO_RADIO 1
@@ -86,7 +86,7 @@ extern void PRINT(const char *format, ...);
 #define PRINTLN(x) PRINT(x "\n")
 
 #if PLATFORM_PC
-#include <hil/timers.h> // for getRealTime()
+#include <timers.h> // for getRealTime()
 #define TPRINTF(format, ...) debugPrintf("[%u] " format, getRealTime(), ##__VA_ARGS__)
 #else
 #define TPRINTF(...) PRINTF(__VA_ARGS__)

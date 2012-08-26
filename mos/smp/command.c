@@ -1,7 +1,7 @@
 #include "stdmansos.h"
 #include "smp.h"
 #include <kernel/reprogramming.h>
-#include <hil/snum.h>
+#include <serial_number.h>
 #include <net/addr.h>
 
 bool getMoteType(bool set, uint8_t oidLen, SmpOid_t oid,
@@ -113,11 +113,11 @@ bool processSensorCommand(bool set, uint8_t oidLen, SmpOid_t oid,
         break;
     case SMP_SENSOR_HUMIDITY:
         ensureHumidityIsOn();
-        response->u.uint16 = readHumidity();
+        response->u.uint16 = humidityRead();
         break;
     case SMP_SENSOR_TEMPERATURE:
         ensureHumidityIsOn();
-        response->u.uint16 = readHTemperature();
+        response->u.uint16 = temperatureRead();
         break;
     default:
         PRINTF("processSensorCommand: unknown sensor %d\n", sensor);

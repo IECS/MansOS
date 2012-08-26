@@ -24,7 +24,7 @@
 #ifndef AMB8420_PINS_H
 #define AMB8420_PINS_H
 
-#include <hil/gpio.h>
+#include <digital.h>
 
 #define AMB8420_UART_ID     0
 

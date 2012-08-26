@@ -28,7 +28,7 @@
 //-----------------------------------------------------------------------------
 
 #include "stdmansos.h"
-#include <lib/random.h>
+#include <random.h>
 #include "amb8420/amb8420.h"
 #include <string.h>
 

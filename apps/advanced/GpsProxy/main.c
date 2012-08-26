@@ -25,10 +25,7 @@
 // Pure GPS proxy (input & output)
 //
 
-#include "mansos.h"
-#include "usart.h"
-#include "udelay.h"
-#include "leds.h"
+#include "stdmansos.h"
 #include <string.h>
 #include <stdio.h>
 

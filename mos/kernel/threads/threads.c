@@ -30,8 +30,8 @@
 #error Define context switch macros for this architecture!
 #endif
 #include <lib/assert.h>
-#include <lib/dprint.h>
-#include <hil/sleep.h>
+#include <print.h>
+#include <sleep.h>
 #include <string.h>
 
 uint8_t threadStackBuffer[THREAD_STACK_SIZE * NUM_USER_THREADS];

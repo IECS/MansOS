@@ -26,10 +26,10 @@
 //
 
 #include "stdmansos.h"
-#include "dprint.h"
-#include "hil/extflash.h"
+#include <print.h>
+#include <extflash.h>
 #include "lib/assert.h"
-#include "lib/random.h"
+#include "random.h"
 #include <string.h>
 
 // while working with flash, radio must be turned off

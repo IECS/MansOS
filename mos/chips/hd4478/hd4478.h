@@ -31,8 +31,8 @@
 // <pfleury@gmx.ch>  http://jump.to/fleury
 //-------------------------------------------
 
-#include "gpio.h"
-#include "udelay.h"
+#include <digital.h>
+#include <delay.h>
 
 // if this macro-flag is 1, wait until operation is finished
 // use simple delay (max us according to datasheet) otherwise

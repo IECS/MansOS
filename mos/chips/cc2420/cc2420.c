@@ -56,13 +56,13 @@
 #include "cc2420.h"
 #include "cc2420_const.h"
 #include "cc2420_spi.h"
-#include <hil/radio.h>
-#include <hil/errors.h>
+#include <radio.h>
+#include <errors.h>
 #include <lib/codec/crc.h>
 #include <kernel/defines.h>
 #include <kernel/threads/threads.h>
 
-#include <hil/gpio.h>
+#include <digital.h>
 
 // for 4MHz CPU speed? (326us required)
 #define LOOP_20_SYMBOLS 700

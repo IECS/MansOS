@@ -23,8 +23,8 @@
 
 #include "stdmansos.h"
 #include <string.h>
-#include <hil/snum.h>
-#include <hil/extflash.h>
+#include <serial_number.h>
+#include <extflash.h>
 #include <lib/codec/crc.h>
 #include <lib/assert.h>
 

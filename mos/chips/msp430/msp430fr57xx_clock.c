@@ -27,7 +27,7 @@
 
 #include "msp430_clock.h"
 #include "msp430_timers.h"
-#include <hil/udelay.h>
+#include <delay.h>
 
 static void msp430CalibrateDCO(void) {
 #if 0  // To run in ~8MHz mode:

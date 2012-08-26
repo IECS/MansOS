@@ -28,7 +28,7 @@
 // Driver for SHT1x/SHT7x humidity & temperature sensors
 //------------------------------------------------------
 
-#include <hil/gpio.h>
+#include <digital.h>
 #include <kernel/defines.h>
 #include "humidity_hal.h"
 

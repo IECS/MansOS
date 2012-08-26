@@ -22,7 +22,7 @@
  */
 
 #include <unistd.h>
-#include <hil/timers.h>
+#include <timers.h>
 #include <kernel/alarms_system.h>
 #include <sys/time.h>
 

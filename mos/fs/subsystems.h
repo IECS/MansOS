@@ -28,8 +28,8 @@
 #ifndef _FS_SUBSYSTEMS_H_
 #define _FS_SUBSYSTEMS_H_
 
-#include <hil/fs/block/init.h>
-#include <hil/fs/dev/init.h>
+#include <fs/block/init.h>
+#include <fs/dev/init.h>
 
 #define FS_SUBSYSTEM_LIST \
     FS_SUBSYSTEM("/blk/", &fsBlockOps, fsBlockInit) \

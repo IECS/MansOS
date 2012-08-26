@@ -24,7 +24,7 @@
 #ifndef MRF24J40_SPI_HAL_H
 #define MRF24J40_SPI_HAL_H
 
-#include <hil/gpio.h>
+#include <digital.h>
 
 /*
  * MRF24J40 SPI bus configuration

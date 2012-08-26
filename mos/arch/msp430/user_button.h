@@ -28,7 +28,7 @@
 #ifndef _USER_BUTTON_HAL_H_
 #define _USER_BUTTON_HAL_H_
 
-#include <hil/gpio.h>
+#include <digital.h>
 #include <platform.h>
 
 //===========================================================
