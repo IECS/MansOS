@@ -24,11 +24,11 @@
 #include "mrf24j40.h"
 #include "mrf24j40_const.h"
 #include "mrf24j40_pins.h"
-#include <hil/spi.h>
-#include <hil/udelay.h>
-#include <hil/radio.h>
-#include <hil/errors.h>
-#include <hil/usart.h>
+#include <spi.h>
+#include <delay.h>
+#include <radio.h>
+#include <errors.h>
+#include <serial.h>
 #include <kernel/threads/threads.h>
 #include "platform.h"
 

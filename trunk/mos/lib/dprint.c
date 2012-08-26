@@ -40,8 +40,8 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <hil/radio.h>
-#include <hil/udelay.h>
+#include <radio.h>
+#include <delay.h>
 #include <platform.h>
 
 // Global variable

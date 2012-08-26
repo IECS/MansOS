@@ -25,7 +25,7 @@
 #define _MSP430_ADC_H_
 
 #include <kernel/defines.h>
-#include <hil/gpio.h>
+#include <digital.h>
 
 //===========================================================
 // Defines and macros

@@ -22,7 +22,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <hil/usart.h>
+#include <serial.h>
 #include "msp430fr57xx_usci.h"
 
 USARTCallback_t usartRecvCb[USART_COUNT];

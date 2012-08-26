@@ -28,11 +28,11 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <hil/alarms.h>
-#include <hil/eeprom.h>
-#include <hil/extflash.h>
-#include <hil/fs/common.h>
-#include <hil/fs/types.h>
+#include <alarms.h>
+#include <eeprom.h>
+#include <extflash.h>
+#include <fs/common.h>
+#include <fs/types.h>
 #include <kernel/defines.h>
 
 #include "alloc.h"

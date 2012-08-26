@@ -29,9 +29,9 @@
 //------------------------------------------------------------
 
 #include "stdmansos.h"
-#include "usart.h"
-#include "dprint.h"
-#include "udelay.h"
+#include "serial.h"
+#include "print.h"
+#include "delay.h"
 
 /**
  * Our callback

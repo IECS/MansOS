@@ -22,11 +22,11 @@
  */
 
 #include "../mac.h"
-#include <hil/radio.h>
-#include <hil/errors.h>
-#include <hil/alarms.h>
-#include <hil/timers.h>
-#include <lib/dprint.h>
+#include <radio.h>
+#include <errors.h>
+#include <alarms.h>
+#include <timers.h>
+#include <print.h>
 #include <lib/radio_packet_buffer.h>
 #include <net/net-stats.h>
 #include <net/routing.h>

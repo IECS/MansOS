@@ -24,7 +24,7 @@
 #ifndef MANSOS_RADIO_PACKET_BUFFER_H
 #define MANSOS_RADIO_PACKET_BUFFER_H
 
-#include <hil/radio.h>
+#include <radio.h>
 
 typedef struct RadioPacketBuffer_s {
     uint8_t bufferLength;     // length of the buffer

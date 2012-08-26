@@ -24,9 +24,9 @@
 #include "sdcard.h"
 #include "sdcard_pins.h"
 #include "sdcard_const.h"
-#include <hil/udelay.h>
-#include <hil/timers.h>
-#include <hil/blink.h>
+#include <delay.h>
+#include <timers.h>
+#include <utils.h>
 #include <hil/busywait.h>
 #include <lib/assert.h>
 #include <string.h>

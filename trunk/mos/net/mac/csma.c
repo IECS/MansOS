@@ -23,14 +23,14 @@
 
 #include "../mac.h"
 #include "../queue.h"
-#include <hil/radio.h>
-#include <hil/errors.h>
-#include <hil/alarms.h>
+#include <radio.h>
+#include <errors.h>
+#include <alarms.h>
 #include <lib/unaligned.h>
 #include <lib/byteorder.h>
 #include <lib/buffer.h>
-#include <lib/dprint.h>
-#include <lib/random.h>
+#include <print.h>
+#include <random.h>
 #include <lib/assert.h>
 #include <lib/radio_packet_buffer.h>
 #include <net/net-stats.h>

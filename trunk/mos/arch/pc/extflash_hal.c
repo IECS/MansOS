@@ -27,7 +27,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <hil/extflash.h>
+#include <extflash.h>
 
 #define FLASH_FILE_NAME "extflash.dat"
 

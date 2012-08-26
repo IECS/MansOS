@@ -96,6 +96,9 @@ COMMON_TARGETS = \
 	$(foreach t,$(TEST_TARGETS),tests/$(t)) \
 	$(foreach t,$(SEAL_TARGETS),seal/$(t))
 
+#COMMON_TARGETS = \
+#	$(foreach t,$(DEMO_TARGETS),demo/$(t))
+
 # -- generic part follows
 
 .PHONY: all clean $(PLATFORMS)

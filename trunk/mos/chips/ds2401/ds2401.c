@@ -22,7 +22,7 @@
  */
 
 #include "ds2401.h"
-#include "udelay.h"
+#include <delay.h>
 #include <kernel/defines.h>
 #include <lib/codec/crc.h>
 #include <string.h>

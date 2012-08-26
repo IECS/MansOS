@@ -30,7 +30,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
-#include <hil/radio.h>
+#include <radio.h>
 #include <net/addr.h>
 #include <pthread.h>
 #include "sem_hal.h"

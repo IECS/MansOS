@@ -26,8 +26,8 @@
 //-------------------------------------------
 
 #include "mansos.h"
-#include "dprint.h"
-#include "udelay.h"
+#include "print.h"
+#include "delay.h"
 
 //-------------------------------------------
 //      Entry point for the application

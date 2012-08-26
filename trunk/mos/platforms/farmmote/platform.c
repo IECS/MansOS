@@ -26,8 +26,8 @@
 //      Platform code
 //----------------------------------------------------------
 #include "platform.h"
-#include <hil/gpio.h>
-#include <hil/snum.h>
+#include <digital.h>
+#include <serial_number.h>
 
 #include <chips/ds18b20/ds18b20.h>
 

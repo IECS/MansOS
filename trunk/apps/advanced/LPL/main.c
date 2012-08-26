@@ -22,8 +22,8 @@
  */
 
 #include "stdmansos.h"
-#include <hil/errors.h>
-#include <lib/random.h>
+#include <errors.h>
+#include <random.h>
 
 #include "lpl.h"
 

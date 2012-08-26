@@ -21,43 +21,38 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _STD_MANSOS_H_
-#define _STD_MANSOS_H_
+#ifndef STD_MANSOS_H
+#define STD_MANSOS_H
 
 // include all the things that could be useful
 
 #include "mansos.h"
 
-#include <hil/sleep.h>
-#include <hil/alarms.h>
-#include <hil/gpio.h>
+#include <sleep.h>
+#include <alarms.h>
+#include <digital.h>
 #ifdef USE_ADC
-#include <hil/adc.h>
+#include <analog.h>
 #endif
 #ifdef USE_LEDS
-#include <hil/leds.h>
+#include <leds.h>
 #endif
 #ifdef USE_RADIO
-#include <hil/radio.h>
+#include <radio.h>
 #endif
 #ifdef USE_SERIAL
-#include <hil/usart.h>
+#include <serial.h>
 #endif
-#include <hil/udelay.h>
-#include <hil/timers.h>
-#include <hil/errors.h>
+#include <delay.h>
+#include <timers.h>
+#include <errors.h>
 #ifdef USE_PRINT
-#include <lib/dprint.h>
+#include <print.h>
 #endif
 #ifdef USE_ADDRESSING
 #include <net/addr.h>
 #endif
-#ifdef USE_HUMIDITY
-#include <hil/humidity.h>
-#endif
-#include <hil/light.h>
-#ifdef USE_LEDS
-#include <hil/blink.h>
-#endif
+#include <sensors.h>
+#include <utils.h>
 
 #endif

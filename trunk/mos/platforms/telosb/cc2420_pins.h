@@ -28,7 +28,7 @@
 #ifndef CC2420_PINS_H
 #define CC2420_PINS_H
 
-#include <hil/gpio.h>
+#include <digital.h>
 
 // Radio attached to USART0 SPI BUS
 #define CC2420_SPI_ID   0

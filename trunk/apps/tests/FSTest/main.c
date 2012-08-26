@@ -30,17 +30,17 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <hil/extflash.h>
-#include <hil/fs.h>
-#include <hil/leds.h>
-#include <hil/sleep.h>
+#include <extflash.h>
+#include <fs.h>
+#include <leds.h>
+#include <sleep.h>
 #include <kernel/mansos.h>
 #include <kernel/stdtypes.h>
 #include <lib/assert.h>
-#include <lib/dprint.h>
+#include <print.h>
 
 /* Internal header, not for users */
-#include <hil/fs/block/common.h>
+#include <fs/block/common.h>
 
 static void mark(void)
 {

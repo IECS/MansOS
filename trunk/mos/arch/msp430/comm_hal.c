@@ -22,10 +22,10 @@
  */
 
 #include <net/addr.h>
-#include <msp430/msp430_flash.h>
+#include <msp430/msp430_flash.h> // TODO: use hil interface
 #include <lib/hash.h>
-#include <lib/dprint.h>
-#include <hil/snum.h>
+#include <print.h>
+#include <serial_number.h>
 
 #define LOCAL_ADDR_STORAGE_ADDRESS (MSP430_FLASH_INFOMEM_START + MSP430_FLASH_INFOMEM_SEGMENT_SIZE)
 

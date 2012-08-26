@@ -29,7 +29,7 @@
 #define MANSOS_ALARMS_SYSTEM_H
 
 // include user API
-#include <hil/alarms.h>
+#include <alarms.h>
 
 typedef SLIST_HEAD(head, Alarm_s) AlarmList_t;
 

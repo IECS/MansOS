@@ -23,10 +23,9 @@
 
 #include "at25df.h"
 #include "at25df_pins.h"
-#include <hil/gpio.h>
-#include <hil/usart.h>
-#include <hil/udelay.h>
-//#include <msp430/msp430_int.h>
+#include <digital.h>
+#include <serial.h>
+#include <delay.h>
 
 #define AT25DF_MANUFACTURER_INFO_COMMAND 0x9f
 #define AT25DF_DEEP_POWER_DOWN_COMMAND 0xB9

@@ -28,15 +28,14 @@
 #include "../mac.h"
 #include "../routing.h"
 #include "../socket.h"
-#include <hil/alarms.h>
+#include <alarms.h>
 #include <kernel/threads/timing.h>
-#include <lib/dprint.h>
+#include <print.h>
 #include <net/net-stats.h>
 
 static Socket_t roSocket;
 static Alarm_t roOriginateTimer;
 static Seqnum_t mySeqnum;
-MosShortAddr rootAddress;
 
 static void roOriginateTimerCb(void *);
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len);

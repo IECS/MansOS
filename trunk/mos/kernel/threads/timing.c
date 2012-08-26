@@ -24,7 +24,7 @@
 #include "threads.h"
 #include <kernel/alarms_system.h>
 #include <platform.h>
-#include <hil/radio.h> // XXX
+#include <radio.h> // XXX
 
 volatile ticks_t jiffies;
 

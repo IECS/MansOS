@@ -25,7 +25,7 @@
 #define MANSOS_LEDS_H
 
 #include <kernel/defines.h>
-#include "gpio.h"
+#include "digital.h"
 
 // NOTE: a platform must define ledslist.h for listing all the leds 
 //      and implementation specific details. See ledslist.h for the details
@@ -189,6 +189,4 @@ LED_ALIAS(led, LED_DEFAULT)
 #  define suppressLedOutput(_)
 #endif
 
-
 #endif
-

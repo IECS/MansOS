@@ -26,8 +26,8 @@
 #ifndef _FS_DEV_DEVICES_H_
 #define _FS_DEV_DEVICES_H_
 
-#include <hil/fs/dev/leds.h>
-#include <hil/fs/dev/null.h>
+#include <fs/dev/leds.h>
+#include <fs/dev/null.h>
 
 #define FS_DEVICE_LIST \
     FS_DEVICE("leds", &fsDevLEDOps)  \

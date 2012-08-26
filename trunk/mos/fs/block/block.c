@@ -28,12 +28,12 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <hil/fs/prefix.h>
-#include <hil/fs/common.h>
-#include <hil/fs/types.h>
+#include <fs/prefix.h>
+#include <fs/common.h>
+#include <fs/types.h>
 #include <kernel/defines.h>
 #include <kernel/stdtypes.h>
-#include <lib/assert.h>
+#include <assert.h>
 #include <lib/codec/crc.h>
 
 #include "alloc.h"

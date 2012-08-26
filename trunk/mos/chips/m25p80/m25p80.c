@@ -27,7 +27,7 @@
 
 #include "m25p80.h"
 #include <m25p80_pins.h>
-#include <hil/gpio.h>
+#include <digital.h>
 
 #define M25P80_DEBUG 0
 

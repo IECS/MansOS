@@ -28,7 +28,7 @@
 
 #include <limits.h>
 
-#include <hil/extflash.h>
+#include <extflash.h>
 //#include <kernel/mos_sem.h>
 
 #include "common.h"

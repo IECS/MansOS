@@ -24,7 +24,7 @@
 #include "stdmansos.h"
 #include "common.h"
 #include <lib/codec/crc.h>
-#include <hil/extflash.h>
+#include <extflash.h>
 #include <string.h>
 #include <kernel/threads/radio.h>
 

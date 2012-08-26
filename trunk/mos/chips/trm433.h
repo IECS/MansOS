@@ -28,7 +28,7 @@
 // Driver for TRM433-LT radio
 //-------------------------------------------
 
-#include "gpio.h"
+#include <digital.h>
 #include "adc.h"
 
 // constants, which should be moved to platform specific code

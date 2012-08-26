@@ -498,7 +498,7 @@ class BeeperAct(SealActuator):
         self.duration = SealParameter(None, ["10", "20", "50", "100", "200", "500", "1000", "2000"])
 
         self.extraConfig = SealParameter("USE_BEEPER=y")
-        self.extraIncludes = SealParameter("#include <hil/beeper.h>")
+        self.extraIncludes = SealParameter("#include <beeper.h>")
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "useFunction" and parameter != "onFunction":
@@ -574,14 +574,14 @@ class ExternalFlashOutput(SealOutput):
     def __init__(self):
         super(ExternalFlashOutput, self).__init__("ExternalFlash")
         self.useFunction.value = "extFlashWrite(0, &externalflashPacket, sizeof(externalflashPacket))"
-        self.extraIncludes = SealParameter("#include <hil/extflash.h>")
+        self.extraIncludes = SealParameter("#include <extflash.h>")
         self.extraConfig = SealParameter("USE_EXT_FLASH=y")
 
 class SdCardOutput(SealOutput):
     def __init__(self):
         super(SdCardOutput, self).__init__("SdCard")
         self.useFunction.value = "sdStreamWriteRecord(&sdcardPacket, sizeof(sdcardPacket), true)"
-        self.extraIncludes = SealParameter("#include <hil/sdstream.h>")
+        self.extraIncludes = SealParameter("#include <sdstream.h>")
         self.extraConfig = SealParameter("USE_SDCARD_STREAM=y")
 
 # "local storage" (i.e. [external] flash or SD card is defined depending on platform
@@ -591,7 +591,7 @@ class LocalStorageOutput(SealOutput):
         super(LocalStorageOutput, self).__init__("LocalStorage")
         # ext flash by default
         self.useFunction.value = "extFlashWrite(0, &localstoragePacket, sizeof(localstoragePacket))"
-        self.extraIncludes = SealParameter("#include <hil/extflash.h>")
+        self.extraIncludes = SealParameter("#include <extflash.h>")
         self.extraConfig = SealParameter("USE_EXT_FLASH=y")
 
 class FileOutput(SealOutput):
@@ -602,7 +602,7 @@ class FileOutput(SealOutput):
         # XXX: make text files by default - more intuitive
         self.text = SealParameter(None, [False, True])
         self.binary = SealParameter(None, [False, True])
-        self.extraIncludes = SealParameter("#include <hil/fs.h>")
+        self.extraIncludes = SealParameter("#include <fs.h>")
         self.extraConfig = SealParameter("USE_FS=y")
 
 class NetworkOutput(SealOutput):

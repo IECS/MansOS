@@ -21,8 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MOS_TIMERS_H
-#define MOS_TIMERS_H
+#ifndef MANSOS_TIMERS_H
+#define MANSOS_TIMERS_H
 
 #include <platform.h>
 #include <kernel/threads/timing.h>

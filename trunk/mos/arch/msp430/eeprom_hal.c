@@ -40,7 +40,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <hil/eeprom.h>
+#include <eeprom.h>
 #include <msp430/msp430_flash.h>
 
 #define BASE     MSP430_FLASH_INFOMEM_START

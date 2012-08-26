@@ -27,9 +27,9 @@
 
 #define USE_USART_RX 1 // XXX
 
-#include <hil/gpio.h>
-#include <hil/usart.h>
-#include <hil/spi.h>
+#include <digital.h>
+#include <serial.h>
+#include <spi.h>
 #include <hil/busywait.h>
 #include <kernel/defines.h>
 #include "msp430_timers.h"

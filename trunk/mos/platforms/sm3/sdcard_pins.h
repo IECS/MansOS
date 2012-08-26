@@ -24,7 +24,7 @@
 #ifndef SDCARD_PINS_H
 #define SDCARD_PINS_H
 
-#include <hil/spi.h>
+#include <digital.h>
 
 /*
  * SdCard SPI bus configuration for SADmote v03

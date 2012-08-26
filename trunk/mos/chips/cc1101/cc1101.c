@@ -27,9 +27,9 @@
  * TODO: This module monopolizes a port interrupt vector
  */
 
-#include <hil/gpio.h>
-#include <hil/errors.h>
-#include <hil/spi.h>
+#include <digital.h>
+#include <errors.h>
+#include <spi.h>
 #include <cc1101_pins.h>
 #include <kernel/threads/threads.h>
 

@@ -29,8 +29,8 @@
 #define lightOn()
 #define lightOff()
 
-#define readVisibleLight() adcRead(ADC_LIGHT_TOTAL)
-#define readPARLight() adcRead(ADC_LIGHT_PHOTOSYNTHETIC)
-#define readLight() readVisibleLight()
+#define visibleLightRead() adcRead(ADC_LIGHT_TOTAL)
+#define PARLightRead() adcRead(ADC_LIGHT_PHOTOSYNTHETIC)
+#define lightRead() visibleLightRead()
 
-#endif // !PC_LIGHT_HAL_H
+#endif

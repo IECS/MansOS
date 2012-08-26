@@ -23,7 +23,7 @@
 
 #include "mansos.h"
 #include "leds.h"
-#include "usart.h"
+#include "serial.h"
 #include "smp.h"
 #include "radio.h"
 #include "dev_snum.h"

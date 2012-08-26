@@ -27,8 +27,8 @@
  * Define ONEWIRE_PORT and ONEWIRE_PIN before including this file.
  */
 
-#include <hil/udelay.h>
-#include <hil/gpio.h>
+#include <delay.h>
+#include <digital.h>
 #include <lib/codec/crc.h>
 
 /* Common 1-Wire commands */

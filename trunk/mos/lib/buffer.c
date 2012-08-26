@@ -23,7 +23,7 @@
 
 #include "buffer.h"
 #include "dprint.h"
-#include <hil/errors.h>
+#include <errors.h>
 
 void bufferInit(Buffer_t *b, void *space, uint16_t len) {
     b->data = (uint8_t *) space;

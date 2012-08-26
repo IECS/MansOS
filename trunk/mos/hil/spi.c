@@ -28,8 +28,8 @@
 //==============================================================================
 
 
-#include <hil/spi.h>
-#include <hil/gpio.h>
+#include <spi.h>
+#include <digital.h>
 
 #ifdef USE_SOFT_SPI
 #include <hil/spi_soft.h>

@@ -28,8 +28,8 @@
 
 #include <stdint.h>
 
-#include <hil/extflash.h>
-#include <hil/fs/types.h>
+#include <extflash.h>
+#include <fs/types.h>
 #include <kernel/defines.h>
 
 /*

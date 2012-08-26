@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <hil/eeprom.h>
+#include <eeprom.h>
 #include <lib/assert.h>
 
 #define FILENAME "eeprom"

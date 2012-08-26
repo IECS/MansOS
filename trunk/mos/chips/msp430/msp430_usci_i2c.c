@@ -26,8 +26,8 @@
  * msp430_usci_i2c.c -- USCI module on MSP430, I2C mode
  */
 
-#include <hil/gpio.h>
-#include <hil/i2c.h>
+#include <digital.h>
+#include <i2c.h>
 #include <kernel/defines.h>
 #include <kernel/stdtypes.h>
 

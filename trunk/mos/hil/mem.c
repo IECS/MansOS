@@ -29,6 +29,19 @@
 #include <stdlib.h>
 #include "mem.h"
 
+//----------------------------------------------------------
+// types
+//----------------------------------------------------------
+/** @brief A node of managed memory */
+typedef struct Node_s {
+   /** @brief Size of blocks */
+   uint16_t size;
+   /** @brief Linked list of pointers */
+   struct Node_s *prev;
+   /** @brief Pointer to ned node */
+   struct Node_s *next;
+} Node_t;
+
 //--------------------------------------------------------------------------------
 // variables
 //--------------------------------------------------------------------------------
@@ -40,7 +53,16 @@ static Node_t *freelist; // List head
 inline void flagBlock(Node_t *n);
 inline void combine(Node_t *n1, Node_t *n2);
 
-void *mantisMemAlloc(uint16_t size)
+void memoryInit(void *region, uint16_t size)
+{
+    /*set up the initial free list with one region*/
+    freelist = (Node_t *)region;
+    freelist->size = size - sizeof(Node_t);
+    freelist->prev = freelist;
+    freelist->next = freelist;
+}
+
+void *memoryAlloc(uint16_t size)
 {
     Node_t *current;
     Node_t *best;
@@ -127,16 +149,7 @@ inline void flagBlock(Node_t *n)
         ptr[index] = 0xEF;
 }
 
-void mantisMemInit(void *region, uint16_t size)
-{
-    /*set up the initial free list with one region*/
-    freelist = (Node_t *)region;
-    freelist->size = size - sizeof(Node_t);
-    freelist->prev = freelist;
-    freelist->next = freelist;
-}
-
-void mantisMemFree(void* block)
+void memoryFree(void* block)
 {
     Node_t *current;
 

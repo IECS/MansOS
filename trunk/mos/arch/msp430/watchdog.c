@@ -21,7 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <hil/watchdog.h>
+#include <watchdog.h>
 #include <msp430/msp430_int.h>
 #include <platform.h>
 

@@ -24,7 +24,7 @@
 #ifndef AT25DF_PINS_H
 #define AT25DF_PINS_H
 
-#include <hil/spi.h>
+#include <spi.h>
 
 /*
  * AT25DF161 Flash SPI bus configuration for SADmote

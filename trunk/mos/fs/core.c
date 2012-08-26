@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <hil/fs.h>
+#include <fs.h>
 #include <kernel/stdtypes.h>
 
 #include "common.h"

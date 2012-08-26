@@ -36,8 +36,8 @@
 #define humidityInit()     SHT11_INIT()
 #define humidityOn()       SHT11_ON()
 #define humidityOff()      SHT11_OFF()
-#define readHumidity()     sht11_read_humidity()
-#define readHTemperature() sht11_read_temperature()
+#define humidityRead()     sht11_read_humidity()
+#define temperatureRead()  sht11_read_temperature()
 #define humidityIsError()  sht11_is_error()
 
 // include driver header

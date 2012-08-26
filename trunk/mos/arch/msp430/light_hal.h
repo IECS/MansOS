@@ -24,7 +24,7 @@
 #ifndef LIGHT_HAL_H
 #define LIGHT_HAL_H
 
-#include <hil/adc.h>
+#include <adc.h>
 #include <platform.h>
 
 // On TelosB analog light sensors (visible spectrum and PAR) are attached to ADC
@@ -34,15 +34,15 @@
 #define lightOff()
 
 #ifdef ADC_LIGHT_TOTAL
-#define readTotalLight() adcRead(ADC_LIGHT_TOTAL)
+#define totalLightRead() adcRead(ADC_LIGHT_TOTAL)
 #else
-#define readTotalLight() 0
+#define totalLightRead() 0
 #endif
 #ifdef ADC_LIGHT_PHOTOSYNTHETIC
-#define readPARLight() adcRead(ADC_LIGHT_PHOTOSYNTHETIC)
+#define PARLightRead() adcRead(ADC_LIGHT_PHOTOSYNTHETIC)
 #else
-#define readPARLight() 0
+#define PARLightRead() 0
 #endif
-#define readLight() readTotalLight()
+#define lightRead() totalLightRead()
 
 #endif

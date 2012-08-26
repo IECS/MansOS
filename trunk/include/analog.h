@@ -28,6 +28,8 @@
 #ifndef MANSOS_ANALOG_H
 #define MANSOS_ANALOG_H
 
+#include "adc.h"
+
 // TODO
 
 #endif

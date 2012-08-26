@@ -25,7 +25,7 @@
 #include "threads/threads.h"
 #endif
 #include "alarms_system.h"
-#include <hil/timers.h>
+#include <timers.h>
 
 // the global list with all alarms
 AlarmList_t alarmListHead;

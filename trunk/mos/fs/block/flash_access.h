@@ -29,9 +29,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <hil/alarms.h>
-#include <hil/extflash.h>
-#include <hil/fs/types.h>
+#include <alarms.h>
+#include <extflash.h>
+#include <fs/types.h>
 
 #include "common.h"
 

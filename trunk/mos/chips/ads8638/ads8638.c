@@ -22,9 +22,9 @@
  */
 
 #include "ads8638.h"
-#include <hil/spi.h>
-#include <hil/udelay.h>
-#include <lib/dprint.h>
+#include <spi.h>
+#include <delay.h>
+#include <print.h>
 
 #define ADS8638_SPI_ENABLE()   spiSlaveEnable(ADS8638_CS_PORT, ADS8638_CS_PIN)
 #define ADS8638_SPI_DISABLE()  spiSlaveDisable(ADS8638_CS_PORT, ADS8638_CS_PIN)

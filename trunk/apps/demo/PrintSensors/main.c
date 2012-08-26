@@ -32,9 +32,9 @@ void appMain(void)
     humidityOn();
 
     while (1) {
-        uint16_t light = readLight();
-        uint16_t humidity = readHumidity();
-        uint16_t temperature = readHTemperature();
+        uint16_t light = lightRead();
+        uint16_t humidity = humidityRead();
+        uint16_t temperature = temperatureRead();
         PRINTF("light = %u\n", light);
         PRINTF("humidity = %u\n", humidity);
         PRINTF("temperature = %u\n", temperature);

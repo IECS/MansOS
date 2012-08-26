@@ -25,15 +25,15 @@
 // MansOS Kernel main source file
 //----------------------------------------------------------
 #include "stdmansos.h"
-#include <hil/i2c.h>
-#include <hil/eeprom.h>
-#include <hil/fs/init.h>
-#include <hil/watchdog.h>
+#include <i2c.h>
+#include <eeprom.h>
+#include <watchdog.h>
+#include <random.h>
+#include <fs/init.h>
 #include <smp/smp.h>
-#include <lib/random.h>
 #include <lib/assert.h>
 #if USE_EXT_FLASH
-#include <hil/extflash.h>
+#include <extflash.h>
 #endif
 #if USE_FLASH
 #include "boot.h"
@@ -41,7 +41,7 @@
 #include "alarms_system.h"
 #include <net/comm.h>
 #include <net/seal_comm.h>
-#include <hil/beeper.h>
+#include <beeper.h>
 #if USE_THREADS
 #include "threads/threads.h"
 #endif

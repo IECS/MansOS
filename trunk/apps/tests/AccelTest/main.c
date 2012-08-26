@@ -1,8 +1,8 @@
 #include "stdmansos.h"
-#include "dprint.h"
-#include <hil/sleep.h>
-#include <hil/timers.h>
-#include <hil/beeper.h>
+#include "print.h"
+#include <sleep.h>
+#include <timers.h>
+#include <beeper.h>
 #include <string.h>
 
 

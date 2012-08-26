@@ -24,7 +24,7 @@
 #include "rbuffer.h"
 #include "dprint.h"
 #include "assert.h"
-#include <hil/errors.h>
+#include <errors.h>
 
 void rbufferInit(RingBuffer_t *b, void *space, uint16_t len) {
     ASSERT(len);

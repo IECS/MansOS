@@ -22,9 +22,9 @@
  */
 
 #include "smp.h"
-#include <hil/usart.h>
+#include <serial.h>
 #include <kernel/mansos.h>
-#include <lib/dprint.h>
+#include <print.h>
 #include <string.h>
 #include <net/addr.h>
 
