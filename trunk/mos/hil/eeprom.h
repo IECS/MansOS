@@ -24,8 +24,8 @@
  * eeprom.h -- access to non-volatile configuration memory
  */
 
-#ifndef _EEPROM_H_
-#define _EEPROM_H_
+#ifndef _MANSOS_EEPROM_H_
+#define _MANSOS_EEPROM_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -36,4 +36,4 @@ void eepromInit(void);
 void eepromRead(uint16_t addr, void *buf, size_t len);
 void eepromWrite(uint16_t addr, const void *buf, size_t len);
 
-#endif /* _EEPROM_H_ */
+#endif
