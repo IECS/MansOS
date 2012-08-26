@@ -28,19 +28,15 @@
 #ifndef MANSOS_LIGHT_H
 #define MANSOS_LIGHT_H
 
+// include platform-specific interface
 #include "light_hal.h"
 
-// such functions are accessible (defined in platform-specific part)
+// -- these functions are accessible (defined in platform-specific part):
 // void lightInit();      // init light sensor, do not turn it on
 // void lightOn();        // turn on light sensor
 // void lightOff();       // turn off light sensor
-// uint16_t readLight();  // read light value
-
-// uint16_t readVisibleLight();  // read visible light value
-// uint16_t readPARLight();  // read photo-syntetically active radiation value
+// uint16_t lightRead();  // read light value
 
 // Note: light sensor may not support on/off
-
-#define lightRead readLight
 
 #endif

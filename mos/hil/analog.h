@@ -21,33 +21,13 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Humidity & temperature sensor reading
- */
+//
+// Platform-independent interaface for analog read and write functions
+//
 
-#ifndef MANSOS_HUMIDITY_H
-#define MANSOS_HUMIDITY_H
+#ifndef MANSOS_ANALOG_H
+#define MANSOS_ANALOG_H
 
-#include "humidity_hal.h"
-
-//===========================================================
-// Data types and constants
-//===========================================================
-
-
-//===========================================================
-// Procedures
-//===========================================================
-
-// such functions are accessible (defined in platform-specific part)
-// void humidityInit();      // init humidity sensor, do not turn it on
-// void humidityOn();        // turn on humidity sensor
-// void humidityOff();       // turn off humidity sensor
-// uint16_t humidityRead();  // read humidity value
-// bool humidityIsError(void);
-
-// Optional part
-// some humidity sensors (SHT11) also provide temperature reading
-// uint16_t temperatureRead();  // read temperature value from humidity sensor
+// TODO
 
 #endif
