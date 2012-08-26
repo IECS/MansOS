@@ -24,7 +24,7 @@
 #include "socket.h"
 #include "comm.h"
 #include <string.h>
-#include <lib/dprint.h>
+#include <print.h>
 #include <kernel/threads/mutex.h>
 
 static SLIST_HEAD(head, Socket_s) socketList;
