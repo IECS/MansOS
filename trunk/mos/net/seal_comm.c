@@ -23,6 +23,7 @@
 
 #include "seal_comm.h"
 #include "addr.h"
+#include "socket.h"
 #include <lib/codec/crc.h>
 #include <lib/assert.h>
 
@@ -37,9 +38,6 @@
 #define DPRINTF(...) do {} while (0)
 #endif
 
-// TODO: use a mac protocol for energy saving!
-#define USE_MAC 0
-
 // local variables
 
 static SealCommListener_t listeners[MAX_SEAL_LISTENERS];
@@ -48,11 +46,13 @@ static SealCommListener_t *listenerBeingProcessed;
 static SealPacket_t *packetInProgress;
 uint8_t packetInProgressNumFields;
 
-struct MacInfo_s;
+#if USE_NET
+static Socket_t socket;
+#endif
 
 // local functions
 
-static void sealRecv(struct MacInfo_s *mi, uint8_t *data, uint16_t length);
+static void sealRecv(uint8_t *data, uint16_t length);
 
 #define for_all_listeners(op)                                           \
     do {                                                                \
@@ -61,22 +61,27 @@ static void sealRecv(struct MacInfo_s *mi, uint8_t *data, uint16_t length);
         for (; l != end; ++l) { op; }                                   \
     } while (0)
 
-#if !USE_MAC
+#if USE_NET
+static void sealRecvData(Socket_t *socket, uint8_t *data, uint16_t length)
+{
+    sealRecv(data, length);
+}
+#else
 static void sealRecvRaw(void)
 {
     static uint8_t buffer[RADIO_MAX_PACKET];
     int16_t length = radioRecv(buffer, sizeof(buffer));
-    sealRecv(NULL, buffer, length);
+    sealRecv(buffer, length);
 }
 #endif
 
 void sealCommInit(void)
 {
-#if USE_MAC
-    // use a mac protocol
-    mac = getSimpleMac();
-    mac->init(NULL, false, macBuffer, sizeof(macBuffer));
-    mac->recvCb = sealRecv;
+#if USE_NET
+    // use sockets
+    socketOpen(&socket, sealRecvData);
+    socketBind(&socket, SEAL_DATA_PORT);
+    socketSetDstAddress(&socket, MOS_ADDR_ROOT);
 #else
     // use raw radio interface
     radioSetReceiveHandle(sealRecvRaw);
@@ -128,7 +133,7 @@ static void receivePacketData(SealCommListener_t *l, uint32_t typeMask, const ui
     listenerBeingProcessed = NULL;
 }
 
-static void sealRecv(struct MacInfo_s *mi, uint8_t *data, uint16_t length)
+static void sealRecv(uint8_t *data, uint16_t length)
 {
     if (length < sizeof(SealHeader_t)) {
         DPRINTF("sealRecv: too short!\n");
@@ -240,9 +245,8 @@ void sealCommPacketFinish(void)
     packetInProgress->header.crc = 
             crc16((const uint8_t *) packetInProgress + 4, length - 4);
 
-#if USE_MAC
-    const static MosAddr bcastAddr = {MOS_ADDR_TYPE_SHORT, {MOS_ADDR_BROADCAST}};
-    macSend(&bcastAddr, packetInProgress, length);
+#if USE_NET
+    socketSend(&socket, packetInProgress, length);
 #else
     radioSend(packetInProgress, length);
 #endif
@@ -261,7 +265,6 @@ int32_t sealCommReadValue(uint16_t code)
     ASSERT(listenerBeingProcessed);
     ASSERT(listenerBeingProcessed->typeMask & (1 << code));
 
-//    int32_t *read; = getDataPointer(listenerBeingProcessed, );
     int32_t *read;
     if (isSingleValued(listenerBeingProcessed)) {
         read = &listenerBeingProcessed->u.lastValue;
