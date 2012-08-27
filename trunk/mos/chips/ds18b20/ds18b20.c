@@ -85,7 +85,7 @@ int16_t ds18b20Measure(void)
 {
     Handle_t  h;
     int16_t   res;
-    uint8_t   data[2];
+    uint8_t  *data = (uint8_t *)&res;
 #ifdef DS18B20_CHECK_CRC
     uint8_t   i, crc;
     uint16_t  acc = 0;
@@ -132,6 +132,5 @@ int16_t ds18b20Measure(void)
     }
 #endif
 
-    memcpy(&res, data, sizeof(data));
     return res;
 }
