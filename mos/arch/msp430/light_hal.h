@@ -27,6 +27,8 @@
 #include <adc.h>
 #include <platform.h>
 
+#ifndef lightRead
+
 // On TelosB analog light sensors (visible spectrum and PAR) are attached to ADC
 // No on/off functionality available
 #define lightInit()
@@ -44,5 +46,7 @@
 #define PARLightRead() 0
 #endif
 #define lightRead() totalLightRead()
+
+#endif // lightRead not defined in platform-specific way
 
 #endif

@@ -160,6 +160,6 @@ void amb8420Reset(void);
 
 int amb8420EnterAddressingMode(AMB8420AddrMode_t, uint8_t srcAddress);
 
-int amb8420SetDstAddress(uint8_t dstAddress);
+bool amb8420SetDstAddress(uint8_t dstAddress);
 
 #endif

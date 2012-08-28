@@ -22,6 +22,7 @@
  */
 
 #include "isl29003.h"
+#include "stdmansos.h"
 
 /* ISL29003 soft I2C support */
 

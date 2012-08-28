@@ -73,28 +73,33 @@ typedef struct RoutingRequestPacket_s {
 #if 0
 #define ROUTING_ORIGINATE_TIMEOUT   (60 * 1000ul)
 #define ROUTING_REQUEST_TIMEOUT     (10 * 1000ul)
-#define SAD_SUPERFRAME_LENGTH       (10 * 60 * 1000ul)
+#define SAD_SUPERFRAME_LENGTH       524288 // (10 * 60 * 1000ul)
 #define ROUTING_INFO_VALID_TIME     (180 * 1000ul)
 // during this time, radio is never turned off on forwarders and collectors
 #define NETWORK_STARTUP_TIME         (2 * 60 * 60) // 2h in seconds
 #else // for testing
-#define ROUTING_ORIGINATE_TIMEOUT    (5 * 1000ul)
+#define ROUTING_ORIGINATE_TIMEOUT    (15 * 1000ul)
 #define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
-#define SAD_SUPERFRAME_LENGTH        (30 * 1000ul)
+#define SAD_SUPERFRAME_LENGTH        32768 // (30 * 1000ul)
 #define ROUTING_INFO_VALID_TIME      (70 * 1000ul)
 #define NETWORK_STARTUP_TIME         0
 #endif
 
 #define MOTE_INFO_VALID_TIME         (5 * SAD_SUPERFRAME_LENGTH)
 
-#define ROUTING_REPLY_WAIT_TIMEOUT   2000 // ms
+#define TIMESLOT_LENGTH              1000
+// timeslot is adjusted (to both ends) by this number
+#define TIMESLOT_IMPRECISION         2000 // XXX: investigae why so much!
+#define TOTAL_LISTENING_TIME         (TIMESLOT_LENGTH + 2 * TIMESLOT_IMPRECISION)
+
+#define ROUTING_REPLY_WAIT_TIMEOUT   TIMESLOT_IMPRECISION
 
 // XXX: this must be chip-specific. For AMB8420 its quite large (all the serial comm)
-#define RADIO_TX_TIME 100
+#define RADIO_TX_TIME 0
 
 
 #ifndef MAX_MOTES
-#define MAX_MOTES 20 // max nodes this collector can serve
+#define MAX_MOTES 22 // max nodes this collector can serve
 #endif
 
 #define MAX_HOP_COUNT 16
@@ -112,6 +117,7 @@ typedef struct RoutingRequestPacket_s {
 extern MosShortAddr rootAddress;
 
 extern int32_t rootClockDelta;
+extern int32_t rootClockDeltaMs;
 
 //===========================================================
 // Procedures
@@ -123,8 +129,8 @@ RoutingDecision_e routePacket(MacInfo_t *info);
 
 // TODO: move this somewhere
 #if !USE_ROLE_BASE_STATION && USE_NET
-#define getFixedTime() ((uint32_t)((uint32_t)getJiffies() + rootClockDelta))
-#define getFixedUptime() ((uint32_t)(jiffies2ms(getFixedTime()) / 1000))
+#define getFixedTime() ((uint32_t)((uint32_t)getJiffies() + rootClockDeltaMs))
+#define getFixedUptime() ((uint32_t)(getUptime() + rootClockDelta))
 #else
 #define getFixedTime() getJiffies()
 #define getFixedUptime() getUptime()

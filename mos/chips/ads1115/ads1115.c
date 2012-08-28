@@ -22,6 +22,7 @@
  */
 
 #include "ads1115.h"
+#include "stdmansos.h"
 
 // Write ADS1114 register
 bool writeAdsRegister(uint8_t reg, uint16_t val)
@@ -67,6 +68,8 @@ ISR(PORT2, adsInterrupt)
     if (pinReadIntFlag(ADS_INT_PORT, ADS_INT_PIN)) {
         //PRINTF("got ads interrupt!\n");
         pinClearIntFlag(ADS_INT_PORT, ADS_INT_PIN);
+
+        // TODO?
     } else {
         //PRINTF("got some other port2 interrupt!\n");
     }

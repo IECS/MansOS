@@ -26,9 +26,12 @@
 //
 
 #include "sdstream.h"
+#include <dynamic_memory.h>
 #include <sdcard/sdcard.h>
+#include <sdcard_pins.h> // from platform
 #include <lib/assert.h>
 #include <lib/codec/crc.h>
+#include <print.h>
 
 #if DEBUG
 #define SPRINTF PRINTF
@@ -38,7 +41,10 @@
 
 #define VERIFY 1
 
-static uint32_t sdCardAddress;
+static volatile uint32_t sdCardAddress;
+
+// TODO: use dynamic alloc
+static uint8_t tmpBuffer[40];
 
 // XXX: crc, if present, is acutrrently always at buffer[2]
 struct HeaderWithCrc_s {
@@ -57,15 +63,19 @@ static void sdStreamFindStart(void *buffer, uint16_t length, bool crc)
 {
     bool oneInvalid = false;
     sdCardAddress = SDCARD_RESERVED;
+
     while (sdCardAddress < SDCARD_SIZE) {
+        // PRINTF("%lu\n", sdCardAddress);
         sdcardRead(sdCardAddress, buffer, length);
-        bool valid;
+        bool valid = true;
         if (crc) {
             HeaderWithCrc_t headerWithCrc;
             memcpy(&headerWithCrc, buffer, sizeof(headerWithCrc));
             uint16_t calcCrc = crc16((uint8_t *)buffer + sizeof(headerWithCrc), length - sizeof(headerWithCrc));
             valid = headerWithCrc.crc == calcCrc;
-        } else {
+        } 
+        if (valid) {
+            // check if all fields are 0 - also count as invalid
             uint16_t i;
             valid = false;
             for (i = 0; i < length; ++i) {
@@ -75,6 +85,18 @@ static void sdStreamFindStart(void *buffer, uint16_t length, bool crc)
                 }
             }
         }
+
+            // bool allOnes = true, allZeros = true;
+            // for (i = 0; (allZeros || allOnes) && i < length; ++i) {
+            //     if (((uint8_t *)buffer)[i] != 0) {
+            //         allZeros = false;
+            //     }
+            //     if (((uint8_t *)buffer)[i] != 0xff) {
+            //         allOnes = false;
+            //     }
+            // }
+            // valid = !(allOnes || allZeros); 
+        // }
         if (valid) {
             oneInvalid = false;
         } else {
@@ -92,23 +114,31 @@ static void sdStreamFindStart(void *buffer, uint16_t length, bool crc)
 
 bool sdStreamWriteRecord(void *data, uint16_t length, bool crc)
 {
+    ASSERT(length <= sizeof(tmpBuffer));
+
+    // XXX hack
+    if (usartBusy[SDCARD_SPI_ID]) return false;
+
+    // PRINTF("write record %u bytes\n", length);
+
     if (sdCardAddress == 0) {
-        void *buffer = malloc(length);
-        sdStreamFindStart(buffer, length, crc);
-        free(buffer);
+        //void *buffer = memoryAlloc(length);
+        sdStreamFindStart(tmpBuffer, length, crc);
+        //memoryFree(buffer);
     }
     if (crc) {
         uint16_t calcCrc = crc16((uint8_t *)data + sizeof(HeaderWithCrc_t), length - sizeof(HeaderWithCrc_t));
         memcpy((uint8_t *)data + 2, &calcCrc, sizeof(calcCrc));
     }
+    // PRINTF("sdcard write at %lu\n", sdCardAddress);
     sdcardWrite(sdCardAddress, data, length);
 #if VERIFY
-    void *copy = malloc(length);
-    sdcardRead(sdCardAddress, copy, length);
-    if (memcmp(data, copy, length)) {
+    //void *copy = memoryAlloc(length);
+    sdcardRead(sdCardAddress, tmpBuffer, length);
+    if (memcmp(data, tmpBuffer, length)) {
         ASSERT("writing in SD card failed!" && false);
     }
-    free(copy);
+    //memoryFree(copy);
 #endif
     sdCardAddress += length;
     return true;

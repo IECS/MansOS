@@ -26,7 +26,6 @@
 #define MANSOS_ADS1115_H
 
 #include "i2c_soft.h"
-#include "stdmansos.h"
 
 // Command to read ADS1115 register
 #define ADS_READ_FLAG 0x91

@@ -30,7 +30,7 @@
 // call the real code
 //==============================================================================
 
-#ifndef USE_I2C_SOFT // TODO: this header is incompatible with software i2c!
+#ifndef USE_SOFT_I2C // TODO: this header is incompatible with software i2c!
 
 #include <stdtypes.h>
 

@@ -53,7 +53,8 @@ typedef enum Msp430USARTMode_e Msp430USARTMode_t;
 
 USARTCallback_t usartRecvCb[USART_COUNT];
 
-bool usartBusy[USART_COUNT];
+volatile bool usartBusy[USART_COUNT];
+uint8_t usartFunction[USART_COUNT];
 
 #define NOT_IMPLEMENTED -1
 

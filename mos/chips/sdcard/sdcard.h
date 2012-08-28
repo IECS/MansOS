@@ -59,4 +59,6 @@ void sdcardEraseSector(uint32_t addr);
 bool sdcardReadBlock(uint32_t addr, void* buffer);
 bool sdcardWriteBlock(uint32_t addr, const void *buf);
 
+void sdcardInitUsart(void);
+
 #endif

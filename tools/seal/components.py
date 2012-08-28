@@ -2175,16 +2175,16 @@ class OutputUseCase(object):
                 outputFile.write("    if (!({0}Packet.typeMask1 & (1 << {1})))\n".format(self.getNameCC(), f.sensorID))
                 outputFile.write("        {0}Packet.{1} = {2};\n".format(self.getNameCC(), f.sensorName, f.defaultValue))
 
-        if True:
-            outputFile.write("    {0}Packet.crc = crc16((const uint8_t *) &{0}Packet + 4, sizeof({0}Packet) - 4);\n".format(
-                    self.getNameCC()))
-
         initialMask = 0
         for f in self.packetFields:
             if not f.isRealSensor:
                 initialMask |= (1 << f.sensorID)
         outputFile.write("    {0}Packet.typeMask1 |= {1:#x};\n".format(
                 self.getNameCC(), initialMask))
+
+        if True:
+            outputFile.write("    {0}Packet.crc = crc16((const uint8_t *) &{0}Packet + 4, sizeof({0}Packet) - 4);\n".format(
+                    self.getNameCC()))
 
         if isinstance(self, FileOutputUseCase):
             useFunction = self.getNameCC() + "Print()"

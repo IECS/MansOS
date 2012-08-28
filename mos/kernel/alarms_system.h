@@ -31,6 +31,8 @@
 // include user API
 #include <alarms.h>
 
+#include <print.h> // XXX
+
 typedef SLIST_HEAD(head, Alarm_s) AlarmList_t;
 
 // the global list with all alarms
@@ -59,7 +61,8 @@ static inline void scheduleProcessAlarms(uint32_t now)
 static inline uint32_t getNextAlarmTime(void)
 {
     Alarm_t *first = SLIST_FIRST(&alarmListHead);
-    return first ? first->jiffies : getJiffies() + MAX_KERNEL_SLEEP_TIME;
+    // PRINTF("getNextAlarmTime: %p: %lu\n", first, first ? first->jiffies : getJiffies());
+    return first ? first->jiffies : getJiffies(); // + MAX_KERNEL_SLEEP_TIME;
 }
 
 #else // not using threads

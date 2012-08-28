@@ -113,6 +113,7 @@ static uint32_t calcNextForwardTime(uint8_t moteToProcess)
             t = 0;
         }
     }
+    // PRINTF("%lu: calcNextForwardTime=%lu\n", getFixedTime(), t);
     return t;
 }
 
@@ -133,7 +134,7 @@ void initRouting(void)
 
 static void roStartListeningTimerCb(void *x)
 {
-    PRINTF("start listening time slot, jiffies=%lu\n", getFixedTime());
+    PRINTF("%lu: LISTEN START\n", getFixedTime());
     alarmSchedule(&roStartListeningTimer, calcListenStartTime());
 
     radioOn();
@@ -142,13 +143,13 @@ static void roStartListeningTimerCb(void *x)
 
 static void roStopListeningTimerCb(void *x)
 {
-    PRINTF("### turn radio off\n");
+    PRINTF("%lu: turn radio off\n", getFixedTime());
     RADIO_OFF_ENERGSAVE();
 }
 
 static void forwardRoutingInfo(uint8_t moteNumber) {
-    PRINTF("%lu: +++++++++++++++ forward routing packet to mote %u (%#04x)\n",
-            getFixedTime(), moteNumber, motes[moteNumber].address);
+    // PRINTF("%lu: forward routing packet to mote %u (%#04x)\n",
+    //         getFixedTime(), moteNumber, motes[moteNumber].address);
 
     RoutingInfoPacket_t routingInfo;
     routingInfo.packetType = ROUTING_INFORMATION;
@@ -156,7 +157,8 @@ static void forwardRoutingInfo(uint8_t moteNumber) {
     routingInfo.rootAddress = rootAddress;
     routingInfo.hopCount = hopCountToRoot + 1;
     routingInfo.seqnum = lastSeenSeqnum;
-    routingInfo.rootClock = getFixedTime() + RADIO_TX_TIME;
+//  routingInfo.rootClock = getFixedTime() + RADIO_TX_TIME;
+    routingInfo.rootClock = getFixedUptime();
     routingInfo.moteNumber = moteNumber;
 
     // XXX: INC_NETSTAT(NETSTAT_PACKETS_SENT, EMPTY_ADDR);
@@ -308,7 +310,9 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         lastSeenSeqnum = ri.seqnum;
         hopCountToRoot = ri.hopCount;
         lastRootMessageTime = (uint32_t) getJiffies();
-        rootClockDelta = (int32_t)(ri.rootClock - (uint32_t) getJiffies());
+//        rootClockDelta = (int32_t)(ri.rootClock - (uint32_t) getJiffies());
+        rootClockDelta = (int32_t)(ri.rootClock - getUptime());
+        rootClockDeltaMs = rootClockDelta * 1000;
     }
 }
 
@@ -378,6 +382,8 @@ RoutingDecision_e routePacket(MacInfo_t *info)
                 PRINTF("****************** Forwarding a packet to root for %#04x!\n",
                         info->originalSrc.shortAddr);
                 INC_NETSTAT(NETSTAT_PACKETS_FWD, nexthopToRoot);
+                // delay a bit
+                info->timeWhenSend = getFixedTime() + randomInRange(50, 150);
             } else{
                 //INC_NETSTAT(NETSTAT_PACKETS_SENT, nexthopToRoot);     // Done @ comm.c
             }

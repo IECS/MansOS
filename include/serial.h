@@ -95,8 +95,16 @@ uint_t USARTDisableRX(uint8_t id);
 //uint_t USARTisSPI(uint8_t id);
 //uint_t USARTisI2C(uint8_t id);
 
+enum {
+    USART_FUNCTION_SERIAL = 1, // used as serial interface
+    USART_FUNCTION_RADIO,      // used as radio chip's interface
+    USART_FUNCTION_FLASH,      // used as ext flash interface
+    USART_FUNCTION_SDCARD,     // used as sdcard interface
+};
 
-extern bool usartBusy[USART_COUNT];
+extern volatile bool usartBusy[USART_COUNT];
+// one of usart modes
+extern uint8_t usartFunction[USART_COUNT];
 
 
 //===========================================================

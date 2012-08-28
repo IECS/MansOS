@@ -30,6 +30,7 @@
 #include <lib/radio_packet_buffer.h>
 #include <net/net-stats.h>
 #include <net/routing.h>
+#include <leds.h>
 
 #define TEST_FILTERS 1
 
@@ -66,8 +67,6 @@ static void initSadMac(RecvFunction recvCb) {
 
 static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     int8_t ret;
-#if !(USE_ROLE_BASE_STATION || USE_ROLE_COLLECTOR || USE_ROLE_FORWARDER)
-    MESSAGE("mote's code included!")
     if (mi->timeWhenSend) {
         if (delayedDataLength) {
             return -1; // busy
@@ -84,13 +83,17 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
             return length;
         }
     }
-#else
-    MESSAGE("mote's code excluded!")
-#endif
-    PRINTF("%lu: mac tx %u bytes\n", getFixedTime(), length);
+// #if !(USE_ROLE_BASE_STATION || USE_ROLE_COLLECTOR || USE_ROLE_FORWARDER)
+//     redLedToggle();
+// #endif
+     PRINTF("%lu: mac tx %u bytes\n", getFixedTime(), length);
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
     // use least significant byte
     amb8420SetDstAddress(getNexthop(mi) & 0xff);
+    // if (!amb8420SetDstAddress(getNexthop(mi) & 0xff)) {
+    //     bool b = amb8420SetDstAddress(getNexthop(mi) & 0xff);
+    //     PRINTF("MAC ADDR SET RETRY = %d\n", (int) b);
+    // }
     ret = radioSendHeader(mi->macHeader, mi->macHeaderLen, data, length);
     if (ret) return ret;
     return length;
@@ -99,8 +102,13 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
 static void delayTimerCb(void *unused)
 {
     PRINTF("%lu: mac tx %u bytes\n", getFixedTime(), delayedDataLength);
+    // redLedToggle();
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
     amb8420SetDstAddress(delayedNexthop);
+    // if (!amb8420SetDstAddress(delayedNexthop)) {
+    //     bool b = amb8420SetDstAddress(delayedNexthop);
+    //     PRINTF("MAC ADDR SET RETRY = %d\n", (int) b);
+    // }
     radioSendHeader(NULL, 0, delayedData, delayedDataLength);
     delayedDataLength = 0;
 }
@@ -112,28 +120,30 @@ static void delayTimerCb(void *unused)
 //
 static bool filterPass(MacInfo_t *mi)
 {
-#if USE_ROLE_BASE_STATION
-    PRINTF("filter: from=%#04x, orig=%#04x\n",
-            mi->immedSrc.shortAddr, mi->originalSrc.shortAddr);
-#endif
+// #if USE_ROLE_BASE_STATION
+//     PRINTF("filter: from=%#04x, orig=%#04x\n",
+//             mi->immedSrc.shortAddr, mi->originalSrc.shortAddr);
+// #endif
 
     if (!mi->immedSrc.shortAddr) return true; // XXX
 
-#if 0
+#if 1
     // 0x7BAA - base station
-    // 0x3B88 - forwarder
+    // 0x71C0 - forwarder
     // 0x3BA5 - collector
     switch (localAddress) {
     case 0x7BAA:
-        if (mi->immedSrc.shortAddr != 0x3BA5) return false;
+        if (mi->immedSrc.shortAddr != 0x71C0) return false;
+        break;
+    case 0x71C0:
+        if (mi->immedSrc.shortAddr != 0x7BAA
+                && mi->immedSrc.shortAddr != 0x3B88) return false;
         break;
     case 0x3B88:
-        if (mi->immedSrc.shortAddr != 0x7BAA
-                && mi->immedSrc.shortAddr != 0x3BA5) return false;
-        break;
-    case 0x3BA5:
-    default:
         if (mi->immedSrc.shortAddr == 0x7BAA) return false;
+        break;
+    default:
+        if (mi->immedSrc.shortAddr != 0x3B88) return false;
         break;
     }
 #else
@@ -159,12 +169,13 @@ static void pollSadMac(void) {
     static MacInfo_t mi;
     INC_NETSTAT(NETSTAT_RADIO_RX, EMPTY_ADDR);
     if (isRadioPacketReceived()) {
-//#if USE_ROLE_BASE_STATION
+// #if USE_ROLE_COLLECTOR
+//         greenLedToggle();
+// #endif
         PRINTF("%lu: mac rx %u bytes\n",
                 getFixedTime(),
                 radioPacketBuffer->receivedLength);
-//#endif
-        
+
         if (macProtocol.recvCb) {
             uint8_t *data = defaultParseHeader(radioPacketBuffer->buffer,
                     radioPacketBuffer->receivedLength, &mi);

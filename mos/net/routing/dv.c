@@ -95,7 +95,7 @@ static void roForwardTimerCb(void *x)
     routingInfo.rootAddress = rootAddress;
     routingInfo.hopCount = hopCountToRoot + 1;
     routingInfo.seqnum = lastSeenSeqnum;
-    routingInfo.rootClock = getJiffies() + rootClockDelta;
+    routingInfo.rootClock = getUptime() + rootClockDeltaMs;
     routingInfo.moteNumber = 0;
 
     // XXX: INC_NETSTAT(NETSTAT_PACKETS_SENT, EMPTY_ADDR);
@@ -192,7 +192,7 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         }
 #endif
         lastRootMessageTime = getJiffies();
-        rootClockDelta = (int32_t)(ri.rootClock - getJiffies());
+        rootClockDeltaMs = (int32_t)(ri.rootClock - getUptime());
     }
 }
 

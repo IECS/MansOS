@@ -32,12 +32,47 @@
 
 #include "amb8420_pins.h"
 #include "sht_pins.h"
+#ifdef USE_ISL29003
+#include <isl29003/isl29003.h>
+#endif
+#ifdef USE_ADS1115
+#include <ads1115/ads1115.h>
+#endif
 
 //===========================================================
 // Functions
 //===========================================================
 
 void initPlatform(void);
+
+// define lightRead() depending on compile-time constants
+#ifdef USE_ISL29003
+static inline uint16_t islLightRead(void) 
+{
+    uint16_t result;
+    if (!islRead(&result, true)) {
+        result = 0xffff;
+    }
+    return result;
+}
+
+#define lightRead islLightRead
+
+#endif // USE_ISL29003
+
+#ifdef USE_ADS1115
+static inline uint16_t sq100LightRead(void) 
+{
+    uint16_t result;
+    if (!readAds(&result)) {
+        result = 0xffff;
+    }
+    return result;
+}
+
+#define lightRead sq100LightRead
+
+#endif // USE_ADS1115
 
 //===========================================================
 // Data types and constants
