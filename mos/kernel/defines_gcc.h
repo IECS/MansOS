@@ -61,6 +61,7 @@
 
 #define ASM_VOLATILE(x) __asm__ __volatile__(x)
 #define RAMFUNC __attribute__ ((section (".data")))
+#define TEXTDATA __attribute__ ((section (".text")))
 
 #define MEMORY_BARRIER()                           \
     ASM_VOLATILE("" : : : "memory")

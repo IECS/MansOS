@@ -46,7 +46,7 @@ void appMain(void)
             RECV ? "Receiver" : "Sender", localAddress);
 
 #if RECV
-#if PLATFORM_SM3
+#if PLATFORM_SM3 || PLATFORM_ARDUINO
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, 0x1);
 #endif
     // PRINTF("recvCounter = %p\n", recvCounter);
@@ -64,9 +64,9 @@ void appMain(void)
         // PRINTF("+++ rssi = %d\n", rssi);
     }
 #else
-//  radioSetReceiveHandle(radioDiscard);
+    // radioSetReceiveHandle(radioDiscard);
     radioOn();
-#if PLATFORM_SM3
+#if PLATFORM_SM3 || PLATFORM_ARDUINO
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, 0x2);
 #endif
     sendCounter();
@@ -116,8 +116,8 @@ void sendCounter(void) {
     // memcpy(sendBuffer + 1, &localAddress, 2);
     while (1) {
         // PRINTF("0x%04x: sending counter %i\n", localAddress, *counter);
-        redLedOn();
-#if PLATFORM_SM3
+        ledOn();
+#if PLATFORM_SM3 || PLATFORM_ARDUINO
         amb8420SetDstAddress(0x1);
 #endif
         int8_t result = radioSend(sendBuffer, sizeof(sendBuffer));
@@ -125,7 +125,7 @@ void sendCounter(void) {
             PRINTF("radio send failed\n"); 
         }
         mdelay(100);
-        redLedOff();
+        ledOff();
         mdelay(1000);
         ++(*counter);
     }

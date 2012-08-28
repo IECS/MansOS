@@ -36,7 +36,7 @@ static Mutex_t macMutex;
 static uint8_t headerBuffer[MAX_MAC_HEADER_LEN]; // XXX: watch out for size
 
 int8_t macSend(MosAddr *dst, const uint8_t *data, uint16_t length) {
-    static MacInfo_t mi;
+    MacInfo_t mi;
     memset(&mi, 0, sizeof(mi));
     fillLocalAddress(&mi.originalSrc);
     if (dst) {
@@ -70,37 +70,41 @@ int8_t macSendEx(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
 bool defaultBuildHeader(MacInfo_t *mi, uint8_t **header /* out */,
                         uint16_t *headerLength /* out */) {
     uint8_t *p = headerBuffer;
-    uint8_t fcf1 = 0, fcf2 = 0; // FCF flags: byte 1 and 2
-
-    if (mi->srcPort) fcf2 |= FCF_EXT_SRC_PORT;
-    if (mi->dstPort) fcf2 |= FCF_EXT_DST_PORT;
-    if (mi->hoplimit) fcf2 |= FCF_EXT_HOPLIMIT;
-    if (mi->flags & MI_FLAG_IS_ACK) fcf2 |= FCF_EXT_IS_ACK;
-
+//    uint8_t fcf1 = 0, fcf2 = 0; // FCF flags: byte 1 and 2
+    uint8_t *fcf1 = headerBuffer;
+    uint8_t *fcf2 = headerBuffer + 1; // FCF flags: byte 1 and 2
+    
+    *fcf1 = 0;
     ++p;
 // always include this...
 //    if (fcf2) {
-        fcf1 |= FCF_EXTENDED;
+        *fcf1 |= FCF_EXTENDED;
+        *fcf2 = 0;
         ++p;
-//    }
+//   }
+
+    if (mi->srcPort) *fcf2 |= FCF_EXT_SRC_PORT;
+    if (mi->dstPort) *fcf2 |= FCF_EXT_DST_PORT;
+    if (mi->hoplimit) *fcf2 |= FCF_EXT_HOPLIMIT;
+    if (mi->flags & MI_FLAG_IS_ACK) *fcf2 |= FCF_EXT_IS_ACK;
 
 #if SUPPORT_LONG_ADDR
     if (mi->originalSrc.type == MOS_ADDR_TYPE_SHORT) {
-        fcf1 += FCF_SRC_ADDR_SHORT;
+        *fcf1 += FCF_SRC_ADDR_SHORT;
         putU16(p, htons(mi->originalSrc.shortAddr));
         p += MOS_SHORT_ADDR_SIZE;
     } else {
-        fcf1 += FCF_SRC_ADDR_LONG;
+        *fcf1 += FCF_SRC_ADDR_LONG;
         memcpy(p, mi->originalSrc.longAddr, MOS_LONG_ADDR_SIZE);
         p += MOS_LONG_ADDR_SIZE;
     }
     if (mi->originalDst.type == MOS_ADDR_TYPE_SHORT) {
-        fcf1 += FCF_DST_ADDR_SHORT;
+        *fcf1 += FCF_DST_ADDR_SHORT;
         putU16(p, htons(mi->originalDst.shortAddr));
         p += MOS_SHORT_ADDR_SIZE;
     } else {
         if (mi->originalSrc.type != MOS_ADDR_TYPE_SHORT) return false;
-        fcf1 += FCF_DST_ADDR_LONG;
+        *fcf1 += FCF_DST_ADDR_LONG;
         memcpy(p, mi->originalDst.longAddr, MOS_LONG_ADDR_SIZE);
         p += MOS_LONG_ADDR_SIZE;
     }
@@ -108,30 +112,30 @@ bool defaultBuildHeader(MacInfo_t *mi, uint8_t **header /* out */,
             || mi->immedSrc.type != MOS_ADDR_TYPE_SHORT) return false;
 #else
     // src
-    fcf1 += FCF_SRC_ADDR_SHORT;
+    *fcf1 += FCF_SRC_ADDR_SHORT;
     putU16(p, htons(mi->originalSrc.shortAddr));
     p += MOS_SHORT_ADDR_SIZE;
     // dst
-    fcf1 += FCF_DST_ADDR_SHORT;
+    *fcf1 += FCF_DST_ADDR_SHORT;
     putU16(p, htons(mi->originalDst.shortAddr));
     p += MOS_SHORT_ADDR_SIZE;
-#endif
+#endif // !SUPPORT_LONG_ADDR
     if (mi->immedSrc.shortAddr) {
-        fcf1 |= FCF_IMMED_SRC;
+        *fcf1 |= FCF_IMMED_SRC;
         putU16(p, htons(mi->immedSrc.shortAddr));
         p += MOS_SHORT_ADDR_SIZE;
     }
     if (mi->immedDst.shortAddr) {
-        fcf1 |= FCF_IMMED_DST;
+        *fcf1 |= FCF_IMMED_DST;
         putU16(p, htons(mi->immedDst.shortAddr));
         p += MOS_SHORT_ADDR_SIZE;
     }
     if (mi->seqnum) {
-        fcf1 |= FCF_SEQNUM;
+        *fcf1 |= FCF_SEQNUM;
         *p++ = mi->seqnum;
     }
     if (mi->cost) {
-        fcf1 |= FCF_COST;
+        *fcf1 |= FCF_COST;
         *p++ = mi->cost;
     }
     if (mi->srcPort) {
@@ -143,8 +147,6 @@ bool defaultBuildHeader(MacInfo_t *mi, uint8_t **header /* out */,
     if (mi->hoplimit) {
         *p++ = mi->hoplimit;
     }
-    headerBuffer[0] = fcf1;
-    if (fcf2) headerBuffer[1] = fcf2;
 
     *header = headerBuffer;
     *headerLength = p - headerBuffer;

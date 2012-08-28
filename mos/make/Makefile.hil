@@ -62,7 +62,6 @@ PSOURCES-$(USE_CACHE) += $(MOS)/lib/processing/cache.c
 PSOURCES-$(USE_NET) += $(NET)/socket.c
 PSOURCES-$(USE_NET) += $(NET)/comm.c
 PSOURCES-$(USE_NET) += $(NET)/mac.c
-PSOURCES-$(USE_NET) += $(NET)/queue.c
 
 PSOURCES-$(USE_THREADS) += $(MOS)/kernel/threads/main.c
 PSOURCES-$(USE_THREADS) += $(MOS)/kernel/threads/mutex.c
@@ -83,6 +82,7 @@ PSOURCES-$(USE_NET) += $(NET)/mac/csma.c
 else
 ifeq ($(CONST_MAC_PROTOCOL),MAC_PROTOCOL_CSMA_ACK)
 PSOURCES-$(USE_NET) += $(NET)/mac/csma-ack.c
+PSOURCES-$(USE_NET) += $(NET)/queue.c
 else
 ifeq ($(CONST_MAC_PROTOCOL),MAC_PROTOCOL_SAD)
 PSOURCES-$(USE_NET) += $(NET)/mac/sad.c

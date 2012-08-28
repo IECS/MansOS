@@ -39,34 +39,48 @@ static int8_t sendSadMac(MacInfo_t *, const uint8_t *data, uint16_t length);
 static void pollSadMac(void);
 static void delayTimerCb(void *);
 
-MacProtocol_t macProtocol = {
+extern void commForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len);
+
+TEXTDATA MacProtocol_t macProtocol = {
     .name = MAC_PROTOCOL_SAD,
     .init = initSadMac,
     .send = sendSadMac,
     .poll = pollSadMac,
     .buildHeader = defaultBuildHeader,
     .isKnownDstAddress = defaultIsKnownDstAddress,
+    .recvCb = commForwardData,
 };
 
+#ifdef USE_ROLE_BASE_STATION
+#define DELAYED_SEND 0
+#else
+#define DELAYED_SEND 1
+#endif
+
+#if DELAYED_SEND
 static uint8_t delayedData[RADIO_MAX_PACKET];
 static volatile uint16_t delayedDataLength;
 static volatile uint8_t delayedNexthop;
 
 static Alarm_t delayTimer;
+#endif
 
 // -----------------------------------------------
 
 static void initSadMac(RecvFunction recvCb) {
-    macProtocol.recvCb = recvCb;
+//    macProtocol.recvCb = recvCb;
 
     // use least significant byte of localAddress AMB8420 address  
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, localAddress & 0xff);
 
+#if DELAYED_SEND
     alarmInit(&delayTimer, delayTimerCb, NULL);
+#endif
 }
 
 static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     int8_t ret;
+#if DELAYED_SEND
     if (mi->timeWhenSend) {
         if (delayedDataLength) {
             return -1; // busy
@@ -83,13 +97,13 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
             return length;
         }
     }
-// #if !(USE_ROLE_BASE_STATION || USE_ROLE_COLLECTOR || USE_ROLE_FORWARDER)
-//     redLedToggle();
-// #endif
-     PRINTF("%lu: mac tx %u bytes\n", getFixedTime(), length);
+#endif
+    PRINTF("%lu: mac tx %u bytes\n", getFixedTime(), length);
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
+#ifndef PLATFORM_ARDUINO
     // use least significant byte
     amb8420SetDstAddress(getNexthop(mi) & 0xff);
+#endif
     // if (!amb8420SetDstAddress(getNexthop(mi) & 0xff)) {
     //     bool b = amb8420SetDstAddress(getNexthop(mi) & 0xff);
     //     PRINTF("MAC ADDR SET RETRY = %d\n", (int) b);
@@ -99,12 +113,15 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     return length;
 }
 
+#if DELAYED_SEND
 static void delayTimerCb(void *unused)
 {
     PRINTF("%lu: mac tx %u bytes\n", getFixedTime(), delayedDataLength);
     // redLedToggle();
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
+#ifndef PLATFORM_ARDUINO
     amb8420SetDstAddress(delayedNexthop);
+#endif
     // if (!amb8420SetDstAddress(delayedNexthop)) {
     //     bool b = amb8420SetDstAddress(delayedNexthop);
     //     PRINTF("MAC ADDR SET RETRY = %d\n", (int) b);
@@ -112,6 +129,7 @@ static void delayTimerCb(void *unused)
     radioSendHeader(NULL, 0, delayedData, delayedDataLength);
     delayedDataLength = 0;
 }
+#endif
 
 #if TEST_FILTERS
 
@@ -166,7 +184,7 @@ static bool filterPass(MacInfo_t *mi)
 #endif
 
 static void pollSadMac(void) {
-    static MacInfo_t mi;
+    MacInfo_t mi;
     INC_NETSTAT(NETSTAT_RADIO_RX, EMPTY_ADDR);
     if (isRadioPacketReceived()) {
 // #if USE_ROLE_COLLECTOR

@@ -111,4 +111,4 @@ mspsim: build
 	$(JAVA) -classpath $(JAVA_CLASSPATH) $(JAVA_CLASS) $(OUTDIR)/$(APPMOD).elf
 
 size: build
-	size $(OUTDIR)/$(APPMOD).elf
+	msp430-size $(OUTDIR)/$(APPMOD).elf

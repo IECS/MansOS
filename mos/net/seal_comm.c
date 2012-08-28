@@ -275,7 +275,7 @@ int32_t sealCommReadValue(uint16_t code)
     }
     uint32_t bit;
     for (bit = 1; bit; bit <<= 1) {
-        if (bit == 1 << code) {
+        if (bit == 1ul << code) {
             return *read;
         }
         if (listenerBeingProcessed->typeMask & bit) {

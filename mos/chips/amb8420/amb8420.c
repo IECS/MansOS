@@ -23,7 +23,11 @@ static AMB8420RxHandle rxHandle;
 
 static bool isOn;
 
-static uint8_t rxBuffer[AMB8420_MAX_PACKET_LEN + 1];
+#ifndef RADIO_BUFFER_SIZE
+#define RADIO_BUFFER_SIZE AMB8420_MAX_PACKET_LEN
+#endif
+
+static uint8_t rxBuffer[RADIO_BUFFER_SIZE + 1];
 static uint8_t rxCursor;
 
 static int8_t lastRssi;
@@ -225,12 +229,12 @@ void amb8420Init(void)
     pinAsOutput(AMB8420_CONFIG_PORT, AMB8420_CONFIG_PIN);
     pinAsOutput(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);
     pinAsOutput(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);
-    pinAsOutput(AMB8420_DATA_REQUEST_PORT, AMB8420_DATA_REQUEST_PIN);
+    // pinAsOutput(AMB8420_DATA_REQUEST_PORT, AMB8420_DATA_REQUEST_PIN);
     pinAsInput(AMB8420_RTS_PORT, AMB8420_RTS_PIN);
-    pinAsInput(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
+    // pinAsInput(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
 
     pinSet(AMB8420_CONFIG_PORT, AMB8420_CONFIG_PIN);
-    pinClear(AMB8420_DATA_REQUEST_PORT, AMB8420_DATA_REQUEST_PIN);
+    // pinClear(AMB8420_DATA_REQUEST_PORT, AMB8420_DATA_REQUEST_PIN);
 
     // in case interrupts are used (for non-command mode):
     //pinIntRising(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
@@ -402,7 +406,11 @@ static int amb8420Set(uint8_t position, uint8_t len, uint8_t *data)
     // if someone grabs access to USART during this waiting,
     // then it will fail, but that's ok, as the caller will retry.
     INTERRUPT_ENABLED_START(handle);
+#ifndef PLATFORM_ARDUINO
     BUSYWAIT_UNTIL(!commandInProgress, TIMER_100_MS, ok);
+#else
+    mdelay(20);
+#endif
     INTERRUPT_ENABLED_END(handle);
 
 
@@ -453,7 +461,11 @@ int amb8420GetAll(void)
     // if someone grabs access to USART during this waiting,
     // then it will fail, but that's ok, as the caller will retry.
     INTERRUPT_ENABLED_START(handle);
+#ifndef PLATFORM_ARDUINO
     BUSYWAIT_UNTIL(!commandInProgress, TIMER_100_MS, ok);
+#else
+    mdelay(20);
+#endif
     INTERRUPT_ENABLED_END(handle);
 
     PRINTF("recvLength=%u\n", recvLength);
@@ -497,7 +509,11 @@ void amb8420SetChannel(int channel)
 
     // wait for reply
     INTERRUPT_ENABLED_START(handle);
+#ifndef PLATFORM_ARDUINO
     BUSYWAIT_UNTIL(!commandInProgress, TIMER_100_MS, ok);
+#else
+    mdelay(20);
+#endif
     INTERRUPT_ENABLED_END(handle);
 
     // Wait for device to become ready
@@ -560,7 +576,11 @@ int amb8420GetRSSI(void)
     INTERRUPT_ENABLED_START(handle);
 
     // wait for reply
+#ifndef PLATFORM_ARDUINO // just. not. possible
     BUSYWAIT_UNTIL_NORET(!commandInProgress, TIMER_SECOND);
+#else
+    mdelay(100);
+#endif
     result = lastRssi;
 
     // disable interrups, if required

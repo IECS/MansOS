@@ -73,11 +73,15 @@ typedef enum {
     AMB8420_ADDR_MODE_ADDRNET = 2, // 1 byte addr, 1 byte net
 } AMB8420AddrMode_t;
 
+#ifndef PLATFORM_ARDUINO
 #define RTS_WAIT_TIMEOUT_TICKS        TIMER_100_MS
 //#define RTS_WAIT_TIMEOUT_TICKS        TIMER_SECOND
-
 #define AMB8420_WAIT_FOR_RTS_READY(ok) \
     BUSYWAIT_UNTIL(pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN) == 0, RTS_WAIT_TIMEOUT_TICKS, ok)
+#else
+#define AMB8420_WAIT_FOR_RTS_READY(ok) \
+    while ((ok = pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN) == 0));
+#endif
 
 // ----------------------------------------
 // mode switching

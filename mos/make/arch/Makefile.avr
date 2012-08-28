@@ -78,3 +78,6 @@ upload-atmega:
 
 memdump : build
 	$(MEMDUMP) $(OUTDIR)/$(APPMOD).elf avr
+
+size: build
+	avr-size $(OUTDIR)/$(APPMOD).elf

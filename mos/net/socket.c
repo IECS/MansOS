@@ -105,7 +105,7 @@ void socketInputData(MacInfo_t *macInfo, void *data, uint16_t len) {
 
 int8_t sendPacket(MosShortAddr addr, NetPort_t port,
                   const void *buf, uint16_t bufLen) {
-    static MacInfo_t mi;
+    MacInfo_t mi;
     memset(&mi, 0, sizeof(mi));
     fillLocalAddress(&mi.originalSrc);
     intToAddr(mi.originalDst, addr);

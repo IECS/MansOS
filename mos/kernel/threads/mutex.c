@@ -24,6 +24,8 @@
 #include "mutex.h"
 #include <lib/assert.h>
 
+#if !DISABLE_LOCKING
+
 void mutexLock(Mutex_t *m)
 {
     Handle_t h;
@@ -52,3 +54,5 @@ void mutexUnlock(Mutex_t *m)
     }
     ATOMIC_END(h);
 }
+
+#endif

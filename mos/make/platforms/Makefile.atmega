@@ -40,3 +40,6 @@ CFLAGS += -DPLATFORM_ARDUINO=1
 # (excluding architecture-specific sources)
 
 PSOURCES += $(MOS)/platforms/atmega/platform.c
+
+# hack for SAD base station
+PSOURCES-$(USE_RADIO) += $(MOS)/chips/amb8420/amb8420.c

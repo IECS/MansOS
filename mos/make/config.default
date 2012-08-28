@@ -41,7 +41,6 @@ USE_KERNEL_MAIN ?= y
 USE_ALARMS ?= y
 USE_LEDS ?= y
 USE_ADC ?= y
-USE_RADIO ?= y
 USE_SERIAL ?= y
 USE_PRINT ?= y
 USE_CRC ?= y
@@ -92,15 +91,19 @@ USE_SEAL_COMM ?= n
 USE_BEEPER ?= n
 
 ifeq ($(USE_NET),y)
-   USE_ADDRESSING ?= y
-   USE_RANDOM ?= y
-   USE_THREADS ?= y
+    USE_ADDRESSING ?= y
+    USE_RANDOM ?= y
+    USE_THREADS ?= y
 endif
 ifeq ($(USE_SEAL_COMM),y)
-   USE_ADDRESSING ?= y
+    USE_ADDRESSING ?= y
 endif
 USE_ADDRESSING ?= n
 USE_RANDOM ?= n
+
+ifeq ($(USE_ADDRESSING),y)
+    USE_RADIO ?= y
+endif
 
 # threads
 USE_THREADS ?= n
