@@ -31,6 +31,7 @@ Average_t avgInit(uint8_t window) {
     result.window = window;
     result.haveCoefficients = false;
     if (window) {
+        // FIXME: malloc!
         result.history = malloc(sizeof(uint16_t) * window);
         // Why implicit declaration?
         //memset(result.history, 0, sizeof(uint16_t) * window);
@@ -47,6 +48,7 @@ Average_t avgInitWithCoeffs(uint8_t window, uint8_t *coefs) {
     Average_t result = avgInit(window);
     uint8_t temp;
     if (window) {
+        // FIXME: malloc
         result.coefficients = (uint8_t*)malloc(sizeof(uint8_t) * window);
         // Why implicit declaration?
         //memcpy(result.coefficients, coefs, sizeof(uint8_t) * window);

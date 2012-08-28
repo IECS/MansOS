@@ -34,7 +34,8 @@
 // linker will provide symbol for end-of-memory
 extern uint8_t _end;
 
-#define KERNEL_STACK_SIZE 256
+//#define KERNEL_STACK_SIZE 256
+#define KERNEL_STACK_SIZE 512
 
 //--------------------------------------------------------------------------------
 // functions

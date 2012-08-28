@@ -65,7 +65,11 @@
 // linker will provide symbol for end-of-memory
 extern uint8_t _end;
 
+#if PLATFORM_FARMMOTE
 #define KERNEL_STACK_SIZE 256
+#else
+#define KERNEL_STACK_SIZE 512
+#endif
 
 //--------------------------------------------------------------------------------
 // functions

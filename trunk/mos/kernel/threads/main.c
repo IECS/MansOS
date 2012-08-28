@@ -58,12 +58,31 @@ void systemMain(void)
             alarmsProcess();
         }
 
-        uint32_t now = (uint32_t) getJiffies();
-        jiffiesToSleep = (uint16_t)(getNextAlarmTime() - now);
-        if ((int16_t) jiffiesToSleep < 0) {
-            // do not allow them to become negative
+        uint32_t t = getNextAlarmTime();
+        t -= (uint32_t) getJiffies();
+        if ((int32_t) t < 0) {
             jiffiesToSleep = 0;
+        } else {
+            jiffiesToSleep = (uint16_t) t;
+            if (jiffiesToSleep > MAX_KERNEL_SLEEP_TIME) {
+                jiffiesToSleep = MAX_KERNEL_SLEEP_TIME;
+            }
         }
+        // PRINTF("jiffiesToSleep=%u\n", jiffiesToSleep);
+
+        // if (t == 0) {
+        //     jiffiesToSleep = MAX_KERNEL_SLEEP_TIME;
+        // } else {
+        //     t -= (uint32_t) getJiffies();
+        //     if ((int32_t) t < 0) {
+        //     }
+        //     jiffiesToSleep = (uint16_t)(t - (uint32_t) getJiffies());
+        //     if (jiffiesToSleep > MAX_KERNEL_SLEEP_TIME) {
+        //         // do not allow them to become negative
+        //         jiffiesToSleep = MAX_KERNEL_SLEEP_TIME;
+        //     }
+        // }
+
         // PRINTF("kernel main, sleepTime = %u\n", jiffiesToSleep);
         // PRINTF("  nextAlarm=%lu, jiffies=%lu\n", getNextAlarmTime(), getJiffies());
         schedule();

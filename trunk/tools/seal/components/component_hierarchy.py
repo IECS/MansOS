@@ -537,7 +537,7 @@ class SealOutput(SealComponent):
     def __init__(self, name):
         super(SealOutput, self).__init__(TYPE_OUTPUT, name)
         self.aggregate = SealParameter(True, [False, True])
-        self.crc = SealParameter(False, [False, True])
+        # self.crc = SealParameter(False, [False, True])
         self.address = SealParameter(False, [False, True])
         self.timestamp = SealParameter(True, [False, True])
         self.sequencenumber = SealParameter(False, [False, True])
@@ -562,7 +562,7 @@ class RadioOutput(SealOutput):
     def __init__(self):
         super(RadioOutput, self).__init__("Radio")
         self.useFunction.value = "radioSend(&radioPacket, sizeof(radioPacket))"
-        self.crc.value = True # true by default
+        # self.crc.value = True # true by default
         self.address.value = True # true by default
 
 class InternalFlashOutput(SealOutput):
@@ -608,6 +608,7 @@ class FileOutput(SealOutput):
 class NetworkOutput(SealOutput):
     def __init__(self):
         super(NetworkOutput, self).__init__("Network")
+        self.address.value = True # true by default
         # create a socket, if not alreay, and use it to send data to the root
         self.useFunction.value = """
     static Socket_t socket;

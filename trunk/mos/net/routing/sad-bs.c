@@ -67,13 +67,14 @@ static void roOriginateTimerCb(void *x) {
     routingInfo.rootAddress = localAddress;
     routingInfo.hopCount = 1;
     routingInfo.seqnum = ++mySeqnum;
-    if (lastRootSyncJiffies) {
-        routingInfo.rootClock = lastRootClockSeconds
-                + (getJiffies() - lastRootSyncJiffies);
-    } else {
-        routingInfo.rootClock = getJiffies();
-    }
-    routingInfo.rootClock += RADIO_TX_TIME;
+    // if (lastRootSyncJiffies) {
+    //     routingInfo.rootClock = lastRootClockSeconds
+    //             + (getJiffies() - lastRootSyncJiffies);
+    // } else {
+    //     routingInfo.rootClock = getJiffies();
+    // }
+    // routingInfo.rootClock += RADIO_TX_TIME;
+    routingInfo.rootClock = getUptime();
     routingInfo.moteNumber = 0;
 
     socketSend(&roSocket, &routingInfo, sizeof(routingInfo));

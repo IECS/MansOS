@@ -35,6 +35,7 @@ MosShortAddr localAddress;
 
 MosShortAddr rootAddress;
 int32_t rootClockDelta;
+int32_t rootClockDeltaMs;
 
 #ifdef DEBUG
 uint32_t netstats[TOTAL_NETSTAT];

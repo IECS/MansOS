@@ -25,7 +25,6 @@
 #define MANSOS_ISL29003_H
 
 #include "i2c_soft.h"
-#include "stdmansos.h"
 
 /* ISL29003 soft I2C support */
 #define ISL_I2C_SDA_HI()   pinSet(SDA_PORT, SDA_PIN)

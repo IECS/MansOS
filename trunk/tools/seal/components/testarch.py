@@ -50,14 +50,6 @@ seismic = SeismicSensor()
 acoustic = AcousticSensor()
 
 
-class SQ100LightSensor(SealSensor):
-    def __init__(self):
-        super(SQ100LightSensor, self).__init__("SQ100Light")
-        self.useFunction.value = "sq100LightRead()"
-        self.readFunction.value = "sq100LightRead()"
-
-sq100 = SQ100LightSensor()
-
 class LightWithIdSensor(SealSensor):
     def __init__(self):
         super(LightWithIdSensor, self).__init__("LightWithId")

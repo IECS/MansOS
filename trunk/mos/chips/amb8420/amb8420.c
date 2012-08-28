@@ -43,6 +43,20 @@ static enum {
 static uint8_t recvCommand;
 static uint8_t recvLength;
 
+//
+// Enable/disable flash access to the USART
+// Busy waiting loop us not used, as the code is executd with ints off.
+//
+#define AMB8420_USART_CAPTURE()    \
+    usartBusy[AMB8420_UART_ID] = true;                             \
+    if (usartFunction[AMB8420_UART_ID] != USART_FUNCTION_RADIO) {  \
+        amb8420InitUsart();                                        \
+        usartFunction[AMB8420_UART_ID] = USART_FUNCTION_RADIO;     \
+    }                                                              \
+
+#define AMB8420_USART_FREE()   \
+    usartBusy[AMB8420_UART_ID] = false;
+
 static void rxPacket(uint8_t checksum)
 {
     int i;
@@ -170,7 +184,7 @@ void amb8420Reset(void)
     RPRINTF("amb8420Reset\n");
 
     AMB8420ModeContext_t ctx;
-//    AMB8420_ENTER_STANDBY_MODE(ctx);
+    // AMB8420_ENTER_STANDBY_MODE(ctx);
     AMB8420_ENTER_ACTIVE_MODE(ctx);
 
     pinClear(AMB8420_RESET_PORT, AMB8420_RESET_PIN);
@@ -196,7 +210,9 @@ void amb8420Reset(void)
     AMB8420_RESTORE_MODE(ctx);
 
     // long delay, maybe helps for the RTS problem
-    mdelay(3000);
+    mdelay(500);
+
+    usartFunction[AMB8420_UART_ID] = USART_FUNCTION_RADIO;
 }
 
 void amb8420Init(void)
@@ -292,6 +308,7 @@ int amb8420Send(const void *header_, uint16_t headerLen,
     const uint8_t *data = data_;
     uint8_t totalLen = headerLen + dataLen;
     bool ok;
+//    Handle_t h;
 
     AMB8420_WAIT_FOR_RTS_READY(ok);
     if (!ok) {
@@ -302,6 +319,10 @@ int amb8420Send(const void *header_, uint16_t headerLen,
 
     uint8_t cs = AMB8420_START_DELIMITER ^ AMB8420_CMD_DATA_REQ;
     cs ^= totalLen;
+
+//    PRINTF("send, tar=%u\n", TAR);
+//    ATOMIC_START_TIMESAVE(h);
+    AMB8420_USART_CAPTURE();
 
     // start delimiter
     USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
@@ -322,6 +343,10 @@ int amb8420Send(const void *header_, uint16_t headerLen,
     }
     // checksum
     USARTSendByte(AMB8420_UART_ID, cs);
+
+    AMB8420_USART_FREE();
+//    ATOMIC_END_TIMESAVE(h);
+    // PRINTF("end send, tar=%u\n", TAR);
 
     AMB8420_RESTORE_MODE(ctx);
 
@@ -352,6 +377,9 @@ static int amb8420Set(uint8_t position, uint8_t len, uint8_t *data)
     AMB8420_WAIT_FOR_RTS_READY(ok);
     if (!ok) goto end;
 
+    // ATOMIC_START(handle);
+    AMB8420_USART_CAPTURE();
+
     commandInProgress = AMB8420_CMD_SET_REQ;
 
     USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
@@ -367,12 +395,16 @@ static int amb8420Set(uint8_t position, uint8_t len, uint8_t *data)
     }
     USARTSendByte(AMB8420_UART_ID, crc);
 
-    // wait for reply
-    // XXX: this waiting is next to useless, if it does not always succeed:
-    // could just as well never wait for anything
+    AMB8420_USART_FREE();
+    // ATOMIC_END(handle);
+
+    // wait for reply.
+    // if someone grabs access to USART during this waiting,
+    // then it will fail, but that's ok, as the caller will retry.
     INTERRUPT_ENABLED_START(handle);
     BUSYWAIT_UNTIL(!commandInProgress, TIMER_100_MS, ok);
     INTERRUPT_ENABLED_END(handle);
+
 
     // Wait for device to become ready
     AMB8420_WAIT_FOR_RTS_READY(ok);
@@ -400,6 +432,9 @@ int amb8420GetAll(void)
     AMB8420_WAIT_FOR_RTS_READY(ok);
     if (!ok) goto end;
 
+    // ATOMIC_START(handle);
+    AMB8420_USART_CAPTURE();
+
     commandInProgress = AMB8420_CMD_GET_REQ;
 
     USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
@@ -411,9 +446,12 @@ int amb8420GetAll(void)
             ^ 2 ^ position ^ len;
     USARTSendByte(AMB8420_UART_ID, crc);
 
+    AMB8420_USART_FREE();
+    // ATOMIC_END(handle);
+
     // wait for reply
-    // XXX: this waiting is next to useless, if it does not always succeed:
-    // could just as well never wait for anything
+    // if someone grabs access to USART during this waiting,
+    // then it will fail, but that's ok, as the caller will retry.
     INTERRUPT_ENABLED_START(handle);
     BUSYWAIT_UNTIL(!commandInProgress, TIMER_100_MS, ok);
     INTERRUPT_ENABLED_END(handle);
@@ -442,6 +480,9 @@ void amb8420SetChannel(int channel)
     AMB8420_WAIT_FOR_RTS_READY(ok);
     if (!ok) goto end;
 
+    // ATOMIC_START(handle);
+    AMB8420_USART_CAPTURE();
+
     commandInProgress = AMB8420_CMD_SET_CHANNEL_REQ;
 
     USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
@@ -450,6 +491,9 @@ void amb8420SetChannel(int channel)
     USARTSendByte(AMB8420_UART_ID, channel);
     USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER
             ^ AMB8420_CMD_SET_CHANNEL_REQ ^ 0x1 ^ channel);
+
+    AMB8420_USART_FREE();
+    // ATOMIC_END(handle);
 
     // wait for reply
     INTERRUPT_ENABLED_START(handle);
@@ -497,6 +541,9 @@ int amb8420GetRSSI(void)
     AMB8420_WAIT_FOR_RTS_READY(ok);
     if (!ok) goto end;
 
+    // ATOMIC_START(handle);
+    AMB8420_USART_CAPTURE();
+
     commandInProgress = AMB8420_CMD_RSSI_REQ;
 
     USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
@@ -504,7 +551,10 @@ int amb8420GetRSSI(void)
     USARTSendByte(AMB8420_UART_ID, 0x00);
     USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER ^ AMB8420_CMD_RSSI_REQ);
 
-    // if this code is executed with interrupts disabled,
+    AMB8420_USART_FREE();
+    // ATOMIC_END(handle);
+
+    // if this code was executed with interrupts disabled,
     // the rx callback will never be called. so make sure
     // interrupts are on.
     INTERRUPT_ENABLED_START(handle);
@@ -559,12 +609,12 @@ int amb8420EnterAddressingMode(AMB8420AddrMode_t mode, uint8_t srcAddress)
     return 0;
 }
 
-int amb8420SetDstAddress(uint8_t dstAddress)
+bool amb8420SetDstAddress(uint8_t dstAddress)
 {
     bool ok;
-    Handle_t handle;
+    // Handle_t handle;
 
-    RPRINTF("set dst addr to %#02x\n", dstAddress);
+    // PRINTF("set dst addr to %#02x\n", dstAddress);
 
     // disable radio rx/tx
     AMB8420ModeContext_t ctx;
@@ -577,6 +627,10 @@ int amb8420SetDstAddress(uint8_t dstAddress)
     AMB8420_WAIT_FOR_RTS_READY(ok);
     if (!ok) goto end;
 
+    // PRINTF("set dst, tar=%u\n", TAR);
+    // ATOMIC_START_TIMESAVE(handle);
+    AMB8420_USART_CAPTURE();
+
     commandInProgress = AMB8420_CMD_SET_DESTADDR_REQ;
 
     USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
@@ -586,16 +640,22 @@ int amb8420SetDstAddress(uint8_t dstAddress)
     USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER
             ^ AMB8420_CMD_SET_DESTADDR_REQ ^ 0x1 ^ dstAddress);
 
+    AMB8420_USART_FREE();
+    // ATOMIC_END_TIMESAVE(handle);
+    // PRINTF("end set dst, tar=%u\n", TAR);
+
     // wait for reply
-    INTERRUPT_ENABLED_START(handle);
-    BUSYWAIT_UNTIL_NORET(!commandInProgress, TIMER_SECOND);
+    // INTERRUPT_ENABLED_START(handle);
+    // BUSYWAIT_UNTIL(!commandInProgress, TIMER_100_MS, ok);
     // if (commandInProgress) PRINTF("command wait fail\n");
-    INTERRUPT_ENABLED_END(handle);
+    // INTERRUPT_ENABLED_END(handle);
+    // if (!ok) goto end;
 
     // Wait for device to become ready
-    AMB8420_WAIT_FOR_RTS_READY(ok);
+    // AMB8420_WAIT_FOR_RTS_READY(ok);
   end:
     AMB8420_RESTORE_MODE(ctx);
     // PRINTF(" ok = %d\n", (int)ok);
-    return ok ? 0 : -1;
+    // if (!ok) amb8420Reset();
+    return ok;
 }

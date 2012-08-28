@@ -48,7 +48,6 @@ USE_CRC ?= y
 USE_NET ?= n
 USE_USER_BUTTON ?= n
 USE_FLASH ?= n
-USE_EXT_FLASH ?= n
 USE_EEPROM ?= n
 USE_WATCHDOG ?= n
 USE_SOFT_I2C ?= n
@@ -78,8 +77,10 @@ USE_SDCARD_STREAM ?= n
 # SD card
 ifeq ($(USE_SDCARD_STREAM),y)
 USE_SDCARD ?= y
+#USE_EXT_FLASH ?= y
 endif
 USE_SDCARD ?= n
+USE_EXT_FLASH ?= n
 
 #TODO:
 #USE_PRINT_SERIAL ?= y

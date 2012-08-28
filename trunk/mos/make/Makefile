@@ -374,7 +374,7 @@ endif
 # .sl -> .c, SEAL sources
 $(BUILDDIR)/%.c : %.sl
 	$(Print) "SEAL $<"
-	$(_QUIET) $(SEAL) --arch $(ARCH) -o $@ $<
+	$(_QUIET) $(SEAL) --arch $(PLATFORM) -o $@ $<
 
 # .o -> .elf
 $(OUTDIR)/$(APPMOD).elf : $(OBJS)

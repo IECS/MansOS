@@ -46,6 +46,7 @@
 #include "threads/threads.h"
 #endif
 #include <arch_mem.h>
+#include <sdcard/sdcard.h>
 
 #if (defined DEBUG && !defined DPRINT_TO_RADIO)
 #define INIT_PRINTF(...) PRINTF(__VA_ARGS__)
@@ -68,6 +69,9 @@ static inline void initSystem(void)
 
     // stop the watchdog (GCC disables it by default, but other compilers might need this line)
     watchdogStop();
+
+    // TODO: init dynamic memory
+    // platformMemInit();
 
     // basic, platform-specific initialization: timers, platform-specific drivers (?)
     initPlatform();
@@ -124,9 +128,23 @@ static inline void initSystem(void)
     INIT_PRINTF("init external flash...\n");
     extFlashInit();
 #endif
+#ifdef USE_SDCARD
+    INIT_PRINTF("init SD card...\n");
+    sdcardInit();
+#endif
 #ifdef USE_EEPROM
     INIT_PRINTF("init EEPROM...\n");
     eepromInit();
+#endif
+#ifdef USE_ISL29003
+    INIT_PRINTF("init ISL light sensor...\n");
+    islInit();
+    islOn();
+#endif
+#ifdef USE_ADS1115
+    INIT_PRINTF("init ADS111x ADC converter chip...\n");
+    adsInit();
+    adsSelectInput(0);
 #endif
 #ifdef USE_HUMIDITY
     INIT_PRINTF("init humidity sensor...\n");

@@ -24,11 +24,14 @@
 #include "sdcard.h"
 #include "sdcard_pins.h"
 #include "sdcard_const.h"
+#include <spi.h>
 #include <delay.h>
 #include <timers.h>
 #include <utils.h>
+#include <serial.h>
 #include <hil/busywait.h>
 #include <lib/assert.h>
+#include <kernel/threads/threads.h>
 #include <string.h>
 
 #if DEBUG
@@ -50,6 +53,8 @@
 
 // same timeouts in timer A ticks
 #define INIT_TIMEOUT_TICKS  (2 * TIMER_SECOND)
+#define READ_TIMEOUT_TICKS  (3 * TIMER_100_MS)
+#define WRITE_TIMEOUT_TICKS (6 * TIMER_100_MS)
 
 // card types
 enum {
@@ -71,6 +76,28 @@ static bool cacheChanged;
     (((address) >= (sectorStartAdddress)) &&                    \
             (address) < ((sectorStartAdddress) + SDCARD_SECTOR_SIZE))
 
+//
+// Enable/disable flash access to the SPI bus (active low).
+// Busy waiting loop us not used, as the code is executd with ints off.
+//
+#define SDCARD_SPI_ENABLE()    \
+    usartBusy[SDCARD_SPI_ID] = true;                             \
+    if (usartFunction[SDCARD_SPI_ID] != USART_FUNCTION_SDCARD) { \
+        sdcardInitUsart();                                       \
+        usartFunction[SDCARD_SPI_ID] = USART_FUNCTION_SDCARD;    \
+    }                                                            \
+    pinClear(SDCARD_CS_PORT, SDCARD_CS_PIN)
+
+// for use in init function only
+#define SDCARD_SPI_ENABLE_INIT()    \
+    pinClear(SDCARD_CS_PORT, SDCARD_CS_PIN)
+
+#define SDCARD_SPI_DISABLE()   \
+    pinSet(SDCARD_CS_PORT, SDCARD_CS_PIN); \
+    /* ensure MISO goes high impedance */  \
+    spiWriteByte(SDCARD_SPI_ID, 0xff);     \
+    usartBusy[SDCARD_SPI_ID] = false       \
+
 // Shortcuts
 #if SDCARD_SPI_ID == 0
 
@@ -79,7 +106,7 @@ static bool cacheChanged;
 // Chip Select
 #define MMC_CS_PxOUT      P3OUT
 #define MMC_CS_PxDIR      P3DIR
-#define MMC_CS            0x01
+#define MMC_CS            (1 << SDCARD_CS_PIN)
 
 #define SPI_PxSEL         P3SEL
 #define SPI_PxDIR         P3DIR
@@ -97,8 +124,10 @@ static bool cacheChanged;
 #define MMC_SOMI          SPI_SOMI
 #define MMC_UCLK          SPI_UCLK
 
-void halSPISetup(void)
+void sdcardInitUsart(void)
 {
+    IE1 &= ~(URXIE0 | UTXIE0); // disable USART interrupts
+
     // Init Port for MMC (default high)
     MMC_PxOUT |= MMC_SIMO + MMC_UCLK;
     MMC_PxDIR |= MMC_SIMO + MMC_UCLK;
@@ -113,6 +142,7 @@ void halSPISetup(void)
     U0BR0 = 0x08;                             // UCLK/8
     U0BR1 = 0x00;                             // 0
     UMCTL0 = 0x00;                            // No modulation
+    ME1 &= ~(UTXE0 | URXE0);                  // disable USART0 TXD/RXD
     ME1 |= USPIE0;                            // Enable USART0 SPI mode
     UCTL0 &= ~SWRST;                          // Initialize USART state machine
 
@@ -129,7 +159,7 @@ void halSPISetup(void)
 // Chip Select
 #define MMC_CS_PxOUT      P5OUT
 #define MMC_CS_PxDIR      P5DIR
-#define MMC_CS            0x01
+#define MMC_CS            (1 << SDCARD_CS_PIN)
 
 // Card Detect
 #define MMC_CD_PxIN       P5IN
@@ -152,7 +182,7 @@ void halSPISetup(void)
 #define MMC_SOMI          SPI_SOMI
 #define MMC_UCLK          SPI_UCLK
 
-void halSPISetup(void)
+void sdcardInitUsart(void)
 {
     // Init Port for MMC (default high)
     MMC_PxOUT |= MMC_SIMO + MMC_UCLK;
@@ -214,8 +244,7 @@ static bool waitCardNotBusyNoints(uint16_t timeout)
 static uint8_t sdcardCommand(uint8_t cmd, uint32_t arg, uint8_t crc)
 {
 //    SPRINTF("sdcardCommand\n");
-        
-    SDCARD_SPI_ENABLE();
+    STACK_GUARD();
 
     // wait up to 300 ms if busy
     waitCardNotBusyNoints(3 * TIMER_100_MS);
@@ -278,7 +307,8 @@ bool sdcardInit(void)
 
     //msp430USARTInitSPI(SDCARD_SPI_ID, SPI_MODE_MASTER);
     //spiBusInit(SDCARD_SPI_ID, SPI_MODE_MASTER);
-    halSPISetup();
+    sdcardInitUsart();
+    usartFunction[SDCARD_SPI_ID] = USART_FUNCTION_SDCARD;
 
     SPRINTF("1\n");
     // mdelay(1);
@@ -289,6 +319,8 @@ bool sdcardInit(void)
 
     SPRINTF("2\n");
     // mdelay(1);
+
+    SDCARD_SPI_ENABLE_INIT();
 
     BUSYWAIT_UNTIL(sdcardCommand(CMD_GO_IDLE_STATE, 0, 0x95) == R1_IDLE_STATE, INIT_TIMEOUT_TICKS / 2, ok);
     if (!ok) {
@@ -302,6 +334,7 @@ bool sdcardInit(void)
     while (response == 0x01) {
         SDCARD_SPI_DISABLE();
         SDCARD_WR_BYTE(0xff);
+        SDCARD_SPI_ENABLE_INIT();
         response = sdcardCommand(CMD_SEND_OP_COND, 0x00, 0xff);
     }
     SDCARD_SPI_DISABLE();
@@ -311,6 +344,7 @@ bool sdcardInit(void)
     SPRINTF("3\n");
 
     // check SD version
+    SDCARD_SPI_ENABLE_INIT();
     if ((sdcardCommand(CMD_SEND_IF_COND, 0x1AA, 0x87) & R1_ILLEGAL_COMMAND)) {
         cardType = SD_CARD_TYPE_SD1;
     } else {
@@ -328,6 +362,7 @@ bool sdcardInit(void)
     // initialize card and send host supports SDHC if SD2
     arg = (cardType == SD_CARD_TYPE_SD2 ? 0x40000000 : 0);
 
+    SDCARD_SPI_ENABLE_INIT();
     BUSYWAIT_UNTIL(sdcardAppCommand(ACMD_SD_SEND_OP_COMD, arg) == R1_READY_STATE,
             INIT_TIMEOUT_TICKS / 2, ok);
     if (!ok) {
@@ -342,6 +377,7 @@ bool sdcardInit(void)
 
     // if SD2 read OCR register to check for SDHC card
     if (cardType == SD_CARD_TYPE_SD2) {
+        SDCARD_SPI_ENABLE_INIT();
         if (sdcardCommand(CMD_READ_OCR, 0, 0xff)) {
             goto fail;
         }
@@ -369,6 +405,7 @@ bool sdcardInit(void)
 static bool sdcardReadRegister(uint8_t cmd, void* buf)
 {
     uint8_t* dst = buf;
+    SDCARD_SPI_ENABLE();
     if (sdcardCommand(cmd, 0, 0xff)) {
         goto fail;
     }
@@ -402,11 +439,13 @@ static bool sdcardEraseRange(uint32_t firstBlock, uint32_t lastBlock)
         firstBlock <<= 9;
         lastBlock <<= 9;
     }
+    SDCARD_SPI_ENABLE();
     if (sdcardCommand(CMD_ERASE_WR_BLK_START, firstBlock, 0xff)
             || sdcardCommand(CMD_ERASE_WR_BLK_END, lastBlock, 0xff)
             || sdcardCommand(CMD_ERASE, 0, 0xff)) {
         goto fail;
     }
+    // TODO: make sure interrupts are enabled
     if (!waitCardNotBusy(ERASE_TIMEOUT)) {
         goto fail;
     }
@@ -434,20 +473,26 @@ void sdcardEraseSector(uint32_t address)
 
 bool sdcardReadBlock(uint32_t address, void* buffer)
 {
-    //PRINTF("sdcardReadBlock at %lu\n", address);
+    // PRINTF("sdcardReadBlock at %lu\n", address);
+    bool result = false;
+    Handle_t h;
 
     //  if SDHC card: use block number instead of address
     if (cardType == SD_CARD_TYPE_SDHC) address >>= 9;
+
+    ATOMIC_START(h);
+    SDCARD_SPI_ENABLE();
 
     if (sdcardCommand(CMD_READ_SINGLE_BLOCK, address, 0xff) != 0) {
         goto fail;
     }
 
-    return sdcardReadData(buffer, SDCARD_SECTOR_SIZE);
+    result = sdcardReadData(buffer, SDCARD_SECTOR_SIZE);
 
   fail:
     SDCARD_SPI_DISABLE();
-    return false;
+    ATOMIC_END(h);
+    return result;
 }
 
 static bool sdcardReadData(void* buffer, uint16_t len)
@@ -456,7 +501,7 @@ static bool sdcardReadData(void* buffer, uint16_t len)
     bool ok;
 
     // wait for start block token
-    BUSYWAIT_UNTIL_LONG((status = SDCARD_RD_BYTE()) != 0xFF, READ_TIMEOUT, ok);
+    BUSYWAIT_UNTIL((status = SDCARD_RD_BYTE()) != 0xFF, READ_TIMEOUT_TICKS, ok);
     if (!ok) {
         goto fail;
     }
@@ -473,7 +518,6 @@ static bool sdcardReadData(void* buffer, uint16_t len)
     SDCARD_RD_BYTE();
 
     SDCARD_SPI_DISABLE();
-    // SPRINTF("sdcardReadData ok\n");
     return true;
 
   fail:
@@ -505,17 +549,20 @@ static bool sdcardWriteData(uint8_t token, const uint8_t* data)
 bool sdcardWriteBlock(uint32_t address, const void *buf)
 {
     // PRINTF("sdcardWriteBlock at %lu\n", address);
+    Handle_t handle;
+    ATOMIC_START(handle);
 
     //  if SDHC card: use block number instead of address
     if (cardType == SD_CARD_TYPE_SDHC) address >>= 9;
 
+    SDCARD_SPI_ENABLE();
     if (sdcardCommand(CMD_WRITE_BLOCK, address, 0xff)) {
         goto fail;
     }
     if (!sdcardWriteData(DATA_START_BLOCK, buf)) goto fail;
 
     // wait for flash programming to complete
-    if (!waitCardNotBusy(WRITE_TIMEOUT)) {
+    if (!waitCardNotBusyNoints(WRITE_TIMEOUT_TICKS)) {
         goto fail;
     }
     // response is r2 so get and check two bytes for nonzero
@@ -523,10 +570,12 @@ bool sdcardWriteBlock(uint32_t address, const void *buf)
         goto fail;
     }
     SDCARD_SPI_DISABLE();
+    ATOMIC_END(handle);
     return true;
 
  fail:
     SDCARD_SPI_DISABLE();
+    ATOMIC_END(handle);
     return false;
 }
  
@@ -622,7 +671,7 @@ void sdcardWrite(uint32_t address, const void *buffer, uint16_t len)
 {
     if (!initOk) return;
 
-    // PRINTF("sdcardWrite %u bytes at %lu\n", len, address);
+    //PRINTF("sdcardWrite %u bytes at %lu\n", len, address);
 
     const uint8_t *buf = (const uint8_t *)buffer;
     uint16_t pageOffset = (uint16_t) (address & (SDCARD_SECTOR_SIZE - 1));

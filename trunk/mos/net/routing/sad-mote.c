@@ -22,7 +22,7 @@
  */
 
 //
-// SAD routing, mote (dats source) functionality
+// SAD routing, mote (data source) functionality
 //
 
 #include "../mac.h"
@@ -107,9 +107,15 @@ static uint32_t calcListenStartTime(void)
     t += 1000 * moteNumber;
     t = SAD_SUPERFRAME_LENGTH - t;
 
+    //PRINTF("  l=%lu, t=%lu\n", SAD_SUPERFRAME_LENGTH, t);
+
     uint32_t toEnd = SAD_SUPERFRAME_LENGTH - getFixedTime() % SAD_SUPERFRAME_LENGTH;
-    if (toEnd < t) toEnd += SAD_SUPERFRAME_LENGTH;
-    return toEnd - t;
+    if (toEnd < t + TOTAL_LISTENING_TIME) toEnd += SAD_SUPERFRAME_LENGTH;
+    //PRINTF("  toEnd=%lu\n", toEnd);
+    t = toEnd - t;
+    //PRINTF("  result=%lu\n", t < TIMESLOT_IMPRECISION ? 0 : t - TIMESLOT_IMPRECISION);
+    if (t < TIMESLOT_IMPRECISION) return 0;
+    return t - TIMESLOT_IMPRECISION;
 }
 
 void initRouting(void)
@@ -127,13 +133,14 @@ void initRouting(void)
 
 static void roStartListeningTimerCb(void *x)
 {
-    RPRINTF("start listening time slot, jiffies=%lu\n", getFixedTime());
     alarmSchedule(&roStartListeningTimer, calcListenStartTime());
 
     // listen to info only when routing info is already valid (?)
-    // if (isRoutingInfoValid()) {
-    radioOn();
-    alarmSchedule(&roStopListeningTimer, 1000);
+    if (isRoutingInfoValid()) {
+        RPRINTF("%lu: --- START LISTENING\n", getFixedTime());
+        radioOn();
+        alarmSchedule(&roStopListeningTimer, TOTAL_LISTENING_TIME);
+    }
 }
 
 static void roStopListeningTimerCb(void *x)
@@ -219,9 +226,11 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         lastSeenSeqnum = ri.seqnum;
         hopCountToRoot = ri.hopCount;
         lastRootMessageTime = (uint32_t)getJiffies();
-        rootClockDelta = (int32_t)(ri.rootClock - (uint32_t)getJiffies());
+//        rootClockDelta = (int32_t)(ri.rootClock - (uint32_t)getJiffies());
+        rootClockDelta = (int32_t)(ri.rootClock - getUptime());
+        rootClockDeltaMs = rootClockDelta * 1000;
         moteNumber = ri.moteNumber;
-        PRINTF("%lu: ++++++++++++ fixed local time\n", getFixedTime());
+        // PRINTF("%lu: ++++++++++++ fixed local time\n", getFixedTime());
     }
 }
 
@@ -251,27 +260,17 @@ RoutingDecision_e routePacket(MacInfo_t *info)
         // don't forward broadcast packets
         return IS_LOCAL(info) ? RD_BROADCAST : RD_LOCAL;
     }
-
-    if (dst->shortAddr == rootAddress) {
-        if (isRoutingInfoValid()) {
-            //RPRINTF("using 0x%04x as nexthop to root\n", nexthopToRoot);
-            if (!IS_LOCAL(info)) {
-                return RD_DROP;
-            }
-            info->immedDst.shortAddr = nexthopToRoot;
-            // delay until our frame
-            info->timeWhenSend = calcSendTime();
-            return RD_UNICAST;
-        } else {
-            RPRINTF("root routing info not present or expired!\n");
-            return RD_DROP;
-        }
+    if (!IS_LOCAL(info)) {
+        // mote never forwards packets
+        return RD_DROP;
     }
-
-    if (IS_LOCAL(info)) {
-        //INC_NETSTAT(NETSTAT_PACKETS_SENT, dst->shortAddr);        // Done @ comm.c
-        // send out even with an unknown nexthop, makes sense?
-        return RD_UNICAST;
+    if (!isRoutingInfoValid()) {
+        RPRINTF("root routing info not present or expired!\n");
+        return RD_DROP;
     }
-    return RD_DROP;
+    //RPRINTF("using 0x%04x as nexthop to root\n", nexthopToRoot);
+    info->immedDst.shortAddr = nexthopToRoot;
+    // delay until our frame
+    info->timeWhenSend = calcSendTime();
+    return RD_UNICAST;
 }

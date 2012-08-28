@@ -25,6 +25,7 @@
 #if USE_THREADS
 #include "threads/threads.h"
 #endif
+#include <print.h>
 
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 

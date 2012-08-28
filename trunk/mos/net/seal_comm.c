@@ -26,13 +26,13 @@
 #include "socket.h"
 #include <lib/codec/crc.h>
 #include <lib/assert.h>
+#include <print.h>
 
 #if DEBUG
 #define SEAL_DEBUG 1
 #endif
 
 #if SEAL_DEBUG
-#include <lib/dprint.h>
 #define DPRINTF(...) PRINTF(__VA_ARGS__)
 #else
 #define DPRINTF(...) do {} while (0)
@@ -160,10 +160,12 @@ static void sealRecv(uint8_t *data, uint16_t length)
     }
     typeMask = h.typeMask;
 
+    PRINT("^\n");
     for_all_listeners(
             if (l->typeMask && (l->typeMask & typeMask) == l->typeMask) {
                 receivePacketData(l, typeMask, data + valueOffset);
             });
+    PRINT("$\n");
 }
 
 bool sealCommPacketRegisterInterest(uint32_t typeMask,
