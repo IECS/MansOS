@@ -76,4 +76,15 @@
         SET_INTERRUPT_STATUS(handle);           \
     } while (0)
 
+#define INTERRUPT_ENABLED_START(handle) do {    \
+        handle = GET_INTERRUPT_STATUS();        \
+        ENABLE_INTS();                          \
+        MEMORY_BARRIER();                       \
+    } while (0)
+
+#define INTERRUPT_ENABLED_END(handle) do {      \
+        MEMORY_BARRIER();                       \
+        SET_INTERRUPT_STATUS(handle);           \
+    } while (0);
+
 #endif

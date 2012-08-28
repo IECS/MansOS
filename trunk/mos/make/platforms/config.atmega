@@ -1,1 +1,1 @@
-#USE_RADIO=n
+USE_RADIO ?= n

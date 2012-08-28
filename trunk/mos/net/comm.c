@@ -33,9 +33,11 @@
 
 MosShortAddr localAddress;
 
+#ifndef USE_ROLE_BASE_STATION
 MosShortAddr rootAddress;
 int32_t rootClockDelta;
 int32_t rootClockDeltaMs;
+#endif
 
 #ifdef DEBUG
 uint32_t netstats[TOTAL_NETSTAT];
@@ -44,7 +46,6 @@ uint32_t netstats[TOTAL_NETSTAT];
 // -----------------------------------
 
 void initComm(void) {
-    queueInit();
     initArchComm();
     macProtocol.init(commForwardData);
     socketsInit();
@@ -80,6 +81,7 @@ bool isLocalAddress(MosAddr *addr) {
 #endif
 }
 
+#if PLATFORM_SADMOTE
 #define NUM_SENDERS 10
 
 typedef struct Sender_s {
@@ -119,6 +121,7 @@ static bool isDuplicate(MacInfo_t *macInfo, uint8_t *data, uint16_t len)
     memcpy(&timestamp, data, sizeof(timestamp));
     return findDuplicate(macInfo->originalSrc.shortAddr, timestamp);
 }
+#endif
 
 // send smth to address 'addr', port 'port' 
 void commForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len) {
@@ -143,11 +146,12 @@ void commForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len) {
         // PRINT("RD_UNICAST\n");
         // force header rebuild
         macInfo->macHeaderLen = 0;
-        // XXX: for SAD
+#if PLATFORM_SADMOTE
         if (!IS_LOCAL(macInfo) && isDuplicate(macInfo, data, len)) {
             PRINTF("not forwarding, duplicate...\n");
             break;
         }
+#endif
         if (IS_LOCAL(macInfo)){
             INC_NETSTAT(NETSTAT_PACKETS_SENT, macInfo->originalDst.shortAddr);
         }

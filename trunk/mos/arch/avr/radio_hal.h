@@ -24,7 +24,14 @@
 #ifndef RADIO_ATMEGA_HAL_H
 #define RADIO_ATMEGA_HAL_H
 
+// let the platform define the chip it uses
+#include <platform.h>
+
+#ifndef RADIO_CHIP
 // By default, no radio for ATMega platform
 #include <arch/null_radio.h>
+#else
+#include <platform_radio.h>
+#endif
 
 #endif

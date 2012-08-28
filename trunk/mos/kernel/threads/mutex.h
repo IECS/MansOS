@@ -24,7 +24,7 @@
 #ifndef MANSOS_MUTEX_H
 #define MANSOS_MUTEX_H
 
-#if USE_THREADS
+#if USE_THREADS && !DISABLE_LOCKING
 
 #include "threads.h"
 

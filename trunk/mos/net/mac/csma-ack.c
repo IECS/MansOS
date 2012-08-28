@@ -45,7 +45,7 @@ static void sendTimerCb(void *);
 static bool ackMacBuildHeader(MacInfo_t *mi, uint8_t **header /* out */,
                               uint16_t *headerLength /* out */);
 
-MacProtocol_t macProtocol = {
+TEXTDATA const MacProtocol_t macProtocol = {
     .name = MAC_PROTOCOL_CSMA_ACK,
     .init = initCsmaMac,
     .send = sendCsmaMac,
@@ -61,6 +61,8 @@ static uint8_t mySeqnum;
 // -----------------------------------------------
 
 static void initCsmaMac(RecvFunction recvCb) {
+    queueInit();
+
     macProtocol.recvCb = recvCb;
 
     alarmInit(&sendTimer, sendTimerCb, NULL);

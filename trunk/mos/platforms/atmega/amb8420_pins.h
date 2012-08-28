@@ -21,25 +21,46 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PLATFORM_ATMEGA_H_
-#define _PLATFORM_ATMEGA_H_
-
-#include <atmega/atmega_timers.h>
-#include <atmega/atmega_int.h>
-#include <atmega/atmega_adc.h>
-#include <atmega/atmega_usart.h>
+#ifndef AMB8420_PINS_H
+#define AMB8420_PINS_H
 
 #include <digital.h>
 
-#include "amb8420_pins.h"
-#include <arch/null_spi.h>
+#define AMB8420_UART_ID     0
 
-void initPlatform(void);
+#define AMB8420_SERIAL_BAUDRATE  9600
 
-#ifndef PRINT_BUFFER_SIZE
-#define PRINT_BUFFER_SIZE 127
-#endif
+#define D 3
 
-#define RADIO_CHIP RADIO_CHIP_AMB8420
+// when low: restart the module
+#define AMB8420_RESET_PORT  D
+#define AMB8420_RESET_PIN   3
+
+// on falling edge: switch to config mode
+#define AMB8420_CONFIG_PORT D
+#define AMB8420_CONFIG_PIN  4
+
+// when high: enter low power mode
+#define AMB8420_SLEEP_PORT  D
+#define AMB8420_SLEEP_PIN   6
+
+// when high: switch off Tx. XXX: needed?
+#define AMB8420_TRX_DISABLE_PORT  D
+#define AMB8420_TRX_DISABLE_PIN   5
+
+// // on falling edge: take the data from UART buffer and send out wirelessly
+// #define AMB8420_DATA_REQUEST_PORT 4
+// #define AMB8420_DATA_REQUEST_PIN  0
+
+// input.
+// when low: ready to send.
+// when high: UART buffer is full, or wireless reception is detected
+#define AMB8420_RTS_PORT  D
+#define AMB8420_RTS_PIN   2
+
+// input;
+// falling edge signals that valid frame is received via wireless
+// #define AMB8420_DATA_INDICATE_PORT  1
+// #define AMB8420_DATA_INDICATE_PIN   7
 
 #endif
