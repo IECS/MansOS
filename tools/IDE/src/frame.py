@@ -172,7 +172,7 @@ class Frame(wx.Frame):
                               self.tr('Open document'))
         save = fileMenu.Append(wx.ID_SAVE, '&' + self.tr('Save') + '\tCtrl+S',
                               self.tr('Save document'))
-        saveAs = fileMenu.Append(wx.ID_SAVEAS, '&' + self.tr('Save as') + '\tCtrl+A',
+        saveAs = fileMenu.Append(wx.ID_SAVEAS, '&' + self.tr('Save as') + '\t',
                               self.tr('Save document as'))
         upload = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Upload') + '\tCtrl+U',
                               self.tr('Open upload window'))
