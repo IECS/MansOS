@@ -316,7 +316,7 @@ class Frame(wx.Frame):
     def OnOpen(self, event):
         open_ = wx.FileDialog(self,
             self.tr("Open new document"),
-            wildcard = 'Seal or MansOS ' + self.tr('files') + ' (*.sl, *.c)|*.sl;*.c|' +
+            wildcard = 'Seal or MansOS ' + self.tr('files') + ' (*.sl, *.c, *.h)|*.sl;*.c;*.h;config|' +
                     self.tr('All files') + '(.*)|*',
             style = wx.FD_OPEN | wx.FD_MULTIPLE)
         if open_.ShowModal() == wx.ID_OK:
