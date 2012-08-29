@@ -21,46 +21,61 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_SDCARD_H
-#define MANSOS_SDCARD_H
+#ifndef MANSOS_TIMESYNC_H
+#define MANSOS_TIMESYNC_H
 
-#include <kernel/stdtypes.h>
+#include "timesync.h"
+#include <print.h>
+#include <timers.h>
+#include <lib/codec/crc.h>
 
-// minimal unit that can be erased
-#define SDCARD_SECTOR_SIZE    512
+//
+// TODO: lock the usart in rx mode (resource arbitration)
+//
 
-// maximal unit that can be written
-#define SDCARD_PAGE_SIZE      512
+extern uint32_t lastRootSyncSeconds;
+extern uint32_t lastRootClockSeconds;
 
-// 1 GB total (the minimal size - use this only for compatibility with flash drivers)
-// The maximal size is 4GB due to addressing constraints (32 bit)
-#define SDCARD_SECTOR_COUNT   (2 * 1024 * 1024ul)
+#define DELIMITER '$'
 
-#define SDCARD_SIZE  (SDCARD_SECTOR_SIZE * SDCARD_SECTOR_COUNT)
+typedef struct TimeSyncPacket_s {
+    uint8_t delimiter1;
+    uint8_t delimiter2;
+    uint16_t crc;
+    uint32_t time;
+} TimeSyncPacket_t;
 
-// initialize pin directions and SPI in general. Enter low power mode afterwards
-bool sdcardInit(void);
-// Enter low power mode (wait for last instruction to complete)
-void sdcardSleep(void);
-// Exit low power mode
-void sdcardWake(void);
-// Read a block of data from addr
-void sdcardRead(uint32_t addr, void* buffer, uint16_t len);
-// Write len bytes (len <= 256) to flash at addr
-// Block can split over multiple sectors/pages
-void sdcardWrite(uint32_t addr, const void *buf, uint16_t len);
-// Erase the entire flash
-void sdcardBulkErase(void);
-// Erase on sector, containing address addr. Addr is not the number of sector,
-// rather an address (any) inside the sector
-void sdcardEraseSector(uint32_t addr);
+static uint8_t rxBytes;
 
-// internal
-bool sdcardReadBlock(uint32_t addr, void* buffer);
-bool sdcardWriteBlock(uint32_t addr, const void *buf);
+static void parsePacket(TimeSyncPacket_t *packet) 
+{
+    uint16_t calcCrc = crc16((uint8_t *)&packet->time, sizeof(packet->time));
+    if (packet->delimiter2 != 0
+            || packet->crc != calcCrc) {
+        PRINT("timesync: wrong format\n");
+        return;
+    }
+    lastRootSyncSeconds = getUptime();
+    lastRootClockSeconds = packet->time;
+    // PRINTF("will use time from router: %lu\n", packet->time);
+}
 
-void sdcardInitUsart(void);
+static void timesyncUsartReceive(uint8_t byte) {
+    static TimeSyncPacket_t packet;
+    if (rxBytes == 0) {
+        if (byte != DELIMITER) return;
+    }
+    ((uint8_t *) (void *) &packet)[rxBytes] = byte;
+    rxBytes++;
+    if (rxBytes == sizeof(packet)) {
+        parsePacket(&packet);
+        rxBytes = 0;
+    }
+}
 
-void sdcardFlush(void);
+void timesyncInit(void) {
+    USARTEnableRX(PRINTF_USART_ID);
+    USARTSetReceiveHandle(PRINTF_USART_ID, timesyncUsartReceive);
+}
 
 #endif

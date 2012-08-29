@@ -70,17 +70,17 @@ typedef struct RoutingRequestPacket_s {
 
 #define ROUTING_PROTOCOL_PORT  112
 
-#if 0
-#define ROUTING_ORIGINATE_TIMEOUT   (60 * 1000ul)
-#define ROUTING_REQUEST_TIMEOUT     (10 * 1000ul)
-#define SAD_SUPERFRAME_LENGTH       524288 // (10 * 60 * 1000ul)
-#define ROUTING_INFO_VALID_TIME     (180 * 1000ul)
+#if 1
+#define ROUTING_ORIGINATE_TIMEOUT    (60 * 1000ul)
+#define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
+#define SAD_SUPERFRAME_LENGTH        524288ul // (10 * 60 * 1000ul)
+#define ROUTING_INFO_VALID_TIME      (1600 * 1000ul)
 // during this time, radio is never turned off on forwarders and collectors
 #define NETWORK_STARTUP_TIME         (2 * 60 * 60) // 2h in seconds
 #else // for testing
 #define ROUTING_ORIGINATE_TIMEOUT    (15 * 1000ul)
 #define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
-#define SAD_SUPERFRAME_LENGTH        32768 // (30 * 1000ul)
+#define SAD_SUPERFRAME_LENGTH        32768ul // (30 * 1000ul)
 #define ROUTING_INFO_VALID_TIME      (70 * 1000ul)
 #define NETWORK_STARTUP_TIME         0
 #endif
@@ -89,7 +89,7 @@ typedef struct RoutingRequestPacket_s {
 
 #define TIMESLOT_LENGTH              1000
 // timeslot is adjusted (to both ends) by this number
-#define TIMESLOT_IMPRECISION         2000 // XXX: investigae why so much!
+#define TIMESLOT_IMPRECISION         2000 // XXX: investigate why so much!
 #define TOTAL_LISTENING_TIME         (TIMESLOT_LENGTH + 2 * TIMESLOT_IMPRECISION)
 
 #define ROUTING_REPLY_WAIT_TIMEOUT   TIMESLOT_IMPRECISION

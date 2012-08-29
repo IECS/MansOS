@@ -221,6 +221,7 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
     if (ri.hopCount > MAX_HOP_COUNT) update = false;
 
     if (update) {
+        PRINTF("got valid routing info\n");
         rootAddress = ri.rootAddress;
         nexthopToRoot = s->recvMacInfo->originalSrc.shortAddr;
         lastSeenSeqnum = ri.seqnum;

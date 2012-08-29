@@ -158,3 +158,5 @@ PSOURCES-$(USE_FS) += \
 	$(MOSROOT)$(PDFS)/block/alloc.c
 
 PSOURCES-$(USE_SEAL_COMM) += $(MOS)/net/seal_comm.c
+
+PSOURCES-$(USE_TIMESYNC) += $(MOS)/net/timesync.c

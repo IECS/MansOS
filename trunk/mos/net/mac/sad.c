@@ -105,7 +105,7 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
         }
     }
 #endif
-    PRINTF("%lu: mac tx %u bytes\n", getFixedTime(), length);
+    // PRINTF("%lu: mac tx %u bytes\n", getFixedTime(), length);
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
 #ifndef PLATFORM_ARDUINO
     // use least significant byte
@@ -127,7 +127,7 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
 #if DELAYED_SEND
 static void delayTimerCb(void *unused)
 {
-    PRINTF("%lu: mac tx %u bytes\n", getFixedTime(), delayedDataLength);
+    // PRINTF("%lu: mac tx %u bytes\n", getFixedTime(), delayedDataLength);
     // redLedToggle();
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
 #ifndef PLATFORM_ARDUINO
@@ -206,9 +206,9 @@ static void pollSadMac(void) {
 // #if USE_ROLE_COLLECTOR
 //         greenLedToggle();
 // #endif
-        PRINTF("%lu: mac rx %u bytes\n",
-                getFixedTime(),
-                radioPacketBuffer->receivedLength);
+        // PRINTF("%lu: mac rx %u bytes\n",
+        //         getFixedTime(),
+        //         radioPacketBuffer->receivedLength);
 
         if (macProtocol.recvCb) {
             uint8_t *data = defaultParseHeader(radioPacketBuffer->buffer,

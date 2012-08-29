@@ -21,6 +21,7 @@ sq100Light = SQ100LightSensor()
 # default light sensor for this platform is ISL29003
 light.extraConfig.value="""
 # for apds & isl
+USE_ISL29003=y
 USE_SOFT_I2C=y
 CONST_SDA_PORT=2
 CONST_SDA_PIN=3
