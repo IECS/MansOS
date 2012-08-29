@@ -72,4 +72,7 @@ static inline void setupLocalAddr(void)
 
 void initArchComm(void) {
     setupLocalAddr();
+#if PLATFORM_Z1
+    localAddress = 0x0001; // XXX
+#endif
 }

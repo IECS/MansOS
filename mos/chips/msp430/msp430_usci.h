@@ -78,7 +78,7 @@
 #define USART_COUNT       2
 #define PRINTF_USART_ID   1
 #define UART_ON_USCI_A1   1
-#elif PLATFORM_TESTBED
+#elif PLATFORM_TESTBED || PLATFORM_Z1
 #define USART_COUNT       2
 #define PRINTF_USART_ID   0
 #define UART_ON_USCI_A0   1

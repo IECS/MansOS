@@ -31,7 +31,7 @@
 #include <random.h>
 #include <string.h>
 
-#define RECV 0
+#define RECV 1
 
 void sendCounter(void);
 void recvCounter(void);
@@ -46,7 +46,7 @@ void appMain(void)
             RECV ? "Receiver" : "Sender", localAddress);
 
 #if RECV
-#if PLATFORM_SM3 || PLATFORM_ARDUINO
+#if RADIO_CHIP==RADIO_CHIP_AMB8420
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, 0x1);
 #endif
     // PRINTF("recvCounter = %p\n", recvCounter);
@@ -62,11 +62,12 @@ void appMain(void)
         // int rssi = amb8420GetRSSI();
         // int8_t rssi = radioGetRSSI();
         // PRINTF("+++ rssi = %d\n", rssi);
+        PRINT(".\n");
     }
 #else
     // radioSetReceiveHandle(radioDiscard);
     radioOn();
-#if PLATFORM_SM3 || PLATFORM_ARDUINO
+#if RADIO_CHIP==RADIO_CHIP_AMB8420
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, 0x2);
 #endif
     sendCounter();
@@ -82,7 +83,7 @@ void recvCounter(void)
     uint8_t counter;
     int8_t rssi = 0;
 
-//    PRINT("recvCounter\n");
+    PRINT("recvCounter\n");
 
     greenLedToggle();
     len = radioRecv(buffer, sizeof(buffer));
@@ -115,9 +116,9 @@ void sendCounter(void) {
     uint8_t *counter = &sendBuffer[0];
     // memcpy(sendBuffer + 1, &localAddress, 2);
     while (1) {
-        // PRINTF("0x%04x: sending counter %i\n", localAddress, *counter);
+        PRINTF("0x%04x: sending counter %i\n", localAddress, *counter);
         ledOn();
-#if PLATFORM_SM3 || PLATFORM_ARDUINO
+#if RADIO_CHIP==RADIO_CHIP_AMB8420
         amb8420SetDstAddress(0x1);
 #endif
         int8_t result = radioSend(sendBuffer, sizeof(sendBuffer));

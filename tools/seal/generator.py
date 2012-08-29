@@ -8,7 +8,7 @@ def formatCondition(condition, isNew):
         prefix = "new"
     else:
         prefix = "old"
-    return prefix + "ConditionStatus[{0}]".format(abs(condition))
+    return prefix + "ConditionStatus[{0}]".format(abs(condition) - 1)
 
 def formatConditions(conditions, isNew):
     result = ""
@@ -49,10 +49,11 @@ class Generator(object):
 
         self.outputFile.write("#define NUM_CONDITIONS {0}\n".format(
                 components.conditionCollection.totalConditions()))
-        self.outputFile.write("#define DEFAULT_CONDITION 0\n\n")
+#        self.outputFile.write("#define DEFAULT_CONDITION 0\n\n")
 
         self.outputFile.write("#define IS_FROM_BRANCH_START ((void *) 1)\n\n")
 
+        components.componentRegister.prepareToGenerateConstants()
         for c in self.components:
             c.generateConstants(self.outputFile)
             # self.outputFile.write("\n")
@@ -70,7 +71,7 @@ class Generator(object):
             n.generatePacketType(self.outputFile)
 
     def generateVariables(self):
-        self.outputFile.write("bool oldConditionStatus[NUM_CONDITIONS + 1];\n")
+        self.outputFile.write("bool oldConditionStatus[NUM_CONDITIONS];\n")
         components.componentRegister.generateVariables(self.outputFile)
         for c in self.components:
             c.generateVariables(self.outputFile)
@@ -113,29 +114,30 @@ class Generator(object):
 #            self.outputFile.write(p)
 
         self.outputFile.write("\n")
-        self.outputFile.write("    bool branch0OldStatus = false;\n")
         for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
             conditions = components.componentRegister.branchCollection.getConditions(i)
             self.outputFile.write("    bool branch{0}OldStatus = false;\n".format(i))
         self.outputFile.write("\n")
+
+        self.outputFile.write("    branch0Start();\n\n")
 
         self.outputFile.write("    for (;;) {\n")
         self.outputFile.write("        uint32_t iterationEndTime = getRealTime() + CONDITION_EVALUATION_INTERVAL;\n")
         self.outputFile.write("\n")
 
         totalConditions = components.conditionCollection.totalConditions()
-        self.outputFile.write("        bool newConditionStatus[NUM_CONDITIONS + 1];\n")
-        self.outputFile.write("        newConditionStatus[DEFAULT_CONDITION] = true;\n")
+        self.outputFile.write("        bool newConditionStatus[NUM_CONDITIONS];\n")
+#        self.outputFile.write("        newConditionStatus[DEFAULT_CONDITION] = true;\n")
         for i in range(totalConditions):
-            self.outputFile.write("        newConditionStatus[{0}] = condition{0}Check(oldConditionStatus[{0}]);\n".format(i + 1))
+            self.outputFile.write("        newConditionStatus[{0}] = condition{1}Check(oldConditionStatus[{0}]);\n".format(i, i + 1))
         self.outputFile.write("\n")
 
-        self.outputFile.write("        bool branch0NewStatus = newConditionStatus[DEFAULT_CONDITION];\n")
+#        self.outputFile.write("        bool branch0NewStatus = newConditionStatus[DEFAULT_CONDITION];\n")
         for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
             conditions = components.componentRegister.branchCollection.getConditions(i)
             self.outputFile.write("        bool branch{0}NewStatus = {1};\n".format(i, formatConditions(conditions, True)))
 
-        for i in range(components.componentRegister.branchCollection.getNumBranches()):
+        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
             s = '''
         if (branch{0}OldStatus != branch{0}NewStatus) {1}
             if (branch{0}NewStatus) branch{0}Start();
@@ -146,7 +148,7 @@ class Generator(object):
         self.outputFile.write("\n")
         self.outputFile.write("        memcpy(oldConditionStatus, newConditionStatus, sizeof(oldConditionStatus));\n")
 
-        for i in range(components.componentRegister.branchCollection.getNumBranches()):
+        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
             self.outputFile.write("        branch{0}OldStatus = branch{0}NewStatus;\n".format(i))
         self.outputFile.write("\n")
 
@@ -255,6 +257,8 @@ endif
             self.generateMakefile(outputFile, "main.c", pathToOS)
 
         with open(os.path.join(path, 'config'), 'w') as outputFile:
+            for x in components.componentRegister.systemParams:
+                outputFile.write(x.getConfigLine() + "\n")
             outputFile.write("USE_SEAL_COMM=y\n")
             outputFile.write("USE_ROLE_BASE_STATION=y\n")
             c = components.componentRegister.findComponentByName("network")
@@ -294,6 +298,8 @@ endif
             self.generateMakefile(outputFile, "main.c", pathToOS)
 
         with open(os.path.join(path, 'config'), 'w') as outputFile:
+            for x in components.componentRegister.systemParams:
+                outputFile.write(x.getConfigLine() + "\n")
             outputFile.write("USE_ROLE_FORWARDER=y\n")
             c = components.componentRegister.findComponentByName("network")
             if c: outputFile.write(c.getConfig())
@@ -314,6 +320,8 @@ endif
             self.generateMakefile(outputFile, "main.c", pathToOS)
 
         with open(os.path.join(path, 'config'), 'w') as outputFile:
+            for x in components.componentRegister.systemParams:
+                outputFile.write(x.getConfigLine() + "\n")
             outputFile.write("USE_ROLE_COLLECTOR=y\n")
             c = components.componentRegister.findComponentByName("network")
             if c: outputFile.write(c.getConfig())

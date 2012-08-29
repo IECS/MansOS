@@ -3,3 +3,4 @@
 #
 
 USE_PRINT=y
+USE_RADIO=n

@@ -37,7 +37,6 @@
 static void initSadMac(RecvFunction cb);
 static int8_t sendSadMac(MacInfo_t *, const uint8_t *data, uint16_t length);
 static void pollSadMac(void);
-static void delayTimerCb(void *);
 
 extern void commForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len);
 
@@ -51,6 +50,8 @@ TEXTDATA MacProtocol_t macProtocol = {
     .recvCb = commForwardData,
 };
 
+static uint8_t lastNexthop = 0xff;
+
 #ifdef USE_ROLE_BASE_STATION
 #define DELAYED_SEND 0
 #else
@@ -63,6 +64,8 @@ static volatile uint16_t delayedDataLength;
 static volatile uint8_t delayedNexthop;
 
 static Alarm_t delayTimer;
+
+static void delayTimerCb(void *);
 #endif
 
 // -----------------------------------------------
@@ -102,7 +105,11 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
 #ifndef PLATFORM_ARDUINO
     // use least significant byte
-    amb8420SetDstAddress(getNexthop(mi) & 0xff);
+    uint8_t nh = getNexthop(mi) & 0xff;
+    if (lastNexthop != nh) {
+        amb8420SetDstAddress(nh);
+        lastNexthop = nh;
+    }
 #endif
     // if (!amb8420SetDstAddress(getNexthop(mi) & 0xff)) {
     //     bool b = amb8420SetDstAddress(getNexthop(mi) & 0xff);
@@ -120,7 +127,10 @@ static void delayTimerCb(void *unused)
     // redLedToggle();
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
 #ifndef PLATFORM_ARDUINO
-    amb8420SetDstAddress(delayedNexthop);
+    if (lastNexthop != delayedNexthop) {
+        amb8420SetDstAddress(delayedNexthop);
+        lastNexthop = delayedNexthop;
+    }
 #endif
     // if (!amb8420SetDstAddress(delayedNexthop)) {
     //     bool b = amb8420SetDstAddress(delayedNexthop);
@@ -145,20 +155,22 @@ static bool filterPass(MacInfo_t *mi)
 
     if (!mi->immedSrc.shortAddr) return true; // XXX
 
+#define BASE_STATION_ADDRESS 0x0001
+
 #if 1
     // 0x7BAA - base station
     // 0x71C0 - forwarder
     // 0x3BA5 - collector
     switch (localAddress) {
-    case 0x7BAA:
+    case BASE_STATION_ADDRESS:
         if (mi->immedSrc.shortAddr != 0x71C0) return false;
         break;
     case 0x71C0:
-        if (mi->immedSrc.shortAddr != 0x7BAA
+        if (mi->immedSrc.shortAddr != BASE_STATION_ADDRESS
                 && mi->immedSrc.shortAddr != 0x3B88) return false;
         break;
     case 0x3B88:
-        if (mi->immedSrc.shortAddr == 0x7BAA) return false;
+        if (mi->immedSrc.shortAddr == BASE_STATION_ADDRESS) return false;
         break;
     default:
         if (mi->immedSrc.shortAddr != 0x3B88) return false;

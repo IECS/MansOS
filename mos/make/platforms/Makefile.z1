@@ -62,6 +62,8 @@ PSOURCES += $(MOS)/chips/msp430/msp430x2xx_clock.c
 PSOURCES-$(USE_RADIO) += $(MOS)/chips/cc2420/cc2420.c
 #PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
 
+PSOURCES-$(USE_RADIO) += $(MOS)/chips/amb8420/amb8420.c
+
 PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
 PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
 PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c
