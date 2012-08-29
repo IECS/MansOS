@@ -40,7 +40,7 @@ static Seqnum_t mySeqnum;
 static void roOriginateTimerCb(void *);
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len);
 
-uint32_t lastRootSyncJiffies;
+uint32_t lastRootSyncSeconds;
 uint32_t lastRootClockSeconds;
 
 // -----------------------------------------------
@@ -67,14 +67,14 @@ static void roOriginateTimerCb(void *x) {
     routingInfo.rootAddress = localAddress;
     routingInfo.hopCount = 1;
     routingInfo.seqnum = ++mySeqnum;
-    // if (lastRootSyncJiffies) {
-    //     routingInfo.rootClock = lastRootClockSeconds
-    //             + (getJiffies() - lastRootSyncJiffies);
-    // } else {
-    //     routingInfo.rootClock = getJiffies();
-    // }
+    if (lastRootSyncSeconds) {
+        routingInfo.rootClock = lastRootClockSeconds
+                + (getUptime() - lastRootSyncSeconds);
+    } else {
+        routingInfo.rootClock = getUptime();
+    }
     // routingInfo.rootClock += RADIO_TX_TIME;
-    routingInfo.rootClock = getUptime();
+    // routingInfo.rootClock = getUptime();
     routingInfo.moteNumber = 0;
 
     socketSend(&roSocket, &routingInfo, sizeof(routingInfo));

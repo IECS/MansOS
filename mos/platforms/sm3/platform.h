@@ -70,7 +70,7 @@ static inline uint16_t sq100LightRead(void)
     return result;
 }
 
-#define lightRead sq100LightRead
+//#define lightRead sq100LightRead
 
 #endif // USE_ADS1115
 

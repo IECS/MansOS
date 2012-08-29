@@ -47,6 +47,7 @@
 #endif
 #include <arch_mem.h>
 #include <sdcard/sdcard.h>
+#include <net/timesync.h>
 
 #if (defined DEBUG && !defined DPRINT_TO_RADIO)
 #define INIT_PRINTF(...) PRINTF(__VA_ARGS__)
@@ -149,6 +150,10 @@ static inline void initSystem(void)
 #ifdef USE_HUMIDITY
     INIT_PRINTF("init humidity sensor...\n");
     humidityInit();
+#endif
+#ifdef USE_TIMESYNC
+    INIT_PRINTF("init base station time sync...\n");
+    timesyncInit();
 #endif
 #ifdef USE_SMP
     INIT_PRINTF("init SSMP...\n");

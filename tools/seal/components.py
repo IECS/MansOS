@@ -750,7 +750,7 @@ class Component(object):
             if self.specification._readFunctionDependsOnParams:
                 for uc in self.useCases:
                     self.generateReadFunctions(outputFile, uc)
-                if self.usedForConditions:
+                if self.markedAsUsed:
                     self.generateReadFunctions(outputFile, None)
             else:
                 self.generateReadFunctions(outputFile, None)
