@@ -130,7 +130,7 @@ uint_t USARTSendByte(uint8_t id, uint8_t data)
 // #if defined(__msp430x54xA) // || defined __IAR_SYSTEMS_ICC__
 // ISR(USCI_A0, USCIAInterruptHandler)
 // #else
-ISR(USCIAB0RX, USCIAInterruptHandler)
+ISR(USCIAB0RX, USCI0InterruptHandler)
 // #endif
 {
     bool error = UCA0STAT & UCRXERR;
@@ -146,9 +146,26 @@ ISR(USCIAB0RX, USCIAInterruptHandler)
     }
 }
 
+#if PLATFORM_Z1 || PLATFORM_TESTBED
+ISR(USCIAB1RX, USCI1InterruptHandler)
+{
+    bool error = UCA1STAT & UCRXERR;
+    uint8_t data = UCA1RXBUF;
+    if (error || UCA1STAT & UCOE) {
+        // There was an error or a register overflow; clear UCOE and exit
+        data = UCA1RXBUF;
+        return;
+    }
+
+    if (usartRecvCb[1]) {
+        usartRecvCb[1](data);
+    }
+}
+#endif // PLATFORM_Z1
+
 #else // !UART_ON_USCI_A0
 
-ISR(USCIAB1RX, USCIAInterruptHandler)
+ISR(USCIAB1RX, USCI0InterruptHandler)
 {
     bool error = UCA1STAT & UCRXERR;
     uint8_t data = UCA1RXBUF;

@@ -125,8 +125,8 @@ static bool isDuplicate(MacInfo_t *macInfo, uint8_t *data, uint16_t len)
 
 // send smth to address 'addr', port 'port' 
 void commForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len) {
-    // PRINT("commForwardData\n");
-
+    // PRINTF("commForwardData, len=%u\n", len);
+    
     switch (routePacket(macInfo)) {
     case RD_DROP:
         // PRINT("RD_DROP\n");
