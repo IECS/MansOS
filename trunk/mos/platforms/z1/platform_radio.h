@@ -24,6 +24,10 @@
 #ifndef PLATFORM_RADIO_H
 #define PLATFORM_RADIO_H
 
+#include "platform.h"
+
+#if RADIO_CHIP == RADIO_CHIP_CC2420
+
 #include <cc2420/cc2420.h>
 
 static inline void radioInit(void) {
@@ -83,5 +87,69 @@ static inline bool radioIsChannelClear(void) {
 #define RADIO_MAX_PACKET          CC2420_MAX_PACKET_LEN
 #define RADIO_TX_POWER_MIN        CC2420_TX_POWER_MIN
 #define RADIO_TX_POWER_MAX        CC2420_TX_POWER_MAX
+
+#else
+
+#include <amb8420/amb8420.h>
+
+static inline void radioInit(void) {
+    if (amb8420Init) amb8420Init();
+}
+
+static inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
+                                     const void *data, uint16_t dataLength) {
+    return amb8420Send(header, headerLength, data, dataLength);
+}
+
+static inline int16_t radioRecv(void *buffer, uint16_t bufferLength) {
+    return amb8420Read(buffer, bufferLength);
+}
+
+static inline void radioDiscard(void) {
+    amb8420Discard();
+}
+
+static inline RadioRecvFunction radioSetReceiveHandle(
+        RadioRecvFunction functionHandle) {
+    return amb8420SetReceiver(functionHandle);
+}
+
+static inline void radioOn(void) {
+    amb8420On();
+}
+
+static inline void radioOff(void) {
+    amb8420Off();
+}
+
+static inline int radioGetRSSI(void) {
+    return amb8420GetRSSI();
+}
+
+static inline int8_t radioGetLastRSSI(void) {
+    return amb8420GetLastRSSI();
+}
+
+static inline uint8_t radioGetLastLQI(void) {
+    return amb8420GetLastLQI();
+}
+
+static inline void radioSetChannel(int channel) {
+    amb8420SetChannel(channel);
+}
+
+static inline void radioSetTxPower(uint8_t power) {
+    amb8420SetTxPower(power);
+}
+
+static inline bool radioIsChannelClear(void) {
+    return amb8420IsChannelClear();
+}
+
+#define RADIO_MAX_PACKET          AMB8420_MAX_PACKET_LEN
+#define RADIO_TX_POWER_MIN        AMB8420_TX_POWER_MIN
+#define RADIO_TX_POWER_MAX        AMB8420_TX_POWER_MAX
+
+#endif
 
 #endif

@@ -21,36 +21,44 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PLATFORM_ZOLERTIA_Z1_H_
-#define _PLATFORM_ZOLERTIA_Z1_H_
+#ifndef AMB8420_PINS_H
+#define AMB8420_PINS_H
 
-#include <msp430/msp430_clock.h>
-#include <msp430/msp430_timers.h>
-#include <msp430/msp430_int.h>
-#include <msp430/msp430_adc.h>
-#include <msp430/msp430_usci.h>
+#include <digital.h>
 
-#include "amb8420_pins.h"
+#define AMB8420_UART_ID     1
 
-#include "cc2420_pins.h"
-#include "sht_pins.h"
+#define AMB8420_SERIAL_BAUDRATE  9600
 
-//===========================================================
-// Functions
-//===========================================================
+// when low: restart the module
+#define AMB8420_RESET_PORT  5
+#define AMB8420_RESET_PIN   1
 
-void initPlatform(void);
+// on falling edge: switch to config mode
+#define AMB8420_CONFIG_PORT 4
+#define AMB8420_CONFIG_PIN  2
 
-//===========================================================
-// Data types and constants
-//===========================================================
+// when high: enter low power mode
+#define AMB8420_SLEEP_PORT  3
+#define AMB8420_SLEEP_PIN   3
 
-//#define EXT_FLASH_CHIP FLASH_CHIP_AT25DF
+// when high: switch off Tx. XXX: needed?
+#define AMB8420_TRX_DISABLE_PORT  4
+#define AMB8420_TRX_DISABLE_PIN   0
 
-#ifndef RADIO_CHIP
-#define RADIO_CHIP RADIO_CHIP_CC2420
-#endif
+// on falling edge: take the data from UART buffer and send out wirelessly
+// #define AMB8420_DATA_REQUEST_PORT 4
+// #define AMB8420_DATA_REQUEST_PIN  0
 
-//#define SNUM_CHIP SNUM_DS2411
+// input.
+// when low: ready to send.
+// when high: UART buffer is full, or wireless reception is detected
+#define AMB8420_RTS_PORT  5
+#define AMB8420_RTS_PIN   2
+
+// input;
+// falling edge signals that valid frame is received via wireless
+// #define AMB8420_DATA_INDICATE_PORT  1
+// #define AMB8420_DATA_INDICATE_PIN   7
 
 #endif

@@ -35,6 +35,9 @@
 
 USARTCallback_t usartRecvCb[USART_COUNT];
 
+volatile bool usartBusy[USART_COUNT];
+uint8_t usartFunction[USART_COUNT];
+
 //
 // Initialization
 //

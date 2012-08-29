@@ -39,7 +39,7 @@
 #define SPRINTF(...) // nothing
 #endif
 
-#define VERIFY 1
+#define VERIFY 0
 
 static volatile uint32_t sdCardAddress;
 
@@ -85,18 +85,6 @@ static void sdStreamFindStart(void *buffer, uint16_t length, bool crc)
                 }
             }
         }
-
-            // bool allOnes = true, allZeros = true;
-            // for (i = 0; (allZeros || allOnes) && i < length; ++i) {
-            //     if (((uint8_t *)buffer)[i] != 0) {
-            //         allZeros = false;
-            //     }
-            //     if (((uint8_t *)buffer)[i] != 0xff) {
-            //         allOnes = false;
-            //     }
-            // }
-            // valid = !(allOnes || allZeros); 
-        // }
         if (valid) {
             oneInvalid = false;
         } else {
@@ -119,19 +107,22 @@ bool sdStreamWriteRecord(void *data, uint16_t length, bool crc)
     // XXX hack
     if (usartBusy[SDCARD_SPI_ID]) return false;
 
-    // PRINTF("write record %u bytes\n", length);
-
     if (sdCardAddress == 0) {
         //void *buffer = memoryAlloc(length);
         sdStreamFindStart(tmpBuffer, length, crc);
         //memoryFree(buffer);
     }
+
+    // PRINTF("write record %u bytes at %lu\n", length, sdCardAddress);
+
     if (crc) {
         uint16_t calcCrc = crc16((uint8_t *)data + sizeof(HeaderWithCrc_t), length - sizeof(HeaderWithCrc_t));
         memcpy((uint8_t *)data + 2, &calcCrc, sizeof(calcCrc));
     }
     // PRINTF("sdcard write at %lu\n", sdCardAddress);
     sdcardWrite(sdCardAddress, data, length);
+    // make sure it's saved to the card, not just in buffers
+    sdcardFlush();
 #if VERIFY
     //void *copy = memoryAlloc(length);
     sdcardRead(sdCardAddress, tmpBuffer, length);

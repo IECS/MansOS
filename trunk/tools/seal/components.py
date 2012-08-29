@@ -63,14 +63,12 @@ class BranchCollection(object):
     def generateStopCode(self, b, outputFile):
         number = b[0]
         useCases = b[1]
+        # the default branch NEVER stops.
+        if number == 0: return
         outputFile.write("void branch{0}Stop(void)\n".format(number))
         outputFile.write("{\n")
-        # the default branch NEVER stops.
-        if number == 0:
-            outputFile.write("    // never executed\n")
-        else:
-            for uc in useCases:
-                uc.generateBranchExitCode(outputFile)
+        for uc in useCases:
+            uc.generateBranchExitCode(outputFile)
         outputFile.write("}\n\n")
 
     # Returns list of numbers [N] of conditions that must be met to enter this branch
@@ -90,21 +88,39 @@ class BranchCollection(object):
 ######################################################
 class UseCase(object):
     def __init__(self, component, parameters, conditions, branchNumber, numInBranch):
-#        print "new use case of " + component.name + ": ", parameters
+        # print "new use case of " + component.name + ": ", parameters
         self.component = component
         self.parameters = {}
         # use component's parameters as defaults
         for p in component.parameters:
             self.parameters[p] = Value(component.parameters[p])
 
+        self.associatedUseCase = None
+        self.parentUseCase = None
+
         # add user's parameters
         for p in parameters:
             paramName = component.specification.resolveAlias(p[0])
+
+            #  print paramName, ":", p[1]
+
+            if paramName == "associate":
+                # use associated component here
+                comp = componentRegister.findComponentByName(p[1].asString().lower())
+                if comp is None:
+                    componentRegister.userError("Associate parameter specifies unknown component '{1}'\n".format(pvalue.asString()))
+                else:
+                    self.associatedUseCase = comp.addUseCase(
+                        {}, conditions = [], branchNumber = 0)
+                    self.associatedUseCase.parentUseCase = self
+                continue
+
             if not isinstance(component, Output): # outputs are allowed all fields as params
                 if paramName not in component.parameters:
                     componentRegister.userError("Parameter '{0}' not known for component {1}\n".format(
                             paramName, component.name))
                     continue
+
             # update parameters with user's value, if given. If no value given, only name: treat it as 'True',
             # because value 'None' means that the parameter is supported, but not specified by the user.
             if p[1] is not None:
@@ -123,13 +139,10 @@ class UseCase(object):
         #print "  branchNumber=", self.branchNumber
         self.outputUseCase = None
 
-        self.associatedUseCase = None
-        self.parentUseCase = None
 
         # TODO: automate this using reflection!
         p = self.parameters.get("period")
         if p:
-#            self.period = toMilliseconds(p, componentRegister)
             self.period = p.getRawValue()
         else:
             self.period = None
@@ -667,13 +680,6 @@ class Component(object):
                             componentRegister.userError("Parameter '{0}' already specified for component '{1}'\n".format(pd[0], self.name))
                         else:
                             finalParameters[pd[0]] = pd[1]
-            elif pname == "associate":
-                # use associate component here
-                comp = componentRegister.findComponentByName(pvalue.asString().lower())
-                if comp is None:
-                    componentRegister.userError("Associate parameter specifies unknown component '{1}'\n".format(pvalue.asString()))
-                else:
-                    associatedUseCase = comp.addUseCase({}, conditions = [], branchNumber = 0)
             else:
                 if pname in finalParameters:
                     componentRegister.userError("Parameter '{0}' already specified for component '{1}'\n".format(p[0], self.name))
@@ -682,9 +688,6 @@ class Component(object):
 
         uc = UseCase(self, list(finalParameters.iteritems()), conditions, branchNumber, numInBranch)
         self.useCases.append(uc)
-        # link it with associate use case
-        uc.associatedUseCase = associatedUseCase
-        if associatedUseCase: associatedUseCase.parentUseCase = uc
         return uc
 
     # XXX: replacement for "getParamValue"
@@ -812,6 +815,7 @@ class Sensor(Component):
         self.cacheNumber = 0
         self.readFunctionNum = 0
         self.systemwideID = None
+        self.alsoSensorIds = set()
 #        if name.lower() == "command":
 #            self.systemwideID = PACKET_FIELD_ID_COMMAND
 #        else:
@@ -862,7 +866,14 @@ class Sensor(Component):
         super(Sensor, self).generateConstants(outputFile)
         if self.isUsed():
             outputFile.write("#define {0}_TYPE_ID     {1:}\n".format(self.getNameUC(), self.getSystemwideID()))
-            outputFile.write("#define {0}_TYPE_MASK   {1:#x}\n".format(self.getNameUC(), 1<< self.getSystemwideID()))
+            # TODO FIXME: also all copies
+            if len(self.alsoSensorIds) == 0:
+                mask = 1<< self.getSystemwideID()
+            else:
+                mask = 0
+                for id in self.alsoSensorIds:
+                    mask |= 1 << id
+            outputFile.write("#define {0}_TYPE_MASK   {1:#x}\n".format(self.getNameUC(), mask))
 
     def isCacheNeeded(self, numCachedSensors):
         if not self.specification._cacheable: return False
@@ -1915,6 +1926,9 @@ class Sensor(Component):
         outputFile.write("static inline {0} {1}ReadProcess{2}(bool *isFilteredOut)\n".format(
                 self.getDataType(), self.getNameCC(), readFunctionSuffix))
         outputFile.write("{\n")
+
+        # HERE: turn on/off? use associated componenent?
+
         outputFile.write("    return {};\n".format(subReadFunction))
         outputFile.write("}\n\n")
 
@@ -3125,11 +3139,11 @@ class ComponentRegister(object):
         return uc
 
     def useComponent(self, keyword, name, parameters, fields, conditions, branchNumber):
-#        print "useComponent", name
-#        print "self.virtualComponents = ", self.virtualComponents
+        # print "useComponent", name
+        # print "self.virtualComponents = ", self.virtualComponents
         virtual = self.virtualComponents.get(name)
-#        print self.virtualComponents[name]
-#        print virtual.alsoInBranches
+        # print self.virtualComponents[name]
+        # print virtual.alsoInBranches
         if virtual is None or len(virtual.alsoInBranches) == 0:
             return self.reallyUseComponent(keyword, name, parameters, fields, conditions, branchNumber)
 
@@ -3152,6 +3166,29 @@ class ComponentRegister(object):
                                         virtual.alsoInBranchesConditions[branchNumber], branchNumber)
             else:
                 self.userError("Component '{0}' is not defined for use in this branch!\n".format(name))
+
+    def prepareToGenerateConstants(self):
+        # print "prepareToGenerateConstants"
+        for s in self.sensors.itervalues():
+            # print "process", s.name
+            name = s.name
+            if name[:6] == '__copy':
+                name = name[7:]
+                # what if branch has two or multiple digits?
+                while name[0] != '_':
+                    name = name[1:]
+                name = name[1:]
+            virtual = self.virtualComponents.get(name)
+            if virtual is None or len(virtual.alsoInBranches) == 0:
+                # print "  no virtual"
+                continue
+            # print "  is virtual"
+            for b in virtual.alsoInBranches:
+                vname = "__copy" + str(b) + "_" + name
+                s1 = self.sensors[vname]
+                s.alsoSensorIds.add(s1.getSystemwideID())
+            s1 = self.sensors[name]
+            s.alsoSensorIds.add(s1.getSystemwideID())
 
     def setState(self, name, expression, conditions, branchNumber):
         # add the state itself, if not already
