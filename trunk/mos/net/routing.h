@@ -132,7 +132,7 @@ RoutingDecision_e routePacket(MacInfo_t *info);
 #define getFixedTime() ((uint32_t)((uint32_t)getJiffies() + rootClockDeltaMs))
 #define getFixedUptime() ((uint32_t)(getUptime() + rootClockDelta))
 #else
-#define getFixedTime() getJiffies()
+#define getFixedTime() ((uint32_t)getJiffies())
 #define getFixedUptime() getUptime()
 #endif
 

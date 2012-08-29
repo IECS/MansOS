@@ -36,7 +36,7 @@ static Mutex_t macMutex;
 static uint8_t headerBuffer[MAX_MAC_HEADER_LEN]; // XXX: watch out for size
 
 int8_t macSend(MosAddr *dst, const uint8_t *data, uint16_t length) {
-    MacInfo_t mi;
+    static MacInfo_t mi;
     memset(&mi, 0, sizeof(mi));
     fillLocalAddress(&mi.originalSrc);
     if (dst) {

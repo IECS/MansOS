@@ -93,6 +93,19 @@
 static inline uint_t USARTEnableTX(uint8_t id) { return 0; }
 static inline uint_t USARTDisableTX(uint8_t id) { return 0; }
 // Enable receive interrupt
+#if PLATFORM_Z1 || PLATFORM_TESTBED
+static inline uint_t USARTEnableRX(uint8_t id) {
+    if (id == 0) UC0IE |= UCA0RXIE;
+    else UC1IE |= UCA1RXIE;
+    return 0;
+}
+// Disable receive interrupt
+static inline uint_t USARTDisableRX(uint8_t id) {
+    if (id == 0) UC0IE &= ~UCA0RXIE;
+    else UC1IE &= ~UCA1RXIE;
+    return 0;
+}
+#else
 static inline uint_t USARTEnableRX(uint8_t id) {
 #if UART_ON_USCI_A0
     UC0IE |= UCA0RXIE;
@@ -114,6 +127,7 @@ static inline uint_t USARTDisableRX(uint8_t id) {
 #endif
     return 0;
 }
+#endif // PLATFORM_Z1
 static inline void hw_spiBusOn(uint8_t busId) { }
 static inline void hw_spiBusOff(uint8_t busId) { }
 

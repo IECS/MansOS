@@ -124,9 +124,9 @@ static void rxPacket(uint8_t checksum)
 }
 
 static void usartReceive(uint8_t byte) {
-    // USARTSendByte(1, '0' + (byte >> 4) );
-    // USARTSendByte(1, '0' + (byte & 0xf) );
-    // USARTSendByte(1, '\n');
+    // USARTSendByte(AMB8420_UART_ID ^ 1, '0' + (byte >> 4) );
+    // USARTSendByte(AMB8420_UART_ID ^ 1, '0' + (byte & 0xf) );
+    // USARTSendByte(AMB8420_UART_ID ^ 1, '\n');
     // greenLedToggle();
 
     switch (recvState) {
