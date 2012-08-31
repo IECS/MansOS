@@ -35,7 +35,7 @@ from time import sleep
 def doPopen(pipe, args):
     retcode = -1
     try:
-        proc = Popen(args, stderr = STDOUT, stdout = PIPE)
+        proc = Popen(args, stderr = STDOUT, stdout = PIPE, shell = True)
         out = proc.stdout.readline()
         while out:
             pipe.send(out)
@@ -44,7 +44,7 @@ def doPopen(pipe, args):
         proc.wait()
         retcode = proc.returncode
     except OSError as e:
-        print "OSError:", e
+        print "doPopen OSError:", e
     finally:
         pipe.send(retcode)
 
