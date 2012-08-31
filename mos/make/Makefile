@@ -249,7 +249,7 @@ OBJS = $(APP_OBJS) $(POBJS)
 OBJDIRS = $(dir $(OBJS))
 
 # ===== Targets =====
-.PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs clean cleanall
+.PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs motelist clean cleanall
 
 all: build
 
@@ -407,3 +407,6 @@ $(OUTDIR):
 
 objDirs:
 	$(_QUIET) $(MakeDir) $(OBJDIRS)
+
+motelist:
+	$(MOTELIST)
