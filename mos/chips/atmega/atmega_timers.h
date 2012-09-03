@@ -39,6 +39,11 @@
 
 enum {
     JIFFY_TIMER_MS = 1000 / TIMER_INTERRUPT_HZ,
+
+    // number of jiffies in a second
+    // Contiki compatibility, added by Girts, 2012-07-16
+    CLOCK_SECOND = TIMER_INTERRUPT_HZ,
+
     // how many ticks per jiffy
     PLATFORM_ALARM_TIMER_PERIOD = JIFFY_TIMER_MS *
            (CPU_HZ / TIMER_INTERRUPT_HZ / JIFFY_CLOCK_DIVIDER),
@@ -166,6 +171,10 @@ extern void atmegaTimer1Set(uint16_t ms);
     sleep_disable();
 
 // TODO: enable/disable all pull-ups?
+
+#define PLATFORM_CAN_SLEEP() (1)
+// TODO: return 0, when platform cannot go into sleep mode (for example,
+//     UART/SPI transmission is in progress
 
 // no action needed to exit idle/sleep mode
 #define EXIT_SLEEP_MODE()
