@@ -67,8 +67,8 @@ extern void PRINT(const char *format, ...);
 // code for printing to serial port
 #  define PRINT_INIT_NEW(len) \
      PRINT_INIT_DEF(len);                        \
-     USARTInit(PRINTF_USART_ID, SERIAL_PORT_BAUDRATE, 0);      \
-     USARTEnableTX(PRINTF_USART_ID)
+     serialInit(PRINTF_SERIAL_ID, SERIAL_PORT_BAUDRATE, 0);      \
+     serialEnableTX(PRINTF_SERIAL_ID)
 #  define PRINT serialPrint
 #  define PRINTF debugPrintf
 # endif // DPRINT_TO_RADIO

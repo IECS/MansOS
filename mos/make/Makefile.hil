@@ -79,6 +79,7 @@ PSOURCES-$(USE_NET) += $(NET)/mac/null.c
 else
 ifeq ($(CONST_MAC_PROTOCOL),MAC_PROTOCOL_CSMA)
 PSOURCES-$(USE_NET) += $(NET)/mac/csma.c
+PSOURCES-$(USE_NET) += $(NET)/queue.c
 else
 ifeq ($(CONST_MAC_PROTOCOL),MAC_PROTOCOL_CSMA_ACK)
 PSOURCES-$(USE_NET) += $(NET)/mac/csma-ack.c

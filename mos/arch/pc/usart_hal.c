@@ -22,7 +22,7 @@
  */
 
 //
-// PC USART
+// PC serial interface emulation
 //
 
 #ifdef WIN32
@@ -40,10 +40,10 @@
 // Variables
 //===========================================================
 
-USARTCallback_t usartRecvCb[USART_COUNT];
+SerialCallback_t serialRecvCb[SERIAL_COUNT];
 
-static bool txEnabled[USART_COUNT];
-static bool rxEnabled[USART_COUNT];
+static bool txEnabled[SERIAL_COUNT];
+static bool rxEnabled[SERIAL_COUNT];
 static pthread_t rxThread;
 static void *rxHandler(void *dummy);
 
@@ -51,14 +51,14 @@ static void *rxHandler(void *dummy);
 // Procedures
 //===========================================================
 
-uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf)
+uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
 {
     return 0;
 }
 
-uint_t USARTSendByte( uint8_t id, uint8_t data)
+uint_t serialSendByte( uint8_t id, uint8_t data)
 {
-    if (id >= USART_COUNT) return (uint_t)-1u;
+    if (id >= SERIAL_COUNT) return (uint_t)-1u;
 
     if (txEnabled[id]) {
         printf("%c", data);
@@ -67,25 +67,25 @@ uint_t USARTSendByte( uint8_t id, uint8_t data)
     return 0;
 }
 
-uint_t USARTEnableTX( uint8_t id )
+uint_t serialEnableTX( uint8_t id )
 {
-    if (id >= USART_COUNT) return (uint_t)-1u;
+    if (id >= SERIAL_COUNT) return (uint_t)-1u;
 
     txEnabled[id] = true;
     return 0;
 }
 
-uint_t USARTDisableTX( uint8_t id )
+uint_t serialDisableTX( uint8_t id )
 {
-    if (id > USART_COUNT) return (uint_t)-1u;
+    if (id > SERIAL_COUNT) return (uint_t)-1u;
 
     txEnabled[id] = false;
     return 0;
 }
 
-uint_t USARTEnableRX( uint8_t id )
+uint_t serialEnableRX( uint8_t id )
 {
-    if (id >= USART_COUNT) return (uint_t)-1u;
+    if (id >= SERIAL_COUNT) return (uint_t)-1u;
 
     if (!rxEnabled[id]) {
         rxEnabled[id] = true;
@@ -94,9 +94,9 @@ uint_t USARTEnableRX( uint8_t id )
     return 0;
 }
 
-uint_t USARTDisableRX( uint8_t id )
+uint_t serialDisableRX( uint8_t id )
 {
-    if (id > USART_COUNT) return (uint_t)-1u;
+    if (id > SERIAL_COUNT) return (uint_t)-1u;
 
     if (rxEnabled[id]) {
         rxEnabled[id] = false;
@@ -134,7 +134,7 @@ static void *rxHandler(void *arg)
                 perror("rxHandler read");
                 break;
             }
-            if (usartRecvCb[id]) usartRecvCb[id](c);
+            if (serialRecvCb[id]) serialRecvCb[id](c);
         }        
     }
     pthread_exit(NULL);

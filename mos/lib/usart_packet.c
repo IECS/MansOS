@@ -28,38 +28,18 @@
 //===========================================================
 // Data types and constants
 //===========================================================
-uint8_t *packetBuffer = NULL;
-uint16_t bytesReceived = 0;
-uint16_t bufferSize = 0;
-USARTCallback_t packetHandler;
+static uint8_t *packetBuffer = NULL;
+static uint16_t bytesReceived = 0;
+static uint16_t bufferSize = 0;
+static SerialCallback_t packetHandler;
 
 //===========================================================
 // Procedures
 //===========================================================
-void handleUsartByte(uint8_t byte);
 
-uint_t USARTSetPacketReceiveHandle(uint8_t id, USARTCallback_t cb, void *buffer,
-        uint16_t len) {
-    if (id >= USART_COUNT) return -1;
-    if (!cb || !buffer) {
-        // stop USART reception
-        USARTDisableRX(id);
-        packetBuffer = NULL;
-        return -1;
-    }
-    USARTEnableRX(id);
-    packetBuffer = (uint8_t *) buffer;
-    bufferSize = len - 1;
-    packetHandler = cb;
-    bytesReceived = 0;
-    USARTSetReceiveHandle(id, handleUsartByte);
-
-    return 0;
-}
-
-// user provided recv function callback
-void handleUsartByte(uint8_t byte) {
-    if (packetBuffer && packetHandler) {
+static void recvByte(uint8_t byte)
+{
+    if (packetBuffer) {
         // store byte
         packetBuffer[bytesReceived] = byte;
         ++bytesReceived;
@@ -69,4 +49,25 @@ void handleUsartByte(uint8_t byte) {
             bytesReceived = 0; // reset reception
         }
     }
+}
+
+
+uint_t serialSetPacketReceiveHandle(uint8_t id, SerialCallback_t cb,
+                                    void *buffer, uint16_t len)
+{
+    if (id >= SERIAL_COUNT) return -1;
+    if (!cb || !buffer) {
+        // stop USART reception
+        serialDisableRX(id);
+        packetBuffer = NULL;
+        return -1;
+    }
+    serialEnableRX(id);
+    packetBuffer = (uint8_t *) buffer;
+    bufferSize = len - 1;
+    packetHandler = cb;
+    bytesReceived = 0;
+    serialSetReceiveHandle(id, recvByte);
+
+    return 0;
 }

@@ -40,7 +40,7 @@ int putchar(int c) {
     if (!spInPutchar) {
         GET_SP(spInPutchar);
     }
-    USARTSendByte(PRINTF_USART_ID, c);
+    serialSendByte(PRINTF_SERIAL_ID, c);
     return c;
 }
 

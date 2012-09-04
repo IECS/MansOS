@@ -61,16 +61,75 @@
 #endif
 
 // available USART count
-#define USART_COUNT 2
+#define SERIAL_COUNT 2
 
 // use USART 1 for PRINTF
-#define PRINTF_USART_ID 1
+#define PRINTF_SERIAL_ID 1
 
 // USART buffers, defined in .c file
-extern volatile uint8_t * const UxTXBUF[USART_COUNT];
-extern volatile const uint8_t * const UxRXBUF[USART_COUNT];
+// extern volatile uint8_t * const UxTXBUF[SERIAL_COUNT];
+// extern volatile const uint8_t * const UxRXBUF[SERIAL_COUNT];
+
+static inline bool serialIsUART(uint8_t id) {
+    if (id == 0) return !(U0CTL | SYNC);
+    else return !(U1CTL | SYNC);
+}
+
+static inline bool serialIsSPI(uint8_t id) {
+    if (id == 0) return (U0CTL & SYNC) && !(U0CTL & I2C);
+    else return (U1CTL & SYNC) && !(U1CTL & I2C);
+}
+
+static inline bool serialIsI2C(uint8_t id) {
+    if (id == 0) return (U0CTL & SYNC) && (U0CTL & I2C);
+    else return (U1CTL & SYNC) && (U1CTL & I2C);
+}
+
+static inline void serialSendByte(uint8_t id, uint8_t data)
+{
+    if (id == 0) {
+        U0TXBUF = data;
+        while ((U0TCTL & TXEPT) == 0);  // Is byte sent ?
+    } else {
+        U1TXBUF = data;
+        while ((U1TCTL & TXEPT) == 0);  // Is byte sent ?
+    }
+}
+
+static inline void serialEnableTX(uint8_t id) {
+    if (id == 0) U0ME |= UTXE0;
+    else U1ME |= UTXE1;
+}
+
+static inline void serialDisableTX(uint8_t id) {
+    if (id == 0) U1ME &= ~UTXE0;
+    else U1ME &= ~UTXE1;
+}
+
+static inline void serialEnableRX(uint8_t id) {
+    if (id == 0) {
+        U0ME |= URXE0;
+        // Enable RX interrupt only in UART mode
+        if (serialIsUART(0)) IE1 |= URXIE0;
+    } else {
+        U1ME |= URXE1;
+        // Enable RX interrupt only in UART mode
+        if (serialIsUART(1)) IE2 |= URXIE1;
+    }
+}
+
+static inline void serialDisableRX(uint8_t id) {
+    if (id == 0) {
+        U0ME &= ~URXE0;
+        IE1 &= ~URXIE0;
+    } else {
+        U1ME &= ~URXE1;
+        IE2 &= ~URXIE1;
+    }
+}
+
 
 // Not on all platforms SPI and I2C is part of USART
-uint_t msp430USARTInitI2C(uint8_t id);
+uint_t msp430SerialInitI2C(uint8_t id);
 
 #endif

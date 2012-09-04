@@ -55,7 +55,7 @@ typedef enum {
     SMP_RES_IEEE_ADDRESS, // 8-byte address
     SMP_RES_LED,
     SMP_RES_RADIO,
-    SMP_RES_USART,
+    SMP_RES_SERIAL,
     SMP_RES_SENSOR,
     SMP_RES_SOFTWARE,
     SMP_RES_MEMORY,

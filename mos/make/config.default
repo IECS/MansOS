@@ -101,9 +101,9 @@ endif
 USE_ADDRESSING ?= n
 USE_RANDOM ?= n
 
-ifeq ($(USE_ADDRESSING),y)
+#ifeq ($(USE_ADDRESSING),y)
     USE_RADIO ?= y
-endif
+#endif
 
 # threads
 USE_THREADS ?= n

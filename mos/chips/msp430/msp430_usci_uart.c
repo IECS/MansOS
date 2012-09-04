@@ -33,16 +33,16 @@
 
 #include "msp430_usci.h"
 
-USARTCallback_t usartRecvCb[USART_COUNT];
+SerialCallback_t serialRecvCb[SERIAL_COUNT];
 
-volatile bool usartBusy[USART_COUNT];
-uint8_t usartFunction[USART_COUNT];
+volatile bool serialBusy[SERIAL_COUNT];
+volatile uint8_t serialFunction[SERIAL_COUNT];
 
 //
 // Initialization
 //
 
-uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf)
+uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
 {
     //
     // Default setting is: 8 data bits, 1 stop bit, no parity bit, LSB first
@@ -106,7 +106,7 @@ uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf)
 // Send/receive functions
 //
 
-uint_t USARTSendByte(uint8_t id, uint8_t data)
+uint_t serialSendByte(uint8_t id, uint8_t data)
 {
     if (id == 0) {
         while (!(UC0IFG & UCA0TXIFG));
@@ -141,8 +141,8 @@ ISR(USCIAB0RX, USCI0InterruptHandler)
         return;
     }
 
-    if (usartRecvCb[0]) {
-        usartRecvCb[0](data);
+    if (serialRecvCb[0]) {
+        serialRecvCb[0](data);
     }
 }
 
@@ -157,8 +157,8 @@ ISR(USCIAB1RX, USCI1InterruptHandler)
         return;
     }
 
-    if (usartRecvCb[1]) {
-        usartRecvCb[1](data);
+    if (serialRecvCb[1]) {
+        serialRecvCb[1](data);
     }
 }
 #endif // PLATFORM_Z1
@@ -175,8 +175,8 @@ ISR(USCIAB1RX, USCI0InterruptHandler)
         return;
     }
 
-    if (usartRecvCb[0]) {
-        usartRecvCb[0](data);
+    if (serialRecvCb[0]) {
+        serialRecvCb[0](data);
     }
 }
 

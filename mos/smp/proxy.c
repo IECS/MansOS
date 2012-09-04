@@ -45,6 +45,8 @@
 //      -- send to serial port
 //      -- send to radio
 
+#define SMP_SERIAL_ID 1
+
 #define USE_MAC 0
 
 #include "smp.h"
@@ -81,11 +83,11 @@ void smpDebugPrint(const char *format, ...) {
     va_end(ap);
     len = strlen(buffer);
 
-    USARTSendByte(1, SERIAL_PACKET_DELIMITER);
-    USARTSendByte(1, PROTOCOL_DEBUG);
-    USARTSendByte(1, len >> 8);
-    USARTSendByte(1, len & 0xFF);
-    USARTSendData(1, (uint8_t *) buffer, len);
+    serialSendByte(SMP_SERIAL_ID, SERIAL_PACKET_DELIMITER);
+    serialSendByte(SMP_SERIAL_ID, PROTOCOL_DEBUG);
+    serialSendByte(SMP_SERIAL_ID, len >> 8);
+    serialSendByte(SMP_SERIAL_ID, len & 0xFF);
+    serialSendData(SMP_SERIAL_ID, (uint8_t *) buffer, len);
 }
 #else
 void smpDebugPrint(const char *format, ...) {}
@@ -106,11 +108,11 @@ static void smpProxyRecv(MacInfo_t *mi, uint8_t *data, uint16_t length) {
         break;
     case SMP_PACKET_RESPONSE:
         // simply forward it to serial port
-        USARTSendByte(1, SERIAL_PACKET_DELIMITER);
-        USARTSendByte(1, PROTOCOL_SMP);
-        USARTSendByte(1, length >> 8);
-        USARTSendByte(1, length & 0xFF);
-        USARTSendData(1, data, length);
+        serialSendByte(SMP_SERIAL_ID, SERIAL_PACKET_DELIMITER);
+        serialSendByte(SMP_SERIAL_ID, PROTOCOL_SMP);
+        serialSendByte(SMP_SERIAL_ID, length >> 8);
+        serialSendByte(SMP_SERIAL_ID, length & 0xFF);
+        serialSendData(SMP_SERIAL_ID, data, length);
         break;
     }
 }
@@ -169,11 +171,11 @@ void smpProxySendSmp(uint8_t *data, uint16_t length) {
 
     if (isBaseStation) {
         // send to serial
-        USARTSendByte(1, SERIAL_PACKET_DELIMITER);
-        USARTSendByte(1, PROTOCOL_SMP);
-        USARTSendByte(1, length >> 8);
-        USARTSendByte(1, length & 0xFF);
-        USARTSendData(1, data, length);
+        serialSendByte(SMP_SERIAL_ID, SERIAL_PACKET_DELIMITER);
+        serialSendByte(SMP_SERIAL_ID, PROTOCOL_SMP);
+        serialSendByte(SMP_SERIAL_ID, length >> 8);
+        serialSendByte(SMP_SERIAL_ID, length & 0xFF);
+        serialSendData(SMP_SERIAL_ID, data, length);
     } else {
         // add a random delay here to minimize collision probability
         // XXX: this could be improved a lot.
@@ -255,11 +257,11 @@ void radioReceive(void) {
 
     if (isBaseStation) {
         // forward it to serial port
-        USARTSendByte(1, SERIAL_PACKET_DELIMITER);
-        USARTSendByte(1, PROTOCOL_SMP);
-        USARTSendByte(1, length >> 8);
-        USARTSendByte(1, length & 0xFF);
-        USARTSendData(1, p, length);
+        serialSendByte(SMP_SERIAL_ID, SERIAL_PACKET_DELIMITER);
+        serialSendByte(SMP_SERIAL_ID, PROTOCOL_SMP);
+        serialSendByte(SMP_SERIAL_ID, length >> 8);
+        serialSendByte(SMP_SERIAL_ID, length & 0xFF);
+        serialSendData(SMP_SERIAL_ID, p, length);
     } else {
         // receive it locally
         uint16_t address = getU16Network(p);
@@ -275,10 +277,10 @@ void radioReceive(void) {
 #endif
 
 void smpInit(void) {
-    USARTInit(1, SMP_BAUDRATE, 0);
-    USARTEnableTX(1);
-    USARTEnableRX(1);
-    USARTSetReceiveHandle(1, serialReceive);
+    serialInit(SMP_SERIAL_ID, SMP_BAUDRATE, 0);
+    serialEnableTX(SMP_SERIAL_ID);
+    serialEnableRX(SMP_SERIAL_ID);
+    serialSetReceiveHandle(SMP_SERIAL_ID, serialReceive);
 
 #if USE_MAC
     mac = getSimpleMac();
@@ -289,4 +291,3 @@ void smpInit(void) {
     radioOn();
 #endif
 }
-
