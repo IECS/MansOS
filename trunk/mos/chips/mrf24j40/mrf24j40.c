@@ -262,7 +262,7 @@ int_t mrf24j40Send(const void *header, uint16_t headerLen,
     int_t result;
     uint8_t status;
 
-    if (usartBusy[MRF24_SPI_ID]) {
+    if (serialBusy[MRF24_SPI_ID]) {
         RPRINTF("cannot send via radio, flash is being used!\n");
         return -EBUSY;
     }
@@ -482,7 +482,7 @@ bool mrf24j40IsChannelClear(void)
 bool mrf24j40PollForPacket(void)
 {
     // don't touch radio SPI when usart is busy (TODO: check that this does not hang sending!)
-    if (usartBusy[MRF24_SPI_ID]) {
+    if (serialBusy[MRF24_SPI_ID]) {
         return false;
     }
 

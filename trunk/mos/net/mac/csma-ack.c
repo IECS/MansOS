@@ -45,7 +45,7 @@ static void sendTimerCb(void *);
 static bool ackMacBuildHeader(MacInfo_t *mi, uint8_t **header /* out */,
                               uint16_t *headerLength /* out */);
 
-TEXTDATA const MacProtocol_t macProtocol = {
+MacProtocol_t macProtocol = {
     .name = MAC_PROTOCOL_CSMA_ACK,
     .init = initCsmaMac,
     .send = sendCsmaMac,

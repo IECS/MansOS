@@ -26,12 +26,41 @@
 
 // available USART count
 #ifdef PLATFORM_WASPMOTE
-#define USART_COUNT 2
+#define SERIAL_COUNT 2
 #else
-#define USART_COUNT 1
+#define SERIAL_COUNT 1
 #endif
 
 // use the only USART for PRINTF
-#define PRINTF_USART_ID 0
+#define PRINTF_SERIAL_ID 0
 
-#endif // !ATMEGA_USART_H
+static inline void serialSendByte(uint8_t id, uint8_t data)
+{
+    /* Wait for empty transmit buffer */
+    while (!(UCSR0A & (1 << UDRE0))) { }
+    /* Put data into buffer, sends the data */
+    UDR0 = data;
+}
+
+static inline void serialEnableTX(uint8_t id)
+{
+    UCSR0B |= (1 << TXEN0);
+}
+
+static inline void serialDisableTX(uint8_t id)
+{
+    UCSR0B &= ~(1 << TXEN0);
+}
+
+static inline void serialEnableRX(uint8_t id)
+{
+    // enable RX and interrupt
+    UCSR0B |= (1 << RXEN0) | (1 << RXCIE0);
+}
+
+static inline void serialDisableRX(uint8_t id)
+{
+    UCSR0B &= ~(1 << RXEN0);
+}
+
+#endif

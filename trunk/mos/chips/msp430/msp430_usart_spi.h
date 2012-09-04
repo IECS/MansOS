@@ -30,7 +30,7 @@
 // SPI bus configuration for the MSP430 x1xx
 //
 
-uint_t msp430USARTInitSPI(uint8_t id, uint_t spiBusMode);
+uint_t msp430SerialInitSPI(uint8_t id, uint_t spiBusMode);
 
 /**
  * Initializes SPI bus in either master or slave mode
@@ -41,7 +41,7 @@ uint_t msp430USARTInitSPI(uint8_t id, uint_t spiBusMode);
  * @return  0       on success, -1 on error
  */
 static inline int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode) {
-    return msp430USARTInitSPI(busId, spiBusMode);
+    return msp430SerialInitSPI(busId, spiBusMode);
 }
 
 /**

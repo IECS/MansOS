@@ -31,13 +31,13 @@
 
 #define PROMPT "$ "
 
-void usartReceive(uint8_t byte) {
+void serialReceive(uint8_t byte) {
     static uint16_t bytesReceived;
     static char buffer[255];
 
 #if !PLATFORM_PC
     // echo the byte back
-    USARTSendByte(PRINTF_USART_ID, byte);
+    serialSendByte(PRINTF_SERIAL_ID, byte);
 #endif
 
     // store it in the buffer
@@ -45,7 +45,7 @@ void usartReceive(uint8_t byte) {
 
     if (byte == '\n' || byte == '\r' || bytesReceived == sizeof(buffer) - 1) {
         buffer[bytesReceived] = 0;
-        if (byte == '\r') USARTSendByte(PRINTF_USART_ID, '\n');
+        if (byte == '\r') serialSendByte(PRINTF_SERIAL_ID, '\n');
         PRINTF("%s", buffer);
         if (byte != '\n') {
             // print newline as well
@@ -58,7 +58,7 @@ void usartReceive(uint8_t byte) {
 
 void appMain(void)
 {
-    USARTSetReceiveHandle(PRINTF_USART_ID, usartReceive);
+    serialSetReceiveHandle(PRINTF_SERIAL_ID, serialReceive);
 
     PRINTF("Type your text here, press enter, and the mote will echo it back\n");
     PRINT(PROMPT);

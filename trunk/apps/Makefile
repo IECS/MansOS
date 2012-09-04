@@ -87,9 +87,6 @@ ADVANCED_TARGETS = \
 
 SEAL_TARGETS = \
 	Blink					\
-	Custom					\
-	Sensors					\
-	Sad
 
 COMMON_TARGETS = \
 	$(foreach t,$(DEMO_TARGETS),demo/$(t)) \

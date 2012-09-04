@@ -30,10 +30,10 @@ void watchdogReboot(void)
     msp430ClearAllInterruptsBeforeReboot();
 
     // switch off all things...
-    USARTDisableTX(0);
-    USARTDisableTX(1);
-    USARTDisableRX(0);
-    USARTDisableRX(1);
+    serialDisableTX(0);
+    serialDisableTX(1);
+    serialDisableRX(0);
+    serialDisableRX(1);
     // UCTL0 = SWRST;
     // UCTL1 = SWRST;
     TACTL = TACLR;

@@ -29,11 +29,11 @@
 #include <string.h>
 #include <stdio.h>
 
-#define GPS_USART_ID  0
-#define USB_USART_ID  1
+#define GPS_SERIAL_ID  0
+#define USB_SERIAL_ID  1
 
-#define GPS_USART_SPEED  9600
-#define USB_USART_SPEED  38400
+#define GPS_SERIAL_SPEED  9600
+#define USB_SERIAL_SPEED  38400
 
 #define GPS_PDN_PORT 2
 #define GPS_PDN_PIN 6
@@ -47,13 +47,13 @@
 
 void gpsCharRecv(uint8_t b)
 {
-    USARTSendByte(USB_USART_ID, b); // send to serial
+    serialSendByte(USB_SERIAL_ID, b); // send to serial
 }
 
 void usbCharRecv(uint8_t b)
 {
     // redLedOn();
-    USARTSendByte(GPS_USART_ID, b); // send to GPS
+    serialSendByte(GPS_SERIAL_ID, b); // send to GPS
 }
 
 #define NMEA_CMD_SET_BAUD_RATE  ((uint8_t *) "$PSRF100,1,9600,8,1,0*0D\r\n")
@@ -67,17 +67,17 @@ void appMain(void)
     GPS_ON();
 
     // GPS
-    if (USARTInit(GPS_USART_ID, GPS_USART_SPEED, 0)) redLedOn();
-    if (USARTEnableRX(GPS_USART_ID)) redLedOn();
-    if (USARTEnableTX(GPS_USART_ID)) redLedOn();
+    if (serialInit(GPS_SERIAL_ID, GPS_SERIAL_SPEED, 0)) redLedOn();
+    serialEnableRX(GPS_SERIAL_ID);
+    serialEnableTX(GPS_SERIAL_ID);
 
     // USB serial port
-    if (USARTInit(USB_USART_ID, USB_USART_SPEED, 0)) redLedOn();
-    if (USARTEnableRX(USB_USART_ID)) redLedOn();
-    if (USARTEnableTX(USB_USART_ID)) redLedOn();
+    if (serialInit(USB_SERIAL_ID, USB_SERIAL_SPEED, 0)) redLedOn();
+    serialEnableRX(USB_SERIAL_ID);
+    serialEnableTX(USB_SERIAL_ID);
 
-    USARTSetReceiveHandle(GPS_USART_ID, gpsCharRecv);
-    USARTSetReceiveHandle(USB_USART_ID, usbCharRecv);
+    serialSetReceiveHandle(GPS_SERIAL_ID, gpsCharRecv);
+    serialSetReceiveHandle(USB_SERIAL_ID, usbCharRecv);
 
-    // USARTSendString(GPS_USART_ID, NMEA_CMD_SET_BAUD_RATE);
+    // serialSendString(GPS_SERIAL_ID, NMEA_CMD_SET_BAUD_RATE);
 }

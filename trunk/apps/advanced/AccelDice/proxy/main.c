@@ -42,10 +42,10 @@ void DPRINT(const char *format, ...) {
     va_end(ap);
     len = strlen(buffer);
 
-    USARTSendByte(1, PROTOCOL_DEBUG);
-    USARTSendByte(1, len >> 8);
-    USARTSendByte(1, len & 0xFF);
-    USARTSendData(1, buffer, len);
+    serialSendByte(1, PROTOCOL_DEBUG);
+    serialSendByte(1, len >> 8);
+    serialSendByte(1, len & 0xFF);
+    serialSendData(1, buffer, len);
 }
 #endif // DEBUG
 
@@ -128,9 +128,9 @@ bool processCommand(bool set, uint8_t command, uint8_t oidLen, SmpOid_t oid,
 
 void appMain(void)
 {
-    USARTInit(1, 115200, 0);
-    USARTEnableTX(1);
-    USARTEnableRX(1);
+    serialInit(1, 115200, 0);
+    serialEnableTX(1);
+    serialEnableRX(1);
 
     radioInit(); 
 

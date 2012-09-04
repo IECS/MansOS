@@ -56,7 +56,7 @@ void recvSerial(uint8_t length) {
 
 void appMain(void)
 {
-    USARTSetPacketReceiveHandle(PRINTF_USART_ID, recvSerial,
+    serialSetPacketReceiveHandle(PRINTF_SERIAL_ID, recvSerial,
             (uint8_t *)serialBuffer, sizeof(serialBuffer));
 
     radioSetReceiveHandle(recvRadio);

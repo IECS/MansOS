@@ -1,6 +1,5 @@
 /**
- * Copyright (c) 2011, Institute of Electronics and Computer Science
- * All rights reserved.
+ * Copyright (c) 2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -65,8 +64,8 @@
 #define USCI_B0_SCL_PIN   7
 
 
-#define USART_COUNT       2
-#define PRINTF_USART_ID   1
+#define SERIAL_COUNT      2
+#define PRINTF_SERIAL_ID  1
 #define UART_ON_USCI_A0   1
 
 
@@ -82,19 +81,35 @@
 #define UCB0TXIFG UCTXIFG
 
 // This module enables and disables components automatically
-static inline uint_t USARTEnableTX(uint8_t id) { return 0; }
-static inline uint_t USARTDisableTX(uint8_t id) { return 0; }
-static inline uint_t USARTEnableRX(uint8_t id) {
-    // TODO: A1?
-    UC0IE |= UCA0RXIE;     // Enable receive interrupt
-    return 0;
+static inline void serialEnableTX(uint8_t id) { }
+static inline void serialDisableTX(uint8_t id) { }
+static inline void serialEnableRX(uint8_t id) {
+    // Enable receive interrupt
+#ifdef UART_ON_USCI_A0
+    UC0IE |= UCA0RXIE;
+#else
+    UC1IE |= UCA1RXIE;
+#endif
 }
-static inline uint_t USARTDisableRX(uint8_t id) {
-    // TODO: A1?
-    UC0IE &= ~UCA0RXIE;    // Disable receive interrupt
-    return 0;
+static inline void serialDisableRX(uint8_t id) {
+    // Disable receive interrupt
+#ifdef UART_ON_USCI_A0
+    UC0IE &= ~UCA0RXIE;
+#else
+    UC1IE &= ~UCA1RXIE;
+#endif
 }
 static inline void hw_spiBusOn(uint8_t busId) { }
 static inline void hw_spiBusOff(uint8_t busId) { }
+
+
+
+// Send data
+void serialSendByte(uint8_t id, uint8_t data)
+{
+    while (!(UC0IFG & UCA0TXIFG));
+    UCA0TXBUF = data;
+}
+
 
 #endif

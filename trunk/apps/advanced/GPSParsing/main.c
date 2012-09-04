@@ -78,12 +78,11 @@ void appMain(void)
     GPS_ON();
 
     PRINT_INIT(256); // inits UART1 automatically
-    if (USARTInit(0, 115200, 0)) redLedOn();
-    if (USARTEnableRX(0)) redLedOn();
+    if (serialInit(0, 115200, 0)) redLedOn();
 
     // set NMEA stream parsing routine as UART0 callback
-    USARTSetReceiveHandle(0, nmeaCharRecv);
-    // USARTSetReceiveHandle(0, charRecv);
+    serialSetReceiveHandle(0, nmeaCharRecv);
+    // serialSetReceiveHandle(0, charRecv);
 
     // wait for NMEA command buffers to become ready
     while (1) {

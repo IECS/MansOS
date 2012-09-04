@@ -28,7 +28,7 @@
 #include <kernel/stdmansos.h>
 #include "dprint.h"
 
-void usartReceive(uint8_t byte) {
+void serialReceive(uint8_t byte) {
     PRINTF("Pong #%i\n", byte);
 }
 
@@ -37,9 +37,8 @@ void usartReceive(uint8_t byte) {
 //-------------------------------------------
 void appMain(void)
 {
-    PRINT_INIT(128);
-    USARTEnableRX(PRINTF_USART_ID);
-    USARTSetReceiveHandle(PRINTF_USART_ID, usartReceive);
+    serialEnableRX(PRINTF_SERIAL_ID);
+    serialSetReceiveHandle(PRINTF_SERIAL_ID, serialReceive);
     ledOff();
 
     static uint_t counter = 1;

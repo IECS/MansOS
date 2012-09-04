@@ -74,8 +74,8 @@ static void timesyncUsartReceive(uint8_t byte) {
 }
 
 void timesyncInit(void) {
-    USARTEnableRX(PRINTF_USART_ID);
-    USARTSetReceiveHandle(PRINTF_USART_ID, timesyncUsartReceive);
+    serialEnableRX(PRINTF_SERIAL_ID);
+    serialSetReceiveHandle(PRINTF_SERIAL_ID, timesyncUsartReceive);
 }
 
 #endif

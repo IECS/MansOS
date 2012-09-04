@@ -22,7 +22,7 @@
  */
 
 //------------------------------------------------------------
-// USART Send & Receive demo:
+// Serial Send & Receive demo:
 // * Send counter every second
 // * Receive data packets, get first byte as an ASCII digit,
 //   set it on leds and send back
@@ -36,7 +36,7 @@
 /**
  * Our callback
  */
-void usartPacketReceived(uint8_t bytes);
+void serialPacketReceived(uint8_t bytes);
 
 /**
  * Buffer size, in bytes
@@ -56,9 +56,8 @@ static uint8_t buf[BUF_SIZE];
 //-------------------------------------------
 void appMain(void)
 {
-    PRINT_INIT(128);
     // Set packet reception handler (callback function)
-    USARTSetPacketReceiveHandle(1, usartPacketReceived, buf, BUF_SIZE);
+    serialSetPacketReceiveHandle(1, serialPacketReceived, buf, BUF_SIZE);
     ledOff();
 
     // Send Ping every second
@@ -69,7 +68,7 @@ void appMain(void)
     }
 }
 
-void usartPacketReceived(uint8_t bytes) {
+void serialPacketReceived(uint8_t bytes) {
     // get ASCII digit from the first byte
     uint8_t c = buf[0] - '0';
 

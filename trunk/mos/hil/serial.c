@@ -30,35 +30,35 @@
 //===========================================================
 
 // user provided recv function callback
-extern USARTCallback_t usartRecvCb[USART_COUNT];
+extern SerialCallback_t serialRecvCb[SERIAL_COUNT];
 
 //===========================================================
 // Procedures
 //===========================================================
 
-void USARTSendString(uint8_t id, char *s) {
+void serialSendString(uint8_t id, char *s) {
     for (; *s; ++s) {
-        USARTSendByte(id, *s);
+        serialSendByte(id, *s);
         if (*s == '\n') {
             // HACK: fix the newlines
-            USARTSendByte(id, '\r');
+            serialSendByte(id, '\r');
         }
     }
 }
 
-void USARTSendData(uint8_t id, uint8_t *data, uint16_t len) {
+void serialSendData(uint8_t id, uint8_t *data, uint16_t len) {
     uint8_t *p;
     for (p = data; p < data + len; ++p) {
-        USARTSendByte(id, *p);
+        serialSendByte(id, *p);
     }
 }
 
-uint_t USARTSetReceiveHandle(uint8_t id, USARTCallback_t functionHandle) {
-    if (id >= USART_COUNT) return -1;
-    usartRecvCb[id] = functionHandle;
+uint_t serialSetReceiveHandle(uint8_t id, SerialCallback_t functionHandle) {
+    if (id >= SERIAL_COUNT) return -1;
+    serialRecvCb[id] = functionHandle;
     if (functionHandle) {
-        // Enable USART RX automatically
-        USARTEnableRX(id);
+        // Enable Serial RX automatically
+        serialEnableRX(id);
     }
     return 0;
 }

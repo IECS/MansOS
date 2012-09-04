@@ -38,16 +38,23 @@
 //===========================================================
 // Data types and constants
 //===========================================================
-// callback for USART RX interrupt
-typedef void (* USARTCallback_t)(uint8_t);
+// callback for Serial RX interrupt
+typedef void (* SerialCallback_t)(uint8_t);
 
 //===========================================================
 // Procedures
 //===========================================================
 
-// Implemented in HIL
-void USARTSendString(uint8_t id, char *string);
-void USARTSendData(uint8_t id, uint8_t *data, uint16_t len);
+uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf);
+
+void serialEnableTX(uint8_t id);
+void serialDisableTX(uint8_t id);
+void serialEnableRX(uint8_t id);
+void serialDisableRX(uint8_t id);
+
+void serialSendString(uint8_t id, char *string);
+void serialSendData(uint8_t id, uint8_t *data, uint16_t len);
+void serialSendByte(uint8_t id, uint8_t data);
 
 /**
  * Set callback function for per-byte data receive. The callback is called
@@ -55,16 +62,16 @@ void USARTSendData(uint8_t id, uint8_t *data, uint16_t len);
  * @param id - ID of the UART used (See MCU datasheet to get IDs)
  * @param cb - callback function: void myCallback(uint8_t byte)
  */
-uint_t USARTSetReceiveHandle(uint8_t id, USARTCallback_t cb);
+uint_t serialSetReceiveHandle(uint8_t id, SerialCallback_t cb);
 
 /**
  * Set callback for per-packet data receive. Stores the received bytes in
  * the buffer and the callback is called when either a newline is received
  * ('\n', binary value 10) or at most len bytes are received. The newline is
  * also stored in the buffer
- * Also enables USART RX automatically.
+ * Also enables Serial RX automatically.
  * After the callback, buffer is reset and reception restarts.
- * Warning: Can use only one USART at a time (single buffer, single handler)!
+ * Warning: Can use only one Serial at a time (single buffer, single handler)!
  *
  * @param id - ID of the UART used (See MCU datasheet to get IDs)
  * @param cb - callback function: void myCallback(uint8_t bytes). Here the
@@ -75,36 +82,18 @@ uint_t USARTSetReceiveHandle(uint8_t id, USARTCallback_t cb);
  *              When len is zero, no packet size is checked, only on newline
  *              reception the callback is called.
  */
-uint_t USARTSetPacketReceiveHandle(uint8_t id, USARTCallback_t cb,
+uint_t serialSetPacketReceiveHandle(uint8_t id, SerialCallback_t cb,
         void *buffer, uint16_t len);
 
-// Implemented in HPL
-uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf);
-// Not on all platforms SPI and I2C is part of USART
-//uint_t USARTInitSPI(uint8_t id);
-//uint_t USARTInitI2C(uint8_t id);
-
-uint_t USARTSendByte(uint8_t id, uint8_t data);
-
-uint_t USARTEnableTX(uint8_t id);
-uint_t USARTDisableTX(uint8_t id);
-uint_t USARTEnableRX(uint8_t id);
-uint_t USARTDisableRX(uint8_t id);
-
-//uint_t USARTisUART(uint8_t id);
-//uint_t USARTisSPI(uint8_t id);
-//uint_t USARTisI2C(uint8_t id);
-
 enum {
-    USART_FUNCTION_SERIAL = 1, // used as serial interface
-    USART_FUNCTION_RADIO,      // used as radio chip's interface
-    USART_FUNCTION_FLASH,      // used as ext flash interface
-    USART_FUNCTION_SDCARD,     // used as sdcard interface
+    SERIAL_FUNCTION_PRINT = 1, // used for debug output
+    SERIAL_FUNCTION_RADIO,      // used as radio chip's interface
+    SERIAL_FUNCTION_FLASH,      // used as ext flash interface
+    SERIAL_FUNCTION_SDCARD,     // used as sdcard interface
 };
 
-extern volatile bool usartBusy[USART_COUNT];
-// one of usart modes
-extern uint8_t usartFunction[USART_COUNT];
+extern volatile bool serialBusy[SERIAL_COUNT];
+extern volatile uint8_t serialFunction[SERIAL_COUNT];
 
 
 //===========================================================

@@ -51,15 +51,15 @@ static uint8_t recvLength;
 // Enable/disable flash access to the USART
 // Busy waiting loop us not used, as the code is executd with ints off.
 //
-#define AMB8420_USART_CAPTURE()    \
-    usartBusy[AMB8420_UART_ID] = true;                             \
-    if (usartFunction[AMB8420_UART_ID] != USART_FUNCTION_RADIO) {  \
-        amb8420InitUsart();                                        \
-        usartFunction[AMB8420_UART_ID] = USART_FUNCTION_RADIO;     \
+#define AMB8420_SERIAL_CAPTURE()    \
+    serialBusy[AMB8420_UART_ID] = true;                             \
+    if (serialFunction[AMB8420_UART_ID] != SERIAL_FUNCTION_RADIO) {  \
+        amb8420InitSerial();                                        \
+        serialFunction[AMB8420_UART_ID] = SERIAL_FUNCTION_RADIO;     \
     }                                                              \
 
-#define AMB8420_USART_FREE()   \
-    usartBusy[AMB8420_UART_ID] = false;
+#define AMB8420_SERIAL_FREE()   \
+    serialBusy[AMB8420_UART_ID] = false;
 
 static void rxPacket(uint8_t checksum)
 {
@@ -112,7 +112,7 @@ static void rxPacket(uint8_t checksum)
 
 #if USE_THREADS
     // disable Rx interrupts
-    USARTDisableRX(AMB8420_UART_ID);
+    serialDisableRX(AMB8420_UART_ID);
     processFlags.bits.radioProcess = true;
 #else
     if (rxHandle) {
@@ -123,10 +123,10 @@ static void rxPacket(uint8_t checksum)
 #endif
 }
 
-static void usartReceive(uint8_t byte) {
-    // USARTSendByte(AMB8420_UART_ID ^ 1, '0' + (byte >> 4) );
-    // USARTSendByte(AMB8420_UART_ID ^ 1, '0' + (byte & 0xf) );
-    // USARTSendByte(AMB8420_UART_ID ^ 1, '\n');
+static void serialReceive(uint8_t byte) {
+    // serialSendByte(AMB8420_UART_ID ^ 1, '0' + (byte >> 4) );
+    // serialSendByte(AMB8420_UART_ID ^ 1, '0' + (byte & 0xf) );
+    // serialSendByte(AMB8420_UART_ID ^ 1, '\n');
     // greenLedToggle();
 
     switch (recvState) {
@@ -174,11 +174,11 @@ static void usartReceive(uint8_t byte) {
     }
 }
 
-void amb8420InitUsart(void)
+void amb8420InitSerial(void)
 {
-    USARTInit(AMB8420_UART_ID, AMB8420_SERIAL_BAUDRATE, 0);
-    USARTEnableTX(AMB8420_UART_ID);
-    USARTSetReceiveHandle(AMB8420_UART_ID, usartReceive);
+    serialInit(AMB8420_UART_ID, AMB8420_SERIAL_BAUDRATE, 0);
+    serialEnableTX(AMB8420_UART_ID);
+    serialSetReceiveHandle(AMB8420_UART_ID, serialReceive);
 }
 
 void amb8420Reset(void)
@@ -199,7 +199,7 @@ void amb8420Reset(void)
     AMB8420_WAIT_FOR_RTS_READY(ok);
 
     pinSet(AMB8420_RESET_PORT, AMB8420_RESET_PIN);
-    amb8420InitUsart();
+    amb8420InitSerial();
     mdelay(100);
 
     // Switch to command mode (generate falling front)
@@ -216,14 +216,14 @@ void amb8420Reset(void)
     // long delay, maybe helps for the RTS problem
     mdelay(500);
 
-    usartFunction[AMB8420_UART_ID] = USART_FUNCTION_RADIO;
+    serialFunction[AMB8420_UART_ID] = SERIAL_FUNCTION_RADIO;
 }
 
 void amb8420Init(void)
 {
     RPRINTF("amb8420Init...\n");
 
-    amb8420InitUsart();
+    amb8420InitSerial();
 
     pinAsOutput(AMB8420_RESET_PORT, AMB8420_RESET_PIN);
     pinAsOutput(AMB8420_CONFIG_PORT, AMB8420_CONFIG_PIN);
@@ -292,7 +292,7 @@ int amb8420Read(void *buf, uint16_t bufsize)
 
 #if USE_THREADS
     // enable Rx interrupts back
-    USARTEnableRX(AMB8420_UART_ID);
+    serialEnableRX(AMB8420_UART_ID);
 #endif
 
     return len;
@@ -326,29 +326,29 @@ int amb8420Send(const void *header_, uint16_t headerLen,
 
 //    PRINTF("send, tar=%u\n", TAR);
 //    ATOMIC_START_TIMESAVE(h);
-    AMB8420_USART_CAPTURE();
+    AMB8420_SERIAL_CAPTURE();
 
     // start delimiter
-    USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
+    serialSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
     // command
-    USARTSendByte(AMB8420_UART_ID, AMB8420_CMD_DATA_REQ);
+    serialSendByte(AMB8420_UART_ID, AMB8420_CMD_DATA_REQ);
     // data length
-    USARTSendByte(AMB8420_UART_ID, totalLen);
+    serialSendByte(AMB8420_UART_ID, totalLen);
 
     // data
     uint16_t i;
     for (i = 0; i < headerLen; ++i) {
         cs ^= header[i];
-        USARTSendByte(AMB8420_UART_ID, header[i]);
+        serialSendByte(AMB8420_UART_ID, header[i]);
     }
     for (i = 0; i < dataLen; ++i) {
         cs ^= data[i];
-        USARTSendByte(AMB8420_UART_ID, data[i]);
+        serialSendByte(AMB8420_UART_ID, data[i]);
     }
     // checksum
-    USARTSendByte(AMB8420_UART_ID, cs);
+    serialSendByte(AMB8420_UART_ID, cs);
 
-    AMB8420_USART_FREE();
+    AMB8420_SERIAL_FREE();
 //    ATOMIC_END_TIMESAVE(h);
     // PRINTF("end send, tar=%u\n", TAR);
 
@@ -382,28 +382,28 @@ static int amb8420Set(uint8_t position, uint8_t len, uint8_t *data)
     if (!ok) goto end;
 
     // ATOMIC_START(handle);
-    AMB8420_USART_CAPTURE();
+    AMB8420_SERIAL_CAPTURE();
 
     commandInProgress = AMB8420_CMD_SET_REQ;
 
-    USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
-    USARTSendByte(AMB8420_UART_ID, AMB8420_CMD_SET_REQ);
-    USARTSendByte(AMB8420_UART_ID, len + 2);
-    USARTSendByte(AMB8420_UART_ID, position);
-    USARTSendByte(AMB8420_UART_ID, len);
+    serialSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
+    serialSendByte(AMB8420_UART_ID, AMB8420_CMD_SET_REQ);
+    serialSendByte(AMB8420_UART_ID, len + 2);
+    serialSendByte(AMB8420_UART_ID, position);
+    serialSendByte(AMB8420_UART_ID, len);
     crc = AMB8420_START_DELIMITER ^ AMB8420_CMD_SET_REQ
             ^ (len + 2) ^ position ^ len;
     for (i = 0; i < len; i++) {
-        USARTSendByte(AMB8420_UART_ID, data[i]);
+        serialSendByte(AMB8420_UART_ID, data[i]);
         crc ^= data[i];
     }
-    USARTSendByte(AMB8420_UART_ID, crc);
+    serialSendByte(AMB8420_UART_ID, crc);
 
-    AMB8420_USART_FREE();
+    AMB8420_SERIAL_FREE();
     // ATOMIC_END(handle);
 
     // wait for reply.
-    // if someone grabs access to USART during this waiting,
+    // if someone grabs access to serial during this waiting,
     // then it will fail, but that's ok, as the caller will retry.
     INTERRUPT_ENABLED_START(handle);
 #ifndef PLATFORM_ARDUINO
@@ -441,24 +441,24 @@ int amb8420GetAll(void)
     if (!ok) goto end;
 
     // ATOMIC_START(handle);
-    AMB8420_USART_CAPTURE();
+    AMB8420_SERIAL_CAPTURE();
 
     commandInProgress = AMB8420_CMD_GET_REQ;
 
-    USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
-    USARTSendByte(AMB8420_UART_ID, AMB8420_CMD_GET_REQ);
-    USARTSendByte(AMB8420_UART_ID, 2);
-    USARTSendByte(AMB8420_UART_ID, position);
-    USARTSendByte(AMB8420_UART_ID, len);
+    serialSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
+    serialSendByte(AMB8420_UART_ID, AMB8420_CMD_GET_REQ);
+    serialSendByte(AMB8420_UART_ID, 2);
+    serialSendByte(AMB8420_UART_ID, position);
+    serialSendByte(AMB8420_UART_ID, len);
     crc = AMB8420_START_DELIMITER ^ AMB8420_CMD_GET_REQ
             ^ 2 ^ position ^ len;
-    USARTSendByte(AMB8420_UART_ID, crc);
+    serialSendByte(AMB8420_UART_ID, crc);
 
-    AMB8420_USART_FREE();
+    AMB8420_SERIAL_FREE();
     // ATOMIC_END(handle);
 
     // wait for reply
-    // if someone grabs access to USART during this waiting,
+    // if someone grabs access to serial during this waiting,
     // then it will fail, but that's ok, as the caller will retry.
     INTERRUPT_ENABLED_START(handle);
 #ifndef PLATFORM_ARDUINO
@@ -493,18 +493,18 @@ void amb8420SetChannel(int channel)
     if (!ok) goto end;
 
     // ATOMIC_START(handle);
-    AMB8420_USART_CAPTURE();
+    AMB8420_SERIAL_CAPTURE();
 
     commandInProgress = AMB8420_CMD_SET_CHANNEL_REQ;
 
-    USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
-    USARTSendByte(AMB8420_UART_ID, AMB8420_CMD_SET_CHANNEL_REQ);
-    USARTSendByte(AMB8420_UART_ID, 0x1);
-    USARTSendByte(AMB8420_UART_ID, channel);
-    USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER
+    serialSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
+    serialSendByte(AMB8420_UART_ID, AMB8420_CMD_SET_CHANNEL_REQ);
+    serialSendByte(AMB8420_UART_ID, 0x1);
+    serialSendByte(AMB8420_UART_ID, channel);
+    serialSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER
             ^ AMB8420_CMD_SET_CHANNEL_REQ ^ 0x1 ^ channel);
 
-    AMB8420_USART_FREE();
+    AMB8420_SERIAL_FREE();
     // ATOMIC_END(handle);
 
     // wait for reply
@@ -558,16 +558,16 @@ int amb8420GetRSSI(void)
     if (!ok) goto end;
 
     // ATOMIC_START(handle);
-    AMB8420_USART_CAPTURE();
+    AMB8420_SERIAL_CAPTURE();
 
     commandInProgress = AMB8420_CMD_RSSI_REQ;
 
-    USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
-    USARTSendByte(AMB8420_UART_ID, AMB8420_CMD_RSSI_REQ);
-    USARTSendByte(AMB8420_UART_ID, 0x00);
-    USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER ^ AMB8420_CMD_RSSI_REQ);
+    serialSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
+    serialSendByte(AMB8420_UART_ID, AMB8420_CMD_RSSI_REQ);
+    serialSendByte(AMB8420_UART_ID, 0x00);
+    serialSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER ^ AMB8420_CMD_RSSI_REQ);
 
-    AMB8420_USART_FREE();
+    AMB8420_SERIAL_FREE();
     // ATOMIC_END(handle);
 
     // if this code was executed with interrupts disabled,
@@ -649,18 +649,18 @@ bool amb8420SetDstAddress(uint8_t dstAddress)
 
     // PRINTF("set dst, tar=%u\n", TAR);
     // ATOMIC_START_TIMESAVE(handle);
-    AMB8420_USART_CAPTURE();
+    AMB8420_SERIAL_CAPTURE();
 
     commandInProgress = AMB8420_CMD_SET_DESTADDR_REQ;
 
-    USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
-    USARTSendByte(AMB8420_UART_ID, AMB8420_CMD_SET_DESTADDR_REQ);
-    USARTSendByte(AMB8420_UART_ID, 0x1);
-    USARTSendByte(AMB8420_UART_ID, dstAddress);
-    USARTSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER
+    serialSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER);
+    serialSendByte(AMB8420_UART_ID, AMB8420_CMD_SET_DESTADDR_REQ);
+    serialSendByte(AMB8420_UART_ID, 0x1);
+    serialSendByte(AMB8420_UART_ID, dstAddress);
+    serialSendByte(AMB8420_UART_ID, AMB8420_START_DELIMITER
             ^ AMB8420_CMD_SET_DESTADDR_REQ ^ 0x1 ^ dstAddress);
 
-    AMB8420_USART_FREE();
+    AMB8420_SERIAL_FREE();
     // ATOMIC_END_TIMESAVE(handle);
     // PRINTF("end set dst, tar=%u\n", TAR);
 

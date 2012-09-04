@@ -1,6 +1,5 @@
 /**
- * Copyright (c) 2011, Institute of Electronics and Computer Science
- * All rights reserved.
+ * Copyright (c) 2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -25,13 +24,13 @@
 #include <serial.h>
 #include "msp430fr57xx_usci.h"
 
-USARTCallback_t usartRecvCb[USART_COUNT];
+SerialCallback_t serialRecvCb[SERIAL_COUNT];
 
 //
 // Initialization
 //
 
-uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf)
+uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
 {
     //
     // Default setting is: 8 data bits, 1 stop bit, no parity bit, LSB first
@@ -65,21 +64,6 @@ uint_t USARTInit(uint8_t id, uint32_t speed, uint8_t conf)
     return 0;
 }
 
-
-//
-// Send/receive functions
-//
-
-uint_t USARTSendByte(uint8_t id, uint8_t data)
-{
-    (void) id;
-    while (!(UC0IFG & UCA0TXIFG));
-    // Send data
-    UCA0TXBUF = data;
-
-    return 0;
-}
-
 // UART mode receive handler
 #if UART_ON_USCI_A0
 
@@ -93,8 +77,8 @@ ISR(USCI_A0, USCIAInterruptHandler)
         return;
     }
 
-    if (usartRecvCb[0]) {
-        usartRecvCb[0](data);
+    if (serialRecvCb[0]) {
+        serialRecvCb[0](data);
     }
 }
 
@@ -110,8 +94,8 @@ ISR(USCI_A1, USCIAInterruptHandler)
         return;
     }
 
-    if (usartRecvCb[0]) {
-        usartRecvCb[0](data);
+    if (serialRecvCb[0]) {
+        serialRecvCb[0](data);
     }
 }
 

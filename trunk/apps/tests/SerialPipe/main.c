@@ -55,7 +55,7 @@ void doPrintBuffer(void *userData) {
         Handle_t h;
         ATOMIC_START(h);
         buf[bufPos++] = 0;
-        atomic(PRINTF("%s", buf));
+        PRINTF("%s", buf);
         bufPos = 0;
         ATOMIC_END(h);
     }
@@ -67,8 +67,6 @@ void doPrintBuffer(void *userData) {
 void appMain(void)
 {
     alarmInit(&printAlarm, doPrintBuffer, NULL);
-    PRINT_INIT(256); // inits UART1 automatically
-    if (USARTInit(0, 115200, 0)) redLedOn();
-    if (USARTEnableRX(0)) redLedOn();
-    USARTSetReceiveHandle(0, usart0Recv);
+    if (serialInit(0, 115200, 0)) redLedOn();
+    serialSetReceiveHandle(0, usart0Recv);
 }

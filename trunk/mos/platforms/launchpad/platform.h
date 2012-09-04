@@ -35,8 +35,8 @@ void initPlatform(void);
 #define USER_BUTTON_PIN  3
 
 // number of USARTs
-#define USART_COUNT 1
+#define SERIAL_COUNT 1
 // use the only "USART" for PRINTF
-#define PRINTF_USART_ID 0
+#define PRINTF_SERIAL_ID 0
 
 #endif

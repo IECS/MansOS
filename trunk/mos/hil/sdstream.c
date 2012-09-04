@@ -105,7 +105,7 @@ bool sdStreamWriteRecord(void *data, uint16_t length, bool crc)
     ASSERT(length <= sizeof(tmpBuffer));
 
     // XXX hack
-    if (usartBusy[SDCARD_SPI_ID]) return false;
+    if (serialBusy[SDCARD_SPI_ID]) return false;
 
     if (sdCardAddress == 0) {
         //void *buffer = memoryAlloc(length);

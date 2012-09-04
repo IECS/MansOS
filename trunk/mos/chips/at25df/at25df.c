@@ -144,7 +144,7 @@ static void at25df_pageProgram(uint32_t addr, const uint8_t *buffer, uint16_t le
 {
     // Handle_t h;
     // ATOMIC_START(h);
-    usartBusy[AT25DF_SPI_ID] = true;
+    serialBusy[AT25DF_SPI_ID] = true;
     AT25DF_WAIT_UNTIL_DONE();
     writeEnableAndUnprotect();
     AT25DF_SPI_ENABLE();
@@ -153,7 +153,7 @@ static void at25df_pageProgram(uint32_t addr, const uint8_t *buffer, uint16_t le
     AT25DF_WR_MANY(buffer, len);
     AT25DF_SPI_DISABLE();
     writeDisable();
-    usartBusy[AT25DF_SPI_ID] = false;
+    serialBusy[AT25DF_SPI_ID] = false;
 //    ATOMIC_END(h);
 }
 
@@ -161,10 +161,10 @@ void at25df_bulkErase(void)
 {
     // Handle_t h;
     // ATOMIC_START(h);
-    usartBusy[AT25DF_SPI_ID] = true;
+    serialBusy[AT25DF_SPI_ID] = true;
     AT25DF_WAIT_UNTIL_DONE();
     command(AT25DF_CHIP_ERASE_COMMAND);
-    usartBusy[AT25DF_SPI_ID] = false;
+    serialBusy[AT25DF_SPI_ID] = false;
 //    ATOMIC_END(h);
 }
 
@@ -172,14 +172,14 @@ void at25df_eraseSector(uint32_t addr)
 {
     // Handle_t h;
     // ATOMIC_START(h);
-    usartBusy[AT25DF_SPI_ID] = true;
+    serialBusy[AT25DF_SPI_ID] = true;
     AT25DF_WAIT_UNTIL_DONE();
     writeEnableAndUnprotect();
     AT25DF_SPI_ENABLE();
     AT25DF_WR_BYTE(AT25DF_BLOCK_ERASE_4KB);
     AT25DF_TX_ADDR(addr); // the lower bits will be automatically ignored
     AT25DF_SPI_DISABLE();
-    usartBusy[AT25DF_SPI_ID] = false;
+    serialBusy[AT25DF_SPI_ID] = false;
 //    ATOMIC_END(h);
 }
 
@@ -187,7 +187,7 @@ void at25df_read(uint32_t addr, void* buffer, uint16_t len)
 {
     // Handle_t h;
     // ATOMIC_START(h);
-    usartBusy[AT25DF_SPI_ID] = true;
+    serialBusy[AT25DF_SPI_ID] = true;
     AT25DF_WAIT_UNTIL_DONE();
     AT25DF_SPI_ENABLE();
     AT25DF_WR_BYTE(AT25DF_READ_ARRAY_FAST_COMMAND);
@@ -195,7 +195,7 @@ void at25df_read(uint32_t addr, void* buffer, uint16_t len)
     AT25DF_WR_BYTE(0); // dummy byte, needed for the fast mode
     AT25DF_RD_MANY(buffer, len);
     AT25DF_SPI_DISABLE();
-    usartBusy[AT25DF_SPI_ID] = false;
+    serialBusy[AT25DF_SPI_ID] = false;
 //    ATOMIC_END(h);
 }
 
