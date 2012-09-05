@@ -106,7 +106,7 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
 // Send/receive functions
 //
 
-uint_t serialSendByte(uint8_t id, uint8_t data)
+void serialSendByte(uint8_t id, uint8_t data)
 {
     if (id == 0) {
         while (!(UC0IFG & UCA0TXIFG));
@@ -120,8 +120,6 @@ uint_t serialSendByte(uint8_t id, uint8_t data)
         UCA1TXBUF = data;
 #endif
     }
-
-    return 0;
 }
 
 // UART mode receive handler
