@@ -32,7 +32,6 @@ from seal_syntax import SealSyntax
 from translater import Translater
 from output_area import OutputArea
 from tab_manager import TabManager
-from output_tools import OutputTools
 from listen_module import ListenModule
 from editor_manager import EditorManager
 from get_motelist import GetMotelist
@@ -122,34 +121,33 @@ class ApiCore:
         #    print "Can't find system default font, defaulting to {}".\
         #                format(self.fontName)
 
-### Shortcuts etc
+        self.listenModules = list()
+
+        self.editors = list()
+
+        icon = os.path.normpath('../../doc/mansos-32x32.ico')
+
+### Module initializations
 
 # Visual objects here can be used in forms only after they have been re-parented 
 # using their Reparent() function, else they won't be visible!
 
-        self.editors = list()
         self.emptyFrame = wx.Frame(None)
 
         # Defines seal syntax
         self.sealSyntax = SealSyntax(self)
-        self.getKeywords = self.sealSyntax.getKeywords
 
         # Init translation module
         self.translater = Translater(self)
         self.tr = self.translater.translate
 
         # Init output_tools
-        self.outputTools = OutputTools(self.emptyFrame, self)
+        #self.outputTools = OutputTools(self.emptyFrame, self)
 
         # Init outputArea for info, 1st tab
         self.infoArea = OutputArea(self.emptyFrame, self, 0)
         self.printInfo = self.infoArea.printLine
         self.clearInfoArea = self.infoArea.clear
-
-        # Init outputArea for output, 2nd tab
-        self.outputArea = OutputArea(self.emptyFrame, self, 1)
-        self.printOutput = self.outputArea.printLine
-        self.clearOutputArea = self.outputArea.clear
 
         # Init blockly handler
         self.blockly = Blockly(self.emptyFrame, self)
@@ -160,10 +158,9 @@ class ApiCore:
         # Init tab manager 
         self.tabManager = TabManager(self.emptyFrame, self)
 
-        self.uploadTargets = ([], self.tr('the default device'))
 
         # Init listenModule
-        self.listenModule = ListenModule(self.emptyFrame, self)
+        self.listenModules.append(ListenModule(self.emptyFrame, self))
 
         self.editPanel = ScrolledPanel(self.emptyFrame)
 
@@ -173,26 +170,47 @@ class ApiCore:
 
         #self.outputTools.addTools()
 
-        icon = os.path.normpath('../../doc/mansos-32x32.ico')
+        self.motelistClass = GetMotelist(self.pathToMansos, self)
+        self.compiler = DoCompile(self)
+        self.uploader = DoUpload(self)
+
+### Shortcuts
+
+# This allows modules to be disabled and dummy functions attached, so other 
+# modules can keep saving the day... Each module updates his functions at 
+# startup and restores them at termination. All function calls between modules 
+# should go through here, but this ain't perfect world :(
+
+        self.getKeywords = self.sealSyntax.getKeywords
+        self.tr = self.translater.translate
+        self.printInfo = self.dummyPrint
+        self.printOutput = self.dummyPrint
+
+# Check if icon can be found
         if os.path.exists(icon):
             self.frame.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_ICO, 32, 32))
         else:
             self.logMsg(LOG_WARNING, "Icon not found in '{}'!".format(icon))
 
-        self.onExit.append(self.frame.Close)
-
-        self.motelistClass = GetMotelist(self.pathToMansos, self)
-        self.compiler = DoCompile(self)
-        self.uploader = DoUpload(self)
-
+# Check that everything is OK
         assert len(self.emptyFrame.GetChildren()) == 0, \
-            "There are parentless objects after API initialization."
+        "There are parentless objects after API initialization.\n{}".format(\
+                            self.emptyFrame.GetChildren())
 
+        self.syncModuleCheckboxes()
+
+# Initialize upload targets
+        self.uploadTargets = ([], self.tr('the default device'))
+
+# Load last used tabs
         self.tabManager.loadRememberedTabs()
         for x in argv:
             self.tabManager.addPage(x)
         self.frame.auiManager.Update()
+
+# Populate motelist
         self.populateMotelist()
+
 
     def getPlatformsFromMakefile(self):
         makefile = os.path.join(self.path, "../../mos/make/Makefile.options")
@@ -328,10 +346,13 @@ class ApiCore:
             # Clear info about this thread
             self.activeThreads.pop(thread.EVT_ID)
         elif type(event.data) is str:
-            if thread.printToInfo:
-                self.infoArea.printLine(event.data)
-            if thread.printToListen:
-                self.outputArea.printLine(event.data)
+            if thread.printFunction:
+                thread.printFunction(event.data)
+            else:
+                if thread.printToInfo:
+                    self.infoArea.printLine(event.data)
+                if thread.printToListen:
+                    self.outputArea.printLine(event.data)
             thread.output += event.data
         elif type(event.data) is int:
             if event.data == 0:
@@ -361,3 +382,44 @@ class ApiCore:
 
     def getActivePlatform(self):
         return self.platforms[self.activePlatform]
+
+    def dummyPrint(self, msg, arg1 = "", arg2 = ""):
+        print msg
+
+    def addListenWindow(self, event):
+        listenModule = ListenModule(self.emptyFrame, self)
+        self.listenModules.append(listenModule)
+        self.frame.layoutListenPane(listenModule, "Listen module {}".format(len(self.listenModules)))
+        self.frame.auiManager.Update()
+
+    def showBlocklyWindow(self, event):
+        blocklyPane = self.frame.auiManager.GetPaneByName("blocklyPane")
+        if blocklyPane.IsShown() and blocklyPane.IsOk():
+            self.blocklyPane = blocklyPane
+            blocklyPane.Float()
+            blocklyPane.Hide()
+            self.frame.auiManager.DetachPane(self.blockly)
+        else:
+            self.frame.layoutBlocklyPane()
+        self.frame.auiManager.UpdateNotebook()
+        self.frame.auiManager.Update()
+
+    def showEditWindow(self, event):
+        editPane = self.frame.auiManager.GetPaneByName("editPane")
+        if editPane.IsShown() and editPane.IsOk():
+            self.frame.auiManager.ClosePane(editPane)
+            self.frame.auiManager.DetachPane(self.editPanel)
+        else:
+            self.frame.layoutEditPane()
+        self.frame.auiManager.Update()
+
+    def syncModuleCheckboxes(self):
+        if self.frame.auiManager.GetPaneByName("editPane").IsShown():
+            self.frame.editCheck.Check(True)
+        else:
+            self.frame.editCheck.Check(False)
+
+        if self.frame.auiManager.GetPaneByName("blocklyPane").IsShown():
+            self.frame.blocklyCheck.Check(True)
+        else:
+            self.frame.blocklyCheck.Check(False)

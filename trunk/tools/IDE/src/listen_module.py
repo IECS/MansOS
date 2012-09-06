@@ -23,6 +23,8 @@
 #
 
 import wx
+
+from output_area import OutputArea
 from helperFunctions import listenSerialPort
 from myThread import MyThread
 
@@ -40,8 +42,6 @@ class ListenModule(wx.Panel):
              'baudrate': 38400
          }
 
-        self.API.outputArea.Reparent(self)
-        self.updateStatus = self.API.printOutput
         self.API.motelistCallbacks.append(self.updateMotelist)
 
         self.SetBackgroundColour("white")
@@ -52,13 +52,18 @@ class ListenModule(wx.Panel):
         self.clear = wx.Button(self, label = self.tr("Start listening"))
         self.refresh = wx.Button(self, label = self.tr("Refresh"))
 
+        # Init outputArea for output
+        self.outputArea = OutputArea(self, self.API, 1)
+        self.updateStatus = self.outputArea.printLine
+        self.clearOutputArea = self.outputArea.clear
+
         self.listenControls.Add(self.ports)
         self.listenControls.Add(self.refresh)
         self.listenControls.Add(self.clear)
 
         self.main.Add(self.listenControls, 0,
                       wx.EXPAND | wx.wx.TOP | wx.LEFT | wx.RIGHT, 10);
-        self.main.Add(self.API.outputArea, 1, wx.EXPAND | wx.ALL, 5);
+        self.main.Add(self.outputArea, 1, wx.EXPAND | wx.ALL, 5);
 
         self.Bind(wx.EVT_BUTTON, self.doClear, self.clear)
         self.Bind(wx.EVT_BUTTON, self.getMotelist, self.refresh)
@@ -89,7 +94,7 @@ class ListenModule(wx.Panel):
         self.clear.SetSize(self.clear.GetEffectiveMinSize())
         if self.listening:
             thread = MyThread(listenSerialPort, self.args, \
-                              self.doClear, False, True, "Serial port listener")
+                              self.doClear, False, True, "Serial port listener", self.updateStatus)
             self.API.startThread(thread)
         else:
             self.API.stopThread("Serial port listener")
