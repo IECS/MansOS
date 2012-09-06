@@ -27,9 +27,9 @@
 #include <alarms.h>
 #include <timers.h>
 #include <print.h>
-#include <lib/radio_packet_buffer.h>
 #include <net/net-stats.h>
 #include <net/routing.h>
+#include <net/radio_packet_buffer.h>
 #include <leds.h>
 
 #define TEST_FILTERS 1

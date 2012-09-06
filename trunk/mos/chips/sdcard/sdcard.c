@@ -124,7 +124,7 @@ static bool cacheChanged;
 #define MMC_SOMI          SPI_SOMI
 #define MMC_UCLK          SPI_UCLK
 
-void sdcardInitUsart(void)
+void sdcardInitSerial(void)
 {
     IE1 &= ~(URXIE0 | UTXIE0); // disable USART interrupts
 
@@ -182,7 +182,7 @@ void sdcardInitUsart(void)
 #define MMC_SOMI          SPI_SOMI
 #define MMC_UCLK          SPI_UCLK
 
-void sdcardInitUsart(void)
+void sdcardInitSerial(void)
 {
     // Init Port for MMC (default high)
     MMC_PxOUT |= MMC_SIMO + MMC_UCLK;
@@ -307,8 +307,8 @@ bool sdcardInit(void)
 
     //msp430USARTInitSPI(SDCARD_SPI_ID, SPI_MODE_MASTER);
     //spiBusInit(SDCARD_SPI_ID, SPI_MODE_MASTER);
-    sdcardInitUsart();
-    usartFunction[SDCARD_SPI_ID] = SERIAL_FUNCTION_SDCARD;
+    sdcardInitSerial();
+    serialFunction[SDCARD_SPI_ID] = SERIAL_FUNCTION_SDCARD;
 
     SPRINTF("1\n");
     // mdelay(1);

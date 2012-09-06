@@ -26,7 +26,7 @@
 #include <radio.h>
 #include <errors.h>
 #include <print.h>
-#include <lib/radio_packet_buffer.h>
+#include <net/radio_packet_buffer.h>
 #include <net/net-stats.h>
 
 #if DEBUG

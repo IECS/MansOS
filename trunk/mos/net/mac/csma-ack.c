@@ -32,7 +32,7 @@
 #include <print.h>
 #include <random.h>
 #include <lib/assert.h>
-#include <lib/radio_packet_buffer.h>
+#include <net/radio_packet_buffer.h>
 #include <kernel/threads/timing.h>
 #include <net/net-stats.h>
 
