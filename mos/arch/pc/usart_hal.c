@@ -56,53 +56,48 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
     return 0;
 }
 
-uint_t serialSendByte( uint8_t id, uint8_t data)
+void serialSendByte( uint8_t id, uint8_t data)
 {
-    if (id >= SERIAL_COUNT) return (uint_t)-1u;
+    if (id >= SERIAL_COUNT) return;
 
     if (txEnabled[id]) {
         printf("%c", data);
         fflush(stdout);
     }
-    return 0;
 }
 
-uint_t serialEnableTX( uint8_t id )
+void serialEnableTX( uint8_t id )
 {
-    if (id >= SERIAL_COUNT) return (uint_t)-1u;
+    if (id >= SERIAL_COUNT) return;
 
     txEnabled[id] = true;
-    return 0;
 }
 
-uint_t serialDisableTX( uint8_t id )
+void serialDisableTX( uint8_t id )
 {
-    if (id > SERIAL_COUNT) return (uint_t)-1u;
+    if (id > SERIAL_COUNT) return;
 
     txEnabled[id] = false;
-    return 0;
 }
 
-uint_t serialEnableRX( uint8_t id )
+void serialEnableRX( uint8_t id )
 {
-    if (id >= SERIAL_COUNT) return (uint_t)-1u;
+    if (id >= SERIAL_COUNT) return;
 
     if (!rxEnabled[id]) {
         rxEnabled[id] = true;
         pthread_create(&rxThread, NULL, rxHandler, (void *) (uint32_t) id);
     }
-    return 0;
 }
 
-uint_t serialDisableRX( uint8_t id )
+void serialDisableRX( uint8_t id )
 {
-    if (id > SERIAL_COUNT) return (uint_t)-1u;
+    if (id > SERIAL_COUNT) return;
 
     if (rxEnabled[id]) {
         rxEnabled[id] = false;
         pthread_join(rxThread, NULL);
     }
-    return 0;
 }
 
 // simulate serial rx in a separate thread

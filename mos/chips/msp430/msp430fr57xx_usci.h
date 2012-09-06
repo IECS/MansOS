@@ -105,7 +105,7 @@ static inline void hw_spiBusOff(uint8_t busId) { }
 
 
 // Send data
-void serialSendByte(uint8_t id, uint8_t data)
+static inline void serialSendByte(uint8_t id, uint8_t data)
 {
     while (!(UC0IFG & UCA0TXIFG));
     UCA0TXBUF = data;
