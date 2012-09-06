@@ -45,6 +45,8 @@ class Editor(wx.stc.StyledTextCtrl):
         self.lastLineNr = -1
         self.forcedType = UNKNOWN
 
+        self.sealParserTimer = None
+
         self._styles = [None] * 32
         self._free = 1
 
@@ -382,11 +384,18 @@ class Editor(wx.stc.StyledTextCtrl):
         if self.GetParent().projectType == SEAL_PROJECT:
             if self.lastText != self.GetText():
                 self.lastText = self.GetText()
-                self.API.sealParser.run(self.lastText)
-                self.lineTracking = self.API.sealParser.lineTracking
+
+                if self.sealParserTimer == None:
+                    self.sealParserTimer = wx.CallLater(1000, self.doSealParse)
+                else:
+                    self.sealParserTimer.Restart()
             if self.lastLineNr != self.GetCurLine():
                 self.lastLineNr = self.GetCurLine()
                 self.getAction(event)
+
+    def doSealParse(self):
+        self.API.sealParser.run(self.lastText)
+        self.lineTracking = self.API.sealParser.lineTracking
 
     def getAction(self, event):
         if self.newMode:

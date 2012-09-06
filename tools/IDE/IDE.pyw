@@ -25,8 +25,7 @@
 
 import os
 from sys import path, argv
-import time
-import wx.lib.inspection
+#import wx.lib.inspection
 
 def main():
     # Go to real directory for imports to work
@@ -52,17 +51,17 @@ def importsOk():
     mansOSOK = True         # MansOS
 
     try:
-        import wx
+        import wx #@UnusedImport
     except ImportError:
         wxModuleOK = False
 
     try:
-        import serial
+        import serial #@UnusedImport
     except ImportError:
         serialModuleOK = False
 
     try:
-        import ply
+        import ply #@UnusedImport
     except ImportError:
         plyModuleOK = False
 
@@ -71,8 +70,8 @@ def importsOk():
         sealPath = os.path.join(os.getcwd()[:-4], "seal")
         path.append(sealPath)
         path.append(os.path.join(sealPath, 'components'))
-        from seal_parser import SealParser
-        import seal_parser
+        from seal_parser import SealParser #@UnusedImport
+        import seal_parser #@UnusedImport
     except ImportError:
         sealParserOK = False
     except OSError:

@@ -36,13 +36,15 @@ class ResultEvent(wx.PyEvent):
 
 class MyThread():
     def __init__(self, target = None, args = None, callbackFunction = None,
-                 printToInfo = False, printToListen = False, name = ''):
+                 printToInfo = False, printToListen = False, name = '',
+                 printFunction = None):
         # Initial values
         self.target = target
         self.args = args
         self.callbackFunction = callbackFunction
         self.printToInfo = printToInfo
         self.printToListen = printToListen
+        self.printFunction = printFunction
         self.name = name if name != '' else str(callbackFunction)
 
         # Background values

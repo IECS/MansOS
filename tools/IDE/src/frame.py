@@ -54,56 +54,36 @@ class Frame(wx.Frame):
         self.examples = dict()
         self.initUI()
         self.SetBackgroundColour("white")
-
-        flag = aui.AUI_MGR_ALLOW_ACTIVE_PANE | aui.AUI_MGR_LIVE_RESIZE | \
+        flag = aui.AUI_MGR_LIVE_RESIZE | aui.AUI_MGR_ALLOW_ACTIVE_PANE | \
         aui.AUI_MGR_AUTONB_NO_CAPTION | aui.AUI_MGR_SMOOTH_DOCKING | \
         aui.AUI_MGR_TRANSPARENT_HINT | aui.AUI_NB_CLOSE_ON_TAB_LEFT | \
         aui.AUI_MGR_AERO_DOCKING_GUIDES | aui.AUI_MGR_TRANSPARENT_DRAG
         self.auiManager.SetAGWFlags(self.auiManager.GetAGWFlags() ^ flag)
-        self.auiManager.SetAutoNotebookStyle(aui.AUI_NB_TOP | aui.AUI_NB_SMART_TABS)
+        self.auiManager.SetAutoNotebookStyle(aui.AUI_NB_TOP | aui.AUI_NB_SMART_TABS | aui.AUI_NB_CLOSE_ON_ALL_TABS)
+        self.auiManager.SetManagedWindow(self)
+
+        self.API.onExit.append(self.Close)
 
         self.API.tabManager.Reparent(self)
         self.API.editPanel.Reparent(self)
         self.API.blockly.Reparent(self)
-
-        self.tabManager = self.API.tabManager
-
-        self.auiManager.SetManagedWindow(self)
-        self.auiManager.AddPane(self.API.tabManager,
-                aui.AuiPaneInfo().CenterPane().
-                CloseButton(False).
-                Caption("Editors").CaptionVisible(False).
-                MinimizeButton(True).MaximizeButton(True).
-                BestSize(wx.Size(400, 400)))
-        self.auiManager.UpdateNotebook()
-        rightPane = (aui.AuiPaneInfo().Floatable(True).
-                Right().
-                CloseButton(False).
-                Caption("Visual edit").CaptionVisible(True).
-                MinimizeButton(True).MaximizeButton(True).
-                BestSize(wx.Size(320, 400)))
-        self.auiManager.AddPane(self.API.editPanel, rightPane)
-
-        self.bottomPane = (aui.AuiPaneInfo().
-                Bottom().CloseButton(False).
-                CaptionVisible(True).Caption("Listen").
-                MinimizeButton(True).MaximizeButton(True).
-                BestSize(wx.Size(500, 150)))
-        self.API.listenModule.Reparent(self)
-        self.auiManager.AddPane(self.API.listenModule, self.bottomPane)
-
-        self.blocklyPane = (aui.AuiPaneInfo().Caption("Seal-Blockly handler").CloseButton(False).
-                CaptionVisible(True).
-                MinimizeButton(True).MaximizeButton(True).
-                BestSize(wx.Size(500, 150)))
-        self.auiManager.AddPane(self.API.blockly, self.blocklyPane, target = self.bottomPane)
-
+        self.API.listenModules[0].Reparent(self)
         self.API.infoArea.Reparent(self)
-        infoPane = (aui.AuiPaneInfo().Caption("Info").CloseButton(False).
-                CaptionVisible(True).
-                MinimizeButton(True).MaximizeButton(True).
-                BestSize(wx.Size(500, 150)))
-        self.auiManager.AddPane(self.API.infoArea, infoPane, target = self.bottomPane)
+
+        mainPane = (aui.AuiPaneInfo().CenterPane().Name("mainPane").
+                Caption("Editors").CaptionVisible(False).
+                BestSize(wx.Size(600, 400)))
+        self.auiManager.AddPane(self.API.tabManager, mainPane)
+
+        self.infoPane = (aui.AuiPaneInfo().CaptionVisible(True).
+                BestSize(wx.Size(500, 150)).Bottom().
+                CloseButton(False).MaximizeButton(True).MinimizeButton(True))
+
+        self.auiManager.AddPane(self.API.infoArea, self.infoPane.Caption("Info").Name("infoPane"))
+
+        self.layoutListenPane(self.API.listenModules[0], "Listen module 1", False)
+        self.layoutEditPane()
+        self.layoutBlocklyPane()
 
         self.auiManager.Update()
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
@@ -233,6 +213,17 @@ class Frame(wx.Frame):
 
         output = optionMenu.Append(wx.ID_ANY, '&' + self.tr('Configure upload and compile') + '\tCtrl+R',
                               self.tr('Open read output window'))
+        windowMenu = wx.Menu()
+        addMenu = wx.Menu()
+        showMenu = wx.Menu()
+        windowMenu.AppendMenu(wx.ID_ANY, self.tr('Add window'), addMenu)
+        windowMenu.AppendMenu(wx.ID_ANY, self.tr('Show window'), showMenu)
+        listen = addMenu.Append(wx.ID_ANY, '&' + self.tr('Add listen window'),
+                              self.tr('Add listen window'))
+        self.blocklyCheck = showMenu.AppendCheckItem(wx.ID_ANY, '&' + self.tr('Show blockly window'),
+                              self.tr('Show blockly window'))
+        self.editCheck = showMenu.AppendCheckItem(wx.ID_ANY, '&' + self.tr('Show edit window'),
+                              self.tr('Show edit window'))
 
         helpMenu = wx.Menu()
         sealHelp = helpMenu.Append(wx.ID_ANY, '&' + self.tr('Seal documentation'),
@@ -251,6 +242,7 @@ class Frame(wx.Frame):
         self.menubar.Append(fileMenu, '&' + self.tr('File'))
         self.menubar.Append(exampleMenu, '&' + self.tr('Examples'))
         self.menubar.Append(optionMenu, '&' + self.tr('Options'))
+        self.menubar.Append(windowMenu, '&' + self.tr('Windows'))
         self.menubar.Append(helpMenu, '&' + self.tr('Help'))
         self.SetMenuBar(self.menubar)
 
@@ -266,11 +258,15 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnSealHelp, sealHelp)
         self.Bind(wx.EVT_MENU, self.OnMansosHelp, mansosHelp)
 
+        self.Bind(wx.EVT_MENU, self.API.addListenWindow, listen)
+        self.Bind(wx.EVT_MENU, self.API.showBlocklyWindow, self.blocklyCheck)
+        self.Bind(wx.EVT_MENU, self.API.showEditWindow, self.editCheck)
+
     def on_file_history(self, event):
             fileNum = event.GetId() - wx.ID_FILE1
             path = self.recentlyMenu.GetHistoryFile(fileNum)
             self.recentlyMenu.AddFileToHistory(path)  # move up the list
-            self.tabManager.addPage(path)
+            self.API.tabManager.addPage(path)
 
     def OnQuit(self, event):
         # Workaround, because wx.exit calls wx.ON_CLOSE, which is binded to this 
@@ -280,27 +276,27 @@ class Frame(wx.Frame):
             return
         self.API.tabManager.rememberOpenedTabs()
         self.rememberPositioning()
-        if self.tabManager.onQuitCheck() == True:
+        if self.API.tabManager.onQuitCheck() == True:
             self.exitCalled = time()
             self.API.performExit()
             wx.Exit()
 
     def OnSave(self, event):
-        self.tabManager.doPopupSave(None)
+        self.API.tabManager.doPopupSave(None)
 
     def OnSaveAs(self, event):
-        self.tabManager.doPopupSaveAs(None)
+        self.API.tabManager.doPopupSaveAs(None)
 
     def OnCompile(self, event):
-        if self.tabManager.doPopupSave(None) == True:
+        if self.API.tabManager.doPopupSave(None) == True:
             self.API.doCompile()
 
     def OnUpload(self, event):
-        if self.tabManager.doPopupSave(None) == True:
+        if self.API.tabManager.doPopupSave(None) == True:
             self.API.doUpload()
 
     def OnOutput(self, event):
-        if self.tabManager.doPopupSave(None) == True:
+        if self.API.tabManager.doPopupSave(None) == True:
 
             dialog = wx.Dialog(self, wx.ID_ANY, self.tr('Configure upload and compile'),
                 style = wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
@@ -311,7 +307,7 @@ class Frame(wx.Frame):
             dialog.Destroy()
 
     def OnNew(self, event):
-        self.tabManager.addPage()
+        self.API.tabManager.addPage()
 
     def OnOpen(self, event):
         open_ = wx.FileDialog(self,
@@ -322,7 +318,7 @@ class Frame(wx.Frame):
         if open_.ShowModal() == wx.ID_OK:
             for x in open_.GetPaths():
                 if os.path.exists(x) and os.path.isfile(x):
-                    self.tabManager.addPage(x)
+                    self.API.tabManager.addPage(x)
         open_.Destroy()
 
     def findFirstSourceFile(self, path):
@@ -347,15 +343,15 @@ class Frame(wx.Frame):
         path = self.examples.get(event.GetId())
         filename = self.findFirstSourceFile(path)
         if filename:
-            self.tabManager.addPage(filename)
+            self.API.tabManager.addPage(filename)
         else:
             self.API.logMsg(LOG_WARNING, "No source files in {}".format(path))
 
     def OnAddStatement(self, event):
-        self.tabManager.getPageObject().code.addStatement()
+        self.API.tabManager.getPageObject().code.addStatement()
 
     def OnAddCondition(self, event):
-        self.tabManager.getPageObject().code.addCondition()
+        self.API.tabManager.getPageObject().code.addCondition()
 
     def OnAbout(self, event):
         versionFile = os.path.join("../..", "doc/VERSION")
@@ -493,3 +489,24 @@ Developed by: Jānis Judvaitis, janis.judvaitis@gmail.com
     #    wx.YieldIfNeeded()
     #    self.auiManager.RestorePane(self.blocklyPane)
     #    self.blocklyToolVisible = not self.blocklyToolVisible
+
+    def layoutBlocklyPane(self):
+        blocklyPane = (aui.AuiPaneInfo().Caption("Seal-Blockly handler").
+                Name("blocklyPane").BestSize(wx.Size(500, 150)))
+        self.auiManager.AddPane(self.API.blockly, blocklyPane,
+                                target = self.infoPane)
+
+    def layoutListenPane(self, listenModule, name, floating = True):
+        listenPane = (aui.AuiPaneInfo().BestSize(wx.Size(500, 150)).
+                Caption(name).Name(name).MinimizeButton(True).
+                MaximizeButton(True).CloseButton(True))
+        if floating:
+            listenPane.Float()
+        self.auiManager.AddPane(listenModule, listenPane, target = self.infoPane)
+
+    def layoutEditPane(self):
+        self.rightPane = (aui.AuiPaneInfo().Floatable(True).
+                Right().Name("editPane").MinimizeButton(True).
+                MaximizeButton(True).CloseButton(True).Caption("Visual edit").
+                BestSize(wx.Size(320, 400)))
+        self.auiManager.AddPane(self.API.editPanel, self.rightPane)

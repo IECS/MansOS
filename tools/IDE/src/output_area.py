@@ -46,15 +46,15 @@ class OutputArea(wx.Panel):
             text = "\n"
         self.outputArea.AppendText(text)
         self.outputArea.ScrollLines(1)
-        # Disable switching, unable to write in editor!
-        return
+        # Ensure output visibility
         if forceSwitching:
             if self == self.API.infoArea:
                 self.API.frame.auiManager.ShowPane(self, True)
-            elif self == self.API.outputArea:
-                self.API.frame.auiManager.ShowPane(self.API.listenModule, True)
             else:
-                assert False, "Output window identity crysis!"
-
+                self.API.frame.auiManager.ShowPane(self.GetParent(), True)
+            #else:
+            #    assert False, "Output window identity crysis!"
+        # Return focus to the editor
+        self.API.tabManager.getPageObject().code.SetFocus()
     def clear(self):
         self.outputArea.Clear()
