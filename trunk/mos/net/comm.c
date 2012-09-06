@@ -25,9 +25,14 @@
 #include "routing.h"
 #include "socket.h"
 #include "queue.h"
+#include "net-stats.h"
+#include "radio_packet_buffer.h"
 #include <serial_number.h>
 #include <print.h>
-#include <net/net-stats.h>
+
+#ifndef RADIO_BUFFER_SIZE
+#define RADIO_BUFFER_SIZE RADIO_MAX_PACKET
+#endif
 
 // ---------- place for global net variables
 
@@ -42,6 +47,14 @@ int32_t rootClockDeltaMs;
 #ifdef DEBUG
 uint32_t netstats[TOTAL_NETSTAT];
 #endif
+
+static struct RadioPacketBufferReal_s {
+    uint8_t bufferLength;     // length of the buffer
+    int8_t receivedLength;    // length of data stored in the packet, or error code if negative
+    uint8_t buffer[RADIO_BUFFER_SIZE]; // a buffer where the packet is stored
+} realBuf = {RADIO_BUFFER_SIZE, 0, {0}};
+
+RadioPacketBuffer_t *radioPacketBuffer = (RadioPacketBuffer_t *) &realBuf;
 
 // -----------------------------------
 

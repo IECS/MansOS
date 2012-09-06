@@ -130,7 +130,6 @@ PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/sleep.c
 endif # ifeq($(USE_THREADS),y)
 
 PSOURCES-$(USE_NET) += $(MOS)/lib/buffer.c
-PSOURCES-$(USE_NET) += $(MOS)/lib/radio_packet_buffer.c
 PSOURCES-$(USE_HD4478_LCD) += $(MOS)/chips/hd4478/hd4478.c
 
 PSOURCES-$(USE_REPROGRAMMING) += $(MOS)/kernel/boot.c
