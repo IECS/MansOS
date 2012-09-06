@@ -32,10 +32,6 @@
 #include <net/routing.h>
 #include <leds.h>
 
-#if PLATFORM_Z1
-#include <lib/radio_packet_buffer.c>
-#endif
-
 #define TEST_FILTERS 1
 
 static void initSadMac(RecvFunction cb);
