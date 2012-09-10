@@ -27,14 +27,14 @@
 #include <kernel/defines.h>
 #include <platform.h>
 
+extern volatile ticks_t jiffies;
+
 //
 // More heavyweight versions of ATOMIC_START/ATOMIC_END macros
 // that take in account timer ticks during interrupt phase.
 // Note that interrupt handlers are called as soon as interrupts are enabled,
 // so delays < 10ms will be handled by the default logic
 //
-extern volatile ticks_t jiffies;
-
 #define ATOMIC_START_TIMESAVE(h)                                     \
     const uint_t _start_time = ALARM_TIMER_VALUE();                  \
     ATOMIC_START(h)
@@ -48,20 +48,5 @@ extern volatile ticks_t jiffies;
         }                                                            \
     }                                                                \
     ATOMIC_END(h)
-
-//
-// Atomic ops (syntactic sugar)
-//
-#define atomic(op)  do {             \
-        Handle_t h;                  \
-        ATOMIC_START(h);             \
-        op;                          \
-        ATOMIC_END(h);               \
-    } while (0)
-
-#define atomic_read(x, ret)  atomic(ret = x)
-#define atomic_write(x, y)  atomic(x = y)
-#define atomic_inc(x, c)  atomic(x += c)
-#define atomic_dec(x, c)  atomic(x -= c)
 
 #endif
