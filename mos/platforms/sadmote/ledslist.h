@@ -31,12 +31,6 @@
 //      Platform: SADmote
 //==========================================================
 
-// DOIT_COUNTER(): starts with 1 and increments for each line
-#ifndef DOIT_COUNTER 
-#define DOIT_COUNTER() (__LINE__ - DOIT_FIRST_LINE)
-#endif  // DOIT_COUNTER 
-
-
 //-------------------------------------------
 // LED implementation with individual parameters per led
 // Invoke this definition from outside as follows:
@@ -76,12 +70,7 @@ LED_DEFINE(redLed,   LEDS_PORT, 4, LEDS_ON_PIN_VALUE)
 // Do iteration if DOIT(item) is defined
 //-------------------------------------------
 #ifdef DOIT
-#undef DOIT_FIRST_LINE
 
-// Do not leave empty lines between this and any DOIT(item)
-// for the DOIT_COUNTER() to worlk properly!
-
-#define DOIT_FIRST_LINE __LINE__
 DOIT(redLed)
 
 // Reset DOIT for the next use

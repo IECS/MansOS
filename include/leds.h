@@ -93,7 +93,12 @@ uint_t ledsGet(void);              // Which leds are on? Returns a bitmask
 // Prerequisite: ledslist.h file with the LED names.
 //----------------------------------------------------------
 typedef enum {
-#  define DOIT(_led) _led##_mask  = (1<<( DOIT_COUNTER() )), 
+#  define DOIT(_led) _led##_num, 
+#  include "ledslist.h"
+} leds_num_t;
+
+typedef enum {
+#  define DOIT(_led) _led##_mask  = (1 << _led##_num),
 #  include "ledslist.h"
 } leds_t;
 

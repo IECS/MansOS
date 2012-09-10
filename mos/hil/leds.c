@@ -22,6 +22,7 @@
  */
 
 #include "leds.h"
+#include <print.h>
 
 //=========================================================
 // Services for multiple LEDs
