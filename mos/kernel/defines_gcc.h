@@ -36,7 +36,8 @@
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 5 // for msp430-gcc version 4.5+
 #include <msp430.h>
 #else
-#include <msp430x16x.h>
+#include <io.h>
+#include <signal.h>
 #endif
 #if !defined(__MSP430_LIBC__) || __MSP430_LIBC__ < 20111008L
 #  define interrupt(x) void __attribute__((interrupt (x)))
