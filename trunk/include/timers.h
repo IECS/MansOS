@@ -26,7 +26,6 @@
 
 #include <platform.h>
 #include <kernel/threads/timing.h>
-#include <hil/atomic.h>
 
 extern volatile ticks_t jiffies;
 
@@ -34,7 +33,8 @@ extern volatile ticks_t jiffies;
 // counter was not incremented
 static inline void incRealtime(uint32_t inc)
 {
-    atomic_inc(jiffies, inc);
+    // XXX: make sure this function is called with interrupts disabled
+    jiffies += inc;
 }
 
 static inline uint16_t msToSleepCycles(uint16_t ms)

@@ -67,6 +67,7 @@ SLEEP_TIMER_INTERRUPT()
 
 void MSLEEP_FUNCTION_NAME(uint16_t milliseconds)
 {
+    DISABLE_INTS();
     // setup sleep timer
     SLEEP_TIMER_SET(milliseconds);
     // start timer B
