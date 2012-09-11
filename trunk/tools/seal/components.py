@@ -1864,7 +1864,7 @@ class Sensor(Component):
             return self.generateArithmeticFunction(outputFile, functionTree, '+', root)
         if functionTree.function == "minus" or functionTree.function == "subtract":
             return self.generateArithmeticFunction(outputFile, functionTree, '-', root)
-        if functionTree.function == "multiply":
+        if functionTree.function == "multiply" or functionTree.function == "times":
             return self.generateArithmeticFunction(outputFile, functionTree, '*', root)
         if functionTree.function == "divide":
             return self.generateArithmeticFunction(outputFile, functionTree, '/', root)
