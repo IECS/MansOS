@@ -38,6 +38,7 @@ class OutputArea(wx.Panel):
         self.SetBackgroundColour("white")
         self.SetSizerAndFit(sizer)
         self.SetAutoLayout(1)
+        self.forceCall = None
 
     def printLine(self, text, clear = False, forceSwitching = True):
         if clear:
@@ -48,13 +49,18 @@ class OutputArea(wx.Panel):
         self.outputArea.ScrollLines(1)
         # Ensure output visibility
         if forceSwitching:
-            if self == self.API.infoArea:
-                self.API.frame.auiManager.ShowPane(self, True)
+            if self.forceCall == None:
+                self.switch()
+                self.forceCall = wx.CallLater(1000, self.switch)
             else:
-                self.API.frame.auiManager.ShowPane(self.GetParent(), True)
-            #else:
-            #    assert False, "Output window identity crysis!"
-        # Return focus to the editor
+                self.forceCall.Restart()
+
+    def switch(self):
+        if self == self.API.infoArea:
+            self.API.frame.auiManager.ShowPane(self, True)
+        else:
+            self.API.frame.auiManager.ShowPane(self.GetParent(), True)
         self.API.tabManager.getPageObject().code.SetFocus()
+
     def clear(self):
         self.outputArea.Clear()
