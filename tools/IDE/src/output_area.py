@@ -56,6 +56,8 @@ class OutputArea(wx.Panel):
                 self.switch()
                 self.forceCall = wx.CallLater(1000, self.switch)
             else:
+                if self.forceCall.HasRun():
+                    self.switch()
                 self.forceCall.Restart()
 
     def switch(self):
