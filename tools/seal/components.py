@@ -2,11 +2,11 @@ import sys, string, copy
 from structures import *
 
 # pre-allocated packet field ID
-PACKET_FIELD_ID_COMMAND    = 0
-PACKET_FIELD_ID_SEQNUM     = 1
-PACKET_FIELD_ID_TIMESTAMP  = 2
-PACKET_FIELD_ID_ADDRESS    = 3
-PACKET_FIELD_ID_IS_SENT    = 4
+PACKET_FIELD_ID_COMMAND = 0
+PACKET_FIELD_ID_SEQNUM = 1
+PACKET_FIELD_ID_TIMESTAMP = 2
+PACKET_FIELD_ID_ADDRESS = 3
+PACKET_FIELD_ID_IS_SENT = 4
 # first free packet field ID (note that ID 31, 63, 95, 127 etc. are reserved for extension)
 PACKET_FIELD_ID_FIRST_FREE = 5
 
@@ -282,7 +282,7 @@ class UseCase(object):
         if outComp is None:
             componentRegister.userError("Component '{0}': 'out' parameter must point to a valid component!\n".format(outName))
             return
-        
+
         writeFunction = outComp.getDependentParameterValue("writeFunction", outComp.parameters)
         if writeFunction is None:
             componentRegister.userError("Component '{0}': 'out' parameter points to a component with write function!\n".format(outName))
@@ -827,7 +827,7 @@ class Sensor(Component):
             outputFile.write("#define {0}_TYPE_ID     {1:}\n".format(self.getNameUC(), self.getSystemwideID()))
             # TODO FIXME: also all copies
             if len(self.alsoSensorIds) == 0:
-                mask = 1<< self.getSystemwideID()
+                mask = 1 << self.getSystemwideID()
             else:
                 mask = 0
                 for id in self.alsoSensorIds:
@@ -1741,7 +1741,7 @@ class Sensor(Component):
                 self.generatedDefaultRawReadFunction = True
 
             self.markAsUsed()
-            
+
             outputFile.write("static inline {0} {1}ReadRaw{2}(void)\n".format(
                     self.getDataType(), self.getNameCC(), readFunctionSuffix))
             outputFile.write("{\n")
@@ -2021,7 +2021,7 @@ class OutputUseCase(object):
                 systemwideID = componentRegister.sensors.get(fieldName).getSystemwideID()
             else:
                 continue
-            paramValue = self.getParameterValue(f) 
+            paramValue = self.getParameterValue(f)
             if paramValue:
                 self.packetFields.append(PacketField(
                         systemwideID, f, size, type, count = 1, defaultValue = paramValue))
@@ -2040,8 +2040,8 @@ class OutputUseCase(object):
         outputFile.write(getIndent(indent) + "struct {0}Packet_s {1}\n".format(self.getNameTC(), '{'))
 
         # --- generate header
-        outputFile.write(getIndent(indent+1) + "uint16_t magic;\n")  # 2-byte magic number
-        outputFile.write(getIndent(indent+1) + "uint16_t crc;\n")    # 2-byte crc (always)
+        outputFile.write(getIndent(indent + 1) + "uint16_t magic;\n")  # 2-byte magic number
+        outputFile.write(getIndent(indent + 1) + "uint16_t crc;\n")    # 2-byte crc (always)
         # type masks
         headerField = 0
         numField = 1
@@ -2049,7 +2049,7 @@ class OutputUseCase(object):
             if f.sensorID >= numField * 32:
                 headerField |= 1 << 31
                 outputFile.write("#define {}_TYPE_MASK {:#x}\n".format(self.getNameUC(), headerField))
-                outputFile.write(getIndent(indent+1) + "uint32_t typeMask{};\n".format(numField))
+                outputFile.write(getIndent(indent + 1) + "uint32_t typeMask{};\n".format(numField))
                 self.headerMasks.append(headerField)
                 headerField = 0
                 numField += 1
@@ -2059,7 +2059,7 @@ class OutputUseCase(object):
                 headerField |= (1 << bit)
         if headerField:
             outputFile.write("#define {}_TYPE_MASK {:#x}\n".format(self.getNameUC(), headerField))
-            outputFile.write(getIndent(indent+1) + "uint32_t typeMask{};\n".format(numField))
+            outputFile.write(getIndent(indent + 1) + "uint32_t typeMask{};\n".format(numField))
             self.headerMasks.append(headerField)
 
         # --- generate the body of the packet
@@ -2068,14 +2068,14 @@ class OutputUseCase(object):
         for f in self.packetFields:
             paddingNeeded = packetLen % f.dataSize
             if paddingNeeded:
-                outputFile.write(getIndent(indent+1) + "uint{}_t __reserved{};\n".format(
+                outputFile.write(getIndent(indent + 1) + "uint{}_t __reserved{};\n".format(
                         paddingNeeded * 8, reservedNum))
                 packetLen += paddingNeeded
                 reservedNum += 1
             if f.count == 1:
-                outputFile.write(getIndent(indent+1) + "{0} {1};\n".format(f.dataType, f.sensorName))
+                outputFile.write(getIndent(indent + 1) + "{0} {1};\n".format(f.dataType, f.sensorName))
             else:
-                outputFile.write(getIndent(indent+1) + "{0} {1}[{2}];\n".format(
+                outputFile.write(getIndent(indent + 1) + "{0} {1}[{2}];\n".format(
                         f.dataType, f.sensorName, f.count))
             packetLen += f.dataSize * f.count
 
@@ -2257,7 +2257,7 @@ class FileOutputUseCase(OutputUseCase):
         self.filename = self.getParameterValue("file")
         if not self.filename: self.filename = self.getParameterValue("name")
         if not self.filename: self.filename = self.getParameterValue("filename")
-        if self.filename is None: 
+        if self.filename is None:
             # extension is determined by type
             if self.isText: suffix = "csv"
             else: suffix = "bin"
@@ -2298,9 +2298,9 @@ class FileOutputUseCase(OutputUseCase):
 
         for f in self.packetFields:
             if self.isText:
-                self.generateTextOutputCode(outputFile, f, indent=1)
+                self.generateTextOutputCode(outputFile, f, indent = 1)
             else:
-                self.generateBinaryOutputCode(outputFile, f, indent=1)
+                self.generateBinaryOutputCode(outputFile, f, indent = 1)
 
         if self.isText:
             outputFile.write("    fputc('\\r', out);\n")
@@ -2361,9 +2361,9 @@ class FromFileOutputUseCase(OutputUseCase):
         self.conditionEvaluationCode = self.condition.getEvaluationCode(componentRegister)
 
         # define packet type
-        self.generatePacketType(outputFile, indent=0)
+        self.generatePacketType(outputFile, indent = 0)
         if self.getNameCC() == "serial":
-            self.generateSerialOutputCode(outputFile, sensorsUsed=[])
+            self.generateSerialOutputCode(outputFile, sensorsUsed = [])
 
     def generateCallbacks(self, outputFile):
         if self.associatedFileOutputUseCase is None:
@@ -2404,9 +2404,9 @@ class FromFileOutputUseCase(OutputUseCase):
 
         for f in self.packetFields:
             if self.isText:
-                self.generateTextInputCode(outputFile, f, indent=2)
+                self.generateTextInputCode(outputFile, f, indent = 2)
             else:
-                self.generateBinaryInputCode(outputFile, f, indent=2)
+                self.generateBinaryInputCode(outputFile, f, indent = 2)
 
         # if reading returned end of file, return here
         outputFile.write("        if (feof(in)) break;\n")
@@ -2441,9 +2441,9 @@ class FromFileOutputUseCase(OutputUseCase):
         if doRewriteFile:
             for f in self.packetFields:
                 if self.isText:
-                    self.generateTextOutputCode(outputFile, f, indent=2)
+                    self.generateTextOutputCode(outputFile, f, indent = 2)
                 else:
-                    self.generateBinaryOutputCode(outputFile, f, indent=2)
+                    self.generateBinaryOutputCode(outputFile, f, indent = 2)
             if self.isText:
                 outputFile.write("        fputc('\\r', out);\n")
                 outputFile.write("        fputc('\\n', out);\n")
@@ -2452,7 +2452,7 @@ class FromFileOutputUseCase(OutputUseCase):
         outputFile.write("        mdelay(10);\n")
 
         outputFile.write("    }\n")
-        
+
         # outputFile.write('        PRINT("close files\\n");\n')
 
         # close the file
@@ -2660,6 +2660,9 @@ class NetworkComponent(object):
 ######################################################
 class ComponentRegister(object):
     module = None
+
+    def __init__(self):
+        self.printFunction = self.dummyPrint
 
     def addComponent(self, name, spec):
         s = None
@@ -3190,10 +3193,12 @@ class ComponentRegister(object):
 
     def userError(self, msg):
         self.isError = True
-        # TODO JJ - redirect to IDE
+        # TODO JJ - redirect to IDE(done by dummyPrint)
+        self.printFunction(msg)
+
+    def dummyPrint(msg):
         sys.stderr.write(msg)
-
-
+        
 ######################################################
 # global variables
 componentRegister = ComponentRegister()
@@ -3204,3 +3209,4 @@ def clearGlobals():
     global conditionCollection
     componentRegister = ComponentRegister()
     conditionCollection = ConditionCollection()
+

@@ -30,6 +30,7 @@ class SealParser():
         components.componentRegister.load(architecture)
 
     def run(self, s):
+        components.componentRegister.printFunction = self.printMsg
         if self.verboseMode:
             print s
         if s == None: return
