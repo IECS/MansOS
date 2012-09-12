@@ -4,23 +4,42 @@
 
 from msp430 import *
 
-foobar = SealActuator('Foobar')
-foobar1 = SealActuator('Foobar1')
-foobar2 = SealActuator('Foobar2')
-foobar3 = SealActuator('Foobar3')
-foo = SealActuator('Foo')
-bar = SealActuator('Bar')
+class TestActuator(SealActuator):
+    def __init__(self, name):
+        super(TestActuator, self).__init__(name)
+        self.param = SealParameter(None)
+        self.param1 = SealParameter(None)
+        self.param2 = SealParameter(None)
+        self.param3 = SealParameter(None)
 
-#sfoobar = SealSensor('Foobar')
-#sfoobar1 = SealSensor('Foobar1')
-#sfoobar2 = SealSensor('Foobar2')
-#sfoobar3 = SealSensor('Foobar3')
+class TestSensor(SealSensor):
+    def __init__(self, name):
+        super(TestSensor, self).__init__(name)
+        self.param = SealParameter(None)
+        self.param1 = SealParameter(None)
+        self.param2 = SealParameter(None)
+        self.param3 = SealParameter(None)
 
-ofoobar = SealOutput('Foobar')
+class TestOutput(SealOutput):
+    def __init__(self, name):
+        super(TestOutput, self).__init__(name)
+        self.param = SealParameter(None)
+        self.param1 = SealParameter(None)
+        self.param2 = SealParameter(None)
+        self.param3 = SealParameter(None)
+
+foobar = TestActuator('Foobar')
+foobar1 = TestActuator('Foobar1')
+foobar2 = TestActuator('Foobar2')
+foobar3 = TestActuator('Foobar3')
+foo = TestActuator('Foo')
+bar = TestActuator('Bar')
+
+sfoobar = TestSensor('SFoobar')
+sfoobar.readFunction.value = ""
+
+ofoobar = TestOutput('OFoobar')
 ofoobar.useFunction.value = "sendFoobar()"
-ofoobar1 = SealOutput('Foobar1')
-ofoobar2 = SealOutput('Foobar2')
-ofoobar3 = SealOutput('Foobar3')
 
 #includes = ("includeFiles", "#include \"foobar.h\"\n#include \"baz.h\"")
 #cooltestcomponent = ComponentSpecification(TYPE_SENSOR, "CoolTestComponent", sensorParameters + [includes])

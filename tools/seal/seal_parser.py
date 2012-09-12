@@ -26,14 +26,17 @@ class SealParser():
         if verboseMode:
             print "Lex & Yacc init done!"
             print "Note: cache is used, so warnings are shown only at first-time compilation!"
-        # load available components
-        components.componentRegister.load(architecture)
+        self.architecture = architecture
 
     def run(self, s):
         components.componentRegister.printFunction = self.printMsg
         if self.verboseMode:
             print s
         if s == None: return
+        # reset global variables
+        components.clearGlobals()
+        # load available components
+        components.componentRegister.load(self.architecture)
         self.newCode = True
         self.result = None
         self.lineTracking = {"Condition": [], "Statement": []}

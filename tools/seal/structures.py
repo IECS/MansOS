@@ -325,9 +325,9 @@ class SealValue(object):
         if isinstance(self.firstPart, Value):
             return self.firstPart.getCode()
 
-#        print "SealValue: getCodeForGenerator", self.firstPart
+        # print "SealValue: getCodeForGenerator", self.firstPart
 
-        if condition.dependentOnComponent:
+        if condition and condition.dependentOnComponent:
             r = condition.dependentOnComponent.replaceCode(self.firstPart)
             if r: return r
 
@@ -578,6 +578,11 @@ class ComponentDefineStatement(object):
         # derived virtual components
         self.derived = set()
         self.addedByPreprocessor = True
+
+    def prettyName(self):
+        if self.name[:6] == '__copy':
+            return self.name[8:]
+        return self.name
 
     def getCode(self, indent):
         result = "define " + self.name
@@ -855,7 +860,9 @@ class CodeBlock(object):
             if not isinstance(d, CodeBlock):
                 anyUsefulDeclarations = True
                 break
-        if anyUsefulDeclarations:
+        # add branch only if it has useful declaration,
+        # with the exception of the main (zero) branch - it is always present
+        if anyUsefulDeclarations or self.blockType == CODE_BLOCK_TYPE_PROGRAM:
             conditionCollection.ensureBranchIsPresent(componentRegister)
 
         return stackStartSize

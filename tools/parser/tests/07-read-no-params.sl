@@ -1,1 +1,1 @@
-read Foobar;
+read SFoobar;
