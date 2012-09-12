@@ -43,7 +43,7 @@
 #define sht11_read_humidity() \
     sht11_cmd(SHT11_CMD_HUM)
 
-// TODO: improve this
+// TODO: improve this (use global variable?)
 #define sht11_is_error() \
     (sht11_read_humidity() == 0xffff)
 

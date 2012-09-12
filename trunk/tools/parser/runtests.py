@@ -12,15 +12,24 @@ def runTest(sourceFileName):
     if not os.path.exists(outputDirName):
         os.makedirs(outputDirName)
 
-    outputFileName = outputDirName + '/' + os.path.basename(sourceFileName[:-2]) + 'c'
+    basename = os.path.basename(sourceFileName)
 
-    sys.argv = ["./main.py", "-e", "-a", architecture, "-t", targetOS, "-o", outputFileName, sourceFileName]
+    outputFileName = outputDirName + '/' + basename[:-2] + 'c'
+
+    if basename == "45-extras-cache.sl" or basename == "46-extras-cache-when.sl":
+        arch = "schedtest"
+    else:
+        arch = architecture
+
+    sys.argv = ["./main.py", "-e", "-a", arch, "-t", targetOS, "-o", outputFileName, sourceFileName]
 
     try:
-        main.main()
+        ret = main.main()
     except Exception:
         print ("error compiling {}".format(sourceFileName))
         return
+
+    if ret != 0: return
 
     # prepend output with the test script
     with open(outputFileName, 'r+') as outputFile:

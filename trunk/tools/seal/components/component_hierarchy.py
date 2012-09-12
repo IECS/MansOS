@@ -16,17 +16,23 @@ class SealComponent(object):
         self._typeCode = typeCode
         self._name = name
         # parameters
+        self.aliases = dict() # alias name -> parameter name
         self.id = SealParameter(0, ["0", "1"])
         self.extraConfig = SealParameter(None)  # config file line(s)
         self.extraIncludes = SealParameter(None) # #include<> line(s)
+        # read/use period
         self.period = SealParameter(1000, ['100', '200', '500', '1000', '2000'])
+        # read/use using specific time pattern?
         self.pattern = SealParameter(None)
+        # read/use just once?
         self.once = SealParameter(False, [False, True])
-        # how many times to use/read this? ("times 1" is the same as "once")
+        # read/use just a few times? ("times 1" is the same as "once")
         self.times = SealParameter(None, ['1', '2', '3', '4', '5', '10', '20', '50', '100'])
+        # read/use just for a time period?
+        self.duration = SealParameter(None, ['100', '200', '500', '1000', '2000'])
         self.useFunction = SealParameter(None)   # each usable component must define this
         self.readFunction = SealParameter(None)  # each readable component must define this
-        self.aliases = dict() # alias name -> parameter name
+        self.aliases["time"] = "duration"
         components.append(self)
 
     def resolveAlias(self, possibleAliasName):
@@ -58,18 +64,18 @@ class SealSensor(SealComponent):
         self._cacheable = True # whether can be kept in cache
         self._dataSize = 4 # in bytes
         self._dataType = "int32_t"
-#        self.filter = SealParameter('', ['> 100'])
-#        self.average = SealParameter('', ['10'])
-#        self.stdev = SealParameter('', ['10'])
         self.preReadFunction = SealParameter(None)
         self._minUpdatePeriod = 1000 # milliseconds
         self._readTime = 0 # read instanttly
         self._readFunctionDependsOnParams = False
-        # if true, call on and off functions before/after reading
+        # call on and off functions before/after reading?
         self.turnonoff = SealParameter(False, [False, True])
         self.onFunction = SealParameter(None)
         self.offFunction = SealParameter(None)
+        # output reading to somewhere?
         self.out = SealParameter(None)
+        # evaluate function(s) lazily? (for example, useful for averaged sensors)
+        self.lazy = SealParameter(False, [False, True])
 
 # for remote use only
 class CommandSensor(SealSensor):
@@ -91,7 +97,7 @@ class VariableSensor(SealSensor):
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
-            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
+            return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
         return self.getParameterValue("name", useCaseParameters)
 
 class ConstantSensor(SealSensor):
@@ -105,7 +111,7 @@ class ConstantSensor(SealSensor):
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
-            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
+            return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
         return self.getParameterValue("value", useCaseParameters)
 
 class CounterSensor(SealSensor):
@@ -120,7 +126,7 @@ class CounterSensor(SealSensor):
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
-            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
+            return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
         start = int(self.getParameterValue("start", useCaseParameters))
         max = int(self.getParameterValue("max", useCaseParameters))
         if max >= 0x80000000: suffix = "u"
@@ -144,7 +150,7 @@ class RandomSensor(SealSensor):
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
-            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
+            return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
         min = int(self.getParameterValue("min", useCaseParameters))
         max = int(self.getParameterValue("max", useCaseParameters))
         modulo = max - min + 1
@@ -168,7 +174,7 @@ class TimeCounterSensor(SealSensor):
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
-            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
+            return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
         counterPeriod = self.getParameterValue("counterperiod", useCaseParameters)
         return "getJiffies() / {0}".format(counterPeriod)
 
@@ -214,7 +220,7 @@ class SquareWaveSensor(WaveSensor):
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
-            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
+            return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
         wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
         low = self.getParameterValue("low", useCaseParameters)
         high = self.getParameterValue("high", useCaseParameters)
@@ -233,7 +239,7 @@ class TriangleWaveSensor(WaveSensor):
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
-            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
+            return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
         wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
         low = self.getParameterValue("low", useCaseParameters)
         high = self.getParameterValue("high", useCaseParameters)
@@ -252,7 +258,7 @@ class SawtoothWaveSensor(WaveSensor):
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
-            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
+            return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
         wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
         low = self.getParameterValue("low", useCaseParameters)
         high = self.getParameterValue("high", useCaseParameters)
@@ -267,7 +273,7 @@ class SineWaveSensor(WaveSensor):
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
-            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
+            return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
         wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
         low = self.getParameterValue("low", useCaseParameters)
         high = self.getParameterValue("high", useCaseParameters)
@@ -556,7 +562,7 @@ class SerialOutput(SealOutput):
         super(SerialOutput, self).__init__("Serial")
         self.useFunction.value = "serialPacketPrint()"
         self.baudrate = SealParameter(38400, ['9600', '38400', '57600', '115200'])
-        # TODO: self.aggregate.value = False # false by default
+        self.aggregate.value = False # false by default
 
 class RadioOutput(SealOutput):
     def __init__(self):
@@ -625,7 +631,7 @@ class NetworkOutput(SealOutput):
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "extraConfig":
-            return SealSensor.calculateParameterValue(parameter, useCaseParameters)
+            return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
         protocol = self.getParameterValue("protocol", useCaseParameters)
         if protocol is None: protocol = "NULL"
         else:

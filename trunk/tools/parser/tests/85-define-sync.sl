@@ -1,2 +1,2 @@
-define SyncSensors sync(SlowReadSensor1, SlowReadSensor2, SlowReadSensor3);
+define SyncSensors sync(Light, Humidity, Temperature);
 read SyncSensors;

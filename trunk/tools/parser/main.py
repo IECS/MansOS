@@ -161,15 +161,15 @@ def main():
             g.generate(outputFile)
         with open(outputDirName + "Makefile", 'w') as outputFile:
             g.generateMakefile(outputFile, outputFileName, makefilePathToOS)
-
         with open(outputDirName + "config", 'w') as outputFile:
             g.generateConfigFile(outputFile)
+
         if generator.components.componentRegister.isError:
             # cleanup
             os.remove(outputFileName)
             os.remove(outputDirName + "Makefile")
             os.remove(outputDirName + "config")
-            return
+            return -1
 
         if g.isComponentUsed("network"):
             g.generateBaseStationCode(os.path.join(outputDirName, 'bs'), makefilePathToOS)
@@ -177,6 +177,8 @@ def main():
             g.generateCollectorCode(os.path.join(outputDirName, 'coll'), makefilePathToOS)
         elif g.isComponentUsed("radio"):
             g.generateBaseStationCode(os.path.join(outputDirName, 'bs'), makefilePathToOS)
+
+    return 0
 
 if __name__ == '__main__':
     main()
