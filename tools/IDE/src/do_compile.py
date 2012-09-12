@@ -45,6 +45,7 @@ class DoCompile():
         thread = MyThread(doPopen, ["make", platform], \
                               self.dummy, True, False, "Compile")
         self.API.startThread(thread)
+        chdir(self.curPath)
 
     def clean(self, data = None):
         self.API.startPopen(["make", "clean"], "Compile", None, False)
