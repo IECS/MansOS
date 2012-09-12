@@ -49,6 +49,8 @@ class UploadModule(wx.Panel):
         self.source.SetValue("USB")
         self.platforms = wx.ComboBox(self, choices = self.API.getPlatforms())
         self.platforms.SetValue(self.API.getActivePlatform())
+        if self.API.platformOnly != None:
+            self.platforms.Enable(False)
         self.compile = wx.Button(self, label = self.tr("Compile"))
         self.upload = wx.Button(self, label = self.tr("Upload"))
         self.refresh = wx.Button(self, label = self.tr("Refresh"))

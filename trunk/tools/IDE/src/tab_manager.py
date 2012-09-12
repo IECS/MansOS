@@ -64,6 +64,7 @@ class TabManager(aui.AuiNotebook):
         # Remove any Helper windows
         self.API.checkForDeletedEditors()
         wx.YieldIfNeeded()
+        self.getPageObject().parseConfigFile()
 
     def showPopupMenu(self, event):
         # Make clicked tab active, so all actions target this tab.
