@@ -12,7 +12,7 @@ NetworkRead NeighborSoilHumidity(SoilHumidity);
 
 // define the minimal humidity as minimum of values
 // in last 60 seconds, max 20 value aray
-define MinHumidity min(takeRecent(NeighborSoilHumidity, 60s, 20));
+define MinHumidity min(take(NeighborSoilHumidity, 20, 60s));
 
 when MinHumidity < MIN_HUMIDITY_THRESHOLD:
     // use watering system in this case
