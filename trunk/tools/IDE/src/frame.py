@@ -87,6 +87,7 @@ class Frame(wx.Frame):
 
         self.auiManager.Update()
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
+        self.auiManager.ShowPane(self.API.infoArea, True)
 
     def initUI(self):
         self.generateMenu()
