@@ -149,6 +149,14 @@ class Editor(wx.stc.StyledTextCtrl):
         # keyword
         self.StyleSetSpec(wx.stc.STC_P_WORD,
             "fore:#00007F,bold,size:%(size)d" % faces)
+
+
+        self.StyleSetSpec(wx.stc.STC_C_WORD,
+            "fore:#00007F,bold,size:%(size)d" % faces)
+
+        self.StyleSetSpec(wx.stc.STC_C_WORD2,
+            "fore:#5F0F7F,bold,size:%(size)d" % faces)
+
         # triple quotes
         self.StyleSetSpec(wx.stc.STC_P_TRIPLE,
             "fore:#7F0000,size:%(size)d" % faces)
@@ -246,10 +254,6 @@ class Editor(wx.stc.StyledTextCtrl):
         else:
             self.BraceHighlight(braceAtCaret, braceOpposite)
 
-        if self.GetParent().projectType == SEAL_PROJECT:
-            self.highlightSealManual()
-        #self.doGrammarCheck(evt)
-
     def onMarginClick(self, evt):
         # fold and unfold as needed
         if evt.GetMargin() == 2:
@@ -335,30 +339,29 @@ class Editor(wx.stc.StyledTextCtrl):
     def highlightC(self):
         self.SetLexer(wx.stc.STC_LEX_CPP)
         self.SetKeyWords(0, " ".join(C_KEYWORDS))
+        # Controls FOLDING
+        self.SetProperty('fold', '1')
+        self.SetProperty('fold.comment', '1')
+        self.SetProperty('fold.preprocessor', '0')
+        self.SetProperty('fold.compact', '0')
+        self.SetProperty('styling.within.preprocessor', '0')
+        self.SetProperty("tab.timmy.whinge.level", "1")
 
     def highlightSeal(self):
-        self.SetLexer(wx.stc.STC_LEX_PYTHON)
+        self.SetLexer(wx.stc.STC_LEX_CPPNOCASE)
+        self.SetProperty('fold', '1')
+        self.SetProperty('fold.comment', '1')
+        self.SetProperty('fold.preprocessor', '0')
+        self.SetProperty('fold.compact', '0')
+        self.SetProperty('styling.within.preprocessor', '0')
+        self.SetProperty("tab.timmy.whinge.level", "1")
         self.SetKeyWords(0, " ".join(SEAL_KEYWORDS))
-        self.highlightSealManual()
-
-    def highlightSealManual(self):
-        # TODO: filter out comment lines
-        text = self.GetText().lower()
+        keywords_comp = list()
         for x in components:
-            for a in list(finditer(" " + x._name.lower(), text)):
-                self.StartStyling(a.start() + 1, 0x1F)
-                self.SetStyling(len(x._name), wx.stc.STC_P_DEFNAME)
-
-        for x in SEAL_PARAMETERS:
-            for a in list(finditer(" " + x.lower() + " ", text)):
-                self.StartStyling(a.start() + 1, 0x1F)
-                self.SetStyling(len(x), wx.stc.STC_P_TRIPLEDOUBLE)
-            for a in list(finditer(" " + x.lower() + ";", text)):
-                self.StartStyling(a.start() + 1, 0x1F)
-                self.SetStyling(len(x), wx.stc.STC_P_TRIPLEDOUBLE)
-            for a in list(finditer(" " + x.lower() + ",", text)):
-                self.StartStyling(a.start() + 1, 0x1F)
-                self.SetStyling(len(x), wx.stc.STC_P_TRIPLEDOUBLE)
+            keywords_comp.append(x._name.lower())
+        self.SetKeyWords(1, " ".join(keywords_comp))
+        # Doesn't work, because CPP lexer supports only 2 types of keywords
+        self.SetKeyWords(2, " ".join(SEAL_PARAMETERS))
 
     def setLineNumbers(self, enable = True):
         if enable:
