@@ -1,5 +1,6 @@
 import sys, string, copy
 from structures import *
+from functions import *
 
 # pre-allocated packet field ID
 PACKET_FIELD_ID_COMMAND = 0
@@ -440,40 +441,6 @@ class UseCase(object):
                     self.generateOutCode(outputFile)
                     outputFile.write("    }\n")
                     if self.offCode: outputFile.write("    {};\n".format(self.offCode))
-#                elif self.period:
-
-
-#                if self.filter:
-#                    filterName = "{}{}Filter{}".format(self.component.getNameCC(),
-#                                self.branchName, self.numInBranch)
-#                    outputFile.write("    if(addFilter(&{}, &{}Value)) ".format(
-#                         filterName, self.component.getNameCC()))
-#                    outputFile.write("{\n")
-#                    if self.average:
-#                        outputFile.write("        addAverage(&{}{}Average{}, &getValue(&{}));\n".format(
-#                            self.component.getNameCC(), self.branchName,
-#                            self.numInBranch, filterName))
-#                    if self.stdev:
-#                        outputFile.write("        addStdev(&{}{}Stdev{}, &getValue(&{}));\n".format(
-#                            self.component.getNameCC(), self.branchName,
-#                            self.numInBranch, filterName))
-#                    self.checkDependencies(self.component.getNameCC(), 2, outputFile)
-#                if True:
-#                    for o in outputs:
-#                        o.generateCallbackCode(self.component, outputFile)
-#                    outputFile.write("    }\n")
-#                else:
-#                    if self.average:
-#                        outputFile.write("    addAverage(&{}{}Average{}, &{}Value);\n".format(
-#                            self.component.getNameCC(), self.branchName,
-#                            self.numInBranch, self.component.getNameCC()))
-#                    if self.stdev:
-#                        outputFile.write("    addStdev(&{}{}Stdev{}, &{}Value);\n".format(
-#                            self.component.getNameCC(), self.branchName,
-#                            self.numInBranch, self.component.getNameCC()))
-#                    self.checkDependencies(self.component.getNameCC(), 1, outputFile)
-#                    for o in outputs:
-#                        o.generateCallbackCode(self.component, outputFile)
 
             if self.component.isRemote or self.interruptBased:
                 pass
@@ -489,11 +456,6 @@ class UseCase(object):
                 outputFile.write("    pattern_{0}Cursor %= sizeof(pattern_{0}) / sizeof(*pattern_{0});\n".format(
                         self.pattern))
             outputFile.write("}\n\n")
-
-    # Checks for dependencies for given name
-#    def checkDependencies(self, name, indent, outputFile):
-#        for x in componentRegister.getDependentProcess(name):
-#            x[1].generateCallbackCode(outputFile, name, indent, self.checkDependencies)
 
     def generateAppMainCode(self, outputFile):
         ccname = self.component.getNameCC()
@@ -1058,8 +1020,6 @@ class Sensor(Component):
         if len(functionTree.arguments) == 1:
             if functionTree.arguments[0].function == "take":
                 return self.generateTakeFunction(outputFile, functionTree.arguments[0], "min")
-            if functionTree.arguments[0].function == "takerecent":
-                return self.generateTakeRecentFunction(outputFile, functionTree.arguments[0], "min")
             if functionTree.arguments[0].function == "tuple":
                 return self.generateTupleFunction(outputFile, functionTree.arguments[0], "min")
             return self.generateUnaryMinFunction(outputFile, functionTree, root)
@@ -1070,8 +1030,6 @@ class Sensor(Component):
             return self.generateUnaryMaxFunction(outputFile, functionTree, root)
             if functionTree.arguments[0].function == "take":
                 return self.generateTakeFunction(outputFile, functionTree.arguments[0], "max")
-            if functionTree.arguments[0].function == "takerecent":
-                return self.generateTakeRecentFunction(outputFile, functionTree.arguments[0], "max")
             if functionTree.arguments[0].function == "tuple":
                 return self.generateTupleFunction(outputFile, functionTree.arguments[0], "max")
         return self.generateNaryMaxFunction(outputFile, functionTree, root)
@@ -1112,8 +1070,6 @@ class Sensor(Component):
             return ""
         if functionTree.arguments[0].function == "take":
             return self.generateTakeFunction(outputFile, functionTree.arguments[0], "avg")
-        if functionTree.arguments[0].function == "takerecent":
-            return self.generateTakeRecentFunction(outputFile, functionTree.arguments[0], "avg")
         if functionTree.arguments[0].function == "tuple":
             return self.generateTupleFunction(outputFile, functionTree.arguments[0], "avg")
         subReadFunction = self.generateSubReadFunctions(
@@ -1134,17 +1090,22 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
+    # TODO: test this
+    # TODO: allow alpha as optional
     def generateEWMAFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(3, componentRegister):
+        if not functionTree.checkArgs(2, componentRegister):
             return ""
         subReadFunction = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], root)
 
-        numerator = functionTree.arguments[1].asConstant()
-        denominator = functionTree.arguments[2].asConstant()
-        if numerator is None or denominator is None:
-            componentRegister.userError("2nd and 3rd arguments of EWMA() function are expected to be constants!\n")
+        alpha = functionTree.arguments[1].asConstant()
+        if alpha is None:
+            componentRegister.userError("2nd argument of EWMA() function is expected to be a constant!\n")
             return ""
+
+        # TODO: improve this
+        numerator = int(100 * alpha)
+        denominator = 100
 
         funName = self.getGeneratedFunctionName("EWMA")
         outputFile.write("static inline {0} {1}(bool *__unused)\n".format(self.getDataType(), funName))
@@ -1166,8 +1127,6 @@ class Sensor(Component):
             return ""
         if functionTree.arguments[0].function == "take":
             return self.generateTakeFunction(outputFile, functionTree.arguments[0], "stdev")
-        if functionTree.arguments[0].function == "takerecent":
-            return self.generateTakeRecentFunction(outputFile, functionTree.arguments[0], "stdev")
         if functionTree.arguments[0].function == "tuple":
             return self.generateTupleFunction(outputFile, functionTree.arguments[0], "stdev")
         subReadFunction = self.generateSubReadFunctions(
@@ -1196,9 +1155,10 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
+    # TODO: 
     # first arg: sensor
     # second arg: window size WinSize
-    # thrist ard: strength (multiplied by WinSize, 1 * WinSize by default)
+    # third ard: strength
     def generateSmoothenFunction(self, outputFile, functionTree, root):
         subReadFunction = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], root)
@@ -1212,7 +1172,9 @@ class Sensor(Component):
             adjustmentWeight = functionTree.arguments[2].asConstant()
 
         if numSamples == None: numSamples = 3
-        if adjustmentWeight == None: adjustmentWeight = numSamples # already multiplied by num samples
+        if adjustmentWeight == None: adjustmentWeight = 1
+        # scale it
+        adjustmentWeight = adjustmentWeight * numSamples
         medianPos = numSamples / 2
 
         funName = self.getGeneratedFunctionName("smoothen")
@@ -1282,6 +1244,7 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
+    # TODO: allow arg as optional?
     def generateChangedFunction(self, outputFile, functionTree, root):
         if not functionTree.checkArgs(2, componentRegister):
             return ""
@@ -1316,8 +1279,6 @@ class Sensor(Component):
         if len(functionTree.arguments) == 1:
             if functionTree.arguments[0].function == "take":
                 return self.generateTakeFunction(outputFile, functionTree.arguments[0], "sum")
-            if functionTree.arguments[0].function == "takerecent":
-                return self.generateTakeRecentFunction(outputFile, functionTree.arguments[0], "sum")
             if functionTree.arguments[0].function == "tuple":
                 return self.generateTupleFunction(outputFile, functionTree.arguments[0], "sum")
         subReadFunctions = []
@@ -1548,14 +1509,22 @@ class Sensor(Component):
             return ""
         subReadFunction = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], None)
+
         numToTake = functionTree.arguments[1].asConstant()
         if numToTake is None:
             componentRegister.userError("Second argument of take() function is expected to be a constant!\n")
             return ""
 
+        if len(functionTree.arguments) > 2:
+            timeToTake = functionTree.arguments[2].asConstant()
+            if timeToTake:
+                # generate takeRecent function;
+                # ignore "lazy" parameter in that case.
+                return self.generateTakeRecentFunction(outputFile,
+                                                       subReadFunction, aggregateFunction,
+                                                       numToTake, timeToTake)
+
         lazy = getUseCaseParameterValue("lazy", self.sensorReadFunctionParams)
-        # print "params = ", self.sensorReadFunctionParams
-        # print "lazy = ", lazy
 
         staticIfLazy = "static " if lazy else ""
 
@@ -1616,17 +1585,7 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
-    def generateTakeRecentFunction(self, outputFile, functionTree, aggregateFunction):
-        if not functionTree.checkArgs(3, componentRegister):
-            return ""
-        subReadFunction = self.generateSubReadFunctions(
-            outputFile, functionTree.arguments[0], None)
-        timeToTake = functionTree.arguments[1].asConstant()
-        numToTake = functionTree.arguments[2].asConstant()
-        if timeToTake is None or numToTake is None:
-            componentRegister.userError("2nd and 3rd arguments of takeRecent() function are expected to be constants!\n")
-            return ""
-
+    def generateTakeRecentFunction(self, outputFile, subReadFunction, aggregateFunction, numToTake, timeToTake):
         funName = self.getGeneratedFunctionName("takeRecent" + toTitleCase(aggregateFunction))
         outputFile.write("static inline {0} {1}(bool *__unused)\n".format(self.getDataType(), funName))
         outputFile.write("{\n")
@@ -1694,7 +1653,7 @@ class Sensor(Component):
             outputFile.write("    value /= cnt;\n")
         # OTHER
         else:
-            componentRegister.userError("takeRecent(): unknown aggregate function {}()!\n".format(aggregateFunction));
+            componentRegister.userError("take(): unknown aggregate function {}()!\n".format(aggregateFunction));
         outputFile.write("    return value;\n")
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
@@ -1888,8 +1847,8 @@ class Sensor(Component):
                 componentRegister.userError("sync() function only allowed at the top level!\n")
             else:
                 return self.generateSyncFunction(outputFile, useCase, functionTree, root)
-        if functionTree.function == "take" or functionTree.function == "takerecent":
-            componentRegister.userError("take() and takeRecent() functions can be used only as an argument to one of the following:\n" +
+        if functionTree.function == "take":
+            componentRegister.userError("take() function can be used only as an argument to one of the following:\n" +
                       "    min(), max(), sum(), avg(), stdev()!\n")
             return "0"
         if functionTree.function == "tuple":
@@ -3252,4 +3211,5 @@ def clearGlobals():
     global conditionCollection
     componentRegister = ComponentRegister()
     conditionCollection = ConditionCollection()
+
 
