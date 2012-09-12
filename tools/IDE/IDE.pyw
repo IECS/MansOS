@@ -32,6 +32,7 @@ def main():
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     # Check if all imports are found
     if not importsOk():
+        raw_input("Press any key to exit...")
         exit(1)
 
     from src import api_core
