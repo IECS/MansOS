@@ -54,5 +54,6 @@
 #endif
 #include <sensors.h>
 #include <utils.h>
+#include <random.h>
 
 #endif
