@@ -35,7 +35,7 @@ from time import sleep
 def doPopen(pipe, args):
     retcode = -1
     try:
-        proc = Popen(args, stderr = STDOUT, stdout = PIPE, shell = True)
+        proc = Popen(args, stderr = STDOUT, stdout = PIPE, shell = False)
         out = proc.stdout.readline()
         while out:
             pipe.send(out)
