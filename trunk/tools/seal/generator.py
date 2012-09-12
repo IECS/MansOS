@@ -30,8 +30,6 @@ class Generator(object):
     def generateIncludes(self):
         for c in self.components:
             c.generateIncludes(self.outputFile)
-#        for x in components.processFunctionsUsed:
-#            self.outputFile.write('#include "{}.h"\n'.format(x))
         if components.componentRegister.numCachedSensors:
             self.outputFile.write("#include <lib/processing/cache.h>\n")
         self.outputFile.write("#include <net/seal_comm.h>\n")
@@ -108,10 +106,6 @@ class Generator(object):
         for c in self.components:
             c.generateAppMainCode(self.outputFile)
         components.conditionCollection.generateAppMainCode(self.outputFile)
-
-        # Init Process variables
-#        for p in components.processStructInits:
-#            self.outputFile.write(p)
 
         self.outputFile.write("\n")
         for i in range(1, components.componentRegister.branchCollection.getNumBranches()):

@@ -76,10 +76,6 @@ class BranchCollection(object):
     # * number N < 0: condition Nr. abs(N) must be FALSE
     def getConditions(self, branchNumber):
         return self.conditions[branchNumber]
-#        branchUseCases = self.branches[branchNumber]
-#        assert len(branchUseCases)
-#        assert len(branchUseCases[0].conditions)
-#        return branchUseCases[0].conditions
 
     def getNumBranches(self):
         return len(self.branches)
@@ -217,18 +213,6 @@ class UseCase(object):
             self.onCode = None
             self.offCode = None
 
-#        for x in ['average', 'stdev', 'filter']:
-#            p = self.parameters.get(x)
-#            if p and p.value != '':
-#                    self.__setattr__(x, p.asString())
-#            else:
-#                self.__setattr__(x, None)
-
-#        if (self.period and self.pattern) or (self.period and self.once) or (self.pattern and self.once):
-#            if self.period and self.pattern:
-#                componentRegister.userError("Both 'period' and 'pattern' specified for component '{0}' use case\n".format(component.name))
-#            else:
-#                componentRegister.userError("Both 'once' and 'period' or 'pattern' specified for component '{0}' use case\n".format(component.name))
         if (self.pattern and self.once):
             componentRegister.userError("Both 'once' and 'pattern' specified for component '{0}' use case\n".format(component.name))
         if (self.times and self.once):
@@ -282,31 +266,6 @@ class UseCase(object):
             if type(self) is Sensor:
                 for s in self.component.subsensors:
                     outputFile.write("Alarm_t {0}PreAlarm;\n".format(s.getNameCC()))
-
-#        if self.filter:
-#            outputFile.write(
-#                "Filter_t {}{}Filter{};\n".format(
-#                    self.component.getNameCC(), self.branchName, self.numInBranch))
-#            processStructInits.append("    {}{}Filter{} = filterInit({});\n".format(
-#                    self.component.getNameCC(), self.branchName, self.numInBranch,
-#                    self.filter))
-
-#        if self.average:
-#            outputFile.write(
-#                "Average_t {}{}Average{};\n".format(
-#                    self.component.getNameCC(), self.branchName, self.numInBranch))
-#            processStructInits.append("    {}{}Average{} = avgInit({});\n".format(
-#                    self.component.getNameCC(), self.branchName, self.numInBranch,
-#                    self.average))
-
-#        if self.stdev:
-#            outputFile.write(
-#                "Stdev_t {}{}Stdev{};\n".format(
-#                    self.component.getNameCC(), self.branchName, self.numInBranch))
-#            processStructInits.append("    {}{}Stdev{} = stdevInit({});\n".format(
-#                    self.component.getNameCC(), self.branchName, self.numInBranch,
-#                    self.stdev))
-
 
     def generateOutCode(self, outputFile):
         # for o in outputs:
@@ -2219,14 +2178,6 @@ class OutputUseCase(object):
         outputFile.write("}\n\n")
 
     def generateCallbackCode(self, sensorName, outputFile, suffix):
-#        if not self.isAggregate():
-#            # this must be serial, because all other sinks require packets!
-#            outputFile.write("        {0}Print_{1}(\"{2}\", {2}Value);\n".format(
-#                    self.getNameCC(),
-#                    sensor.getDataType(),
-#                    sensor.getNameCC()))
-#            return
-
         # a packet; more complex case
         found = False
         for f in self.packetFields:
@@ -2234,25 +2185,6 @@ class OutputUseCase(object):
                 found = True
                 break
         if not found: return
-
-#        if f.count == 1:
-#            outputFile.write("        if (!({0}Packet.typeMask1 & {:#x}) {3}\n".format(
-#                    self.getNameCC(), sensor.systemwideID, '{'))
-#        else:
-#            outputFile.write("        static uint16_t lastIdx;\n")
-#            outputFile.write("        if (lastIdx == {4} && {0}Packet.{1}[lastIdx] == {2}_NO_VALUE) {3}\n".format(
-#                        self.getNameCC(), sensor.getNameCC(), sensor.getNameUC(), '{', f.count - 1))
-
-#        outputFile.write("            {0}PacketNumFieldsFull++;\n".format(self.getNameCC()))
-
-#        outputFile.write("        }\n")
-
-#        if f.count == 1:
-#            outputFile.write("        {0}Packet.{1} = {1}Value;\n".format(
-#                    self.getNameCC(), sensor.getNameCC()))
-#        else:
-#            outputFile.write("        {0}Packet.{1}[lastIdx] = {1}Value;\n".format(
-#                    self.getNameCC(), sensor.getNameCC()))
 
         if f.count == 1:
             outputFile.write("        {0}Packet.{1} = {1}Value;\n".format(
@@ -2898,34 +2830,17 @@ class ComponentRegister(object):
             # a real sensor?
             base = self.findComponentByName(basename)
             if base is None or base.isVirtual():
-                # a virtual sensor
-                # virtualBase = self.virtualComponents.get(basename, None)
+                # a virtual sensor?
                 virtualBase = self.lookupVirtualBase(basename, c.branchNumber)
-                assert virtualBase
+                if virtualBase is None:
+                    self.userError("Virtual component '{0}' has unknown base component '{1}', ignoring\n".format(
+                            c.name, basename))
+                    c.isError = True
+                    return
                 if virtualBase.name != basename:
                     c.fixBasename(basename, virtualBase.name)
                 # add the virtual base first (because of parameters)
                 self.continueAddingVirtualComponent(virtualBase)
-
-#                self.finishAddingVirtualComponent(virtualBase) # XXX
-#                c.parameterDictionary.update(virtualBase.parameterDictionary)
-#                for br in virtualBase.alsoInBranches:
-#                    print "add virtual component to other branches too, branch", br
-#                    cc = copy.copy(c)
-#                    cc.alsoInBranches = set()
-#                    cc.alsoInBranchesConditions = dict()
-#                    cc.added = False
-#                    cc.branchNumber = br
-#                    cc.conditions = list(virtualBase.alsoInBranchesConditions[br])
-#                    cc.customVirtualBase = basename
-#                    self.addVirtualComponent(cc)
-#                    self.continueAddingVirtualComponent(cc)
-#                    self.finishAddingVirtualComponent(cc) # XXX
-#                c.alsoInBranches.update(virtualBase.alsoInBranches)
-#                c.alsoInBranchesConditions.update(virtualBase.alsoInBranchesConditions)
-
-#        for b in c.bases:
-#            self.continueAddingVirtualComponent(b)
 
         immediateBaseName = c.getImmediateBasename()
         immediateBase = self.lookupVirtualBase(immediateBaseName, c.branchNumber)
@@ -3102,36 +3017,13 @@ class ComponentRegister(object):
                 # add an use case to the sensor as well (with empty parameters)
                 s.addUseCase({}, conditions, branchNumber)
 
-#        for f in fields:
-            # check for common fields
-#            if f in commonFields: continue
-            # add remote sensor for each "real" field
-#            s = self.addRemote(name, basename = f)
-            # add an use case to the sensor as well (with empty parameters)
-#            s.addUseCase({}, conditions, branchNumber)
-
     def reallyUseComponent(self, keyword, name, parameters, fields, conditions, branchNumber):
         # find the component
         o = self.findComponentByKeyword(keyword, name)
         if o is None:
-            # check if this is a remote component
-
-            # TODO: check network component
-
-#            if name[:6] == "remote":
-#                o = self.addRemote(name)
-#                if o == None: return
-            # not a remote, treat as error.
-#            else:
-                self.userError("Component '{0}' not known or not supported for architecture '{1}'\n".format(
-                        name, self.architecture))
-                return None
-        # check if it can be used
-#        if type(o) is Output:
-#            if len(o.useCases):
-#                self.userError("Output component '{0}': can be used just once in whole program!\n".format(name))
-#                return
-#            o.setFields(fields)
+            self.userError("Component '{0}' not known or not supported for architecture '{1}'\n".format(
+                    name, self.architecture))
+            return None
         # add use case to the component
         uc = o.addUseCase(parameters, conditions, branchNumber)
         if isinstance(o, Output):
@@ -3221,15 +3113,6 @@ class ComponentRegister(object):
     def getAllComponents(self):
         return set(self.actuators.values()).union(set(self.sensors.values())).union(set(self.outputs.values()))
 
-#    def getDependentProcess(self, name):
-#        result = []
-#        # Find any process statement that is dependent from this component
-#        for x in self.process.iteritems():
-#            if x[1].target == name.lower():
-#                result.append(x)
-#                print x[1].name, "depends on", name
-#        return result
-
     def markSyncSensors(self):
         for s in self.sensors.itervalues():
             if s.syncOnlySensor:
@@ -3240,20 +3123,6 @@ class ComponentRegister(object):
         for s in self.sensors.itervalues():
             if s.isCacheNeeded(self.numCachedSensors):
                 self.numCachedSensors += 1
-
-#    def replaceCodeForNetworkComponent(self, componentName, parameterName, condition):
-#        n = self.networkComponents.get(componentName)
-#        if n is None: return None
-
-#        for f in n.fields:
-#            # check for common fields
-#            if f in commonFields: continue
-#            # add remote sensor for each "real" field
-#            self.addRemote(componentName, basename=f)
-
-#        return None
-
-        #return n.replaceCode(parameterName)
 
     # find the first base component that has interrupts enabled
     def getInterruptBase(self, comp):
@@ -3312,19 +3181,6 @@ class ComponentRegister(object):
             # return the right read function
             return c.getNameCC() + "ReadProcess(&isFilteredOut)"
 
-#            readFunction = c.getParameterValue("readFunction", None)
-#            if readFunction:
-#                # otherwise unused component might become usable because of use in condition.
-#                c.markAsUsed()
-#                return readFunction
-#            else:
-#                userError("Parameter '{0}' for component '{1} is not readable!'\n".format(parameterName, componentName))
-#                return "false"
-
-#        if parameterName in ['average', 'stdev', 'filter']:
-#            return "get{}Value(&{}{})".format(toTitleCase(parameterName),
-#                                              componentName,
-#                                              toTitleCase(parameterName))
         if componentName == 'variables':
             # a global C variable, return its name (the user is responsible for correctness)
             return parameterName
@@ -3342,7 +3198,6 @@ class ComponentRegister(object):
 # global variables
 componentRegister = ComponentRegister()
 conditionCollection = ConditionCollection()
-#processStructInits = list()
 
 def clearGlobals():
     global componentRegister
