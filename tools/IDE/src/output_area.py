@@ -42,8 +42,8 @@ class OutputArea(wx.Panel):
 
     def printLine(self, text, clear = True, forceSwitching = True):
         if self == self.API.infoArea and self.forceCall is not None:
-                if self.forceCall.HasRun():
-                    self.clear()
+            if self.forceCall.HasRun():
+                self.clear()
         elif clear:
             self.clear()
         if not text:
