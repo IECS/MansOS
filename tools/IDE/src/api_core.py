@@ -57,7 +57,7 @@ class ApiCore:
                    "blocklyPort" : '8090',
                    "blocklyHost" : "localhost",
                    "blocklyLocation" : "../../../seal-blockly/blockly/seal/playground-seal.html",
-                   "recentlyOpenedMaxCount": 10
+                   "recentlyOpenedMaxCount" : 10
                }
         # Read settings from file
         if os.path.exists(SETTING_FILE) and os.path.isfile(SETTING_FILE):
@@ -84,6 +84,8 @@ class ApiCore:
 
         # All defined platforms
         self.platforms = self.getPlatformsFromMakefile()
+
+        self.platformOnly = None
 
         self.activePlatform = self.platforms.index("telosb")
         #
@@ -157,7 +159,6 @@ class ApiCore:
 
         # Init tab manager 
         self.tabManager = TabManager(self.emptyFrame, self)
-
 
         # Init listenModule
         self.listenModules.append(ListenModule(self.emptyFrame, self))
@@ -381,7 +382,10 @@ class ApiCore:
         self.printInfo(self.tr("Changed platform to") + " " + self.getActivePlatform() + "\n")
 
     def getActivePlatform(self):
-        return self.platforms[self.activePlatform]
+        if self.platformOnly == None:
+            return self.platforms[self.activePlatform]
+        else:
+            return self.platforms[self.platforms.index(self.platformOnly)]
 
     def dummyPrint(self, msg, arg1 = "", arg2 = ""):
         print msg

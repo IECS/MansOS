@@ -71,6 +71,8 @@ class EditorManager(wx.Panel):
         self.lastSaved = self.code.GetText()
         self.yieldChanges()
 
+        self.parseConfigFile()
+
     def initUI(self):
         self.main = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -126,3 +128,15 @@ class EditorManager(wx.Panel):
             self.API.tabManager.markAsUnsaved()
         else:
             self.save(False)
+
+    def parseConfigFile(self):
+        self.API.platformOnly = None
+        path = os.path.split(self.filePath)[0]
+        if os.path.isdir(path):
+            if os.path.isfile(os.path.join(path, "config")):
+                f = open(os.path.join(path, "config"), "r")
+                for x in f.readlines():
+                    if x.startswith("PLATFORM_ONLY"):
+                        platform = x.split("=")[1].strip()
+                        if platform in self.API.platforms:
+                            self.API.platformOnly = platform
