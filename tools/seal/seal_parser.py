@@ -29,12 +29,13 @@ class SealParser():
         self.architecture = architecture
 
     def run(self, s):
-        components.componentRegister.printFunction = self.printMsg
         if self.verboseMode:
             print s
         if s == None: return
         # reset global variables
         components.clearGlobals()
+        # Redirect user errors to parent print function
+        components.componentRegister.printFunction = self.printMsg
         # load available components
         components.componentRegister.load(self.architecture)
         self.newCode = True
