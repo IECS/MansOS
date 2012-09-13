@@ -188,6 +188,12 @@ class SystemTimeSensor(SealSensor):
         self.useFunction.value = "getFixedUptime()"
         self.readFunction.value = "getFixedUptime()"
 
+class TimestampSensor(SealSensor):
+    def __init__(self):
+        super(TimestampSensor, self).__init__("Timestamp")
+        self.useFunction.value = "getFixedUptime()"
+        self.readFunction.value = "getFixedUptime()"
+
 # TODO: allow aliases!
 class UptimeSensor(SealSensor):
     def __init__(self):
