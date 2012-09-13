@@ -3198,7 +3198,7 @@ class ComponentRegister(object):
         # TODO JJ - redirect to IDE(done by dummyPrint)
         self.printFunction(msg)
 
-    def dummyPrint(msg):
+    def dummyPrint(self, msg):
         sys.stderr.write(msg)
         
 ######################################################
