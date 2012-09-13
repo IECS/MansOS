@@ -1,5 +1,4 @@
 import sys, string, copy
-from structures import *
 from functions import *
 
 # pre-allocated packet field ID
@@ -270,8 +269,6 @@ class UseCase(object):
                     ucname, self.numInBranch, self.period))
 
     def generateVariables(self, outputFile):
-#        global processStructInits
-
         if self.generateAlarm:
             outputFile.write(
                 "Alarm_t {0}{1}Alarm{2};\n".format(
@@ -313,14 +310,6 @@ class UseCase(object):
         ccname += self.branchName
         ucname = self.component.getNameUC()
         ucname += self.branchName.upper()
-
-#        print "useFunction = ", useFunction
-
-#            outputFile.write("void {0}{1}Callback(uint32_t value)\n".format(ccname, self.numInBranch))
-#            outputFile.write("{\n")
-#            if type(self.component) is Sensor:
-#                pass
-#            outputFile.write("}\n\n")
 
         if self.generateAlarm or self.interruptBased or self.component.isRemote:
             if self.interruptBased:
@@ -403,6 +392,8 @@ class UseCase(object):
                     outputFile.write("    {0} {1}Value = {2}ReadProcess{3}(&isFilteredOut);\n".format(
                             intTypeName, self.component.getNameCC(),
                             self.component.getNameCC(), self.readFunctionSuffix))
+                    outputFile.write("    (void){0}Value;\n".format(
+                            self.component.getNameCC()))
 
                     if generateOnOffCode:
                         for s in self.component.subsensors:
@@ -424,6 +415,8 @@ class UseCase(object):
                     else:
                         outputFile.write("    {0} {1}Value = value;\n".format(
                                 intTypeName, self.component.getNameCC()))
+                        outputFile.write("    (void){0}Value;\n".format(
+                                self.component.getNameCC()))
                         for o in outputs:
                             o.generateCallbackCode(self.component.name, outputFile, self.readFunctionSuffix)
                         self.generateOutCode(outputFile)
@@ -611,7 +604,7 @@ class Component(object):
             if pname == "parameters":
                 #print "p[1] = ", p[1].asString()
                 #print "componentRegister = ", componentRegister.defines.keys()
-                d = componentRegister.parameterDefines.get(pvalue.asString().lower())
+                d = componentRegister.parameterDefines.get(pvalue.lower())
                 if d is None:
                     componentRegister.userError("No parameter define with name '{0}' is present (for component '{1}')\n".format(
                             pvalue.asString(), self.name))
@@ -859,6 +852,7 @@ class Sensor(Component):
         outputFile.write("    bool isFilteredOut = false;\n")
         outputFile.write("    {0} {1}Value = {1}ReadProcess(&isFilteredOut);\n".format(
                 self.getDataType(), self.getNameCC()))
+        outputFile.write("    (void){0}Value;\n".format(self.getNameCC()))
         outputFile.write("    if (!isFilteredOut) {\n")
         for o in outputs:
             o.generateCallbackCode(self.name, outputFile, "")
@@ -910,8 +904,6 @@ class Sensor(Component):
         return self.getNameCC() + "Read" + toTitleCase(fun) + readFunctionSuffix
 
     def generateAbsFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(1, componentRegister):
-            return ""
         subReadFunction = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], root)
 
@@ -924,8 +916,6 @@ class Sensor(Component):
         return funName + "(isFilteredOut)"
 
     def generateNegFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(1, componentRegister):
-            return ""
         subReadFunction = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], root)
 
@@ -938,8 +928,6 @@ class Sensor(Component):
         return funName + "(isFilteredOut)"
 
     def generateMapFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(5, componentRegister):
-            return ""
         subReadFunction = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], root)
 
@@ -1035,8 +1023,6 @@ class Sensor(Component):
         return self.generateNaryMaxFunction(outputFile, functionTree, root)
 
     def generateSquareFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(1, componentRegister):
-            return ""
         subReadFunction = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], root)
 
@@ -1049,8 +1035,6 @@ class Sensor(Component):
         return funName + "(isFilteredOut)"
 
     def generateSqrtFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(1, componentRegister):
-            return ""
         subReadFunction = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], root)
 
@@ -1066,8 +1050,6 @@ class Sensor(Component):
 
 
     def generateAvgFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(1, componentRegister):
-            return ""
         if functionTree.arguments[0].function == "take":
             return self.generateTakeFunction(outputFile, functionTree.arguments[0], "avg")
         if functionTree.arguments[0].function == "tuple":
@@ -1093,8 +1075,6 @@ class Sensor(Component):
     # TODO: test this
     # TODO: allow alpha as optional
     def generateEWMAFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(2, componentRegister):
-            return ""
         subReadFunction = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], root)
 
@@ -1123,8 +1103,6 @@ class Sensor(Component):
         return funName + "(isFilteredOut)"
 
     def generateStdevFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(1, componentRegister):
-            return ""
         if functionTree.arguments[0].function == "take":
             return self.generateTakeFunction(outputFile, functionTree.arguments[0], "stdev")
         if functionTree.arguments[0].function == "tuple":
@@ -1173,8 +1151,7 @@ class Sensor(Component):
 
         if numSamples == None: numSamples = 3
         if adjustmentWeight == None: adjustmentWeight = 1
-        # scale it
-        adjustmentWeight = adjustmentWeight * numSamples
+        adjustmentWeight = int(adjustmentWeight * numSamples)  # scale it
         medianPos = numSamples / 2
 
         funName = self.getGeneratedFunctionName("smoothen")
@@ -1216,7 +1193,8 @@ class Sensor(Component):
             adjustmentWeight = functionTree.arguments[2].asConstant()
 
         if numSamples == None: numSamples = 3
-        if adjustmentWeight == None: adjustmentWeight = numSamples # already multiplied by num samples
+        if adjustmentWeight == None: adjustmentWeight = 1
+        adjustmentWeight = int(adjustmentWeight * numSamples)  # scale it
         medianPos = numSamples / 2
 
         funName = self.getGeneratedFunctionName("sharpen")
@@ -1246,9 +1224,6 @@ class Sensor(Component):
 
     # TODO: allow arg as optional?
     def generateChangedFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(2, componentRegister):
-            return ""
-
         milliseconds = functionTree.arguments[1].asConstant()
         if milliseconds is None:
             componentRegister.userError("Second argument of changed() function is expected to be a constant!\n")
@@ -1296,9 +1271,6 @@ class Sensor(Component):
         return funName + "(isFilteredOut)"
 
     def generateArithmeticFunction(self, outputFile, functionTree, op, root):
-        if not functionTree.checkArgs(2, componentRegister):
-            return ""
-
         subReadFunction1 = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], root)
         subReadFunction2 = self.generateSubReadFunctions(
@@ -1314,9 +1286,6 @@ class Sensor(Component):
         return funName + "(isFilteredOut)"
 
     def generateSymmetricDiffFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(2, componentRegister):
-            return ""
-
         subReadFunction1 = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], root)
         subReadFunction2 = self.generateSubReadFunctions(
@@ -1336,9 +1305,6 @@ class Sensor(Component):
         return funName + "(isFilteredOut)"
 
     def generatePowerFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(2, componentRegister):
-            return ""
-
         power = functionTree.arguments[1].asConstant()
         if power is None:
             componentRegister.userError("Second argument of power() function is expected to be a constant!\n")
@@ -1359,9 +1325,6 @@ class Sensor(Component):
         return funName + "(isFilteredOut)"
 
     def generateMatchFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(2, componentRegister):
-            return ""
-
         patternName = functionTree.arguments[1].asString()
         pattern = componentRegister.patterns.get(patternName)
         if pattern is None:
@@ -1394,9 +1357,6 @@ class Sensor(Component):
         return funName + "(isFilteredOut)"
 
     def generateFilterRangeFunction(self, outputFile, functionTree, op, root):
-        if not functionTree.checkArgs(3, componentRegister):
-            return ""
-
         subReadFunction = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], root)
 
@@ -1418,9 +1378,6 @@ class Sensor(Component):
         return funName + "(isFilteredOut)"
 
     def generateFilterFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(2, componentRegister):
-            return ""
-
         kind = functionTree.function[6:]
 
         subReadFunction = self.generateSubReadFunctions(
@@ -1454,9 +1411,6 @@ class Sensor(Component):
     # This is something like negation for sensor values
     #
     def generateInvertFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(1, componentRegister):
-            return ""
-
         subReadFunction = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], root)
 
@@ -1474,9 +1428,6 @@ class Sensor(Component):
     # This is not negation in the usual sense, but a negation of filter
     #
     def generateInvertFilterFunction(self, outputFile, functionTree, root):
-        if not functionTree.checkArgs(1, componentRegister):
-            return ""
-
         subReadFunction = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], root)
 
@@ -1505,8 +1456,6 @@ class Sensor(Component):
         return funName + "(isFilteredOut)"
 
     def generateTakeFunction(self, outputFile, functionTree, aggregateFunction):
-        if not functionTree.checkArgs(2, componentRegister):
-            return ""
         subReadFunction = self.generateSubReadFunctions(
             outputFile, functionTree.arguments[0], None)
 
@@ -1789,6 +1738,11 @@ class Sensor(Component):
             sensor.sensorReadFunctionParams = self.sensorReadFunctionParams
             return sensor.generateSubReadFunctions(outputFile, sensor.functionTree, root)
 
+        (validationOk, errorMessage) = validateFunction(functionTree)
+        if not validationOk:
+            componentRegister.userError(errorMessage)
+            return "0"
+
         # run through the tree and generate all needed
         if functionTree.function == "abs":
             return self.generateAbsFunction(outputFile, functionTree, root)
@@ -1846,7 +1800,7 @@ class Sensor(Component):
             if functionTree != self.functionTree:
                 componentRegister.userError("sync() function only allowed at the top level!\n")
             else:
-                return self.generateSyncFunction(outputFile, useCase, functionTree, root)
+                return self.generateSyncFunction(outputFile, functionTree, root)
         if functionTree.function == "take":
             componentRegister.userError("take() function can be used only as an argument to one of the following:\n" +
                       "    min(), max(), sum(), avg(), stdev()!\n")
@@ -2809,8 +2763,8 @@ class ComponentRegister(object):
         self.virtualComponents[c.name] = c
 
     def continueAddingVirtualComponent(self, c):
+        # print "continue adding", c.name, c
         if c.isError or c.added: return
-        #print "continue adding", c.name, "branch", c.branchNumber
 
         c.added = True
         c.base = None
@@ -2829,7 +2783,10 @@ class ComponentRegister(object):
             # print "    process", basename
             # constant value
             if basename[:7] == '__const':
-                numericalValue = int(basename[7:], 0)
+                try:
+                    numericalValue = int(basename[7:], 0)
+                except ValueError:
+                    numericalValue = float(basename[7:])
                 continue
             if basename in self.patterns: continue
             # a real sensor?
@@ -2876,9 +2833,9 @@ class ComponentRegister(object):
             c.parameterDictionary["value"] = Value(c.numericalValue)
 
     def finishAddingVirtualComponent(self, c):
-        # print "+++ finish adding", c.name, "base", c.base.name
         if c.isError: return
         assert c.base
+        # print "+++ finish adding", c.name, "base", c.base.name
 
         # add a real component
         s = self.addComponent(c.name, c.base.specification)
@@ -2908,7 +2865,10 @@ class ComponentRegister(object):
 
         for basename in basenames:
             if basename[:7] == '__const':
-                c.numericalValue = int(basename[7:], 0)
+                try:
+                    c.numericalValue = int(basename[7:], 0)
+                except ValueError:
+                    c.numericalValue = float(basename[7:])
                 continue
             if basename in self.patterns: continue
             base = self.findComponentByName(basename)
@@ -3195,7 +3155,6 @@ class ComponentRegister(object):
 
     def userError(self, msg):
         self.isError = True
-        # TODO JJ - redirect to IDE(done by dummyPrint)
         self.printFunction(msg)
 
     def dummyPrint(self, msg):
@@ -3211,5 +3170,3 @@ def clearGlobals():
     global conditionCollection
     componentRegister = ComponentRegister()
     conditionCollection = ConditionCollection()
-
-

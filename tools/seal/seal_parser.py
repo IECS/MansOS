@@ -82,6 +82,7 @@ class SealParser():
       "<=": "LEQ_TOKEN"}
 
     tokens = reserved.values() + ["IDENTIFIER_TOKEN",
+                                  "FLOATING_POINT_LITERAL",
                                   "HEX_INTEGER_LITERAL",
                                   "DECIMAL_INTEGER_LITERAL",
                                   "STRING_LITERAL"]
@@ -134,6 +135,12 @@ class SealParser():
                 parsingPrefix = False
             suffix += c.lower()
         t.value = (int(prefix) * sign, suffix)
+        return t
+
+    # XXX: this is just a hack
+    def t_FLOATING_POINT_LITERAL(self, t):
+        r'\.[0-9]+'
+        t.value = float(t.value)
         return t
 
     t_STRING_LITERAL = r'"[^"\n]*"'
@@ -249,16 +256,27 @@ class SealParser():
 
     def p_functional_expression(self, p):
         '''functional_expression : IDENTIFIER_TOKEN '(' argument_list ')'
+                                 | IDENTIFIER_TOKEN value
                                  | value
         '''
+        valueOnly = False
         if len(p) == 2:
+            valueOnly = True; valuePos = 1
+        elif len(p) == 3:
+            valueOnly = True; valuePos = 2
+
+        if valueOnly:
             # hacks...
-            if type(p[1].value) is str: v = p[1].value
+            if type(p[valuePos].value) is str: v = p[valuePos].value
             # XXX: for now just ignore structure.field syntax inside functions
             # elif type(p[1].value) is SealValue: v = p[1].value.firstPart
-            elif type(p[1].value) is SealValue: v = p[1].value
-            else: v = p[1]
-            p[0] = FunctionTree(v, [])
+            elif type(p[valuePos].value) is SealValue: v = p[valuePos].value
+            else: v = p[valuePos]
+
+            if (valuePos == 1):
+                p[0] = FunctionTree(v, [])
+            else:
+                p[0] = FunctionTree((p[1], v), [])
         else:
             p[3].reverse()
             p[0] = FunctionTree(p[1], p[3])
@@ -365,6 +383,7 @@ class SealParser():
                      | IDENTIFIER_TOKEN value
                      | PATTERN_TOKEN value
                      | WHERE_TOKEN condition
+                     | PARAMETERS_TOKEN IDENTIFIER_TOKEN
         '''
         if len(p) == 2:
             p[0] = (p[1], None)
@@ -383,6 +402,7 @@ class SealParser():
 
     def p_value(self, p):
         '''value : boolean_literal
+                 | floating_point_literal
                  | integer_literal
                  | string_literal
                  | identifier
@@ -398,6 +418,13 @@ class SealParser():
         '''integer_literal : DECIMAL_INTEGER_LITERAL
                            | HEX_INTEGER_LITERAL'''
         p[0] = Value(p[1][0], p[1][1])
+
+    def p_floating_point_literal(self, p):
+        '''floating_point_literal : DECIMAL_INTEGER_LITERAL FLOATING_POINT_LITERAL'''
+        # XXX: suffix is allowed by lexer, but silently discarded here (should report syntax error)
+        floatValue = p[1][0]
+        floatValue += p[2]
+        p[0] = Value(floatValue)
 
     def p_string_literal(self, p):
         '''string_literal : STRING_LITERAL'''

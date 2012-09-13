@@ -6,17 +6,6 @@ def getIndent(indent):
     # take indent string n times
     return INDENT_STRING * indent
 
-#def toMilliseconds(x, componentRegister):
-#    if type(x) is int: return x
-#    value = x.value
-#    if x.suffix is None or x.suffix == '' or x.suffix == "ms":
-#        pass
-#    elif x.suffix == "s" or x.suffix == "sec":
-#        value *= 1000
-#    else:
-#        componentRegister.userError("Unknown suffix '{0}' for time value\n".format(x.suffix))
-#    return value
-
 def suffixTransform(value, suffix):
     if suffix is None or suffix == '':
         return value
@@ -44,6 +33,13 @@ def toTitleCase(s):
 def isConstant(s):
     return s[0] >= '0' and s[0] <= '9'
 
+def orderNumToString(i):
+    lst = ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eight", "ninth"]
+    i -= 1
+    if i >= 0 and i < len(lst):
+        return lst[i]
+    return str(i)
+
 # a decorator that allows to set up and use static variables
 def static_var(varname, value = 0):
     def decorate(func):
@@ -54,32 +50,28 @@ def static_var(varname, value = 0):
 ######################################################
 class FunctionTree(object):
     def __init__(self, function, arguments):
-#        if isinstance(function, SealValue):
-#            print "  FunctionTree from SealValue!"
-#            self.function = function.firstPart
-#        else:
-#            self.function = function
-        self.function = function.lower()
+        if isinstance(function, str) \
+                or isinstance(function, Value) \
+                or isinstance(function, SealValue):
+            # for normal functions / arguments
+            self.parameterName = None
+            self.function = function.lower()
+        else:
+            # for named parameters; a pair is passed instead
+            assert len(arguments) == 0
+            self.parameterName = function[0].lower()
+            self.function = function[1].lower()
         self.arguments = arguments
-
-    def checkArgs(self, argCount, componentRegister):
-        if len(self.arguments) != argCount:
-            componentRegister.userError("Function {}(): {} arguments expected, {} given!\n".format(
-                    self.function, argCount, len(self.arguments)))
-            return False
-        return True
 
     def asConstant(self):
         if len(self.arguments):
             return None
+        if isinstance(self.function, SealValue):
+            return None
         const = self.function.getRawValue()
-        if isinstance(const, int):
+        if isinstance(const, int) or isinstance(const, float):
             return const
         return None
-#        try:
-#            return int(self.function.value)
-#        except Exception:
-#            return None
 
     def asString(self):
         if len(self.arguments):
@@ -90,7 +82,8 @@ class FunctionTree(object):
 
     def generateSensorName(self):
         if type(self.function) is Value:
-            return self.function.asString()
+            # do not allow '.' to appear is sensor names
+            return self.function.asString().replace(".", "point")
         if type(self.function) is SealValue:
             return self.function.firstPart # XXX
         result = self.function.lower()
@@ -107,9 +100,6 @@ class FunctionTree(object):
         for a in self.arguments:
             args.append(a.getCode())
         return self.function.lower() + "(" + ",".join(args) + ")"
-
-#    def getEvaluationCode(self, componentRegister):
-#        return self.getCode()
 
     def collectImplicitDefines(self, containingComponent):
         return []
@@ -251,7 +241,7 @@ class Value(object):
     def getRawValue(self):
         if not isinstance(self.value, int):
             return self.value
-        return suffixTransform(self.value, self.suffix, )
+        return suffixTransform(self.value, self.suffix)
 
     def getCode(self):
 #        print "getCode for", self.value, self.suffix
@@ -262,7 +252,7 @@ class Value(object):
             return self.value.getCode()
         if isinstance(self.value, str):
             return '"' + self.value + '"'
-        # integer or boolean
+        # integer, boolean or real
         s = string.lower(str(self.value))
         if not (self.suffix is None):
             s += self.suffix
@@ -797,7 +787,7 @@ class CodeBlock(object):
         self.blockType = blockType
         self.condition = condition
         self.declarations = declarations
-        self.componentDefines = dict()
+        self.componentDefines = {}
         self.next = next
 
     def getCode(self, indent):
@@ -902,7 +892,16 @@ class CodeBlock(object):
                     d.addComponents(componentRegister, conditionCollection)
 
             if type(d) is ComponentDefineStatement:
-                self.componentDefines[d.name] = d
+                # find unused name; this is needed because there can be
+                # multiple sensor read with the same implicit define (want to add them all);
+                # on the other hand, for defines-in-branch the branch code (componentDefines)
+                # is searched for a specific name.
+                key = d.name
+                i = 1
+                while key in self.componentDefines:
+                    key = "__" + d.name + str(i)
+                    i += 1
+                self.componentDefines[key] = d
                 d.containingCodeBlock = self
                 d.addComponents(componentRegister, conditionCollection)
 

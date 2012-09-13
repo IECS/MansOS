@@ -31,6 +31,7 @@ random = RandomSensor()
 
 timecounter = TimeCounterSensor()
 systime = SystemTimeSensor()
+timestamp = TimestampSensor()
 uptime = UptimeSensor()
 
 squarewave = SquareWaveSensor()
