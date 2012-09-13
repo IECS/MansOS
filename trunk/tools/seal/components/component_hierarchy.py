@@ -127,11 +127,9 @@ class CounterSensor(SealSensor):
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
             return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
-        start = int(self.getParameterValue("start", useCaseParameters))
-        max = int(self.getParameterValue("max", useCaseParameters))
-        if max >= 0x80000000: suffix = "u"
-        else: suffix = ""
-
+        start = self.getParameterValue("start", useCaseParameters)
+        max = self.getParameterValue("max", useCaseParameters)
+        suffix = "u" if isinstance(max, int) and max >= 0x80000000 else ""
         # use GCC statement-as-expression extension
         return "({" + "static uint32_t counter = {}; counter = (counter + 1) % {}{};".format(
             start, max, suffix) + "})"
@@ -151,14 +149,15 @@ class RandomSensor(SealSensor):
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
             return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
-        min = int(self.getParameterValue("min", useCaseParameters))
-        max = int(self.getParameterValue("max", useCaseParameters))
-        modulo = max - min + 1
-        if modulo == 0x10000:
-            return self.useFunction.value
-        else:
+        min = self.getParameterValue("min", useCaseParameters)
+        max = self.getParameterValue("max", useCaseParameters)
+        if isinstance(min, int) and isinstance(max, int):
+            modulo = max - min + 1
+            if modulo == 0x10000:
+                return self.useFunction.value
             # TODO: cast the result to uint16_t, but only in case of signed int overflow
             return "{} % {} + {}".format(self.useFunction.value, modulo, min)
+        return "{} % ({} - {} + 1) + {}".format(self.useFunction.value, max, min, min)
 
 #
 # A time-based counter value.
@@ -339,7 +338,7 @@ class AnalogInputSensor(SealSensor):
         # print "calculateParameterValue: ", parameter
         if parameter != "readFunction" and parameter != "useFunction":
             return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
-        channel = int(self.getParameterValue("channel", useCaseParameters))
+        channel = self.getParameterValue("channel", useCaseParameters)
         if channel is None: channel = 1
         return "adcRead({})".format(channel)
 
@@ -363,8 +362,8 @@ class DigitalInputSensor(SealSensor):
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
             return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
-        port = int(self.getParameterValue("port", useCaseParameters))
-        pin = int(self.getParameterValue("pin", useCaseParameters))
+        port = self.getParameterValue("port", useCaseParameters)
+        pin = self.getParameterValue("pin", useCaseParameters)
         if port is None: port = 1
         if pin is None: pin = 0
         return "pinRead({}, {})".format(port, pin)
@@ -444,8 +443,8 @@ class DigitalOutputAct(SealActuator):
                 and parameter != "offFunction" \
                 and parameter != "writeFunction":
             return SealActuator.calculateParameterValue(self, parameter, useCaseParameters)
-        port = int(self.getParameterValue("port", useCaseParameters))
-        pin = int(self.getParameterValue("pin", useCaseParameters))
+        port = self.getParameterValue("port", useCaseParameters)
+        pin = self.getParameterValue("pin", useCaseParameters)
         if port is None: port = 1
         if pin is None: pin = 0
         args = "(" + str(port) + ", " + str(pin) + ")"
@@ -480,9 +479,9 @@ class AnalogOutputAct(SealActuator):
                 and parameter != "offFunction" \
                 and parameter != "writeFunction":
             return SealActuator.calculateParameterValue(self, parameter, useCaseParameters)
-        port = int(self.getParameterValue("port", useCaseParameters))
-        pin = int(self.getParameterValue("pin", useCaseParameters))
-        value = int(self.getParameterValue("value", useCaseParameters))
+        port = self.getParameterValue("port", useCaseParameters)
+        pin = self.getParameterValue("pin", useCaseParameters)
+        value = self.getParameterValue("value", useCaseParameters)
         if port is None: port = 1
         if pin is None: pin = 0
         if value is None: value = 128
