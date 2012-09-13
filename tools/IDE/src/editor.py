@@ -25,7 +25,6 @@
 import wx.stc
 
 from component_hierarchy import components
-from re import finditer
 from globals import * #@UnusedWildImport
 import  keyword
 
@@ -126,62 +125,32 @@ class Editor(wx.stc.StyledTextCtrl):
         self.StyleSetSpec(wx.stc.STC_STYLE_CONTROLCHAR,
             "face:%(mono)s" % faces)
         self.StyleSetSpec(wx.stc.STC_STYLE_BRACELIGHT,
-            "fore:#FFFFFF,back:#0000FF,bold")
+            "fore:#FFFFFF,back:#CCCCCC,bold")
         self.StyleSetSpec(wx.stc.STC_STYLE_BRACEBAD,
-            "fore:#000000,back:#FF0000,bold")
+            "fore:#FF3300,back:{},bold".format(backgroundColor))
 
-        # make the Python styles ...
+        # make the CPP styles ...
         # default
-        self.StyleSetSpec(wx.stc.STC_P_DEFAULT,
+        self.StyleSetSpec(wx.stc.STC_C_DEFAULT,
             "fore:#000000,face:%(mono)s,size:%(size)d" % faces)
         # comments
-        self.StyleSetSpec(wx.stc.STC_P_COMMENTLINE,
+        self.StyleSetSpec(wx.stc.STC_C_COMMENTLINE,
             "fore:#007F00,face:%(mono)s,size:%(size)d" % faces)
         # number
-        self.StyleSetSpec(wx.stc.STC_P_NUMBER,
+        self.StyleSetSpec(wx.stc.STC_C_NUMBER,
             "fore:#007F7F,size:%(size)d" % faces)
         # string
-        self.StyleSetSpec(wx.stc.STC_P_STRING,
+        self.StyleSetSpec(wx.stc.STC_C_STRING,
             "fore:#7F007F,face:%(mono)s,size:%(size)d" % faces)
         # single quoted string
-        self.StyleSetSpec(wx.stc.STC_P_CHARACTER,
+        self.StyleSetSpec(wx.stc.STC_C_CHARACTER,
             "fore:#7F007F,face:%(mono)s,size:%(size)d" % faces)
-        # keyword
-        self.StyleSetSpec(wx.stc.STC_P_WORD,
-            "fore:#00007F,bold,size:%(size)d" % faces)
-
-
+        # keywords 1
         self.StyleSetSpec(wx.stc.STC_C_WORD,
             "fore:#00007F,bold,size:%(size)d" % faces)
-
+        # keywords 2
         self.StyleSetSpec(wx.stc.STC_C_WORD2,
             "fore:#5F0F7F,bold,size:%(size)d" % faces)
-
-        # triple quotes
-        self.StyleSetSpec(wx.stc.STC_P_TRIPLE,
-            "fore:#7F0000,size:%(size)d" % faces)
-        # triple double quotes
-        self.StyleSetSpec(wx.stc.STC_P_TRIPLEDOUBLE,
-            "fore:#7F0000,size:%(size)d" % faces)
-        # class name definition
-        self.StyleSetSpec(wx.stc.STC_P_CLASSNAME,
-            "fore:#0000FF,bold,underline,size:%(size)d" % faces)
-        # function or method name definition
-        self.StyleSetSpec(wx.stc.STC_P_DEFNAME,
-            "fore:#007F7F,bold,size:%(size)d" % faces)
-        # operators
-        self.StyleSetSpec(wx.stc.STC_P_OPERATOR,
-            "bold,size:%(size)d" % faces)
-        # identifiers
-        self.StyleSetSpec(wx.stc.STC_P_IDENTIFIER,
-            "fore:#000000,face:%(mono)s,size:%(size)d" % faces)
-        # comment-blocks
-        self.StyleSetSpec(wx.stc.STC_P_COMMENTBLOCK,
-            "fore:#7F7F7F,size:%(size)d" % faces)
-        # end of line where string is not closed
-        self.StyleSetSpec(wx.stc.STC_P_STRINGEOL,
-            "fore:#000000,face:%(mono)s,back:#E0C0E0,eol,size:%(size)d"\
-                % faces)
 
         # register some images for use in the AutoComplete box
         self.RegisterImage(1,
@@ -197,12 +166,11 @@ class Editor(wx.stc.StyledTextCtrl):
         self.Bind(wx.EVT_KEY_UP, self.doGrammarCheck)
         self.Bind(wx.EVT_LEFT_UP, self.doGrammarCheck)
 
-
+# TOBE implemented - currently unused
     def onKeyPressed(self, event):
-        if self.CallTipActive():
-            self.CallTipCancel()
-        key = event.GetKeyCode()
-        if key == 32 and event.ControlDown():
+        if type(event) is wx._core.KeyEvent and not self.AutoCompActive():
+            key = event.GetKeyCode()
+            print key
             pos = self.GetCurrentPos()
             # tips
             if event.ShiftDown():
@@ -222,8 +190,7 @@ class Editor(wx.stc.StyledTextCtrl):
                     if kw[i] in keyword.kwlist:
                         kw[i] = kw[i] + "?1"
                 self.AutoCompShow(0, " ".join(kw))
-        else:
-            event.Skip()
+        self.doGrammarCheck(event)
 
     def onUpdateUI(self, evt):
         """update the user interface"""
@@ -338,23 +305,19 @@ class Editor(wx.stc.StyledTextCtrl):
 
     def highlightC(self):
         self.SetLexer(wx.stc.STC_LEX_CPP)
-        self.SetKeyWords(0, " ".join(C_KEYWORDS))
+        self.SetKeyWords(1, " ".join(C_KEYWORDS))
         # Controls FOLDING
-        self.SetProperty('fold', '1')
         self.SetProperty('fold.comment', '1')
-        self.SetProperty('fold.preprocessor', '0')
-        self.SetProperty('fold.compact', '0')
-        self.SetProperty('styling.within.preprocessor', '0')
-        self.SetProperty("tab.timmy.whinge.level", "1")
+        self.SetProperty('fold.preprocessor', '1')
+        self.SetProperty('fold.compact', '1')
+        self.SetProperty('styling.within.preprocessor', '1')
 
     def highlightSeal(self):
         self.SetLexer(wx.stc.STC_LEX_CPPNOCASE)
-        self.SetProperty('fold', '1')
         self.SetProperty('fold.comment', '1')
-        self.SetProperty('fold.preprocessor', '0')
-        self.SetProperty('fold.compact', '0')
-        self.SetProperty('styling.within.preprocessor', '0')
-        self.SetProperty("tab.timmy.whinge.level", "1")
+        self.SetProperty('fold.preprocessor', '1')
+        self.SetProperty('fold.compact', '1')
+        self.SetProperty('styling.within.preprocessor', '1')
         self.SetKeyWords(0, " ".join(SEAL_KEYWORDS))
         keywords_comp = list()
         for x in components:
@@ -488,6 +451,17 @@ class Editor(wx.stc.StyledTextCtrl):
             return retVal
         else:
             return None
+
+    def checkForComment(self, source):
+        if source is not None:
+            lineNr = self.LineFromPosition(source['start'])
+            firstLine = self.GetLine(lineNr).strip()
+            linePosNr = self.PositionFromLine(lineNr)
+            keywordPos = source['start'] - linePosNr
+            comment = firstLine.find("//")
+            if comment != -1 and comment < keywordPos:
+                return None
+        return source
 
     def change(self, data):
         textAfter = self.GetText()[data['end']:].strip()
