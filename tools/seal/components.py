@@ -37,6 +37,10 @@ def getUseCaseParameterValue(parameter, parameters):
     if isinstance(val, Value): return val.value
     return val
 
+def convertToParameterValue(pvalue):
+    if isinstance(pvalue.value, SealValue):
+        return pvalue.getCodeForGenerator(componentRegister, None)
+    return pvalue
 
 ######################################################
 class BranchCollection(object):
@@ -562,7 +566,8 @@ class Component(object):
 
     def updateParameters(self, dictionary):
         for p in dictionary.iteritems():
-            self.parameters[p[0]] = p[1].value
+            pvalue = convertToParameterValue(p[1])
+            self.parameters[p[0]] = pvalue
 
     def getParameterValue(self, parameter, defaultValue = None):
         if parameter in self.parameters:
@@ -613,12 +618,12 @@ class Component(object):
                         if pd[0] in finalParameters:
                             componentRegister.userError("Parameter '{0}' already specified for component '{1}'\n".format(pd[0], self.name))
                         else:
-                            finalParameters[pd[0]] = pd[1]
+                            finalParameters[pd[0]] = convertToParameterValue(pd[1])
             else:
                 if pname in finalParameters:
                     componentRegister.userError("Parameter '{0}' already specified for component '{1}'\n".format(p[0], self.name))
                 else:
-                    finalParameters[pname] = pvalue
+                    finalParameters[pname] = convertToParameterValue(pvalue)
 
         uc = UseCase(self, list(finalParameters.iteritems()), conditions, branchNumber, numInBranch)
         self.useCases.append(uc)
