@@ -43,20 +43,20 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
 #define SPI_MODE  (UCCKPH | UCMSB | UCMST | UCMODE_0 | UCSYNC)
 #define SPI_SPEED (CPU_HZ / 2)
 
-#define SETUP_SPI_PINS(letterid) (                           \
-    pinAsFunction(USCI_##letterid##_RXTX_PORT, USCI_##letterid##_SIMO_PIN), \
-    pinAsFunction(USCI_##letterid##_RXTX_PORT, USCI_##letterid##_SOMI_PIN), \
-    pinAsFunction(USCI_##letterid##_CLK_PORT, USCI_##letterid##_CLK_PIN),   \
-    pinAsOutput(USCI_##letterid##_RXTX_PORT, USCI_##letterid##_SOMI_PIN),   \
-    pinAsOutput(USCI_##letterid##_CLK_PORT, USCI_##letterid##_CLK_PIN) )
-#define SETUP_USCI(id, letterid) (                                      \
-    UC##letterid##CTL1 = UCSWRST,             /* Hold the module in reset state */   \
-    UC##letterid##CTL1 |= UCSSEL_2,           /* SMCLK clock source */               \
-    UC##letterid##BR0 = (CPU_HZ / SPI_SPEED) & 0xFF, /* Clock divider, lower part */ \
-    UC##letterid##BR1 = (CPU_HZ / SPI_SPEED) >> 8, /* Clock divider, higher part */  \
-    UC##letterid##CTL0 = SPI_MODE,            /* Set specified mode */               \
-    UC##id##IE &= ~UC##letterid##RXIE,        /* Disable receive interrupt */        \
-    UC##letterid##CTL1 &= ~UCSWRST)           /* Release hold */
+#define SETUP_SPI_PINS(letterid)                                            \
+    pinAsFunction(USCI_##letterid##_RXTX_PORT, USCI_##letterid##_SIMO_PIN); \
+    pinAsFunction(USCI_##letterid##_RXTX_PORT, USCI_##letterid##_SOMI_PIN); \
+    pinAsFunction(USCI_##letterid##_CLK_PORT, USCI_##letterid##_CLK_PIN);   \
+    pinAsOutput(USCI_##letterid##_RXTX_PORT, USCI_##letterid##_SIMO_PIN);   \
+    pinAsOutput(USCI_##letterid##_CLK_PORT, USCI_##letterid##_CLK_PIN)
+#define SETUP_USCI(id, letterid)                                                     \
+    UC##letterid##CTL1 = UCSWRST;             /* Hold the module in reset state */   \
+    UC##letterid##CTL1 |= UCSSEL_2;           /* SMCLK clock source */               \
+    UC##letterid##BR0 = (CPU_HZ / SPI_SPEED) & 0xFF; /* Clock divider, lower part */ \
+    UC##letterid##BR1 = (CPU_HZ / SPI_SPEED) >> 8; /* Clock divider, higher part */  \
+    UC##letterid##CTL0 = SPI_MODE;            /* Set specified mode */               \
+    UC##id##IE &= ~UC##letterid##RXIE;        /* Disable receive interrupt */        \
+    UC##letterid##CTL1 &= ~UCSWRST;           /* Release hold */
 
     if (busId == 0) {
         SETUP_SPI_PINS(A0);

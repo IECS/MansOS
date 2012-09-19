@@ -37,14 +37,14 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
     P1SEL1 |= BV(USCI_A0_CLK_PIN);                         \
     P2SEL1 |= BV(USCI_A0_RX_PIN) + BV(USCI_A0_TX_PIN);     \
 
-#define SETUP_USCI(id, letterid) (                                                   \
-    UC##letterid##CTL1 = UCSWRST,             /* Hold the module in reset state */   \
-    UC##letterid##CTL1 |= UCSSEL_2,           /* SMCLK clock source */               \
-    UC##letterid##BR0 = (CPU_HZ / SPI_SPEED) & 0xFF, /* Clock divider, lower part */ \
-    UC##letterid##BR1 = (CPU_HZ / SPI_SPEED) >> 8, /* Clock divider, higher part */  \
-    UC##letterid##CTL0 = SPI_MODE,            /* Set specified mode */               \
-    UC##id##IE &= ~UC##letterid##RXIE,        /* Disable receive interrupt */        \
-    UC##letterid##CTL1 &= ~UCSWRST)           /* Release hold */
+#define SETUP_USCI(id, letterid)                                                     \
+    UC##letterid##CTL1 = UCSWRST;             /* Hold the module in reset state */   \
+    UC##letterid##CTL1 |= UCSSEL_2;           /* SMCLK clock source */               \
+    UC##letterid##BR0 = (CPU_HZ / SPI_SPEED) & 0xFF; /* Clock divider, lower part */ \
+    UC##letterid##BR1 = (CPU_HZ / SPI_SPEED) >> 8; /* Clock divider, higher part */  \
+    UC##letterid##CTL0 = SPI_MODE;            /* Set specified mode */               \
+    UC##id##IE &= ~UC##letterid##RXIE;        /* Disable receive interrupt */        \
+    UC##letterid##CTL1 &= ~UCSWRST           /* Release hold */
 
     (void) busId;
     SETUP_SPI_PINS(A0);
