@@ -65,7 +65,7 @@ PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/chips/msp430/msp430_timers.c
 endif
 PSOURCES-$(USE_FLASH) += $(MOS)/chips/msp430/msp430_flash.c
 
-PSOURCES-$(USE_THREADS) += $(MOS)/kernel/threads/msp430/timing.c
+PSOURCES-$(USE_THREADS) += $(MOS)/arch/msp430/threads/timing.c
 
 PSOURCES-$(USE_HUMIDITY) += $(MOS)/chips/sht11/sht11.c
 PSOURCES-$(USE_HUMIDITY) += $(MOS)/chips/sht11/sht11_conv.c

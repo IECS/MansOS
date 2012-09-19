@@ -22,13 +22,7 @@
  */
 
 #include "threads.h"
-#ifdef MCU_MSP430
-#include "msp430/context_switch.h"
-#elif MCU_AVR
-#include "avr/context_switch.h"
-#else
-#error Define context switch macros for this architecture!
-#endif
+#include "threads/context_switch.h" // arch-specific file
 #include <lib/assert.h>
 #include <print.h>
 #include <sleep.h>
