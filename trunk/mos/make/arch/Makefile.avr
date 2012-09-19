@@ -54,7 +54,7 @@ ifneq ($(USE_THREADS),y)
 PSOURCES += $(MOS)/chips/atmega/atmega_timers.c
 endif
 
-PSOURCES-$(USE_THREADS) += $(MOS)/kernel/threads/avr/timing.c
+PSOURCES-$(USE_THREADS) += $(MOS)/arch/avr/threads/timing.c
 
 #===== Build and Upload Rules =====
 

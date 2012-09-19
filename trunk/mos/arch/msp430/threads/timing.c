@@ -22,22 +22,35 @@
  */
 
 #include <platform.h>
-#include "../timing.h"
+#include <kernel/threads/timing.h>
+#include <lib/assert.h>
 
-static inline uint16_t msToSleepCycles(uint16_t ms) {
-    return ms * SLEEP_CYCLES
-        + (uint16_t) ((uint32_t) ms * (uint32_t) SLEEP_CYCLES_DEC / 1000ull);
-}
+#include <lib/dprint.h>
 
-void atmegaTimer1Set(uint16_t ms)
+void msp430TimerBSet(uint16_t ms)
 {
-    if (ms > PLATFORM_MAX_SLEEP_MS) {
-        ms = PLATFORM_MAX_SLEEP_MS;
-    } else if (ms < PLATFORM_MIN_SLEEP_MS) {
-        ms = PLATFORM_MIN_SLEEP_MS;
+    // assume the 'ms' value passed here is correct (below maximum supported by HW)
+    if (ms >= 15984) {
+        PRINTF("ms=%u\n", ms);
+    }
+    ASSERT(ms < 15984); // 15984 * 4.1 ~= 0xfffe
+
+    uint16_t ocr;
+    if (ms > 0) {
+        // 32768 ticks per second
+        // => 32.768 ticks per millisecond
+        // scaled by 8 => 4.096 ticks per millisecond
+        // the following is equivalent to st * 4.1
+        ocr = ms * 4 + ms / 10;
+    } else {
+        ms = 1;
+        ocr = 1;
     }
 
-    uint16_t ocr = msToSleepCycles(ms);
+    // Note: this means that jiffies will contain incorrect value when someone
+    //       wakes from sleep because of an interrupt!
+    // XXX: also, a rounding error is introduced here
     jiffies += ms2jiffies(ms);
-    OCR1A = TCNT1 + ocr;
+
+    TBCCR0 = TBR + ocr;
 }
