@@ -24,7 +24,7 @@
 #
 
 import os
-from sys import path, argv
+from sys import path, argv, version
 #import wx.lib.inspection
 
 def main():
@@ -93,28 +93,37 @@ def importsOk():
         else:
             installStr = "Make sure you have installed modules:"
 
-        print "Cannot run MansOS IDE:"
+        print ("Cannot run MansOS IDE:")
 
         if not wxModuleOK:
-            print "\twx module not found"
+            print ("\twx module not found")
             installStr += " python-wxtools"
 
         if not serialModuleOK:
-            print "\tserial module not found"
+            print ("\tserial module not found")
             installStr += " python-serial"
 
         if not plyModuleOK:
-            print "\tPLY module not found"
+            print ("\tPLY module not found")
             installStr += " python-ply"
 
         if not sealParserOK:
-            print "\tSEAL parser not found!"
+            print ("\tSEAL parser not found!")
 
         if not mansOSOK:
-            print "\tMansOS not found!"
-        print installStr
+            print ("\tMansOS not found!")
+        print (installStr)
         return False
     return True
 
 if __name__ == '__main__':
+    if not version.startswith("2.7.2"):
+        print ("You are using Python version {}, this app is tested only under version 2.7.2, continue at Your own risk.".format(version[:5]))
+        inp = ""
+        if version[0] == '3':
+            inp = input("Continue? (y/n)")
+        else:
+            inp = raw_input("Continue? (y/n)")
+        if inp != "y":
+            exit(1)
     main()
