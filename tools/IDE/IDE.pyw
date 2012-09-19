@@ -117,8 +117,8 @@ def importsOk():
     return True
 
 if __name__ == '__main__':
-    if not version.startswith("2.7.2"):
-        print ("You are using Python version {}, this app is tested only under version 2.7.2, continue at Your own risk.".format(version[:5]))
+    if not version.startswith("2.7"):
+        print ("You are using Python version {}, this app is tested only under version 2.7., continue at Your own risk.".format(version[:5]))
         inp = ""
         if version[0] == '3':
             inp = input("Continue? (y/n)")
