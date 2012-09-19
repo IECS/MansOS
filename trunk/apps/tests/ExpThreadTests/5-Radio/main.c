@@ -22,7 +22,7 @@
  */
 
 #include "stdmansos.h"
-#include <lib/radio_packet_buffer.h>
+#include <net/radio_packet_buffer.h>
 
 uint8_t data[] = "hello world";
 
