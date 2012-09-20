@@ -6,6 +6,7 @@ const COMMAND_FLUSH_UNSENT 17;
 read Light;
 output File (Light, SequenceNumber, IsSent), filename "LightData.csv";
 
-when RemoteCommand == COMMAND_FLUSH_UNSENT:
+NetworkRead RemoteCommand (Command);
+when RemoteCommand.Command == COMMAND_FLUSH_UNSENT:
     output Radio, file "LightData.csv", where IsSent = False;
 end

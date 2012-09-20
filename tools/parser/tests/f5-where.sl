@@ -3,7 +3,7 @@
 const COMMAND_GET 17;
 const ID_TO_GET 3;
 
-InputCommand CommandWithSeqnum (Command, SequenceNumber);
+NetworkRead CommandWithSeqnum (Command, SequenceNumber);
 
 read Light;
 output File (Light, SequenceNumber), filename "LightData.csv";
