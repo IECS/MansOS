@@ -1,5 +1,6 @@
-// react on a command ("RemoteCommand" syntax)
+// react on a command
 const COMMAND_PRINT 17;
-when RemoteCommand == COMMAND_PRINT:
+NetworkRead RemoteCommand (Command);
+when RemoteCommand.Command == COMMAND_PRINT:
     use Print, format "hello world\n", once;
 end;

@@ -107,7 +107,6 @@ static void receivePacketData(SealCommListener_t *l, uint32_t typeMask, const ui
     uint16_t code = ffs(l->typeMask) - 1; // XXX: warning on msp430
     bool isSingleValued = !(l->typeMask & ~(1 << code));
 
-    int32_t *read = (int32_t *) data;
     int32_t *write;
     if (isSingleValued) write = &l->u.lastValue;
     else write = l->u.buffer;
@@ -117,10 +116,10 @@ static void receivePacketData(SealCommListener_t *l, uint32_t typeMask, const ui
         if (typeMask & bit) {
             if (l->typeMask & bit) {
                 // read memory can be unaligned!
-                memcpy(write, read, 4);
+                memcpy(write, data, 4);
                 write++;
             }
-            read++;
+            data += 4;
         }
         if (bit == (1ul << 31)) break;
     }
@@ -160,7 +159,7 @@ static void sealRecv(uint8_t *data, uint16_t length)
     }
     typeMask = h.typeMask;
 
-    PRINT("^\n");
+    PRINT("^\n"); // XXX TODO: this is SAD specific
     for_all_listeners(
             if (l->typeMask && (l->typeMask & typeMask) == l->typeMask) {
                 receivePacketData(l, typeMask, data + valueOffset);

@@ -152,11 +152,11 @@ class ConditionCollection(object):
 
     def writeOutCodeForEventBasedCondition(self, condition, outputFile):
         if condition.dependentOnSensors:
-            outputFile.write("static void condition{0}Callback(uint16_t code, int32_t values)\n".format(condition.id))
+            outputFile.write("static void condition{0}Callback(uint16_t code, int32_t value)\n".format(condition.id))
         elif condition.dependentOnInterrupts:
             outputFile.write("static void condition{0}Callback(void)\n".format(condition.id))
         else:
-            outputFile.write("static void condition{0}Callback(int32_t *values)\n".format(condition.id))
+            outputFile.write("static void condition{0}Callback(int32_t *value)\n".format(condition.id))
         outputFile.write("{\n")
         outputFile.write("    bool isFilteredOut = false;\n")
         outputFile.write(self.codeList[condition.id - 1])
@@ -258,10 +258,10 @@ class Value(object):
             s += self.suffix
         return s
 
-    def getCodeForGenerator(self, componentRegister, condition):
-#        print "getCodeForGenerator for ", self.value
+    def getCodeForGenerator(self, componentRegister, condition, inParameter):
+        # print " Value", self.value
         if type(self.value) is SealValue:
-            return self.value.getCodeForGenerator(componentRegister, condition)
+            return self.value.getCodeForGenerator(componentRegister, condition, inParameter)
         return self.getCode()
 
     def getType(self):
@@ -311,7 +311,7 @@ class SealValue(object):
             result += self.secondPart
         return result
 
-    def getCodeForGenerator(self, componentRegister, condition):
+    def getCodeForGenerator(self, componentRegister, condition, inParameter):
         if isinstance(self.firstPart, Value):
             return self.firstPart.getCode()
 
@@ -324,7 +324,7 @@ class SealValue(object):
         sp = self.secondPart
         if sp is None:
             sp = "value"
-        return componentRegister.replaceCode(self.firstPart, sp, condition)
+        return componentRegister.replaceCode(self.firstPart, sp, condition, inParameter)
 
 ########################################################
 class Expression(object):
@@ -395,30 +395,30 @@ class Expression(object):
             return self.right.getCode()
         return self.right
 
-    def getCodeForGenerator(self, componentRegister, condition):
-        #print "getCodeForGenerator", self
+    def getCodeForGenerator(self, componentRegister, condition, inParameter):
+        # print "getCodeForGenerator", self.right, self.op, self.left
         if self.left != None and self.right != None:
-            result = self.left.getCodeForGenerator(componentRegister, condition)
+            result = self.left.getCodeForGenerator(componentRegister, condition, inParameter)
             result += " " + self.op + " "
-            result += self.right.getCodeForGenerator(componentRegister, condition)
+            result += self.right.getCodeForGenerator(componentRegister, condition, inParameter)
             return result
         if self.op != None:
-            return self.op + " " + self.right.getCodeForGenerator(componentRegister, condition)
+            return self.op + " " + self.right.getCodeForGenerator(componentRegister, condition, inParameter)
         if type(self.right) is Expression:
-            return "(" + self.right.getCodeForGenerator(componentRegister, condition) + ")"
+            return "(" + self.right.getCodeForGenerator(componentRegister, condition, inParameter) + ")"
 #        print "self.right=", self.right, "[", self.right.asString(), "]"
 #        if type(self.right) is Value:
 #            print "self.right.value", self.right.value
 #            return self.right.asString()
         if type(self.right) is Value:
-            return self.right.getCodeForGenerator(componentRegister, condition)
+            return self.right.getCodeForGenerator(componentRegister, condition, inParameter)
         return self.right
 
     def getEvaluationCode(self, componentRegister):
-#        print "getEvaluationCode for", self.right, self.left
+#        print "\n\ngetEvaluationCode"
 #        print "getEvaluationCode for", self.right.right.right.value.firstPart
 #        print "getEvaluationCode for", self
-        code = self.getCodeForGenerator(componentRegister, self)
+        code = self.getCodeForGenerator(componentRegister, self, inParameter = False)
         return string.replace(string.replace(string.replace(
                     code,
                     " and ", "\n        && "),
