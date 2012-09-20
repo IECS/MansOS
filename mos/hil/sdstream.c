@@ -44,7 +44,11 @@
 static volatile uint32_t sdCardAddress;
 
 // TODO: use dynamic alloc
-static uint8_t tmpBuffer[40];
+#ifndef SDSTREAM_MAX_RECORD_SIZE
+#define SDSTREAM_MAX_RECORD_SIZE 40
+#endif
+
+static uint8_t tmpBuffer[SDSTREAM_MAX_RECORD_SIZE];
 
 // XXX: crc, if present, is acutrrently always at buffer[2]
 struct HeaderWithCrc_s {

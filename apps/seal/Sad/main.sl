@@ -1,6 +1,9 @@
 // use 64-bit counter
 config "USE_LONG_LIFETIME=y";
 config "CONST_CONDITION_EVALUATION_INTERVAL=10000";
+// optimize away unneeded things
+config "USE_PRINT=n";
+config "USE_ASSERT=n";
 
 const ADC_INTERNAL_VOLTAGE 11;
 
@@ -29,4 +32,4 @@ read AllSensors, period 10min, associate HelperLed, turnOnOff;
 // define our outputs
 output SdCard;
 output Network, protocol SAD, routing SAD;
-output Serial;
+//output Serial;

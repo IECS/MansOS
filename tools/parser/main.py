@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # - because /usr/bin/env python does not works when called from IDE on Windows
 
-import os, sys, getopt
+import os, sys, getopt, shutil
 
 inputFileName = 'test.sl'
 outputFileName = 'main.c'
@@ -161,7 +161,9 @@ def main():
             g.generate(outputFile)
         with open(outputDirName + "Makefile", 'w') as outputFile:
             g.generateMakefile(outputFile, outputFileName, makefilePathToOS)
-        with open(outputDirName + "config", 'w') as outputFile:
+        # use SEAL application's config file as the basis
+        shutil.copy2(outputDirName + ".." + os.sep + "config", outputDirName + "config")
+        with open(outputDirName + "config", 'a+') as outputFile:
             g.generateConfigFile(outputFile)
 
         if generator.components.componentRegister.isError:

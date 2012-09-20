@@ -166,9 +166,9 @@ endif
 
 # Decide the correct build action
 ifneq ("","$(SEAL_SOURCES)")
-PLATFORM_ACTION ?= platform_build_seal
+PLATFORM_ACTION ?= $(BUILDDIR)/config.saved platform_build_seal
 endif
-PLATFORM_ACTION ?= platform_build
+PLATFORM_ACTION ?= $(BUILDDIR)/config.saved platform_build 
 
 #===== Tools =====
 
@@ -265,18 +265,23 @@ platform_build: build saveplatform
 
 # SEAL code compiled successfully, now build C sources.
 ifeq ($(SHORT_UNAME),MINGW3)
-platform_build_seal: $(GENERATED_SOURCES)
+
 # Sorry for this mess - needed to compile at all on MinGW...  
+platform_build_seal: $(GENERATED_SOURCES)
 	(cd $(BUILDDIR);\
 	echo "TARGET=$(TARGET)">Makefile.target;\
 	MAKECMDGOALS="$(TARGET)" $(MAKE) $(TARGET);\
 	$(MakeDir) $(TARGET);\
 	$(Copy) build/$(TARGET)/$(SEAL_EXECUTABLE) $(TARGET)/$(EXECUTABLE))
+
 else
+
+# the target for all except MinGW
 platform_build_seal: $(GENERATED_SOURCES)
 	$(MAKE) -C $(BUILDDIR) $(TARGET)
 	$(MakeDir) $(OUTDIR)
 	$(Copy) build/$(OUTDIR)/$(SEAL_EXECUTABLE) $(OUTDIR)/$(EXECUTABLE)
+
 endif
 
 platform_skip:
@@ -314,7 +319,7 @@ saveplatform:
 	$(_QUIET) @echo "saving Makefile.target"
 	$(_QUIET) @echo >$(BUILDDIR)/Makefile.target "TARGET = $(TARGET)"
 
-build: $(BUILDDIR)/config.saved objDirs $(OUTDIR)/$(EXECUTABLE)
+build: objDirs $(OUTDIR)/$(EXECUTABLE)
 
 #
 # "config" file is required for building. An empty file is created it doesn't exist
