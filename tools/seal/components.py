@@ -1997,9 +1997,7 @@ class OutputUseCase(object):
         self.packetFields = sorted(self.packetFields, key = lambda f: f.sensorID)
 
     def generateConstants(self, outputFile):
-        if self.numSensorFields:
-            outputFile.write("#define {0}_PACKET_NUM_FIELDS    {1}\n".format(
-                    self.getNameUC(), self.numSensorFields))
+        pass
 
     def generatePacketType(self, outputFile, indent):
         if len(self.packetFields) == 0: return
@@ -2141,9 +2139,6 @@ class OutputUseCase(object):
         outputFile.write("{\n")
         outputFile.write("    return ({0}Packet.typeMask1 & {1}_TYPE_MASK) == {1}_TYPE_MASK;\n".format(
                 self.getNameCC(), self.getNameUC()))
-
-#        outputFile.write("    return {0}PacketNumFieldsFull >= {1}_PACKET_NUM_FIELDS;\n".format(
-#                self.getNameCC(), self.getNameUC()))
         outputFile.write("}\n\n")
 
     def generateCallbackCode(self, sensorName, outputFile, suffix):
