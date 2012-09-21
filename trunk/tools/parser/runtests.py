@@ -18,10 +18,12 @@ def runTest(sourceFileName):
 
     if basename == "45-extras-cache.sl" or basename == "46-extras-cache-when.sl":
         arch = "schedtest"
+    elif basename == "scen-sad.sl":
+        arch = "sm3"
     else:
         arch = architecture
 
-    sys.argv = ["./main.py", "-e", "-a", arch, "-t", targetOS, "-o", outputFileName, sourceFileName]
+    sys.argv = ["./main.py", "-c", "-a", arch, "-t", targetOS, "-o", outputFileName, sourceFileName]
 
     try:
         ret = main.main()
@@ -48,7 +50,7 @@ def runTests():
     files = os.listdir(testFileDir)
     files.sort()
     for f in files:
-        if len(f) < 3 or f[len(f) - 3:] != '.sl': continue
+        if f[-3:] != '.sl': continue
         sourceFileName = os.path.join(testFileDir, f)
         print ("\nprocessing " + sourceFileName + "...")
         runTest(sourceFileName)
