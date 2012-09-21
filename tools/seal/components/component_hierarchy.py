@@ -559,6 +559,7 @@ class PrintAct(SealActuator):
 class WateringAct(SealActuator):
     def __init__(self):
         super(WateringAct, self).__init__("Watering")
+        self.useFunction.value = "0"
 
 #######################################################
 class SealOutput(SealComponent):
