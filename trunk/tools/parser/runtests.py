@@ -7,6 +7,8 @@ architecture = 'testarch'
 #architecture = 'telosb'
 targetOS = 'mansos'
 outputDirName = "build"
+doCompile = False
+compileArch = "telosb"
 
 def runTest(sourceFileName):
     if not os.path.exists(outputDirName):
@@ -44,6 +46,9 @@ def runTest(sourceFileName):
             outputFile.write(sourceFile.read())
         outputFile.write("*/\n\n")
         outputFile.write(contents)
+
+    if doCompile:
+        os.system("cd build && make clean && make {}".format(compileArch))
 
 def runTests():
     numTests = 0

@@ -101,6 +101,20 @@ class FunctionTree(object):
             args.append(a.getCode())
         return self.function.lower() + "(" + ",".join(args) + ")"
 
+    def collectSensors(self):
+        result = []
+        for a in self.arguments:
+            result += a.collectSensors()
+
+        if type(self.function) is SealValue:
+            result.append(self.function.firstPart)
+
+        if isinstance(self.function, str):
+            if self.function[:7] != '__const':
+                result.append(self.function)
+
+        return set(result)
+
     def collectImplicitDefines(self, containingComponent):
         return []
 
@@ -200,13 +214,12 @@ class ConditionCollection(object):
 
         for component in condition.dependentOnPackets:
             outputFile.write("    {\n")
-            outputFile.write("        static int32_t buffer[{}];\n".format(len(component.remoteFields)))
             outputFile.write("        const uint32_t typeMask = 0")
             for f in component.remoteFields:
                 outputFile.write("\n            | {}_TYPE_MASK".format(f.upper()))
             outputFile.write(";\n")
-            outputFile.write("        sealCommPacketRegisterInterest(typeMask, condition{}Callback, buffer);\n".format(
-                    condition.id))
+            outputFile.write("        sealCommPacketRegisterInterest(typeMask, condition{}Callback, (int32_t *)&{}PacketBuffer);\n".format(
+                    condition.id, component.name))
             outputFile.write("    }\n")
 
     def generateAppMainCode(self, outputFile):
@@ -423,7 +436,7 @@ class Expression(object):
                     code,
                     " and ", "\n        && "),
                     " or ", "\n        || "),
-                    " not ", " ! ") + ";\n"
+                    "(not ", "(! ") + ";\n"
 
     def asString(self):
         temp = self.getCode().split(" ", 1)
@@ -849,18 +862,8 @@ class CodeBlock(object):
             # just invert previous
             conditionCollection.invertLast()
 
-        # if there are some declarations present for this code branch,
-        # make sure it gets unique number
-
-        anyUsefulDeclarations = False
-        for d in self.declarations:
-            if not isinstance(d, CodeBlock):
-                anyUsefulDeclarations = True
-                break
-        # add branch only if it has useful declaration,
-        # with the exception of the main (zero) branch - it is always present
-        if anyUsefulDeclarations or self.blockType == CODE_BLOCK_TYPE_PROGRAM:
-            conditionCollection.ensureBranchIsPresent(componentRegister)
+        # make sure this code branch gets a unique number
+        conditionCollection.ensureBranchIsPresent(componentRegister)
 
         return stackStartSize
 

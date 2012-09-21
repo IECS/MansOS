@@ -314,6 +314,11 @@ class UseCase(object):
         outputFile.write("        {};\n".format(writeFunction))
         outputFile.write("    }\n")
 
+    def warnIfNone(self, function, functionName):
+        if function: return False
+        componentRegister.userWarning("No '{1}' parameter for component '{0}'!\n".format(
+                self.component.getNameCC(), functionName))
+        return True
 
     def generateCallbacks(self, outputFile, outputs):
         ccname = self.component.getNameCC()
@@ -369,15 +374,18 @@ class UseCase(object):
                 elif self.on:
                     onFunction = self.component.getDependentParameterValue(
                         "onFunction", self.parameters)
-                    outputFile.write("    {0};\n".format(onFunction))
+                    if not self.warnIfNone(onFunction, "onFunction"):
+                        outputFile.write("    {0};\n".format(onFunction))
                 elif self.off:
                     offFunction = self.component.getDependentParameterValue(
                         "offFunction", self.parameters)
-                    outputFile.write("    {0};\n".format(offFunction))
+                    if not self.warnIfNone(offFunction, "offFunction"):
+                        outputFile.write("    {0};\n".format(offFunction))
                 else:
                     useFunction = self.component.getDependentParameterValue(
                         "useFunction", self.parameters)
-                    outputFile.write("    {0};\n".format(useFunction))
+                    if not self.warnIfNone(useFunction, "useFunction"):
+                        outputFile.write("    {0};\n".format(useFunction))
 
             elif type(self.component) is Sensor:
                 intTypeName = self.component.getDataType()
@@ -664,6 +672,9 @@ class Component(object):
         self.risingEdge = risingEdge
         return True
 
+    def isNetworkBased(self):
+        return False # only for sensors
+
     def generateIncludes(self, outputFile):
         # if self.isUsed():
             includes = self.getSpecialValue("extraIncludes")
@@ -815,6 +826,14 @@ class Sensor(Component):
 
 #    def getNoValue(self):
 #        return "0x" + "ff" * self.getDataSize()
+
+    def isNetworkBased(self):
+        if self.functionTree is None: return False
+        allSensors = self.functionTree.collectSensors()
+        for name in allSensors:
+            if name in componentRegister.networkComponents:
+                return True
+        return False
 
     def generateConstants(self, outputFile):
         super(Sensor, self).generateConstants(outputFile)
@@ -1677,7 +1696,7 @@ class Sensor(Component):
             outputFile.write("    value /= {};\n".format(numToTake))
         # OTHER
         else:
-            componentRegister.userError("tuple(): unknown aggregate function {}()!\n".format(aggregateFunction));
+            componentRegister.userError("tuple(): unknown aggregate function {}()!\n".format(aggregateFunction))
         outputFile.write("    if (valuesCursor == 0) {\n")
         outputFile.write("        *topLevelFilteredOut = true;\n")
         outputFile.write("    }\n")
@@ -1688,6 +1707,28 @@ class Sensor(Component):
 
     def generateSubReadFunctions(self, outputFile, functionTree, root):
         if functionTree is None:
+            # special case for remote sensors
+
+#        for f in fields:
+#            basename = "null" if f in commonFields else f
+#            s = self.addRemote(nc.getPrefix() + f, basename)
+#            s.networkComponent = nc
+
+        # add remote sensor for all fields
+#        s = self.addRemote(name, basename = "null")
+
+#        if s:
+#            s.remoteFields = fields
+
+            if self.isRemote() and self.specification._name == "Null":
+                if len(self.remoteFields) > 1:
+                    componentRegister.userError("Network packet '{}' with more than one field used: specify field name!\n".format(self.name))
+                    return "0"
+                baseSensorName = self.networkComponent.getPrefix() + self.remoteFields[0]
+                baseSensor = componentRegister.sensors.get(baseSensorName)
+                assert baseSensor
+                return baseSensor.generateSubReadFunctions(outputFile, None, root)
+
             # a physical sensor; generate just raw read function
             if self.specification._readFunctionDependsOnParams:
                 readFunctionSuffix = str(self.readFunctionNum)
@@ -2575,6 +2616,12 @@ class NetworkComponent(object):
 
     def replaceCode(self, fieldName, condition):
         fieldName = fieldName.lower()
+        if fieldName == "value" \
+                and fieldName not in self.fields \
+                and len(self.fields) >= 1:
+            fieldName = self.fields.pop()
+            self.fields.add(fieldName) # re-add it, because pop() removes the element
+
         if fieldName not in self.fields:
             componentRegister.userError("Network component '{0}' has no field named '{1}'\n".format(
                     self.name, fieldName))
@@ -3159,6 +3206,9 @@ class ComponentRegister(object):
             b = self.getInterruptBase(c)
             condition.dependentOnInterrupts.add(b)
             b.conditionsDependentOnInterrupt.append(condition)
+
+        if c.isNetworkBased() and condition:
+            condition.dependentOnPackets.add(c)
 
         # found
         if parameterName.lower() == 'ispresent':
