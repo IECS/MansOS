@@ -24,106 +24,23 @@
 #
 
 import os
-from sys import path, argv, version
-#import wx.lib.inspection
+from sys import argv, path
+import wx
 
 def main():
     # Go to real directory for imports to work
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
-    # Check if all imports are found
-    if not importsOk():
-        raw_input("Press any key to exit...")
-        exit(1)
-
+    # Append seal parser to PATH
+    sealPath = os.path.join(os.getcwd()[:-4], "seal")
+    path.append(sealPath)
+    path.append(os.path.join(sealPath, 'components'))
+    # Must import after PATH update!
     from src import api_core
-    import wx
 
     ex = wx.App(redirect = False)
     API = api_core.ApiCore(argv[1:])
     API.frame.Show()
-    #wx.lib.inspection.InspectionTool().Show()
     ex.MainLoop()
 
-def importsOk():
-    wxModuleOK = True       # wx widgets
-    serialModuleOK = True   # serial port communication
-    plyModuleOK = True      # Python Lex Yacc - for compilation
-    sealParserOK = True     # SEAL parser
-    mansOSOK = True         # MansOS
-
-    try:
-        import wx #@UnusedImport
-    except ImportError:
-        wxModuleOK = False
-
-    try:
-        import serial #@UnusedImport
-    except ImportError:
-        serialModuleOK = False
-
-    try:
-        import ply #@UnusedImport
-    except ImportError:
-        plyModuleOK = False
-
-    try:
-        # Add SEAL parser to python path
-        sealPath = os.path.join(os.getcwd()[:-4], "seal")
-        path.append(sealPath)
-        path.append(os.path.join(sealPath, 'components'))
-        from seal_parser import SealParser #@UnusedImport
-        import seal_parser #@UnusedImport
-    except ImportError:
-        sealParserOK = False
-    except OSError:
-        sealParserOK = False
-
-    versionFile = os.path.join("../..", "doc/VERSION")
-    if not os.path.exists(versionFile) or not os.path.isfile(versionFile):
-        mansOSOK = False
-    else:
-        f = open(versionFile, "r")
-        print ("Using MansOS:\n\tVersion: {}\n\tRelease date: {}".format(\
-                                 f.readline().strip(), f.readline().strip()))
-        f.close()
-
-    if not (wxModuleOK and serialModuleOK and plyModuleOK and sealParserOK and mansOSOK):
-        if os.name == 'posix':
-            installStr = "Make sure you have installed required modules. Run:\n\tapt-get install"
-        else:
-            installStr = "Make sure you have installed modules:"
-
-        print ("Cannot run MansOS IDE:")
-
-        if not wxModuleOK:
-            print ("\twx module not found")
-            installStr += " python-wxtools"
-
-        if not serialModuleOK:
-            print ("\tserial module not found")
-            installStr += " python-serial"
-
-        if not plyModuleOK:
-            print ("\tPLY module not found")
-            installStr += " python-ply"
-
-        if not sealParserOK:
-            print ("\tSEAL parser not found!")
-
-        if not mansOSOK:
-            print ("\tMansOS not found!")
-        print (installStr)
-        return False
-    return True
-
 if __name__ == '__main__':
-    if not version.startswith("2.7"):
-        print ("You are using Python version {}, this app is tested only under version 2.7., continue at Your own risk.".format(version[:5]))
-        inp = ""
-        if version[0] == '3':
-            inp = input("Continue? (y/n)")
-        else:
-            inp = raw_input("Continue? (y/n)")
-        if inp != "y":
-            exit(1)
     main()
