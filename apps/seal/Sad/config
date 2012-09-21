@@ -1,1 +1,7 @@
 PLATFORM_ONLY=sm3
+# use 64-bit counter
+USE_LONG_LIFETIME=y
+CONST_CONDITION_EVALUATION_INTERVAL=10000
+# optimize away unneeded things
+USE_PRINT=n
+USE_ASSERT=n
