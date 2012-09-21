@@ -54,7 +54,7 @@ def help(isError):
     sys.stderr.write("  -p, --path <path>     PAth to the target OS folder (default: {0})\n".format(pathToOS))
     sys.stderr.write("  -V, --verbose         Verbose mode\n")
     sys.stderr.write("  -v, --version         Print version\n")
-    sys.stderr.write("  -e, --errors          Test mode (ignore errors)\n")
+    sys.stderr.write("  -c, --continue        Countinue on errors (test mode)\n")
     sys.stderr.write("  -h, --help            Print this help\n")
     sys.exit(int(isError))
 
@@ -67,8 +67,8 @@ def parseCommandLine(argv):
     global pathToOS
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "a:eho:p:t:Vv",
-                   ["arch=", "errors", "help", "output=",
+        opts, args = getopt.getopt(sys.argv[1:], "a:cho:p:t:Vv",
+                   ["arch=", "continue", "help", "output=",
                     "path=", "target=", "verbose", "version"])
     except getopt.GetoptError, err:
         # print help information and exit:
@@ -94,7 +94,7 @@ def parseCommandLine(argv):
             outputFileName = a
         elif o in ("-p", "--path"):
             pathToOS = a
-        elif o in ("-e", "--errors"):
+        elif o in ("-c", "--continue"):
             testMode = True
 
     if len(args):
@@ -162,7 +162,13 @@ def main():
         with open(outputDirName + "Makefile", 'w') as outputFile:
             g.generateMakefile(outputFile, outputFileName, makefilePathToOS)
         # use SEAL application's config file as the basis
-        shutil.copy2(outputDirName + ".." + os.sep + "config", outputDirName + "config")
+        try:
+            shutil.copy2(outputDirName + ".." + os.sep + "config", outputDirName + "config")
+        except IOError as e:
+            try:
+                os.remove(outputDirName + "config")
+            except OSError as e:
+                pass
         with open(outputDirName + "config", 'a+') as outputFile:
             g.generateConfigFile(outputFile)
 

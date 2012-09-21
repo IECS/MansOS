@@ -58,7 +58,7 @@ class FunctionTree(object):
             self.function = function.lower()
         else:
             # for named parameters; a pair is passed instead
-            assert len(arguments) == 0
+            # assert len(arguments) == 0
             self.parameterName = function[0].lower()
             self.function = function[1].lower()
         self.arguments = arguments
@@ -507,9 +507,14 @@ class SetStatement(object):
         self.expression = expression
 
     def addComponents(self, componentRegister, conditionCollection):
-        componentRegister.setState(self.name, self.expression,
-                                   conditionCollection.conditionStack,
-                                   conditionCollection.branchNumber)
+        self.conditionStack = list(conditionCollection.conditionStack)
+        self.branchNumber = conditionCollection.branchNumber
+        componentRegister.setState(self.name)
+
+    def finishAdding(self, componentRegister):
+        componentRegister.addStateUseCase(self.name, self.expression,
+                                   self.conditionStack,
+                                   self.branchNumber)
 
     def getCode(self, indent):
         return "set " + self.name + " " + self.expression.getCode() + ';'
@@ -547,8 +552,8 @@ class NetworkReadStatement(object):
 ########################################################
 class ComponentDefineStatement(object):
     def __init__(self, name, functionTree, parameters, isImplicit, containingOutputComponent = None):
+        # print "ComponentDefineStatement", name
         self.name = name.lower()
-#        self.basename = basename.lower()
         self.functionTree = functionTree
         self.parameterList = parameters
         self.parameterDictionary = {}
@@ -562,7 +567,6 @@ class ComponentDefineStatement(object):
         self.alsoInBranches = set()
         self.alsoInBranchesConditions = {}
         self.alsoInCodeBlocks = {}
-#        self.customVirtualBase = None
         # underlying virtual components
         self.bases = set()
         # derived virtual components
@@ -590,14 +594,17 @@ class ComponentDefineStatement(object):
 #        return result
 
     def addComponents(self, componentRegister, conditionCollection):
+        # print "ComponentDefineStatement", self.name, ": addComponents"
         self.conditions = list(conditionCollection.conditionStack)
         self.branchNumber = conditionCollection.branchNumber
         componentRegister.addVirtualComponent(self)
 
     def continueAdding(self, componentRegister):
+        # print "ComponentDefineStatement", self.name, ": continueAdding"
         componentRegister.continueAddingVirtualComponent(self)
 
     def finishAdding(self, componentRegister):
+        # print "ComponentDefineStatement", self.name, ": finishAdding"
         componentRegister.finishAddingVirtualComponent(self)
 
     def getAllBasenamesRecursively(self, functionTree):
@@ -906,7 +913,8 @@ class CodeBlock(object):
                 d.addComponents(componentRegister, conditionCollection)
 
             if type(d) is ParametersDefineStatement \
-                    or type(d) is NetworkReadStatement:
+                    or type(d) is NetworkReadStatement \
+                    or type(d) is SetStatement:
                 d.addComponents(componentRegister, conditionCollection)
 
             if type(d) is LoadStatement:
@@ -917,9 +925,9 @@ class CodeBlock(object):
                     d.load(componentRegister)
 
         # add set statements (may depend on virtual components)
-        for d in self.declarations:
-            if type(d) is SetStatement:
-                d.addComponents(componentRegister, conditionCollection)
+#        for d in self.declarations:
+#            if type(d) is SetStatement:
+#                d.addComponents(componentRegister, conditionCollection)
 
         conditionCollection.nextBranch()
 
@@ -942,6 +950,11 @@ class CodeBlock(object):
             d.continueAdding(componentRegister)
         for d in self.componentDefines.itervalues():
             d.finishAdding(componentRegister)
+
+        # add set statements (may depend on virtual components)
+        for d in self.declarations:
+            if type(d) is SetStatement:
+                d.finishAdding(componentRegister)
 
         conditionCollection.nextBranch()
 
@@ -978,11 +991,9 @@ class CodeBlock(object):
 
         self.exitCodeBlock(componentRegister, conditionCollection, ss)
 
+
     def add(self, componentRegister, conditionCollection):
-        self.addComponents(componentRegister,
-                           conditionCollection)
+        self.addComponents(componentRegister, conditionCollection)
         componentRegister.chainVirtualComponents()
-        self.addVirtualComponents(componentRegister,
-                                  conditionCollection)
-        self.addUseCases(componentRegister,
-                         conditionCollection)
+        self.addVirtualComponents(componentRegister, conditionCollection)
+        self.addUseCases(componentRegister, conditionCollection)

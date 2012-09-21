@@ -3083,11 +3083,9 @@ class ComponentRegister(object):
             if not s1: continue
             s.alsoSensorIds.add(s1.getSystemwideID())
 
-    def setState(self, name, expression, conditions, branchNumber):
+    def setState(self, name):
         # add the state itself, if not already
-        isNew = False
         if name not in self.systemStates:
-            isNew = True
             self.systemStates[name] = []
             # also add a kind of sensor, to later allow these state values to be read
             if name in self.sensors:
@@ -3101,7 +3099,10 @@ class ComponentRegister(object):
             # spec.dataType = componentRegister.module.SealParameter(value.getType())
             # add the sensor to array
             self.sensors[name] = Sensor(name, spec)
+
+    def addStateUseCase(self, name, expression, conditions, branchNumber):
         # add new use case for this state
+        isNew = len(self.systemStates[name]) == 0
         self.systemStates[name].append(
             SetUseCase(name, expression, conditions, branchNumber, isNew))
 
@@ -3185,7 +3186,7 @@ class ComponentRegister(object):
             # return the right read function
             return c.getNameCC() + "ReadProcess(&isFilteredOut)"
 
-        if componentName == 'variables':
+        if componentName == 'variables' or componentName == 'constants':
             # a global C variable, return its name (the user is responsible for correctness)
             return parameterName
 

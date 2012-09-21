@@ -100,6 +100,23 @@ class VariableSensor(SealSensor):
             return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
         return self.getParameterValue("name", useCaseParameters)
 
+# to read C constants (pseudo sensor)
+class ConstantsSensor(SealSensor):
+    def __init__(self):
+        super(ConstantsSensor, self).__init__("Constants")
+        self.useFunction.value = "0"
+        self.readFunction.value = self.useFunction.value
+        self._cacheable = False
+        # the name of C constant
+        self.name = SealParameter(None, [])
+        self._readFunctionDependsOnParams = True
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "readFunction" and parameter != "useFunction":
+            return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
+        return self.getParameterValue("name", useCaseParameters)
+
+
 class ConstantSensor(SealSensor):
     def __init__(self):
         super(ConstantSensor, self).__init__("Constant")

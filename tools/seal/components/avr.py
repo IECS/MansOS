@@ -35,6 +35,7 @@ sawwave = SawtoothWaveSensor()
 sinewave = SineWaveSensor()
 
 variables = VariableSensor()
+constants = ConstantsSensor()
 
 
 #
