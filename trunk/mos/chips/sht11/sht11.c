@@ -28,6 +28,8 @@
 #include "sht11.h"
 #include <delay.h>
 
+bool shtIsOn;
+
 #define SHT11_SEND_START_SEQ() \
     SHT11_SDA_OUT(); \
     SHT11_SDA_HI(); \

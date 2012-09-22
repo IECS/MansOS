@@ -140,12 +140,10 @@ static inline void initSystem(void)
 #ifdef USE_ISL29003
     INIT_PRINTF("init ISL light sensor...\n");
     islInit();
-    islOn();
 #endif
 #ifdef USE_ADS1115
     INIT_PRINTF("init ADS111x ADC converter chip...\n");
     adsInit();
-    adsSelectInput(0);
 #endif
 #ifdef USE_HUMIDITY
     INIT_PRINTF("init humidity sensor...\n");

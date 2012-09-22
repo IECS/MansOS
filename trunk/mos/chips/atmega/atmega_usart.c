@@ -30,8 +30,7 @@
 #include <errors.h>
 #include <avr/interrupt.h>
 
-volatile bool serialBusy[SERIAL_COUNT];
-volatile uint8_t serialFunction[SERIAL_COUNT];
+volatile Serial_t serial[SERIAL_COUNT];
 
 //===========================================================
 // Data types and constants

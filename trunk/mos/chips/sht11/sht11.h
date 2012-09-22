@@ -33,23 +33,10 @@
 #include "humidity_hal.h"
 
 // -----------------------
-// public functions
-// -----------------------
-
-// read temperature
-#define sht11_read_temperature() \
-    sht11_cmd(SHT11_CMD_TEMP)
-// read humidity
-#define sht11_read_humidity() \
-    sht11_cmd(SHT11_CMD_HUM)
-
-// TODO: improve this (use global variable?)
-#define sht11_is_error() \
-    (sht11_read_humidity() == 0xffff)
-
-// -----------------------
 // internal stuff
 // -----------------------
+
+extern bool shtIsOn;
 
 // SHT11 pins must be defined in HAL level
 //#define SHT11_SDA_PORT 1
@@ -95,10 +82,12 @@ void sht11_conn_reset(void);
 #define SHT11_ON() \
     SHT11_PWR_HI(); \
     sht11_conn_reset(); \
-    sht11_cmd(SHT11_CMD_RESET);
+    sht11_cmd(SHT11_CMD_RESET); \
+    shtIsOn = true
 
 #define SHT11_OFF() \
-    SHT11_PWR_LO()
+    SHT11_PWR_LO(); \
+    shtIsOn = false
 
 // init sensor, turn power off
 #define SHT11_INIT() \
@@ -107,7 +96,27 @@ void sht11_conn_reset(void);
     SHT11_OFF();     \
     SHT11_SDA_IN();  \
     SHT11_CLK_LO();  \
-    SHT11_SDA_HI();
+    SHT11_SDA_HI()
 
-#endif // !MANSOS_SHT11_H
+// -----------------------
+// public functions
+// -----------------------
+
+// read temperature
+static inline uint16_t sht11_read_temperature(void) {
+    if (!shtIsOn) SHT11_ON();
+    return sht11_cmd(SHT11_CMD_TEMP);
+}
+
+// read humidity
+static inline uint16_t sht11_read_humidity(void) {
+    if (!shtIsOn) SHT11_ON();
+    return sht11_cmd(SHT11_CMD_HUM);
+}
+
+// TODO: improve this (use global variable?)
+#define sht11_is_error() \
+    (sht11_read_humidity() == 0xffff)
+
+#endif
 

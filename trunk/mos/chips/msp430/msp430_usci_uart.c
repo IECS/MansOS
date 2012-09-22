@@ -35,13 +35,11 @@
 
 SerialCallback_t serialRecvCb[SERIAL_COUNT];
 
-volatile bool serialBusy[SERIAL_COUNT];
-volatile uint8_t serialFunction[SERIAL_COUNT];
+volatile Serial_t serial[SERIAL_COUNT];
 
 //
 // Initialization
 //
-
 uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
 {
     //
@@ -125,11 +123,7 @@ void serialSendByte(uint8_t id, uint8_t data)
 // UART mode receive handler
 #if UART_ON_USCI_A0
 
-// #if defined(__msp430x54xA) // || defined __IAR_SYSTEMS_ICC__
-// ISR(USCI_A0, USCIAInterruptHandler)
-// #else
 ISR(USCIAB0RX, USCI0InterruptHandler)
-// #endif
 {
     bool error = UCA0STAT & UCRXERR;
     uint8_t data = UCA0RXBUF;

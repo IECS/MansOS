@@ -52,14 +52,13 @@ static uint8_t recvLength;
 // Busy waiting loop us not used, as the code is executd with ints off.
 //
 #define AMB8420_SERIAL_CAPTURE()    \
-    serialBusy[AMB8420_UART_ID] = true;                             \
-    if (serialFunction[AMB8420_UART_ID] != SERIAL_FUNCTION_RADIO) {  \
-        amb8420InitSerial();                                        \
-        serialFunction[AMB8420_UART_ID] = SERIAL_FUNCTION_RADIO;     \
-    }                                                              \
+    serial[AMB8420_UART_ID].busy = true;                             \
+    if (serial[AMB8420_UART_ID].function != SERIAL_FUNCTION_RADIO) { \
+        amb8420InitSerial();                                         \
+    }                                                                \
 
 #define AMB8420_SERIAL_FREE()   \
-    serialBusy[AMB8420_UART_ID] = false;
+    serial[AMB8420_UART_ID].busy = false;
 
 static void rxPacket(uint8_t checksum)
 {
@@ -179,6 +178,7 @@ void amb8420InitSerial(void)
     serialInit(AMB8420_UART_ID, AMB8420_SERIAL_BAUDRATE, 0);
     serialEnableTX(AMB8420_UART_ID);
     serialSetReceiveHandle(AMB8420_UART_ID, serialReceive);
+    serial[AMB8420_UART_ID].function = SERIAL_FUNCTION_RADIO;
 }
 
 void amb8420Reset(void)
@@ -215,8 +215,6 @@ void amb8420Reset(void)
 
     // long delay, maybe helps for the RTS problem
     mdelay(500);
-
-    serialFunction[AMB8420_UART_ID] = SERIAL_FUNCTION_RADIO;
 }
 
 void amb8420Init(void)
