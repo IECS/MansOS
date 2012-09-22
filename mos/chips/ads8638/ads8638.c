@@ -25,6 +25,7 @@
 #include <spi.h>
 #include <delay.h>
 #include <print.h>
+#include <serial.h>
 
 #define ADS8638_SPI_ENABLE()   spiSlaveEnable(ADS8638_CS_PORT, ADS8638_CS_PIN)
 #define ADS8638_SPI_DISABLE()  spiSlaveDisable(ADS8638_CS_PORT, ADS8638_CS_PIN)
@@ -32,33 +33,12 @@
 static uint8_t adsChannel;
 static uint8_t adsRange;
 
-// Data transmission
-static uint8_t adsSpiExchByte(uint8_t b)
-{
-    while (!(UC0IFG & UCB0TXIFG)); /* Wait for ready */
-    UCB0TXBUF = b;                      /* Send data */
-    while (!(UC0IFG & UCB0RXIFG)); /* Wait for reply */
-    return UCB0RXBUF;                /* Return reply */
-}
-
-static void adsSpiWriteByte(uint8_t b)
-{
-    while (!(UC0IFG & UCB0TXIFG)); /* Wait for ready */
-    UCB0TXBUF = b;                      /* Send data */
-}
-
-static inline uint8_t adsSpiReadByte(void)
-{
-    while (!(UC0IFG & UCB0RXIFG)); /* Wait for reply */
-    return UCB0RXBUF;                /* Return reply */
-}
-
 uint8_t ads8638RegRead(uint8_t address)
 {
     uint8_t result;
     ADS8638_SPI_ENABLE();
-    adsSpiWriteByte((address << 1) | 0x1);
-    result = adsSpiReadByte();
+    spiWriteByte(ADS8638_SPI_ID, (address << 1) | ADS8638_SPI_WRITE_FLAG);
+    result = spiReadByte(ADS8638_SPI_ID);
     ADS8638_SPI_DISABLE();
     return result;
 }
@@ -66,8 +46,8 @@ uint8_t ads8638RegRead(uint8_t address)
 void ads8638RegWrite(uint8_t address, uint8_t data)
 {
     ADS8638_SPI_ENABLE();
-    adsSpiWriteByte(address << 1);
-    adsSpiWriteByte(data);
+    spiWriteByte(ADS8638_SPI_ID, address << 1);
+    spiWriteByte(ADS8638_SPI_ID, data);
     ADS8638_SPI_DISABLE();
 }
 
@@ -92,11 +72,15 @@ bool ads8638Read(uint16_t *value)
 
     ads8638RegWrite(ADS8638_REG_MANUAL, (adsChannel << 4) | (adsRange << 1));
 
-    udelay(1); // conversion time 750 ns
+    // discard the first frame
+    ADS8638_SPI_ENABLE();
+    b0 = spiReadByte(ADS8638_SPI_ID);
+    b1 = spiReadByte(ADS8638_SPI_ID);
+    ADS8638_SPI_DISABLE();
 
     ADS8638_SPI_ENABLE();
-    b0 = adsSpiReadByte();
-    b1 = adsSpiReadByte();
+    b0 = spiReadByte(ADS8638_SPI_ID);
+    b1 = spiReadByte(ADS8638_SPI_ID);
     ADS8638_SPI_DISABLE();
 
     *value = b0 & 0xf;
