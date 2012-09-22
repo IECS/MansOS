@@ -81,11 +81,10 @@ static bool cacheChanged;
 // Busy waiting loop us not used, as the code is executd with ints off.
 //
 #define SDCARD_SPI_ENABLE()    \
-    serialBusy[SDCARD_SPI_ID] = true;                              \
-    if (serialFunction[SDCARD_SPI_ID] != SERIAL_FUNCTION_SDCARD) { \
-        sdcardInitSerial();                                        \
-        serialFunction[SDCARD_SPI_ID] = SERIAL_FUNCTION_SDCARD;    \
-    }                                                              \
+    serial[SDCARD_SPI_ID].busy = true;                              \
+    if (serial[SDCARD_SPI_ID].function != SERIAL_FUNCTION_SDCARD) { \
+        sdcardInitSerial();                                         \
+    }                                                               \
     pinClear(SDCARD_CS_PORT, SDCARD_CS_PIN)
 
 // for use in init function only
@@ -96,7 +95,7 @@ static bool cacheChanged;
     pinSet(SDCARD_CS_PORT, SDCARD_CS_PIN); \
     /* ensure MISO goes high impedance */  \
     spiWriteByte(SDCARD_SPI_ID, 0xff);     \
-    serialBusy[SDCARD_SPI_ID] = false      \
+    serial[SDCARD_SPI_ID].busy = false     \
 
 // Shortcuts
 #if SDCARD_SPI_ID == 0
@@ -150,6 +149,8 @@ void sdcardInitSerial(void)
 #ifndef USE_SOFT_SPI
     MMC_PxSEL |= MMC_SIMO + MMC_SOMI + MMC_UCLK;
 #endif
+
+    serial[SDCARD_SPI_ID].function = SERIAL_FUNCTION_SDCARD;
 }
 
 #else
@@ -207,6 +208,8 @@ void sdcardInitSerial(void)
 #ifndef USE_SOFT_SPI
     MMC_PxSEL |= MMC_SIMO + MMC_SOMI + MMC_UCLK;
 #endif
+
+    serial[SDCARD_SPI_ID].function = SERIAL_FUNCTION_SDCARD;
 }
 
 #endif
@@ -308,7 +311,6 @@ bool sdcardInit(void)
     //msp430USARTInitSPI(SDCARD_SPI_ID, SPI_MODE_MASTER);
     //spiBusInit(SDCARD_SPI_ID, SPI_MODE_MASTER);
     sdcardInitSerial();
-    serialFunction[SDCARD_SPI_ID] = SERIAL_FUNCTION_SDCARD;
 
     SPRINTF("1\n");
     // mdelay(1);

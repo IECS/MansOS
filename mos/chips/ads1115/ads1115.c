@@ -80,6 +80,7 @@ void adsInit(void)
     i2cInit();
     adsActiveConfig = ADS_DEFAULT_CONFIG;
     writeAdsRegister(ADS_CONFIG_REGISTER, 0x8483);
+    adsSelectInput(0);
     adsPowerDownSingleShotMode();
 }
 

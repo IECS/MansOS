@@ -281,6 +281,7 @@ void smpInit(void) {
     serialEnableTX(SMP_SERIAL_ID);
     serialEnableRX(SMP_SERIAL_ID);
     serialSetReceiveHandle(SMP_SERIAL_ID, serialReceive);
+    serial[SMP_SERIAL_ID].function = SERIAL_FUNCTION_PRINT;
 
 #if USE_MAC
     mac = getSimpleMac();

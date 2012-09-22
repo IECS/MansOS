@@ -86,15 +86,19 @@ uint_t serialSetPacketReceiveHandle(uint8_t id, SerialCallback_t cb,
         void *buffer, uint16_t len);
 
 enum {
-    SERIAL_FUNCTION_PRINT = 1, // used for debug output
-    SERIAL_FUNCTION_RADIO,      // used as radio chip's interface
-    SERIAL_FUNCTION_FLASH,      // used as ext flash interface
-    SERIAL_FUNCTION_SDCARD,     // used as sdcard interface
+    SERIAL_FUNCTION_UNUSED,
+    SERIAL_FUNCTION_PRINT,   // used for debug output
+    SERIAL_FUNCTION_RADIO,   // used as radio chip's interface
+    SERIAL_FUNCTION_FLASH,   // used as flash chip's interface
+    SERIAL_FUNCTION_SDCARD,  // used as sdcard interface
 };
 
-extern volatile bool serialBusy[SERIAL_COUNT];
-extern volatile uint8_t serialFunction[SERIAL_COUNT];
+struct Serial_s {
+    uint8_t busy : 1, function : 3;
+} PACKED;
+typedef struct Serial_s Serial_t;
 
+extern volatile Serial_t serial[SERIAL_COUNT];
 
 //===========================================================
 //===========================================================

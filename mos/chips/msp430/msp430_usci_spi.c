@@ -42,6 +42,7 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
     // SPI mode: master, MSB first, 8-bit, 3-pin
 #define SPI_MODE  (UCCKPH | UCMSB | UCMST | UCMODE_0 | UCSYNC)
 #define SPI_SPEED (CPU_HZ / 2)
+//#define SPI_SPEED 100000ul
 
 #define SETUP_SPI_PINS(letterid)                                            \
     pinAsFunction(USCI_##letterid##_RXTX_PORT, USCI_##letterid##_SIMO_PIN); \

@@ -44,8 +44,7 @@
 
 SerialCallback_t serialRecvCb[SERIAL_COUNT];
 
-volatile bool serialBusy[SERIAL_COUNT];
-volatile uint8_t serialFunction[SERIAL_COUNT];
+volatile Serial_t serial[SERIAL_COUNT];
 
 #define NOT_IMPLEMENTED -ENOSYS
 
@@ -57,32 +56,11 @@ volatile uint8_t serialFunction[SERIAL_COUNT];
 //-----------------------------------------------------------
 
 // pointers to usartx registers:
-// TODO - change these to base + offset (base = UART0 reg, offset = 8 * id)
 static volatile uint8_t * const UxCTL[SERIAL_COUNT] = { &(U0CTL), &(U1CTL) };
 static volatile uint8_t * const UxTCTL[SERIAL_COUNT] = { &(U0TCTL), &(U1TCTL) };
 static volatile uint8_t * const UxMCTL[SERIAL_COUNT] = { &(U0MCTL), &(U1MCTL) };
 static volatile uint8_t * const UxBR0[SERIAL_COUNT] = { &(U0BR0), &(U1BR0) };
 static volatile uint8_t * const UxBR1[SERIAL_COUNT] = { &(U0BR1), &(U1BR1) };
-//static volatile uint8_t * const UxME[SERIAL_COUNT] = { &(U0ME), &(U1ME) };
-
-// static volatile uint8_t * const UxTXBUF[SERIAL_COUNT] = { &(U0TXBUF), &(U1TXBUF) };
-// static volatile const uint8_t * const UxRXBUF[SERIAL_COUNT] = { &(U0RXBUF), &(U1RXBUF) };
-
-// static volatile uint8_t * const IEx[SERIAL_COUNT] = { &(IE1), &(IE2) };
-// static volatile uint8_t * const IFGx[SERIAL_COUNT] = { &(IFG1), &(IFG2) };
-
-// // serial flags
-// static const uint8_t USPIEx[SERIAL_COUNT] = { USPIE0, USPIE1 };
-// static const uint8_t UTXEx[SERIAL_COUNT] = { UTXE0, UTXE1 };
-// static const uint8_t URXEx[SERIAL_COUNT] = { URXE0, URXE1 };
-// static const uint8_t URXIEx[SERIAL_COUNT] = { URXIE0, URXIE1 };
-// static const uint8_t UTXIEx[SERIAL_COUNT] = { UTXIE0, UTXIE1 };
-// static const uint8_t UTXIFGx[SERIAL_COUNT] = { UTXIFG0, UTXIFG1 };
-// static const uint8_t URXIFGx[SERIAL_COUNT] = { URXIFG0, URXIFG1 };
-
-// actual serialx mode (UART/SPI/I2C)
-//static Msp430serialMode_t usartMode[SERIAL_COUNT] = { UM_DISABLED, UM_DISABLED };
-
 
 static inline void serialInitPins(uint8_t id) {
     // Setting port directions & selections for RX/TX
@@ -193,10 +171,6 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
     // serialx not supported, x >= SERIAL_COUNT
     if (id >= SERIAL_COUNT) return -ENOSYS;
 
-    // we could want to change UART speed - allow to call this
-    // function multiple times
-//    if (usartMode[id] == UM_UART) return 0; // already in UART mode
-
     serialInitPins(id);
 
     // Set SWRST - Software reset must be set when configuring
@@ -228,15 +202,6 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
     //Clear SWRST via software - Release software reset
     *UxCTL[id] &= ~(SWRST);
 
-    //Disable interrupts via the IEx SFRs (URXIEx and/or UTXIEx)
-    //  IFGx, Interrupt Flag Register 2
-//    *IFGx[id] &= ~(UTXIFGx[id] | URXIFGx[id]);   // ???
-//    *IEx[id] &= ~(UTXIEx[id] | URXIEx[id]);      // interrupt disabled
-
-//    *IEx[id] |= URXIEx[id]; // enable rx interrupt
-
-//    usartMode[id] = UM_UART;
-
     return 0;
 }
 
@@ -248,12 +213,7 @@ uint_t msp430SerialInitSPI(uint8_t id, uint_t spiBusMode) {
     // serialx not supported, x >= SERIAL_COUNT
     if (id >= SERIAL_COUNT) return -ENOSYS;
 
-    // // TODO - implement slave mode
-
-    // if ((usartMode[id] == UM_SPI_MASTER && spiBusMode == SPI_MODE_MASTER)
-    //         || (usartMode[id] == UM_SPI_SLAVE && spiBusMode == SPI_MODE_SLAVE)) {
-    //     return 0; // already in appropriate SPI mode
-    // }
+    // TODO - implement slave mode
 
     *UxCTL[id] = SWRST; // reset must be hold while configuring
     *UxCTL[id] |= CHAR | SYNC | MST; /* 8-bit transfer, SPI mode, master */
@@ -286,8 +246,6 @@ uint_t msp430SerialInitSPI(uint8_t id, uint_t spiBusMode) {
     }
     *UxCTL[id] &= ~SWRST;                  /* Remove RESET flag */
 
-//    usartMode[id] = (spiBusMode == SPI_MODE_SLAVE ? UM_SPI_SLAVE : UM_SPI_MASTER);
-
     return 0;
 }
 
@@ -298,8 +256,6 @@ uint_t msp430SerialInitSPI(uint8_t id, uint_t spiBusMode) {
 uint_t msp430SerialInitI2C(uint8_t id) {
     // // I2C available on serial0 only
     if (id != 0) return -ENOSYS;
-
-//    if (usartMode[id] == UM_I2C) return 0; // already in I2C mode
 
     U0CTL = SWRST; // reset must be hold while configuring
     /* 8-bit transfer, I2C mode, master, 7-bit addressing */
@@ -320,8 +276,6 @@ uint_t msp430SerialInitI2C(uint8_t id) {
     U0ME |= UTXE0 | URXE0;            /* Enable UART module (DO NOT REMOVE!) */
     U0CTL &= ~SWRST;                  /* Remove RESET flag */
 
-//    usartMode[id] = UM_I2C;
-
     return 0;
 }
 
@@ -340,10 +294,6 @@ ISR(UART0RX, UART0InterruptHandler)
 
     uint8_t x = U0RXBUF;
 
-    // serialSendByte(1, '0' + (x >> 4));
-    // serialSendByte(1, '0' + (x & 0xf));
-    // serialSendByte(1, '\n');
-
     if (serialRecvCb[0]) serialRecvCb[0](x);
 }
 
@@ -357,14 +307,7 @@ ISR(UART1RX, UART1InterruptHandler)
 
     uint8_t x = U1RXBUF;
 
-    // serialSendByte(1, '0' + (x >> 4));
-    // serialSendByte(1, '0' + (x & 0xf));
-    // serialSendByte(1, '\n');
-
     if (serialRecvCb[1]) serialRecvCb[1](x);
 }
 
 #endif // USE_SERIAL_RX
-
-//===========================================================
-//===========================================================
