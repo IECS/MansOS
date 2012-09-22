@@ -24,7 +24,11 @@
 #include "adc_dac_pins.h"
 #include <kernel/defines.h>
 
+#ifdef USE_SOFT_SPI
+#define ADS8638_SPI_ID SPI_BUS_SW
+#else
 #define ADS8638_SPI_ID             1  // id 0 is A0, id 1 is B0
+#endif
 
 #define ADS8638_REG_MANUAL         0x04
 #define ADS8638_REG_AUTO           0x04
@@ -51,6 +55,8 @@
 #define ADS8638_RANGE_PLUS_5V  0x6 // Range is set to 0V to 5V
 #define ADS8638_POWER_DOWN     0x7 // Powers down the device immediately
                                    // after the 16th SCLK falling edge
+
+#define ADS8638_SPI_WRITE_FLAG 0x1
 
 enum {
     ADS8638_CHANNEL_0,
