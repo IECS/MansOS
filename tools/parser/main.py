@@ -155,7 +155,10 @@ def main():
 
         numDirs = len(os.path.normpath(outputFileName).split(os.sep)) - 1
         dirname = os.path.dirname(os.path.realpath(outputFileName))
-        makefilePathToOS = os.path.normpath(dirname + os.sep + pathToOS + ('/..' * numDirs))
+        if os.path.isabs(pathToOS):
+            makefilePathToOS = pathToOS
+        else:
+            makefilePathToOS = os.path.normpath(dirname + os.sep + pathToOS + ('/..' * numDirs))
 
         with open(outputFileName, 'w') as outputFile:
             g.generate(outputFile)

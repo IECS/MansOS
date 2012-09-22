@@ -876,7 +876,7 @@ class CodeBlock(object):
     def addComponents(self, componentRegister, conditionCollection):
         ss = self.enterCodeBlock(componentRegister, conditionCollection)
 
-        # add implicitly declared virtual senosrs
+        # add implicitly declared virtual sensors
         implicitDefines = []
         for d in self.declarations:
             if isinstance(d, ComponentUseCase) or isinstance(d, SetStatement):
