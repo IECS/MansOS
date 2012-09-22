@@ -25,7 +25,7 @@
 //  Light sensor test, reads ISL29003 sensor
 //  and prints to serial.
 //-------------------------------------------
-#include "mansos.h"
+#include "stdmansos.h"
 #include <hil/i2c_soft.h>
 #include <isl29003/isl29003.h>
 
