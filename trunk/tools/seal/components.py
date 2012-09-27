@@ -37,12 +37,25 @@ def getUseCaseParameterValue(parameter, parameters):
     if isinstance(val, Value): return val.value
     return val
 
+# this is needed to allow to write for example "...,identifier variables.localAddress, ..."
 def convertToParameterValue(pvalue):
     if pvalue is not None:
         if not isinstance(pvalue, Expression): # filter out "where ..." conditions
             if isinstance(pvalue.value, SealValue):
                 return Value(pvalue.getCodeForGenerator(componentRegister, None, inParameter = True))
     return pvalue
+
+
+# Update existing parameters.
+# 'parameters' - params in component format: <name, value>
+# 'additionalParametrs' - params in use case format: <name, Value(value)>
+# convertToParameterValue() must already have been called before.
+def mergeParameters(parameters, additionalParametrs):
+    result = parameters
+    for p in additionalParametrs.iteritems():
+        if p[1] != None:
+            result[p[0]] = p[1]
+    return result
 
 ######################################################
 class BranchCollection(object):
@@ -549,7 +562,7 @@ class Component(object):
                 self.parameters[p] = specification.__getattribute__(p).value
         self.useCases = []
         self.markedAsUsed = False
-        self.usedForConditions = False
+        self.usedForNumberOfConditions = 0
         # save specification (needed for dependent parameters)
         self.specification = specification
         self.functionTree = None
@@ -849,7 +862,7 @@ class Sensor(Component):
                         mask |= 1 << id
                 outputFile.write("#define {0}_TYPE_MASK   {1:#x}\n".format(self.getNameUC(), mask))
 
-    def isCacheNeeded(self, numCachedSensors):
+    def testIsCacheNeeded(self, numCachedSensors):
         if not self.specification._cacheable: return False
         if self.cacheNeeded: return True
 
@@ -864,7 +877,9 @@ class Sensor(Component):
 
         return self.cacheNeeded
 
-    def isCacheNeededForCondition(self):
+    def testIsCacheNeededForCondition(self):
+        self.usedForNumberOfConditions += 1
+
         if not self.specification._cacheable: return False
 
         if self.cacheNeeded: return True
@@ -872,11 +887,16 @@ class Sensor(Component):
         cnParam = self.getParameterValue("cache")
         if cnParam is not None: return cnParam
 
-        conditionEvaluatePeriod = 1000 # once in second
+        # once in second...
+        conditionEvaluatePeriod = 1000
+        # ..divided by the number of conditions this sensor is used for
+        conditionEvaluatePeriod /= self.usedForNumberOfConditions
+
         if conditionEvaluatePeriod < self.minUpdatePeriod:
             self.cacheNeeded = True
             self.cacheNumber = componentRegister.numCachedSensors
             componentRegister.numCachedSensors += 1
+
         return self.cacheNeeded
 
     def generateSyncCallback(self, outputFile, outputs):
@@ -922,16 +942,17 @@ class Sensor(Component):
             # remote sensors require specialHandling
             return "sealCommReadValue({}_TYPE_ID)".format(self.getNameUC())
 
-        rawReadFunc = "{}ReadRaw{}()".format(self.getNameCC(), suffix)
+        rawReadFunc = "{}ReadRaw{}".format(self.getNameCC(), suffix)
 #        if len(suffix) == 0 and self.cacheNeeded:
-        cacheNeeded = False
-        if self.cacheNeeded: cacheNeeded = True
-        if root and root.cacheNeeded: cacheNeeded = True
-        if cacheNeeded:
+#        cacheNeeded = False
+#        if self.cacheNeeded: cacheNeeded = True
+#        if root and root.cacheNeeded: cacheNeeded = True
+#        if cacheNeeded:
+        if self.cacheNeeded:
             dataFormat = str(self.getDataSize() * 8)
-            return "cacheReadSensor{0}({1}, &{2}, {3})".format(
-                dataFormat, self.cacheNumber, rawReadFunc.strip("()"), self.minUpdatePeriod)
-        return rawReadFunc
+            return "cacheReadSensor{0}({1}, &{2}, {3}, NULL)".format(
+                dataFormat, self.cacheNumber, rawReadFunc, self.minUpdatePeriod)
+        return rawReadFunc + "(NULL)"
 
     def getGeneratedFunctionName(self, fun):
         readFunctionSuffix = str(self.readFunctionNum)
@@ -1705,21 +1726,10 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
+
     def generateSubReadFunctions(self, outputFile, functionTree, root):
         if functionTree is None:
             # special case for remote sensors
-
-#        for f in fields:
-#            basename = "null" if f in commonFields else f
-#            s = self.addRemote(nc.getPrefix() + f, basename)
-#            s.networkComponent = nc
-
-        # add remote sensor for all fields
-#        s = self.addRemote(name, basename = "null")
-
-#        if s:
-#            s.remoteFields = fields
-
             if self.isRemote() and self.specification._name == "Null":
                 if len(self.remoteFields) > 1:
                     componentRegister.userError("Network packet '{}' with more than one field used: specify field name!\n".format(self.name))
@@ -1742,22 +1752,15 @@ class Sensor(Component):
 
             self.markAsUsed()
 
-            outputFile.write("static inline {0} {1}ReadRaw{2}(void)\n".format(
+            outputFile.write("static inline {0} {1}ReadRaw{2}(bool *__unused)\n".format(
                     self.getDataType(), self.getNameCC(), readFunctionSuffix))
             outputFile.write("{\n")
 
             if self.specification._readFunctionDependsOnParams:
-#                print "useCase", useCase
-#                print "root", root.name
-#                print "self", self.name
-                
                 specifiedReadFunction = self.getDependentParameterValue(
                     "readFunction", self.sensorReadFunctionParams)
             else:
                 specifiedReadFunction = self.getParameterValue("readFunction", None)
-
-#        useFunction = self.component.getDependentParameterValue("useFunction", self.parameters)
-#        print "useFunction = ", useFunction
 
             if specifiedReadFunction is None:
                 componentRegister.userError("Sensor '{}' has no valid read function!\n".format(self.name))
@@ -1790,9 +1793,11 @@ class Sensor(Component):
             sensor = componentRegister.findComponentByName(name)
             assert sensor
             assert type(sensor) is Sensor
-            # TODO: in some cases might be better to use parameters from self
-            # instead of always inheriting (propagating) them from root
-            sensor.sensorReadFunctionParams = self.sensorReadFunctionParams
+            # Use parameters from self as the base, but also
+            # inherit (propagate) them from the root
+            sensor.sensorReadFunctionParams = mergeParameters(
+                sensor.parameters, self.sensorReadFunctionParams)
+            #print "inherit params from", self.name, "to", sensor.name
             return sensor.generateSubReadFunctions(outputFile, sensor.functionTree, root)
 
         (validationOk, errorMessage) = validateFunction(functionTree)
@@ -1869,6 +1874,7 @@ class Sensor(Component):
         componentRegister.userError("unhandled function {}()\n".format(functionTree.function))
         return "0"
 
+
     def generateReadFunctions(self, outputFile, useCase):
         if not self.isUsed(): return
 
@@ -1887,6 +1893,13 @@ class Sensor(Component):
         subReadFunction = self.generateSubReadFunctions(
             outputFile, self.functionTree, self)
 
+        if self.cacheNeeded:
+            outputFile.write("static inline {0} {1}CacheReadProcess{2}(bool *isFilteredOut)\n".format(
+                    self.getDataType(), self.getNameCC(), readFunctionSuffix))
+            outputFile.write("{\n")
+            outputFile.write("    return {};\n".format(subReadFunction))
+            outputFile.write("}\n\n")
+
         # generate reading and processing function
         outputFile.write("static inline {0} {1}ReadProcess{2}(bool *isFilteredOut)\n".format(
                 self.getDataType(), self.getNameCC(), readFunctionSuffix))
@@ -1894,7 +1907,15 @@ class Sensor(Component):
 
         # HERE: turn on/off? use associated componenent?
 
-        outputFile.write("    return {};\n".format(subReadFunction))
+        if self.cacheNeeded:
+            # TODO: in some cases this will lead to double read from cache (inefficient)
+            dataFormat = str(self.getDataSize() * 8)
+            outputFile.write("    return cacheReadSensor{0}({1}, &{2}CacheReadProcess{3}, {4}, isFilteredOut);\n".format(
+                dataFormat, self.cacheNumber, self.getNameCC(),
+                readFunctionSuffix, self.minUpdatePeriod))
+        else:
+            outputFile.write("    return {};\n".format(subReadFunction))
+
         outputFile.write("}\n\n")
 
 ######################################################
@@ -3170,7 +3191,7 @@ class ComponentRegister(object):
     def markCachedSensors(self):
         self.numCachedSensors = 0
         for s in self.sensors.itervalues():
-            if s.isCacheNeeded(self.numCachedSensors):
+            if s.testIsCacheNeeded(self.numCachedSensors):
                 self.numCachedSensors += 1
 
     # find the first base component that has interrupts enabled
@@ -3228,11 +3249,10 @@ class ComponentRegister(object):
                 if inParameter: return componentName
                 self.userError("Parameter '{0}' for component '{1}' is not readable!\n".format(parameterName, componentName))
                 return "false"
-            # test if cache is needed and if yes, update the flag
-            c.isCacheNeededForCondition()
             # otherwise unused component might become usable because of use in condition.
             c.markAsUsed()
-            c.usedForConditions = True
+            # test if cache is needed and if yes, update the flag
+            c.testIsCacheNeededForCondition()
             # return the right read function
             return c.getNameCC() + "ReadProcess(&isFilteredOut)"
 
