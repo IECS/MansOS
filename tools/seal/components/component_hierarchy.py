@@ -25,7 +25,7 @@ class SealComponent(object):
         # read/use using specific time pattern?
         self.pattern = SealParameter(None)
         # read/use just once?
-        self.once = SealParameter(False, [False, True])
+        self.once = SealParameter(None, [False, True])
         # read/use just a few times? ("times 1" is the same as "once")
         self.times = SealParameter(None, ['1', '2', '3', '4', '5', '10', '20', '50', '100'])
         # read/use just for a time period?
@@ -60,7 +60,7 @@ class SealComponent(object):
 class SealSensor(SealComponent):
     def __init__(self, name):
         super(SealSensor, self).__init__(TYPE_SENSOR, name)
-        self.cache = SealParameter(False, [False, True])
+        self.cache = SealParameter(None, [False, True])
         self._cacheable = True # whether can be kept in cache
         self._dataSize = 4 # in bytes
         self._dataType = "int32_t"
@@ -69,13 +69,13 @@ class SealSensor(SealComponent):
         self._readTime = 0 # read instanttly
         self._readFunctionDependsOnParams = False
         # call on and off functions before/after reading?
-        self.turnonoff = SealParameter(False, [False, True])
+        self.turnonoff = SealParameter(None, [False, True])
         self.onFunction = SealParameter(None)
         self.offFunction = SealParameter(None)
         # output reading to somewhere?
         self.out = SealParameter(None)
         # evaluate function(s) lazily? (for example, useful for averaged sensors)
-        self.lazy = SealParameter(False, [False, True])
+        self.lazy = SealParameter(None, [False, True])
 
 # for remote use only
 class CommandSensor(SealSensor):
@@ -368,9 +368,9 @@ class DigitalInputSensor(SealSensor):
         self.port = SealParameter(1, ["1", "2", "3", "4", "5", "6"])
         self._readFunctionDependsOnParams = True
         # interrupt related configuration
-        self.interrupt = SealParameter(False, [False, True])
-        self.rising = SealParameter(False, [False, True])
-        self.falling = SealParameter(False, [False, True]) # inverse of rising edge
+        self.interrupt = SealParameter(None, [False, True])
+        self.rising = SealParameter(None, [False, True])
+        self.falling = SealParameter(None, [False, True]) # inverse of rising edge
         self.aliases["rising"] = "risingedge"
         self.aliases["falling"] = "fallingedge"
         self.interruptPin = SealParameter(0, ["0", "1", "2", "3", "4", "5", "6", "7"])
@@ -392,8 +392,8 @@ class SealActuator(SealComponent):
         self.onFunction = SealParameter(None)
         self.offFunction = SealParameter(None)
         self.writeFunction = SealParameter(None)
-        self.on = SealParameter(False, [False, True])
-        self.off = SealParameter(False, [False, True])
+        self.on = SealParameter(None, [False, True])
+        self.off = SealParameter(None, [False, True])
         # "blink X" is shortcut syntax for "times 2, period X"
         self.blink = SealParameter(None, ['50', '100', '200'])
 
@@ -565,7 +565,9 @@ class WateringAct(SealActuator):
 class SealOutput(SealComponent):
     def __init__(self, name):
         super(SealOutput, self).__init__(TYPE_OUTPUT, name)
+        # create packets? (if aggregate=true)
         self.aggregate = SealParameter(True, [False, True])
+        # packet fields (crc is always included...)
         # self.crc = SealParameter(False, [False, True])
         self.address = SealParameter(False, [False, True])
         self.timestamp = SealParameter(True, [False, True])
