@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 from sys import path, version, executable, argv
 
