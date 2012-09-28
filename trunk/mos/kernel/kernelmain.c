@@ -65,10 +65,10 @@
 //----------------------------------------------------------
 static inline void initSystem(void)
 {
-    // disable interrupts (disabled on msp430 by default, but other systems might need this)
+    // disable interrupts: disabled on msp430 by default, but other systems might need this
     DISABLE_INTS();
 
-    // stop the watchdog (GCC disables it by default, but other compilers might need this line)
+    // stop the watchdog: GCC disables it by default, but other compilers might be so helpful
     watchdogStop();
 
     // TODO: init dynamic memory
@@ -199,12 +199,13 @@ int main(void)
     appMain();
 
     //
-    // Do not allow to quit from main(). This code is needed because
+    // Do not allow to return from this function. The reason:
     // GCC 4.5+ disables interrupts after completion of main() function,
-    // while applications may want to use main() for initialization only
-    // and do the "real work" in interrupt handlers.
+    // but MansOS applications may want to return from appMain()
+    // and do all the "real work" in interrupt handlers.
+    // Therefore, interrupts must be kept enabled.
     //
-    for (;;);
+    for (;;) {}
 #endif // USE_THREADS
 
     return 0;

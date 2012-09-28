@@ -49,7 +49,7 @@ static uint8_t recvLength;
 
 //
 // Enable/disable flash access to the USART
-// Busy waiting loop us not used, as the code is executd with ints off.
+// Busy waiting loop us not used, as the code is executed with ints off.
 //
 #define AMB8420_SERIAL_CAPTURE()    \
     serial[AMB8420_UART_ID].busy = true;                             \
