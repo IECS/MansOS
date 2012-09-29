@@ -38,6 +38,11 @@
 
 #include "iomacros.h"
 
+// Left in for debugging
+// #define STR_HELPER(x) #x
+// #define STR(x) STR_HELPER(x)
+// #pragma message "Selected MCU frequency in MHZ is = " STR(CPU_MHZ)
+
 #if CPU_MHZ >= 4
 #define CPU_MHZ_ADJUSTED 4
 #else
