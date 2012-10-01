@@ -42,7 +42,8 @@ typedef struct SensorCache_s {
 #endif
 static SensorCache_t sensorCache[TOTAL_CACHEABLE_SENSORS];
 
-int8_t cacheReadSensor8(uint16_t code, ReadFunction8 func, uint16_t expireTime)
+int8_t cacheReadSensor8(uint16_t code, ReadFunction8 func,
+                        uint16_t expireTime, bool *isFilteredOut)
 {
     ticks_t now = getJiffies();
     SensorCache_t *cacheValue = &sensorCache[code];
@@ -50,7 +51,7 @@ int8_t cacheReadSensor8(uint16_t code, ReadFunction8 func, uint16_t expireTime)
         // take from cache
         return cacheValue->value.i8;
     }
-    int8_t result = func();
+    int8_t result = func(isFilteredOut);
     if (expireTime) {
         // add to cache
         cacheValue->value.i8 = result;
@@ -59,7 +60,8 @@ int8_t cacheReadSensor8(uint16_t code, ReadFunction8 func, uint16_t expireTime)
     return result;
 }
 
-int16_t cacheReadSensor16(uint16_t code, ReadFunction16 func, uint16_t expireTime)
+int16_t cacheReadSensor16(uint16_t code, ReadFunction16 func,
+                          uint16_t expireTime, bool *isFilteredOut)
 {
     ticks_t now = getJiffies();
     SensorCache_t *cacheValue = &sensorCache[code];
@@ -67,7 +69,7 @@ int16_t cacheReadSensor16(uint16_t code, ReadFunction16 func, uint16_t expireTim
         // take from cache
         return cacheValue->value.i16;
     }
-    int16_t result = func();
+    int16_t result = func(isFilteredOut);
     if (expireTime) {
         // add to cache
         cacheValue->value.i16 = result;
@@ -76,7 +78,8 @@ int16_t cacheReadSensor16(uint16_t code, ReadFunction16 func, uint16_t expireTim
     return result;
 }
 
-int32_t cacheReadSensor32(uint16_t code, ReadFunction32 func, uint16_t expireTime)
+int32_t cacheReadSensor32(uint16_t code, ReadFunction32 func,
+                          uint16_t expireTime, bool *isFilteredOut)
 {
     ticks_t now = getJiffies();
     SensorCache_t *cacheValue = &sensorCache[code];
@@ -84,7 +87,7 @@ int32_t cacheReadSensor32(uint16_t code, ReadFunction32 func, uint16_t expireTim
         // take from cache
         return cacheValue->value.i32;
     }
-    int32_t result = func();
+    int32_t result = func(isFilteredOut);
     if (expireTime) {
         // add to cache
         cacheValue->value.i32 = result;
