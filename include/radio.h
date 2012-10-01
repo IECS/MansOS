@@ -157,6 +157,16 @@ void radioSetChannel(int channel);
 // The exact behaviour of these functions is platform- and chip-dependent.
 // For CC2420, a value in range [0 .. 31] is expected,
 // where 0 corresponds to the minimal transmit power and 31 - to the maximum
+// Default value is 31.
+// Possible values (only use the values below!)
+//   31      0 dBm    (1 mW)
+//   27     -1 dBm    (0.8 mW)
+//   23     -3 dBm    (0.5 mW)
+//   19     -5 dBm    (0.3 mW)
+//   15     -7 dBm    (0.2 mW)
+//   11    -10 dBm    (0.1 mW)
+//    7    -15 dBm    (0.03 mW)
+//    3    -25 dBm    (0.003 mW)
 //
 void radioSetTxPower(uint8_t power);
 
