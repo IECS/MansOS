@@ -97,23 +97,23 @@ f.arguments.append(SealArgument("arg2"))
 
 f = SealFunction("abs")
 f.group = "arithmetic"
-f.arguments.append(SealArgument("arg1"))
+f.arguments.append(SealArgument("value"))
 
 f = SealFunction("neg")
 f.group = "arithmetic"
-f.arguments.append(SealArgument("arg1"))
+f.arguments.append(SealArgument("value"))
 
 f = SealFunction("invert")
 f.group = "arithmetic"
-f.arguments.append(SealArgument("arg1"))
+f.arguments.append(SealArgument("value"))
 
 f = SealFunction("square")
 f.group = "arithmetic"
-f.arguments.append(SealArgument("arg1"))
+f.arguments.append(SealArgument("value"))
 
 f = SealFunction("sqrt")
 f.group = "arithmetic"
-f.arguments.append(SealArgument("arg1"))
+f.arguments.append(SealArgument("value"))
 
 f = SealFunction("power")
 f.group = "arithmetic"
@@ -146,6 +146,11 @@ f.aggregate = True
 f.alias = "std"
 f.arguments.append(SealArgument("value"))
 
+f = SealFunction("variance")
+f.group = "aggregation"
+f.aggregate = True
+f.arguments.append(SealArgument("value"))
+
 f = SealFunction("ewma") # exponentially weighted moving average
 f.group = "aggregation"
 f.arguments.append(SealArgument("value"))
@@ -153,10 +158,19 @@ f.arguments.append(SealArgument("alpha", constantOnly = True, defaultValue = Val
 
 f = SealFunction("changed")
 f.group = "aggregation"
+f.aggregate = True
 f.arguments.append(SealArgument("value"))
 f.arguments.append(SealArgument("milliseconds", constantOnly = True, defaultValue = Value(10000)))
 
 # --------------------------------------------------
+
+f = SealFunction("map")
+f.group = "signal processing"
+f.arguments.append(SealArgument("value"))
+f.arguments.append(SealArgument("fromRangeLow", constantOnly = True))
+f.arguments.append(SealArgument("fromRangeHigh", constantOnly = True))
+f.arguments.append(SealArgument("toRangeLow", constantOnly = True))
+f.arguments.append(SealArgument("toRangeHigh", constantOnly = True))
 
 f = SealFunction("sharpen")
 f.group = "signal processing"
@@ -171,14 +185,6 @@ f.alias = "blur"
 f.arguments.append(SealArgument("value"))
 f.arguments.append(SealArgument("numSamples", constantOnly = True, defaultValue = Value(3)))
 f.arguments.append(SealArgument("weight", constantOnly = True, defaultValue = Value(1)))
-
-f = SealFunction("map")
-f.group = "signal processing"
-f.arguments.append(SealArgument("value"))
-f.arguments.append(SealArgument("fromRangeLow", constantOnly = True))
-f.arguments.append(SealArgument("fromRangeHigh", constantOnly = True))
-f.arguments.append(SealArgument("toRangeLow", constantOnly = True))
-f.arguments.append(SealArgument("toRangeHigh", constantOnly = True))
 
 # --------------------------------------------------
 

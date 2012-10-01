@@ -1158,6 +1158,8 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
+    #TODO: variance function!
+
     def generateStdevFunction(self, outputFile, functionTree, root):
         if functionTree.arguments[0].function == "take":
             return self.generateTakeFunction(outputFile, functionTree.arguments[0], "stdev")
@@ -1280,6 +1282,8 @@ class Sensor(Component):
 
     # TODO: allow arg as optional?
     def generateChangedFunction(self, outputFile, functionTree, root):
+        # TODO: allow take()!
+
         milliseconds = functionTree.arguments[1].asConstant()
         if milliseconds is None:
             componentRegister.userError("Second argument of changed() function is expected to be a constant!\n")
