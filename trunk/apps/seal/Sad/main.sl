@@ -1,3 +1,6 @@
+// use 64-bit counter
+config "USE_LONG_LIFETIME=y";
+
 // define red led to blink
 define HelperLed RedLed, blink;
 
