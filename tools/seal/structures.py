@@ -51,6 +51,7 @@ def static_var(varname, value = 0):
 class FunctionTree(object):
     def __init__(self, function, arguments):
         if isinstance(function, str) \
+                or isinstance(function, unicode) \
                 or isinstance(function, Value) \
                 or isinstance(function, SealValue):
             # for normal functions / arguments
@@ -76,7 +77,8 @@ class FunctionTree(object):
     def asString(self):
         if len(self.arguments):
             return None
-        if isinstance(self.function, str):
+        if isinstance(self.function, str) \
+                or isinstance(self.function, unicode):
             return self.function
         return self.function.asString()
 
@@ -109,7 +111,8 @@ class FunctionTree(object):
         if type(self.function) is SealValue:
             result.append(self.function.firstPart)
 
-        if isinstance(self.function, str):
+        if isinstance(self.function, str) \
+                or isinstance(self.function, unicode):
             if self.function[:7] != '__const':
                 result.append(self.function)
 
@@ -263,7 +266,8 @@ class Value(object):
         assert not isinstance(self.value, Value)
         if isinstance(self.value, SealValue):
             return self.value.getCode()
-        if isinstance(self.value, str):
+        if isinstance(self.value, str) \
+                or isinstance(self.value, unicode):
             return '"' + self.value + '"'
         # integer, boolean or real
         s = string.lower(str(self.value))
@@ -278,9 +282,10 @@ class Value(object):
         return self.getCode()
 
     def getType(self):
-        if type(self.value) is str:
+        if isinstance(self.value, str) \
+                or isinstance(self.value, unicode):
             return "const char *"
-        if type(self.value) is bool:
+        if isinstance(self.value, bool):
             return "bool"
         return "int32_t"
 
@@ -642,7 +647,8 @@ class ComponentDefineStatement(object):
         if isinstance(newTree.function, SealValue):
             if newTree.function.firstPart == old:
                 newTree.function.firstPart = new
-        elif isinstance(newTree.function, str):
+        elif isinstance(newTree.function, str) \
+                or isinstance(newTree.function, unicode):
             if newTree.function == old:
                 newTree.function = new
         for a in functionTree.arguments:

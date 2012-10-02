@@ -303,7 +303,7 @@ class UseCase(object):
 
         p = self.parameters.get("out")
         if p and p.value:
-            if isinstance(p.value, str):
+            if isinstance(p.value, str) or isinstance(p.value, unicode):
                 outName = p.value
             else:
                 outName = p.value.asString()
