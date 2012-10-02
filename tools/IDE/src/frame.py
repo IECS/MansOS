@@ -265,8 +265,8 @@ class Frame(wx.Frame):
 
     def on_file_history(self, event):
             fileNum = event.GetId() - wx.ID_FILE1
-            path = self.recentlyMenu.GetHistoryFile(fileNum)
-            self.recentlyMenu.AddFileToHistory(path)  # move up the list
+            path = self.fileHistory.GetHistoryFile(fileNum)
+            self.fileHistory.AddFileToHistory(path)  # move up the list
             self.API.tabManager.addPage(path)
 
     def OnQuit(self, event):
