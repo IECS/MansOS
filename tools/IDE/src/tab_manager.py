@@ -237,7 +237,7 @@ class TabManager(aui.AuiNotebook):
             return
 
         # Open default files if no tabs were saved
-        path = join(self.API.path, "../../apps/seal/Blink/")
+        path = join(self.API.path, "../../apps/seal/Empty/")
         if exists(path):
             filename = self.API.frame.findFirstSourceFile(path)
             if filename:
