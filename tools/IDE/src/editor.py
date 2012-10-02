@@ -406,7 +406,7 @@ class Editor(wx.stc.StyledTextCtrl):
                     start = min(start, wannabe + cursor)
                     if start == wannabe + cursor:
                         type_ = CONDITION
-
+            end = start
             if start != len(text):
                 # Try to find next end of statement
                 end = len(text)
