@@ -42,7 +42,7 @@ def importsOk():
         mansOSOK = False
     else:
         f = open(versionFile, "r")
-        print ("Using MansOS:\n\tVersion: {}\n\tRelease date: {}".format(\
+        print ("Using MansOS:\n\tVersion: {0}\n\tRelease date: {1}".format(\
                                  f.readline().strip(), f.readline().strip()))
         f.close()
 
@@ -82,11 +82,12 @@ def getUserInput(prompt):
         return raw_input(prompt)
 
 if not version.startswith("2.7"):
-    print ("You are using Python version {}.".format(version[:5]))
-    print ("MansOS IDE is tested only under version 2.7.x, continue at Your own risk.")
-    inp = getUserInput("Continue? (y/n)")
+    print ("You are using Python version {0}.".format(version[:5]))
+    print ("MansOS IDE is tested only under version 2.7.x, continue at your own risk.")
+    inp = getUserInput("Continue? (Y/n)\n")
 
-    if inp != "y":
+    if inp.lower().strip() == "n":
+        print ""
         exit(1)
 try:
     if not importsOk():
