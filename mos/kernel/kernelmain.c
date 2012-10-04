@@ -68,7 +68,7 @@ static inline void initSystem(void)
     // disable interrupts: disabled on msp430 by default, but other systems might need this
     DISABLE_INTS();
 
-    // stop the watchdog: GCC disables it by default, but other compilers might be so helpful
+    // stop the watchdog: GCC disables it by default, but other compilers might not be so helpful
     watchdogStop();
 
     // TODO: init dynamic memory

@@ -90,7 +90,7 @@ void debugPrintf(char* str, ...)
 #endif
 }
 
-#ifdef DEBUG
+#if defined DEBUG || defined ENABLE_DEBUG_HEXDUMP
 #if 1
 // hexdump version #1
 void debugHexdump(void *data_, unsigned len) {

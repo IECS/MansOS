@@ -51,7 +51,11 @@ typedef uint16_t MemoryAddress_t;
 
 // the default size of print buffer
 #ifndef PRINT_BUFFER_SIZE
-#define PRINT_BUFFER_SIZE 127
+# if PLATFORM_FARMMOTE
+#  define PRINT_BUFFER_SIZE 31
+# else
+#  define PRINT_BUFFER_SIZE 127
+# endif
 #endif
 
 #endif
