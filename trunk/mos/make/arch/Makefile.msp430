@@ -84,11 +84,16 @@ platform-upload: build $(UPLOAD_TARGET)
 upload-tmote:
 	$(Print) ""
 	$(MOTELIST)
+
 	$(Print) ""
 	$(BSL) --telosb -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-msp430: 
 	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+
+upload-msp430-sm3: 
+	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+#	$(MSP430-BSL) -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-z1:
 	$(Z1-BSL) --z1 -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)

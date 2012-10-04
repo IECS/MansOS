@@ -34,7 +34,7 @@ ARCH = msp430
 MCU_MODEL = msp430f1611
 
 # Upload target
-UPLOAD_TARGET=upload-msp430
+UPLOAD_TARGET=upload-msp430-sm3
 
 # Default clock speed: 8MHz,
 # which is also the maximum without tweaking Power Management Module (PMM).
