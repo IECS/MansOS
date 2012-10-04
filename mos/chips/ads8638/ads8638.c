@@ -57,7 +57,8 @@ void ads8638Init(void)
 
     pinAsOutput(ADS8638_CS_PORT, ADS8638_CS_PIN);
 
-    ADS8638_SPI_DISABLE();
+    // turn on internal ref
+    ads8638RegWrite(ADS8638_REG_AUX_CONFIG, ADS8638_INTERNAL_VREF_ON);
 }
 
 void ads8638SelectChannel(uint8_t channel, uint8_t range)

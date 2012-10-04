@@ -33,7 +33,7 @@
 #define ADS8638_REG_MANUAL         0x04
 #define ADS8638_REG_AUTO           0x04
 #define ADS8638_REG_RESET          0x01
-#define ADS8638_REG_AUX_CODING     0x06
+#define ADS8638_REG_AUX_CONFIG     0x06
 #define ADS8638_REG_CHAN_SEL       0x0C // channel select for auto mode
 #define ADS8638_REG_RANGE_SEL_BASE 0x10
 
@@ -55,6 +55,8 @@
 #define ADS8638_RANGE_PLUS_5V  0x6 // Range is set to 0V to 5V
 #define ADS8638_POWER_DOWN     0x7 // Powers down the device immediately
                                    // after the 16th SCLK falling edge
+
+#define ADS8638_INTERNAL_VREF_ON 0xC
 
 #define ADS8638_SPI_WRITE_FLAG 0x1
 
