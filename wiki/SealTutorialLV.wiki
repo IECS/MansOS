@@ -1,0 +1,105 @@
+= SEAL lietošanas pamācība =
+
+==Ievads ==
+
+SEAL ir programmēšanas valoda bezvadu sensoru tīkliem. Atšķirībā no vispārīga pielietojuma programmēšanas valodām. SEAL ir daudz vienkāršāka, mazāka, un ātrāk apgūstama. Savukārt programmas rakstītas tajā ir īsākas nekā analoģiskas programmas priekš sensoru tīkliem, rakstītas kādā no vispārīga pielietojuma programmēšanas valodām.
+
+Programmēšanas testa laikā jums būs pieejams sensoru mezgls. Sensoru mezgls var sazināties ar bāzes staciju, kas atrodas vienā telpā ar to. Sensoru mezgls spēj lasīt sensorus, miršķināt LED, izvadīt datus uz seriālo saskarni (USB vadu) uz datoru, kā arī sūtīt tos pa radio (uz bāzes staciju).
+
+== Valodas sintakse ==
+
+SEAL ir šādi rezervēti atslēgvārdi:
+
+<code>and, config, const, define, else, elsewhen, end, load, networkread, not, parameters, pattern, read, or,   output, set, use, when, where</code>.
+
+Visiem SEAL izteikumiem jābeidzas ar noslēdzošo simbolu. Parasti tas ir semikols ';', izņemot <code>when</code> nosacījumus, kuriem jābeidzas ar atslēgvārdu <code>end</code>.
+
+SEAL sintakse nav reģistrjūtīga. Tas ir, <code>USE</code>, <code>use</code>, un  <code>Use</code> nozīmē vienu un to pašu. Ieteicams izstrādājot programmas ievērot neformālas konvencijas, lai tās būtu viegli lasāmas. Viena no konvencijām ir apzīmēt simboliskās konstantes ar LIELAJIEM BURTIEM, sensoru vērtības ar Lielo Sākumburtu, savukārt pārējos vārdus programmā sākt ar mazo burtu.
+
+== Valodas elementi ==
+
+* '''Komponentu lietojumus''' apraksta ar vieu no atslēgas vārdiem use, read, output, kuram seku komponentu nosaukums un parameteri. Piemēram,
+** <code>use Beeper</code> -- lietot pīkstuli, ja motei tāds ir;
+** <code>read Humidity</code> -- nolasīt mitruma sensora vērtību;
+** <code>output Serial</code> -- uzvadīt nolasītos datus (visus) uz seriālo saskarni (USB kabeli).
+Pilns atbalstīto komponentu saraksts ir [http://selavo.lv/wiki/index.php/SEAL_Components pieejams te].
+
+* '''Funkcijas''' ļauj ielasītos sensoru datus apstrādāt, piemēram, pielietojot tiem aritmētiskas operācijas. Piemēram, funkcija <code>add(Humidity, 10)</code> pieskaita gaismas sensora lasījumam skaitli 10. Pilns atbalstīto funkciju saraksts ir [http://selavo.lv/wiki/index.php/SEAL_Functions pieejams te].
+
+* '''Komponentu definīcījas''' ļauj ar atslēgvārda <code>define</code> palīdzību "izveidot" jaunos, virtuālus komponentus, ar funkciju palīdzību kombinējot jau esošos. Piemēram, <code>define MaxHumidity max(Humidity)</code> definē jaunu komponentu ar nosaukumu ''MaxLight'', kura vērtība būs vienāda ar maksimālo līdz šim nolasītos gaismas sensora vērtību programmas darbības laikā.
+
+* '''Parameterus''' var norādīt gan komponentu lietojumiem, gan komponentu definīcijām. Piemēram, parametrs <code>once</code> saka, ka komponentu vajag lietot (lasīt, ieslēgt utt.) tikai vienreiz. (Pēc noklusēšanas komponenti tiek lietoti periodiski, neierobežotu skaitu periodu.)
+
+* '''Komentāri''' var tikt rakstīti, atdalot tos no pārējā programmas koda ar diviem simboliem "//". Komentārs stiepjas līdz rindiņas beigām, un neietekmē programmas funkcionalitāti. Piemēram:
+** <code>use Beeper; // lieto pīkstuli</code>
+definē Beeper komponenta lietojumu ar atbilstošu paskaidrojošu tekstu.
+
+==== Mainīgie un konstantes ====
+
+Lielā daļā SEAL programmu nav nepieciešams izmantot ''mainīgos''. Jau nu tie tomēr ir vajadzīgi, mainīgo var definēt un lietot izmantojot <code>set</code> atslēgvārdu.
+
+Piemēram <code>set counter 1;</code> uzstāda mainīgā ar nosaukumu "counter" vērtību vienādu ar viens.
+
+<code>set counter add(counter, 1);</code> uzstāda šī pašam mainīgā vērtību vienādu ar tā iepriekšējo vērtību saskaitītu ar viens.
+
+Visi mainīgie ir skalāri (t.i. var saturēt sevī tikai vienu vērtību).
+
+
+''Simboliskās konstantes'' (t.i. konstantes ar vārdu) SEAL programmās ir ieteicams izmantot bieži. Konstanti definē ar <code>const</code> atslēgvārda palīdzību.
+
+Piemēram <code>const SLIEKSNIS 1000;</code> definē konstanti ar nosaukumu "SLIEKSNIS" un vērtību vienādu ar 1000.
+
+Konstantes vietā vienmēr var rakstīt arī šīs konstantes vērtību tieši, ar cipariem.
+
+==== Kontroles bloki ====
+
+SEAL programmas izpildīšanos var kontrolēt ar <code>when</code> atslēgvārda palīdzību.
+
+Tā lietošana ir šāda:
+ when &lt;nosacījums&gt;
+   &lt;koda bloks 1&gt;
+ end
+Šajā piemērā <code>&lt;koda bloks 1&gt;</code> izpildās tad un tikai tad, ja <code>&lt;nosacījums&gt;</code> ir patiess.
+
+Jāņem vērā, ka nosacījumu patiesuma vērtības tiek atkārtoti izvērtētas periodiski. (Pēc noklusēšanas tas notiek 10 reizes sekundē). Koda bloks savukārt izpildās neatkarīgi no tiem. Ja reiz bloks ir sācis izpildīties, tas izpildās vai nu noteiktu reižu skaitu, ja tāds norādīts parametros, vai arī noteiktu laiku, ja norādīts tas. Pēc noklusēšanas koda bloks izpildās neierobežotu reižu skaitu, periodiski. Izpildīšanās periods arī atkarīgs no parametriem un pēc noklusēšanas ir vienāds ar vienu sekundi.
+
+Ir atbalstīti arī <code>else</code> un <code>elsewhen</code> atslēgvārdi ar to intuitīvajām nozīmēm.<code>else</code> norāda, ka tālāk sekos koda bloks, kurš izpildīsies tikai tad, kad visi iepriekšējā koda bloka nosacījumi ir nepatiesi. <code>elsewhen</code> nozīme ir līdzīga <code>else</code>, bet papildus tam kods šajā blokā izpildās tikai tad, kad <code>elsewhen</code> sekojošais nosacījums ir patiess.
+ when &lt;nosacījums&gt;:
+  &lt;koda bloks 1&gt;
+ else:
+  &lt;koda bloks 2&gt;
+ end
+Šajā piemērā <code>&lt; koda bloks 1 &gt;</code> izpildās tad un tikai tad, ja <code>&lt; nosacījums  &gt;</code> ir patiess, savukārt <code>&lt; koda bloks 2 &gt;</code> izpildās pretējā gadījuma -- ja nosacījums ir nepatiess. 
+ when &lt;nosacījums 1&gt;:
+  &lt;koda bloks 1&gt;
+ elsewhen  &lt;nosacījums 2&gt;:
+  &lt;koda bloks 2&gt;
+ else:
+  &lt;koda bloks 3&gt;
+ end
+Šajā piemērā <code>&lt;koda bloks 2&gt;</code> izpildās tad un tikai tad, ja <code>&lt;nosacījums 1&gt;</code> ir nepatiess, savukārt <code>&lt;nosacījums 2&gt;</code> ir patiess. <code>&lt;koda bloks 3&gt;</code> izpildās tikai tad, ja abi nosacījumi ir nepatiesi.
+ 
+
+Nosacījumi savā starpā var tikt apvienoti ar loģiskajiem atslēgvārdiem <code>AND</code>, <code>OR</code>, kā arī nosacījuma vērtība var tikt invertēta ar atslēgvārdu <code>NOT</code>.
+
+Piemēram:
+ when (NOT &lt;nosacījums 1&gt;) AND (&lt;nosacījums 2&gt; OR &lt;nosacījums 3&gt;):
+   &lt;koda bloks&gt;
+ end
+Šeit koda bloks izpildīsies tikai tad, ja <code>&lt;nosacījums 1&gt;</code> būs nepatiess, bet vismaz viens no nosacījumiem 2 un 3 būš patiess.
+
+== Programmēšanas vide ==
+
+[[File:mansos-ide.png]]
+
+Uzsākot testu, jums priekšā būs MansOS IDE atvērtā stāvoklī (attēlā).
+
+SEAL '''kodu rakstīt''' paredzēts pelēkajā rajonā labajā pusē.
+
+Lai atvieglotu koda ievadīšanu, eksistē '''vizuālais redaktors''' (kreisā puse). Noklikšķinot uz noteikts koda rindas (kura var būt nepilnīgi uzrakstīta), vizuālais redaktors parādīs izvēļu joslu ar atslēgvārdiem, nosaukumiem un parametriem, kurus varētu lietot šajā koda rindā (vai <code>when ... end</code> koda blokā). Lai aktivizētu vizuālo redaktoru, nepieciešams vai nu sākt rakstīt kodu, vai arī nospiest vienu no pogām "Add statement" vai "Add condition".
+
+Lai '''pārbaudītu''', vai jūsu sintakse ir korekta, nospiediet "Compile" pogu. Tiks palaists programmas būvēšanas process, kas vai nu parādīs sintakses kļūdas, vai novedīs līdz paziņojumam par veiksmīgu procesa pabeigšanos. Ja tas nenotiek automātiski, programmas būvēšanās stāvokli iespējams redzēt, aktivizējot "Info" izvēlni apakšējā darbvirsmas daļā.
+
+Lai '''izmēģinātu''' uzlādētu programmu uz motes, nospiediet "Upload" pogu. Tehnisku operētājsistēmas un aparatūras problēmu dēļ uzlādēšana var neizdoties a pirmo mēģinājumu, Tādā gadījumā jāmēģina atkārtoti. Ja neizdodas arī ar otro reizi, pārbaudiet, vai mote ir pilnībā iesprausta. Variet arī lūgt instruktora palīdzību. Informāciju par šo procesu iespējams redzēt "Info" izvēlnē apakšējā darbvirsmas daļā.
+
+Sensoru mezgls var sazināties pa seriālo saskarni (sūtīt diagnostiskus rakstveida ziņojumus) ar datoru, kuram tas ir pieslēgts. Lai '''klausītos''' šos ziņojumus, jums jāaktivizē sadaļa "Listen module 1" apakšējā panelī un jānospiež tur "Start listening" poga. Lai izpildītu jums izsniegtos programmēšanas uzdevumus, seriālās saskarnes izmantošana programmas tekstā nav obligāta. Ja seriālās saskarnes izmantošana programmas tekstā nav norādīta, ziņojumi netiek sūtīti.
