@@ -3,4 +3,5 @@
 #
 
 USE_PRINT=y
+USE_SERIAL=y
 USE_RADIO=n
