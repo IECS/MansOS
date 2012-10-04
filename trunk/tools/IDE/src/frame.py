@@ -385,7 +385,7 @@ Developed by: Jānis Judvaitis, janis.judvaitis@gmail.com
             wx.OK | wx.ICON_INFORMATION)
 
     def OnSealHelp(self, event):
-        filename = "http://mansos.net/wiki/index.php/Declarative_programming_with_MansOS"
+        filename = "http://mansos.net/wiki/index.php/SEAL"
         # Damn linux
         if os.name == 'posix':
             Popen(['xdg-open', filename])
