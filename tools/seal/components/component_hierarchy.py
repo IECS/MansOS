@@ -72,7 +72,7 @@ class SealSensor(SealComponent):
         self.turnonoff = SealParameter(None, [False, True])
         self.onFunction = SealParameter(None)
         self.offFunction = SealParameter(None)
-        # output reading to somewhere?
+        # output reading to somewhere? (actuator or output; same syntax, different semantics)
         self.out = SealParameter(None)
         # evaluate function(s) lazily? (for example, useful for averaged sensors)
         self.lazy = SealParameter(None, [False, True])
@@ -554,6 +554,8 @@ class PrintAct(SealActuator):
         self.arg7 = SealParameter(None)
         self.arg8 = SealParameter(None)
         self.arg9 = SealParameter(None)
+        # output reading to some SEAL output?
+        self.out = SealParameter(None)
 
 # not implemented
 class WateringAct(SealActuator):

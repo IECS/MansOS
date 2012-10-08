@@ -36,7 +36,7 @@
 #  define ASSERT_PRINT printf
 #else
 #  ifdef USE_PRINT
-#    define ASSERT_PRINT debugPrintf
+#    define ASSERT_PRINT(...) debugPrintf(PRINT, __VA_ARGS__)
 #  else
 #    define ASSERT_PRINT(...)
 #  endif /* USE_PRINT */
@@ -50,8 +50,7 @@ void panic(void)
     //make LEDs blink like linux kernel on panic
     uint16_t x = 0;
     DISABLE_INTS();
-    for (;;)
-    {
+    for (;;) {
         ledsSet(x ^= ~0u);
         volatile uint32_t t = 100000;
         while (--t);

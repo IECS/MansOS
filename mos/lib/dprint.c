@@ -52,8 +52,6 @@ void printInit(void)
     PRINT_INIT_NEW(PRINT_BUFFER_SIZE);
 }
 
-#ifdef DPRINT_TO_RADIO
-
 void radioPrint( char* str )
 {
 #if 0
@@ -62,20 +60,29 @@ void radioPrint( char* str )
 #else
    // don't forget to call radioInit() somewhere!
    radioSend((uint8_t *) str, strlen(str) + 1);
-   mdelay(100); // wait a bit, to allow the radio to complete the sending
+   // mdelay(100); // wait a bit, to allow the radio to complete the sending
 #endif
 }
 
-#else // DPRINT_TO_RADIO
+#if USE_NETWORK
+void networkPrint( char* str )
+{
+    static Socket_t socket;
+    if (socket.port == 0) {
+        socketOpen(&socket, NULL);
+        socketBind(&socket, DPRINT_PORT);
+        socketSetDstAddress(&socket, MOS_ADDR_ROOT);
+    }
+    socketSend(&socket, (uint8_t *) str, strlen(str) + 1);
+}
+#endif // USE_NETWORK
 
 void serialPrint(char* str)
 {
     serialSendString(PRINTF_SERIAL_ID,  str);
 }
 
-#endif // !DPRINT_TO_RADIO
-
-void debugPrintf(char* str, ...)
+void debugPrintf(PrintFunction_t outputFunction, char* str, ...)
 {
     va_list args;
 
@@ -86,7 +93,7 @@ void debugPrintf(char* str, ...)
     vprintf(str, args);
 #else
     vsnprintf(_print_buf, PRINT_BUFFER_SIZE, str, args);
-    PRINT(_print_buf);
+    outputFunction(_print_buf);
 #endif
 }
 
