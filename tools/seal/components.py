@@ -1562,6 +1562,27 @@ class Sensor(Component):
         outputFile.write("}\n\n")
         return funName + "(isFilteredOut)"
 
+    #
+    # A logical function similar to Excel's IF()
+    #
+    def generateIfFunction(self, outputFile, functionTree, root):
+        conditionFunction = self.generateSubReadFunctions(
+            outputFile, functionTree.arguments[0], root)
+        ifFunction = self.generateSubReadFunctions(
+            outputFile, functionTree.arguments[1], root)
+        elseFunction = self.generateSubReadFunctions(
+            outputFile, functionTree.arguments[2], root)
+
+        funName = self.getGeneratedFunctionName("If")
+        outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
+        outputFile.write("{\n")
+        outputFile.write("    {0} conditionValue = {1};\n".format(
+                self.getDataType(), conditionFunction))
+        outputFile.write("    if (conditionValue) return {0};\n".format(ifFunction))
+        outputFile.write("    return {0};\n".format(elseFunction))
+        outputFile.write("}\n\n")
+        return funName + "(isFilteredOut)"
+
     def generateSyncFunction(self, outputFile, functionTree, root):
         assert self.syncOnlySensor
 
@@ -1922,6 +1943,8 @@ class Sensor(Component):
             return self.generateInvertFunction(outputFile, functionTree, root)
         if functionTree.function == "invertfilter":
             return self.generateInvertFilterFunction(outputFile, functionTree, root)
+        if functionTree.function == "if":
+            return self.generateIfFunction(outputFile, functionTree, root)
         if functionTree.function == "sync":
             if functionTree != self.functionTree:
                 componentRegister.userError("sync() function only allowed at the top level!\n")
@@ -2947,10 +2970,7 @@ class ComponentRegister(object):
             # print "    process", basename
             # constant value
             if basename[:7] == '__const':
-                try:
-                    numericalValue = int(basename[7:], 0)
-                except ValueError:
-                    numericalValue = float(basename[7:])
+                numericalValue = getNumberFromString(basename[7:])
                 continue
             if basename in self.patterns: continue
             # a real sensor?
@@ -3029,10 +3049,7 @@ class ComponentRegister(object):
 
         for basename in basenames:
             if basename[:7] == '__const':
-                try:
-                    c.numericalValue = int(basename[7:], 0)
-                except ValueError:
-                    c.numericalValue = float(basename[7:])
+                c.numericalValue = getNumberFromString(basename[7:])
                 continue
             if basename in self.patterns: continue
             base = self.findComponentByName(basename)

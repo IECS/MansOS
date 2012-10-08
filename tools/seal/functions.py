@@ -4,7 +4,7 @@ from structures import *
 # Data aggregation -- "min", "max", "average" (avg), "stdev" (std), "ewma", "changed"
 # Signal processing -- "sharpen" (contrast), "smoothen" (blur), "map"
 # Filtering -- "match", "filterRange", "filterEqual", "filterNotEqual", "filterLess", "filterLessOrEqual", "filterMore", "filterMoreOrEqual", "invertfilter"
-# Subset selection & special purpose -- "take", "tuple", "sync"
+# Subset selection & special purpose -- "take", "tuple", "sync", "if"
 
 # this global dictionary holds all functions by name
 functions = {}
@@ -258,6 +258,14 @@ f.group = "special"
 f.special = True
 f.repeatedArguments = True
 f.arguments.append(SealArgument("value", repeated = True))
+
+# Logical IF (like in Excel)
+f = SealFunction("if")
+f.group = "special"
+f.special = True
+f.arguments.append(SealArgument("condition"))
+f.arguments.append(SealArgument("ifPart"))
+f.arguments.append(SealArgument("elsePart", defaultValue = Value(0)))
 
 # --------------------------------------------------
 

@@ -47,6 +47,15 @@ def static_var(varname, value = 0):
         return func
     return decorate
 
+def getNumberFromString(s):
+    try:
+        try:
+            return int(s, 0)
+        except ValueError:
+            return int(bool(s))
+    except ValueError:
+        return float(s)
+
 ######################################################
 class FunctionTree(object):
     def __init__(self, function, arguments):
