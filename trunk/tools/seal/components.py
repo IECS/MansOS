@@ -80,7 +80,7 @@ class BranchCollection(object):
     def generateStartCode(self, b, outputFile):
         number = b[0]
         useCases = b[1]
-        outputFile.write("void branch{0}Start(void)\n".format(number))
+        outputFile.write("static inline void branch{0}Start(void)\n".format(number))
         outputFile.write("{\n")
         for uc in useCases:
             uc.generateBranchEnterCode(outputFile)
@@ -91,7 +91,7 @@ class BranchCollection(object):
         useCases = b[1]
         # the default branch NEVER stops.
         if number == 0: return
-        outputFile.write("void branch{0}Stop(void)\n".format(number))
+        outputFile.write("static inline void branch{0}Stop(void)\n".format(number))
         outputFile.write("{\n")
         for uc in useCases:
             uc.generateBranchExitCode(outputFile)
@@ -298,9 +298,6 @@ class UseCase(object):
                     outputFile.write("Alarm_t {0}PreAlarm;\n".format(s.getNameCC()))
 
     def generateOutCode(self, outputFile):
-        # for o in outputs:
-        #    o.generateCallbackCode(f, outputFile, self.readFunctionSuffix)
-
         p = self.parameters.get("out")
         if p and p.value:
             if isinstance(p.value, str) or isinstance(p.value, unicode):
@@ -309,29 +306,88 @@ class UseCase(object):
                 outName = p.value.asString()
         else:
             outName = None
-        if outName is None: return
+
+        if outName is None: return False
 
         outComp = componentRegister.findComponentByName(outName)
         if outComp is None:
             componentRegister.userError("Component '{0}': 'out' parameter must point to a valid component!\n".format(outName))
-            return
+            return True
 
+        if isinstance(outComp, Output):
+            outputFile.write("#if USE_PRINT\n")
+            # at the moment radio and serial are supported
+            if outComp.name not in ('radio', 'serial', 'network'):
+                componentRegister.userError("Component '{0}': 'out' parameter should be either Serial, Radio, or Network.\n".format(outName))
+                return
+            outputFile.write('        debugPrintf({}Print, "%d\\n", {}Value);\n'.format(
+                    outComp.name, self.component.getNameCC()))
+            outputFile.write("#endif\n")
+            return True
+
+        if isinstance(outComp, Sensor):
+            componentRegister.userError("Component '{0}': 'out' parameter points to another sensor?\n".format(outName))
+            return True
+
+        assert isinstance(outComp, Actuator)
         writeFunction = outComp.getDependentParameterValue("writeFunction", outComp.parameters)
         if writeFunction is None:
             componentRegister.userError("Component '{0}': 'out' parameter points to a component with write function!\n".format(outName))
-            return
+            return True
 
         outputFile.write("    {\n")
         outputFile.write("        {0} value = {1}Value;\n".format(
                 self.component.getDataType(), self.component.getNameCC()))
         outputFile.write("        {};\n".format(writeFunction))
         outputFile.write("    }\n")
+        return True
 
     def warnIfNone(self, function, functionName):
         if function: return False
         componentRegister.userWarning("No '{1}' parameter for component '{0}'!\n".format(
                 self.component.getNameCC(), functionName))
         return True
+
+    # special handling for print statements
+    def generatePrintCallbacks(self, outputFile):
+        outputFile.write("    bool isFilteredOut;\n")
+        outputFile.write("    (void)isFilteredOut;\n")
+
+        argsUsed = set()
+        for i in range(100):
+            param = self.getParameterValueValue("arg{0}".format(i))
+            if param:
+                outputFile.write("    isFilteredOut = false;\n".format(i))
+                outputFile.write("    int32_t arg{0} = {1};\n".format(i, param))
+                # XXX: use 0 to specify "no value"
+                outputFile.write("    if (isFilteredOut) arg{0} = 0;\n".format(i))
+                argsUsed.add(i)
+
+        formatString = self.getParameterValueValue("format", "")
+        if not formatString:
+            formatString = '"'
+            formatString += '%d ' * len(argsUsed)
+        else:
+            formatString = formatString.rstrip('"')
+
+        # always append newline
+        formatString += '\\n"'
+
+        outputTo = self.getParameterValueValue("out")
+        # at the moment radio and serial are supported
+        if not outputTo: outputTo = "serial"
+        else:
+            outputTo = outputTo.lower()
+            if outputTo not in ('radio', 'serial', 'network'):
+                componentRegister.userError("Component '{0}': 'out' parameter should be either Serial, Radio, or Network.\n".format(outName))
+                return
+
+        outputFile.write("#if USE_PRINT\n")       
+        outputFile.write("    debugPrintf({}Print, {}".format(outputTo, formatString))
+        for i in argsUsed:
+            outputFile.write(", arg{0}".format(i))
+        outputFile.write(");\n")
+        outputFile.write("#endif\n")
 
     def generateCallbacks(self, outputFile, outputs):
         ccname = self.component.getNameCC()
@@ -376,14 +432,7 @@ class UseCase(object):
 
             if type(self.component) is Actuator:
                 if self.component.name.lower() == "print":
-                    # special handling for print statements
-                    formatString = self.getParameterValueValue("format", "")
-                    outputFile.write("    PRINTF({0}".format(formatString))
-                    for i in range(100):
-                        param = self.getParameterValueValue("arg{0}".format(i))
-                        if param:
-                            outputFile.write(", {0}".format(param))
-                    outputFile.write(");\n")
+                    self.generatePrintCallbacks(outputFile)
                 elif self.on:
                     onFunction = self.component.getDependentParameterValue(
                         "onFunction", self.parameters)
@@ -440,9 +489,12 @@ class UseCase(object):
                             outputFile.write("    {\n")
                             outputFile.write("        {0} {1}Value = *read;\n".format(
                                     intTypeName, prefix + toCamelCase(f)))
-                            for o in outputs:
-                                o.generateCallbackCode(prefix + f, outputFile, self.readFunctionSuffix)
-                            self.generateOutCode(outputFile)
+                            if self.generateOutCode(outputFile):
+                                # 'out' parameter specified; ignore the regular outputs in this case
+                                pass
+                            else:
+                                for o in outputs:
+                                    o.generateCallbackCode(prefix + f, outputFile, self.readFunctionSuffix)
                             outputFile.write("    }\n")
                             outputFile.write("    read++;\n")
                     else:
@@ -453,7 +505,12 @@ class UseCase(object):
                         outputFile.write("    (void){0}Value;\n".format(fieldName))
                         for o in outputs:
                             o.generateCallbackCode(fieldName, outputFile, self.readFunctionSuffix)
-                        self.generateOutCode(outputFile)
+                        if self.generateOutCode(outputFile):
+                            # 'out' parameter specified; ignore the regular outputs in this case
+                            pass
+                        else:
+                            for o in outputs:
+                                o.generateCallbackCode(fieldName, outputFile, self.readFunctionSuffix)
                 else:
                     if self.onCode: outputFile.write("    {};\n".format(self.onCode))
                     outputFile.write("    bool isFilteredOut = false;\n")
@@ -463,9 +520,12 @@ class UseCase(object):
                     outputFile.write("    (void){0}Value;\n".format(
                             self.component.getNameCC()))
                     outputFile.write("    if (!isFilteredOut) {\n")
-                    for o in outputs:
-                        o.generateCallbackCode(self.component.name, outputFile, self.readFunctionSuffix)
-                    self.generateOutCode(outputFile)
+                    if self.generateOutCode(outputFile):
+                        # 'out' parameter specified; ignore the regular outputs in this case
+                        pass
+                    else:
+                        for o in outputs:
+                            o.generateCallbackCode(self.component.name, outputFile, self.readFunctionSuffix)
                     outputFile.write("    }\n")
                     if self.offCode: outputFile.write("    {};\n".format(self.offCode))
 
@@ -1962,6 +2022,9 @@ class OutputUseCase(object):
                 self.useOnlyFields[f[0]] = f[1]
 
         self.isAggregate = self.getParameterValue("aggregate", False)
+        if not self.isAggregate and parent.name != "serial":
+            componentRegister.userError("Parameter 'aggregate' must be set (true) for output '{}'\n".format(
+                    toTitleCase(parent.name)))
 
     def getNameTC(self):
         return toTitleCase(self.name)

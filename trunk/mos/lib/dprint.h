@@ -62,7 +62,7 @@ extern void PRINT(const char *format, ...);
 // code for printing to radio
 #  define PRINT_INIT_NEW(len) PRINT_INIT_DEF(len);
 #  define PRINT radioPrint
-#  define PRINTF debugPrintf
+#  define PRINTF(...) debugPrintf(PRINT, __VA_ARGS__);
 # else
 // code for printing to serial port
 #  define PRINT_INIT_NEW(len) \
@@ -72,7 +72,7 @@ extern void PRINT(const char *format, ...);
      serial[PRINTF_SERIAL_ID].function = SERIAL_FUNCTION_PRINT
 
 #  define PRINT serialPrint
-#  define PRINTF debugPrintf
+#  define PRINTF(...) debugPrintf(PRINT, __VA_ARGS__);
 # endif // DPRINT_TO_RADIO
 
 #else // USE_PRINT not defined
@@ -89,10 +89,13 @@ extern void PRINT(const char *format, ...);
 
 #if PLATFORM_PC
 #include <timers.h> // for getRealTime()
-#define TPRINTF(format, ...) debugPrintf("[%u] " format, getRealTime(), ##__VA_ARGS__)
+#define TPRINTF(format, ...) debugPrintf(PRINT, "[%u] " format, getRealTime(), ##__VA_ARGS__)
 #else
 #define TPRINTF(...) PRINTF(__VA_ARGS__)
 #endif
+
+// the port used for network printing
+#define DPRINT_PORT  113
 
 // -------------------------------------------------
 // old version, kept for backwards compatibility, does nothing
@@ -100,10 +103,12 @@ extern void PRINT(const char *format, ...);
 
 // -------------------------------------- functions
 
-void serialPrint( char* str );
-void radioPrint( char* str );
+void serialPrint(char* str);
+void radioPrint(char* str);
 
-void debugPrintf(char* str, ...);
+typedef void (* PrintFunction_t)(char* str);
+
+void debugPrintf(PrintFunction_t outputFunction, char* str, ...);
 void debugHexdump(void *data, unsigned len);
 
 void printInit(void) WEAK_SYMBOL;

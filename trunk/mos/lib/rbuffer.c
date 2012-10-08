@@ -78,7 +78,7 @@ uint8_t rbufferRead(RingBuffer_t *b, uint16_t length) {
 }
 
 void rbufferDump(RingBuffer_t *b) {
-    debugPrintf("buffer size %d\n", rbufferSize(b));
+    PRINTF("buffer size %d\n", rbufferSize(b));
     if (b->writePos == b->readPos) return; // empty
     if (b->writePos > b->readPos) {
         debugHexdump(b->data + b->readPos, b->writePos - b->readPos);
