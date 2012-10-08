@@ -254,6 +254,7 @@ class SealParser():
         '''
         p[0] = LoadStatement(p[2].strip('"'))
 
+    # XXX: the second form can NEVER be in top level
     def p_functional_expression(self, p):
         '''functional_expression : IDENTIFIER_TOKEN '(' argument_list ')'
                                  | IDENTIFIER_TOKEN value
