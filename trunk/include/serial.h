@@ -52,8 +52,8 @@ void serialDisableTX(uint8_t id);
 void serialEnableRX(uint8_t id);
 void serialDisableRX(uint8_t id);
 
-void serialSendString(uint8_t id, char *string);
-void serialSendData(uint8_t id, uint8_t *data, uint16_t len);
+void serialSendString(uint8_t id, const char *string);
+void serialSendData(uint8_t id, const uint8_t *data, uint16_t len);
 void serialSendByte(uint8_t id, uint8_t data);
 
 /**
