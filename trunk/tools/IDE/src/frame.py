@@ -131,6 +131,9 @@ class Frame(wx.Frame):
         outputTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW_ZOOM, self.tr('Configure upload and compile'),
                                 wx.Bitmap(self.path + '/src/Icons/read.png'),
                                 shortHelp = self.tr('Configure upload and compile'))
+        listenTool = self.toolbar.AddCheckLabelTool(wx.ID_CDROM, self.tr('Listen node\'s output'),
+                                wx.Bitmap(self.path + '/src/Icons/listen.png'),
+                                shortHelp = self.tr('Listen node\'s output'))
         self.toolbar.AddSeparator()
         self.toolbar.AddLabelTool(wx.ID_EXIT, self.tr('Exit'),
                                 wx.Bitmap(self.path + '/src/Icons/exit.png'),
@@ -144,6 +147,7 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_TOOL, self.OnOutput, outputTool)
         self.Bind(wx.EVT_TOOL, self.OnAddStatement, addStatementTool)
         self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
+        self.Bind(wx.EVT_TOOL, self.OnStartListening, listenTool)
 
     def generateMenu(self):
         fileMenu = wx.Menu()
@@ -306,6 +310,17 @@ class Frame(wx.Frame):
             dialog.Fit()
             dialog.ShowModal()
             dialog.Destroy()
+
+    def OnStartListening(self, event = None):
+        if not self.API.listenModules[0].listening and event is not None:
+            self.auiManager.ShowPane(self.API.listenModules[0], True)
+            self.API.listenModules[0].doClear()
+
+        if self.API.listenModules[0].listening:
+            self.toolbar.ToggleTool(wx.ID_CDROM, True)
+            wx.CallLater(100, self.OnStartListening)
+        else:
+            self.toolbar.ToggleTool(wx.ID_CDROM, False)
 
     def OnNew(self, event):
         self.API.tabManager.addPage()
