@@ -24,13 +24,13 @@
 #ifndef PC_LIGHT_HAL_H
 #define PC_LIGHT_HAL_H
 
-// assume, that analog light sensors attached as on TelosB platform
+// assume analog light sensors attached, same as on TelosB platform
 #define lightInit()
 #define lightOn()
 #define lightOff()
 
-#define visibleLightRead() adcRead(ADC_LIGHT_TOTAL)
-#define PARLightRead() adcRead(ADC_LIGHT_PHOTOSYNTHETIC)
-#define lightRead() visibleLightRead()
+#define totalSolarRadiationRead()     adcRead(ADC_LIGHT_TOTAL)
+#define photosyntheticRadiationRead() adcRead(ADC_LIGHT_PHOTOSYNTHETIC)
+#define lightRead()                   totalSolarRadiationRead()
 
 #endif
