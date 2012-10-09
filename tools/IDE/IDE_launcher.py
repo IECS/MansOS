@@ -80,24 +80,28 @@ def getUserInput(prompt):
         return input(prompt)
     else:
         return raw_input(prompt)
-
-if not version.startswith("2.7"):
-    print ("You are using Python version {0}.".format(version[:5]))
-    print ("MansOS IDE is tested only under version 2.7.x, continue at your own risk.")
-    inp = getUserInput("Continue? (Y/n)\n")
-
-    if inp.lower().strip() == "n":
-        print ""
-        exit(1)
 try:
-    if not importsOk():
-        getUserInput("Press enter to exit...")
-        exit(1)
+    if not version.startswith("2.7"):
+        print ("You are using Python version {0}.".format(version[:5]))
+        print ("MansOS IDE is tested only under version 2.7.x, continue at your own risk.")
+        inp = getUserInput("Continue? (Y/n)\n")
 
-    print ("Launching MansOS IDE...")
-    os.execl(executable, executable, * ['IDE.pyw'])
+        if inp.lower().strip() == "n":
+            print ("")
+            exit(1)
+    try:
+        # Go to real directory for imports to work
+        os.chdir(os.path.dirname(os.path.realpath(__file__)))
+        if not importsOk():
+            getUserInput("Press enter to exit...")
+            exit(1)
+
+        print ("Launching MansOS IDE...")
+        os.execl(executable, executable, * ['IDE.pyw'])
+    except Exception as e:
+        print ("Oops! something went wrong!")
+        print (e)
+        getUserInput("Press enter to exit...")
 except Exception as e:
-    print ("Oops! something went wrong!")
     print (e)
     getUserInput("Press enter to exit...")
-
