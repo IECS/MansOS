@@ -195,7 +195,7 @@ class EditStatement(wx.Panel):
         else:
             self.type.SetValue('')
         # Return if 2nd tier needs to be generated
-        return True#self.type.GetValue() != ''
+        return True #self.type.GetValue() != ''
 
     # Generate or update second comboBox, Led, Light, Radio, etc...
     def generateSecondTier(self, value, choices = None):
@@ -311,7 +311,7 @@ class EditStatement(wx.Panel):
     def onActuatorChange(self, event):
         actuator = self.type.GetValue()
         # Don't clear if this is already selected
-        if self._type.startswith(actuator):
+        if self._type.startswith(actuator) or actuator.startswith("use"):
             space = len(self.source['text'].split(None, 1)[0])
             self.source['text'] = actuator + self.source['text'][space:]
         else:
