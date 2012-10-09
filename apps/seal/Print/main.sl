@@ -1,9 +1,10 @@
 //
 // Note: use of Print is NOT required to output e.g. typical system values.
-// Do somehitng lik this instead
+// Do something like this instead
 //   read Light; read Humidity;
 //   output Serial;
 // or
+//   read Light; read Humidity;
 //   output Serial (Light, Humidity);
 //
 
