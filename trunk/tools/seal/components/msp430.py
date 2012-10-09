@@ -34,10 +34,11 @@ systime = SystemTimeSensor()
 timestamp = TimestampSensor()
 uptime = UptimeSensor()
 
-squarewave = SquareWaveSensor()
-trianglewave = TriangleWaveSensor()
-sawwave = SawtoothWaveSensor()
-sinewave = SineWaveSensor()
+# comment out for now: the work, but are not appropriate for beginners
+#squarewave = SquareWaveSensor()
+#trianglewave = TriangleWaveSensor()
+#sawwave = SawtoothWaveSensor()
+#sinewave = SineWaveSensor()
 
 variables = VariableSensor()
 constants = ConstantsSensor()
