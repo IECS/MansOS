@@ -36,7 +36,7 @@ extern SerialCallback_t serialRecvCb[SERIAL_COUNT];
 // Procedures
 //===========================================================
 
-void serialSendString(uint8_t id, char *s) {
+void serialSendString(uint8_t id, const char *s) {
     for (; *s; ++s) {
         serialSendByte(id, *s);
         if (*s == '\n') {
@@ -46,8 +46,8 @@ void serialSendString(uint8_t id, char *s) {
     }
 }
 
-void serialSendData(uint8_t id, uint8_t *data, uint16_t len) {
-    uint8_t *p;
+void serialSendData(uint8_t id, const uint8_t *data, uint16_t len) {
+    const uint8_t *p;
     for (p = data; p < data + len; ++p) {
         serialSendByte(id, *p);
     }

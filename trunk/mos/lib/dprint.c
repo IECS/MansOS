@@ -52,7 +52,7 @@ void printInit(void)
     PRINT_INIT_NEW(PRINT_BUFFER_SIZE);
 }
 
-void radioPrint( char* str )
+void radioPrint(const char* str)
 {
 #if 0
    if (!localMac) getSimpleMac()->init(NULL, false, NULL, 0);
@@ -65,7 +65,7 @@ void radioPrint( char* str )
 }
 
 #if USE_NETWORK
-void networkPrint( char* str )
+void networkPrint(const char* str)
 {
     static Socket_t socket;
     if (socket.port == 0) {
@@ -73,16 +73,16 @@ void networkPrint( char* str )
         socketBind(&socket, DPRINT_PORT);
         socketSetDstAddress(&socket, MOS_ADDR_ROOT);
     }
-    socketSend(&socket, (uint8_t *) str, strlen(str) + 1);
+    socketSend(&socket, str, strlen(str) + 1);
 }
 #endif // USE_NETWORK
 
-void serialPrint(char* str)
+void serialPrint(const char* str)
 {
     serialSendString(PRINTF_SERIAL_ID,  str);
 }
 
-void debugPrintf(PrintFunction_t outputFunction, char* str, ...)
+void debugPrintf(PrintFunction_t outputFunction, const char* str, ...)
 {
     va_list args;
 
