@@ -309,6 +309,18 @@ class LightSensor(SealSensor):
         self.useFunction.value = "lightRead()"
         self.readFunction.value = "lightRead()"
 
+class TotalSolarRadiationSensor(SealSensor):
+    def __init__(self):
+        super(TotalSolarRadiationSensor, self).__init__("TotalSolarRadiation")
+        self.useFunction.value = "totalSolarRadiationRead()"
+        self.readFunction.value = "totalSolarRadiationRead()"
+
+class PhotosyntheticRadiationSensor(SealSensor):
+    def __init__(self):
+        super(PhotosyntheticRadiationSensor, self).__init__("PhotosyntheticRadiation")
+        self.useFunction.value = "photosyntheticRadiationRead()"
+        self.readFunction.value = "photosyntheticRadiationRead()"
+
 class HumiditySensor(SealSensor):
     def __init__(self):
         super(HumiditySensor, self).__init__("Humidity")
