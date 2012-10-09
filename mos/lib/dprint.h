@@ -103,12 +103,12 @@ extern void PRINT(const char *format, ...);
 
 // -------------------------------------- functions
 
-void serialPrint(char* str);
-void radioPrint(char* str);
+void serialPrint(const char* str);
+void radioPrint(const char* str);
 
-typedef void (* PrintFunction_t)(char* str);
+typedef void (* PrintFunction_t)(const char* str);
 
-void debugPrintf(PrintFunction_t outputFunction, char* str, ...);
+void debugPrintf(PrintFunction_t outputFunction, const char* str, ...);
 void debugHexdump(void *data, unsigned len);
 
 void printInit(void) WEAK_SYMBOL;

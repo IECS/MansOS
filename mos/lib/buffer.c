@@ -32,6 +32,6 @@ void bufferInit(Buffer_t *b, void *space, uint16_t len) {
 }
 
 void bufferDump(Buffer_t *b) {
-    debugPrintf("buffer size %d\n\r", b->length);
+    debugPrintf(PRINT, "buffer size %d\n\r", b->length);
     debugHexdump(b->data, b->length);
 }
