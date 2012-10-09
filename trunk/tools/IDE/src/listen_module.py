@@ -119,7 +119,7 @@ class ListenModule(wx.Panel):
             self.haveMote = True
             self.ports.SetValue(self.tr("Use default device"))
             if len(motelist[0]) > 1:
-                self.args['serialPort'] = motelist[0][1].strip()
+                self.args['serialPort'] = motelist[0][1].strip().strip("\x00")
             self.ports.Enable()
         else:
             self.ports.SetValue(self.tr("No devices found"))
