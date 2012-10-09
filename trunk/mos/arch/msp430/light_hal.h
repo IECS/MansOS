@@ -36,16 +36,18 @@
 #define lightOff()
 
 #ifdef ADC_LIGHT_TOTAL
-#define totalLightRead() adcRead(ADC_LIGHT_TOTAL)
+#define totalSolarRadiationRead() adcRead(ADC_LIGHT_TOTAL)
 #else
-#define totalLightRead() 0
+#define totalSolarRadiationRead() 0
 #endif
+
 #ifdef ADC_LIGHT_PHOTOSYNTHETIC
-#define PARLightRead() adcRead(ADC_LIGHT_PHOTOSYNTHETIC)
+#define photosyntheticRadiationRead() adcRead(ADC_LIGHT_PHOTOSYNTHETIC)
 #else
-#define PARLightRead() 0
+#define photosyntheticRadiationRead() 0
 #endif
-#define lightRead() totalLightRead()
+
+#define lightRead() totalSolarRadiationRead()
 
 #endif // lightRead not defined in platform-specific way
 
