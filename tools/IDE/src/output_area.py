@@ -54,7 +54,7 @@ class OutputArea(wx.Panel):
         if forceSwitching:
             if self.forceCall == None:
                 self.switch()
-                self.forceCall = wx.CallLater(1000, self.switch)
+                self.forceCall = wx.CallLater(2000, self.switch)
             else:
                 if self.forceCall.HasRun():
                     self.switch()
@@ -65,7 +65,9 @@ class OutputArea(wx.Panel):
             self.API.frame.auiManager.ShowPane(self, True)
         else:
             self.API.frame.auiManager.ShowPane(self.GetParent(), True)
-        self.API.tabManager.getPageObject().code.SetFocus()
+        page = self.API.tabManager.getPageObject()
+        if page is not None:
+            page.code.SetFocus()
 
     def clear(self):
         self.outputArea.Clear()

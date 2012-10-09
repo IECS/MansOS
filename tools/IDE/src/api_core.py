@@ -321,6 +321,9 @@ class ApiCore:
         self.compiler.doCompile()
 
     def doUpload(self, event = None):
+        # Stop all listening
+        for x in self.listenModules:
+            x.doClear("")
         self.printInfo("Starting to upload ... \n", False)
         self.uploader.doUpload()
 
