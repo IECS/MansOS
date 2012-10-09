@@ -249,13 +249,17 @@ class EditStatement(wx.Panel):
             # Cycle all posible parameters and draw according boxes
             for parameter in keywords:
                 # This is advanced parameter, don't display it
-                if parameter[1] == []:
+                if parameter[2] == True:
                     continue
                 text = wx.StaticText(self, label = self.tr(parameter[0]) + ":")
 
                 # Get real parameter associated with current name
                 value = self.API.getParamByName(realParams, parameter[0])[1]
-
+                try:
+                    if len(parameter[1]) == 0:
+                        parameter[1].append("")
+                except Exception as e:
+                    parameter[1] = [""]
                 # Create combobox or checkbox
                 if type(parameter[1][0]) is not bool:
                     box = wx.ComboBox(self, choices = [""] + parameter[1],
