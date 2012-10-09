@@ -131,7 +131,7 @@ class Frame(wx.Frame):
         outputTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW_ZOOM, self.tr('Configure upload and compile'),
                                 wx.Bitmap(self.path + '/src/Icons/read.png'),
                                 shortHelp = self.tr('Configure upload and compile'))
-        listenTool = self.toolbar.AddCheckLabelTool(wx.ID_CDROM, self.tr('Listen node\'s output'),
+        listenTool = self.toolbar.AddCheckLabelTool(wx.ID_HOME, self.tr('Listen node\'s output'),
                                 wx.Bitmap(self.path + '/src/Icons/listen.png'),
                                 shortHelp = self.tr('Listen node\'s output'))
         self.toolbar.AddSeparator()
@@ -317,10 +317,10 @@ class Frame(wx.Frame):
             self.API.listenModules[0].doClear()
 
         if self.API.listenModules[0].listening:
-            self.toolbar.ToggleTool(wx.ID_CDROM, True)
+            self.toolbar.ToggleTool(wx.ID_HOME, True)
             wx.CallLater(100, self.OnStartListening)
         else:
-            self.toolbar.ToggleTool(wx.ID_CDROM, False)
+            self.toolbar.ToggleTool(wx.ID_HOME, False)
 
     def OnNew(self, event):
         self.API.tabManager.addPage()
