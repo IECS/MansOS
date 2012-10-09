@@ -311,14 +311,18 @@ class Frame(wx.Frame):
             dialog.ShowModal()
             dialog.Destroy()
 
-    def OnStartListening(self, event = None):
-        if not self.API.listenModules[0].listening and event is not None:
+    def OnStartListening(self, event):
+        if not self.API.listenModules[0].listening:
             self.auiManager.ShowPane(self.API.listenModules[0], True)
             self.API.listenModules[0].doClear()
+        else:
+            self.API.listenModules[0].doClear("")
+        self.checkToggleState()
 
+    def checkToggleState(self):
         if self.API.listenModules[0].listening:
             self.toolbar.ToggleTool(wx.ID_HOME, True)
-            wx.CallLater(100, self.OnStartListening)
+            wx.CallLater(100, self.checkToggleState)
         else:
             self.toolbar.ToggleTool(wx.ID_HOME, False)
 
