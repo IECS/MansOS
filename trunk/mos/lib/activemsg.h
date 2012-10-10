@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,39 +21,26 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AT25DF_PINS_H
-#define AT25DF_PINS_H
+//
+// TinyOS active message (AM) format for CC2420 radio.
+// This is for testing only, not for serious work.
+//
 
-#include <spi.h>
+#ifndef MANSOS_ACTIVEMSG_H
+#define MANSOS_ACTIVEMSG_H
 
-/*
- * AT25DF161 Flash SPI bus configuration for SADmote
- */
+#include <kernel/stdtypes.h>
 
-// Flash attached to USART0 SPI BUS
-#define AT25DF_SPI_ID     0
-#define EXT_FLASH_SPI_ID  AT25DF_SPI_ID
+typedef struct CC2420Header_s {
+  uint8_t length;
+  uint8_t fcf[2];
+  uint8_t dsn;
+  uint8_t destpan[2];
+  uint8_t dest[2];
+  uint8_t src[2];
+  uint8_t type;
+} CC2420Header_t;
 
-// To use soft-SPI, uncomment the line below and define
-// MISO, MOSI and SCLK pins (see hil/spi_soft.h) in your config file!
-//#define AT25DF_SPI_ID   SPI_BUS_SW
-
-// Flash pins
-#define AT25DF_CS_PORT    4   /* P4.1 Output */
-#define AT25DF_CS_PIN     1
-
-#define AT25DF_WP_PORT    4   /* P4.0 Output */
-#define AT25DF_WP_PIN     0
-
-#define AT25DF_HOLD_PORT  4   /* P4.3 Output */
-#define AT25DF_HOLD_PIN   3
-
-/* AT25DF flash functions */
-#define SPI_AT25DF_HOLD()      pinClear(AT25DF_HOLD_PORT, AT25DF_HOLD_PIN)
-#define SPI_AT25DF_UNHOLD()    pinSet(AT25DF_HOLD_PORT, AT25DF_HOLD_PIN)
-
-/* Enable/disable flash access to the SPI bus (active low). */
-#define AT25DF_SPI_ENABLE()    spiSlaveEnable(AT25DF_CS_PORT, AT25DF_CS_PIN)
-#define AT25DF_SPI_DISABLE()   spiSlaveDisable(AT25DF_CS_PORT, AT25DF_CS_PIN)
+void activeMessageSend(const void *data, uint16_t length);
 
 #endif

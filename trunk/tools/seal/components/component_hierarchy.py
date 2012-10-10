@@ -6,12 +6,11 @@ components = []
 
 #######################################################
 class SealParameter(object):
-    def __init__(self, value, valueList = [], advancedParameter = False):
+    def __init__(self, value, valueList = [], isAdvanced = False):
         self.value = value
         self.valueList = valueList
-        self.advancedParameter = advancedParameter
-        
-
+        self.isAdvanced = isAdvanced
+       
 #######################################################
 class SealComponent(object):
     def __init__(self, typeCode, name):
@@ -75,7 +74,7 @@ class SealSensor(SealComponent):
         self.onFunction = SealParameter(None, [], True)
         self.offFunction = SealParameter(None, [], True)
         # output reading to somewhere? (actuator or output; same syntax, different semantics)
-        self.out = SealParameter(None, [], True)
+        self.out = SealParameter(None)
         # evaluate function(s) lazily? (for example, useful for averaged sensors)
         self.lazy = SealParameter(None, [False, True])
 
@@ -158,8 +157,8 @@ class RandomSensor(SealSensor):
         super(RandomSensor, self).__init__("Random")
         self.useFunction.value = "randomNumber()"
         self.readFunction.value = "randomNumber()"
-        self.extraConfig = SealParameter("USE_RANDOM=y", [], True)
-        self.extraIncludes = SealParameter("#include <random.h>", [], True)
+        self.extraConfig.value = "USE_RANDOM=y"
+        self.extraIncludes.value = "#include <random.h>"
         # parameters
         self.min = SealParameter(0, ["0", "1", "2", "5", "10", "100", "1000"])
         self.max = SealParameter(0xffff, ["1", "2", "5", "10", "100", "1000", "65535"])
@@ -259,7 +258,7 @@ class SquareWaveSensor(WaveSensor):
 class TriangleWaveSensor(WaveSensor):
     def __init__(self):
         super(TriangleWaveSensor, self).__init__("TriangleWave")
-        self.extraIncludes = SealParameter("#include <lib/algo.h>", [], True)
+        self.extraIncludes.value = "#include <lib/algo.h>"
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
@@ -278,7 +277,7 @@ class TriangleWaveSensor(WaveSensor):
 class SawtoothWaveSensor(WaveSensor):
     def __init__(self):
         super(SawtoothWaveSensor, self).__init__("SawtoothWave")
-        self.extraIncludes = SealParameter("#include <lib/algo.h>", [], True)
+        self.extraIncludes.value = "#include <lib/algo.h>"
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "readFunction" and parameter != "useFunction":
@@ -329,8 +328,8 @@ class HumiditySensor(SealSensor):
         self.onFunction.value = "humidityOn()"
         self.offFunction.value = "humidityOff()"
         self.errorFunction = SealParameter("humidityIsError()", [], True)
-        self.extraConfig = SealParameter("USE_HUMIDITY=y", [], True)
-        self.extraIncludes = SealParameter("#include <hil/humidity.h>", [], True)
+        self.extraConfig.value = "USE_HUMIDITY=y"
+        self.extraIncludes.value = "#include <hil/humidity.h>"
 
 # the following for are not implemented
 class TemperatureSensor(SealSensor):
@@ -539,8 +538,8 @@ class BeeperAct(SealActuator):
         self.frequency = SealParameter(None, ["100", "200", "500", "1000", "2000", "5000", "10000"])
         self.duration = SealParameter(None, ["10", "20", "50", "100", "200", "500", "1000", "2000"])
 
-        self.extraConfig = SealParameter("USE_BEEPER=y", [], True)
-        self.extraIncludes = SealParameter("#include <beeper.h>", [], True)
+        self.extraConfig.value = "USE_BEEPER=y"
+        self.extraIncludes.value = "#include <beeper.h>"
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "useFunction" and parameter != "onFunction":
@@ -569,7 +568,7 @@ class PrintAct(SealActuator):
         self.arg8 = SealParameter(None, [], True)
         self.arg9 = SealParameter(None, [], True)
         # output reading to some SEAL output?
-        self.out = SealParameter(None, [], True)
+        self.out = SealParameter(None)
 
 # not implemented
 class WateringAct(SealActuator):
@@ -582,13 +581,13 @@ class SealOutput(SealComponent):
     def __init__(self, name):
         super(SealOutput, self).__init__(TYPE_OUTPUT, name)
         # create packets? (if aggregate=true)
-        self.aggregate = SealParameter(True, [False, True])
+        self.aggregate = SealParameter(True, [False, True], True)
         # packet fields (crc is always included...)
         # self.crc = SealParameter(False, [False, True])
         self.address = SealParameter(False, [False, True])
         self.timestamp = SealParameter(True, [False, True])
-        self.sequencenumber = SealParameter(False, [False, True])
-        self.issent = SealParameter(False, [False, True])
+        self.sequencenumber = SealParameter(False, [False, True], True)
+        self.issent = SealParameter(False, [False, True], True)
         # The name of the file, FROM which to output
         # but "File" outputs has "filename" parameter TO which to output; do not confuse!
         # Automatically generated if None.
@@ -612,6 +611,13 @@ class RadioOutput(SealOutput):
         # self.crc.value = True # true by default
         self.address.value = True # true by default
 
+class ActiveMessageOutput(SealOutput):
+    def __init__(self):
+        super(ActiveMessageOutput, self).__init__("ActiveMessage")
+        self.useFunction.value = "activeMessageSend(&activemessagePacket, sizeof(activemessagePacket))"
+        self.extraIncludes.value = "#include <lib/activemsg.h>"
+        self.extraConfig.value = "USE_ACTIVE_MSG_RADIO=y"
+
 class InternalFlashOutput(SealOutput):
     def __init__(self):
         super(InternalFlashOutput, self).__init__("InternalFlash")
@@ -620,16 +626,16 @@ class InternalFlashOutput(SealOutput):
 class ExternalFlashOutput(SealOutput):
     def __init__(self):
         super(ExternalFlashOutput, self).__init__("ExternalFlash")
-        self.useFunction.value = "extFlashWrite(0, &externalflashPacket, sizeof(externalflashPacket))"
-        self.extraIncludes = SealParameter("#include <extflash.h>", [], True)
-        self.extraConfig = SealParameter("USE_EXT_FLASH=y", [], True)
+        self.useFunction.value = "flashStreamWriteRecord(&externalflashPacket, sizeof(externalflashPacket), true)"
+        self.extraIncludes.value = "#include <fstream-light.h>"
+        self.extraConfig.value = "USE_FLASH_STREAM=y"
 
 class SdCardOutput(SealOutput):
     def __init__(self):
         super(SdCardOutput, self).__init__("SdCard")
         self.useFunction.value = "sdStreamWriteRecord(&sdcardPacket, sizeof(sdcardPacket), true)"
-        self.extraIncludes = SealParameter("#include <sdstream.h>", [], True)
-        self.extraConfig = SealParameter("USE_SDCARD_STREAM=y", [], True)
+        self.extraIncludes.value = "#include <sdstream.h>"
+        self.extraConfig.value = "USE_SDCARD_STREAM=y"
 
 # "local storage" (i.e. [external] flash or SD card is defined depending on platform
 # on telosb, local storage is synonym for external flash
@@ -638,8 +644,8 @@ class LocalStorageOutput(SealOutput):
         super(LocalStorageOutput, self).__init__("LocalStorage")
         # ext flash by default
         self.useFunction.value = "extFlashWrite(0, &localstoragePacket, sizeof(localstoragePacket))"
-        self.extraIncludes = SealParameter("#include <extflash.h>", [], True)
-        self.extraConfig = SealParameter("USE_EXT_FLASH=y", [], True)
+        self.extraIncludes.value = "#include <extflash.h>"
+        self.extraConfig.value = "USE_EXT_FLASH=y"
 
 class FileOutput(SealOutput):
     def __init__(self):
@@ -648,9 +654,9 @@ class FileOutput(SealOutput):
         # a file can be text or binary - allow both parameter names wih inverse meaning
         # XXX: make text files by default - more intuitive
         self.text = SealParameter(None, [False, True])
-        self.binary = SealParameter(None, [False, True])
-        self.extraIncludes = SealParameter("#include <fs.h>", [], True)
-        self.extraConfig = SealParameter("USE_FS=y", [], True)
+        self.binary = SealParameter(None, [False, True], True)
+        self.extraIncludes.value = "#include <fs.h>"
+        self.extraConfig.value = "USE_FS=y"
 
 class NetworkOutput(SealOutput):
     def __init__(self):
@@ -667,8 +673,8 @@ class NetworkOutput(SealOutput):
     socketSend(&socket, &networkPacket, sizeof(networkPacket))"""
         self.protocol = SealParameter("NULL", ["NULL", "CSMA", "CSMA_ACK", "SAD"])
         self.routing = SealParameter("DV", ["DV", "SAD"])
-        self.extraIncludes = SealParameter("#include <net/mac.h>", [], True)
-        self.extraConfig = SealParameter("USE_NET=y", [], True)
+        self.extraIncludes.value = "#include <net/mac.h>"
+        self.extraConfig.value = "USE_NET=y"
 
     def calculateParameterValue(self, parameter, useCaseParameters):
         if parameter != "extraConfig":

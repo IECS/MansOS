@@ -50,7 +50,8 @@ PSOURCES-$(USE_PRINT) += $(MOS)/lib/usart_packet.c
 PSOURCES-$(USE_GPS) += $(MOS)/lib/nmea/nmea.c
 PSOURCES-$(USE_GPS) += $(MOS)/lib/nmea/nmea_stream.c
 PSOURCES-$(USE_HASH) += $(MOS)/lib/hash.c
-PSOURCES-$(USE_TOSMSG_FORMAT) += $(MOS)/lib/tosmsg.c
+PSOURCES-$(USE_ACTIVE_MSG_SERIAL) += $(MOS)/lib/tosmsg.c
+PSOURCES-$(USE_ACTIVE_MSG_RADIO) += $(MOS)/lib/activemsg.c
 PSOURCES-$(USE_CRC) += $(MOS)/lib/codec/crc.c
 # Data processing
 PSOURCES-$(USE_ALGO) += $(MOS)/lib/algo.c
@@ -145,6 +146,7 @@ PSOURCES-$(USE_ADDRESSING) += $(MOS)/net/nonet.c
 endif
 
 #PSOURCES-$(USE_EXT_FLASH) += $(MOS)/hil/fstream.c
+PSOURCES-$(USE_FLASH_STREAM) += $(MOS)/hil/fstream-light.c
 PSOURCES-$(USE_SDCARD_STREAM) += $(MOS)/hil/sdstream.c
 
 PSOURCES-$(USE_FS) += \

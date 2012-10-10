@@ -27,7 +27,7 @@
 #include <radio.h>
 
 #ifndef SEAL_MAGIC
-#define SEAL_MAGIC    0xABCD
+#define SEAL_MAGIC    0x5EA1 // "SEAl"
 #endif
 
 #ifndef SEAL_DATA_PORT
