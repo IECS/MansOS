@@ -31,7 +31,8 @@
  */
 
 // Flash attached to USCI 1 SPI BUS
-#define M25P80_SPI_ID   1
+#define M25P80_SPI_ID      1
+#define EXT_FLASH_SPI_ID   M25P80_SPI_ID
 
 // To use soft-SPI, uncomment the line below and define
 // MISO, MOSI and SCLK pins (see hil/spi_soft.h) in your config file!

@@ -21,6 +21,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+//
+// TinyOS serial message format
+//
+
 #ifndef MANSOS_TOSMSG_H
 #define MANSOS_TOSMSG_H
 

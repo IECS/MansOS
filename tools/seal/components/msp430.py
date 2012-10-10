@@ -6,6 +6,7 @@ from component_hierarchy import *
 
 serial = SerialOutput()
 radio = RadioOutput()
+activemsg = ActiveMessageOutput()
 network = NetworkOutput()
 internalFlash = InternalFlashOutput()
 localStorage = LocalStorageOutput()

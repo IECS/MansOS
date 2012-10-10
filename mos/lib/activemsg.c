@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,39 +21,25 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AT25DF_PINS_H
-#define AT25DF_PINS_H
+#include <radio.h>
+#include "unaligned.h"
+#include "activemsg.h"
+#include <string.h>
+#include <net/addr.h>
 
-#include <spi.h>
+static uint8_t localSendId;
 
-/*
- * AT25DF161 Flash SPI bus configuration for SADmote
- */
+void activeMessageSend(const void *data, uint16_t length)
+{
+    CC2420Header_t header;
 
-// Flash attached to USART0 SPI BUS
-#define AT25DF_SPI_ID     0
-#define EXT_FLASH_SPI_ID  AT25DF_SPI_ID
+    header.length = length + sizeof(header);
+    putU16(header.fcf, 0x1234);
+    header.dsn = localSendId++;
+    putU16(header.destpan, 0x0);
+    putU16(header.dest, 0xffff); // broadcast
+    putU16(header.src, localAddress);
+    header.type = 0xAA;
 
-// To use soft-SPI, uncomment the line below and define
-// MISO, MOSI and SCLK pins (see hil/spi_soft.h) in your config file!
-//#define AT25DF_SPI_ID   SPI_BUS_SW
-
-// Flash pins
-#define AT25DF_CS_PORT    4   /* P4.1 Output */
-#define AT25DF_CS_PIN     1
-
-#define AT25DF_WP_PORT    4   /* P4.0 Output */
-#define AT25DF_WP_PIN     0
-
-#define AT25DF_HOLD_PORT  4   /* P4.3 Output */
-#define AT25DF_HOLD_PIN   3
-
-/* AT25DF flash functions */
-#define SPI_AT25DF_HOLD()      pinClear(AT25DF_HOLD_PORT, AT25DF_HOLD_PIN)
-#define SPI_AT25DF_UNHOLD()    pinSet(AT25DF_HOLD_PORT, AT25DF_HOLD_PIN)
-
-/* Enable/disable flash access to the SPI bus (active low). */
-#define AT25DF_SPI_ENABLE()    spiSlaveEnable(AT25DF_CS_PORT, AT25DF_CS_PIN)
-#define AT25DF_SPI_DISABLE()   spiSlaveDisable(AT25DF_CS_PORT, AT25DF_CS_PIN)
-
-#endif
+    radioSendHeader(&header, sizeof(header), data, length);
+}

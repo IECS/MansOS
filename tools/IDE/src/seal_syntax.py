@@ -88,7 +88,7 @@ class SealSyntax():
                 if type(x.__getattribute__(p)) is component_hierarchy.SealParameter:
                     self.syntax[x._typeCode][-1].insert(0, (p, \
                                      x.__getattribute__(p).valueList, \
-                                     x.__getattribute__(p).advancedParameter))
+                                     x.__getattribute__(p).isAdvanced))
                     # Bad thing to do...
                     if p not in SEAL_PARAMETERS:
                         SEAL_PARAMETERS.append(p)

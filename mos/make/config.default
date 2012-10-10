@@ -70,15 +70,17 @@ USE_RAM_EXECUTION ?= n
 # e.g. by default timestamps will repeat after ~40 days.
 USE_LONG_LIFETIME ?= n
 
-# SD card stream interface
-USE_SDCARD_STREAM ?= n
-
 # SD card
+USE_SDCARD_STREAM ?= n
 ifeq ($(USE_SDCARD_STREAM),y)
-USE_SDCARD ?= y
-#USE_EXT_FLASH ?= y
+  USE_SDCARD ?= y
 endif
 USE_SDCARD ?= n
+
+USE_FLASH_STREAM ?= n
+ifeq ($(USE_FLASH_STREAM),y)
+  USE_EXT_FLASH ?= y
+endif
 USE_EXT_FLASH ?= n
 
 #TODO:
@@ -90,6 +92,9 @@ USE_SEAL_COMM ?= n
 
 USE_BEEPER ?= n
 
+USE_ACTIVE_MSG_SERIAL ?= n
+USE_ACTIVE_MSG_RADIO ?= n
+
 ifeq ($(USE_NET),y)
     USE_ADDRESSING ?= y
     USE_RANDOM ?= y
@@ -98,6 +103,11 @@ endif
 ifeq ($(USE_SEAL_COMM),y)
     USE_ADDRESSING ?= y
 endif
+
+ifeq ($(USE_ACTIVE_MSG_RADIO),y)
+   USE_ADDRESSING ?= y
+endif
+
 USE_ADDRESSING ?= n
 USE_RANDOM ?= n
 
