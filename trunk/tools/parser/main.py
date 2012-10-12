@@ -158,7 +158,7 @@ def main():
         if os.path.isabs(pathToOS):
             makefilePathToOS = pathToOS
         else:
-            makefilePathToOS = os.path.normpath(dirname + os.sep + pathToOS + ('/..' * numDirs))
+            makefilePathToOS = os.path.normpath(dirname + os.sep + ('/..' * numDirs) + os.sep + pathToOS)
 
         with open(outputFileName, 'w') as outputFile:
             g.generate(outputFile)
