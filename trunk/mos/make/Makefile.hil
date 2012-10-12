@@ -44,6 +44,8 @@ PSOURCES-$(USE_KERNEL_MAIN) += $(MOS)/kernel/kernelmain.c
 PSOURCES-$(USE_ALARMS) += $(MOS)/kernel/alarms.c
 
 PSOURCES-$(USE_PRINT) += $(MOS)/lib/dprint.c
+PSOURCES-$(USE_SERIAL) += $(MOS)/lib/dprint-serial.c
+PSOURCES-$(USE_RADIO) += $(MOS)/lib/dprint-radio.c
 PSOURCES-$(USE_ASSERT) += $(MOS)/lib/assert.c
 PSOURCES-$(USE_RANDOM) += $(MOS)/hil/random.c
 PSOURCES-$(USE_PRINT) += $(MOS)/lib/usart_packet.c
