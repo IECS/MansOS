@@ -40,9 +40,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <radio.h>
-#include <delay.h>
-#include <platform.h>
 
 // Global variable
 static char * _print_buf;
@@ -50,36 +47,6 @@ static char * _print_buf;
 void printInit(void)
 {
     PRINT_INIT_NEW(PRINT_BUFFER_SIZE);
-}
-
-void radioPrint(const char* str)
-{
-#if 0
-   if (!localMac) getSimpleMac()->init(NULL, false, NULL, 0);
-   macSend(NULL, (uint8_t *) str, strlen(str) + 1);
-#else
-   // don't forget to call radioInit() somewhere!
-   radioSend((uint8_t *) str, strlen(str) + 1);
-   // mdelay(100); // wait a bit, to allow the radio to complete the sending
-#endif
-}
-
-#if USE_NETWORK
-void networkPrint(const char* str)
-{
-    static Socket_t socket;
-    if (socket.port == 0) {
-        socketOpen(&socket, NULL);
-        socketBind(&socket, DPRINT_PORT);
-        socketSetDstAddress(&socket, MOS_ADDR_ROOT);
-    }
-    socketSend(&socket, str, strlen(str) + 1);
-}
-#endif // USE_NETWORK
-
-void serialPrint(const char* str)
-{
-    serialSendString(PRINTF_SERIAL_ID,  str);
 }
 
 void debugPrintf(PrintFunction_t outputFunction, const char* str, ...)
