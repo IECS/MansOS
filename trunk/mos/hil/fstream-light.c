@@ -43,6 +43,10 @@
 
 #define VERIFY 0
 
+#ifndef EXT_FLASH_SPI_ID
+#define EXT_FLASH_SPI_ID 0 // XXX
+#endif
+
 static volatile uint32_t extFlashAddress;
 
 // TODO: use dynamic alloc
