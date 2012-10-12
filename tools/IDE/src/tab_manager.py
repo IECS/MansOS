@@ -166,7 +166,7 @@ class TabManager(aui.AuiNotebook):
     def addPage(self, newFile = ''):
         if newFile == '':
             self.AddPage(EditorManager(self, self.API),
-                self.tr("Untitled document") + ' ' + str(self.nextPageNr))
+                self.tr("Untitled document") + ' ' + str(self.nextPageNr) + '.sl')
         else:
             self.AddPage(EditorManager(self, self.API), newFile)
         self.nextPageNr += 1
