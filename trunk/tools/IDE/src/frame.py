@@ -328,6 +328,7 @@ class Frame(wx.Frame):
 
     def OnNew(self, event):
         self.API.tabManager.addPage()
+        self.API.editWindow.update()
 
     def OnOpen(self, event):
         open_ = wx.FileDialog(self,
