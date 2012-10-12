@@ -110,7 +110,10 @@ class TabManager(aui.AuiNotebook):
                 style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
                 defaultFile = self.getPageObject().fileName)
             if save.ShowModal() == wx.ID_OK:
-                self.getPageObject().updateInfo(path = save.GetPath())
+                if not save.GetPath().endswith(".sl") and self.getPageObject().projectType == SEAL_PROJECT:
+                    self.getPageObject().updateInfo(path = save.GetPath() + '.sl')
+                else:
+                    self.getPageObject().updateInfo(path = save.GetPath())
                 self.getPageObject().save()
                 self.getPageObject().hasAFile = True
             save.Destroy()
@@ -125,11 +128,12 @@ class TabManager(aui.AuiNotebook):
             style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
             defaultFile = self.getPageObject().fileName)
         if save.ShowModal() == wx.ID_OK:
-            if save.GetPath()[-3:] != '.sl':
+            if not save.GetPath().endswith(".sl") and self.getPageObject().projectType == SEAL_PROJECT:
                 self.getPageObject().updateInfo(path = save.GetPath() + '.sl')
             else:
                 self.getPageObject().updateInfo(path = save.GetPath())
             self.getPageObject().save()
+            self.getPageObject().hasAFile = True
         save.Destroy()
 
     def doPopupClose(self, event, checkConsequences = True):
