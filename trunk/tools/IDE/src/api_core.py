@@ -184,7 +184,7 @@ class ApiCore:
 
         self.getKeywords = self.sealSyntax.getKeywords
         self.tr = self.translater.translate
-        self.printInfo = self.dummyPrint
+        #self.printInfo = self.dummyPrint
         self.printOutput = self.dummyPrint
 
 # Check if icon can be found
@@ -211,7 +211,6 @@ class ApiCore:
 
 # Populate motelist
         self.populateMotelist()
-
 
     def getPlatformsFromMakefile(self):
         makefile = os.path.join(self.path, "../../mos/make/Makefile.options")
