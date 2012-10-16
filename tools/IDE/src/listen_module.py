@@ -68,6 +68,7 @@ class ListenModule(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.doClear, self.clear)
         self.Bind(wx.EVT_BUTTON, self.getMotelist, self.refresh)
         self.Bind(wx.EVT_COMBOBOX, self.changeTarget, self.ports)
+        self.Bind(wx.EVT_TEXT, self.changeTarget, self.ports)
 
         self.SetSizer(self.main)
         self.main.Fit(self)
