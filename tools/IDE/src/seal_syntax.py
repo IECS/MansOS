@@ -85,7 +85,7 @@ class SealSyntax():
                 self.syntax[x._typeCode].append(list())
             for p in dir(x):
                 # Fill object entry with keywords
-                if type(x.__getattribute__(p)) is component_hierarchy.SealParameter:
+                if isinstance(x.__getattribute__(p), component_hierarchy.SealParameter):
                     self.syntax[x._typeCode][-1].insert(0, (p, \
                                      x.__getattribute__(p).valueList, \
                                      x.__getattribute__(p).isAdvanced))

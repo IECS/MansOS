@@ -6,10 +6,15 @@ components = []
 
 #######################################################
 class SealParameter(object):
-    def __init__(self, value, valueList = [], isAdvanced = False):
+    def __init__(self, value, valueList = []):
         self.value = value
         self.valueList = valueList
-        self.isAdvanced = isAdvanced
+        self.isAdvanced = False
+
+class SealAdvancedParameter(SealParameter):
+    def __init__(self, value, valueList = []):
+        super(SealAdvancedParameter, self).__init__(value, valueList)
+        self.isAdvanced = True
        
 #######################################################
 class SealComponent(object):
@@ -19,8 +24,8 @@ class SealComponent(object):
         # parameters
         self.aliases = dict() # alias name -> parameter name
         self.id = SealParameter(0, ["0", "1"])
-        self.extraConfig = SealParameter(None, [], True)  # config file line(s)
-        self.extraIncludes = SealParameter(None, [], True) # #include<> line(s)
+        self.extraConfig = SealAdvancedParameter(None)   # config file line(s)
+        self.extraIncludes = SealAdvancedParameter(None) # #include<> line(s)
         # read/use period
         self.period = SealParameter(1000, ['100', '200', '500', '1000', '2000'])
         # read/use using specific time pattern?
@@ -31,8 +36,8 @@ class SealComponent(object):
         self.times = SealParameter(None, ['1', '2', '3', '4', '5', '10', '20', '50', '100'])
         # read/use just for a time period?
         self.duration = SealParameter(None, ['100', '200', '500', '1000', '2000'])
-        self.useFunction = SealParameter(None, [], True)   # each usable component must define this
-        self.readFunction = SealParameter(None, [], True)  # each readable component must define this
+        self.useFunction = SealAdvancedParameter(None)   # each usable component must define this
+        self.readFunction = SealAdvancedParameter(None)  # each readable component must define this
         self.aliases["time"] = "duration"
         components.append(self)
 
@@ -65,14 +70,14 @@ class SealSensor(SealComponent):
         self._cacheable = True # whether can be kept in cache
         self._dataSize = 4 # in bytes
         self._dataType = "int32_t"
-        self.preReadFunction = SealParameter(None, [], True)
+        self.preReadFunction = SealAdvancedParameter(None)
         self._minUpdatePeriod = 1000 # milliseconds
         self._readTime = 0 # read instanttly
         self._readFunctionDependsOnParams = False
         # call on and off functions before/after reading?
         self.turnonoff = SealParameter(None, [False, True])
-        self.onFunction = SealParameter(None, [], True)
-        self.offFunction = SealParameter(None, [], True)
+        self.onFunction = SealAdvancedParameter(None)
+        self.offFunction = SealAdvancedParameter(None)
         # output reading to somewhere? (actuator or output; same syntax, different semantics)
         self.out = SealParameter(None)
         # evaluate function(s) lazily? (for example, useful for averaged sensors)
@@ -327,7 +332,7 @@ class HumiditySensor(SealSensor):
         self.readFunction.value = "humidityRead()"
         self.onFunction.value = "humidityOn()"
         self.offFunction.value = "humidityOff()"
-        self.errorFunction = SealParameter("humidityIsError()", [], True)
+        self.errorFunction = SealAdvancedParameter("humidityIsError()")
         self.extraConfig.value = "USE_HUMIDITY=y"
         self.extraIncludes.value = "#include <hil/humidity.h>"
 
@@ -402,9 +407,9 @@ class DigitalInputSensor(SealSensor):
 class SealActuator(SealComponent):
     def __init__(self, name):
         super(SealActuator, self).__init__(TYPE_ACTUATOR, name)
-        self.onFunction = SealParameter(None, [], True)
-        self.offFunction = SealParameter(None, [], True)
-        self.writeFunction = SealParameter(None, [], True)
+        self.onFunction = SealAdvancedParameter(None)
+        self.offFunction = SealAdvancedParameter(None)
+        self.writeFunction = SealAdvancedParameter(None)
         self.on = SealParameter(None, [False, True])
         self.off = SealParameter(None, [False, True])
         # "blink X" is shortcut syntax for "times 2, period X"
@@ -561,12 +566,12 @@ class PrintAct(SealActuator):
         self.arg1 = SealParameter(None)
         self.arg2 = SealParameter(None)
         self.arg3 = SealParameter(None)
-        self.arg4 = SealParameter(None, [], True)
-        self.arg5 = SealParameter(None, [], True)
-        self.arg6 = SealParameter(None, [], True)
-        self.arg7 = SealParameter(None, [], True)
-        self.arg8 = SealParameter(None, [], True)
-        self.arg9 = SealParameter(None, [], True)
+        self.arg4 = SealAdvancedParameter(None)
+        self.arg5 = SealAdvancedParameter(None)
+        self.arg6 = SealAdvancedParameter(None)
+        self.arg7 = SealAdvancedParameter(None)
+        self.arg8 = SealAdvancedParameter(None)
+        self.arg9 = SealAdvancedParameter(None)
         # output reading to some SEAL output?
         self.out = SealParameter(None)
 
@@ -581,21 +586,21 @@ class SealOutput(SealComponent):
     def __init__(self, name):
         super(SealOutput, self).__init__(TYPE_OUTPUT, name)
         # create packets? (if aggregate=true)
-        self.aggregate = SealParameter(True, [False, True], True)
+        self.aggregate = SealAdvancedParameter(True, [False, True])
         # packet fields (crc is always included...)
         # self.crc = SealParameter(False, [False, True])
         self.address = SealParameter(False, [False, True])
         self.timestamp = SealParameter(True, [False, True])
-        self.sequencenumber = SealParameter(False, [False, True], True)
-        self.issent = SealParameter(False, [False, True], True)
+        self.sequencenumber = SealAdvancedParameter(False, [False, True])
+        self.issent = SealAdvancedParameter(False, [False, True])
         # The name of the file, FROM which to output
         # but "File" outputs has "filename" parameter TO which to output; do not confuse!
         # Automatically generated if None.
-        self.filename = SealParameter(None, [], True)
+        self.filename = SealAdvancedParameter(None) # TODO: make not advanced!
         self.aliases["file"] = "filename" # synonym Nr.1 
         self.aliases["name"] = "filename" # synonym Nr.2
         # for FromFile outputs
-        self.where = SealParameter(None, [], True)
+        self.where = SealAdvancedParameter(None)
 
 class SerialOutput(SealOutput):
     def __init__(self):
@@ -654,7 +659,7 @@ class FileOutput(SealOutput):
         # a file can be text or binary - allow both parameter names wih inverse meaning
         # XXX: make text files by default - more intuitive
         self.text = SealParameter(None, [False, True])
-        self.binary = SealParameter(None, [False, True], True)
+        self.binary = SealParameter(None, [False, True])
         self.extraIncludes.value = "#include <fs.h>"
         self.extraConfig.value = "USE_FS=y"
 
