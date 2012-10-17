@@ -26,18 +26,15 @@
 
 void appMain(void)
 {
-    uint16_t val;
     uint16_t i;
+
+    PRINT("starting..\n");
 
     dac7718Init();
     dac7718SelectChannel(DAC7718_CHANNEL_0);
 
-    for (i = 0, val = 0; ; i++) {
-        i %= 8;
-        val++;
-        dac7718SelectChannel(i);
-        PRINTF("Writing to AIN%d: %#x\n", i, val);
-        dac7718Write(val);
-        sleep(1);
-    }
+    dac7718WriteBroadcast(1000ul);
+
+    dac7718SelectChannel(1);
+    dac7718Write(500ul);
 }

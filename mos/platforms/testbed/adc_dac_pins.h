@@ -31,35 +31,31 @@
 
 // Testbed platform uses DAC7718 digital/analog converter
 
-#define DAC7718_CS_PORT   1
-#define DAC7718_CS_PIN    1
+#define DAC7718_CS_PORT   3
+#define DAC7718_CS_PIN    0
 
-#define DAC7718_RST_PORT  1
-#define DAC7718_RST_PIN   1
+// #define DAC7718_RST_PORT  1
+// #define DAC7718_RST_PIN   1
 
 // selects output voltage after reset
-#define DAC7718_RSTSEL_PORT 1
-#define DAC7718_RSTSEL_PIN  1
+#define DAC7718_RSTSEL_PORT 3
+#define DAC7718_RSTSEL_PIN  6
 
 // fix DAC latch (active low)
-#define DAC7718_LDAC_PORT 1
-#define DAC7718_LDAC_PIN  1
+#define DAC7718_LDAC_PORT 3
+#define DAC7718_LDAC_PIN  7
 
 // when 0, all V_out pins set to ground
-#define DAC7718_CLR_PORT  1
-#define DAC7718_CLR_PIN   1
+// #define DAC7718_CLR_PORT  1
+// #define DAC7718_CLR_PIN   1
 
-// when 0, wake up SPI to normal mode from sleep
-#define DAC7718_WAKEUP_PORT 1
-#define DAC7718_WAKEUP_PIN  1
+// // when 0, wake up SPI to normal mode from sleep
+// #define DAC7718_WAKEUP_PORT 1
+// #define DAC7718_WAKEUP_PIN  1
 
-// use binary two's complement? (if IOV_dd)
-#define DAC7718_BTC_PORT 1
-#define DAC7718_BTC_PIN  1
-
-// digital ground
-// #define DAC7718_DGND_PORT 1
-// #define DAC7718_DGND_PIN  1
+// // use binary two's complement? (if IOV_dd)
+// #define DAC7718_BTC_PORT 1
+// #define DAC7718_BTC_PIN  1
 
 // // interface power (I/O Voltage digital)
 // #define DAC7718_IOVDD_PORT 1

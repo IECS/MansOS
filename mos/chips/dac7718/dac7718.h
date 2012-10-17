@@ -24,7 +24,7 @@
 #include "adc_dac_pins.h"
 #include <kernel/defines.h>
 
-#define DAC7718_SPI_ID             0
+#define DAC7718_SPI_ID             1
 
 #define DAC7718_REG_CONFIG         0x0
 #define DAC7718_REG_MONITOR        0x1
@@ -67,6 +67,12 @@ enum {
     DAC7718_CHANNEL_7,
 };
 
+// DAC7718_CONFIG_SCE
+#define DEFAULT_CONFIG   (DAC7718_CONFIG_GAINA | DAC7718_CONFIG_GAINB)
+
+// ---------------------------------------------------
+// user API
+
 void dac7718Init(void);
 
 void dac7718SelectChannel(uint8_t channel);
@@ -76,3 +82,7 @@ void dac7718SelectChannel(uint8_t channel);
 // output voltage is [-3 * V_ref ... +3 * V_ref]
 //
 void dac7718Write(uint16_t value);
+
+void dac7718WriteChannel(uint8_t channel, uint16_t value);
+
+void dac7718WriteBroadcast(uint16_t value);
