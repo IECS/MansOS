@@ -618,7 +618,7 @@ class Component(object):
         # create dictionary for parameters
         self.parameters = {}
         for p in dir(specification):
-            if type(specification.__getattribute__(p)) is componentRegister.module.SealParameter:
+            if isinstance(specification.__getattribute__(p), componentRegister.module.SealParameter):
                 self.parameters[p] = specification.__getattribute__(p).value
         self.useCases = []
         self.markedAsUsed = False
