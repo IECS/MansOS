@@ -663,6 +663,7 @@ class SdCardOutput(SealOutput):
         self.useFunction.value = "sdStreamWriteRecord(&sdcardPacket, sizeof(sdcardPacket), true)"
         self.extraIncludes.value = "#include <sdstream.h>"
         self.extraConfig.value = "USE_SDCARD_STREAM=y"
+        self.address.value = True # true by default
 
 # "local storage" (i.e. [external] flash or SD card is defined depending on platform
 # on telosb, local storage is synonym for external flash
