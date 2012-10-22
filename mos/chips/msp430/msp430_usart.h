@@ -66,13 +66,9 @@
 // use USART 1 for PRINTF
 #define PRINTF_SERIAL_ID 1
 
-// USART buffers, defined in .c file
-// extern volatile uint8_t * const UxTXBUF[SERIAL_COUNT];
-// extern volatile const uint8_t * const UxRXBUF[SERIAL_COUNT];
-
 static inline bool serialIsUART(uint8_t id) {
-    if (id == 0) return !(U0CTL | SYNC);
-    else return !(U1CTL | SYNC);
+    if (id == 0) return !(U0CTL & SYNC);
+    else return !(U1CTL & SYNC);
 }
 
 static inline bool serialIsSPI(uint8_t id) {
