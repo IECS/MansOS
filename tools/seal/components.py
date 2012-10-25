@@ -438,13 +438,13 @@ class UseCase(object):
 
             # times limit check
             if self.times:
-                outputFile.write("    static uint32_t times;\n");
+                outputFile.write("    static uint32_t times;\n")
                 outputFile.write("    if (isFromBranchStart) times = 0;\n")
                 outputFile.write("    if (++times > {}) return;\n".format(self.times))
 
             # duration limit check
             if self.duration:
-                outputFile.write("    static uint32_t startTime;\n");
+                outputFile.write("    static uint32_t startTime;\n")
                 outputFile.write("    if (isFromBranchStart) startTime = getJiffies();\n")
                 outputFile.write("    if (timeAfter32((uint32_t)getJiffies(), startTime + {})) return;\n\n".format(
                         self.duration))
@@ -785,6 +785,9 @@ class Component(object):
         for uc in self.useCases:
             uc.generateVariables(outputFile)
 
+    def generateLocalFunctions(self, outputFile):
+        pass
+
     def prepareToGenerateCallbacks(self, outputFile):
         # for outputs only
         for o in self.outputUseCases:
@@ -824,8 +827,6 @@ class Component(object):
             uc.generateCallbacks(outputFile, outputs)
 
         if self.isInterruptBased() and len(self.conditionsDependentOnInterrupt):
-            for c in self.conditionsDependentOnInterrupt:
-                outputFile.write("static void condition{}Callback(void);\n".format(c.id))
             outputFile.write("\n")
             outputFile.write("ISR(PORT{0}, port{0}Interrupt)\n".format(self.intPort))
             outputFile.write("{\n")
@@ -930,10 +931,20 @@ class Sensor(Component):
                 return True
         return False
 
+    def generateLocalFunctions(self, outputFile):
+        if self.isUsed():
+            outputFile.write("static inline {} {}ReadRaw(bool *);\n".format(
+                    self.getDataType(), self.getNameCC()))
+        for s in self.subsensors:
+            outputFile.write("static void {}SyncCallback(void);\n".format(s.getNameCC()))
+        for c in self.conditionsDependentOnInterrupt:
+            outputFile.write("static void condition{}Callback(void);\n".format(c.id))
+
     def generateConstants(self, outputFile):
         super(Sensor, self).generateConstants(outputFile)
         if self.isUsed() or self.networkComponent:
-            outputFile.write("#define {0}_TYPE_ID     {1:}\n".format(self.getNameUC(), self.getSystemwideID()))
+            outputFile.write("#define {0}_TYPE_ID     {1:}\n".format(
+                    self.getNameUC(), self.getSystemwideID()))
             if self.name.lower() not in commonFields:
                 # TODO FIXME: also all copies
                 if len(self.alsoSensorIds) == 0:
@@ -984,7 +995,7 @@ class Sensor(Component):
     def generateSyncCallback(self, outputFile, outputs):
         useFunction = self.getDependentParameterValue("useFunction", self.parameters)
 
-        outputFile.write("void {0}SyncCallback(void)\n".format(self.getNameCC()))
+        outputFile.write("static void {0}SyncCallback(void)\n".format(self.getNameCC()))
         outputFile.write("{\n")
         outputFile.write("    bool isFilteredOut = false;\n")
         outputFile.write("    {0} {1}Value = {1}ReadProcess(&isFilteredOut);\n".format(
@@ -1612,7 +1623,6 @@ class Sensor(Component):
         outputFile.write("static inline {0} {1}(bool *isFilteredOut)\n".format(self.getDataType(), funName))
         outputFile.write("{\n")
         for s in self.subsensors:
-            outputFile.write("    extern void {}SyncCallback(void);\n".format(s.getNameCC()))
             outputFile.write("    {}SyncCallback();\n".format(s.getNameCC()))
         outputFile.write("    return 0;\n")
         outputFile.write("}\n\n")
@@ -2879,7 +2889,7 @@ class ComponentRegister(object):
         try:
             extModule = __import__(filename)
         except Exception as ex:
-            print("failed to load " + filename + ":", ex)
+            self.userError("Failed to load " + filename)
             return
 
         for p in dir(extModule):

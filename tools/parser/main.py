@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# (because /usr/bin/env python does not works when called from IDE on Windows)
+# (because /usr/bin/env python does not work when called from IDE on Windows)
 
 #
 # Copyright (c) 2012 Atis Elsts
@@ -70,13 +70,13 @@ def printLine(line):
 
 def help(isError):
     sys.stderr.write("Usage:\n")
-    sys.stderr.write("  -a <arch>, --arch     Target architecture (e.g. 'telosb')\n")
-    sys.stderr.write("  -t <target>, --target Target OS (e.g. 'mansos')\n")
-    sys.stderr.write("  -o, --output <file>   Output to file (default: {0}, - for stdout)\n".format(outputFileName))
-    sys.stderr.write("  -p, --path <path>     PAth to the target OS folder (default: {0})\n".format(pathToOS))
+    sys.stderr.write("  -a <arch>, --arch     Target architecture (defalt: {})\n".format(architecture))
+    sys.stderr.write("  -t <target>, --target Target OS (default: {0})\n".format(targetOS))
+    sys.stderr.write("  -o, --output <file>   Output to file, '-' for stdout (default: {0})\n".format(outputFileName))
+    sys.stderr.write("  -p, --path <path>     Path to the target OS installation (default: {0})\n".format(pathToOS))
     sys.stderr.write("  -V, --verbose         Verbose mode\n")
-    sys.stderr.write("  -v, --version         Print version\n")
-    sys.stderr.write("  -c, --continue        Countinue on errors (test mode)\n")
+    sys.stderr.write("  -v, --version         Print version and exit\n")
+    sys.stderr.write("  -c, --continue        Continue on errors (test mode)\n")
     sys.stderr.write("  -h, --help            Print this help\n")
     sys.exit(int(isError))
 
@@ -105,8 +105,20 @@ def parseCommandLine(argv):
         if o in ("-t", "--target"):
             targetOS = a.lower()
         elif o in ("-v", "--version"):
-            #from seal import mansos
-            # print ("MansOS version:", mansos.VERSION, "(Release date: " + mansos.RELEASE_DATE + ")")
+            versionFile = os.path.join("../..", "doc/VERSION")
+            release = "Unknown"
+            date = "Unknown"
+            try:
+                f = open(versionFile, "r")
+                lines = f.readlines()
+                f.close()
+                if len(lines) > 0:
+                    release = lines[0].strip()
+                if len(lines) > 1:
+                    date = lines[1].strip()
+            except:
+                pass
+            print ("MansOS version: " + release + " (Release date: " + date + ")")
             sys.exit(0)
         elif o in ("-V", "--verbose"):
             verboseMode = True
