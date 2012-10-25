@@ -87,10 +87,18 @@ sub scan_sysfs {
     ($f->{SysDev} = $syspath) =~ s{^.*/}{};
 
     my $port = "$syspath/$f->{SysDev}:1.0";
-    ($f->{DriverName} = readlink("$port/driver")) =~ s{^.*/}{} if -l "$port/driver";
-    ($f->{SerialDevName} = (glob("$port/tty*"),undef)[0]) =~ s{^.*/}{};
-    $f->{SerialDevNum} = $1 if $f->{SerialDevName} =~ /(\d+)/;
-    $f->{SerialDevName} = getSerialDevName( $f->{SerialDevNum} ) || "  (none)";
+    $f->{DriverName} = readlink("$port/driver");
+    if ($f->{DriverName}) {
+        $f->{DriverName} =~ s{^.*/}{} if -l "$port/driver";
+    }
+    $f->{SerialDevName} = (glob("$port/tty*"),undef)[0];
+    if ($f->{SerialDevName}) {
+        $f->{SerialDevName} =~ s{^.*/}{};
+        $f->{SerialDevNum} = $1 if $f->{SerialDevName} =~ /(\d+)/;
+        $f->{SerialDevName} = getSerialDevName( $f->{SerialDevNum} ) || "  (none)";
+    } else {
+        $f->{SerialDevName} = "  (none)";
+    }
   }
 
   return @ftdidevs;
