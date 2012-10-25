@@ -98,6 +98,10 @@ class Generator(object):
         for n in self.networkComponents:
             n.generateVariables(self.outputFile)
 
+    def generateLocalFunctions(self):
+        for c in self.components:
+            c.generateLocalFunctions(self.outputFile)
+
     def generateOutputCode(self):
         sensorsUsed = []
         for s in components.componentRegister.sensors.values():
@@ -203,6 +207,9 @@ class Generator(object):
         outputFile.write("// Types, variables\n\n")
         self.generateTypes()
         self.generateVariables()
+        outputFile.write(SEPARATOR)
+        outputFile.write("// Local functions\n\n")
+        self.generateLocalFunctions()
         outputFile.write(SEPARATOR)
         outputFile.write("// Outputs\n\n")
         self.generateOutputCode()
