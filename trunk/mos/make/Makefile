@@ -273,14 +273,14 @@ platform_build: build saveplatform
 ifeq ($(SHORT_UNAME),MINGW3)
 
 # Sorry for this mess - needed to compile at all on MinGW...  
-platform_build_seal: $(GENERATED_SOURCES)
-	(cd $(BUILDDIR);\
-	echo "TARGET=$(TARGET)">Makefile.target;\
-	MAKECMDGOALS="$(TARGET)" $(MAKE) $(TARGET);\
-	$(MakeDir) $(TARGET);\
-	$(Copy) build/$(TARGET)/$(SEAL_EXECUTABLE) $(TARGET)/$(EXECUTABLE))
+#platform_build_seal: $(GENERATED_SOURCES)
+#	(cd $(BUILDDIR);\
+#	rm -rf ./build;\
+#	MAKECMDGOALS="$(TARGET)" $(MAKE) $(TARGET);\
+#	$(MakeDir) $(TARGET);\
+#	$(Copy) build/$(TARGET)/$(SEAL_EXECUTABLE) $(TARGET)/$(EXECUTABLE))
 
-else
+#else
 
 # the target for all except MinGW
 platform_build_seal: $(GENERATED_SOURCES)
@@ -288,7 +288,7 @@ platform_build_seal: $(GENERATED_SOURCES)
 	$(MakeDir) $(OUTDIR)
 	$(Copy) build/$(OUTDIR)/$(SEAL_EXECUTABLE) $(OUTDIR)/$(EXECUTABLE)
 
-endif
+#endif
 
 platform_skip:
 	$(Print) "Skipping $(PROJDIR)/$(APPMOD) for $(TARGET): not for this platform!"
