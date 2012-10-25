@@ -21,7 +21,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys, string, copy
-from functions import *
+from .functions import *
 
 # pre-allocated packet field ID
 PACKET_FIELD_ID_COMMAND = 0
@@ -74,7 +74,7 @@ def convertToParameterValue(pvalue):
 # convertToParameterValue() must already have been called before.
 def mergeParameters(parameters, additionalParametrs):
     result = parameters
-    for p in additionalParametrs.iteritems():
+    for p in additionalParametrs.items():
         if p[1] != None:
             result[p[0]] = p[1]
     return result
@@ -95,7 +95,7 @@ class BranchCollection(object):
         self.branches[branchNumber].append(useCase)
 
     def generateCode(self, outputFile):
-        for b in self.branches.iteritems():
+        for b in self.branches.items():
             self.generateStartCode(b, outputFile)
             self.generateStopCode(b, outputFile)
 
@@ -150,7 +150,7 @@ class UseCase(object):
 
             if paramName == "associate":
                 # use associated component here
-                compname = p[1].asString().lower().strip('"')
+                compname = p[1].asString().lower()
                 comp = componentRegister.findComponentByName(compname)
                 if comp is None:
                     componentRegister.userError("Associate parameter specifies unknown component '{}'\n".format(compname))
@@ -322,7 +322,7 @@ class UseCase(object):
     def generateOutCode(self, outputFile):
         p = self.parameters.get("out")
         if p and p.value:
-            if isinstance(p.value, str) or isinstance(p.value, unicode):
+            if typeIsString(p.value):
                 outName = p.value
             else:
                 outName = p.value.asString()
@@ -671,14 +671,14 @@ class Component(object):
 
     def getNameCC(self):
         assert self.name != ''
-        return string.lower(self.name[0]) + self.name[1:]
+        return self.name[0].lower() + self.name[1:]
 
     def getNameTC(self):
         assert self.name != ''
-        return string.upper(self.name[0]) + self.name[1:]
+        return self.name[0].upper() + self.name[1:]
 
     def updateParameters(self, dictionary):
-        for p in dictionary.iteritems():
+        for p in dictionary.items():
             pvalue = convertToParameterValue(p[1])
             self.parameters[p[0]] = pvalue
 
@@ -715,7 +715,7 @@ class Component(object):
                 numInBranch += 1
         finalParameters = {}
         associatedUseCase = None
-        for p in parameters.iteritems():
+        for p in parameters.items():
             # resolve "parameters" parametes (should point to a define)
             pname = p[0].lower()
             pvalue = p[1]
@@ -738,7 +738,7 @@ class Component(object):
                 else:
                     finalParameters[pname] = convertToParameterValue(pvalue)
 
-        uc = UseCase(self, list(finalParameters.iteritems()), conditions, branchNumber, numInBranch)
+        uc = UseCase(self, finalParameters.items(), conditions, branchNumber, numInBranch)
         self.useCases.append(uc)
         return uc
 
@@ -2113,7 +2113,7 @@ class OutputUseCase(object):
         self.packetFields = []
         self.usedIds = set()
         self.numSensorFields = 0
-        for s in componentRegister.sensors.itervalues():
+        for s in componentRegister.sensors.values():
             if not s.isUsed() and s.networkComponent is None:
                 continue
 
@@ -2879,7 +2879,7 @@ class ComponentRegister(object):
         try:
             extModule = __import__(filename)
         except Exception as ex:
-            print "failed to load " + filename + ":", ex
+            print("failed to load " + filename + ":", ex)
             return
 
         for p in dir(extModule):
@@ -3118,7 +3118,7 @@ class ComponentRegister(object):
     def addVirtualComponentsToCodeBlocks(self, c):
         result = {}
         if len(c.alsoInBranches) == 0: return result
-        for (branch, block) in c.alsoInCodeBlocks.iteritems():
+        for (branch, block) in c.alsoInCodeBlocks.items():
             if c.name not in block.componentDefines:
                 cp = copy.copy(c)
                 cp.name = "__copy" + str(branch) + "_" + c.name
@@ -3134,17 +3134,17 @@ class ComponentRegister(object):
         return result
 
     def chainVirtualComponents(self):
-        for c in self.virtualComponents.itervalues():
+        for c in self.virtualComponents.values():
             if c.name[:6] == '__copy': continue
             self.chainVirtualComponentBases(c)
-        for c in self.virtualComponents.itervalues():
+        for c in self.virtualComponents.values():
             if c.name[:6] == '__copy': continue
             self.chainVirtualComponentDerived(c)
-        for c in self.virtualComponents.itervalues():
+        for c in self.virtualComponents.values():
             if c.name[:6] == '__copy': continue
             self.addVirtualComponentsToBaseBranches(c)
         newVC = {}
-        for c in self.virtualComponents.itervalues():
+        for c in self.virtualComponents.values():
             if c.name[:6] == '__copy': continue
             newVC.update(self.addVirtualComponentsToCodeBlocks(c))
         self.virtualComponents.update(newVC)
@@ -3232,7 +3232,7 @@ class ComponentRegister(object):
 
     def prepareToGenerateConstants(self):
         # print "prepareToGenerateConstants"
-        for s in self.sensors.itervalues():
+        for s in self.sensors.values():
             # print "process", s.name
             name = s.name
             if name[:6] == '__copy':
@@ -3281,22 +3281,22 @@ class ComponentRegister(object):
             SetUseCase(name, expression, conditions, branchNumber, isNew))
 
     def generateVariables(self, outputFile):
-        for s in self.systemStates.itervalues():
+        for s in self.systemStates.values():
             s[0].generateVariables(outputFile)
-        for p in self.patterns.itervalues():
+        for p in self.patterns.values():
             p.generateVariables(outputFile)
 
     def getAllComponents(self):
         return set(self.actuators.values()).union(set(self.sensors.values())).union(set(self.outputs.values()))
 
     def markSyncSensors(self):
-        for s in self.sensors.itervalues():
+        for s in self.sensors.values():
             if s.syncOnlySensor:
                 s.addSubsensors()
 
     def markCachedSensors(self):
         self.numCachedSensors = 0
-        for s in self.sensors.itervalues():
+        for s in self.sensors.values():
             if s.testIsCacheNeeded(self.numCachedSensors):
                 self.numCachedSensors += 1
 

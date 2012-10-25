@@ -20,7 +20,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from structures import *
+from .structures import *
 
 # Arithmetic functions -- "sum", "plus" (add), "minus" (subtract), "times" (multiply), "divide", "modulo", "difference", "abs", "neg", "invert", "square", "sqrt", "power"
 # Data aggregation -- "min", "max", "average" (avg), "stdev" (std), "ewma", "changed"

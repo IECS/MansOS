@@ -25,8 +25,8 @@ import ply.lex as lex
 import ply.yacc as yacc
 import re, string
 
-from structures import *
-import components
+from .structures import *
+from . import components
 
 ###################################################
 
@@ -46,13 +46,13 @@ class SealParser():
         self.debugMode = debugMode
         # initialization done!
         if verboseMode:
-            print "Lex & Yacc init done!"
-            print "Note: cache is used, so warnings are shown only at first-time compilation!"
+            print ("Lex & Yacc init done!")
+            print ("Note: cache is used, so warnings are shown only at first-time compilation!")
         self.architecture = architecture
 
     def run(self, s):
         if self.verboseMode:
-            print s
+            print (s)
         if s == None: return
         # reset global variables
         components.clearGlobals()
@@ -67,7 +67,7 @@ class SealParser():
         # \n added because guarantees, that lineNr is correct!
         self.yacc.parse('\n' + s)
         if self.verboseMode:
-            print "Parsing done in %.4f s" % (time.time() - start)
+            print ("Parsing done in %.4f s" % (time.time() - start))
         if self.result:
             self.result.add(components.componentRegister,
                             components.conditionCollection)
@@ -103,7 +103,7 @@ class SealParser():
       ">=": "GEQ_TOKEN",
       "<=": "LEQ_TOKEN"}
 
-    tokens = reserved.values() + ["IDENTIFIER_TOKEN",
+    tokens = list(reserved.values()) + ["IDENTIFIER_TOKEN",
                                   "FLOATING_POINT_LITERAL",
                                   "HEX_INTEGER_LITERAL",
                                   "DECIMAL_INTEGER_LITERAL",
@@ -435,7 +435,7 @@ class SealParser():
     def p_boolean_literal(self, p):
         '''boolean_literal : TRUE_TOKEN
                            | FALSE_TOKEN'''
-        p[0] = Value(string.lower(p[1][0]) == 't')
+        p[0] = Value(p[1][0].lower() == 't')
 
     def p_integer_literal(self, p):
         '''integer_literal : DECIMAL_INTEGER_LITERAL
