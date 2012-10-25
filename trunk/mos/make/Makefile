@@ -270,7 +270,7 @@ platform_build: build saveplatform
 	$(Print) ""
 
 # SEAL code compiled successfully, now build C sources.
-ifeq ($(SHORT_UNAME),MINGW3)
+#ifeq ($(SHORT_UNAME),MINGW3)
 
 # Sorry for this mess - needed to compile at all on MinGW...  
 #platform_build_seal: $(GENERATED_SOURCES)
