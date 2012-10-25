@@ -83,7 +83,7 @@ def getUserInput(prompt):
 try:
     if not version.startswith("2.7"):
         print ("You are using Python version {0}.".format(version[:5]))
-        print ("MansOS IDE is tested only under version 2.7.x, continue at your own risk.")
+        print ("MansOS IDE is tested only under version 2.7, continue at your own risk.")
         inp = getUserInput("Continue? (Y/n)\n")
 
         if inp.lower().strip() == "n":
