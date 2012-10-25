@@ -38,7 +38,7 @@ testMode = False
 def exitProgram(code):
     if not testMode:
         exit(code)
-    print "Would exit from program with code " + str(code)
+    print ("Would exit from program with code " + str(code))
     raise Exception
 
 def importsOk():
@@ -51,17 +51,17 @@ def importsOk():
 
     if not plyModuleOK:
         if os.name == 'posix':
-            installStr = "Make sure you have installed required modules. Run:\n\tapt-get install"
+            installStr = "Make sure you have installed required modules. Run:\n\tsudo apt-get install"
         else: 
             installStr = "Make sure you have installed modules:"
             
-        print "Cannot run SEAL parser:"
+        print ("Cannot run SEAL parser:")
 
         if not plyModuleOK:
-            print "\tPLY module not found"
+            print ("\tPLY module not found")
             installStr += " python-ply"
 
-        print installStr
+        print (installStr)
         return False
     return True
 
@@ -92,9 +92,9 @@ def parseCommandLine(argv):
         opts, args = getopt.getopt(sys.argv[1:], "a:cho:p:t:Vv",
                    ["arch=", "continue", "help", "output=",
                     "path=", "target=", "verbose", "version"])
-    except getopt.GetoptError, err:
+    except getopt.GetoptError as err:
         # print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
+        print (str(err)) # will print something like "option -a not recognized"
         help(True)
 
     isError = False
@@ -105,8 +105,8 @@ def parseCommandLine(argv):
         if o in ("-t", "--target"):
             targetOS = a.lower()
         elif o in ("-v", "--version"):
-            from seal import mansos
-            print "MansOS version:", mansos.VERSION, "(Release date: " + mansos.RELEASE_DATE + ")"
+            #from seal import mansos
+            # print ("MansOS version:", mansos.VERSION, "(Release date: " + mansos.RELEASE_DATE + ")")
             sys.exit(0)
         elif o in ("-V", "--verbose"):
             verboseMode = True
@@ -208,7 +208,7 @@ def main():
             try:
                 shutil.move(outputDirName + "config-tmp", outputDirName + "config")
             except Exception as ex:
-                print ex
+                print (ex)
 
         if generator.components.componentRegister.isError:
             # cleanup
