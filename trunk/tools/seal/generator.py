@@ -20,7 +20,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from seal_parser import *
+from .seal_parser import *
 import os
 
 SEPARATOR = "// -----------------------------\n"
@@ -100,7 +100,7 @@ class Generator(object):
 
     def generateOutputCode(self):
         sensorsUsed = []
-        for s in components.componentRegister.sensors.itervalues():
+        for s in components.componentRegister.sensors.values():
             if s.isUsed(): sensorsUsed.append(s)
         for c in self.outputs:
             c.generateOutputCode(self.outputFile, sensorsUsed)
@@ -109,11 +109,11 @@ class Generator(object):
         for o in self.outputs:
             o.prepareToGenerateCallbacks(self.outputFile)
 
-        for s in components.componentRegister.sensors.itervalues():
+        for s in components.componentRegister.sensors.values():
             s.generateCallbacks(self.outputFile, self.outputs)
-        for a in components.componentRegister.actuators.itervalues():
+        for a in components.componentRegister.actuators.values():
             a.generateCallbacks(self.outputFile, self.outputs)
-        for o in components.componentRegister.outputs.itervalues():
+        for o in components.componentRegister.outputs.values():
             o.generateCallbacks(self.outputFile, self.outputs)
 
         for n in self.networkComponents:
@@ -287,7 +287,7 @@ endif
             outputFile.write("#include <net/socket.h>\n")
             outputFile.write("\n")
             outputFile.write("const char *sensorNames[32] = {\n")
-            for (name, id) in components.componentRegister.allSensorNames.iteritems():
+            for (name, id) in components.componentRegister.allSensorNames.items():
                 outputFile.write('    [{}] = "{}",\n'.format(id, name))
             outputFile.write("};\n")
             outputFile.write("\n")

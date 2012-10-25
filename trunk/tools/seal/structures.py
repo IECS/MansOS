@@ -40,17 +40,17 @@ def suffixTransform(value, suffix):
     if suffix == 'us':
         return value / 1000.  # milliseconds to microeconds
     # default case: ignore the suffix
-    print "Unknown suffix '{0}' for value {1}\n".format(suffix, value)
+    print("Unknown suffix '{0}' for value {1}\n".format(suffix, value))
     # TODO: componentRegister.userError("Unknown suffix '{0}' for value {1}\n".format(suffix, value))
     return value
 
 def toCamelCase(s):
     if s == '': return ''
-    return string.lower(s[0]) + s[1:]
+    return s[0].lower() + s[1:]
 
 def toTitleCase(s):
     if s == '': return ''
-    return string.upper(s[0]) + s[1:]
+    return s[0].upper() + s[1:]
 
 def isConstant(s):
     return s[0] >= '0' and s[0] <= '9'
@@ -78,11 +78,17 @@ def getNumberFromString(s):
     except ValueError:
         return float(s)
 
+def typeIsString(s):
+    if isinstance(s, str):
+        return True
+    if sys.version[0] < '3':
+        return isinstance(s, unicode)
+    return False
+
 ######################################################
 class FunctionTree(object):
     def __init__(self, function, arguments):
-        if isinstance(function, str) \
-                or isinstance(function, unicode) \
+        if typeIsString(function) \
                 or isinstance(function, Value) \
                 or isinstance(function, SealValue):
             # for normal functions / arguments
@@ -108,8 +114,7 @@ class FunctionTree(object):
     def asString(self):
         if len(self.arguments):
             return None
-        if isinstance(self.function, str) \
-                or isinstance(self.function, unicode):
+        if typeIsString(self.function):
             return self.function
         return self.function.asString()
 
@@ -142,8 +147,7 @@ class FunctionTree(object):
         if type(self.function) is SealValue:
             result.append(self.function.firstPart)
 
-        if isinstance(self.function, str) \
-                or isinstance(self.function, unicode):
+        if typeIsString(self.function):
             if self.function[:7] != '__const':
                 result.append(self.function)
 
@@ -297,11 +301,12 @@ class Value(object):
         assert not isinstance(self.value, Value)
         if isinstance(self.value, SealValue):
             return self.value.getCode()
-        if isinstance(self.value, str) \
-                or isinstance(self.value, unicode):
-            return '"' + self.value + '"'
+        if typeIsString(self.value):
+            # XXX?
+            # return '"' + self.value + '"'
+            return self.value
         # integer, boolean or real
-        s = string.lower(str(self.value))
+        s = str(self.value).lower()
         if not (self.suffix is None):
             s += self.suffix
         return s
@@ -313,8 +318,7 @@ class Value(object):
         return self.getCode()
 
     def getType(self):
-        if isinstance(self.value, str) \
-                or isinstance(self.value, unicode):
+        if typeIsString(self.value):
             return "const char *"
         if isinstance(self.value, bool):
             return "bool"
@@ -468,11 +472,9 @@ class Expression(object):
 #        print "getEvaluationCode for", self.right.right.right.value.firstPart
 #        print "getEvaluationCode for", self
         code = self.getCodeForGenerator(componentRegister, self, inParameter = False)
-        return string.replace(string.replace(string.replace(
-                    code,
-                    " and ", "\n        && "),
-                    " or ", "\n        || "),
-                    "(not ", "(! ") + ";\n"
+        return code.replace(" and ", "\n        && ")\
+            .replace(" or ", "\n        || ")\
+            .replace("(not ", "(! ") + ";\n"
 
     def asString(self):
         temp = self.getCode().split(" ", 1)
@@ -533,7 +535,9 @@ class PatternDeclaration(object):
         if self.isUsec: arrayType = "double"
         else: arrayType = "uint32_t"
         outputFile.write("{} {}[] = {}\n".format(arrayType, self.getVariableName(), '{'));
-        outputFile.write(string.join(map(lambda x: "    " + str(x.getRawValue()), self.values), ",\n"))
+        # outputFile.write(string.join(map(lambda x: "    " + str(x.getRawValue()), self.values), ",\n"))
+        values = ["    " + str(x.getRawValue()) for x in self.values]
+        outputFile.write(",\n".join(values))
         outputFile.write("\n};\n");
         outputFile.write("uint_t pattern_{0}Cursor = 0;\n".format(self.name));
 
@@ -678,8 +682,7 @@ class ComponentDefineStatement(object):
         if isinstance(newTree.function, SealValue):
             if newTree.function.firstPart == old:
                 newTree.function.firstPart = new
-        elif isinstance(newTree.function, str) \
-                or isinstance(newTree.function, unicode):
+        elif typeIsString(newTree.function):
             if newTree.function == old:
                 newTree.function = new
         for a in functionTree.arguments:
@@ -765,7 +768,7 @@ class LoadStatement(object):
         return 'load "' + self.filename + '"'
 
     def load(self, componentRegister):
-        fixedFilename = string.split(self.filename, ".")
+        fixedFilename = self.filename.split(".")
         if len(fixedFilename) > 1:
             if fixedFilename[-1] == 'c':
                 # it's a C file
@@ -808,7 +811,7 @@ class ComponentUseCase(object):
                 result += ", "
             result = result[:-2] # remove last comma
             result += ")"
-        for p in self.parameters.iteritems():
+        for p in self.parameters.items():
             result += ", "
             result += p[0]
             if p[1] != None:
@@ -840,12 +843,12 @@ CODE_BLOCK_TYPE_ELSEWHEN = 2
 CODE_BLOCK_TYPE_ELSE = 3
 
 class CodeBlock(object):
-    def __init__(self, blockType, condition, declarations, next):
+    def __init__(self, blockType, condition, declarations, nextBlock):
         self.blockType = blockType
         self.condition = condition
         self.declarations = declarations
         self.componentDefines = {}
-        self.next = next
+        self.nextBlock = nextBlock
 
     def getCode(self, indent):
         result = getIndent(indent)
@@ -871,11 +874,11 @@ class CodeBlock(object):
             result += d.getCode(indent)
             result += "\n"
         # recursive call
-        if self.next != None:
+        if self.nextBlock != None:
             assert indent > 0
             indent -= 1
             result += getIndent(indent)
-            result += self.next.getCode(indent)
+            result += self.nextBlock.getCode(indent)
             result += "\n"
         elif self.blockType != CODE_BLOCK_TYPE_PROGRAM:
             result += "end\n"
@@ -977,8 +980,8 @@ class CodeBlock(object):
                 d.addComponents(componentRegister, conditionCollection)
 
         # recursive call (for next "elsewhen" or "else" branch)
-        if self.next != None:
-            self.next.addComponents(componentRegister, conditionCollection)
+        if self.nextBlock != None:
+            self.nextBlock.addComponents(componentRegister, conditionCollection)
 
         self.exitCodeBlock(componentRegister, conditionCollection, ss)
 
@@ -986,9 +989,9 @@ class CodeBlock(object):
     def addVirtualComponents(self, componentRegister, conditionCollection):
         ss = self.enterCodeBlock(componentRegister, conditionCollection)
 
-        for d in self.componentDefines.itervalues():
+        for d in self.componentDefines.values():
             d.continueAdding(componentRegister)
-        for d in self.componentDefines.itervalues():
+        for d in self.componentDefines.values():
             d.finishAdding(componentRegister)
 
         # add set statements (may depend on virtual components)
@@ -1004,8 +1007,8 @@ class CodeBlock(object):
                 d.addVirtualComponents(componentRegister, conditionCollection)
 
         # recursive call (for next "elsewhen" or "else" branch)
-        if self.next != None:
-            self.next.addVirtualComponents(componentRegister, conditionCollection)
+        if self.nextBlock != None:
+            self.nextBlock.addVirtualComponents(componentRegister, conditionCollection)
 
         self.exitCodeBlock(componentRegister, conditionCollection, ss)
 
@@ -1026,8 +1029,8 @@ class CodeBlock(object):
                 d.addUseCases(componentRegister, conditionCollection)
 
         # recursive call (for next "elsewhen" or "else" branch)
-        if self.next != None:
-            self.next.addUseCases(componentRegister, conditionCollection)
+        if self.nextBlock != None:
+            self.nextBlock.addUseCases(componentRegister, conditionCollection)
 
         self.exitCodeBlock(componentRegister, conditionCollection, ss)
 
