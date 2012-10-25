@@ -27,11 +27,12 @@ def importsOk():
 
     try:
         # Add SEAL parser to python path
-        sealPath = os.path.join(os.getcwd()[:-4], "seal")
+        sealPath = os.path.join(os.getcwd(), '..', '..', 'tools')
         path.append(sealPath)
-        path.append(os.path.join(sealPath, 'components'))
-        from seal_parser import SealParser #@UnusedImport
-        import seal_parser #@UnusedImport
+        path.append(os.path.join(sealPath, 'seal', 'components'))
+        #from seal.seal_parser import SealParser #@UnusedImport
+        #import seal.seal_parser #@UnusedImport
+        from seal import seal_parser #@UnusedImport
     except ImportError:
         sealParserOK = False
     except OSError:

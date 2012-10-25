@@ -41,7 +41,8 @@ from edit_statement import EditStatement
 from blockly import Blockly
 from globals import * #@UnusedWildImport
 
-from seal_parser import SealParser
+#from seal_parser import SealParser
+from seal import seal_parser
 
 class ApiCore:
     def __init__(self, argv):
@@ -155,7 +156,7 @@ class ApiCore:
         self.blockly = Blockly(self.emptyFrame, self)
 
         # Init seal parser
-        self.sealParser = SealParser("msp430", self.printInfo, False, True)
+        self.sealParser = seal_parser.SealParser("msp430", self.printInfo, False, True)
 
         # Init tab manager 
         self.tabManager = TabManager(self.emptyFrame, self)
