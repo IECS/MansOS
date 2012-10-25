@@ -15,6 +15,12 @@ global flDone
 global baudRate
 global serPort
 
+def getUserInput(prompt):
+    if sys.version[0] >= '3':
+        return input(prompt)
+    else:
+        return raw_input(prompt)
+
 def listenSerial():
     global flDone
     global serPort
@@ -28,7 +34,7 @@ def listenSerial():
         flDone = True
         return
     
-    print ("Listening to serial port: {}, rate: {}".format(ser.portstr, baudRate))
+    print ("Using port {}, baudrate {}".format(ser.portstr, baudRate))
     
     while (not flDone):
         s = ser.read(1)
@@ -36,7 +42,7 @@ def listenSerial():
             if type(s) is str: sys.stdout.write( s )
             else: sys.stdout.write( "{}".format(chr(s[0])) )
             sys.stdout.flush()
-            
+
     print ("\nDone")
     ser.close()
     return 0
@@ -74,19 +80,19 @@ def main():
 
     baudRate = args.baudRate
 
-    print ("MansOS serial listener")
+    print ("MansOS serial listener, press Ctrl+C or Q+Enter to exit")
     threading.Thread(target=listenSerial).start() 
     
     #Keyboard scanning loop
     while (not flDone):
         try:
-            s = input()
-        except:
+            s = getUserInput("")
+        except BaseException as ex:
             print ("\nKeyboard interrupt")
             flDone = True
             return 0
              
-        if s == 'q' :
+        if s.strip().lower() == 'q' :
             flDone = True 
     
     return 0

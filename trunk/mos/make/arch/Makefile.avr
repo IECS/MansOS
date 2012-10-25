@@ -35,10 +35,10 @@ BSL ?= avrdude
 BSLCONFIG ?=
 
 PROGRAMMER ?= stk500v1 
-BAUDRATE ?= 57600
+PROG_BAUDRATE ?= 57600
 
 # for Arduino Uno use this in application's config file:
-#BAUDRATE=115200
+#PROG_BAUDRATE=115200
 #PROGRAMMER=arduino
 
 include $(MAKEFILE_GCC)
@@ -78,7 +78,7 @@ upload-atmega:
 	$(Print) ""
 	$(MOTELIST)
 	$(Print) ""
-	$(BSL) $(BSLCONFIG) -q -q -p $(MCU_MODEL) -c $(PROGRAMMER) -P $(BSLPORT) -b $(BAUDRATE) -D -Uflash:w:$(OUTDIR)/$(EXECUTABLE):i
+	$(BSL) $(BSLCONFIG) -q -q -p $(MCU_MODEL) -c $(PROGRAMMER) -P $(BSLPORT) -b $(PROG_BAUDRATE) -D -Uflash:w:$(OUTDIR)/$(EXECUTABLE):i
 
 memdump : build
 	$(MEMDUMP) $(OUTDIR)/$(APPMOD).elf avr

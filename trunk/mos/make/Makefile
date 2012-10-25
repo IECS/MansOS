@@ -207,6 +207,12 @@ endif
 # Set up the correct programmer port
 BSLPORT ?= "$(shell $(MOTELIST) -c | xargs -0 echo | xargs echo | cut -f2 -d, )"
 
+# listening application
+LISTENER ?= $(MOSROOT)/tools/dumpserial/dumpser.py
+
+# this is for listening (use PROG_BAUDRATE for programming!)
+BAUDRATE ?= 38400
+
 #===== Source files =====
 
 ifeq ($(USE_REPROGRAMMING),y)
@@ -249,7 +255,7 @@ OBJS = $(APP_OBJS) $(POBJS)
 OBJDIRS = $(dir $(OBJS))
 
 # ===== Targets =====
-.PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs motelist clean cleanall
+.PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs motelist listen clean cleanall
 
 all: build
 
@@ -414,4 +420,7 @@ objDirs:
 	$(_QUIET) $(MakeDir) $(OBJDIRS)
 
 motelist:
-	$(MOTELIST)
+	$(_QUIET) $(MOTELIST)
+
+listen:
+	$(_QUIET) $(LISTENER) -s $(BSLPORT) -b $(BAUDRATE)
