@@ -76,7 +76,7 @@ def importsOk():
     return True
 
 def getUserInput(prompt):
-    if version[0] == '3':
+    if version[0] >= '3':
         return input(prompt)
     else:
         return raw_input(prompt)
