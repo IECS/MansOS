@@ -30,7 +30,7 @@ def listenSerial():
         ser = serial.Serial(serPort, baudRate, timeout=1, 
             parity=serial.PARITY_NONE, rtscts=1)
     except serial.SerialException as ex:
-        print ("\nSerial exception {}:\n\t".format(ex))
+        print ("\nSerial exception:\n\t{}".format(ex))
         flDone = True
         return
     

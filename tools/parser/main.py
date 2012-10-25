@@ -186,16 +186,29 @@ def main():
             g.generate(outputFile)
         with open(outputDirName + "Makefile", 'w') as outputFile:
             g.generateMakefile(outputFile, outputFileName, makefilePathToOS)
+
         # use SEAL application's config file as the basis
         try:
-            shutil.copy2(outputDirName + ".." + os.sep + "config", outputDirName + "config")
+            shutil.copyfile(outputDirName + ".." + os.sep + "config", outputDirName + "config-tmp")
         except IOError as e:
             try:
-                os.remove(outputDirName + "config")
+                os.remove(outputDirName + "config-tmp")
             except OSError as e:
                 pass
-        with open(outputDirName + "config", 'a+') as outputFile:
+
+        with open(outputDirName + "config-tmp", 'a+') as outputFile:
             g.generateConfigFile(outputFile)
+
+        # replace the config file only if different: saves rebuiding time.
+        try:
+            isSame = (os.system("cmp -s " + outputDirName + "config-tmp " + outputDirName + "config") == 0)
+        except:
+            isSame = False
+        if not isSame:
+            try:
+                shutil.move(outputDirName + "config-tmp", outputDirName + "config")
+            except Exception as ex:
+                print ex
 
         if generator.components.componentRegister.isError:
             # cleanup
