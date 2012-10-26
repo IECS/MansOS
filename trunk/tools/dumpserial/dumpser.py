@@ -29,13 +29,16 @@ def listenSerial():
     try:
         ser = serial.Serial(serPort, baudRate, timeout=1, 
             parity=serial.PARITY_NONE, rtscts=1)
+        # make sure reset pin is low
+        ser.setDTR(0)
+        ser.setRTS(0)
     except serial.SerialException as ex:
         print ("\nSerial exception:\n\t{}".format(ex))
         flDone = True
         return
     
     print ("Using port {}, baudrate {}".format(ser.portstr, baudRate))
-    
+
     while (not flDone):
         s = ser.read(1)
         if len(s) >= 1:
