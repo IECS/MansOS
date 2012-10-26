@@ -411,6 +411,20 @@ class UseCase(object):
         outputFile.write(");\n")
         outputFile.write("#endif\n")
 
+    def generateLocalFunctions(self, outputFile):
+        ccname = self.component.getNameCC()
+        ccname += self.branchName
+
+        if self.generateAlarm or self.interruptBased or self.component.isRemote():
+            if not self.interruptBased:
+                if self.generateAlarm:
+                    argument = "void *isFromBranchStart"
+                elif self.component.isRemote():
+                    if len(self.component.remoteFields) > 1: argument = "int32_t *buffer"
+                    else: argument = "uint16_t code, int32_t value"
+                outputFile.write("void {0}{1}Callback({2});\n".format(
+                        ccname, self.numInBranch, argument))
+
     def generateCallbacks(self, outputFile, outputs):
         ccname = self.component.getNameCC()
         ccname += self.branchName
@@ -786,7 +800,8 @@ class Component(object):
             uc.generateVariables(outputFile)
 
     def generateLocalFunctions(self, outputFile):
-        pass
+        for uc in self.useCases:
+            uc.generateLocalFunctions(outputFile)
 
     def prepareToGenerateCallbacks(self, outputFile):
         # for outputs only
@@ -932,8 +947,9 @@ class Sensor(Component):
         return False
 
     def generateLocalFunctions(self, outputFile):
+        super(Sensor, self).generateLocalFunctions(outputFile)
         if self.isUsed():
-            outputFile.write("static inline {} {}ReadRaw(bool *);\n".format(
+            outputFile.write("inline {} {}ReadRaw(bool *);\n".format(
                     self.getDataType(), self.getNameCC()))
         for s in self.subsensors:
             outputFile.write("static void {}SyncCallback(void);\n".format(s.getNameCC()))
@@ -1869,7 +1885,7 @@ class Sensor(Component):
 
             self.markAsUsed()
 
-            outputFile.write("static inline {0} {1}ReadRaw{2}(bool *__unused)\n".format(
+            outputFile.write("inline {0} {1}ReadRaw{2}(bool *__unused)\n".format(
                     self.getDataType(), self.getNameCC(), readFunctionSuffix))
             outputFile.write("{\n")
 

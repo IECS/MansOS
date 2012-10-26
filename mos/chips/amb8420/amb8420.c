@@ -466,8 +466,10 @@ int amb8420GetAll(void)
 #endif
     INTERRUPT_ENABLED_END(handle);
 
+#if RADIO_DEBUG
     PRINTF("recvLength=%u\n", recvLength);
     debugHexdump(rxBuffer, recvLength);
+#endif
 
     // Wait for device to become ready
     AMB8420_WAIT_FOR_RTS_READY(ok);
