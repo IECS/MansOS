@@ -54,7 +54,7 @@ def listenSerial():
 def getCliArgs():
     defaultSerialPort = "/dev/ttyUSB0"
     defaultBaudRate = 38400
-    version = "0.2/2012.04.25"
+    version = "0.3/2012.10.26"
 
     parser = argparse.ArgumentParser(description="MansOS serial listener", prog="dumpser")
 
