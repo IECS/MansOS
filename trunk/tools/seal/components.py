@@ -3039,6 +3039,12 @@ class ComponentRegister(object):
         immediateBaseName = c.getImmediateBasename()
         immediateBase = self.lookupVirtualBase(immediateBaseName, c.branchNumber)
         if immediateBase is not None:
+            if immediateBase.isError:
+                self.userError("Virtual component '{0}' has invalid virtual base component '{1}', ignoring\n".format(
+                        c.prettyName(), immediateBaseName))
+                c.isError = True
+                return
+
             # print "  immed base is virtual, in branch", immediateBase.branchNumber
             # inherit parameters from parent virtual sensor
             c.parameterDictionary = immediateBase.parameterDictionary
@@ -3050,7 +3056,7 @@ class ComponentRegister(object):
         else:
             # print "  immed base is real"
             c.base = self.findComponentByName(immediateBaseName)
-        assert c.base
+            assert c.base
 
         # fill the parameter dictionary
         for p in c.parameterList:
