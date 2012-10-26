@@ -49,7 +49,7 @@ def importsOk():
 
     if not (wxModuleOK and serialModuleOK and plyModuleOK and sealParserOK and mansOSOK):
         if os.name == 'posix':
-            installStr = "Make sure you have installed required modules. Run:\n\tapt-get install"
+            installStr = "Make sure you have installed required modules. Run:\n\tsudo apt-get install"
         else:
             installStr = "Make sure you have installed modules:"
 
@@ -83,7 +83,7 @@ def getUserInput(prompt):
         return raw_input(prompt)
 try:
     if not version.startswith("2.7"):
-        print ("You are using Python version {0}.".format(version[:5]))
+        print ("You are using Python version {0}".format(version[:5]))
         print ("MansOS IDE is tested only under version 2.7, continue at your own risk.")
         inp = getUserInput("Continue? (Y/n)\n")
 
