@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 #
 # Copyright (c) 2010-2012 the MansOS team. All rights reserved.
