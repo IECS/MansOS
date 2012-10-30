@@ -42,7 +42,7 @@ class TabManager(aui.AuiNotebook):
         # Need to set because next statement uses it
         self.nextPageNr = 1
         self.AddPage(EditorManager(self, self.API),
-                self.tr("Untitled document"))
+                self.tr("Untitled"))
 
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.onPageChanged)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.doPopupClose)
