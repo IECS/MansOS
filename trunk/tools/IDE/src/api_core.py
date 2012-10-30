@@ -359,7 +359,7 @@ class ApiCore:
                     self.outputArea.printLine(event.data)
             thread.output += event.data
         elif type(event.data) is int:
-            if event.data == 0:
+            if event.data == 0 or event.data == 2: # motelist returns 2 if no mote found!
                 # If no callback defined, no Done printed!
                 if thread.callbackFunction:
                     self.printInfo("Done!\n", False, not self.supressTabSwitching)
