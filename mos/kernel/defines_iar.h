@@ -28,8 +28,15 @@
 #ifndef MANSOS_DEFINES_IAR_H
 #define MANSOS_DEFINES_IAR_H
 
-#include <in430.h>
-#include <io430.h>
+// FIXME: I think we should always include <msp430.h>, but I can't test it with
+// earlier IAR versions.
+#if __VER__ >= 550
+#  include <msp430.h>
+#else // Older IAR compiler
+#  include <in430.h>
+#  include <io430.h>
+#endif
+
 #include <intrinsics.h>
 
 #ifndef BV
@@ -46,8 +53,8 @@
 //# define RAMFUNC __ramfunc   // already defined in IAR headers!
 
 #define ENABLE_INTS() __enable_interrupt()
-#define DISABLE_INTS() __disable_interrupt() 
-#define nop() __no_operation() 
+#define DISABLE_INTS() __disable_interrupt()
+#define nop() __no_operation()
 
 #define GET_INTERRUPT_STATUS(status)       \
     status = __get_interrupt_state();
