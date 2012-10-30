@@ -42,9 +42,9 @@ class EditorManager(wx.Panel):
         # @ creation we assume document is not saved.
         self.saveState = False
         # Filename or untitled document
-        self.fileName = self.tr('Untitled document') + ' ' + str(self.GetParent().nextPageNr) + '.sl'
+        self.fileName = self.tr('Untitled') + ' ' + str(self.GetParent().nextPageNr) + '.sl'
         # Filename and full path(relative or absolute)
-        self.filePath = self.tr('Untitled document') + ' ' + str(self.GetParent().nextPageNr) + '.sl'
+        self.filePath = self.tr('Untitled') + ' ' + str(self.GetParent().nextPageNr) + '.sl'
         # This marks if document already have a file attached to it
         self.hasAFile = False
         # Define project type
