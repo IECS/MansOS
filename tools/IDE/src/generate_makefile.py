@@ -60,7 +60,7 @@ APPMOD = """ + appName + """
 # Set the key variables
 PROJDIR = $(CURDIR)
 ifndef MOSROOT
-  MOSROOT = $(PROJDIR)/""" + path.relpath(pathToMansos).replace("\\", "/") + """
+  MOSROOT = """ + path.realpath(pathToMansos).replace("\\", "/") + """
 endif
 
 # Include the main makefile
