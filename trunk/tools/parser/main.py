@@ -146,9 +146,9 @@ def main():
         exit(1)
 
     # import pathname where seal package is located
-    dirname = os.path.dirname(os.path.realpath(__file__))
-    sys.path.append(os.path.join(dirname, pathToOS, 'tools'))
-    sys.path.append(os.path.join(dirname, pathToOS, 'tools', 'seal', 'components'))
+    selfDirname = os.path.dirname(os.path.realpath(__file__))
+    sys.path.append(os.path.join(selfDirname, pathToOS, 'tools'))
+    sys.path.append(os.path.join(selfDirname, pathToOS, 'tools', 'seal', 'components'))
 
     from seal import generator
     # in case this is used multiple times
@@ -235,6 +235,9 @@ def main():
             g.generateCollectorCode(os.path.join(outputDirName, 'coll'), makefilePathToOS)
         elif g.isComponentUsed("radio"):
             g.generateBaseStationCode(os.path.join(outputDirName, 'bs'), makefilePathToOS)
+
+        if g.isComponentUsed("sdcard"):
+            g.generateRaw2Csv(outputDirName, os.path.join(selfDirname, 'raw2csv-template.py'))
 
     return 0
 

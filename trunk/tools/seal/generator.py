@@ -69,7 +69,6 @@ class Generator(object):
 
         self.outputFile.write("#define NUM_CONDITIONS {0}\n".format(
                 components.conditionCollection.totalConditions()))
-#        self.outputFile.write("#define DEFAULT_CONDITION 0\n\n")
 
         self.outputFile.write("#define IS_FROM_BRANCH_START ((void *) 1)\n\n")
 
@@ -147,12 +146,10 @@ class Generator(object):
 
         totalConditions = components.conditionCollection.totalConditions()
         self.outputFile.write("        bool newConditionStatus[NUM_CONDITIONS];\n")
-#        self.outputFile.write("        newConditionStatus[DEFAULT_CONDITION] = true;\n")
         for i in range(totalConditions):
             self.outputFile.write("        newConditionStatus[{0}] = condition{1}Check(oldConditionStatus[{0}]);\n".format(i, i + 1))
         self.outputFile.write("\n")
 
-#        self.outputFile.write("        bool branch0NewStatus = newConditionStatus[DEFAULT_CONDITION];\n")
         for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
             conditions = components.componentRegister.branchCollection.getConditions(i)
             self.outputFile.write("        bool branch{0}NewStatus = {1};\n".format(i, formatConditions(conditions, True)))
@@ -180,7 +177,6 @@ class Generator(object):
         self.outputFile.write("}\n")
 
     def generate(self, outputFile):
-#        self.isError = False
         self.outputFile = outputFile
 
         # generate condition code now, for later use
@@ -225,10 +221,6 @@ class Generator(object):
         outputFile.write(SEPARATOR)
         outputFile.write("// Main function\n\n")
         self.generateAppMain()
-
-#        global isError
-#        print "global isError: ", isError
-#        if isError: self.isError = True
 
     def generateConfigFile(self, outputFile):
         config = set()
@@ -355,6 +347,14 @@ endif
             outputFile.write("void appMain(void) {\n")
             outputFile.write("}\n")
 
+    def generateRaw2Csv(self, path, templatePath):
+        with open(templatePath, 'r') as inputFile:
+            outputPath = os.path.join(path, 'raw2csv.py')
+            with os.fdopen(os.open(outputPath, os.O_WRONLY | os.O_CREAT, 0755), "w") as outputFile:
+                code = inputFile.read()
+                outputFile.write(code.replace("@APPLICATION_FIELDS@", 
+                             components.componentRegister.getPacketFields("sdcard")))
+      
 ###############################################
 class MansOSGenerator(Generator):
     def __init__(self):

@@ -935,9 +935,6 @@ class Sensor(Component):
         # return "0"
         return "LONG_MIN"
 
-#    def getNoValue(self):
-#        return "0x" + "ff" * self.getDataSize()
-
     def isNetworkBased(self):
         if self.functionTree is None: return False
         allSensors = self.functionTree.collectSensors()
@@ -1052,11 +1049,6 @@ class Sensor(Component):
             return "sealCommReadValue({}_TYPE_ID)".format(self.getNameUC())
 
         rawReadFunc = "{}ReadRaw{}".format(self.getNameCC(), suffix)
-#        if len(suffix) == 0 and self.cacheNeeded:
-#        cacheNeeded = False
-#        if self.cacheNeeded: cacheNeeded = True
-#        if root and root.cacheNeeded: cacheNeeded = True
-#        if cacheNeeded:
         if self.cacheNeeded:
             dataFormat = str(self.getDataSize() * 8)
             return "cacheReadSensor{0}({1}, &{2}, {3}, NULL)".format(
@@ -2255,6 +2247,14 @@ class OutputUseCase(object):
         outputFile.write(getIndent(indent) + "{0}Packet_t {1}Packet;\n\n".format(
                 self.getNameTC(), self.getNameCC()))
 
+    def getPacketFields(self):
+        s = ''
+        for f in self.packetFields:
+            s += '    "'
+            s += f.sensorName
+            s += '",\n'
+        return s
+
     def generateSerialOutputCode(self, outputFile, sensorsUsed):
         usedSizes = set()
         if self.isAggregate:
@@ -2949,6 +2949,14 @@ class ComponentRegister(object):
         if ((self.nextFreeSensorID + 1) & 31) == 0:
             self.nextFreeSensorID += 1
         return result
+
+    def getPacketFields(self, componentName):
+        c = self.outputs.get(componentName, None)
+        if c is None: return ""
+        for u in c.outputUseCases:
+            if not isinstance(u, FromFileOutputUseCase):
+                return u.getPacketFields()
+        return ""
 
     #######################################################################
     def lookupVirtualBase(self, basename, branchNumber):
