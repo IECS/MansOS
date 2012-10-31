@@ -128,6 +128,9 @@ class Generator(object):
     def generateAppMain(self):
         self.outputFile.write("void appMain(void)\n")
         self.outputFile.write("{\n")
+        if not self.isComponentUsed("network") and not self.isComponentUsed("radio"):
+            # make sure radio is off
+            self.outputFile.write("    radioOff(); // reference to radio is necessary to enter proper LPM\n")
         for c in self.components:
             c.generateAppMainCode(self.outputFile)
         components.conditionCollection.generateAppMainCode(self.outputFile)

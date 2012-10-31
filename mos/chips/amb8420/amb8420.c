@@ -238,6 +238,10 @@ void amb8420Init(void)
     //pinIntRising(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
     //pinEnableInt(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
 
+    // make sure low power mode is enabled
+    pinSet(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);
+    pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);
+
     // put the system in reset
     amb8420Reset();
  

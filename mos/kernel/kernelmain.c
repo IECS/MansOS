@@ -65,6 +65,8 @@
 //----------------------------------------------------------
 static inline void initSystem(void)
 {
+    bool success;
+
     // disable interrupts: disabled on msp430 by default, but other systems might need this
     DISABLE_INTS();
 
@@ -139,7 +141,10 @@ static inline void initSystem(void)
 #endif
 #ifdef USE_ISL29003
     INIT_PRINTF("init ISL light sensor...\n");
-    islInit();
+    success = islInit();
+    if (!success) {
+        INIT_PRINTF("ISL init failed!\n");
+    }
 #endif
 #ifdef USE_ADS1115
     INIT_PRINTF("init ADS111x ADC converter chip...\n");
