@@ -399,7 +399,8 @@ Some of the supported target platforms are based on MSP430 and Atmega microcontr
 
 Should you have questions or suggestions about the support, please contact info@mansos.net 
 
-Developed by: Jānis Judvaitis, janis.judvaitis@gmail.com
+MansOS developed by: MansOS contributors, (c) 2008-2012, info@mansos.net
+IDE developed by: Janis Judvaitis, (c) 2011-2012, janis.judvaitis@gmail.com
 """.format(release, date)
         wx.MessageBox(text, 'Info',
             wx.OK | wx.ICON_INFORMATION)
