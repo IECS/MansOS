@@ -1,9 +1,11 @@
 
 struct DataPacket_s {
     uint32_t timestamp;
-    uint16_t dataSeqnum;
     uint16_t sourceAddress;
+    uint16_t dataSeqnum;
     uint16_t islLight;
+    uint16_t apdsLight0;
+    uint16_t apdsLight1;
     uint16_t sq100Light;
     uint16_t internalVoltage;
     uint16_t internalTemperature;
