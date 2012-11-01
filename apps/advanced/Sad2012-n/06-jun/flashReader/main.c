@@ -30,7 +30,7 @@
 
 #include "../datalogger/datapacket.h"
 
-#define ERASE_ALL_AFTER 1
+#define ERASE_ALL_AFTER 0
 
 uint32_t extFlashAddress;
 
@@ -51,7 +51,7 @@ void printPacket1(DataPacket_t *packet)
 
 void printPacket(DataPacket_t *packet)
 {
-    PRINTF("%lu 0x%04x %#x %#x %#x %#x %#x %#x %#x\n",
+    PRINTF("%lu,0x%04x,%u,%u,%u,%u,%u,%u,%u\n",
             packet->timestamp,
             packet->sourceAddress,
             packet->dataSeqnum,
@@ -89,7 +89,8 @@ void readExtFlash(void)
             if (!prevMissed) {
                 prevMissed = true;
             } else {
-                break;
+                // break;
+                PRINT("bad!\n");
             }
         }
         extFlashAddress += sizeof(packet);
