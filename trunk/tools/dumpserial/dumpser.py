@@ -33,11 +33,11 @@ def listenSerial():
         ser.setDTR(0)
         ser.setRTS(0)
     except serial.SerialException as ex:
-        print ("\nSerial exception:\n\t{}".format(ex))
+        sys.stderr.write("\nSerial exception:\n\t{}".format(ex))
         flDone = True
         return
     
-    print ("Using port {}, baudrate {}".format(ser.portstr, baudRate))
+    sys.stderr.write("Using port {}, baudrate {}\n".format(ser.portstr, baudRate))
 
     while (not flDone):
         s = ser.read(1)
@@ -46,7 +46,7 @@ def listenSerial():
             else: sys.stdout.write( "{}".format(chr(s[0])) )
             sys.stdout.flush()
 
-    print ("\nDone")
+    sys.stderr.write("\nDone\n")
     ser.close()
     return 0
 
@@ -83,7 +83,7 @@ def main():
 
     baudRate = args.baudRate
 
-    print ("MansOS serial listener, press Ctrl+C or Q+Enter to exit")
+    sys.stderr.write("MansOS serial listener, press Ctrl+C or Q+Enter to exit\n")
     threading.Thread(target=listenSerial).start() 
     
     #Keyboard scanning loop
@@ -91,7 +91,7 @@ def main():
         try:
             s = getUserInput("")
         except BaseException as ex:
-            print ("\nKeyboard interrupt")
+            sys.stderr.write("\nKeyboard interrupt\n")
             flDone = True
             return 0
              
