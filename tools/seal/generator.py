@@ -25,25 +25,21 @@ import os
 
 SEPARATOR = "// -----------------------------\n"
 
-def formatCondition(condition, isNew):
-    if isNew:
-        prefix = "new"
-    else:
-        prefix = "old"
-    return prefix + "ConditionStatus[{0}]".format(abs(condition) - 1)
+def formatCondition(condition):
+    return "conditionStatus[{0}]".format(abs(condition) - 1)
 
-def formatConditions(conditions, isNew):
+def formatConditions(conditions):
     result = ""
     # all except last one
     for c in conditions[:-1]:
         if c < 0:
             result += "!" # not
-        result += formatCondition(c, isNew)
+        result += formatCondition(c)
         result += " && "  # and
     # last one
     if conditions[-1] < 0:
         result += "!" # not
-    result += formatCondition(conditions[-1], isNew)
+    result += formatCondition(conditions[-1])
     # got it
     return result
 
@@ -90,7 +86,7 @@ class Generator(object):
             n.generatePacketType(self.outputFile)
 
     def generateVariables(self):
-        self.outputFile.write("bool oldConditionStatus[NUM_CONDITIONS];\n")
+        self.outputFile.write("bool conditionStatus[NUM_CONDITIONS];\n")
         components.componentRegister.generateVariables(self.outputFile)
         for c in self.components:
             c.generateVariables(self.outputFile)
@@ -100,6 +96,8 @@ class Generator(object):
     def generateLocalFunctions(self):
         for c in self.components:
             c.generateLocalFunctions(self.outputFile)
+        components.componentRegister.branchCollection.generateLocalFunctions(self.outputFile)
+        components.conditionCollection.generateLocalFunctions(self.outputFile)
 
     def generateOutputCode(self):
         sensorsUsed = []
@@ -122,7 +120,20 @@ class Generator(object):
         for n in self.networkComponents:
             n.generateReadFunctions(self.outputFile)
 
+    def generateConditions(self):
+        # branch evaluation functions
+        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
+            conditions = components.componentRegister.branchCollection.getConditions(i)
+            self.outputFile.write("static inline bool branch{}Evaluate(void) {}\n".format(i, '{'))
+            self.outputFile.write("    return {};\n".format(formatConditions(conditions)))
+            self.outputFile.write("}\n\n")
+
+        # conditions callback functions
+        components.conditionCollection.writeOutCode(self.outputFile,
+                                                    components.componentRegister.branchCollection)
+
     def generateBranchCode(self):
+        # start/stop functions
         components.componentRegister.branchCollection.generateCode(self.outputFile)
 
     def generateAppMain(self):
@@ -135,47 +146,51 @@ class Generator(object):
             c.generateAppMainCode(self.outputFile)
         components.conditionCollection.generateAppMainCode(self.outputFile)
 
-        self.outputFile.write("\n")
-        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
-            conditions = components.componentRegister.branchCollection.getConditions(i)
-            self.outputFile.write("    bool branch{0}OldStatus = false;\n".format(i))
-        self.outputFile.write("\n")
+#        self.outputFile.write("\n")
+#        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
+#            conditions = components.componentRegister.branchCollection.getConditions(i)
+#            self.outputFile.write("    bool branch{0}OldStatus = false;\n".format(i))
+#        self.outputFile.write("\n")
 
         self.outputFile.write("    branch0Start();\n\n")
 
+#        self.outputFile.write("    for (;;) {\n")
+#        self.outputFile.write("        uint32_t iterationEndTime = getRealTime() + CONDITION_EVALUATION_INTERVAL;\n")
+#        self.outputFile.write("\n")
+
+#        totalConditions = components.conditionCollection.totalConditions()
+#        self.outputFile.write("        bool newConditionStatus[NUM_CONDITIONS];\n")
+#        for i in range(totalConditions):
+#            self.outputFile.write("        newConditionStatus[{0}] = condition{1}Check(oldConditionStatus[{0}]);\n".format(i, i + 1))
+#        self.outputFile.write("\n")
+
+#        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
+#            conditions = components.componentRegister.branchCollection.getConditions(i)
+#            self.outputFile.write("        bool branch{0}NewStatus = {1};\n".format(i, formatConditions(conditions, True)))
+
+#        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
+#            s = '''
+#        if (branch{0}OldStatus != branch{0}NewStatus) {1}
+#            if (branch{0}NewStatus) branch{0}Start();
+#            else branch{0}Stop();
+#        {2}\n'''
+#            self.outputFile.write(s.format(i, '{', '}'))
+
+#        self.outputFile.write("\n")
+#        self.outputFile.write("        memcpy(oldConditionStatus, newConditionStatus, sizeof(oldConditionStatus));\n")
+
+#        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
+#            self.outputFile.write("        branch{0}OldStatus = branch{0}NewStatus;\n".format(i))
+#        self.outputFile.write("\n")
+
+#        self.outputFile.write("        uint32_t now = getRealTime();\n")
+#        self.outputFile.write("        if (timeAfter32(iterationEndTime, now)) {\n")
+#        self.outputFile.write("            msleep(iterationEndTime - now);\n")
+#        self.outputFile.write("        }\n")
+#        self.outputFile.write("    }\n")
+
         self.outputFile.write("    for (;;) {\n")
-        self.outputFile.write("        uint32_t iterationEndTime = getRealTime() + CONDITION_EVALUATION_INTERVAL;\n")
-        self.outputFile.write("\n")
-
-        totalConditions = components.conditionCollection.totalConditions()
-        self.outputFile.write("        bool newConditionStatus[NUM_CONDITIONS];\n")
-        for i in range(totalConditions):
-            self.outputFile.write("        newConditionStatus[{0}] = condition{1}Check(oldConditionStatus[{0}]);\n".format(i, i + 1))
-        self.outputFile.write("\n")
-
-        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
-            conditions = components.componentRegister.branchCollection.getConditions(i)
-            self.outputFile.write("        bool branch{0}NewStatus = {1};\n".format(i, formatConditions(conditions, True)))
-
-        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
-            s = '''
-        if (branch{0}OldStatus != branch{0}NewStatus) {1}
-            if (branch{0}NewStatus) branch{0}Start();
-            else branch{0}Stop();
-        {2}\n'''
-            self.outputFile.write(s.format(i, '{', '}'))
-
-        self.outputFile.write("\n")
-        self.outputFile.write("        memcpy(oldConditionStatus, newConditionStatus, sizeof(oldConditionStatus));\n")
-
-        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
-            self.outputFile.write("        branch{0}OldStatus = branch{0}NewStatus;\n".format(i))
-        self.outputFile.write("\n")
-
-        self.outputFile.write("        uint32_t now = getRealTime();\n")
-        self.outputFile.write("        if (timeAfter32(iterationEndTime, now)) {\n")
-        self.outputFile.write("            msleep(iterationEndTime - now);\n")
-        self.outputFile.write("        }\n")
+        self.outputFile.write("        msleep(10000);\n")
         self.outputFile.write("    }\n")
         self.outputFile.write("}\n")
 
@@ -220,7 +235,7 @@ class Generator(object):
         self.generateBranchCode()
         outputFile.write(SEPARATOR)
         outputFile.write("// Conditions\n\n")
-        components.conditionCollection.writeOutCode(self.outputFile)
+        self.generateConditions()
         outputFile.write(SEPARATOR)
         outputFile.write("// Main function\n\n")
         self.generateAppMain()

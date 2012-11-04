@@ -202,51 +202,99 @@ class ConditionCollection(object):
         for i in range(len(self.conditionList)):
             self.codeList.append(self.generateCodeForCondition(i, componentRegister))
 
-    def writeOutCodeForEventBasedCondition(self, condition, outputFile):
-        if condition.dependentOnSensors:
+    def writeOutCodeForEventBasedCondition(self, condition, outputFile, branchCollection):
+        if condition.dependentOnPeriodicSensors:
+#            outputFile.write("static void condition{0}Callback(int32_t value)\n".format(condition.id))
+            outputFile.write("static void condition{0}Callback(void)\n".format(condition.id))
+        elif condition.dependentOnRemoteSensors:
             outputFile.write("static void condition{0}Callback(uint16_t code, int32_t value)\n".format(condition.id))
         elif condition.dependentOnInterrupts:
             outputFile.write("static void condition{0}Callback(void)\n".format(condition.id))
         else:
+            # dependentOnPackets != None
             outputFile.write("static void condition{0}Callback(int32_t *value)\n".format(condition.id))
         outputFile.write("{\n")
+        ID = condition.id - 1
         outputFile.write("    bool isFilteredOut = false;\n")
-        outputFile.write(self.codeList[condition.id - 1])
+        outputFile.write(self.codeList[ID])
         outputFile.write("    if (isFilteredOut) return;\n")
-        outputFile.write("    if (result == oldConditionStatus[{}]) return;\n".format(condition.id))
+        outputFile.write("    if (result == conditionStatus[{}]) return;\n".format(ID))
         # OK, the status has changed; start or stop the code branch
         outputFile.write("\n")
-        outputFile.write("    oldConditionStatus[{}] = result;\n".format(condition.id))
-        outputFile.write("    if (result) branch{0}Start();\n".format(condition.id))
-        outputFile.write("    else branch{0}Stop();\n".format(condition.id))
+
+        branchesAssociated = branchCollection.getAssociatedBranches(condition.id)
+        # 0 - no change
+        # 1 - start
+        # 2 - stop
+#        outputFile.write("    uint8_t branchStatusChange[{}] = {0};\n".format(len(branchesAssociated)))
+
+#        outputFile.write("    if (result) {\n") # becomes true
+#        outputFile.write("    } else {\n") # becomes false
+        outputFile.write("    bool newSt, oldSt;\n")
+
+        for br in branchesAssociated:
+            outputFile.write("    conditionStatus[{}] = !result;\n".format(ID))
+            outputFile.write("    oldSt = branch{}Evaluate();\n".format(br))
+            outputFile.write("    conditionStatus[{}] = result;\n".format(ID))
+            outputFile.write("    newSt = branch{}Evaluate();\n".format(br))
+            outputFile.write("    if (newSt != oldSt) {\n")
+            outputFile.write("        if (newSt) branch{}Start();\n".format(br))
+            outputFile.write("        else branch{}Stop();\n".format(br))
+            outputFile.write("    }\n")
+
+        #outputFile.write("    if (result) branch{0}Start();\n".format(ID))
+        #outputFile.write("    else branch{0}Stop();\n".format(ID))
+
+#        outputFile.write("    conditionStatus[{}] = result;\n".format(ID))
         outputFile.write("}\n\n")
 
         # this function does nothing
-        outputFile.write("static inline bool condition{0}Check(bool oldValue)\n".format(condition.id))
-        outputFile.write("{\n")
-        outputFile.write("    return oldValue;\n")
-        outputFile.write("}\n\n")
+        # outputFile.write("static inline bool condition{0}Check(bool oldValue)\n".format(condition.id))
+        # outputFile.write("{\n")
+        # outputFile.write("    return oldValue;\n")
+        # outputFile.write("}\n\n")
 
-    def writeOutCodeForPeriodicCondition(self, condition, outputFile):
-        outputFile.write("static inline bool condition{0}Check(bool oldValue)\n".format(condition.id))
+    def writeOutCodeForStaticCondition(self, condition, outputFile):
+        outputFile.write("static inline bool condition{0}Check(void)\n".format(condition.id))
         outputFile.write("{\n")
         outputFile.write("    bool isFilteredOut = false;\n")
         outputFile.write(self.codeList[condition.id - 1])
-        outputFile.write("    return isFilteredOut ? oldValue : result;\n")
+        outputFile.write("    return isFilteredOut ? false : result;\n")
         outputFile.write("}\n\n")
 
-    def writeOutCodeForCondition(self, condition, outputFile):
+    def writeOutCodeForCondition(self, condition, outputFile, branchCollection):
         if condition.isEventBased():
-            self.writeOutCodeForEventBasedCondition(condition, outputFile)
+            self.writeOutCodeForEventBasedCondition(condition, outputFile, branchCollection)
         else:
-            self.writeOutCodeForPeriodicCondition(condition, outputFile)
+            self.writeOutCodeForStaticCondition(condition, outputFile)
 
-    def writeOutCode(self, outputFile):
+    def writeOutCode(self, outputFile, branchCollection):
         for c in self.conditionList:
-            self.writeOutCodeForCondition(c, outputFile)
+            self.writeOutCodeForCondition(c, outputFile, branchCollection)
+
+    def generateLocalFunctionsForCondition(self, condition, outputFile):
+        if condition.dependentOnPeriodicSensors:
+            outputFile.write("static void condition{0}Callback(void);\n".format(condition.id))
+        elif condition.dependentOnRemoteSensors:
+            outputFile.write("static void condition{0}Callback(uint16_t code, int32_t value);\n".format(condition.id))
+        elif condition.dependentOnInterrupts:
+            outputFile.write("static void condition{0}Callback(void);\n".format(condition.id))
+        elif condition.dependentOnPackets:
+            outputFile.write("static void condition{0}Callback(int32_t *value);\n".format(condition.id))
+        else:
+            outputFile.write("static inline bool condition{0}Check(void);\n".format(condition.id))
+
+    def generateLocalFunctions(self, outputFile):
+        for c in self.conditionList:
+            self.generateLocalFunctionsForCondition(c, outputFile)
+
+    def onSensorRead(self, outputFile, sensorName):
+        for c in self.conditionList:
+            if sensorName in c.dependentOnPeriodicSensors:
+                outputFile.write("        condition{}Callback();\n".format(c.id))
 
     def generateAppMainCodeForCondition(self, condition, outputFile):
-        for code in condition.dependentOnSensors:
+        for code in condition.dependentOnRemoteSensors:
             outputFile.write("    sealCommRegisterInterest({}, condition{}Callback);\n".format(
                     code, condition.id))
 
@@ -406,8 +454,10 @@ class Expression(object):
             self.right = right
 
         # -- the rest are for conditions only (expression in some contexts is a condition)
-        # dependent on these self-reading sensors
-        self.dependentOnSensors = set()
+        # dependent on these periodic sensors
+        self.dependentOnPeriodicSensors = set()
+        # dependent on these self-reading sensors (e.g. remote, GPS?, etc.)
+        self.dependentOnRemoteSensors = set()
         # dependent on these interrupts sensors
         self.dependentOnInterrupts = set()
         # dependent on these network data sources
@@ -416,7 +466,8 @@ class Expression(object):
         self.dependentOnComponent = None
 
     def isEventBased(self):
-        return bool(len(self.dependentOnSensors)) \
+        return bool(len(self.dependentOnPeriodicSensors)) \
+            or bool(len(self.dependentOnRemoteSensors)) \
             or bool(len(self.dependentOnInterrupts)) \
             or bool(len(self.dependentOnPackets))
 

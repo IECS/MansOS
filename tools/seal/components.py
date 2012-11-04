@@ -99,6 +99,11 @@ class BranchCollection(object):
             self.generateStartCode(b, outputFile)
             self.generateStopCode(b, outputFile)
 
+    def generateLocalFunctions(self, outputFile):
+        for n in self.branches:
+            outputFile.write("static inline void branch{0}Start(void);\n".format(n))
+            if n != 0: outputFile.write("static inline void branch{0}Stop(void);\n".format(n))
+
     def generateStartCode(self, b, outputFile):
         number = b[0]
         useCases = b[1]
@@ -119,7 +124,7 @@ class BranchCollection(object):
             uc.generateBranchExitCode(outputFile)
         outputFile.write("}\n\n")
 
-    # Returns list of numbers [N] of conditions that must be met to enter this branch
+    # Returns list of numbers [N] of conditions that must be matched to enter this branch
     # * number N > 0: condition Nr. N must be TRUE
     # * number N < 0: condition Nr. abs(N) must be FALSE
     def getConditions(self, branchNumber):
@@ -127,6 +132,14 @@ class BranchCollection(object):
 
     def getNumBranches(self):
         return len(self.branches)
+
+    def getAssociatedBranches(self, condition):
+        result = []
+        for i in range(len(self.conditions)):
+            for c in self.conditions[i]:
+                if abs(c) == condition:
+                    result.append(i)
+        return result
 
 
 ######################################################
@@ -505,11 +518,14 @@ class UseCase(object):
                             outputFile.write("    alarmSchedule(&{0}PreAlarm, {2}_PERIOD{1} - {3});\n".format(
                                     s.getNameCC(), self.numInBranch, ucname, preReadTime))
                     outputFile.write("    bool isFilteredOut = false;\n")
-                    outputFile.write("    {0} {1}Value = {2}ReadProcess{3}(&isFilteredOut);\n".format(
-                            intTypeName, self.component.getNameCC(),
+                    outputFile.write("    {0}Value = {0}ReadProcess{1}(&isFilteredOut);\n".format(
                             self.component.getNameCC(), self.readFunctionSuffix))
-                    outputFile.write("    (void){0}Value;\n".format(
-                            self.component.getNameCC()))
+
+#                    outputFile.write("    {0} {1}Value = {2}ReadProcess{3}(&isFilteredOut);\n".format(
+#                            intTypeName, self.component.getNameCC(),
+#                            self.component.getNameCC(), self.readFunctionSuffix))
+#                    outputFile.write("    (void){0}Value;\n".format(
+#                            self.component.getNameCC()))
 
                     if generateOnOffCode:
                         for s in self.component.subsensors:
@@ -536,9 +552,8 @@ class UseCase(object):
                     else:
                         # value is passed as argument
                         fieldName = prefix + self.component.remoteFields[0]
-                        outputFile.write("    {0} {1}Value = value;\n".format(
-                                intTypeName, fieldName))
-                        outputFile.write("    (void){0}Value;\n".format(fieldName))
+                        outputFile.write("    {0}Value = value;\n".format(fieldName))
+#                        outputFile.write("    (void){0}Value;\n".format(fieldName))
                         for o in outputs:
                             o.generateCallbackCode(fieldName, outputFile, self.readFunctionSuffix)
                         if self.generateOutCode(outputFile):
@@ -550,11 +565,13 @@ class UseCase(object):
                 else:
                     if self.onCode: outputFile.write("    {};\n".format(self.onCode))
                     outputFile.write("    bool isFilteredOut = false;\n")
-                    outputFile.write("    {0} {1}Value = {2}ReadProcess{3}(&isFilteredOut);\n".format(
-                            intTypeName, self.component.getNameCC(),
+                    outputFile.write("    {0}Value = {0}ReadProcess{1}(&isFilteredOut);\n".format(
                             self.component.getNameCC(), self.readFunctionSuffix))
-                    outputFile.write("    (void){0}Value;\n".format(
-                            self.component.getNameCC()))
+#                    outputFile.write("    {0} {1}Value = {2}ReadProcess{3}(&isFilteredOut);\n".format(
+#                            intTypeName, self.component.getNameCC(),
+#                            self.component.getNameCC(), self.readFunctionSuffix))
+#                    outputFile.write("    (void){0}Value;\n".format(
+#                            self.component.getNameCC()))
                     outputFile.write("    if (!isFilteredOut) {\n")
                     if self.generateOutCode(outputFile):
                         # 'out' parameter specified; ignore the regular outputs in this case
@@ -562,6 +579,7 @@ class UseCase(object):
                     else:
                         for o in outputs:
                             o.generateCallbackCode(self.component.name, outputFile, self.readFunctionSuffix)
+                        conditionCollection.onSensorRead(outputFile, self.component.getNameCC())
                     outputFile.write("    }\n")
                     if self.offCode: outputFile.write("    {};\n".format(self.offCode))
 
@@ -968,6 +986,11 @@ class Sensor(Component):
                         mask |= 1 << id
                 outputFile.write("#define {0}_TYPE_MASK   {1:#x}\n".format(self.getNameUC(), mask))
 
+    def generateVariables(self, outputFile):
+        super(Sensor, self).generateVariables(outputFile)
+        if self.isUsed():
+            outputFile.write("static {} {}Value;\n".format(self.getDataType(), self.getNameCC()))
+
     def testIsCacheNeeded(self, numCachedSensors):
         if not self.specification._cacheable: return False
         if self.cacheNeeded: return True
@@ -1011,9 +1034,11 @@ class Sensor(Component):
         outputFile.write("static void {0}SyncCallback(void)\n".format(self.getNameCC()))
         outputFile.write("{\n")
         outputFile.write("    bool isFilteredOut = false;\n")
-        outputFile.write("    {0} {1}Value = {1}ReadProcess(&isFilteredOut);\n".format(
-                self.getDataType(), self.getNameCC()))
-        outputFile.write("    (void){0}Value;\n".format(self.getNameCC()))
+        outputFile.write("    {0}Value = {0}ReadProcess(&isFilteredOut);\n".format(
+                self.getNameCC()))
+#        outputFile.write("    {0} {1}Value = {1}ReadProcess(&isFilteredOut);\n".format(
+#                self.getDataType(), self.getNameCC()))
+#        outputFile.write("    (void){0}Value;\n".format(self.getNameCC()))
         outputFile.write("    if (!isFilteredOut) {\n")
         for o in outputs:
             o.generateCallbackCode(self.name, outputFile, "")
@@ -2527,7 +2552,7 @@ class FromFileOutputUseCase(OutputUseCase):
         self.numSensorFields = self.associatedFileOutputUseCase.numSensorFields
         self.networkComponents = self.associatedFileOutputUseCase.networkComponents
 
-        # needed to mark the correspodning sensors as used;
+        # needed to mark the correspodning sensors as used
         if self.condition:
             self.conditionEvaluationCode = self.condition.getEvaluationCode(componentRegister).rstrip("\n\r;")
 
@@ -2790,7 +2815,7 @@ class NetworkComponent(object):
         if len(self.fields) == 1:
             code = commonFields.get(fieldName)
             if code is None: code = componentRegister.sensors.get(fieldName).getSystemwideID()
-            if condition: condition.dependentOnSensors.add(code)
+            if condition: condition.dependentOnRemoteSensors.add(code)
             return "value"
 
         s = componentRegister.sensors.get(self.name)
@@ -3395,12 +3420,21 @@ class ComponentRegister(object):
                 if inParameter: return componentName
                 self.userError("Parameter '{0}' for component '{1}' is not readable!\n".format(parameterName, componentName))
                 return "false"
+
+            # new code:
+            if not c.isUsed():
+                self.userError("Sensor '{0}' used in a condition, but never read!\n".format(componentName))
+                return "false"
+            if condition: condition.dependentOnPeriodicSensors.add(c.getNameCC())
+            return c.getNameCC() + "Value"
+
+            # old code:
             # otherwise unused component might become usable because of use in condition.
-            c.markAsUsed()
+            # c.markAsUsed()
             # test if cache is needed and if yes, update the flag
-            c.testIsCacheNeededForCondition()
+            # c.testIsCacheNeededForCondition()
             # return the right read function
-            return c.getNameCC() + "ReadProcess(&isFilteredOut)"
+            # return c.getNameCC() + "ReadProcess(&isFilteredOut)"
 
         if componentName == 'variables' or componentName == 'constants':
             # a global C variable, return its name (the user is responsible for correctness)
