@@ -52,7 +52,7 @@ static void parsePacket(TimeSyncPacket_t *packet)
     uint16_t calcCrc = crc16((uint8_t *)&packet->time, sizeof(packet->time));
     if (packet->delimiter2 != 0
             || packet->crc != calcCrc) {
-        PRINT("timesync: wrong format\n");
+        PRINTF("timesync: wrong format\n");
         return;
     }
     lastRootSyncSeconds = getUptime();

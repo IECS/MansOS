@@ -81,7 +81,7 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 {
     // PRINTF("BS: routingReceive %d bytes, ignoring\n", len);
     if (len < 2) {
-        PRINT("routingReceive: too short!\n");
+        PRINTF("routingReceive: too short!\n");
         return;
     }
 

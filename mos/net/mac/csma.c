@@ -88,7 +88,7 @@ static int8_t sendCsmaMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     if (radioSendHeader(mi->macHeader, mi->macHeaderLen, data, length) == 0) {
         return length;
     }
-    PRINT("*************** channel NOT free\n");
+    PRINTF("*************** channel NOT free\n");
 
     ret = queueAddPacket(mi, data, length, true, NULL);
     if (ret) return ret;
@@ -125,7 +125,7 @@ static void sendTimerCb(void *x) {
         // tx failed
         // XXX: return error code to user...
         INC_NETSTAT(NETSTAT_PACKETS_DROPPED_TX, EMPTY_ADDR);
-        PRINT("CSMA mac send failed: too many retries!");
+        PRINTF("CSMA mac send failed: too many retries!");
         queuePop();
         sendTries = 0;
         return;

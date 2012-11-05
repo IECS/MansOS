@@ -34,7 +34,6 @@
 #include <hil/busywait.h>
 #include <kernel/defines.h>
 #include "msp430_timers.h"
-#include <kernel/threads/threads.h>
 
 #include <lib/dprint.h>
 

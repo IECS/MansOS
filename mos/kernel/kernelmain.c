@@ -55,10 +55,8 @@
 #define INIT_PRINTF(...) // nothing
 #endif
 
-#define HACK() \
-    asm("nop"); \
-    redLedOn(); \
-    asm("nop");
+// global time counter
+volatile ticks_t jiffies;
 
 //----------------------------------------------------------
 //      System initialization
@@ -66,6 +64,7 @@
 static inline void initSystem(void)
 {
     bool success;
+    (void)success;
 
     // disable interrupts: disabled on msp430 by default, but other systems might need this
     DISABLE_INTS();

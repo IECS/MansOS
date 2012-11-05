@@ -23,13 +23,12 @@
 
 #include <kernel/alarms_system.h>
 #include <platform.h>
-//#include <radio.h>
+#include <kernel/threads/timing.h>
 
 //----------------------------------------------------------
 // internal variables
 //----------------------------------------------------------
 
-volatile ticks_t jiffies; // real time counter, in ms
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 
 // alarm timer interrupt handler
@@ -46,7 +45,7 @@ ALARM_TIMER_INTERRUPT()
     // We assume it's precisely 1 millisecond per each 1.02 seconds and fix that error here.
     // The precision is improved 255 times: 0.99609375 compared to 1 - 0.99609375 = 0.00390625
     //
-    static uint32_t lastFixedJiffies;
+    static ticks_t lastFixedJiffies;
     if (jiffies - lastFixedJiffies > 1020) {
         // fix them
         ++jiffies;

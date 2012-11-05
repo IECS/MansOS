@@ -21,32 +21,16 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//===========================================================================
-// Print to a serial port or radio, e.g. for debugging purposes
-//
-// Usage:
-//      PRINT_INIT( len )  - initialize the printing service, 
-//              use buffer to accomodate up to 'len' characters, 
-//              You can use 0 if no PRINTF is used
-//
-//      PRINT( str ) - print a string, no newline
-//      PRINTLN( str ) - print a string, skip to a new line
-//
-//      PRINTF( str, args...) - printf() style output
-//
-//===========================================================================
-
 #include "dprint.h"
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
 
-// Global variable
 static char * _print_buf;
 
-void printInit(void)
+void printInitReal(void)
 {
-    PRINT_INIT_NEW(PRINT_BUFFER_SIZE);
+    PRINT_INIT(PRINT_BUFFER_SIZE);
 }
 
 void debugPrintf(PrintFunction_t outputFunction, const char* str, ...)
@@ -78,7 +62,7 @@ void debugHexdump(void *data_, unsigned len) {
         *p++ = digits[data[i] & 0xF];
         if ((i & 15) == 15) {
             *p = '\n';
-            PRINT(line);
+            PRINT_FUNCTION(line);
             p = line;
         } else {
             *p++ = ' ';
@@ -87,7 +71,7 @@ void debugHexdump(void *data_, unsigned len) {
     if (i & 15) {
         *p++ = '\n';
         *p = '\0';
-        PRINT(line);
+        PRINT_FUNCTION(line);
     }
 }
 #else
@@ -107,7 +91,7 @@ void debugHexdump(void *data_, unsigned len) {
             *p++ = ',';
             *p++ = '\n';
             *p = '\t';
-            PRINT(line);
+            PRINT_FUNCTION(line);
             p = line;
         } else {
             *p++ = ',';
@@ -116,7 +100,7 @@ void debugHexdump(void *data_, unsigned len) {
     if (i & 15) {
         *p++ = '\n';
         *p = '\0';
-        PRINT(line);
+        PRINT_FUNCTION(line);
     }
 }
 #endif

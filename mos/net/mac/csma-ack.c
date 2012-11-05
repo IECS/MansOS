@@ -79,13 +79,13 @@ static int8_t sendCsmaMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
 
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
     if (!(mi->flags & MI_FLAG_ACK_REQUESTED)) {
-        // PRINT("send a packet\n");
+        // PRINTF("send a packet\n");
         // this is a broadcast message or ACK
         ret = radioSendHeader(mi->macHeader, mi->macHeaderLen, data, length);
         if (ret == 0) ret = length;
         return ret;
     }
-    // PRINT("send a packet with ACK expected\n");
+    // PRINTF("send a packet with ACK expected\n");
     radioSendHeader(mi->macHeader, mi->macHeaderLen, data, length);
     QueuedPacket_t *p = NULL;
     ret = queueAddPacket(mi, data, length, true, &p);
@@ -106,7 +106,7 @@ static int8_t sendCsmaMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
 static void sendTimerCb(void *x) {
     sendTimerRunning = false;
 
-    //PRINT("sendTimerCb\n");
+    //PRINTF("sendTimerCb\n");
 
     QueuedPacket_t *p;
 

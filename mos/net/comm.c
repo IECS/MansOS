@@ -142,7 +142,7 @@ void commForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len) {
     
     switch (routePacket(macInfo)) {
     case RD_DROP:
-        // PRINT("RD_DROP\n");
+        // PRINTF("RD_DROP\n");
         if (IS_LOCAL(macInfo)){
             INC_NETSTAT(NETSTAT_PACKETS_DROPPED_TX, EMPTY_ADDR);
         } else{
@@ -151,12 +151,12 @@ void commForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len) {
         break;
 
     case RD_LOCAL:
-        // PRINT("RD_LOCAL\n");
+        // PRINTF("RD_LOCAL\n");
         socketInputData(macInfo, data, len);
         break;
 
     case RD_UNICAST:
-        // PRINT("RD_UNICAST\n");
+        // PRINTF("RD_UNICAST\n");
         // force header rebuild
         macInfo->macHeaderLen = 0;
 #if PLATFORM_SADMOTE
@@ -172,7 +172,7 @@ void commForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len) {
         break;
 
     case RD_BROADCAST:
-        // PRINT("RD_BROADCAST\n");
+        // PRINTF("RD_BROADCAST\n");
         if (!IS_LOCAL(macInfo)) {
             socketInputData(macInfo, data, len);
         }

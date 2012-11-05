@@ -26,8 +26,6 @@
 #include <platform.h>
 #include <radio.h> // XXX
 
-volatile ticks_t jiffies;
-
 // --------------------------------------------- alarm / time accounting timer
 
 ALARM_TIMER_INTERRUPT()

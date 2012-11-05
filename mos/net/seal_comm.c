@@ -159,12 +159,12 @@ static void sealRecv(uint8_t *data, uint16_t length)
     }
     typeMask = h.typeMask;
 
-    PRINT("^\n"); // XXX TODO: this is SAD specific
+    PRINTF("^\n"); // XXX TODO: this is SAD specific
     for_all_listeners(
             if (l->typeMask && (l->typeMask & typeMask) == l->typeMask) {
                 receivePacketData(l, typeMask, data + valueOffset);
             });
-    PRINT("$\n");
+    PRINTF("$\n");
 }
 
 bool sealCommPacketRegisterInterest(uint32_t typeMask,
