@@ -149,6 +149,32 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_TOOL, self.OnAddCondition, addConditionTool)
         self.Bind(wx.EVT_TOOL, self.OnStartListening, listenTool)
 
+    def addExampleMenuItems(self, subMenu, path, maxDepth):
+        dirList = os.listdir(path)
+        dirList.sort()
+        hasAny = False
+        for dirName in dirList:
+            if dirName[0] == '.': continue
+            pathName = os.path.join(path, dirName)
+            mode = os.stat(pathName).st_mode
+            if not S_ISDIR(mode): continue
+            # it's a directory; process it
+            dirMenu = wx.Menu()
+            # test whether it has a Makefile in it
+            if os.path.isfile(os.path.join(pathName, 'Makefile')):
+                # append the name of this example
+                ex = subMenu.Append(wx.ID_ANY, dirName, pathName)
+                # save this id/path combination, to be used in callback code
+                self.examples[ex.GetId()] = pathName
+                self.Bind(wx.EVT_MENU, self.OnOpenExample, ex)
+                hasAny = True
+            elif maxDepth:
+                # recursive call
+                if self.addExampleMenuItems(dirMenu, pathName, maxDepth - 1):
+                    hasAny = True
+                    subMenu.AppendMenu(wx.ID_ANY, dirName, dirMenu)
+        return hasAny
+
     def generateMenu(self):
         fileMenu = wx.Menu()
         new = fileMenu.Append(wx.ID_NEW, '&' + self.tr('New') + '\tCtrl+N',
@@ -173,36 +199,10 @@ class Frame(wx.Frame):
         self.fileHistory.AddFilesToMenu()
         self.Bind(wx.EVT_MENU_RANGE, self.on_file_history, id = wx.ID_FILE1, id2 = wx.ID_FILE9)
 
-        # show menu with mansos demo applications
-        pathToMansosApps = self.API.path + os.path.normcase("/../../apps/")
+        # show menu with mansos demo & test applications
         exampleMenu = wx.Menu()
-        # list all directories in mansos/apps
-        dirlist = os.listdir(pathToMansosApps)
-        dirlist.sort()
-        for dirname in dirlist:
-            pathname = os.path.join(pathToMansosApps, dirname)
-            mode = os.stat(pathname).st_mode
-            if not S_ISDIR(mode): continue
-            # it's a directory; process it
-            dirMenu = wx.Menu()
-            emptyMenu = True
-            # list all directories in the current subdirectory
-            applist = os.listdir(pathname)
-            applist.sort()
-            for filename in applist:
-                appname = os.path.join(pathname, filename)
-                mode = os.stat(appname).st_mode
-                if not S_ISDIR(mode): continue
-                # it's a directory; test whether it has a Makefile in it
-                if not os.path.isfile(os.path.join(appname, 'Makefile')): continue
-                # append the name of this example to directory menu
-                ex = dirMenu.Append(wx.ID_ANY, filename, os.path.join(dirname, appname))
-                # save this id/path combination, to be used in callback code
-                self.examples[ex.GetId()] = appname
-                self.Bind(wx.EVT_MENU, self.OnOpenExample, ex)
-                emptyMenu = False
-            if not emptyMenu:
-                exampleMenu.AppendMenu(wx.ID_ANY, dirname, dirMenu)
+        pathToMansosApps = self.API.path + os.path.normcase("/../../apps/")
+        self.addExampleMenuItems(exampleMenu, pathToMansosApps, maxDepth = 2)
 
         optionMenu = wx.Menu()
         language = wx.Menu()
