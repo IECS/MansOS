@@ -211,7 +211,7 @@ static void pollSadMac(void) {
                     radioPacketBuffer->receivedLength, &mi);
 #if TEST_FILTERS
             if (!filterPass(&mi)) {
-                // PRINT("filtered out\n");
+                // PRINTF("filtered out\n");
                 data = NULL;
             }
 #endif
@@ -221,11 +221,11 @@ static void pollSadMac(void) {
                 macProtocol.recvCb(&mi, data,
                         radioPacketBuffer->receivedLength - mi.macHeaderLen);
             } else {
-                // PRINT("no data\n");
+                // PRINTF("no data\n");
                 INC_NETSTAT(NETSTAT_PACKETS_DROPPED_RX, EMPTY_ADDR);
             }
         } else {
-            // PRINT("no cb\n");
+            // PRINTF("no cb\n");
             INC_NETSTAT(NETSTAT_PACKETS_DROPPED_RX, EMPTY_ADDR);
         }
     }

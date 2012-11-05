@@ -87,7 +87,7 @@ static void roForwardTimerCb(void *x)
 {
     if (hopCountToRoot >= MAX_HOP_COUNT) return;
 
-    PRINT("forward routing packet\n");
+    PRINTF("forward routing packet\n");
 
     RoutingInfoPacket_t routingInfo;
     routingInfo.packetType = ROUTING_INFORMATION;
@@ -115,7 +115,7 @@ static void roRequestTimerCb(void *x)
 {
     if (isRoutingInfoValid()) return;
 
-    // PRINT("send routing request\n");
+    // PRINTF("send routing request\n");
 
     RoutingRequestPacket_t req;
     req.packetType = ROUTING_REQUEST;
@@ -129,7 +129,7 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
     // PRINTF("routingReceive %d bytes\n", len);
 
     if (len == 0) {
-        PRINT("routingReceive: no data!\n");
+        PRINTF("routingReceive: no data!\n");
         return;
     }
 
@@ -154,12 +154,12 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
     }
 
     if (type != ROUTING_INFORMATION) {
-        PRINT("routingReceive: unknown type!\n");
+        PRINTF("routingReceive: unknown type!\n");
         return;
     }
 
     if (len < sizeof(RoutingInfoPacket_t)) {
-        PRINT("routingReceive: too short for info packet!\n");
+        PRINTF("routingReceive: too short for info packet!\n");
         return;
     }
 
@@ -171,11 +171,11 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         // XXX: theoretically should add some time to avoid switching to
         // worse path only because packets from it travel faster
         update = true;
-        //PRINT("update routing info - more recent seqnum\n");
+        //PRINTF("update routing info - more recent seqnum\n");
     } else if (ri.seqnum == lastSeenSeqnum) {
         if (ri.hopCount < hopCountToRoot) {
             update = true;
-            //PRINT("update routing info - better metric\n");
+            //PRINTF("update routing info - better metric\n");
         }
     }
     if (ri.hopCount > MAX_HOP_COUNT) update = false;

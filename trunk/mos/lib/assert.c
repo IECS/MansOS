@@ -36,7 +36,7 @@
 #  define ASSERT_PRINT printf
 #else
 #  ifdef USE_PRINT
-#    define ASSERT_PRINT(...) debugPrintf(PRINT, __VA_ARGS__)
+#    define ASSERT_PRINT(...) PRINTF(__VA_ARGS__)
 #  else
 #    define ASSERT_PRINT(...)
 #  endif /* USE_PRINT */

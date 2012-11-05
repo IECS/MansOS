@@ -24,6 +24,18 @@
 #include "dprint.h"
 #include <radio.h>
 
+//
+// Hack: printInit() is both in this file and in dprint-serial.c
+// to avoid discarding these files at link stage.
+// This is just 6 byte overhead (code memory) by default,
+// and significant savings if radio is not used.
+//
+void printInit(void)
+{
+    extern void printInitReal(void);
+    printInitReal();
+}
+
 void radioPrint(const char* str)
 {
 #if 0

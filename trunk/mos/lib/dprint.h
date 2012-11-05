@@ -25,14 +25,9 @@
 // Print to a serial port or radio, e.g. for debugging purposes
 //
 // Usage:
-//      PRINT_INIT( len )  - initialize the printing service, 
-//              use buffer to accomodate up to 'len' characters, 
-//              You can use 0 if no PRINTF is used
-//
-//      PRINT( str ) - print a string, no newline
-//      PRINTLN( str ) - print a string, skip to a new line
-//
 //      PRINTF( str, args...) - printf() style output
+//
+//      PRINTLN( str ) - print a string, skip to a new line
 //
 //===========================================================================
 
@@ -42,69 +37,83 @@
 #include <serial.h>
 #include <kernel/stdtypes.h>
 
+//
+// Uncomment this (or better, define it in "config" file!) to send print output to radio.
+//
 //#define DPRINT_TO_RADIO 1
 
 #if USE_PRINT
 
-# define PRINT_INIT_DEF(len) \
+# define PRINT_INIT_DEFAULT(len) \
     static char _print_buf_local[ len +1 ];       \
     _print_buf = _print_buf_local;
 
-# ifdef PRINT
-// code for printing using custom PRINT function provided by the user
-#  define PRINT_INIT_NEW(len) PRINT_INIT_DEF(len);
-extern void PRINT(const char *format, ...);
-#  ifndef PRINTF
-#   define PRINTF PRINT
-#  endif
-// PRINT and PRINTF are defined in user code
-# elif defined DPRINT_TO_RADIO
-// code for printing to radio
-#  define PRINT_INIT_NEW(len) PRINT_INIT_DEF(len);
-#  define PRINT radioPrint
-#  define PRINTF(...) debugPrintf(PRINT, __VA_ARGS__);
+
+# ifdef DPRINT_TO_RADIO
+//
+// Print to radio
+//
+#  define PRINT_INIT(len) PRINT_INIT_DEFAULT(len)
+#  define PRINT_FUNCTION radioPrint
+#  define PRINTF(...) debugPrintf(PRINT_FUNCTION, __VA_ARGS__)
 # else
-// code for printing to serial port
-#  define PRINT_INIT_NEW(len) \
-     PRINT_INIT_DEF(len);                                       \
+//
+// Print to serial port
+//
+#  define PRINT_INIT(len) \
+     PRINT_INIT_DEFAULT(len);                                   \
      serialInit(PRINTF_SERIAL_ID, SERIAL_PORT_BAUDRATE, 0);     \
      serialEnableTX(PRINTF_SERIAL_ID);                          \
      serial[PRINTF_SERIAL_ID].function = SERIAL_FUNCTION_PRINT
+#  define PRINT_FUNCTION serialPrint
+#  define PRINTF(...) \
+    if (COUNT_PARMS(__VA_ARGS__) == 1) {          \
+        serialPrintV(__VA_ARGS__);                \
+    } else {                                      \
+        debugPrintf(serialPrint, __VA_ARGS__);    \
+    }
 
-#  define PRINT serialPrint
-#  define PRINTF(...) debugPrintf(PRINT, __VA_ARGS__);
 # endif // DPRINT_TO_RADIO
 
 #else // USE_PRINT not defined
 
-# define PRINT_INIT_DEF(len)
-# define PRINT_INIT_NEW(len)
+# define PRINT_INIT(len)
 # define PRINTF(...)
-# define PRINT(...)
 
 #endif // USE_PRINT
 
+//
+// Print text with newline
+//
+#define PRINTLN(x) PRINT_FUNCTION(x "\n")
 
-#define PRINTLN(x) PRINT(x "\n")
-
+//
+// TPRINTF: print text with timestamp
+//
 #if PLATFORM_PC
 #include <timers.h> // for getRealTime()
-#define TPRINTF(format, ...) debugPrintf(PRINT, "[%u] " format, getRealTime(), ##__VA_ARGS__)
+#define TPRINTF(format, ...) debugPrintf(PRINT_FUNCTION, "[%u] " format, getRealTime(), ##__VA_ARGS__)
 #else
 #define TPRINTF(...) PRINTF(__VA_ARGS__)
 #endif
 
-// the port used for network printing
+//
+// The port used for network printing
+//
 #define DPRINT_PORT  113
-
-// -------------------------------------------------
-// old version, kept for backwards compatibility, does nothing
-#define PRINT_INIT(len)
 
 // -------------------------------------- functions
 
 void serialPrint(const char* str);
 void radioPrint(const char* str);
+
+// internal, neccessary for building correctly
+static inline void serialPrintV(const char* str, ...) {
+    serialPrint(str);
+}
+static inline void radioPrintV(const char* str, ...) {
+    radioPrint(str);
+}
 
 typedef void (* PrintFunction_t)(const char* str);
 

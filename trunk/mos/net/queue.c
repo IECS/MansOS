@@ -101,7 +101,7 @@ int8_t queueAddPacket(MacInfo_t *mi, const uint8_t *data, uint16_t length,
                       bool replace, QueuedPacket_t **result) {
     QueuedPacket_t *p = newQpacket(replace);
     if (!p) {
-        PRINT("queueAddPacket: queue is full!\n");
+        PRINTF("queueAddPacket: queue is full!\n");
         return -ENOMEM;
     }
     if (bufferWrite(&p->buffer, mi->macHeader, mi->macHeaderLen)
