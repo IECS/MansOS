@@ -165,7 +165,7 @@ void rxPacket(void)
         lastRx = *rxBuffer;
         rxBufferLength = 0;
     } else {
-//        PRINT("failed to rx packet...\n");
+//        PRINTF("failed to rx packet...\n");
     }
 }
 

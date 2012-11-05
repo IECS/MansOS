@@ -68,7 +68,6 @@ void appMain(void)
 
     ledOn(); // to know - we are running
 
-    PRINT_INIT(128); 
     uint16_t a[8];
     uint8_t i;
 

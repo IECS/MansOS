@@ -38,7 +38,7 @@ void appMain(void)
             val = adcRead(channel);
             PRINTF("\t%i", val);
         }
-        PRINT("\n");
+        PRINTF("\n");
         mdelay(1000);
     }
 }

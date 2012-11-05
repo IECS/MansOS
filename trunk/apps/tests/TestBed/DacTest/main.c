@@ -28,7 +28,7 @@ void appMain(void)
 {
     uint16_t i;
 
-    PRINT("starting..\n");
+    PRINTF("starting..\n");
 
     dac7718Init();
     dac7718SelectChannel(DAC7718_CHANNEL_0);

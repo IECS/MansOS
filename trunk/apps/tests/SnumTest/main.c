@@ -29,12 +29,11 @@ void appMain(void)
 {
     uint8_t snumBuffer[8] = {0};
     uint_t i;
-//    PRINT_INIT(127);
 
     bool ok = halGetSerialNumber(snumBuffer);
     PRINTF("ok=%s, snum=", (ok ? "yes" : "no"));
     for (i = 0; i < 8; ++i) {
         PRINTF("0x%02x ", snumBuffer[i]);
     }
-    PRINT("\n");
+    PRINTF("\n");
 }

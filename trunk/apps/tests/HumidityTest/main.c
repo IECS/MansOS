@@ -35,7 +35,7 @@
 //-------------------------------------------
 void appMain(void)
 {
-    PRINT("Humidity test app\n");
+    PRINTF("Humidity test app\n");
 
     humidityOn();
 

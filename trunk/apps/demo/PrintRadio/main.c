@@ -37,7 +37,7 @@ void recvRadio(void)
     greenLedToggle();
     len = radioRecv(radioBuffer, sizeof(radioBuffer));
     if (len < 0) {
-        PRINT("radio receive failed\n");
+        PRINTF("radio receive failed\n");
     }
     else if (len > 0 ) {
         PRINTF("radio receive %d bytes\n", len);
@@ -46,10 +46,10 @@ void recvRadio(void)
 }
 
 void recvSerial(uint8_t length) {
-    PRINT(serialBuffer);
+    PRINTF(serialBuffer);
     if (serialBuffer[length - 1] != '\n') {
         // print newline as well
-        PRINT("\n");
+        PRINTF("\n");
     }
     radioSend(serialBuffer, length);
 }
@@ -62,7 +62,7 @@ void appMain(void)
     radioSetReceiveHandle(recvRadio);
     radioOn();
 
-    PRINT("Forwarder started...\n");
+    PRINTF("Forwarder started...\n");
 
     while (1) {
         radioSend("hello world", sizeof("hello world"));

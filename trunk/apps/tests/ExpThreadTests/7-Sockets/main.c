@@ -46,7 +46,7 @@ static void sendData(Socket_t *socket)
     for (;;) {
         PRINTF("sending counter %i\n", counter);
         if (socketSend(socket, &counter, sizeof(counter))) {
-            PRINT("socketSend failed\n");
+            PRINTF("socketSend failed\n");
         }
         mdelay(SLEEP_TIME_MS);
         ++counter;

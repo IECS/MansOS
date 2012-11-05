@@ -125,7 +125,7 @@ static void recvTest(Socket_t *socket, uint8_t *data, uint16_t len)
         socketSetDstAddress(socket, originAddr);
         temp2[1] = data[1];
         if (socketSend(socket, &temp2, sizeof(temp2))) {
-            PRINT("socketSend failed\n");
+            PRINTF("socketSend failed\n");
         } else{
             //PRINTF("answered test to neighbor %#x, no %d\n",originAddr,data[1]);
         }
@@ -133,7 +133,7 @@ static void recvTest(Socket_t *socket, uint8_t *data, uint16_t len)
         blocked = false;
         //PRINTF("Got release\n");
     } else{
-        PRINT("unknow packet, dropping\n");
+        PRINTF("unknow packet, dropping\n");
     }
     redLedToggle();
 }
@@ -147,7 +147,7 @@ static void sendTestRequest(Socket_t *socket, MosShortAddr addr)
     for (i = 0; i < TEST_COUNT; i++){
         data[1] = i+1;
         if (socketSend(socket, &data, sizeof(data))) {
-            PRINT("socketSend failed\n");
+            PRINTF("socketSend failed\n");
         }
         INC_SENT(addr);
         // PRINTF("INCE'd sent for %#x\n",addr);
@@ -170,7 +170,7 @@ static void sendAddrRequest(Socket_t *socket)
     
     for (i = 0; i < ADDR_BYTE_COUNT; i++){
         if (socketSend(socket, &data, sizeof(data))) {
-            PRINT("socketSend failed\n");
+            PRINTF("socketSend failed\n");
         } else{
             // PRINT("Addr request sent\n");
         }
@@ -183,7 +183,7 @@ static void sendUnblock(Socket_t *socket)
     uint8_t data = UNBLOCK_BYTE;
     socketSetDstAddress(socket, MOS_ADDR_BROADCAST);
     if (socketSend(socket, &data, sizeof(data))) {
-        PRINT("socketSend failed\n");
+        PRINTF("socketSend failed\n");
     } else{
         //PRINT("Unblock sent\n");
     }
@@ -197,17 +197,17 @@ static void recvAddrRequest(Socket_t *socket, uint8_t *data, uint16_t len){
     if (temp == REPLY_ADDR_BYTE){
         ADD_NEIGHBOR(originAddr);
         // PRINTF("Added neighbor %#x\n",originAddr);
-    } else if (temp == ADDR_BYTE){
+    } else if (temp == ADDR_BYTE) {
         temp = REPLY_ADDR_BYTE;
         if (socketSend(socket, &temp, sizeof(temp))) {
-            PRINT("socketSend failed\n");
+            PRINTF("socketSend failed\n");
         } else{
             //PRINT("Addr request replied\n");
             blocked = true;
             //PRINTF("Got blocked\n");
         }
-    } else{
-        PRINT("unknow packet, dropping\n");
+    } else {
+        PRINTF("unknow packet, dropping\n");
     }
     redLedToggle();
 }
@@ -225,7 +225,6 @@ void appMain(void)
     
     socketSetDstAddress(&addrSocket, MOS_ADDR_BROADCAST);
 
-    PRINT_INIT(128);
     PRINTF("Local address: %#x\n",localAddress);
     
     // Wait for everyone else who might wanna test

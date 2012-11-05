@@ -15,7 +15,7 @@ void appMain(void)
         redLedToggle();
         while (controlFlag);
         mutexLock(&testMutex);
-        PRINT("in thread #0\n");
+        PRINTF("in thread #0\n");
         mdelay(1000);
         controlFlag = 1;
         mutexUnlock(&testMutex);
@@ -28,7 +28,7 @@ void secondThreadFunction(void)
         blueLedToggle();
         while (!controlFlag);
         mutexLock(&testMutex);
-        PRINT("in thread #1\n");
+        PRINTF("in thread #1\n");
         controlFlag = 0;
         mutexUnlock(&testMutex);
     }

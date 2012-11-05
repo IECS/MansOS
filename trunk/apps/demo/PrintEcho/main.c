@@ -49,10 +49,10 @@ void serialReceive(uint8_t byte) {
         PRINTF("%s", buffer);
         if (byte != '\n') {
             // print newline as well
-            PRINT("\n");
+            PRINTF("\n");
         }
         bytesReceived = 0; // reset reception
-        PRINT(PROMPT);
+        PRINTF(PROMPT);
     }
 }
 
@@ -61,5 +61,5 @@ void appMain(void)
     serialSetReceiveHandle(PRINTF_SERIAL_ID, serialReceive);
 
     PRINTF("Type your text here, press enter, and the mote will echo it back\n");
-    PRINT(PROMPT);
+    PRINTF(PROMPT);
 }

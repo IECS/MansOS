@@ -32,11 +32,11 @@ void recvCallback(void)
     greenLedToggle();
     len = radioRecv(&packet, sizeof(packet));
     if (len < 0) {
-        PRINT("radio receive failed\n");
+        PRINTF("radio receive failed\n");
         return;
     }
     if (len < sizeof(packet)) {
-        PRINT("too small!\n");
+        PRINTF("too small!\n");
         return;
     }
     // PRINT("radio rx!\n");
@@ -61,7 +61,7 @@ void appMain(void)
     radioOn();
 
     for (;;) {
-        PRINT(".\n");
+        PRINTF(".\n");
         DISABLE_INTS();
         dumpNeighbors();
         ENABLE_INTS();

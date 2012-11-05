@@ -47,7 +47,7 @@ void appMain(void)
     alarmSchedule(&alarm, 10);
 
     for (;;) {
-        PRINT("in app main...\n");
+        PRINTF("in app main...\n");
         redLedToggle();
         msleep(1000);
     }

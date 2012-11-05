@@ -40,19 +40,19 @@ void appMain(void)
     PRINTF("appMain\n");
 
     extFlashWake();
-    PRINT("wake ok\n");
+    PRINTF("wake ok\n");
 
     addr = 0;
     extFlashRead(addr, readBuffer, sizeof(readBuffer));
     debugHexdump(readBuffer, DATA_SIZE);
 
-    PRINT("read ok\n");
+    PRINTF("read ok\n");
 
     for (i = 0; i < DATA_SIZE; ++i) {
         writeBuffer[i] = i;
     }
     extFlashWrite(addr, writeBuffer, sizeof(writeBuffer));
-    PRINT("write ok\n");
+    PRINTF("write ok\n");
 
     extFlashRead(addr, readBuffer, sizeof(readBuffer));
     debugHexdump(readBuffer, DATA_SIZE);

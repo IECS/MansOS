@@ -101,8 +101,6 @@ void appMain(void)
     for (i = 0; i < BUFSIZE; i++)
         data[i] = i;
 
-    PRINT_INIT(128);
-
     /*
      * Remove files that might have been left from a previous run. Ignore
      * errors. Note that this does not help if someone created a file with

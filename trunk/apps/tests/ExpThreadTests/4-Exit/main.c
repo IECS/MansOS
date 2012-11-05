@@ -29,7 +29,7 @@
 
 void appMain(void)
 {
-    PRINT("in appMain...\n");
+    PRINTF("in appMain...\n");
     ledToggle();
     msleep(1000);
     ledToggle();
