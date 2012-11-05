@@ -36,10 +36,10 @@ void appMain(void)
     PRINTF("%d\n",apdsCommand(TIMING_REG, INTEGRATION_TIME_NORMAL));
     while(1){
         if (apdsReadWord(COMMAND | DATA0LOW_REG, &val1) != 0) {
-            PRINT("apdsReadWord 0 failed\n");
+            PRINTF("apdsReadWord 0 failed\n");
         }
         if (apdsReadWord(COMMAND | DATA1LOW_REG, &val2) != 0) {
-            PRINT("apdsReadWord 1 failed\n");
+            PRINTF("apdsReadWord 1 failed\n");
         }
         PRINTF("val0: %#x\t\tval1:%#x\n", val1, val2);
         sleep(1);

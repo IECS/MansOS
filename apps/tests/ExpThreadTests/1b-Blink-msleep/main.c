@@ -26,7 +26,7 @@
 void appMain(void)
 {
     for (;;) {
-        PRINT("in appMain...\n");
+        PRINTF("in appMain...\n");
         ledToggle();
         msleep(1000);
     }

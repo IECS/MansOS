@@ -31,7 +31,7 @@ void appMain(void)
     alarmSchedule(&alarm2, ALARM_2_INTERVAL);
 
     for (;;) {
-        PRINT("in app main...\n");
+        PRINTF("in app main...\n");
         ledToggle();
         msleep(1000);
     }

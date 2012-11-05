@@ -162,8 +162,6 @@ static bool streamRead(void *buf, size_t size)
 /* Test program */
 void appMain(void)
 {
-    PRINT_INIT(256);
-
 #define REC_SIZE 4
     static char buf[REC_SIZE];
 

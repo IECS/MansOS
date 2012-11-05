@@ -50,8 +50,6 @@ static inline void printPacket(Packet_t *p) {
 //-------------------------------------------
 void appMain(void)
 {
-    PRINT_INIT(255);
-
     PRINTF("\n\nhalo world\n");
 
     // Use AVCC and AVSS as voltage reference

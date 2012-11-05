@@ -219,7 +219,6 @@ void printDate() {
 
 
 void appMain() {
-    PRINT_INIT(127);
     PRINTF("starting\n");
 
     initI2CStuff();

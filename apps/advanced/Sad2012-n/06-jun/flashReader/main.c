@@ -97,7 +97,6 @@ void readExtFlash(void)
     }
 }
 
-
 bool prepareExtFlash(void)
 {
      extFlashWake();

@@ -289,7 +289,7 @@ void recvCallback(uint8_t *data, int16_t len)
         static uint32_t nextCrcErrorReportTime;
         uint32_t now = getJiffies();
         if (timeAfter32(now, nextCrcErrorReportTime)) {
-            PRINT("wrong CRC\n");
+            PRINTF("wrong CRC\n");
             nextCrcErrorReportTime = now + MAX_TEST_TIME;
         }
 //      debugHexdump(data, len);

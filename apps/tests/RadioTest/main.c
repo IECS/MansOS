@@ -46,7 +46,7 @@ void onTimer(void *param)
     //     radioOn();
     // }
 
-    PRINT("reset the radio\n");
+    PRINTF("reset the radio\n");
     radioSetChannel(RADIO_CHANNEL);
 }
 

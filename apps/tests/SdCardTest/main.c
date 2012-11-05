@@ -91,6 +91,6 @@ void appMain(void)
     mdelay(1000);
     while(1) {
         msleep(3000);
-        PRINT(".\n");
+        PRINTF(".\n");
     }
 }

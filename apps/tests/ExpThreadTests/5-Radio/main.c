@@ -32,7 +32,7 @@ void appMain(void)
     radioOn();
 
     for (;;) {
-        PRINT("in appMain...\n");
+        PRINTF("in appMain...\n");
 
         if (isRadioPacketReceived()) {
             PRINTF("got a packet from radio, size=%u, first bytes=0x%02x 0x%02x 0x%02x 0x%02x\n",

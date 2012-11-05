@@ -50,7 +50,7 @@ void appMain(void)
         // islRead(uint16_t *data, bool waitForInterupt),
         // returns true on success, false on fail.
         if (!islRead(&islLight, true)){
-            PRINT("islRead failed\n");
+            PRINTF("islRead failed\n");
         } else {
             PRINTF("islLight = %#x\n", islLight);
         }

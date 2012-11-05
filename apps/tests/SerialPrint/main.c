@@ -34,7 +34,6 @@
 //-------------------------------------------
 void appMain(void)
 {
-    PRINT_INIT(128);
     static uint_t counter = 0;
     while (1) {
         PRINTF("Hello #%i\n", counter++);

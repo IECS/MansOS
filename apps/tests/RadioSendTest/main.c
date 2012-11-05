@@ -62,7 +62,7 @@ void appMain(void)
         // int rssi = amb8420GetRSSI();
         // int8_t rssi = radioGetRSSI();
         // PRINTF("+++ rssi = %d\n", rssi);
-        PRINT(".\n");
+        PRINTF(".\n");
     }
 #else
     // radioSetReceiveHandle(radioDiscard);
@@ -83,18 +83,18 @@ void recvCounter(void)
     uint8_t counter;
     int8_t rssi = 0;
 
-    PRINT("recvCounter\n");
+    PRINTF("recvCounter\n");
 
     greenLedToggle();
     len = radioRecv(buffer, sizeof(buffer));
     rssi = radioGetLastRSSI();
     if (len < 0) {
-        PRINT("radio recv failed\n");
+        PRINTF("radio recv failed\n");
         //blueLedToggle();
         return;
     }
     if (len == 0) {
-        PRINT("0 len!\n");
+        PRINTF("0 len!\n");
     }
     // debugHexdump(buffer, len);
     if (len > 0) {

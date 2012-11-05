@@ -72,9 +72,8 @@ void appMain(void)
         blueLedToggle();
 
         if (socketSend(&socket, &counter, sizeof(counter))) {
-            PRINT("socketSend failed\n");
+            PRINTF("socketSend failed\n");
         }
-//        mdelay(3000);
         mdelay(30000);
         redLedOn();
         mdelay(100);

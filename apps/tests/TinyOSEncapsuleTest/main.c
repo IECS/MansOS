@@ -79,7 +79,6 @@ void testEnc(Size_t payload, Size_t buffer);
 //-------------------------------------------
 void appMain(void)
 {
-    PRINT_INIT(128);
     uint16_t i;
     for (i = 0; i < SMALL_PAYLOAD_SIZE; ++i) {
         smallPayload[i] = i + 1;

@@ -77,7 +77,6 @@ void appMain(void)
     GPS_INIT();
     GPS_ON();
 
-    PRINT_INIT(256); // inits UART1 automatically
     if (serialInit(0, 115200, 0)) redLedOn();
 
     // set NMEA stream parsing routine as UART0 callback

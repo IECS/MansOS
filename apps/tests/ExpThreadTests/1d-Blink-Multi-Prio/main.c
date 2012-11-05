@@ -41,7 +41,7 @@ void appMain(void)
     for (;;) {
         if (timeAfter16(ALARM_TIMER_VALUE(), nextTime)) {
             nextTime += INTERVAL;
-            PRINT("in appMain...\n");
+            PRINTF("in appMain...\n");
             redLedToggle();
             mdelay(100);
         }
@@ -58,7 +58,7 @@ void secondThreadFunction(void)
     for (;;) {
         if (timeAfter16(ALARM_TIMER_VALUE(), nextTime)) {
             nextTime += INTERVAL;
-            PRINT("in thread...\n");
+            PRINTF("in thread...\n");
             greenLedToggle();
             mdelay(100);
         }
