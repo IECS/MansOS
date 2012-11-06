@@ -36,6 +36,8 @@ SLEEP_TIMER_INTERRUPT()
 {
     if (!SLEEP_TIMER_EXPIRED()) return;
 
+    energyConsumerOn(ENERGY_CONSUMER_MCU);
+
     // restart alarm interrupts
     RESET_ALARM_TIMER();
     ENABLE_ALARM_INTERRUPT();
@@ -74,8 +76,14 @@ void MSLEEP_FUNCTION_NAME(uint16_t milliseconds)
     SLEEP_TIMER_START();
     // stop timer A
     DISABLE_ALARM_INTERRUPT();
+    // change energy accounting mode
+    energyConsumerOff(ENERGY_CONSUMER_MCU);
+    energyConsumerOn(ENERGY_CONSUMER_LPM);
     // enter low power mode 3
     ENTER_SLEEP_MODE();
+    // change energy accounting mode back
+    energyConsumerOff(ENERGY_CONSUMER_LPM);
+    energyConsumerOn(ENERGY_CONSUMER_MCU);
 }
 
 #endif

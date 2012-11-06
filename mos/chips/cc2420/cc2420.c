@@ -61,6 +61,7 @@
 #include <lib/codec/crc.h>
 #include <kernel/defines.h>
 #include <kernel/threads/threads.h>
+#include <lib/energy.h>
 
 #include <digital.h>
 
@@ -537,6 +538,8 @@ static void cc2420SetPanAddr(unsigned pan,
 */
 ISR(PORT1, cc2420Interrupt)
 {
+    bool old = energyConsumerOnIrq(ENERGY_CONSUMER_MCU);
+
     CC2420_CLEAR_FIFOP_INT();
 
     // PRINT("cc2420Interrupt\n");
@@ -554,6 +557,8 @@ ISR(PORT1, cc2420Interrupt)
         flushrx();
     }
 #endif
+
+    energyConsumerOffIrq(ENERGY_CONSUMER_MCU, old);
 }
 
 CC2420RxHandle cc2420SetReceiver(CC2420RxHandle recv)
