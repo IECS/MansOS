@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,24 +21,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_TIMERS_H
-#define MANSOS_TIMERS_H
+#include "energy.h"
 
-#include <platform.h>
-#include <kernel/threads/timing.h>
-
-// used when waking up from sleep during which the realtime
-// counter was not incremented
-static inline void incRealtime(uint32_t inc)
-{
-    // XXX: make sure this function is called with interrupts disabled
-    jiffies += inc;
-}
-
-static inline uint16_t msToSleepCycles(uint16_t ms)
-{
-    return ms * SLEEP_CYCLES
-        + (uint16_t) ((uint32_t) ms * (uint32_t) SLEEP_CYCLES_DEC / 1000ull);
-}
-
-#endif
+EnergyStats_t energyStats[TOTAL_ENERGY_CONSUMERS];

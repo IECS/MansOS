@@ -48,6 +48,7 @@
 #include <arch_mem.h>
 #include <sdcard/sdcard.h>
 #include <net/timesync.h>
+#include <lib/energy.h>
 
 #if (defined DEBUG && !defined DPRINT_TO_RADIO)
 #define INIT_PRINTF(...) PRINTF(__VA_ARGS__)
@@ -77,6 +78,9 @@ static inline void initSystem(void)
 
     // basic, platform-specific initialization: timers, platform-specific drivers (?)
     initPlatform();
+
+    // start energy accounting (as soon as timers are initialized)
+    energyConsumerOn(ENERGY_CONSUMER_MCU);
 
 #ifdef USE_PRINT
     // init printing to serial (makes sense only after clock has been calibrated)

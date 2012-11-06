@@ -2296,7 +2296,7 @@ class OutputUseCase(object):
 
         outputFile.write("static inline void {}PacketPrint(void)\n".format(self.getNameCC()))
         outputFile.write("{\n")
-        outputFile.write("    PRINT(\"======================\\n\");\n")
+        outputFile.write("    PRINTF(\"======================\\n\");\n")
         for f in self.packetFields:
             if f.count == 1:
                 outputFile.write("    serialPrint_{0}(\"{1}\", serialPacket.{2});\n".format(
@@ -2596,7 +2596,7 @@ class FromFileOutputUseCase(OutputUseCase):
         # main loop: read the file and print its contents
         outputFile.write("    while (1) {\n")
 
-        # outputFile.write('        PRINT("enter loop\\n");\n')
+        # outputFile.write('        PRINTF("enter loop\\n");\n')
 
         for f in self.packetFields:
             if self.isText:
@@ -2608,7 +2608,7 @@ class FromFileOutputUseCase(OutputUseCase):
         outputFile.write("        if (feof(in)) break;\n")
 
         # for debugging
-        # outputFile.write('        PRINT("\\n");\n')
+        # outputFile.write('        PRINTF("\\n");\n')
 
         if self.condition:
             outputFile.write("\n")
@@ -2616,7 +2616,7 @@ class FromFileOutputUseCase(OutputUseCase):
                     self.conditionEvaluationCode))
 
         # for debugging
-        # outputFile.write('        PRINT("OK\\n");\n')
+        # outputFile.write('        PRINTF("OK\\n");\n')
 
         # fill rest of packet fields
         outputFile.write("        {0}Packet.magic = SEAL_MAGIC;\n".format(self.getNameCC()))
@@ -2649,7 +2649,7 @@ class FromFileOutputUseCase(OutputUseCase):
 
         outputFile.write("    }\n")
 
-        # outputFile.write('        PRINT("close files\\n");\n')
+        # outputFile.write('        PRINTF("close files\\n");\n')
 
         # close the file
         outputFile.write("    fclose(in);\n")

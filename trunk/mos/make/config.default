@@ -155,3 +155,5 @@ ifeq ($(USE_ROLE_BASE_STATION),y)
 USE_TIMESYNC ?= y
 endif
 USE_TIMESYNC ?= n
+
+USE_ENERGY_STATS ?= n
