@@ -26,6 +26,7 @@
 #include "threads/threads.h"
 #endif
 #include <print.h>
+#include <lib/energy.h>
 
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 
