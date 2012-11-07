@@ -155,8 +155,6 @@ extern uint8_t threadStackBuffer[];
 //
 void schedule(void) NAKED;
 
-void doMsleep(uint16_t milliseconds);
-
 void threadCreate(uint_t threadIndex, ThreadFunc threadFunction);
 
 void startThreads(ThreadFunc userThreadFunction, ThreadFunc kernelThreadFunction);

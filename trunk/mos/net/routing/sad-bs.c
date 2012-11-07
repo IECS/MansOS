@@ -29,7 +29,7 @@
 #include "../routing.h"
 #include "../socket.h"
 #include <alarms.h>
-#include <kernel/threads/timing.h>
+#include <kernel/timing.h>
 #include <print.h>
 #include <net/net-stats.h>
 

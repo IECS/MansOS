@@ -21,8 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_THREADS_TIMING_H
-#define MANSOS_THREADS_TIMING_H
+#ifndef MANSOS_TIMING_H
+#define MANSOS_TIMING_H
 
 #include <kernel/defines.h>
 
@@ -60,5 +60,10 @@ static inline ticks_t getRealTime(void) {
 static inline uint32_t getUptime(void) {
     return jiffies2ms(jiffies) / 1000;
 }
+
+//
+// Internal use only: this functions does the actual sleeping
+//
+void doMsleep(uint16_t milliseconds);
 
 #endif

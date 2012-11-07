@@ -73,7 +73,7 @@ void alarmsProcess(void)
 
 void alarmSchedule(Alarm_t *alarm, uint32_t milliseconds)
 {
-    // PRINTF("alarmSchedule %p, ms=%lu\n", alarm, milliseconds);
+    PRINTF("alarmSchedule %p, ms=%lu\n", alarm, milliseconds);
     alarm->jiffies = (uint32_t)getJiffies() + ms2jiffies(milliseconds);
 
     // locking is required, because both kernel and user threads can be using this function
