@@ -62,13 +62,7 @@ SLEEP_TIMER_INTERRUPT()
 //
 #if defined TBCTL || defined TBCTL_ || defined TOIE1
 
-#if USE_THREADS
-#define MSLEEP_FUNCTION_NAME doMsleep
-#else
-#define MSLEEP_FUNCTION_NAME msleep
-#endif
-
-void MSLEEP_FUNCTION_NAME(uint16_t milliseconds)
+void doMsleep(uint16_t milliseconds)
 {
     DISABLE_INTS();
     // setup sleep timer

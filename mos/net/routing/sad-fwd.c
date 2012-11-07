@@ -34,7 +34,7 @@
 #include "../routing.h"
 #include "../socket.h"
 #include <alarms.h>
-#include <kernel/threads/timing.h>
+#include <kernel/timing.h>
 #include <lib/unaligned.h>
 #include <print.h>
 #include <random.h>

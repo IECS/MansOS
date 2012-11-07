@@ -23,7 +23,7 @@
 
 #include <kernel/alarms_system.h>
 #include <platform.h>
-#include <kernel/threads/timing.h>
+#include <kernel/timing.h>
 
 //----------------------------------------------------------
 // internal variables

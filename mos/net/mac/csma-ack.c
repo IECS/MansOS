@@ -33,7 +33,7 @@
 #include <random.h>
 #include <lib/assert.h>
 #include <net/radio_packet_buffer.h>
-#include <kernel/threads/timing.h>
+#include <kernel/timing.h>
 #include <net/net-stats.h>
 
 #define TEST_FILTERS 1

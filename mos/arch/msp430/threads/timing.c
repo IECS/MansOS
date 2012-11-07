@@ -22,7 +22,7 @@
  */
 
 #include <platform.h>
-#include <kernel/threads/timing.h>
+#include <kernel/timing.h>
 #include <lib/assert.h>
 
 #include <lib/dprint.h>

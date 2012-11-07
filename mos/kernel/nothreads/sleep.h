@@ -21,23 +21,48 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <platform.h>
+#include <kernel/alarms_system.h>
 #include <kernel/timing.h>
 
-static inline uint16_t msToSleepCycles(uint16_t ms) {
-    return ms * SLEEP_CYCLES
-        + (uint16_t) ((uint32_t) ms * (uint32_t) SLEEP_CYCLES_DEC / 1000ull);
-}
+#include <lib/dprint.h>
 
-void atmegaTimer1Set(uint16_t ms)
+//
+// Put current thread to sleep for a specific time
+//
+static inline void msleep(uint16_t ms)
 {
-    if (ms > PLATFORM_MAX_SLEEP_MS) {
-        ms = PLATFORM_MAX_SLEEP_MS;
-    } else if (ms < PLATFORM_MIN_SLEEP_MS) {
-        ms = PLATFORM_MIN_SLEEP_MS;
-    }
+    const uint32_t sleepStart = (uint32_t) getJiffies();
+    const uint32_t sleepEnd = sleepStart + ms;
+    // PRINTF("msleep %u, now=%lu\n", ms, sleepStart);
 
-    uint16_t ocr = msToSleepCycles(ms);
-    jiffies += ms2jiffies(ms);
-    OCR1A = TCNT1 + ocr;
+    bool allTimeSpent;
+    do {
+        // how much to sleep?
+        uint32_t now = (uint32_t) getJiffies();
+        int16_t msToSleep = sleepEnd - now;
+        // if time has passed, quit now
+        if (msToSleep <= 0) break;
+
+        // calculate time to sleep: minumum of 'ms' and time to next alarm
+        Alarm_t *first = SLIST_FIRST(&alarmListHead);
+        if (first && timeAfter32(sleepEnd, first->jiffies)) {
+            // PRINTF("alarms, dont sleep to end!\n");
+            msToSleep = first->jiffies - now;
+            // make sure no outstanding alarms are present
+            if (msToSleep <= 0) {
+                // PRINTF("process and restart\n");
+                // take care of expired alarms
+                alarmsProcess();
+                // restart the loop
+                continue;
+            }
+            allTimeSpent = false;
+        } else {
+            // PRINTF("sleep to end\n");
+            allTimeSpent = true;
+        }
+        // do the real sleep
+        doMsleep(msToSleep);
+        //check for exit conditions
+    } while (!allTimeSpent);
 }
