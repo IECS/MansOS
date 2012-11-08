@@ -46,6 +46,7 @@ from seal import seal_parser
 
 class ApiCore:
     def __init__(self, argv):
+        self.loaded = False
         self.config = wx.Config("MansOS-IDE", style = wx.CONFIG_USE_LOCAL_FILE)
 
         self.path = os.getcwd()
@@ -210,6 +211,7 @@ class ApiCore:
             self.tabManager.addPage(x)
         self.frame.auiManager.Update()
 
+        self.loaded = True
 # Populate motelist
         self.populateMotelist()
 
