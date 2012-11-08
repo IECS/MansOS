@@ -57,17 +57,26 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
     UC##letterid##BR1 = (CPU_HZ / SPI_SPEED) >> 8; /* Clock divider, higher part */  \
     UC##letterid##CTL0 = SPI_MODE;            /* Set specified mode */               \
     UC##id##IE &= ~UC##letterid##RXIE;        /* Disable receive interrupt */        \
-    UC##letterid##CTL1 &= ~UCSWRST;           /* Release hold */
+    UC##letterid##CTL1 &= ~UCSWRST            /* Release hold */
 
     if (busId == 0) {
         SETUP_SPI_PINS(A0);
         SETUP_USCI(0, A0);
     }
-    else // busId == 1
-    {
+    else if (busId == 1) {
         SETUP_SPI_PINS(B0);
         SETUP_USCI(0, B0);
     }
+#ifdef UCA1CTL1
+    else if (busId == 2) {
+        SETUP_SPI_PINS(A1);
+        SETUP_USCI(1, A1);
+    }
+    else if (busId == 3) {
+        SETUP_SPI_PINS(B1);
+        SETUP_USCI(1, B1);
+    }
+#endif
 
     return 0;
 }
@@ -75,17 +84,25 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
 // Data transmission
 uint8_t hw_spiExchByte(uint8_t busId, uint8_t b)
 {
-#define SPI_EXCH_BYTE(id, letterid) {                                  \
-    while (!(UC##id##IFG & UC##letterid##TXIFG)); /* Wait for ready */ \
-    UC##letterid##TXBUF = b;                      /* Send data */      \
-    while (!(UC##id##IFG & UC##letterid##RXIFG)); /* Wait for reply */ \
-    return UC##letterid##RXBUF; }                 /* Return reply */
+#define SPI_EXCH_BYTE(id, letterid) do {                               \
+        while (!(UC##id##IFG & UC##letterid##TXIFG)); /* Wait for ready */ \
+        UC##letterid##TXBUF = b;                      /* Send data */      \
+        while (!(UC##id##IFG & UC##letterid##RXIFG)); /* Wait for reply */ \
+        return UC##letterid##RXBUF;                   /* Return reply */  \
+    } while (0)
 
     if (busId == 0) {
-        SPI_EXCH_BYTE(0, A0)
+        SPI_EXCH_BYTE(0, A0);
     }
-    else // busId == 1
-    {
-        SPI_EXCH_BYTE(0, B0)
+    else if (busId == 1) {
+        SPI_EXCH_BYTE(0, B0);
     }
+#ifdef UCA1CTL1
+    else if (busId == 2) {
+        SPI_EXCH_BYTE(1, A1);
+    }
+    else if (busId == 3) {
+        SPI_EXCH_BYTE(1, B1);
+    }
+#endif
 }

@@ -37,6 +37,8 @@
 
 #include <kernel/defines.h>
 
+// TODO: clean up this file
+
 #define USCI_A0_RXTX_PORT 3
 #define USCI_A0_TX_PIN    4
 #define USCI_A0_RX_PIN    5
@@ -44,8 +46,8 @@
 #define USCI_A0_SOMI_PIN  USCI_A0_RX_PIN
 #define USCI_A0_CLK_PORT  3
 #define USCI_A0_CLK_PIN   0
-#define USCI_A0_STE_PORT  3
-#define USCI_A0_STE_PIN   3
+// #define USCI_A0_STE_PORT  3
+// #define USCI_A0_STE_PIN   3
 
 #define USCI_A1_RXTX_PORT 3
 #define USCI_A1_TX_PIN    6
@@ -54,20 +56,28 @@
 #define USCI_A1_SOMI_PIN  USCI_A1_RX_PIN
 #define USCI_A1_CLK_PORT  5
 #define USCI_A1_CLK_PIN   0
-#define USCI_A1_STE_PORT  5
-#define USCI_A1_STE_PIN   3
+// #define USCI_A1_STE_PORT  5
+// #define USCI_A1_STE_PIN   3
 
 #define USCI_B0_RXTX_PORT 3
 #define USCI_B0_SIMO_PIN  1
 #define USCI_B0_SOMI_PIN  2
 #define USCI_B0_CLK_PORT  3
 #define USCI_B0_CLK_PIN   3
-#define USCI_B0_STE_PORT  3
-#define USCI_B0_STE_PIN   0
+// #define USCI_B0_STE_PORT  3
+// #define USCI_B0_STE_PIN   0
 
 #define USCI_B0_I2C_PORT  3
 #define USCI_B0_SDA_PIN   1
 #define USCI_B0_SCL_PIN   2
+
+#define USCI_B1_RXTX_PORT 5
+#define USCI_B1_SIMO_PIN  1
+#define USCI_B1_SOMI_PIN  2
+#define USCI_B1_CLK_PORT  5
+#define USCI_B1_CLK_PIN   3
+// #define USCI_B1_STE_PORT  5
+// #define USCI_B1_STE_PIN   0
 
 #define USCI_B1_I2C_PORT  5
 #define USCI_B1_SDA_PIN   1
@@ -77,15 +87,15 @@
 #if PLATFORM_XM1000
 #define SERIAL_COUNT       2
 #define PRINTF_SERIAL_ID   1
-#define UART_ON_USCI_A1   1
-#elif PLATFORM_TESTBED || PLATFORM_Z1
+#define UART_ON_USCI_A1    1
+#elif PLATFORM_Z1 || PLATFORM_TESTBED || PLATFORM_TESTBED2
 #define SERIAL_COUNT       2
 #define PRINTF_SERIAL_ID   0
-#define UART_ON_USCI_A0   1
+#define UART_ON_USCI_A0    1
 #else
 #define SERIAL_COUNT       1
 #define PRINTF_SERIAL_ID   0
-#define UART_ON_USCI_A0   1
+#define UART_ON_USCI_A0    1
 #endif
 
 
@@ -93,8 +103,12 @@
 static inline void serialEnableTX(uint8_t id) {  }
 static inline void serialDisableTX(uint8_t id) {  }
 
+
 // Enable receive interrupt
-#if PLATFORM_Z1 || PLATFORM_TESTBED
+#if PLATFORM_Z1 || PLATFORM_TESTBED || PLATFORM_TESTBED2
+//
+// Zolertia & TestBed specific code
+//
 static inline void serialEnableRX(uint8_t id) {
     if (id == 0) UC0IE |= UCA0RXIE;
     else UC1IE |= UCA1RXIE;
@@ -104,14 +118,34 @@ static inline void serialDisableRX(uint8_t id) {
     if (id == 0) UC0IE &= ~UCA0RXIE;
     else UC1IE &= ~UCA1RXIE;
 }
+
+// #elif PLATFORM_TESTBED2
+// //
+// // TestBed specific code
+// //
+// static inline void serialEnableRX(uint8_t id) {
+//     if (id == 0) UC0IE |= UCA0RXIE;
+//     if (id == 1) UC0IE |= UCB0RXIE;
+//     if (id == 2) UC1IE |= UCA1RXIE;
+//     else UC1IE |= UCB1RXIE;
+// }
+// // Disable receive interrupt
+// static inline void serialDisableRX(uint8_t id) {
+//     if (id == 0) UC0IE &= ~UCA0RXIE;
+//     else if (id == 1) UC0IE &= ~UCB0RXIE;
+//     else if (id == 2) UC1IE &= ~UCA1RXIE;
+//     else UC1IE &= ~UCB1RXIE;
+// }
+
 #else
+//
+// For other motes
+//
 static inline void serialEnableRX(uint8_t id) {
 #if UART_ON_USCI_A0
     UC0IE |= UCA0RXIE;
 #elif UART_ON_USCI_A1
     UC1IE |= UCA1RXIE;
-#elif UART_ON_USCI_B0
-    UC0IE |= UCB0RXIE;
 #endif
 }
 // Disable receive interrupt
@@ -120,11 +154,10 @@ static inline void serialDisableRX(uint8_t id) {
     UC0IE &= ~UCA0RXIE;
 #elif UART_ON_USCI_A1
     UC1IE &= ~UCA1RXIE;
-#elif UART_ON_USCI_B0
-    UC0IE &= ~UCB0RXIE;
 #endif
 }
-#endif // PLATFORM_Z1
+#endif
+
 static inline void hw_spiBusOn(uint8_t busId) { }
 static inline void hw_spiBusOff(uint8_t busId) { }
 
