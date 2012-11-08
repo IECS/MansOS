@@ -25,7 +25,7 @@
 #define MANSOS_TIMERS_H
 
 #include <platform.h>
-#include <kernel/threads/timing.h>
+#include <kernel/timing.h>
 
 // used when waking up from sleep during which the realtime
 // counter was not incremented
