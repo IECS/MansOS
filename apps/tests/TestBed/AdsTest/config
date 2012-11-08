@@ -3,7 +3,7 @@
 #
 
 # only for testbed
-PLATFORM_ONLY=testbed
+PLATFORM_ONLY=testbed testbed2
 
 #CPU_MHZ=4
 
