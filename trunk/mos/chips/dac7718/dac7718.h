@@ -24,8 +24,6 @@
 #include "adc_dac_pins.h"
 #include <kernel/defines.h>
 
-#define DAC7718_SPI_ID             1
-
 #define DAC7718_REG_CONFIG         0x0
 #define DAC7718_REG_MONITOR        0x1
 #define DAC7718_REG_GPIO           0x2
