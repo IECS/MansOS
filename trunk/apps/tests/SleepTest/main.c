@@ -31,6 +31,7 @@
 #if PLATFORM_SADMOTE
 #include "ads1115/ads1115.h"
 #endif
+#include <lib/energy.h>
 
 #define PAUSE 2000
 
@@ -84,6 +85,8 @@ void appMain(void) {
 #endif
 
     while (1) {
+        energyStatsDump();
+
         msleep(PAUSE); // sleep PAUSE seconds
         //PRINT("hello world\n");
         ledToggle();

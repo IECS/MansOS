@@ -60,6 +60,7 @@ enum {
     TICKS_IN_MS = CPU_HZ / 1000 / JIFFY_CLOCK_DIVIDER,
 };
 
+// XXX: this is slow
 #define TIMER_TICKS_TO_MS(ticks) ((ticks) / TICKS_IN_MS)
 
 // bits for clock divider setup

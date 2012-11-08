@@ -164,6 +164,7 @@ static void on(void)
     BUSYWAIT_UNTIL(status() & (BV(CC2420_XOSC16M_STABLE)), RTIMER_SECOND / 100);
 
     receive_on = 1;
+    energyConsumerOn(ENERGY_CONSUMER_RADIO_RX);
 }
 
 static void off(void)
@@ -173,6 +174,8 @@ static void off(void)
 
     // Wait for transmission to end before turning radio off.
     BUSYWAIT_UNTIL(!(status() & BV(CC2420_TX_ACTIVE)), RTIMER_SECOND / 10);
+
+    energyConsumerOff(ENERGY_CONSUMER_RADIO_RX);
 
     strobe(CC2420_SRFOFF);
     CC2420_DISABLE_FIFOP_INT();
@@ -347,10 +350,15 @@ int_t cc2420Send(const void *header, uint16_t headerLen,
                 result = -EBUSY;
                 goto end;
             }
+
+            energyConsumerOnNoints(ENERGY_CONSUMER_RADIO_TX);
+            // TODO: when transmitting, listening does NOT spend energy!
+
             /* We wait until transmission has ended so that we get an
                accurate measurement of the transmission time.*/
             BUSYWAIT_UNTIL(!(status() & BV(CC2420_TX_ACTIVE)), RTIMER_SECOND / 10);
 
+            energyConsumerOffNoints(ENERGY_CONSUMER_RADIO_TX);
             if (!receive_on) {
                 /* We need to explicitly turn off the radio,
                  * since STXON[CCA] -> TX_ACTIVE -> RX_ACTIVE */
@@ -538,7 +546,8 @@ static void cc2420SetPanAddr(unsigned pan,
 */
 ISR(PORT1, cc2420Interrupt)
 {
-    bool old = energyConsumerOnIrq(ENERGY_CONSUMER_MCU);
+    // enter active CPU mode
+    energyConsumerOnIRQ(ENERGY_CONSUMER_MCU);
 
     CC2420_CLEAR_FIFOP_INT();
 
@@ -558,7 +567,7 @@ ISR(PORT1, cc2420Interrupt)
     }
 #endif
 
-    energyConsumerOffIrq(ENERGY_CONSUMER_MCU, old);
+    energyConsumerOffIRQ(ENERGY_CONSUMER_MCU);
 }
 
 CC2420RxHandle cc2420SetReceiver(CC2420RxHandle recv)

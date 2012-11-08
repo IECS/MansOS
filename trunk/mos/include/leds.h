@@ -26,6 +26,7 @@
 
 #include <kernel/defines.h>
 #include "digital.h"
+#include <lib/energy.h>
 
 // NOTE: a platform must define ledslist.h for listing all the leds 
 //      and implementation specific details. See ledslist.h for the details
@@ -43,6 +44,26 @@ uint_t ledsGet(void);              // Which leds are on? Returns a bitmask
 #define ledsOn(led_bitmask)     ledsSet(  (led_bitmask) | ledsGet() )
 #define ledsOff(led_bitmask)    ledsSet( ~(led_bitmask) & ledsGet() )
 #define ledsToggle(led_bitmask) ledsSet(  (led_bitmask) ^ ledsGet() )
+
+
+//
+// Energy consumption measurements; default energy profiles
+//
+#define redLed_ENERGY_PROFILE    ENERGY_CONSUMER_LED_RED
+#define yellowLed_ENERGY_PROFILE ENERGY_CONSUMER_LED_RED
+#define greenLed_ENERGY_PROFILE  ENERGY_CONSUMER_LED_GREEN
+#define blueLed_ENERGY_PROFILE   ENERGY_CONSUMER_LED_BLUE
+#define led0_ENERGY_PROFILE      ENERGY_CONSUMER_LED_RED
+#define led1_ENERGY_PROFILE      ENERGY_CONSUMER_LED_RED
+#define led2_ENERGY_PROFILE      ENERGY_CONSUMER_LED_RED
+#define led3_ENERGY_PROFILE      ENERGY_CONSUMER_LED_RED
+#define led4_ENERGY_PROFILE      ENERGY_CONSUMER_LED_RED
+#define led5_ENERGY_PROFILE      ENERGY_CONSUMER_LED_RED
+#define led6_ENERGY_PROFILE      ENERGY_CONSUMER_LED_RED
+#define led7_ENERGY_PROFILE      ENERGY_CONSUMER_LED_RED
+#define led8_ENERGY_PROFILE      ENERGY_CONSUMER_LED_RED
+#define led9_ENERGY_PROFILE      ENERGY_CONSUMER_LED_RED
+
 
 
 //=========================================================
@@ -63,11 +84,17 @@ uint_t ledsGet(void);              // Which leds are on? Returns a bitmask
 #define LED_DEFINE2( name, port, pin, valOn )                            \
     static inline uint_t name##Mask()    { return ((uint_t)(name##_mask)); } \
     static inline uint_t name##Get()     { return (pinRead(port, pin) ^ (1-valOn)); } \
-    static inline void name##Set( val )  { pinWrite( port, pin, ((1-valOn) ^ val) ); } \
+    static inline void name##Set( val )  {                              \
+        energyConsumerSet(name##_ENERGY_PROFILE, val);                  \
+        pinWrite( port, pin, ((1-valOn) ^ val) ); }                     \
     static inline void name##On()        { name##Set(1); }              \
     static inline void name##Off()       { name##Set(0); }              \
-    static inline void name##Toggle()    { pinToggle( port, pin ); }    \
+    static inline void name##Toggle()    {                              \
+        energyConsumerSet(name##_ENERGY_PROFILE, 1 ^ name##Get());      \
+        pinToggle( port, pin ); }                                       \
     static inline void name##Init()      { pinAsOutput( port, pin ); name##Off(); } \
+
+// TODO: should differentiate between LED energy consumption!
     
 #endif  // LED_DEFINE
 
