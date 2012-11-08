@@ -23,12 +23,14 @@
 #
 
 import wx
-from os.path import exists, join
+from os.path import exists, join, split, realpath
+from os import chdir, getcwd
 
 from wx.lib.agw import aui
 
 from globals import * #@UnusedWildImports
 from editor_manager import EditorManager
+from src.generate_makefile import GenerateMakefile
 
 class TabManager(aui.AuiNotebook):
     def __init__(self, parent, API):
@@ -41,8 +43,7 @@ class TabManager(aui.AuiNotebook):
 
         # Need to set because next statement uses it
         self.nextPageNr = 1
-        self.AddPage(EditorManager(self, self.API),
-                self.tr("Untitled"))
+        self.AddPage(EditorManager(self, self.API), self.tr("Untitled"))
 
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.onPageChanged)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.doPopupClose)
@@ -71,6 +72,10 @@ class TabManager(aui.AuiNotebook):
         self.SetSelection(event.GetSelection(), True)
 
         self._rmenu = wx.Menu()
+        self.openConfig = self._rmenu.Append(wx.ID_CONVERT, '&' + self.tr("Open config file") +
+                                       '', self.tr("Open config file"))
+        self.openMakefile = self._rmenu.Append(wx.ID_MORE, '&' + self.tr("Open makefile") +
+                                       '', self.tr("Open makefile"))
         self.popupReload = self._rmenu.Append(wx.ID_REPLACE, '&' + self.tr("Reload") +
                                        '\tCtrl+R', self.tr("Reload"))
         self.popupSave = self._rmenu.Append(wx.ID_SAVE, '&' + self.tr('Save') +
@@ -79,18 +84,42 @@ class TabManager(aui.AuiNotebook):
                                        '\tCtrl+A', self.tr("Save as"))
         self.popupClose = self._rmenu.Append(wx.ID_CLOSE, '&' + self.tr('Close') +
                                       '\tCtrl+W', self.tr("Close"))
+        self.Bind(wx.EVT_MENU, self.doPopupConfig, self.openConfig)
+        self.Bind(wx.EVT_MENU, self.doPopupMakefile, self.openMakefile)
         self.Bind(wx.EVT_MENU, self.doPopupReload, self.popupReload)
         self.Bind(wx.EVT_MENU, self.doPopupSave, self.popupSave)
         self.Bind(wx.EVT_MENU, self.doPopupSaveAs, self.popupSaveAs)
         self.Bind(wx.EVT_MENU, self.doPopupClose, self.popupClose)
+
         #Disable control if needed
         if self.getPageObject().saveState == True:
             self.popupSave.Enable(False)
 
+        if self.getPageObject().fileName[-3:] != ".sl" and \
+           self.getPageObject().fileName[-2:] != ".c":
+            self.openConfig.Enable(False)
+            self.openMakefile.Enable(False)
         # Popup the menu. If an item is selected then its handler
         # will be called before PopupMenu returns.
         self.PopupMenu(self._rmenu)
         self._rmenu.Destroy()
+
+    def doPopupConfig(self, event):
+        pathToOpenedFile = split(realpath(self.getPageObject().filePath))[0]
+        if not exists(join(pathToOpenedFile, 'config')):
+            open(join(pathToOpenedFile, 'config'), "wb")
+        self.addPage(join(pathToOpenedFile, 'config'))
+
+    def doPopupMakefile(self, event):
+        pathToOpenedFile = split(realpath(self.getPageObject().filePath))[0]
+        if not exists(join(pathToOpenedFile, 'Makefile')):
+            curPath = getcwd()
+            chdir(pathToOpenedFile)
+            GenerateMakefile().generate(self.getPageObject().fileName,
+                                       self.getPageObject().projectType,
+                                       self.API.pathToMansos)
+            chdir(curPath)
+        self.addPage(join(pathToOpenedFile, 'Makefile'))
 
     def doPopupReload(self, event):
         self.getPageObject().update()
@@ -170,7 +199,7 @@ class TabManager(aui.AuiNotebook):
     def addPage(self, newFile = ''):
         if newFile == '':
             self.AddPage(EditorManager(self, self.API),
-                self.tr("Untitled document") + ' ' + str(self.nextPageNr) + '.sl')
+                self.tr("Untitled") + ' ' + str(self.nextPageNr) + '.sl')
         else:
             self.AddPage(EditorManager(self, self.API), newFile)
         self.nextPageNr += 1
