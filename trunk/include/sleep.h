@@ -34,6 +34,8 @@
 #ifdef USE_THREADS
 // use thread specific sleep instead.
 #include <threads/threads.h>
+#else
+#include <nothreads/sleep.h>
 #endif
 
 #ifdef PLATFORM_PC
