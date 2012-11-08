@@ -24,6 +24,15 @@
 #ifndef ADC_DAC_PINS_H
 #define ADC_DAC_PINS_H
 
+#ifdef USE_SOFT_SPI
+#define ADS8638_SPI_ID SPI_BUS_SW
+#define DAC7718_SPI_ID SPI_BUS_SW
+#else
+// id 3 is B1
+#define ADS8638_SPI_ID  3
+#define DAC7718_SPI_ID  3
+#endif
+
 // Testbed platform uses ADS8638 analog/digital converter
 
 #define ADS8638_CS_PORT 5

@@ -67,7 +67,7 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
         SETUP_SPI_PINS(B0);
         SETUP_USCI(0, B0);
     }
-#ifdef UCA1CTL1
+#ifdef UCA1CTL1_
     else if (busId == 2) {
         SETUP_SPI_PINS(A1);
         SETUP_USCI(1, A1);
@@ -97,7 +97,7 @@ uint8_t hw_spiExchByte(uint8_t busId, uint8_t b)
     else if (busId == 1) {
         SPI_EXCH_BYTE(0, B0);
     }
-#ifdef UCA1CTL1
+#ifdef UCA1CTL1_
     else if (busId == 2) {
         SPI_EXCH_BYTE(1, A1);
     }

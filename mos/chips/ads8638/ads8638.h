@@ -24,12 +24,6 @@
 #include "adc_dac_pins.h"
 #include <kernel/defines.h>
 
-#ifdef USE_SOFT_SPI
-#define ADS8638_SPI_ID SPI_BUS_SW
-#else
-#define ADS8638_SPI_ID             1  // id 0 is A0, id 1 is B0
-#endif
-
 #define ADS8638_REG_MANUAL         0x04
 #define ADS8638_REG_AUTO           0x04
 #define ADS8638_REG_RESET          0x01
