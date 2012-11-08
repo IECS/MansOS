@@ -35,18 +35,19 @@ extern volatile ticks_t jiffies;
 // Note that interrupt handlers are called as soon as interrupts are enabled,
 // so delays < 10ms will be handled by the default logic
 //
-#define ATOMIC_START_TIMESAVE(h)                                     \
-    const uint_t _start_time = ALARM_TIMER_VALUE();                  \
+#define ATOMIC_START_TIMESAVE(h) {                                    \
+    const uint16_t _start_time = ALARM_TIMER_VALUE();                 \
     ATOMIC_START(h)
 
-#define ATOMIC_END_TIMESAVE(h)                                       \
-    if (h != 0) {                                                    \
-        const uint_t _time_diff = ALARM_TIMER_VALUE() - _start_time; \
-        if (_time_diff > PLATFORM_ALARM_TIMER_PERIOD) {              \
-            jiffies += TIMER_TICKS_TO_MS(                            \
-                    _time_diff - PLATFORM_ALARM_TIMER_PERIOD);       \
-        }                                                            \
-    }                                                                \
-    ATOMIC_END(h)
+#define ATOMIC_END_TIMESAVE(h)                                        \
+    if (h != 0) {                                                     \
+        const uint16_t _time_diff = ALARM_TIMER_VALUE() - _start_time;\
+        if (_time_diff > PLATFORM_ALARM_TIMER_PERIOD) {               \
+            jiffies += TIMER_TICKS_TO_MS(                             \
+                    _time_diff - PLATFORM_ALARM_TIMER_PERIOD);        \
+        }                                                             \
+    }                                                                 \
+    ATOMIC_END(h);                                                    \
+    }
 
 #endif

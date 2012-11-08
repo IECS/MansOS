@@ -24,6 +24,8 @@
 #ifndef MANSOS_ENERGY_H
 #define MANSOS_ENERGY_H
 
+#include <kernel/timing.h>
+
 //
 // List all potential energy consumers in the system
 //
@@ -33,7 +35,6 @@ typedef enum {
     ENERGY_CONSUMER_LED_RED,
     ENERGY_CONSUMER_LED_GREEN,
     ENERGY_CONSUMER_LED_BLUE,
-    ENERGY_CONSUMER_LED_YELLOW,
     ENERGY_CONSUMER_RADIO_TX,
     ENERGY_CONSUMER_RADIO_RX,
     ENERGY_CONSUMER_FLASH_WRITE,
@@ -75,18 +76,49 @@ static inline void energyConsumerOff(EnergyConsumer_t type) {
 #endif
 }
 
-static inline bool energyConsumerOnIrq(EnergyConsumer_t type) {
-#if USE_ENERGY_STATS
-    bool result = energyStats[type].on;
-    energyConsumerOn(type);
-    return result;
-#else
-    return false;
-#endif
+static inline void energyConsumerSet(EnergyConsumer_t type, bool on) {
+    if (on) energyConsumerOn(type);
+    else energyConsumerOff(type);
 }
 
-static inline void energyConsumerOffIrq(EnergyConsumer_t type, bool doIt) {
-    if (doIt) energyConsumerOff(type);
-}
+#if USE_ENERGY_STATS
+
+//
+// When interrupts are disabled, use TAR directly
+//
+#define energyConsumerOnNoints(type)                      \
+    {                                                     \
+        const uint16_t _start_time = ALARM_TIMER_VALUE(); \
+        energyStats[type].on = true
+
+#define energyConsumerOffNoints(type) {                                 \
+        const uint_t _time_diff = ALARM_TIMER_VALUE() - _start_time;    \
+        energyStats[type].totalTicks += TIMER_TICKS_TO_MS(_time_diff);  \
+        energyStats[type].on = false;                                   \
+    }                                                                   \
+    }
+
+//
+// When measuring IN interrupt, use TAR *and* account it if not already on
+//
+#define energyConsumerOnIRQ(type)                       \
+    bool _energy_consumer_off = !energyStats[type].on;  \
+    energyConsumerOnNoints(type);
+
+#define energyConsumerOffIRQ(type)                             \
+    if (_energy_consumer_off) energyConsumerOffNoints(type);   \
+
+
+#else
+
+#define energyConsumerOnNoints(type)  // nothing
+#define energyConsumerOffNoints(type) // nothing
+
+#define energyConsumerOnIRQ(type)     // nothing
+#define energyConsumerOffIRQ(type)    // nothing
+
+#endif
+
+void energyStatsDump(void);
 
 #endif

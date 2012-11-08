@@ -93,7 +93,10 @@ enum {
     TICKS_IN_MS = ACLK_SPEED / 1000 + 1,
 };
 
-#define TIMER_TICKS_TO_MS(ticks) ((ticks) / TICKS_IN_MS)
+// this is more precise:
+//#define TIMER_TICKS_TO_MS(ticks) ((ticks) / TICKS_IN_MS)
+// but this is much faster (ACLK MUST be power of two!):
+#define TIMER_TICKS_TO_MS(ticks) ((ticks) * 1024ul / ACLK_SPEED)
 
 //===========================================================
 // Macros
