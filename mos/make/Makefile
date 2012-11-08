@@ -227,7 +227,7 @@ LINKER_SCRIPT = $(MOS)/make/scripts/link.py
 include $(MAKEFILE_HIL)
 
 #===== Includes =====
-INCLUDES += -I$(MOSROOT)/include
+INCLUDES += -I$(MOS)/include
 INCLUDES += -I$(MOS)
 INCLUDES += -I$(MOS)/kernel
 INCLUDES += -I$(MOS)/lib
