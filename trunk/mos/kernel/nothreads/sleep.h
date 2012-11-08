@@ -35,7 +35,7 @@ static inline void msleep(uint16_t ms)
     // PRINTF("msleep %u, end=%lu\n", ms, sleepEnd);
 
     bool allTimeSpent;
-    do {
+    for (;;) {
         // how much to sleep?
         uint32_t now = (uint32_t) getJiffies();
         int16_t msToSleep = sleepEnd - now;
@@ -60,8 +60,9 @@ static inline void msleep(uint16_t ms)
             // PRINTF("sleep to end\n");
             allTimeSpent = true;
         }
-        // do the real sleep
+        // do the real sleeping
         doMsleep(msToSleep);
         //check for exit conditions
-    } while (!allTimeSpent);
+        if (allTimeSpent) break;
+    }
 }
