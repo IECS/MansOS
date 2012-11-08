@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,7 +28,7 @@
 //
 //  Note: the DOIT must include ; or , or nothing at the end as appropriate.
 //==========================================================
-//      Platform: TestBed
+//      Platform: TestBed2
 //==========================================================
 
 //-------------------------------------------
@@ -50,15 +50,17 @@
 // LEDs attached to VDD on this platform
 // to turn LED on, corresponding PIN must be set LOW
 #define LEDS_ON_PIN_VALUE 0 
-#define LEDS_PORT 5
+#define LEDS_PORT 2
 
 LED_DEFINE(redLed,   LEDS_PORT, 4, LEDS_ON_PIN_VALUE)
-LED_DEFINE(greenLed, LEDS_PORT, 6, LEDS_ON_PIN_VALUE)
-LED_DEFINE(blueLed,  LEDS_PORT, 5, LEDS_ON_PIN_VALUE)
+LED_DEFINE(greenLed, LEDS_PORT, 5, LEDS_ON_PIN_VALUE)
+LED_DEFINE(blueLed,  LEDS_PORT, 6, LEDS_ON_PIN_VALUE)
+LED_DEFINE(yellowLed,LEDS_PORT, 7, LEDS_ON_PIN_VALUE)
 
 #define RED_LED_DEFINED    1
 #define GREEN_LED_DEFINED  1
 #define BLUE_LED_DEFINED   1
+#define YELLOW_LED_DEFINED 1
 
 // Should define the default led here!
 #define LED_DEFAULT redLed
@@ -78,6 +80,7 @@ LED_DEFINE(blueLed,  LEDS_PORT, 5, LEDS_ON_PIN_VALUE)
 DOIT(redLed)
 DOIT(greenLed)
 DOIT(blueLed)
+DOIT(yellowLed)
 
 // Reset DOIT for the next use
 #undef DOIT
