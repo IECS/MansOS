@@ -31,9 +31,8 @@
 //
 static inline void msleep(uint16_t ms)
 {
-    const uint32_t sleepStart = (uint32_t) getJiffies();
-    const uint32_t sleepEnd = sleepStart + ms;
-    // PRINTF("msleep %u, now=%lu\n", ms, sleepStart);
+    const uint32_t sleepEnd = (uint32_t) getJiffies() + ms;
+    // PRINTF("msleep %u, end=%lu\n", ms, sleepEnd);
 
     bool allTimeSpent;
     do {
