@@ -72,9 +72,9 @@ class TabManager(aui.AuiNotebook):
         self.SetSelection(event.GetSelection(), True)
 
         self._rmenu = wx.Menu()
-        self.openConfig = self._rmenu.Append(wx.ID_CONVERT, '&' + self.tr("Open config file") +
+        self.openConfig = self._rmenu.Append(wx.ID_ANY, '&' + self.tr("Open config file") +
                                        '', self.tr("Open config file"))
-        self.openMakefile = self._rmenu.Append(wx.ID_MORE, '&' + self.tr("Open makefile") +
+        self.openMakefile = self._rmenu.Append(wx.ID_ANY, '&' + self.tr("Open makefile") +
                                        '', self.tr("Open makefile"))
         self.popupReload = self._rmenu.Append(wx.ID_REPLACE, '&' + self.tr("Reload") +
                                        '\tCtrl+R', self.tr("Reload"))
