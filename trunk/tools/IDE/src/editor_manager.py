@@ -123,6 +123,9 @@ class EditorManager(wx.Panel):
             self.projectType = MANSOS_PROJECT
             self.code.highlightC()
 
+        if self.API.loaded:
+            self.API.editWindow.update()
+
     def yieldChanges(self):
         if self.code.GetText() != self.lastSaved:
             self.saveState = False
