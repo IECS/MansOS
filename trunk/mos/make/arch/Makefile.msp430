@@ -113,7 +113,7 @@ memdump: build
 	$(MEMDUMP) $(OUTDIR)/$(APPMOD).elf msp430
 
 mspsim: build
-	$(JAVA) -classpath $(JAVA_CLASSPATH) $(JAVA_CLASS) $(OUTDIR)/$(APPMOD).elf
+	$(JAVA) -jar $(MSPSIM) -platform=sky $(OUTDIR)/$(APPMOD).elf
 
 size: build
 	msp430-size $(OUTDIR)/$(APPMOD).elf

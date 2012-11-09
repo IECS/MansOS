@@ -37,6 +37,8 @@ SLEEP_TIMER_INTERRUPT()
 {
     if (!SLEEP_TIMER_EXPIRED()) return;
 
+    // change energy accounting mode back to active
+    energyConsumerOff(ENERGY_CONSUMER_LPM);
     energyConsumerOn(ENERGY_CONSUMER_MCU);
 
     // restart alarm interrupts
@@ -65,20 +67,17 @@ SLEEP_TIMER_INTERRUPT()
 void doMsleep(uint16_t milliseconds)
 {
     DISABLE_INTS();
+    // change energy accounting mode
+    energyConsumerOff(ENERGY_CONSUMER_MCU);
+    energyConsumerOn(ENERGY_CONSUMER_LPM);
     // setup sleep timer
     SLEEP_TIMER_SET(milliseconds);
     // start timer B
     SLEEP_TIMER_START();
     // stop timer A
     DISABLE_ALARM_INTERRUPT();
-    // change energy accounting mode
-    energyConsumerOff(ENERGY_CONSUMER_MCU);
-    energyConsumerOn(ENERGY_CONSUMER_LPM);
     // enter low power mode 3
     ENTER_SLEEP_MODE();
-    // change energy accounting mode back
-    energyConsumerOff(ENERGY_CONSUMER_LPM);
-    energyConsumerOn(ENERGY_CONSUMER_MCU);
 }
 
 #endif

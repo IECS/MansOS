@@ -556,9 +556,10 @@ ISR(PORT1, cc2420Interrupt)
     // USARTSendByte(1, 'I');
 
 #if USE_THREADS
-    // simply set the "interrupt happened" flag
+    // simply set the "interrupt happened" flag;
+    // yes, this does NOT wake the MCU!
+    // XXX: add support for MCU "wake on radio" in future?
     processFlags.bits.radioProcess = true;
-    // XXX: add support for "wake on radio"?
 #else
     if (receiver_callback) {
         receiver_callback();

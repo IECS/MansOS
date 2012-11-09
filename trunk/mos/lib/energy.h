@@ -26,6 +26,8 @@
 
 #include <kernel/timing.h>
 
+//#include <lib/dprint.h>
+
 //
 // List all potential energy consumers in the system
 //
@@ -55,33 +57,17 @@ typedef struct EnergyStats_s {
     bool on;
 } EnergyStats_t;
 
-extern EnergyStats_t energyStats[TOTAL_ENERGY_CONSUMERS];
+extern volatile EnergyStats_t energyStats[TOTAL_ENERGY_CONSUMERS];
 
-static inline void energyConsumerOn(EnergyConsumer_t type) {
 #if USE_ENERGY_STATS
-    if (!energyStats[type].on) {
-        energyStats[type].on = true;
-        energyStats[type].lastTicks = (uint32_t) getJiffies();
-    }
-#endif
-}
 
-static inline void energyConsumerOff(EnergyConsumer_t type) {
-#if USE_ENERGY_STATS
-    if (energyStats[type].on) {
-        energyStats[type].totalTicks +=
-                (uint32_t) getJiffies() - energyStats[type].lastTicks;
-        energyStats[type].on = false;
-    }
-#endif
-}
+void energyConsumerOn(EnergyConsumer_t type);
+void energyConsumerOff(EnergyConsumer_t type);
 
-static inline void energyConsumerSet(EnergyConsumer_t type, bool on) {
+static inline void energyConsumerSet(EnergyConsumer_t type, uint8_t on) {
     if (on) energyConsumerOn(type);
     else energyConsumerOff(type);
 }
-
-#if USE_ENERGY_STATS
 
 //
 // When interrupts are disabled, use TAR directly
@@ -111,11 +97,15 @@ static inline void energyConsumerSet(EnergyConsumer_t type, bool on) {
 
 #else
 
-#define energyConsumerOnNoints(type)  // nothing
-#define energyConsumerOffNoints(type) // nothing
+#define energyConsumerOn(type)         // nothing
+#define energyConsumerOff(type)         // nothing
+#define energyConsumerSet(type, value) // nothing
 
-#define energyConsumerOnIRQ(type)     // nothing
-#define energyConsumerOffIRQ(type)    // nothing
+#define energyConsumerOnNoints(type)   // nothing
+#define energyConsumerOffNoints(type)  // nothing
+
+#define energyConsumerOnIRQ(type)      // nothing
+#define energyConsumerOffIRQ(type)     // nothing
 
 #endif
 
