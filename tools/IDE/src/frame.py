@@ -317,14 +317,13 @@ class Frame(wx.Frame):
             self.API.listenModules[0].doClear()
         else:
             self.API.listenModules[0].doClear("")
-        self.checkToggleState()
 
     def checkToggleState(self):
         if self.API.listenModules[0].listening:
             self.toolbar.ToggleTool(wx.ID_HOME, True)
-            wx.CallLater(100, self.checkToggleState)
         else:
             self.toolbar.ToggleTool(wx.ID_HOME, False)
+        wx.CallLater(100, self.checkToggleState)
 
     def OnNew(self, event):
         self.API.tabManager.addPage()

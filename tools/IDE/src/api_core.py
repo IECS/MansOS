@@ -212,6 +212,7 @@ class ApiCore:
         self.frame.auiManager.Update()
 
         self.loaded = True
+        self.frame.checkToggleState()
 # Populate motelist
         self.populateMotelist()
 
