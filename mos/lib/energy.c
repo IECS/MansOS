@@ -24,7 +24,7 @@
 #include "energy.h"
 #include <lib/dprint.h>
 
-EnergyStats_t energyStats[TOTAL_ENERGY_CONSUMERS];
+volatile EnergyStats_t energyStats[TOTAL_ENERGY_CONSUMERS];
 
 const char *energyConsumerNames[TOTAL_ENERGY_CONSUMERS] = {
     "MCU",
@@ -51,5 +51,21 @@ void energyStatsDump(void)
         }
         PRINTF("%s: %lu%s\n", energyConsumerNames[i], energyStats[i].totalTicks,
                 energyStats[i].on ? " (on)" : "");
+    }
+}
+
+
+void energyConsumerOn(EnergyConsumer_t type) {
+    if (!energyStats[type].on) {
+        energyStats[type].on = true;
+        energyStats[type].lastTicks = (uint32_t) getJiffies();
+    }
+}
+
+void energyConsumerOff(EnergyConsumer_t type) {
+    if (energyStats[type].on) {
+        energyStats[type].totalTicks +=
+                (uint32_t) getJiffies() - energyStats[type].lastTicks;
+        energyStats[type].on = false;
     }
 }

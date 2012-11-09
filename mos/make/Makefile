@@ -176,12 +176,10 @@ SEAL = $(MOSROOT)/tools/parser/main.py --path $(MOSROOT)
 
 MEMDUMP = $(MOS)/make/scripts/memdump.py
 
-# change this to your MSPsim installation directory
-MSPSIMDIR = /opt/mspsim
+# change this to your MSPsim installation location
+MSPSIM=/home/atis/work/contiki/contiki-2.5/tools/mspsim/mspsim.jar
 JAVA = java
-JAVA_CLASSPATH=$(MSPSIMDIR):$(MSPSIMDIR)/lib/jfreechart-1.0.11.jar:$(MSPSIMDIR)/lib/jcommon-1.0.14.jar
-# java class used by MSPsim to simulate this platform
-JAVA_CLASS=se.sics.mspsim.platform.sky.SkyNode
+
 
 ifeq ($(UNAME),Darwin)
   # apple wants special handling...

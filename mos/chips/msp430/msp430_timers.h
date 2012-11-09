@@ -122,8 +122,8 @@ enum {
 #define msp430StartTimerA() TACTL |= MC_CONT
 #define msp430StopTimerA() TACTL &= ~(MC_3)
 
-#define msp430StartTimerB() TBCTL |= MC_UPTO_CCR0
-#define msp430StopTimerB() TBCTL &= ~(MC_3)
+#define msp430StartTimerB() TBCTL |= MC_UPTO_CCR0 | TBIE
+#define msp430StopTimerB() TBCTL &= ~(MC_3 | TBIE)
 
 // TODO - make register values dynamic (use constants defined above)
 #define msp430InitTimerA() \
@@ -151,7 +151,7 @@ enum {
     /* TBCTL = TBSSEL0 | TBIE; */ \
     TBCTL = TBCLR; \
     /* src = ACLK, DIV = 8, INT = enabled, 16bit */ \
-    TBCTL = TBSSEL_ACLK | ID_DIV8 | TBIE | CNTL_0; \
+    TBCTL = TBSSEL_ACLK | ID_DIV8 /* | TBIE */ | CNTL_0;    \
 
 extern void msp430TimerBSet(uint16_t ms);
 
