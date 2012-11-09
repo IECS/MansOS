@@ -527,6 +527,7 @@ class EditStatement(wx.Panel):
         self.setNextEditingSelection(self.textBox.GetInsertionPoint())
 
     def onTextChange(self, event):
-        self.source['text'] = "{} {}".format(self.text.GetLabel(), self.textBox.GetValue())
+        self.source['text'] = "{} {}".format(self.text.GetLabel(), \
+             "false" if self.textBox.GetValue() == "" else self.textBox.GetValue())
         self.editor.change(self.source)
         self.source['end'] = self.source['start'] + len(self.source['text'])
