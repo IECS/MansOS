@@ -21,6 +21,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef MANSOS_ADS8638_H
+#define MANSOS_ADS8638_H
+
 #include "adc_dac_pins.h"
 #include <kernel/defines.h>
 
@@ -71,6 +74,16 @@ void ads8638SelectChannel(uint8_t channel, uint8_t range);
 
 bool ads8638Read(uint16_t *value);
 
+static inline uint16_t ads8638ReadChannel(uint8_t channel) {
+    uint16_t result;
+    if (!ads8638Read(&result)) {
+        result = 0xffff;
+    }
+    return result;
+}
+
 uint8_t ads8638RegRead(uint8_t address);
 
 void ads8638RegWrite(uint8_t address, uint8_t data);
+
+#endif

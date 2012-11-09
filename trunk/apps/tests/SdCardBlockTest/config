@@ -1,4 +1,4 @@
-PLATFORM_ONLY=sm3 telosb
+PLATFORM_ONLY=sm3 telosb testbed2
 USE_EXT_FLASH=y
 #USE_RADIO=n
 #DEBUG=y

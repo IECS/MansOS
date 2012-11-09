@@ -63,7 +63,7 @@ void appMain(void)
         reg = ads8638RegRead(ADS8638_REG_RESET);
         PRINTF("reset: %#x\n", reg);
 
-	reg = ads8638RegRead(ADS8638_REG_AUX_CONFIG);
+        reg = ads8638RegRead(ADS8638_REG_AUX_CONFIG);
         PRINTF("aux coding: %#x\n", reg);
 
         reg = ads8638RegRead(ADS8638_REG_TEMP_FLAG);

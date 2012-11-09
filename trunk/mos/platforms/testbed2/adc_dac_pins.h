@@ -24,6 +24,9 @@
 #ifndef ADC_DAC_PINS_H
 #define ADC_DAC_PINS_H
 
+#include "ads8638/ads8638.h"
+#include "dac7718/dac7718.h"
+
 #ifdef USE_SOFT_SPI
 #define ADS8638_SPI_ID SPI_BUS_SW
 #define DAC7718_SPI_ID SPI_BUS_SW

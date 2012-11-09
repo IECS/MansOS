@@ -42,7 +42,7 @@ void initPlatform(void);
 // Data types and constants
 //===========================================================
 
-//#define EXT_FLASH_CHIP FLASH_CHIP_AT25DF
+#define EXT_FLASH_CHIP FLASH_CHIP_SDCARD
 
 //#define RADIO_CHIP RADIO_CHIP_CC2420
 

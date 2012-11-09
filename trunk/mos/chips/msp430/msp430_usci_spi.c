@@ -105,4 +105,7 @@ uint8_t hw_spiExchByte(uint8_t busId, uint8_t b)
         SPI_EXCH_BYTE(1, B1);
     }
 #endif
+    else {
+        return 0xff;
+    }
 }

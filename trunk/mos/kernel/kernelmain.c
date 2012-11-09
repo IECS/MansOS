@@ -153,6 +153,11 @@ static inline void initSystem(void)
     INIT_PRINTF("init ADS111x ADC converter chip...\n");
     adsInit();
 #endif
+#if USE_ADS8638
+    INIT_PRINTF("init ADS8638 ADC converter chip...\n");
+    ads8638Init();
+    ads8638SelectChannel(ADS8638_CHANNEL_0, ADS8638_RANGE_CONFIG);
+#endif
 #ifdef USE_HUMIDITY
     INIT_PRINTF("init humidity sensor...\n");
     humidityInit();

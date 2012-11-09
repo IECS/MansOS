@@ -98,9 +98,7 @@ static bool cacheChanged;
     serial[SDCARD_SPI_ID].busy = false     \
 
 // Shortcuts
-#if SDCARD_SPI_ID == 0
-
-#warning using SadMote
+#if PLATFORM_SM3
 
 // Chip Select
 #define MMC_CS_PxOUT      P3OUT
@@ -153,9 +151,9 @@ void sdcardInitSerial(void)
     serial[SDCARD_SPI_ID].function = SERIAL_FUNCTION_SDCARD;
 }
 
-#else
+#elif PLATFORM_TELOSB
 
-#warning using CarMote
+// For carmote
 
 // Chip Select
 #define MMC_CS_PxOUT      P5OUT
@@ -203,6 +201,61 @@ void sdcardInitSerial(void)
     UMCTL1 = 0x00;                            // No modulation
     ME2 |= USPIE1;                            // Enable USART1 SPI mode
     UCTL1 &= ~SWRST;                          // Initialize USART state machine
+
+    // Enable secondary function
+#ifndef USE_SOFT_SPI
+    MMC_PxSEL |= MMC_SIMO + MMC_SOMI + MMC_UCLK;
+#endif
+
+    serial[SDCARD_SPI_ID].function = SERIAL_FUNCTION_SDCARD;
+}
+
+#elif PLATFORM_TESTBED2
+
+// Chip Select
+#define MMC_CS_PxOUT      P3OUT
+#define MMC_CS_PxDIR      P3DIR
+#define MMC_CS            (1 << SDCARD_CS_PIN)
+
+#define SPI_PxSEL         P3SEL
+#define SPI_PxDIR         P3DIR
+#define SPI_PxIN          P3IN
+#define SPI_PxOUT         P3OUT
+#define SPI_SIMO          0x02
+#define SPI_SOMI          0x04
+#define SPI_UCLK          0x08
+
+#define MMC_PxSEL         SPI_PxSEL
+#define MMC_PxDIR         SPI_PxDIR
+#define MMC_PxIN          SPI_PxIN
+#define MMC_PxOUT         SPI_PxOUT      
+#define MMC_SIMO          SPI_SIMO
+#define MMC_SOMI          SPI_SOMI
+#define MMC_UCLK          SPI_UCLK
+
+void sdcardInitSerial(void)
+{
+    // disable USART interrupts
+    UC1IE &= ~(UCA1RXIE | UCA1RXIE);
+
+    // Init Port for MMC (default high)
+    MMC_PxOUT |= MMC_SIMO + MMC_UCLK;
+    MMC_PxDIR |= MMC_SIMO + MMC_UCLK;
+
+    // Chip Select
+    MMC_CS_PxOUT |= MMC_CS;
+    MMC_CS_PxDIR |= MMC_CS;
+
+    // UCTL0 = SWRST;
+    // UCTL0 |= CHAR + SYNC + MST;               // 8-bit SPI Master **SWRST**
+    // UTCTL0 = CKPL + SSEL1 + SSEL0 + STC;      // SMCLK, 3-pin mode
+    // U0BR0 = 0x08;                             // UCLK/8
+    // U0BR1 = 0x00;                             // 0
+    // UMCTL0 = 0x00;                            // No modulation
+    // ME1 &= ~(UTXE0 | URXE0);                  // disable USART0 TXD/RXD
+    // ME1 |= USPIE0;                            // Enable USART0 SPI mode
+    // UCTL0 &= ~SWRST;                          // Initialize USART state machine
+    spiBusInit(SDCARD_SPI_ID, SPI_MODE_MASTER);
 
     // Enable secondary function
 #ifndef USE_SOFT_SPI
