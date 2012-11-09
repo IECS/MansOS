@@ -59,6 +59,9 @@ void appMain(void)
     for (i = 0; i < DATA_SIZE; ++i) {
         ASSERT(readBuffer[i] == i);
     }
+#if EXT_FLASH_CHIP == FLASH_CHIP_SDCARD
+    sdcardFlush();
+#endif
     PRINTF("all done\n");
     blink(3, 2000);
     ASSERT(false);

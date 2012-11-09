@@ -66,3 +66,6 @@ PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c
 
 PSOURCES-$(USE_ADS8638) += $(MOS)/chips/ads8638/ads8638.c
 PSOURCES-$(USE_DAC7718) += $(MOS)/chips/dac7718/dac7718.c
+
+PSOURCES-$(USE_SDCARD) += $(MOS)/chips/sdcard/sdcard.c
+PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/sdcard/sdcard.c

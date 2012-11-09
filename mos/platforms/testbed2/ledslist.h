@@ -52,21 +52,24 @@
 #define LEDS_ON_PIN_VALUE 0 
 #define LEDS_PORT 2
 
-LED_DEFINE(redLed,   LEDS_PORT, 4, LEDS_ON_PIN_VALUE)
-LED_DEFINE(greenLed, LEDS_PORT, 5, LEDS_ON_PIN_VALUE)
-LED_DEFINE(blueLed,  LEDS_PORT, 6, LEDS_ON_PIN_VALUE)
-LED_DEFINE(yellowLed,LEDS_PORT, 7, LEDS_ON_PIN_VALUE)
+LED_DEFINE(led0, LEDS_PORT, 4, LEDS_ON_PIN_VALUE)
+LED_DEFINE(led1, LEDS_PORT, 5, LEDS_ON_PIN_VALUE)
+LED_DEFINE(led2, LEDS_PORT, 6, LEDS_ON_PIN_VALUE)
+LED_DEFINE(led3, LEDS_PORT, 7, LEDS_ON_PIN_VALUE)
+
+// Should define the default led here!
+#define LED_DEFAULT led0
+
+// Optionally, you can define aliases to the other leds.
+LED_ALIAS(redLed,     led0)
+LED_ALIAS(greenLed,   led1)
+LED_ALIAS(blueLed,    led2)
+LED_ALIAS(yellowLed,  led3)
 
 #define RED_LED_DEFINED    1
 #define GREEN_LED_DEFINED  1
 #define BLUE_LED_DEFINED   1
 #define YELLOW_LED_DEFINED 1
-
-// Should define the default led here!
-#define LED_DEFAULT redLed
-
-// Optionally, you can define aliases to the other leds.
-// LED_ALIAS(myled, redLed)
 
 #endif // LEDS_DEFINE
 
@@ -77,10 +80,10 @@ LED_DEFINE(yellowLed,LEDS_PORT, 7, LEDS_ON_PIN_VALUE)
 //-------------------------------------------
 #ifdef DOIT
 
-DOIT(redLed)
-DOIT(greenLed)
-DOIT(blueLed)
-DOIT(yellowLed)
+DOIT(led0)
+DOIT(led1)
+DOIT(led2)
+DOIT(led3)
 
 // Reset DOIT for the next use
 #undef DOIT

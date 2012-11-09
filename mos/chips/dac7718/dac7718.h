@@ -21,6 +21,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef MANSOS_DAC7718_H
+#define MANSOS_DAC7718_H
+
 #include "adc_dac_pins.h"
 #include <kernel/defines.h>
 
@@ -84,3 +87,5 @@ void dac7718Write(uint16_t value);
 void dac7718WriteChannel(uint8_t channel, uint16_t value);
 
 void dac7718WriteBroadcast(uint16_t value);
+
+#endif

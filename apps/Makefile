@@ -83,6 +83,7 @@ ADVANCED_TARGETS = \
 	SensorToLcd				\
 	SensorToLeds				\
 	TimerSense				\
+        TestBed2Demo                            \
 	UserButtonRead				\
 
 SEAL_TARGETS = \

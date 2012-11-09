@@ -356,7 +356,7 @@ class HumiditySensor(SealSensor):
         self.offFunction.value = "humidityOff()"
         self.errorFunction = SealAdvancedParameter("humidityIsError()")
         self.extraConfig.value = "USE_HUMIDITY=y"
-        self.extraIncludes.value = "#include <hil/humidity.h>"
+        self.extraIncludes.value = "#include <sensors.h>"
 
 # the following for are not implemented
 class TemperatureSensor(SealSensor):
@@ -445,6 +445,27 @@ class LedAct(SealActuator):
         self.onFunction.value = "ledOn()"
         self.offFunction.value = "ledOff()"
         self.writeFunction.value = "if (value) ledOn(); else ledOff()"
+
+    def calculateParameterValue(self, parameter, useCaseParameters):
+        if parameter != "readFunction" \
+                and parameter != "useFunction" \
+                and parameter != "onFunction" \
+                and parameter != "offFunction" \
+                and parameter != "writeFunction":
+            return SealActuator.calculateParameterValue(self, parameter, useCaseParameters)
+        myid = self.getParameterValue("id", useCaseParameters)
+        ledName = ("led" + str(myid)) if myid else "led"
+        if parameter == "useFunction":
+            return ledName + "Toggle()"
+        if parameter == "readFunction":
+            return ledName + "Get()"
+        if parameter == "onFunction":
+            return ledName + "On()"
+        if parameter == "offFunction":
+            return ledName +  "Off()"
+        if parameter == "writeFunction":
+            return "if (value) " +ledName + "On(); else " + ledName + "Off()"
+        return None
 
 class RedLedAct(SealActuator):
     def __init__(self):
