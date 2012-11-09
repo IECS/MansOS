@@ -26,7 +26,7 @@ import wx.stc
 
 from component_hierarchy import components
 from globals import * #@UnusedWildImport
-import  keyword
+import keyword
 
 class Editor(wx.stc.StyledTextCtrl):
     def __init__(self, parent, API):
@@ -360,6 +360,7 @@ class Editor(wx.stc.StyledTextCtrl):
                 self.getAction(event)
 
     def doSealParse(self):
+        self.API.infoArea.printLine("\n", True)
         self.API.sealParser.run(self.lastText)
         self.lineTracking = self.API.sealParser.lineTracking
 
