@@ -21,37 +21,35 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PLATFORM_ZOLERTIA_Z1_H_
-#define _PLATFORM_ZOLERTIA_Z1_H_
+#ifndef PLATFORM_ACCEL_H
+#define PLATFORM_ACCEL_H
 
-#include <msp430/msp430_clock.h>
-#include <msp430/msp430_timers.h>
-#include <msp430/msp430_int.h>
-#include <msp430/msp430_adc.h>
-#include <msp430/msp430_usci.h>
+#include "platform.h"
 
-#include "amb8420_pins.h"
+#include <adxl345/adxl345.h>
 
-#include "cc2420_pins.h"
-#include "sht_pins.h"
-#include "adxl_config.h"
+// init accelerometer sensor, do not turn it on
+static inline void accelInit(void) {
+    adxl345_init();
+}
 
-//===========================================================
-// Functions
-//===========================================================
+// The sensor it is on by default (must be initialized before operation)
+#define accelOn() while (0) {}
+#define accelOff() while (0) {}
 
-void initPlatform(void);
+// read acceleration on X axis
+static inline uint16_t accelReadX() {
+    return adxl345_readAxis(ADXL345_X_AXIS);
+}
 
-//===========================================================
-// Data types and constants
-//===========================================================
+// read acceleration on Y axis
+static inline uint16_t accelReadY() {
+    return adxl345_readAxis(ADXL345_Y_AXIS);
+}
 
-//#define EXT_FLASH_CHIP FLASH_CHIP_AT25DF
-
-#ifndef RADIO_CHIP
-#define RADIO_CHIP RADIO_CHIP_CC2420
-#endif
-
-//#define SNUM_CHIP SNUM_DS2411
+// read acceleration on Z axis
+static inline uint16_t accelReadZ() {
+    return adxl345_readAxis(ADXL345_Z_AXIS);
+}
 
 #endif

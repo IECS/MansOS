@@ -21,37 +21,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PLATFORM_ZOLERTIA_Z1_H_
-#define _PLATFORM_ZOLERTIA_Z1_H_
+#ifndef ADXL345_CONFIG_H
+#define ADXL345_CONFIG_H
 
-#include <msp430/msp430_clock.h>
-#include <msp430/msp430_timers.h>
-#include <msp430/msp430_int.h>
-#include <msp430/msp430_adc.h>
-#include <msp430/msp430_usci.h>
-
-#include "amb8420_pins.h"
-
-#include "cc2420_pins.h"
-#include "sht_pins.h"
-#include "adxl_config.h"
-
-//===========================================================
-// Functions
-//===========================================================
-
-void initPlatform(void);
-
-//===========================================================
-// Data types and constants
-//===========================================================
-
-//#define EXT_FLASH_CHIP FLASH_CHIP_AT25DF
-
-#ifndef RADIO_CHIP
-#define RADIO_CHIP RADIO_CHIP_CC2420
-#endif
-
-//#define SNUM_CHIP SNUM_DS2411
+// Zolertia Z1 platform uses ADXL345 accelerometer sensor
+#define ADXL345_SLAVE_ADDR 0x53
 
 #endif
