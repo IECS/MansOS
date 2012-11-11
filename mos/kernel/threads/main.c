@@ -23,7 +23,8 @@
 
 #include "threads.h"
 #include <kernel/alarms_system.h>
-#include "radio.h"
+#include <kernel/threads/radio.h>
+#include <net/radio_packet_buffer.h>
 #include <net/mac.h>
 #include <kernel/stdmansos.h>
 
@@ -41,7 +42,7 @@ void systemMain(void)
         // PRINTF("ap = %d\n", (int) processFlags.bits.alarmsProcess);
         // PRINTF("rp = %d\n", (int) processFlags.bits.radioProcess);
 
-        // it works better when radio procssing is first (TODO: order should be irrelevant!)
+        // it works better when radio processing is first (TODO: order should be irrelevant!)
 #if USE_RADIO
         if (processFlags.bits.radioProcess) {
             processFlags.bits.radioProcess = false;
@@ -49,7 +50,7 @@ void systemMain(void)
         }
 #endif
 #if USE_NET
-        if (!isRadioPacketEmpty(*radioPacketBuffer)) {
+        if (!isRadioPacketEmpty()) {
             macProtocol.poll();
         }
 #endif
