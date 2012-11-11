@@ -1,0 +1,8 @@
+#
+# Application specific config file
+#
+
+# Must be present for fibers to work.
+
+USE_PROTOTHREADS = y
+USE_RADIO=y
