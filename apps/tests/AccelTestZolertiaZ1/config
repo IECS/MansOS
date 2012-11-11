@@ -1,0 +1,10 @@
+# Zolertia Z1-specific accelerometer test application
+
+PLATFORM_EXCLUDE=arduino atmega farmmote telosb
+
+USE_ADC=n
+USE_RADIO=n
+USE_ACCEL=y
+
+# Change serial port speed
+CONST_SERIAL_PORT_BAUDRATE=115200
