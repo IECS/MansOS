@@ -1,4 +1,9 @@
 USE_SOFT_I2C=y
+
+# On Z1 platform use this:
+#USE_ACCEL=y
+
+# On other platforms use these:
 USE_ADXL345=y
 CONST_SDA_PORT=3
 CONST_SDA_PIN=4
