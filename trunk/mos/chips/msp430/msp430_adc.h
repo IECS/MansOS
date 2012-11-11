@@ -35,6 +35,10 @@
 #define SHT0_DIV128 SHT0_6
 #endif // !SHT0_DIV128
 
+#ifndef SHT1_DIV128
+#define SHT1_DIV128 SHT1_6
+#endif // !SHT0_DIV128
+
 #ifndef SHT0_DIV4
 #define SHT0_DIV4 SHT0_0
 #endif // !SHT0_DIV4
@@ -85,18 +89,27 @@
 // Procedures
 //===========================================================
 
-/* 1.5V reference voltage, clock divided by 128 */
+/* 2.5V reference voltage, clock divided by 128 */
 /* SAMPCON is sourced from sampling timer */
 /* use ACLK for ADC12CLK */
 /* We will be working with memory register 2, so let's configure it */
 /* start conversion in memory reg 2 */
 /* VR+ = VREF+ and VR- = AVSS */
 #define hplAdcInit() \
-    ADC12CTL0 = SHT0_DIV4;                      \
+    /* Use 128 sample hold time */               \
+    ADC12CTL0 = SHT0_DIV128 | SHT1_DIV128;       \
+    /* Use 2.5V internal reference voltage */               \
+    ADC12CTL0 |= REF2_5V;       \
+    /* Multiple Sample-and-Convert */               \
+    ADC12CTL0 |= MSC;       \
+    /* Use sampling timer */ \
     ADC12CTL1 = SHP;                            \
-    ADC12CTL1 |= ADC12SSEL_ACLK;                \
+    /* Sample a single channel continuously */ \
+    ADC12CTL1 |= CONSEQ_2;                            \
+    /* Use internal 5MHz oscillator */               \
+    /* ADC12CTL1 |= ADC12SSEL_ACLK; */               \
     ADC12CTL1 |= CSTARTADD_2;                   \
-    ADC12MCTL2 = SREF_VREF_AVSS
+    ADC12MCTL2 = SREF_VREF_AVSS;
 
 // Use VeREF
 #define hplAdcUseExtVRef() \
@@ -119,7 +132,7 @@
     /* turn on ADC12 */                         \
     ADC12CTL0 |= ADC12ON;                       \
     /* enable conversion to take place */       \
-    ADC12CTL0 |= ENC
+    ADC12CTL0 |= ENC;                           \
 
 #define hplAdcOff()    \
     /* turn off conversions */          \

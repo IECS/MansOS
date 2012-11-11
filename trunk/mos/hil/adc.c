@@ -42,6 +42,7 @@ static uint16_t adcVal;
 
 void adcOn() {
     hplAdcOn();
+    hplAdcStartConversion();
     adcIsOn = true;
 }
 
@@ -97,25 +98,28 @@ uint16_t adcRead(uint8_t ch)
     }
 
     // hplAdcEnableInterrupt();
-    hplAdcStartConversion();
 
-    if (hplAdcIntsUsed()) {
-        // TODO - use callbacks
-        while (hplAdcIsBusy()) {}
-        retval = adcVal;
-    } else {
-        while (hplAdcIsBusy()) {}
+    // conversion already started in MSC mode
+    // hplAdcStartConversion();
+
+//    if (hplAdcIntsUsed()) {
+//        // TODO - use callbacks
+//        while (hplAdcIsBusy()) {}
+//        retval = adcVal;
+//    } else {
+//        while (hplAdcIsBusy()) {}
         retval = hplAdcGetVal();
-    }
+//    }
 
     return retval;
 }
 
 uint16_t adcReadFast()
 {
-    hplAdcStartConversion();
+    // conversion already started in MSC mode
+    // hplAdcStartConversion();
 
-    while (hplAdcIsBusy());
+//    while (hplAdcIsBusy());
 
     return hplAdcGetVal();
 }
