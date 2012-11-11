@@ -28,5 +28,8 @@
 #if USE_HUMIDITY
 #include <hil/humidity.h>
 #endif
+#if USE_ACCEL
+#include <hil/accel.h>
+#endif
 
 #endif
