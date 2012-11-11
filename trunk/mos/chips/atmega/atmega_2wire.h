@@ -56,6 +56,8 @@
 //  #define TWI_STX   4
 
 void twiInit(void);
+void twiOn(); // Enable the I2C bus
+void twiOff(); // Disable the I2C bus
 //void twiSetAddr(uint8_t addr);
 uint8_t twiRead(uint8_t addr, void *data, uint8_t len);
 uint8_t twiWrite(uint8_t addr, const void *data, uint8_t len,

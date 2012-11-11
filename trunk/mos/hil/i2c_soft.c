@@ -36,10 +36,22 @@
 #include "i2c_soft.h"
 
 //------------------------------------------------------------------------------
+//Initializes the ports for I2C
+//------------------------------------------------------------------------------
+void i2cInit() {
+    I2C_SDA_OUT();
+    I2C_SCL_OUT();
+    I2C_SDA_LO();
+    I2C_SCL_LO();
+    I2C_SDA_HI();
+    I2C_SCL_HI();
+}
+
+//------------------------------------------------------------------------------
 // Writes a byte to I2C and checks acknowledge
 // returns 0 on success
 //------------------------------------------------------------------------------
-i2cError_t i2cWriteByte(uint8_t txByte)
+i2cError_t i2cWriteByteRaw(uint8_t txByte)
 {
     uint8_t mask; 
     i2cError_t err=0;
@@ -76,7 +88,7 @@ i2cError_t i2cWriteByte(uint8_t txByte)
 // Returns the byte received
 // note: timing (delay) may have to be changed for different microcontroller
 //------------------------------------------------------------------------------
-uint8_t i2cReadByte(i2cAck_t ack)
+uint8_t i2cReadByteRaw(i2cAck_t ack)
 {
     uint8_t mask, rxByte=0;
 
@@ -103,5 +115,54 @@ uint8_t i2cReadByte(i2cAck_t ack)
     I2C_SDA_IN();                       //release SDA-line
     wait_5us;
     //wait_us(20);                      //delay to see the package on scope
-    return rxByte;                      //return error code
+    return rxByte;                      //return received byte
+}
+
+/*
+ * Writes a string to I2C and checks acknowledge
+ * @param   addr        address of the slave receiver
+ * @param   buf         the buffer containing the string
+ * @param   len         buffer length in bytes
+ * @param   sendStop    whether to send stop condition after data
+ * @return  0           on success, error code otherwise
+ */
+i2cError_t i2cWrite(uint8_t addr, const void *buf, uint8_t len,
+        bool sendStop) {
+    i2cStart();
+    i2cError_t err = i2cWriteByteRaw(addr | I2C_CMD_WRITE);
+    if (err != I2C_OK) return err;
+    uint8_t *b = (uint8_t *) buf;
+    while (len--) {
+        err = i2cWriteByteRaw(*b);
+        if (err != I2C_OK) return err;
+        ++b;
+    }
+    if (sendStop) {
+        i2cStop();
+    }
+    return I2C_OK;
+}
+
+
+/*
+ * Reads a message into buffer from I2C - requests it from a slave
+ * @param   addr        address of the slave transmitter
+ * @param   buf         the buffer to store the message
+ * @param   len         buffer length in bytes
+ * @param   sendStop    whether to send stop condition after data
+ * @return  received byte count
+ */
+uint8_t i2cRead(uint8_t addr, void *buf, uint8_t len, bool sendStop) {
+    i2cStart();
+    i2cError_t err = i2cWriteByteRaw(addr | I2C_CMD_READ);
+    if (err != I2C_OK) return err;
+    uint8_t *b = (uint8_t *) buf;
+    while (len--) {
+        *b = i2cReadByteRaw(I2C_ACK);
+        ++b;
+    }
+    if (sendStop) {
+        i2cStop();
+    }
+    return I2C_OK;
 }

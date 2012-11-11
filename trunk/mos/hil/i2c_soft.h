@@ -23,6 +23,9 @@
 
 #ifndef MANSOS_I2C_SOFT_H
 #define MANSOS_I2C_SOFT_H
+
+#include <i2c.h>
+
 //==============================================================================
 // Software controlled I2C
 //  Prior to use you must define SDA and SCL pins using your specific values 
@@ -68,20 +71,6 @@
 #define wait_20us udelay(20)
 #endif
 
-
-// I2C acknowledge
-typedef enum {
-    I2C_NO_ACK = 0,
-    I2C_ACK    = 1,
-} i2cAck_t;
-
-typedef enum {
-    I2C_OK = 0,
-    I2C_ACK_ERROR = 1,
-    I2C_TIME_OUT_ERROR = 2,
-    I2C_CHECKSUM_ERROR = 4,
-} i2cError_t;
-
 // The communication on SDA (not SCL) is done by switching pad direction.
 // For a low level the direction is set to output. 
 // For a high level the direction is set to input (must have a pullup resistor).
@@ -100,17 +89,6 @@ typedef enum {
 #define I2C_SDA_GET()  pinRead(SDA_PORT, SDA_PIN)
 #define I2C_SDA_SET(b) pinWrite(SDA_PORT, SDA_PIN, b)
 
-
-//------------------------------------------------------------------------------
-//Initializes the ports for I2C
-//------------------------------------------------------------------------------
-#define i2cInit()     \
-    I2C_SDA_OUT();    \
-    I2C_SCL_OUT();    \
-    I2C_SDA_LO();     \
-    I2C_SCL_LO();     \
-    I2C_SDA_HI();     \
-    I2C_SCL_HI();
 
 //------------------------------------------------------------------------------
 // Writes a start condition on I2C-bus
@@ -148,13 +126,13 @@ typedef enum {
 // Writes a byte to I2C and checks acknowledge
 // returns 0 on success
 //------------------------------------------------------------------------------
-i2cError_t i2cWriteByte(uint8_t txByte);
+i2cError_t i2cWriteByteRaw(uint8_t txByte);
 
 //------------------------------------------------------------------------------
 // Reads a byte from I2C
 // Returns the byte received
 // note: timing (delay) may have to be changed for different microcontroller
 //------------------------------------------------------------------------------
-uint8_t i2cReadByte(i2cAck_t ack);
+uint8_t i2cReadByteRaw(i2cAck_t ack);
 
 #endif  // MANSOS_I2C_SOFT_H
