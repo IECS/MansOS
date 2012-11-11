@@ -1,0 +1,2 @@
+# By default no accelerometer on TelosB
+USE_ACCEL ?= n
