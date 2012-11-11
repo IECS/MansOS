@@ -62,8 +62,12 @@
 #include <kernel/defines.h>
 #include <kernel/threads/threads.h>
 #include <lib/energy.h>
-
 #include <digital.h>
+#if USE_PROTOTHREADS
+#include <kernel/protothreads/process.h>
+#include <kernel/protothreads/radio-process.h>
+#endif
+
 
 // for 4MHz CPU speed? (326us required)
 #define LOOP_20_SYMBOLS 700
@@ -73,7 +77,7 @@
 #endif
 
 #if RADIO_DEBUG
-#include "dprint.h"
+#include <lib/dprint.h>
 #define RPRINTF(...) PRINTF(__VA_ARGS__)
 #else
 #define RPRINTF(...) do {} while (0)
@@ -117,6 +121,14 @@ static uint8_t cc2420_last_lqi;
 static uint8_t receive_on;
 /* Radio stuff in network byte order. */
 static uint16_t pan_id;
+
+#ifndef RADIO_CHANNEL
+#define RADIO_CHANNEL 26
+#endif
+
+#ifndef RADIO_TX_POWER
+#define RADIO_TX_POWER CC2420_TX_POWER_MAX
+#endif
 
 static int channel = RADIO_CHANNEL;
 
@@ -450,6 +462,7 @@ int_t cc2420Read(void *buf, uint16_t bufsize)
         cc2420_last_lqi = footer[1] & FOOTER1_LQI;
         result = len;
     } else {
+        RPRINTF("footer = 0x%x 0x%x\n", footer[0], footer[1]);
         result = -EBADMSG;
     }
 
@@ -560,13 +573,22 @@ ISR(PORT1, cc2420Interrupt)
     // yes, this does NOT wake the MCU!
     // XXX: add support for MCU "wake on radio" in future?
     processFlags.bits.radioProcess = true;
+#elif USE_PROTOTHREADS
+    // poll protothread
+    //RPRINTF("%lu, calling radio poll\n", getJiffies());
+    process_poll(&radio_process);
 #else
+    // plain handler
     if (receiver_callback) {
         receiver_callback();
     } else {
         flushrx();
     }
 #endif
+
+    // wake MCU up, if it was sleeping
+    //RPRINTF("Exit sleep mode\n");
+    EXIT_SLEEP_MODE();
 
     energyConsumerOffIRQ(ENERGY_CONSUMER_MCU);
 }
