@@ -22,25 +22,34 @@
  */
 
 #include "radio.h"
+#include <net/radio_packet_buffer.h>
 #include <lib/dprint.h>
 #include <platform.h>
 
-RadioPacketBuffer_t *radioPacketBuffer;
+#if DEBUG
+#define KERNEL_RADIO_DEBUG 1
+#endif
+
+#define KERNEL_RADIO_DEBUG 1
+
+#if KERNEL_RADIO_DEBUG
+#include "dprint.h"
+#define KRPRINTF(...) PRINTF(__VA_ARGS__)
+#else
+#define KRPRINTF(...) do {} while (0)
+#endif
+
 
 void radioProcess(void)
 {
     if (!radioPacketBuffer) {
-#if DEBUG
-        PRINTF("got a radio packet, but no buffer!\n");
-#endif
+        KRPRINTF("got a radio packet, but no buffer!\n");
         radioDiscard();
         return;
     }
 
-    if (isRadioPacketReceived(*radioPacketBuffer)) {
-#if DEBUG
-        PRINTF("got a radio packet, but the buffer is already full!\n");
-#endif
+    if (isRadioPacketReceived()) {
+        KRPRINTF("got a radio packet, but the buffer is already full!\n");
         radioDiscard();
         return;
     }

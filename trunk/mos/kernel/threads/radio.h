@@ -26,42 +26,10 @@
 
 #include <radio.h>
 
-typedef struct RadioPacketBuffer_s {
-    uint8_t bufferLength;     // length of the buffer
-    int8_t receivedLength;    // length of data stored in the packet, or error code if negative
-    uint8_t buffer[0];        // pointer to a buffer where the packet is stored
-} RadioPacketBuffer_t;
-
-extern RadioPacketBuffer_t *radioPacketBuffer;
-
 // ----------------------------------------------------------------
 // Kernel API
 // ----------------------------------------------------------------
 
 void radioProcess(void);
-
-// ----------------------------------------------------------------
-// User API
-// ----------------------------------------------------------------
-
-#define RADIO_PACKET_BUFFER(name, size)                                 \
-    static struct RadioPacketBuffer_s_##name {                          \
-        uint8_t bufferLength;                                           \
-        int8_t receivedLength;                                          \
-        uint8_t buffer[size];                                           \
-    } name = {size, 0, {0}};                                            \
-    radioPacketBuffer = (RadioPacketBuffer_t *) &name;
-
-#define isRadioPacketEmpty(radioBuffer)         \
-    ((radioBuffer).receivedLength == 0)
-
-#define isRadioPacketReceived(radioBuffer)      \
-    ((radioBuffer).receivedLength > 0)
-
-#define isRadioPacketError(radioBuffer)         \
-    ((radioBuffer).receivedLength < 0)
-
-#define radioBufferReset(radioBuffer)           \
-    (radioBuffer).receivedLength = 0;
 
 #endif
