@@ -56,12 +56,16 @@ USE_SMP ?= n
 USE_FS ?= n
 USE_ASSERT ?= y
 USE_HUMIDITY ?= n
+USE_ACCEL ?= n
 USE_SPI ?= y
 USE_SOFT_SPI ?= n
 USE_SOFT_I2C ?= n
 
 # timers are needed for e.g. USART communication and alarms; disable with care!
 USE_HARDWARE_TIMERS ?= y
+
+# proto-threads (from Contiki)
+USE_PROTOTHREADS ?= n
 
 # execute from RAM, not from flash?
 USE_RAM_EXECUTION ?= n
