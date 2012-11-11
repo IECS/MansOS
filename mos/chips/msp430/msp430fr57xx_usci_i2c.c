@@ -126,13 +126,3 @@ end:
 
     return i;
 }
-
-i2cError_t i2cWriteByte(uint8_t addr, uint8_t txByte)
-{
-    return i2cWrite(addr, &txByte, sizeof(txByte));
-}
-
-uint8_t i2cReadByte(uint8_t addr, uint8_t *rxByte)
-{
-    return i2cRead(addr, rxByte, sizeof(*rxByte));
-}

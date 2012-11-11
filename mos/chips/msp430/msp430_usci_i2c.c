@@ -44,8 +44,8 @@ void i2cInit(void)
 #define I2C_MODE (UCMST | UCMODE_3 | UCSYNC)
 #define I2C_SPEED 100000UL
 
-    pinAsFunction(USCI0_I2C_PORT, USCI_B0_SDA_PIN);
-    pinAsFunction(USCI0_I2C_PORT, USCI_B0_SCL_PIN);
+    pinAsFunction(USCI_B0_I2C_PORT, USCI_B0_SDA_PIN);
+    pinAsFunction(USCI_B0_I2C_PORT, USCI_B0_SCL_PIN);
 
     UCB0CTL1 = UCSWRST;                    // Hold the module in reset state
     UCB0CTL1 |= UCSSEL_2;                  // SMCLK clock source
@@ -62,11 +62,16 @@ void i2cOn(void) { }
 void i2cOff(void) { }
 
 
-//
-// Send/receive functions
-//
-
-uint8_t i2cWrite(uint8_t addr, const void *buf, uint8_t len)
+/*
+ * Writes a string to I2C and checks acknowledge
+ * @param   addr        address of the slave receiver
+ * @param   buf         the buffer containing the string
+ * @param   len         buffer length in bytes
+ * @param   sendStop    whether to send stop condition after data
+ * @return  0           on success, error code otherwise
+ */
+i2cError_t i2cWrite(uint8_t addr, const void *buf, uint8_t len,
+        bool sendStop)
 {
     size_t i;
     int    ret = I2C_OK;
@@ -98,13 +103,23 @@ uint8_t i2cWrite(uint8_t addr, const void *buf, uint8_t len)
     }
 
 end:
-    UCB0CTL1 |= UCTXSTP; // Issue STOP condition
-    while (UCB0CTL1 & UCTXSTP);
+    if (sendStop) {
+        UCB0CTL1 |= UCTXSTP; // Issue STOP condition
+        while (UCB0CTL1 & UCTXSTP);
+    }
 
     return ret;
 }
 
-uint8_t i2cRead(uint8_t addr, void *buf, uint8_t len)
+/*
+ * Reads a message into buffer from I2C - requests it from a slave
+ * @param   addr        address of the slave transmitter
+ * @param   buf         the buffer to store the message
+ * @param   len         buffer length in bytes
+ * @param   sendStop    whether to send stop condition after data
+ * @return  received byte count
+ */
+uint8_t i2cRead(uint8_t addr, void *buf, uint8_t len, bool sendStop)
 {
     size_t i;
 
@@ -133,18 +148,10 @@ uint8_t i2cRead(uint8_t addr, void *buf, uint8_t len)
     }
 
 end:
-    UCB0CTL1 |= UCTXSTP; // Force STOP
-    while (UCB0CTL1 & UCTXSTP);
+    if (sendStop) {
+        UCB0CTL1 |= UCTXSTP; // Force STOP
+        while (UCB0CTL1 & UCTXSTP);
+    }
 
     return i;
-}
-
-i2cError_t i2cWriteByte(uint8_t addr, uint8_t txByte)
-{
-    return i2cWrite(addr, &txByte, sizeof(txByte));
-}
-
-uint8_t i2cReadByte(uint8_t addr, uint8_t *rxByte)
-{
-    return i2cRead(addr, rxByte, sizeof(*rxByte));
 }
