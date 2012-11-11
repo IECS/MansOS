@@ -42,6 +42,38 @@ else
 CPU_MHZ ?= 1  # TODO?
 endif
 
+ifeq ($(USE_TEMPERATURE),y)
+# TMP102 sensor requires I2C. HW implementation is partially functional,
+# use soft I2C instead
+USE_SOFT_I2C=y
+SDA_PORT=5
+SDA_PIN=1
+SCL_PORT=5
+SCL_PIN=2
+CONST_TMP102_PWR_PORT=5
+CONST_TMP102_PWR_PIN=0
+USE_TMP102=y
+endif
+
+ifeq ($(USE_ACCEL),y)
+# ADXL345 sensor requires I2C. HW implementation is partially functional,
+# use soft I2C instead
+USE_SOFT_I2C=y
+USE_ADXL345=y
+SDA_PORT=5
+SDA_PIN=1
+SCL_PORT=5
+SCL_PIN=2
+USE_ADXL345=y
+endif
+
+ifneq ($(SDA_PORT),)
+CFLAGS += -DSDA_PORT=$(SDA_PORT)
+CFLAGS += -DSDA_PIN=$(SDA_PIN)
+CFLAGS += -DSCL_PORT=$(SCL_PORT)
+CFLAGS += -DSCL_PIN=$(SCL_PIN)
+endif
+
 Z1-BSL = $(MOS)/make/scripts/z1-bsl-nopic
 
 INTERRUPT_VECTOR_COUNT=32
@@ -63,6 +95,9 @@ PSOURCES-$(USE_RADIO) += $(MOS)/chips/cc2420/cc2420.c
 #PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
 
 PSOURCES-$(USE_RADIO) += $(MOS)/chips/amb8420/amb8420.c
+
+PSOURCES-$(USE_TEMPERATURE) += $(MOS)/chips/tmp102/tmp102.c
+PSOURCES-$(USE_ACCEL) += $(MOS)/chips/adxl345/adxl345.c
 
 PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
 PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
