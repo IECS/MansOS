@@ -28,6 +28,7 @@
 #===== Component locations =====
 PDFS      = /mos/fs
 NET       = $(MOS)/net
+PROTOTHR  = $(MOS)/kernel/protothreads
 
 #===== Sources =====
 
@@ -130,10 +131,24 @@ else #! USE_THREADS
 PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/nothreads/timing.c
 PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/sleep.c
 
+
+ifeq ($(USE_PROTOTHREADS),y)
+INCLUDES += -I$(PROTOTHR)
+PSOURCES += $(PROTOTHR)/process.c
+PSOURCES += $(PROTOTHR)/protosched.c
+PSOURCES += $(PROTOTHR)/autostart.c
+PSOURCES += $(PROTOTHR)/etimer.c
+PSOURCES += $(PROTOTHR)/timer.c
+PSOURCES-$(USE_RADIO) += $(PROTOTHR)/radio.c
+endif # PROTOTHREADS
+
 endif # ifeq($(USE_THREADS),y)
 
 PSOURCES-$(USE_NET) += $(MOS)/lib/buffer.c
 PSOURCES-$(USE_HD4478_LCD) += $(MOS)/chips/hd4478/hd4478.c
+PSOURCES-$(USE_MCP9804) += $(MOS)/chips/mcp9804/mcp9804.c
+PSOURCES-$(USE_ADXL345) += $(MOS)/chips/adxl345/adxl345.c
+PSOURCES-$(USE_TMP102) += $(MOS)/chips/tmp102/tmp102.c
 
 PSOURCES-$(USE_REPROGRAMMING) += $(MOS)/kernel/boot.c
 PSOURCES-$(USE_REPROGRAMMING) += $(MOS)/kernel/reprogramming.c
