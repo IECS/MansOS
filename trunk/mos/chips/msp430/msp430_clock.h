@@ -33,6 +33,10 @@
 // Warning: this commands works *only* in interrupt handlers!
 #define EXIT_SLEEP_MODE() LPM3_EXIT
 
+#define PLATFORM_CAN_SLEEP() (1)
+// TODO: return 0, when platform cannot go into sleep mode (for example,
+//     UART/SPI transmission is in progress
+
 //===========================================================
 // Procedures
 //===========================================================
