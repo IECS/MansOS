@@ -44,6 +44,8 @@
 #include <beeper.h>
 #if USE_THREADS
 #include "threads/threads.h"
+#elif USE_PROTOTHREADS
+#include <kernel/protothreads/protosched.h>
 #endif
 #include <arch_mem.h>
 #include <sdcard/sdcard.h>
@@ -205,11 +207,15 @@ int main(void)
 
 // ------------------------------------------
 #else
-    MESSAGE("Not using threads");
 
     ENABLE_INTS();
 
+#ifdef USE_PROTOTHREADS
+    startProtoSched();
+#else
+    MESSAGE("Not using threads");
     appMain();
+#endif
 
     //
     // Do not allow to return from this function. The reason:

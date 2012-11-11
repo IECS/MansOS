@@ -25,6 +25,10 @@
 #include <platform.h>
 #include <kernel/timing.h>
 
+#if USE_PROTOTHREADS
+#include <etimer.h>
+#endif
+
 //----------------------------------------------------------
 // internal variables
 //----------------------------------------------------------
@@ -37,7 +41,8 @@ ALARM_TIMER_INTERRUPT()
     // advance the CCR
     SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
 
-    jiffies += JIFFY_TIMER_MS;
+    //!!! jiffies += JIFFY_TIMER_MS;
+    ++jiffies;
 
     //
     // Clock error (software, due to rounding) is 32/32768 seconds per second,
@@ -55,6 +60,12 @@ ALARM_TIMER_INTERRUPT()
 #ifdef USE_ALARMS
     if (hasAnyReadyAlarms(jiffies)) {
         alarmsProcess();
+    }
+#endif
+#ifdef USE_PROTOTHREADS
+    if(etimer_pending() && !etimer_polled() && etimer_next_expiration_time() >= jiffies) {
+        etimer_request_poll();
+        EXIT_SLEEP_MODE();
     }
 #endif
 

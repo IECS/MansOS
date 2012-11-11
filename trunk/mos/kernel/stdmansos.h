@@ -52,8 +52,15 @@
 #ifdef USE_ADDRESSING
 #include <net/addr.h>
 #endif
+#ifdef USE_PROTOTHREADS
+#include <kernel/protothreads/process.h>
+#include <kernel/protothreads/autostart.h>
+#include <kernel/protothreads/etimer.h>
+#ifdef USE_RADIO
+#include <kernel/protothreads/radio-process.h>
+#endif
+#endif
 #include <sensors.h>
-#include <utils.h>
 #include <random.h>
 
 #endif
