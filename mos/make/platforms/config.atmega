@@ -1,1 +1,4 @@
+# By default no radio, humidity and accelerometer on ATMega platforms
 USE_RADIO ?= n
+USE_HUMIDITY ?= n
+USE_ACCEL ?= n
