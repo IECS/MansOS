@@ -22,7 +22,7 @@
  */
 
 /*
- * Acellerometer sensor reading
+ * Accelerometer sensor reading
  */
 
 #ifndef MANSOS_ACCEL_H
