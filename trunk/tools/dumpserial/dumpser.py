@@ -12,8 +12,7 @@ import threading
 import argparse
 
 global flDone
-global baudRate
-global serPort
+global cliArgs
 
 def getUserInput(prompt):
     if sys.version[0] >= '3':
@@ -23,21 +22,23 @@ def getUserInput(prompt):
 
 def listenSerial():
     global flDone
-    global serPort
-    global baudRate
+    global cliArgs
     
     try:
-        ser = serial.Serial(serPort, baudRate, timeout=1, 
+        ser = serial.Serial(cliArgs.serialPort, cliArgs.baudRate, timeout=1, 
             parity=serial.PARITY_NONE, rtscts=1)
-        # make sure reset pin is low
-        ser.setDTR(0)
-        ser.setRTS(0)
+
+        if cliArgs.platform != "z1":
+            # make sure reset pin is low
+            ser.setDTR(0)
+            ser.setRTS(0)
+
     except serial.SerialException as ex:
         sys.stderr.write("\nSerial exception:\n\t{}".format(ex))
         flDone = True
         return
     
-    sys.stderr.write("Using port {}, baudrate {}\n".format(ser.portstr, baudRate))
+    sys.stderr.write("Using port {}, baudrate {}\n".format(ser.portstr, cliArgs.baudRate))
 
     while (not flDone):
         s = ser.read(1)
@@ -62,6 +63,8 @@ def getCliArgs():
         help='serial port to listen (default: ' + defaultSerialPort + ' )')
     parser.add_argument('-b', '--baud_rate', dest='baudRate', action='store', default=defaultBaudRate,
         help='baud rate (default: ' + str(defaultBaudRate) + ')')
+    parser.add_argument('-p', '--platform', dest='platform', action='store', default='telosb',
+        help='platform (default: telosb)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + version)
     return parser.parse_args()
 
@@ -69,19 +72,14 @@ def getCliArgs():
 
 def main():
     global flDone
-    global serPort
-    global baudRate
+    global cliArgs
     flDone = False
 
-    args = getCliArgs()
+    cliArgs = getCliArgs()
 
-    serPort = args.serialPort
-
-    if serPort in ("ACM", "chronos") :
-        serPort = "/dev/ttyACM0" 
-        baudRate = 115200
-
-    baudRate = args.baudRate
+    if cliArgs.serialPort in ("ACM", "chronos") :
+        cliArgs.serialPort = "/dev/ttyACM0" 
+        cliArgs.baudRate = 115200
 
     sys.stderr.write("MansOS serial listener, press Ctrl+C or Q+Enter to exit\n")
     threading.Thread(target=listenSerial).start() 

@@ -421,4 +421,4 @@ motelist:
 	$(_QUIET) $(MOTELIST)
 
 listen:
-	$(_QUIET) $(LISTENER) -s $(BSLPORT) -b $(BAUDRATE)
+	$(_QUIET) $(LISTENER) -s $(BSLPORT) -b $(BAUDRATE) -p $(PLATFORM)

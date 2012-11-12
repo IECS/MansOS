@@ -60,6 +60,7 @@
 #include <kernel/protothreads/radio-process.h>
 #endif
 #endif
+#include <utils.h>
 #include <sensors.h>
 #include <random.h>
 

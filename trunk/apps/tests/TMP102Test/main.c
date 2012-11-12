@@ -23,7 +23,7 @@ void appMain(void)
         int16_t temp_c = tmp102_readDegrees();
 
         PRINTF("%u C\n", temp_c);
-        sleep(1000);
+        msleep(1000);
     }
 }
 

@@ -41,8 +41,7 @@ ALARM_TIMER_INTERRUPT()
     // advance the CCR
     SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
 
-    //!!! jiffies += JIFFY_TIMER_MS;
-    ++jiffies;
+    jiffies += JIFFY_TIMER_MS;
 
     //
     // Clock error (software, due to rounding) is 32/32768 seconds per second,
@@ -63,9 +62,10 @@ ALARM_TIMER_INTERRUPT()
     }
 #endif
 #ifdef USE_PROTOTHREADS
-    if(etimer_pending() && !etimer_polled() && etimer_next_expiration_time() >= jiffies) {
-        etimer_request_poll();
-        EXIT_SLEEP_MODE();
+    if (etimer_pending() && !etimer_polled()
+            && !timeAfter32(jiffies, etimer_next_expiration_time())) {
+         etimer_request_poll();
+         EXIT_SLEEP_MODE();
     }
 #endif
 
