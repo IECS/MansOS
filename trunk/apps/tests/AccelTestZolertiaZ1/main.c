@@ -24,8 +24,6 @@ static inline void printPacket(Packet_t *p) {
 //-------------------------------------------
 void appMain(void)
 {
-    PRINT_INIT(255);
-
     PRINTF("\n\nAccelerometer API test app\n");
 
     accelOn();

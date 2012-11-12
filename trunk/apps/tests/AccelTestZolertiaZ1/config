@@ -1,6 +1,6 @@
 # Zolertia Z1-specific accelerometer test application
 
-PLATFORM_EXCLUDE=arduino atmega farmmote telosb
+PLATFORM_ONLY=z1
 
 USE_ADC=n
 USE_RADIO=n
