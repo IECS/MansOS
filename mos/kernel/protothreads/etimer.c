@@ -133,8 +133,8 @@ PROCESS_THREAD(etimer_process, ev, data)
                 if(process_post(t->p, PROCESS_EVENT_TIMER, t) == PROCESS_ERR_OK) {
 
                     /* Reset the process ID of the event timer, to signal that the
-	     etimer has expired. This is later checked in the
-	     etimer_expired() function. */
+                       etimer has expired. This is later checked in the
+                       etimer_expired() function. */
                     t->p = PROCESS_NONE;
                     if(u != NULL) {
                         u->next = t->next;
@@ -263,8 +263,8 @@ etimer_stop(struct etimer *et)
 
         if(t != NULL) {
             /* We've found the item before the event timer that we are about
-	 to remove. We point the items next pointer to the event after
-	 the removed item. */
+               to remove. We point the items next pointer to the event after
+               the removed item. */
             t->next = et->next;
 
             update_time();

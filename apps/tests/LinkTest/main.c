@@ -22,7 +22,7 @@
  */
 
 //
-// LinkTest appplication, communicates with other nodes and tests connection 
+// LinkTest appplication, communicates with other nodes and tests connection
 // by sending multiple messages(TEST_COUNT).
 //
 
@@ -109,8 +109,8 @@ int getNeighborByAddress(MosShortAddr address, bool add){
 }
 
 static void recvTest(Socket_t *socket, uint8_t *data, uint16_t len)
-{   
-    uint8_t temp = *data, temp2[REPLY_TEST_BYTE_COUNT] = {REPLY_TEST_BYTE}; 
+{
+    uint8_t temp = *data, temp2[REPLY_TEST_BYTE_COUNT] = {REPLY_TEST_BYTE};
     // PRINTF("got %d bytes from 0x%04x (%#x) - recvTest\n", len, originAddr, temp);
     if (temp == REPLY_TEST_BYTE){
         if (blocker){

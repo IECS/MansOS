@@ -129,9 +129,9 @@ void start(void)
     // 
     // Call initialization routines.
     // By default these are put by the compiler, right before start of the text segment.
-    // However, if you redefine _reset_vector__ in the program
-    // (as is the case when reprogamming is used),
-    // then they are not included, starting from msp430 GCC 4.5+
+    // However, if _reset_vector__ is redefined in the program
+    // (as in the case when reprogramming is used),
+    // then the routines not included (starting from msp430 GCC 4.5+)
     //
     // The sequence is the same as in GCC sources,
     // file gcc/config/msp430/crt0.S
@@ -151,15 +151,6 @@ void start(void)
         *(uint8_t *)((uint16_t)&__data_start + i) =
                 *(uint8_t *)((uint16_t)&__data_load_start + i);
     }
-    // msp430 assembler code:
-    // asm("mov     #__data_size, r15\n"
-    //     "tst     r15\n"
-    //     "jz      .L__copy_data_end\n"
-    //     ".L__copy_data_loop:\n"
-    //     "decd    r15\n"
-    //     "mov.w   __data_load_start(r15), __data_start(r15)\n"
-    //     "jne     .L__copy_data_loop\n"
-    //     ".L__copy_data_end:");
 
     // zero out BSS segment
     i = __bss_size;
@@ -167,15 +158,6 @@ void start(void)
         i--;
         *(uint8_t *)((uint16_t)&__bss_start + i) = 0;
     }
-    // msp430 assembler code:
-    // asm("mov     #__bss_size, r15\n"
-    //     "tst     r15\n"
-    //     "jz      .L__clear_bss_end\n"
-    //     ".L__clear_bss_loop:\n"
-    //      "dec     r15\n"
-    //     "clr.b   __bss_start(r15)\n"
-    //      "jne     .L__clear_bss_loop\n"
-    //      ".L__clear_bss_end:\n");
 
     // initalization done;
     // simply jump to start of .text section
