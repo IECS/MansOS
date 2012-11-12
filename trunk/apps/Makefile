@@ -20,9 +20,12 @@ DEMO_TARGETS = \
 
 TEST_TARGETS = \
 	AccelTest				\
+	AccelTestZolertiaZ1			\
 	AdaptiveRate				\
 	AdcTest					\
-	AdsTest					\
+	AdcToUart				\
+	Ads111xTest				\
+	ADXL345Test				\
 	AlarmTest				\
 	ApdsTest				\
 	AssertTest				\
@@ -48,6 +51,7 @@ TEST_TARGETS = \
 	SleepTest				\
 	SnumTest				\
 	TinyOSEncapsuleTest			\
+	TMP102Test				\
 	UARTRecvPacketTest			\
 	UARTTest				\
 	SmpTest/DemoBlueLed			\
@@ -65,6 +69,11 @@ TEST_TARGETS = \
 	ExpThreadTests/5-Radio			\
 	ExpThreadTests/6-MAC			\
 	ExpThreadTests/7-Sockets		\
+	TestBed\AdsTest				\
+	TestBed\DacTest				\
+	ProtoThreadTests\01-PTYield		\
+	ProtoThreadTests\01-PTBlink		\
+	ProtoThreadTests\01-PTRadio		\
 
 ADVANCED_TARGETS = \
 	Accel3DTest				\

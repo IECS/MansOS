@@ -11,7 +11,6 @@
 //-------------------------------------------
 void appMain(void)
 {
-    PRINT_INIT(129);
     // wait a while after programming the mote - to be able to start
     // serial port listening app on the PC
     PRINTF("TMP102 test app\n");
