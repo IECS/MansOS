@@ -431,10 +431,14 @@ IDE developed by: Janis Judvaitis, (c) 2011-2012, janis.judvaitis@gmail.com
     def disableAdders(self):
         self.toolbar.EnableTool(wx.ID_ADD, False)
         self.toolbar.EnableTool(wx.ID_APPLY, False)
+        if self.API.loaded:
+            self.API.frame.auiManager.ShowPane(self.API.editPanel, False)
 
     def enableAdders(self):
         self.toolbar.EnableTool(wx.ID_ADD, True)
         self.toolbar.EnableTool(wx.ID_APPLY, True)
+        if self.API.loaded:
+            self.API.frame.auiManager.ShowPane(self.API.editPanel, True)
 
     def rememberPositioning(self):
         # This approach have a small bug.
@@ -505,6 +509,8 @@ IDE developed by: Janis Judvaitis, (c) 2011-2012, janis.judvaitis@gmail.com
         self.toolbar.EnableTool(wx.ID_PREVIEW, False)
         self.toolbar.EnableTool(wx.ID_PREVIEW_GOTO, False)
         self.toolbar.EnableTool(wx.ID_PREVIEW_ZOOM, False)
+        if self.API.loaded:
+            self.API.frame.auiManager.ShowPane(self.API.editPanel, False)
 
     #def OnBlocklyTool(self, event):
     #    wx.YieldIfNeeded()

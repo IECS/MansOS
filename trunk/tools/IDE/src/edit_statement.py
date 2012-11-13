@@ -48,18 +48,18 @@ class EditStatement(wx.Panel):
 ### Update
 
     def update(self):
-        self.editor = self.API.tabManager.getPageObject().code
-        self.source = self.editor.checkForComment(self.editor.findStatement())
-        if self.source is not None:
-
-            if self.source['type'] == STATEMENT:
-                self.updateStatement()
-            if self.source['type'] == CONDITION:
-                self.updateCondition()
-        else:
-            self.clearStatement()
-            self.clearCondition()
-            self.mode = UNKNOWN
+        if self.API.tabManager.getPageObject() != None:
+            self.editor = self.API.tabManager.getPageObject().code
+            self.source = self.editor.checkForComment(self.editor.findStatement())
+            if self.source is not None:
+                if self.source['type'] == STATEMENT:
+                    self.updateStatement()
+                if self.source['type'] == CONDITION:
+                    self.updateCondition()
+                return
+        self.clearStatement()
+        self.clearCondition()
+        self.mode = UNKNOWN
 
 ### Statement processing
 
