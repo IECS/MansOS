@@ -139,8 +139,14 @@ class EditorManager(wx.Panel):
         if os.path.isdir(path):
             if os.path.isfile(os.path.join(path, "config")):
                 f = open(os.path.join(path, "config"), "r")
+                self.API.excludedPlatforms = list()
                 for x in f.readlines():
                     if x.startswith("PLATFORM_ONLY"):
                         platform = x.split("=")[1].strip()
                         if platform in self.API.platforms:
                             self.API.platformOnly = platform
+                    if x.startswith("PLATFORM_EXCLUDE"):
+                        platforms = x.split("=")[1].strip().split(" ")
+                        for target in platforms:
+                            if target in self.API.platforms:
+                                self.API.excludedPlatforms.append(target)
