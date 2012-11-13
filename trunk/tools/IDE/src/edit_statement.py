@@ -139,7 +139,7 @@ class EditStatement(wx.Panel):
         # Check if 3rd tier needs to be recreated or updated
         changed = True
         if self.newMode == 0:
-            if self.type != self.name:
+            if self.type != self.name and self.name != None:
                 changed = self._type.lower() != self.type.GetValue().lower() or \
                           self._name.lower() != self.name.GetValue().lower()
         # Forced recreate?
