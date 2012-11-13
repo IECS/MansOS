@@ -107,17 +107,17 @@ class SealSyntax():
     def getKeywords(self, target1 = None, target2 = None):
         if target1 == None:
             return self.syntax[0]
-        target1Nr = self.findRealIndex(self.syntax[0], target1)
+        target1Nr = self.findRealIndex(self.syntax[0], target1.lower())
 
         if target1Nr == 0 or target2 == '':
             return []
 
-        assert target1 in self.syntax[0], "'{}' not found".format(target1)
+        assert target1.lower() in self.syntax[0], "'{}' not found".format(target1)
 
         if target2 == None:
             return self.syntax[target1Nr][0]
 
-        target2Nr = self.findRealIndex(self.syntax[target1Nr][0], target2)
+        target2Nr = self.findRealIndex(self.syntax[target1Nr][0], target2.lower())
 
         if target2Nr == 0:
             return []
@@ -125,8 +125,7 @@ class SealSyntax():
         #assert target2 in self.syntax[target1Nr][0], \
         #    "'{}' not found in {}".format(target2, self.syntax[target1Nr][0])
 
-        return self.syntax[target1Nr]\
-            [target2Nr]
+        return self.syntax[target1Nr][target2Nr]
 
     def findRealIndex(self, myList, entry):
         #assert entry in myList, "{} not found in {}".format(entry, myList)
