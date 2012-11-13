@@ -88,6 +88,7 @@ class ApiCore:
         self.platforms = self.getPlatformsFromMakefile()
 
         self.platformOnly = None
+        self.excludedPlatforms = list()
 
         self.activePlatform = self.platforms.index("telosb")
         #
@@ -274,7 +275,11 @@ class ApiCore:
         return self.sealSyntax.predefinedConditions
 
     def getPlatforms(self):
-        return self.platforms
+        retVal = list()
+        for x in self.platforms:
+            if x not in self.excludedPlatforms:
+                retVal.append(x)
+        return retVal
 
     def getSetting(self, setting):
         if setting in self.__settings:
@@ -389,7 +394,10 @@ class ApiCore:
 
     def getActivePlatform(self):
         if self.platformOnly == None:
-            return self.platforms[self.activePlatform]
+            if self.platforms[self.activePlatform] not in self.excludedPlatforms:
+                return self.platforms[self.activePlatform]
+            else:
+                return self.platforms[0]
         else:
             return self.platforms[self.platforms.index(self.platformOnly)]
 
