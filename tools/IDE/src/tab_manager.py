@@ -210,7 +210,6 @@ class TabManager(aui.AuiNotebook):
         self.API.frame.deactivateNoEditorMode()
         self.onPageChanged(None)
 
-
     def GetCurrentPage(self):
         return self.getPageObject()
 
@@ -224,7 +223,7 @@ class TabManager(aui.AuiNotebook):
                 self.tr('Save changes to') + ' "' +
                     self.getPageObject().fileName + '" ' +
                     self.tr('before close it?'),
-                self.tr('Unsaved document') + ' "' +
+                self.tr('Unsaved file') + ' "' +
                     self.getPageObject().fileName + '"',
                 wx.YES_NO | wx.CANCEL | wx.ICON_EXCLAMATION)
 
