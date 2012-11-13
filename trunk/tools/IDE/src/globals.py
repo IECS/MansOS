@@ -72,8 +72,9 @@ C_KEYWORDS = ["void", "const", "struct", "char", "enum", "return",
               "if", "do", "while", "until", "for"]
 
 # SEAL keywords
-SEAL_KEYWORDS = ["use", "read", "output", "define", "config", "const", "when",
-                 "else", "elsewhen", "end"]
+SEAL_KEYWORDS = ["and", "config", "const", "define", "else", "elsewhen", "end",
+                 "load", "networkread", "not", "parameters", "pattern", "read",
+                 "or", "output", "set", "use", "when", "where"]
 
 # SEAL parameter names
 SEAL_PARAMETERS = ['period', 'on', 'off', 'once', 'baudrate', 'id', 'cache',
