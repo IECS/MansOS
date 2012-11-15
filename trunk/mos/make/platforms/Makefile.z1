@@ -74,6 +74,9 @@ CFLAGS += -DSCL_PORT=$(SCL_PORT)
 CFLAGS += -DSCL_PIN=$(SCL_PIN)
 endif
 
+# define missing __P1SEL2 and __P5SEL2 symbols
+LDFLAGS += -Wl,--defsym -Wl,__P1SEL2=0x0041 -Wl,--defsym -Wl,__P5SEL2=0x0045
+
 Z1-BSL = $(MOS)/make/scripts/z1-bsl-nopic
 
 INTERRUPT_VECTOR_COUNT=32
