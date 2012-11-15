@@ -75,6 +75,7 @@ class ListenModule(wx.Panel):
         self.Show()
 
     def doClear(self, event = None):
+        self.API.stopThread("Serial port listener")
         # String is returned when callback triggers, so by that we always know
         # that we do not listen now
         if type(event) is str:
