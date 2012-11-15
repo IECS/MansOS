@@ -347,7 +347,6 @@ class ApiCore:
             if self.activeThreads[x].name == name:
                 self.activeThreads[x].stop = True
                 return
-        print "Thread '{}' is not running, can't stop!".format(name)
 
     def onResult(self, event):
         thread = self.activeThreads[event.GetEventType()]
