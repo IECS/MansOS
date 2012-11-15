@@ -25,6 +25,6 @@
 #define ADXL345_CONFIG_H
 
 // Zolertia Z1 platform uses ADXL345 accelerometer sensor
-#define ADXL345_SLAVE_ADDR 0x53
+#define ADXL345_ADDR 0x53
 
 #endif
