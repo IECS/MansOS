@@ -34,7 +34,7 @@
 //----------------------------------------------------------
 static bool adcIsOn;
 static uint8_t adcChannel;
-static uint16_t adcVal;
+//static uint16_t adcVal;
 
 #define enableAdcPin(port, pin) \
     pinAsFunction(port, pin);   \
