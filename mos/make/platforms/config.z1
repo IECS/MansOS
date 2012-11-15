@@ -1,0 +1,9 @@
+ifeq ($(USE_TEMPERATURE),y)
+# Z1 has TMP102 temperature sensor
+USE_TMP102 ?= y
+endif
+
+ifeq ($(USE_ACCEL),y)
+# Z1 has ADXL345 accelerometer sensor
+USE_ADXL345 ?= y
+endif
