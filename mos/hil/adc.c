@@ -34,7 +34,7 @@
 //----------------------------------------------------------
 static bool adcIsOn;
 static uint8_t adcChannel;
-//static uint16_t adcVal;
+static uint16_t adcVal;
 
 #define enableAdcPin(port, pin) \
     pinAsFunction(port, pin);   \
@@ -42,7 +42,6 @@ static uint8_t adcChannel;
 
 void adcOn() {
     hplAdcOn();
-    hplAdcStartConversion();
     adcIsOn = true;
 }
 
@@ -98,28 +97,25 @@ uint16_t adcRead(uint8_t ch)
     }
 
     // hplAdcEnableInterrupt();
+    hplAdcStartConversion();
 
-    // conversion already started in MSC mode
-    // hplAdcStartConversion();
-
-//    if (hplAdcIntsUsed()) {
-//        // TODO - use callbacks
-//        while (hplAdcIsBusy()) {}
-//        retval = adcVal;
-//    } else {
-//        while (hplAdcIsBusy()) {}
+    if (hplAdcIntsUsed()) {
+        // TODO - use callbacks
+        while (hplAdcIsBusy()) {}
+        retval = adcVal;
+    } else {
+        while (hplAdcIsBusy()) {}
         retval = hplAdcGetVal();
-//    }
+    }
 
     return retval;
 }
 
 uint16_t adcReadFast()
 {
-    // conversion already started in MSC mode
-    // hplAdcStartConversion();
+    hplAdcStartConversion();
 
-//    while (hplAdcIsBusy());
+    while (hplAdcIsBusy());
 
     return hplAdcGetVal();
 }
