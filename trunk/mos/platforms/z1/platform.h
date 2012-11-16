@@ -88,4 +88,10 @@ void initPlatform(void);
 #define TMP102_PWR_PORT  5
 #define TMP102_PWR_PIN   0
 
+//
+// User button pins
+//
+#define USER_BUTTON_PORT 2
+#define USER_BUTTON_PIN  5
+
 #endif
