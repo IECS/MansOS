@@ -4,4 +4,3 @@ when RemotePacket.Light < 50:
 else:
     use RedLed, off;
 end
-output Serial;
