@@ -26,6 +26,7 @@
 //----------------------------------------------------------
 #include "platform.h"
 #include <serial_number.h>
+#include "user_button.h"
 
 //----------------------------------------------------------
 //      Init the platform as if on cold reset
@@ -35,5 +36,8 @@ void initPlatform(void)
     msp430Init();
 #if USE_SERIAL_NUMBER
 #warning No serial number for z1
+#endif
+#if USE_USER_BUTTON
+    userButtonInit();
 #endif
 }

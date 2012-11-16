@@ -50,30 +50,32 @@ TEST_TARGETS = \
 	SharingTest				\
 	SleepTest				\
 	SnumTest				\
-	TinyOSEncapsuleTest			\
+	TinyOSEncapsuleTest		\
 	TMP102Test				\
-	UARTRecvPacketTest			\
+	UARTRecvPacketTest		\
 	UARTTest				\
-	SmpTest/DemoBlueLed			\
-	SmpTest/DemoRedLed			\
-	ExpThreadTests/0-Lockup			\
+	SmpTest/DemoBlueLed			        \
+	SmpTest/DemoRedLed			        \
+	UserButtonTest			            \
+	ExpThreadTests/0-Lockup			    \
 	ExpThreadTests/0-Overflow-User		\
 	ExpThreadTests/0-Overflow-Kernel	\
 	ExpThreadTests/1a-Blink-mdelay		\
 	ExpThreadTests/1b-Blink-msleep		\
 	ExpThreadTests/1c-Blink-Multi		\
-	ExpThreadTests/2-Alarms			\
-	ExpThreadTests/3-Locking		\
+	ExpThreadTests/2-Alarms			    \
+	ExpThreadTests/3-Locking		    \
 	ExpThreadTests/3-Locking-Multi		\
-	ExpThreadTests/4-Exit			\
-	ExpThreadTests/5-Radio			\
-	ExpThreadTests/6-MAC			\
+	ExpThreadTests/4-Exit			    \
+	ExpThreadTests/5-Radio		        \
+	ExpThreadTests/6-MAC			    \
 	ExpThreadTests/7-Sockets		\
 	TestBed/AdsTest				\
 	TestBed/DacTest				\
 	ProtoThreadTests/01-PTYield		\
 	ProtoThreadTests/02-PTBlink		\
 	ProtoThreadTests/03-PTRadio		\
+
 
 ADVANCED_TARGETS = \
 	Accel3DTest				\
@@ -85,15 +87,14 @@ ADVANCED_TARGETS = \
 	Calendar				\
 	GPSParsing				\
 	GpsProxy				\
-	IMU					\
-	LPL					\
+	IMU					    \
+	LPL					    \
 	Sarauj					\
 	SeePoga					\
 	SensorToLcd				\
-	SensorToLeds				\
+	SensorToLeds			\
 	TimerSense				\
-        TestBed2Demo                            \
-	UserButtonRead				\
+    TestBed2Demo            
 
 SEAL_TARGETS = \
 	Blink					\

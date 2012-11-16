@@ -3,6 +3,6 @@
 #
 
 # only for telosb
-PLATFORM_ONLY=telosb launchpad
+PLATFORM_ONLY=telosb launchpad xm1000 z1
 
 USE_USER_BUTTON=y
