@@ -49,6 +49,10 @@
 #define ADXLPRINTF(...) do {} while (0)
 #endif
 
+#ifndef PLATFORM_ZOLERTIA 
+#error Zolertia-specific I2C used in this file, bailing out!
+#endif
+
 /* ADXL345 registers */
 #define ADXL345_DEVID           0x00    // read only
 /* registers 0x01 to 0x1C are reserved, do not access */

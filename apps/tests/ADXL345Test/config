@@ -1,2 +1,5 @@
 USE_ADXL345=y
 USE_I2C=y
+
+# sorry
+PLATFORM_ONLY=z1
