@@ -21,44 +21,56 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * \file
+ *         Device drivers header file for tmp102 temperature sensor in Zolertia Z1 WSN Platform.
+ * \author
+ *         Enric M. Calvo, Zolertia <ecalvo@zolertia.com>
+ *         Marcus Lundén, SICS <mlunden@sics.se>
+ *
+ * Modified by:
+ *         Girts Strazdins
+ *         Atis Elsts, EDI <atis.elsts@gmail.com>
+ */
+
 #ifndef MANSOS_TMP102_H
 #define MANSOS_TMP102_H
 
-#include <stdmansos.h>
+#include <platform.h>
 
 // TMP102 pins and I2C slave address must be defined in HAL level
-#ifndef TMP102_SLAVE_ADDR
-#define TMP102_SLAVE_ADDR 0x48
+#ifndef TMP102_ADDR
+#define TMP102_ADDR 0x48
 #endif
 
 /**
  * Initialize pin directions, do not power up the sensor
  */
-void tmp102_init();
+void tmp102Init(void);
 
 /**
  * Read temperature and convert it to celsius degrees, discard decimal part
  * Returns 0 on error
  */
-int16_t tmp102_readDegrees();
+int16_t tmp102ReadDegrees(void);
 
 /**
  * Enable power for the sensor.
  */
-#define tmp102_on() \
-    pinSet(TMP102_PWR_PORT, TMP102_PWR_PIN);
+#define tmp102On() \
+    pinSet(TMP102_PWR_PORT, TMP102_PWR_PIN)
 
 /**
  * Disable power for the sensor.
  */
-#define tmp102_off() \
-    pinClr(TMP102_PWR_PORT, TMP102_PWR_PIN);
+#define tmp102Off() \
+    pinClr(TMP102_PWR_PORT, TMP102_PWR_PIN)
 
 /**
  * Read raw temperature value. Returns 0 on error
  */
-#define tmp102_readRaw() \
-    tmp102_readReg(TMP102_TEMP);
+#define tmp102ReadRaw() \
+    tmp102_readReg(TMP102_TEMP)
 
 
 //---------------------------------------------------------------

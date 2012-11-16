@@ -29,7 +29,7 @@
 // Initialization
 //
 
-void i2cInit(void)
+void i2cInit(uint8_t busId)
 {
      // I2C mode: master, 7-bit addressing, 100 kbaud
 #define I2C_MODE (UCMST | UCMODE_3 | UCSYNC)
@@ -46,15 +46,15 @@ void i2cInit(void)
     UCB0CTL1 &= ~UCSWRST;                  // Release hold
 }
 
-void i2cOn(void) { }
-void i2cOff(void) { }
+void i2cOn(uint8_t busId) { }
+void i2cOff(uint8_t busId) { }
 
 
 //
 // Send/receive functions
 //
 
-uint8_t i2cWrite(uint8_t addr, const void *buf, uint8_t len)
+uint8_t i2cWrite(uint8_t busId, uint8_t addr, const void *buf, uint8_t len)
 {
     size_t i;
     int    ret = I2C_OK;
@@ -64,13 +64,10 @@ uint8_t i2cWrite(uint8_t addr, const void *buf, uint8_t len)
     UCB0CTL1 |= UCTXSTT; // Generate START condition
 
     // Send all bytes sequentially
-    for (i = 0; i < len; i++)
-    {
+    for (i = 0; i < len; i++) {
         // Wait for either transmission clearance or error
-        while (1)
-        {
-            if (UCB0STATW & UCNACKIFG)
-            {
+        while (1) {
+            if (UCB0STATW & UCNACKIFG) {
                 // No ack
                 ret = I2C_ACK_ERROR;
                 goto end;
@@ -92,7 +89,7 @@ end:
     return ret;
 }
 
-uint8_t i2cRead(uint8_t addr, void *buf, uint8_t len)
+uint8_t i2cRead(uint8_t busId, uint8_t addr, void *buf, uint8_t len)
 {
     size_t i;
 
@@ -101,13 +98,11 @@ uint8_t i2cRead(uint8_t addr, void *buf, uint8_t len)
     UCB0CTL1 |= UCTXSTT; // Generate START condition
 
     // Receive data, but watch for buffer overrun
-    for (i = 0; i < len; i++)
-    {
+    for (i = 0; i < len; i++) {
         // Wait for next character or error
-        while (1)
-        {
-            if (UCB0STATW & UCNACKIFG) // No ack
-            {
+        while (1) {
+            if (UCB0STATW & UCNACKIFG) {
+                // No ack
                 goto end;
             }
             else if (UC0IFG & UCB0RXIFG)

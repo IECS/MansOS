@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,10 +21,22 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * \file
+ *         Device drivers for adxl345 accelerometer in Zolertia Z1.
+ * \author
+ *         Marcus Lundén, SICS <mlunden@sics.se>
+ *         Enric M. Calvo, Zolertia <ecalvo@zolertia.com>
+ *
+ * Modified by:
+ *         Girts Strazdins
+ *         Atis Elsts, EDI <atis.elsts@gmail.com>
+ */
+
 #ifndef MANSOS_ADXL345_H
 #define MANSOS_ADXL345_H
 
-#include <defines.h>
+#include <kernel/defines.h>
 
 //---------------------------------------------------------------
 // Global constants
@@ -61,17 +73,17 @@ typedef enum {
  * Does not power up the sensor
  * Returns 0 on success, ERR_MISSING_COMPONENT, if I2C or GPIO is missing
  */
-uint8_t adxl345_init();
+uint8_t adxl345Init(void);
 
 /**
  * Read acceleration on specified axis
  */
-int16_t adxl345_readAxis(AdxlAxis_t axis);
+int16_t adxl345ReadAxis(AdxlAxis_t axis);
 
 /**
  * Set G range for the sensor. Return 0 on success, EINVAL on incorrect grange
  */
-uint8_t adxl345_setGRange(AdxlGRange_t grange);
+uint8_t adxl345SetGRange(AdxlGRange_t grange);
 
 
 #endif

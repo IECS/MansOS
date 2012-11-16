@@ -38,7 +38,7 @@
 //------------------------------------------------------------------------------
 //Initializes the ports for I2C
 //------------------------------------------------------------------------------
-void i2cInit() {
+void i2cInit(uint8_t busId) {
     I2C_SDA_OUT();
     I2C_SCL_OUT();
     I2C_SDA_LO();
@@ -126,8 +126,8 @@ uint8_t i2cReadByteRaw(i2cAck_t ack)
  * @param   sendStop    whether to send stop condition after data
  * @return  0           on success, error code otherwise
  */
-i2cError_t i2cWrite(uint8_t addr, const void *buf, uint8_t len,
-        bool sendStop) {
+i2cError_t i2cWrite(uint8_t id, uint8_t addr,
+                    const void *buf, uint8_t len, bool sendStop) {
     i2cStart();
     i2cError_t err = i2cWriteByteRaw(addr | I2C_CMD_WRITE);
     if (err != I2C_OK) return err;
@@ -152,7 +152,8 @@ i2cError_t i2cWrite(uint8_t addr, const void *buf, uint8_t len,
  * @param   sendStop    whether to send stop condition after data
  * @return  received byte count
  */
-uint8_t i2cRead(uint8_t addr, void *buf, uint8_t len, bool sendStop) {
+uint8_t i2cRead(uint8_t id, uint8_t addr,
+                void *buf, uint8_t len, bool sendStop) {
     i2cStart();
     i2cError_t err = i2cWriteByteRaw(addr | I2C_CMD_READ);
     if (err != I2C_OK) return err;

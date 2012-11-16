@@ -16,11 +16,11 @@ void appMain(void)
     PRINTF("TMP102 test app\n");
 
     // allow sensor to init
-    tmp102_init();
+    tmp102Init();
     msleep(1000);
 
     while (1) {
-        int16_t temp_c = tmp102_readDegrees();
+        int16_t temp_c = tmp102ReadDegrees();
 
         PRINTF("%u C\n", temp_c);
         msleep(1000);

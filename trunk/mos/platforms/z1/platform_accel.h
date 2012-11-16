@@ -24,13 +24,11 @@
 #ifndef PLATFORM_ACCEL_H
 #define PLATFORM_ACCEL_H
 
-#include "platform.h"
-
 #include <adxl345/adxl345.h>
 
 // init accelerometer sensor, do not turn it on
 static inline void accelInit(void) {
-    adxl345_init();
+    adxl345Init();
 }
 
 // The sensor it is on by default (must be initialized before operation)
@@ -39,17 +37,17 @@ static inline void accelInit(void) {
 
 // read acceleration on X axis
 static inline uint16_t accelReadX() {
-    return adxl345_readAxis(ADXL345_X_AXIS);
+    return adxl345ReadAxis(ADXL345_X_AXIS);
 }
 
 // read acceleration on Y axis
 static inline uint16_t accelReadY() {
-    return adxl345_readAxis(ADXL345_Y_AXIS);
+    return adxl345ReadAxis(ADXL345_Y_AXIS);
 }
 
 // read acceleration on Z axis
 static inline uint16_t accelReadZ() {
-    return adxl345_readAxis(ADXL345_Z_AXIS);
+    return adxl345ReadAxis(ADXL345_Z_AXIS);
 }
 
 #endif

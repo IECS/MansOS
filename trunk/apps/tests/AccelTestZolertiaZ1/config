@@ -2,9 +2,4 @@
 
 PLATFORM_ONLY=z1
 
-USE_ADC=n
-USE_RADIO=n
 USE_ACCEL=y
-
-# Change serial port speed
-CONST_SERIAL_PORT_BAUDRATE=115200

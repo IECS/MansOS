@@ -27,9 +27,12 @@
 #include "platform.h"
 #include "user_button.h"
 
-// no clock calibration for launchpad (?)
-void msp430InitClocks(void)
+void msp430Init(void)
 {
+    msp430InitPins();
+
+    // no clock calibration for launchpad (?)
+
     // initialize main timers in system mode (no timer B available)
     msp430InitTimerA();
 }
@@ -39,9 +42,7 @@ void msp430InitClocks(void)
 //----------------------------------------------------------
 void initPlatform(void)
 {
-//#if USE_HARDWARE_TIMERS
-    msp430InitClocks();
-//#endif
+    msp430Init();
 #if USE_USER_BUTTON
     userButtonInit();
 #endif

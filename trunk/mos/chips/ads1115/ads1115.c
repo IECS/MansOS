@@ -24,6 +24,8 @@
 #include "ads1115.h"
 #include "stdmansos.h"
 
+#define ADS111X_I2C_ID I2C_BUS_SW
+
 // Write ADS1114 register
 bool writeAdsRegister(uint8_t reg, uint16_t val)
 {
@@ -77,7 +79,7 @@ ISR(PORT2, adsInterrupt)
 
 void adsInit(void)
 {
-    i2cInit();
+    i2cInit(ADS111X_I2C_ID);
     adsActiveConfig = ADS_DEFAULT_CONFIG;
     writeAdsRegister(ADS_CONFIG_REGISTER, 0x8483);
     adsSelectInput(0);

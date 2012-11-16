@@ -31,7 +31,5 @@
 //----------------------------------------------------------
 void initPlatform(void)
 {
-#if USE_HARDWARE_TIMERS
-    msp430InitClocks();
-#endif
+    msp430Init();
 }
