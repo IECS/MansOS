@@ -68,4 +68,5 @@ PSOURCES-$(USE_RADIO) += $(MOS)/chips/amb8420/amb8420.c
 
 PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
 PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
-PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c
+# because all my efforts to use the unified I2C interface for Z1 were in vain
+PSOURCES-$(USE_I2C) += $(MOS)/platforms/z1/i2c.c

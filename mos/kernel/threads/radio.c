@@ -26,11 +26,14 @@
 #include <lib/dprint.h>
 #include <platform.h>
 
+#ifndef USE_NET
+// otherwise defined in comm.c
+RadioPacketBuffer_t *radioPacketBuffer;
+#endif
+
 #if DEBUG
 #define KERNEL_RADIO_DEBUG 1
 #endif
-
-#define KERNEL_RADIO_DEBUG 1
 
 #if KERNEL_RADIO_DEBUG
 #include "dprint.h"
@@ -38,7 +41,6 @@
 #else
 #define KRPRINTF(...) do {} while (0)
 #endif
-
 
 void radioProcess(void)
 {

@@ -23,9 +23,11 @@
 
 #include "apds9300.h"
 
+#define APDS9300_I2C_ID I2C_BUS_SW
+
 void apdsInit(void) {
     // init SDA and SCK pins (defined in config file)
-    i2cInit();
+    i2cInit(APDS9300_I2C_ID);
 
     // init INT pin
     pinAsInput(APDS_INT_PORT, APDS_INT_PIN);

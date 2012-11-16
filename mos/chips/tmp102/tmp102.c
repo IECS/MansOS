@@ -21,17 +21,33 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * \file
+ *         Device drivers for tmp102 temperature sensor in Zolertia Z1.
+ * \author
+ *         Enric M. Calvo, Zolertia <ecalvo@zolertia.com>
+ *         Marcus Lundén, SICS <mlunden@sics.se>
+ *
+ * Modified by:
+ *         Girts Strazdins
+ *         Atis Elsts, EDI <atis.elsts@gmail.com>
+ */
+
 #include "tmp102.h"
-#include <stdmansos.h>
-#include <i2c.h>
+#include <platform.h>
+#include <platforms/z1/i2cmaster.h>
 
 #define TMP102_DEBUG 0
 
 #if TMP102_DEBUG
-#include <platform.h>
+#include <lib/dprint.h>
 #define TMP102PRINTF(...) PRINTF(__VA_ARGS__)
 #else
 #define TMP102PRINTF(...) do {} while (0)
+#endif
+
+#ifndef TMP102_I2C_ID
+#define TMP102_I2C_ID 0
 #endif
 
 /* TMP102 registers */
@@ -42,6 +58,45 @@ enum TMP102_REGS {
     TMP102_THIGH =          0x03
 };
 
+static void tmp102_writeReg(uint8_t regAddr, uint16_t regVal) __attribute__((unused));
+static void tmp102_writeReg(uint8_t regAddr, uint16_t regVal)
+{
+    uint8_t tx_buf[] = {regAddr, 0x00, 0x00};
+
+    tx_buf[1] = (uint8_t) (regVal >> 8);
+    tx_buf[2] = (uint8_t) (regVal & 0x00FF);
+
+    i2c_transmitinit(TMP102_ADDR);
+    while (i2c_busy());
+    TMP102PRINTF("I2C Ready to TX\n");
+
+    i2c_transmit_n(3, tx_buf);
+    while (i2c_busy());
+    TMP102PRINTF("WRITE_REG 0x%04X @ reg 0x%02X\n", regVal, regAddr);
+}
+
+uint16_t tmp102_readReg(uint8_t regAddr)
+{
+    uint8_t buf[] = { 0x00, 0x00 };
+    uint8_t rtx = regAddr;
+    TMP102PRINTF("READ_REG 0x%02X\n", regAddr);
+
+    // transmit the register to read 
+    i2c_transmitinit(TMP102_ADDR);
+    while (i2c_busy());
+    i2c_transmit_n(1, &rtx);
+    while (i2c_busy());
+
+    // receive the data 
+    i2c_receiveinit(TMP102_ADDR);
+    while (i2c_busy());
+    i2c_receive_n(2, &buf[0]);
+    while (i2c_busy());
+
+    return (uint16_t) (buf[0] << 8 | (buf[1]));
+}
+
+
 /**
  * Initialize pin directions.
  * Slave device I2C address and power pin address must be specified
@@ -49,23 +104,26 @@ enum TMP102_REGS {
  * Does not power up the sensor
  * Returns ERR_OK on success, ERR_MISSING_COMPONENT, if I2C or GPIO is missing
  */
-void tmp102_init() {
+void tmp102Init(void) {
     TMP102PRINTF("TMP102 init\n");
-    i2cInit();
-    /* Set power pin direction */
+
+    // Set power pin direction
     pinAsOutput(TMP102_PWR_PORT, TMP102_PWR_PIN);
     pinAsData(TMP102_PWR_PORT, TMP102_PWR_PIN);
 //    pinDisablePullup(TMP102_PWR_PORT, TMP102_PWR_PIN);
+
+    // Set up ports and pins for I2C communication
+    i2c_enable();
 }
 
 /**
  * Read temperature and convert it to celsius degrees, discard decimal part
  * Returns 0 on error
  */
-int16_t tmp102_readDegrees() {
+int16_t tmp102ReadDegrees(void) {
     int16_t sign = 1;
     int16_t abstemp;
-    int16_t raw = tmp102_readRaw();
+    int16_t raw = tmp102ReadRaw();
     if (raw < 0) {
       abstemp = (raw ^ 0xFFFF) + 1;
       sign = -1;
@@ -77,20 +135,3 @@ int16_t tmp102_readDegrees() {
     return (abstemp >> 8) * sign;
 }
 
-
-uint16_t tmp102_readReg(uint8_t regAddr)
-{
-  TMP102PRINTF("READ_REG 0x%02X\n", regAddr);
-
-  // transmit the register to read
-  i2cWriteByte(TMP102_SLAVE_ADDR, regAddr, false);
-
-  // receive the data
-  uint16_t val;
-  if (i2cRead(TMP102_SLAVE_ADDR, &val, 2, true) == 2) {
-      return val;
-  } else {
-      // error in reception
-      return 0;
-  }
-}

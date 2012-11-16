@@ -24,6 +24,8 @@
 #include "isl29003.h"
 #include "stdmansos.h"
 
+#define ISL_I2C_ID I2C_BUS_SW
+
 /* ISL29003 soft I2C support */
 
 //------------------------------------------------------------------------------
@@ -185,9 +187,9 @@ bool isIslWake(){
 }
 
 // Initialize ISL29003, configure and turn it off
-bool islInit(){
+bool islInit(void) {
     // init SDA and SCK pins (defined in config file)
-    i2cInit();
+    i2cInit(ISL_I2C_ID);
     // Clear registers, so no previos problems occur
     writeIslRegister(ISL_COMMAND_REGISTER,0);
     writeIslRegister(ISL_CONTROL_REGISTER,0);

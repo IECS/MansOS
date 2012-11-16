@@ -28,8 +28,13 @@
 #ifndef MANSOS_ACCEL_H
 #define MANSOS_ACCEL_H
 
+//
+// List all supported accel chips here
+//
+#define ACCEL_CHIP_ADXL345  1
+
 // include platform-specific interface
-#include "platform_accel.h"
+#include <platform.h>
 
 // -- these functions are accessible (defined in platform-specific part):
 // void accelInit();      // init accelerometer sensor, do not turn it on
@@ -39,6 +44,18 @@
 // uint16_t accelReadY();  // read acceleration on Y axis
 // uint16_t accelReadZ();  // read acceleration on Z axis
 
-// Note: light sensor may not support on/off
+// Note: accel sensor may not support on/off
+
+
+#ifdef ACCEL_CHIP
+#include "platform_accel.h"
+#else
+#define accelInit()
+#define accelOn()
+#define accelOff()
+#define accelReadX()
+#define accelReadY()
+#define accelReadZ()
+#endif
 
 #endif

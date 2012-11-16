@@ -28,9 +28,6 @@
 
 #include <digital.h>
 #include <i2c.h>
-#include <kernel/defines.h>
-#include <kernel/stdtypes.h>
-
 #include "msp430_usci.h"
 
 
@@ -38,76 +35,97 @@
 // Initialization
 //
 
-void i2cInit(void)
+void i2cInit(uint8_t busId)
 {
     // I2C mode: master, 7-bit addressing, 100 kbaud
 #define I2C_MODE (UCMST | UCMODE_3 | UCSYNC)
 #define I2C_SPEED 100000UL
 
-    pinAsFunction(USCI_B0_I2C_PORT, USCI_B0_SDA_PIN);
-    pinAsFunction(USCI_B0_I2C_PORT, USCI_B0_SCL_PIN);
+#define SETUP_I2C_PINS(letterid)                                          \
+    pinAsFunction(USCI_##letterid##_I2C_PORT, USCI_##letterid##_SDA_PIN); \
+    pinAsFunction(USCI_##letterid##_I2C_PORT, USCI_##letterid##_SCL_PIN)
+#define SETUP_USCI(id, letterid)                                                     \
+    UC##letterid##CTL1 = UCSWRST;                    /* Hold the module in reset state */ \
+    UC##letterid##CTL1 |= UCSSEL_2;                  /* SMCLK clock source */             \
+    UC##letterid##BR0 = (CPU_HZ / I2C_SPEED) & 0xFF; /* Clock divider, lower part */      \
+    UC##letterid##BR1 = (CPU_HZ / I2C_SPEED) >> 8;   /* Clock divider, higher part */     \
+    UC##letterid##CTL0 = I2C_MODE;                   /* Set specified mode */             \
+    UC##id##IE &= ~UC##letterid##RXIE;               /* Disable receive interrupt */      \
+    UC##letterid##CTL1 &= ~UCSWRST;                  /* Release hold */
 
-    UCB0CTL1 = UCSWRST;                    // Hold the module in reset state
-    UCB0CTL1 |= UCSSEL_2;                  // SMCLK clock source
-    UCB0BR0 = (CPU_HZ / I2C_SPEED) & 0xFF; // Clock divider, lower part
-    UCB0BR1 = (CPU_HZ / I2C_SPEED) >> 8;   // Clock divider, higher part
-    UCB0CTL0 = I2C_MODE;                   // Set specified mode
-#ifndef __IAR_SYSTEMS_ICC__
-    IE2 &= ~UCB0RXIE;                      // Disable receive interrupt
-#endif
-    UCB0CTL1 &= ~UCSWRST;                  // Release hold
+    if (busId == 0) {
+        SETUP_I2C_PINS(B0);
+        SETUP_USCI(0, B0);
+    }
+    else if (busId == 1) {
+        SETUP_I2C_PINS(B1);
+        SETUP_USCI(1, B1);
+    }
 }
 
-void i2cOn(void) { }
-void i2cOff(void) { }
+void i2cOn(uint8_t busId) { }
+void i2cOff(uint8_t busId) { }
 
+// sending I2C stop condition
+#define I2C_SEND_STOP(letterid) \
+    UC##letterid##CTL1 |= UCTXSTP;            \
+    while (UC##letterid##CTL1 & UCTXSTP)
 
 /*
  * Writes a string to I2C and checks acknowledge
  * @param   addr        address of the slave receiver
  * @param   buf         the buffer containing the string
  * @param   len         buffer length in bytes
- * @param   sendStop    whether to send stop condition after data
  * @return  0           on success, error code otherwise
  */
-i2cError_t i2cWrite(uint8_t addr, const void *buf, uint8_t len,
-        bool sendStop)
+i2cError_t i2cWrite(uint8_t busId, uint8_t addr,
+                    const void *buf, uint8_t len)
 {
     size_t i;
     int    ret = I2C_OK;
 
-    UCB0I2CSA = addr;    // Set slave address
-    UCB0CTL1 |= UCTR;    // Transmit mode
-    UCB0CTL1 |= UCTXSTT; // Generate START condition
+#define I2C_WRITE_INIT(letterid) \
+    UC##letterid##CTL1 |= UCSWRST;           /* Enable SW reset */    \
+    UC##letterid##I2CSA = addr;    /* Set slave address */            \
+    UC##letterid##CTL1 &= ~UCSWRST;  /* SW reset, resume operation */ \
+    UC##letterid##CTL1 |= UCTR + UCTXSTT;    /* Transmit mode */      \
 
+#define I2C_WRITE_BYTE1(letterid, id, byte) do {            \
+        /* Send data */                                        \
+        UC##letterid##TXBUF = byte;                            \
+        /* Wait for either transmission clearance or error */  \
+        while (1) {                                            \
+            if (UC##letterid##STAT & UCNACKIFG) {              \
+                /* No ack */                                   \
+                ret = I2C_ACK_ERROR;                           \
+                goto end;                                      \
+            }                                                  \
+            else if (UC##id##IFG & UC##letterid##TXIFG) {      \
+                break;                                         \
+            }                                                  \
+        }                                                      \
+    } while (0)
+
+#define I2C_WRITE_BYTE(letterid, id, byte) do {             \
+        while (!(UC1IFG & UCB1TXIFG) && !(UCB1STAT & UCNACKIFG)); \
+        UC##letterid##TXBUF = byte; \
+    } while (0)
+
+    // initalize Tx mode
+    if (busId == 0) {
+        I2C_WRITE_INIT(B0);
+    } else {
+        I2C_WRITE_INIT(B1);
+    }
     // Send all bytes sequentially
-    for (i = 0; i < len; i++)
-    {
-        // Wait for either transmission clearance or error
-        while (1)
-        {
-            if (UCB0STAT & UCNACKIFG)
-            {
-                // No ack
-                ret = I2C_ACK_ERROR;
-                goto end;
-            }
-            else if (UC0IFG & UCB0TXIFG)
-            {
-                break;
-            }
+    for (i = 0; i < len; i++) {
+        if (busId == 0) {
+            I2C_WRITE_BYTE(B0, 0, ((const char *)buf)[i]);
+        } else {
+            I2C_WRITE_BYTE(B1, 1, ((const char *)buf)[i]);
         }
-
-        // Send data
-        UCB0TXBUF = ((const char *)buf)[i];
     }
-
 end:
-    if (sendStop) {
-        UCB0CTL1 |= UCTXSTP; // Issue STOP condition
-        while (UCB0CTL1 & UCTXSTP);
-    }
-
     return ret;
 }
 
@@ -116,42 +134,47 @@ end:
  * @param   addr        address of the slave transmitter
  * @param   buf         the buffer to store the message
  * @param   len         buffer length in bytes
- * @param   sendStop    whether to send stop condition after data
  * @return  received byte count
  */
-uint8_t i2cRead(uint8_t addr, void *buf, uint8_t len, bool sendStop)
+uint8_t i2cRead(uint8_t busId, uint8_t addr,
+                void *buf, uint8_t len)
 {
     size_t i;
 
-    UCB0I2CSA = addr;    // Set slave address
-    UCB0CTL1 &= ~UCTR;   // Receive mode
-    UCB0CTL1 |= UCTXSTT; // Generate START condition
+#define I2C_READ_INIT(letterid) \
+    UC##letterid##I2CSA = addr;    /* Set slave address */        \
+    UC##letterid##CTL1 |= ~UCTR;   /* Receive mode */             \
+    UC##letterid##CTL1 |= UCTXSTT  /* Generate START condition */
 
-    // Receive data, but watch for buffer overrun
-    for (i = 0; i < len; i++)
-    {
-        // Wait for next character or error
-        while (1)
-        {
-            if (UCB0STAT & UCNACKIFG) // No ack
-            {
-                goto end;
-            }
-            else if (UC0IFG & UCB0RXIFG)
-            {
-                break;
-            }
+#define I2C_READ_BYTE(letterid, id, byte) do {             \
+        /* Wait for either transmission clearance or error */   \
+        while (1) {                                             \
+            if (UC##letterid##STAT & UCNACKIFG) {               \
+                /* No ack */                                    \
+                goto end;                                       \
+            }                                                   \
+            else if (UC##id##IFG & UC##letterid##RXIFG) {       \
+                break;                                          \
+            }                                                   \
+        }                                                       \
+        /* Read data */                                         \
+        byte = UC##letterid##RXBUF;                             \
+    } while (0)
+
+    // initalize Tx mode
+    if (busId == 0) {
+        I2C_READ_INIT(B0);
+    } else {
+        I2C_READ_INIT(B1);
+    }
+    // Send all bytes sequentially
+    for (i = 0; i < len; i++) {
+        if (busId == 0) {
+            I2C_READ_BYTE(B0, 0, ((char *)buf)[i]);
+        } else {
+            I2C_READ_BYTE(B1, 1, ((char *)buf)[i]);
         }
-
-        // Read data
-        ((char *)buf)[i] = UCB0RXBUF;
     }
-
 end:
-    if (sendStop) {
-        UCB0CTL1 |= UCTXSTP; // Force STOP
-        while (UCB0CTL1 & UCTXSTP);
-    }
-
     return i;
 }

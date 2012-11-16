@@ -39,9 +39,7 @@
 //----------------------------------------------------------
 void initPlatform(void)
 {
-#if USE_HARDWARE_TIMERS
-    msp430InitClocks();
-#endif
+    msp430Init();
 #if USE_ADC
     hplAdcUse2V5VRef(); // Soil humidity sensor outputs ~0--2.5 V
     ADC10AE1 |= BV(SOIL_HUMIDITY_AE_BIT);

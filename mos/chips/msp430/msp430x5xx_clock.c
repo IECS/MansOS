@@ -27,6 +27,7 @@
 
 #include "msp430_clock.h"
 #include "msp430_timers.h"
+#include "msp430_int.h"
 #include <delay.h>
 
 static void msp430CalibrateDCO(void) {
@@ -70,8 +71,9 @@ static void msp430CalibrateDCO(void) {
     } while (SFRIFG1 & OFIFG);                  // Test oscillator fault flag
 }
 
-void msp430InitClocks(void)
+static void msp430InitClocks(void)
 {
+#if USE_HARDWARE_TIMERS
     // reset timers
     TACTL = TACLR;
     TBCTL = TBCLR;
@@ -84,4 +86,11 @@ void msp430InitClocks(void)
     // initialize main timers in system mode
     msp430InitTimerA();
     msp430InitTimerB();
+#endif
+}
+
+void msp430Init(void)
+{
+    msp430InitPins();
+    msp430InitClocks();
 }

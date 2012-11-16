@@ -207,8 +207,6 @@ extern void msp430TimerBSet(uint16_t ms);
 #define platformTurnAlarmsOff() DISABLE_ALARM_INTERRUPT()
 #define platformTurnAlarmsOn() ENABLE_ALARM_INTERRUPT()
 
-#define platformTimersInit() msp430InitClocks()
-
 //===========================================================
 //===========================================================
 

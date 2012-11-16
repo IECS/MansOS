@@ -25,7 +25,6 @@
 // MansOS Kernel main source file
 //----------------------------------------------------------
 #include "stdmansos.h"
-#include <i2c.h>
 #include <eeprom.h>
 #include <watchdog.h>
 #include <random.h>
@@ -112,10 +111,6 @@ static inline void initSystem(void)
         initAdc();
     }
 #endif
-#ifdef USE_I2C
-    INIT_PRINTF("init I2C...\n");
-    i2cInit();
-#endif
 #ifdef USE_RANDOM
     INIT_PRINTF("init RNG...\n");
     randomInit();
@@ -163,6 +158,10 @@ static inline void initSystem(void)
 #ifdef USE_HUMIDITY
     INIT_PRINTF("init humidity sensor...\n");
     humidityInit();
+#endif
+#ifdef USE_ACCEL
+    INIT_PRINTF("init accelerometer...\n");
+    accelInit();
 #endif
 #ifdef USE_TIMESYNC
     INIT_PRINTF("init base station time sync...\n");

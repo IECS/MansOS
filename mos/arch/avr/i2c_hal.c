@@ -31,21 +31,21 @@
 /**
  * Initializes the I2C bus
  */
-void i2cInit() {
+void i2cInit(uint8_t busId) {
     twiInit();
 }
 
 /**
  * Turn on the I2C bus
  */
-void i2cOn() {
+void i2cOn(uint8_t busId) {
     twiOn();
 }
 
 /**
  * Turn off the I2C bus
  */
-void i2cOff() {
+void i2cOff(uint8_t busId) {
     twiOff();
 }
 
@@ -59,7 +59,7 @@ void i2cOff() {
  * @param   sendStop    whether to send stop condition after data
  * @return  0           on success, error code otherwise
  */
-i2cError_t i2cWrite(uint8_t addr, const void *buf, uint8_t len,
+i2cError_t i2cWrite(uint8_t busId, uint8_t addr, const void *buf, uint8_t len,
         bool sendStop) {
     return twiWrite(addr, buf, len, 1);
 }
@@ -74,6 +74,6 @@ i2cError_t i2cWrite(uint8_t addr, const void *buf, uint8_t len,
  * @param   sendStop    whether to send stop condition after data
  * @return  received byte count
  */
-uint8_t i2cRead(uint8_t addr, void *buf, uint8_t len, bool sendStop) {
+uint8_t i2cRead(uint8_t busId, uint8_t addr, void *buf, uint8_t len, bool sendStop) {
     return twiRead(addr, buf, len);
 }

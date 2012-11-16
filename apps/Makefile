@@ -69,11 +69,11 @@ TEST_TARGETS = \
 	ExpThreadTests/5-Radio			\
 	ExpThreadTests/6-MAC			\
 	ExpThreadTests/7-Sockets		\
-	TestBed\AdsTest				\
-	TestBed\DacTest				\
-	ProtoThreadTests\01-PTYield		\
-	ProtoThreadTests\01-PTBlink		\
-	ProtoThreadTests\01-PTRadio		\
+	TestBed/AdsTest				\
+	TestBed/DacTest				\
+	ProtoThreadTests/01-PTYield		\
+	ProtoThreadTests/02-PTBlink		\
+	ProtoThreadTests/03-PTRadio		\
 
 ADVANCED_TARGETS = \
 	Accel3DTest				\

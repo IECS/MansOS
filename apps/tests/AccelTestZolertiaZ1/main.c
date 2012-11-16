@@ -1,6 +1,6 @@
 #include <stdmansos.h>
 
-#define MAIN_LOOP_LENGTH 10 // ms
+#define MAIN_LOOP_LENGTH 1000 // ms
 
 #define START_DELAY    1000
 
@@ -15,7 +15,7 @@ typedef struct Packet {
 } Packet_t;
 
 static inline void printPacket(Packet_t *p) {
-    PRINTF("%lu %u %u %u\n", p->timestamp,
+    PRINTF("%lu %d %d %d\n", p->timestamp,
             p->acc_x, p->acc_y, p->acc_z);
 }
 

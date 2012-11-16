@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,9 +21,24 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+/**
+ * \file
+ *         Device drivers for adxl345 accelerometer in Zolertia Z1.
+ * \author
+ *         Marcus Lundén, SICS <mlunden@sics.se>
+ *         Enric M. Calvo, Zolertia <ecalvo@zolertia.com>
+ *
+ * Modified by:
+ *         Girts Strazdins
+ *         Atis Elsts, EDI <atis.elsts@gmail.com>
+ */
+
+
 #include <stdmansos.h>
 #include "adxl345.h"
-#include <i2c.h>
+#include <platform.h>
+#include <platforms/z1/i2cmaster.h>
 
 #define ADXL345_DEBUG 0
 
@@ -33,7 +48,6 @@
 #else
 #define ADXLPRINTF(...) do {} while (0)
 #endif
-
 
 /* ADXL345 registers */
 #define ADXL345_DEVID           0x00    // read only
@@ -126,62 +140,104 @@
 /* Default values for adxl345 at startup. This will be sent to the adxl345 in a
     stream at init to set it up in a default state */
 static uint8_t adxl345_default_settings[] = {
-  /* Note, as the two first two bulks are to be written in a stream, they contain
-    the register address as first byte in that section. */
-  /* 0--14 are in one stream, start at ADXL345_THRESH_TAP */
-  ADXL345_THRESH_TAP,         // NB Register address, not register value!!
-  ADXL345_THRESH_TAP_DEFAULT,
-  ADXL345_OFSX_DEFAULT,
-  ADXL345_OFSY_DEFAULT,
-  ADXL345_OFSZ_DEFAULT,
-  ADXL345_DUR_DEFAULT,
-  ADXL345_LATENT_DEFAULT,
-  ADXL345_WINDOW_DEFAULT,
-  ADXL345_THRESH_ACT_DEFAULT,
-  ADXL345_THRESH_INACT_DEFAULT,
-  ADXL345_TIME_INACT_DEFAULT,
-  ADXL345_ACT_INACT_CTL_DEFAULT,
-  ADXL345_THRESH_FF_DEFAULT,
-  ADXL345_TIME_FF_DEFAULT,
-  ADXL345_TAP_AXES_DEFAULT,
+    /* Note, as the two first two bulks are to be written in a stream, they contain
+       the register address as first byte in that section. */
+    /* 0--14 are in one stream, start at ADXL345_THRESH_TAP */
+    ADXL345_THRESH_TAP,         // NB Register address, not register value!!
+    ADXL345_THRESH_TAP_DEFAULT,
+    ADXL345_OFSX_DEFAULT,
+    ADXL345_OFSY_DEFAULT,
+    ADXL345_OFSZ_DEFAULT,
+    ADXL345_DUR_DEFAULT,
+    ADXL345_LATENT_DEFAULT,
+    ADXL345_WINDOW_DEFAULT,
+    ADXL345_THRESH_ACT_DEFAULT,
+    ADXL345_THRESH_INACT_DEFAULT,
+    ADXL345_TIME_INACT_DEFAULT,
+    ADXL345_ACT_INACT_CTL_DEFAULT,
+    ADXL345_THRESH_FF_DEFAULT,
+    ADXL345_TIME_FF_DEFAULT,
+    ADXL345_TAP_AXES_DEFAULT,
 
-  /* 15--19 start at ADXL345_BW_RATE */
-  ADXL345_BW_RATE,    // NB Register address, not register value!!
-  ADXL345_BW_RATE_DEFAULT,
-  ADXL345_POWER_CTL_DEFAULT,
-  ADXL345_INT_ENABLE_DEFAULT,
-  ADXL345_INT_MAP_DEFAULT,
+    /* 15--19 start at ADXL345_BW_RATE */
+    ADXL345_BW_RATE,    // NB Register address, not register value!!
+    ADXL345_BW_RATE_DEFAULT,
+    ADXL345_POWER_CTL_DEFAULT,
+    ADXL345_INT_ENABLE_DEFAULT,
+    ADXL345_INT_MAP_DEFAULT,
 
-  /* These two: 20, 21 write separately */
-  ADXL345_DATA_FORMAT_DEFAULT,
-  ADXL345_FIFO_CTL_DEFAULT
+    /* These two: 20, 21 write separately */
+    ADXL345_DATA_FORMAT_DEFAULT,
+    ADXL345_FIFO_CTL_DEFAULT
 };
 
+// ------------------------------------------------
 
-#define adxl345_writeStream(buf, len) \
-    i2cWrite(ADXL345_SLAVE_ADDR, buf, len, true)
+static void adxl345_writeReg8(uint8_t regAddr, int8_t regVal)
+{
+    uint8_t tx_buf[] = {regAddr, regVal};
 
-static inline uint16_t adxl345_readReg16(uint8_t regAddr) {
-    // transmit the register to read
-    i2cWrite(ADXL345_SLAVE_ADDR, &regAddr, 1, false);
-    // receive the data
-    uint16_t val = 0;
-    i2cRead(ADXL345_SLAVE_ADDR, &val, sizeof(val), true);
-    return val;
+    i2c_transmitinit(ADXL345_ADDR);
+    while (i2c_busy());
+    ADXLPRINTF("I2C Ready to TX\n");
+
+    i2c_transmit_n(2, tx_buf);
+    while (i2c_busy());
+    ADXLPRINTF("WRITE_REG 0x%02X @ reg 0x%02X\n", regVal, regAddr);
 }
 
-static inline uint8_t adxl345_readReg8(uint8_t regAddr) {
-    // transmit the register to read
-    i2cWrite(ADXL345_SLAVE_ADDR, &regAddr, 1, false);
-    // receive the data
-    return i2cReadByte(ADXL345_SLAVE_ADDR, true);
+static void adxl345_writeStream(uint8_t *data, uint8_t len)
+{
+    i2c_transmitinit(ADXL345_ADDR);
+    while (i2c_busy());
+    ADXLPRINTF("I2C Ready to TX(stream)\n");
+
+    i2c_transmit_n(len, data); // start tx and send conf reg 
+    while (i2c_busy());
+    ADXLPRINTF("WRITE_REG %u B to 0x%02X\n", len, data[0]);
 }
 
-static inline void adxl345_writeReg8(uint8_t regAddr, int8_t regVal) {
-    uint8_t buf[2];
-    buf[0] = regAddr;
-    buf[1] = regVal;
-    i2cWrite(ADXL345_SLAVE_ADDR, &buf, sizeof(buf), true);
+static uint8_t adxl345_readReg8(uint8_t regAddr)
+{
+    uint8_t retVal = 0;
+    uint8_t rtx = regAddr;
+    ADXLPRINTF("READ_REG 0x%02X\n", regAddr);
+
+    /* transmit the register to read */
+    i2c_transmitinit(ADXL345_ADDR);
+    while (i2c_busy());
+    i2c_transmit_n(1, &rtx);
+    while (i2c_busy());
+
+    /* receive the data */
+    i2c_receiveinit(ADXL345_ADDR);
+    while (i2c_busy());
+    i2c_receive_n(1, &retVal);
+    while (i2c_busy());
+
+    return retVal;
+}
+
+static int16_t adxl345_readReg16(uint8_t regAddr)
+{
+    uint8_t rtx = regAddr;
+    ADXLPRINTF("READ_REG16 0x%02X\n", regAddr);
+
+    /* transmit the register to start reading from */
+    i2c_transmitinit(ADXL345_ADDR);
+    while (i2c_busy());
+    i2c_transmit_n(1, &rtx);
+    while (i2c_busy());
+
+    /* receive the data */
+    i2c_receiveinit(ADXL345_ADDR);
+    while (i2c_busy());
+
+    uint8_t tmp[2];
+    i2c_receive_n(2, tmp);
+    while (i2c_busy());
+
+    return (int16_t)(tmp[0] | (tmp[1]<<8));  
 }
 
 /**
@@ -191,15 +247,23 @@ static inline void adxl345_writeReg8(uint8_t regAddr, int8_t regVal) {
  * Does not power up the sensor
  * Returns 0 on success, ERR_MISSING_COMPONENT, if I2C or GPIO is missing
  */
-uint8_t adxl345_init() {
+uint8_t adxl345Init(void)
+{
     ADXLPRINTF("ADXL345 init\n");
-    i2cInit();
 
-    /* set default register values. */
+    Handle_t handle;
+    INTERRUPT_ENABLED_START(handle);
+
+    // Set up ports and pins for I2C communication
+    i2c_enable();
+
+    // Set default register values
     adxl345_writeStream(&adxl345_default_settings[0], 15);
     adxl345_writeStream(&adxl345_default_settings[15], 5);
     adxl345_writeReg8(ADXL345_DATA_FORMAT, adxl345_default_settings[20]);
     adxl345_writeReg8(ADXL345_FIFO_CTL, adxl345_default_settings[21]);
+
+    INTERRUPT_ENABLED_END(handle);
 
     return 0;
 }
@@ -207,26 +271,25 @@ uint8_t adxl345_init() {
 /**
  * Read acceleration on specified axis
  */
-int16_t adxl345_readAxis(AdxlAxis_t axis) {
+int16_t adxl345ReadAxis(AdxlAxis_t axis) {
     if (axis > ADXL345_Z_AXIS) return 0;
-    uint16_t r = adxl345_readReg16(ADXL345_DATAX0 + axis);
-    // swap bytes
-    return (int16_t) (((r & 0xff) << 8) | ((r & 0xff00) >> 8));
+    return adxl345_readReg16(ADXL345_DATAX0 + axis);
 }
 
 /**
  * Set G range for the sensor. Return 0 on success, EINVAL on incorrect grange
  */
-uint8_t adxl345_setGRange(AdxlGRange_t grange) {
-  if (grange > ADXL345_RANGE_16G) {
-    // invalid g-range.
-    ADXLPRINTF("ADXL grange invalid: %u\n", grange);
-    return EINVAL;
-  }
-  /* preserve the previous contents of the register */
-  // zero out the last two bits (grange)
-  uint8_t r = adxl345_readReg8(ADXL345_DATA_FORMAT) & 0xFC;
-  r |= grange;                                      // set new range
-  adxl345_writeReg8(ADXL345_DATA_FORMAT, r);
-  return 0;
+uint8_t adxl345SetGRange(AdxlGRange_t grange)
+{
+    if (grange > ADXL345_RANGE_16G) {
+        // invalid g-range.
+        ADXLPRINTF("ADXL grange invalid: %u\n", grange);
+        return EINVAL;
+    }
+    /* preserve the previous contents of the register */
+    // zero out the last two bits (grange)
+    uint8_t r = adxl345_readReg8(ADXL345_DATA_FORMAT) & 0xFC;
+    r |= grange;                                      // set new range
+    adxl345_writeReg8(ADXL345_DATA_FORMAT, r);
+    return 0;
 }

@@ -58,63 +58,62 @@ typedef enum {
 //#include <i2c_hw.h>
 #endif
 
+// constant used to specify software-I2C bus
+#define I2C_BUS_SW 128
 
 /**
  * Initializes the I2C bus
  */
-void i2cInit(void);
+void i2cInit(uint8_t busId);
 
 /**
  * Turn on the I2C bus
  */
-void i2cOn(void);
+void i2cOn(uint8_t busId);
 
 /**
  * Turn off the I2C bus
  */
-void i2cOff(void);
+void i2cOff(uint8_t busId);
 
 /**
  * Writes a byte to I2C and checks acknowledge
  * @param   addr    address of the slave receiver
  * @param   txByte  byte to transmit
- * @param   sendStop    whether to send stop condition after data
  * @return          0 on success, error code otherwise
  */
-#define i2cWriteByte(addr, txByte, sendStop) \
-    i2cWrite(addr, &(txByte), 1, sendStop)
+#define i2cWriteByte(busId, addr, txByte)  \
+    i2cWrite(busId, addr, &(txByte), 1)
 
 /*
  * Writes a string to I2C and checks acknowledge
  * @param   addr        address of the slave receiver
  * @param   buf         the buffer containing the string
  * @param   len         buffer length in bytes
- * @param   sendStop    whether to send stop condition after data
  * @return  0           on success, error code otherwise
  */
-i2cError_t i2cWrite(uint8_t addr, const void *buf, uint8_t len,
-        bool sendStop);
+i2cError_t i2cWrite(uint8_t busId, uint8_t addr,
+                    const void *buf, uint8_t len);
 
 /*
  * Reads a message into buffer from I2C - requests it from a slave
  * @param   addr        address of the slave transmitter
  * @param   buf         the buffer to store the message
  * @param   len         buffer length in bytes
- * @param   sendStop    whether to send stop condition after data
  * @return  received byte count
  */
-uint8_t i2cRead(uint8_t addr, void *buf, uint8_t len, bool sendStop);
+uint8_t i2cRead(uint8_t busId, uint8_t addr,
+                void *buf, uint8_t len);
 
 /*
  * Reads a byte from I2C - requests it from a slave
  * @param   addr        address of the slave transmitter
  * @param   rxByte      buffer, where the received data will be stored
- * @param   sendStop    whether to send stop condition after data
  * @return  received byte count (1 on success, 0 on error)
  */
-static inline uint8_t i2cReadByte(uint8_t slaveAddr, bool sendStop) {
+static inline uint8_t i2cReadByte(uint8_t busId, uint8_t slaveAddr) {
     uint8_t byte = 0;
-    i2cRead(slaveAddr, &byte, 1, sendStop);
+    i2cRead(busId, slaveAddr, &byte, 1, sendStop);
     return byte;
 }
 

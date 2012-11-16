@@ -138,7 +138,11 @@ ISR(USCIAB0RX, USCI0InterruptHandler)
     }
 }
 
-#if PLATFORM_Z1 || PLATFORM_TESTBED || PLATFORM_TESTBED2
+#if PLATFORM_TESTBED || PLATFORM_TESTBED2
+
+//
+// XXX: for Z1 this ISR is defined in file platforms/z1/i2c.c and handles NACKs
+//
 ISR(USCIAB1RX, USCI1InterruptHandler)
 {
     bool error = UCA1STAT & UCRXERR;
@@ -153,7 +157,7 @@ ISR(USCIAB1RX, USCI1InterruptHandler)
         serialRecvCb[1](data);
     }
 }
-#endif // PLATFORM_Z1
+#endif // PLATFORM_TESTBED
 
 #else // !UART_ON_USCI_A0
 

@@ -77,4 +77,15 @@ void initPlatform(void);
 
 //#define SNUM_CHIP SNUM_DS2411
 
+#ifndef ACCEL_CHIP
+#define ACCEL_CHIP ACCEL_CHIP_ADXL345
+#endif
+
+
+//
+// TMP sensor pins
+// 
+#define TMP102_PWR_PORT  5
+#define TMP102_PWR_PIN   0
+
 #endif

@@ -31,9 +31,7 @@
 //----------------------------------------------------------
 void initPlatform(void)
 {
-#if USE_HARDWARE_TIMERS
-    msp430InitClocks();
-#endif
+    msp430Init();
 #if USE_SERIAL_NUMBER
 #warning No serial number for testbed mote
 #endif

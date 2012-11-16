@@ -192,8 +192,6 @@ extern void atmegaTimer1Set(uint16_t ms);
 #define platformTurnAlarmsOff() DISABLE_ALARM_INTERRUPT()
 #define platformTurnAlarmsOn() ENABLE_ALARM_INTERRUPT()
 
-#define platformTimersInit() atmegaTimersInit()
-
 // assume that timer compare interrupt occurs only on compare match
 #define SLEEP_TIMER_EXPIRED() (1)
 #define SLEEP_TIMER_INTERRUPT() SIGNAL(TIMER1_COMPA_vect)
