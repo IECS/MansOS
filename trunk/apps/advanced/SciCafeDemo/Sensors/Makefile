@@ -17,7 +17,7 @@ APPMOD = SealApp
 # Set the key variables
 PROJDIR = $(CURDIR)
 ifndef MOSROOT
-  MOSROOT = ../../..
+  MOSROOT = ../../../..
 endif
 
 # Include the main makefile
