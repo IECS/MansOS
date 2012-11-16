@@ -196,7 +196,7 @@ class ConditionCollection(object):
         # for optimization, should return as soon as isFilteredOut becomes true.
         condition = self.conditionList[i]
         condition.id = i + 1
-        return "    bool result = " + condition.getEvaluationCode(componentRegister)
+        return "    int8_t result = (bool)" + condition.getEvaluationCode(componentRegister)
 
     def generateCode(self, componentRegister):
         for i in range(len(self.conditionList)):
@@ -204,7 +204,6 @@ class ConditionCollection(object):
 
     def writeOutCodeForEventBasedCondition(self, condition, outputFile, branchCollection):
         if condition.dependentOnPeriodicSensors:
-#            outputFile.write("static void condition{0}Callback(int32_t value)\n".format(condition.id))
             outputFile.write("static void condition{0}Callback(void)\n".format(condition.id))
         elif condition.dependentOnRemoteSensors:
             outputFile.write("static void condition{0}Callback(uint16_t code, int32_t value)\n".format(condition.id))
@@ -219,40 +218,21 @@ class ConditionCollection(object):
         outputFile.write(self.codeList[ID])
         outputFile.write("    if (isFilteredOut) return;\n")
         outputFile.write("    if (result == conditionStatus[{}]) return;\n".format(ID))
-        # OK, the status has changed; start or stop the code branch
+
+        # OK, the status has changed; start or stop associated code branches
+        outputFile.write("    conditionStatus[{}] = result;\n".format(ID))
         outputFile.write("\n")
 
+        outputFile.write("    bool newBranchStatus;\n")
         branchesAssociated = branchCollection.getAssociatedBranches(condition.id)
-        # 0 - no change
-        # 1 - start
-        # 2 - stop
-#        outputFile.write("    uint8_t branchStatusChange[{}] = {0};\n".format(len(branchesAssociated)))
-
-#        outputFile.write("    if (result) {\n") # becomes true
-#        outputFile.write("    } else {\n") # becomes false
-        outputFile.write("    bool newSt, oldSt;\n")
-
         for br in branchesAssociated:
-            outputFile.write("    conditionStatus[{}] = !result;\n".format(ID))
-            outputFile.write("    oldSt = branch{}Evaluate();\n".format(br))
-            outputFile.write("    conditionStatus[{}] = result;\n".format(ID))
-            outputFile.write("    newSt = branch{}Evaluate();\n".format(br))
-            outputFile.write("    if (newSt != oldSt) {\n")
-            outputFile.write("        if (newSt) branch{}Start();\n".format(br))
+            outputFile.write("    newBranchStatus = branch{}Evaluate();\n".format(br))
+            outputFile.write("    if (newBranchStatus != branchStatus[{}]) {}\n".format(br, '{'))
+            outputFile.write("        branchStatus[{}] = newBranchStatus;\n".format(br))
+            outputFile.write("        if (newBranchStatus) branch{}Start();\n".format(br))
             outputFile.write("        else branch{}Stop();\n".format(br))
             outputFile.write("    }\n")
-
-        #outputFile.write("    if (result) branch{0}Start();\n".format(ID))
-        #outputFile.write("    else branch{0}Stop();\n".format(ID))
-
-#        outputFile.write("    conditionStatus[{}] = result;\n".format(ID))
         outputFile.write("}\n\n")
-
-        # this function does nothing
-        # outputFile.write("static inline bool condition{0}Check(bool oldValue)\n".format(condition.id))
-        # outputFile.write("{\n")
-        # outputFile.write("    return oldValue;\n")
-        # outputFile.write("}\n\n")
 
     def writeOutCodeForStaticCondition(self, condition, outputFile):
         outputFile.write("static inline bool condition{0}Check(void)\n".format(condition.id))

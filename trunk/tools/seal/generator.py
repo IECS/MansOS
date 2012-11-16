@@ -65,6 +65,8 @@ class Generator(object):
 
         self.outputFile.write("#define NUM_CONDITIONS {0}\n".format(
                 components.conditionCollection.totalConditions()))
+        self.outputFile.write("#define NUM_BRANCHES {0}\n".format(
+                components.componentRegister.branchCollection.getNumBranches()))
 
         self.outputFile.write("#define IS_FROM_BRANCH_START ((void *) 1)\n\n")
 
@@ -86,7 +88,11 @@ class Generator(object):
             n.generatePacketType(self.outputFile)
 
     def generateVariables(self):
-        self.outputFile.write("bool conditionStatus[NUM_CONDITIONS];\n")
+        self.outputFile.write("int8_t conditionStatus[NUM_CONDITIONS] = {\n")
+        for i in range(components.conditionCollection.totalConditions()):
+            self.outputFile.write("    -1,\n")
+        self.outputFile.write("};\n")
+        self.outputFile.write("bool branchStatus[NUM_BRANCHES] = {true};\n")
         components.componentRegister.generateVariables(self.outputFile)
         for c in self.components:
             c.generateVariables(self.outputFile)
