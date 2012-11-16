@@ -123,11 +123,10 @@ uint8_t i2cReadByteRaw(i2cAck_t ack)
  * @param   addr        address of the slave receiver
  * @param   buf         the buffer containing the string
  * @param   len         buffer length in bytes
- * @param   sendStop    whether to send stop condition after data
  * @return  0           on success, error code otherwise
  */
 i2cError_t i2cWrite(uint8_t id, uint8_t addr,
-                    const void *buf, uint8_t len, bool sendStop) {
+                    const void *buf, uint8_t len) {
     i2cStart();
     i2cError_t err = i2cWriteByteRaw(addr | I2C_CMD_WRITE);
     if (err != I2C_OK) return err;
@@ -136,9 +135,6 @@ i2cError_t i2cWrite(uint8_t id, uint8_t addr,
         err = i2cWriteByteRaw(*b);
         if (err != I2C_OK) return err;
         ++b;
-    }
-    if (sendStop) {
-        i2cStop();
     }
     return I2C_OK;
 }
@@ -149,11 +145,10 @@ i2cError_t i2cWrite(uint8_t id, uint8_t addr,
  * @param   addr        address of the slave transmitter
  * @param   buf         the buffer to store the message
  * @param   len         buffer length in bytes
- * @param   sendStop    whether to send stop condition after data
  * @return  received byte count
  */
 uint8_t i2cRead(uint8_t id, uint8_t addr,
-                void *buf, uint8_t len, bool sendStop) {
+                void *buf, uint8_t len) {
     i2cStart();
     i2cError_t err = i2cWriteByteRaw(addr | I2C_CMD_READ);
     if (err != I2C_OK) return err;
@@ -161,9 +156,6 @@ uint8_t i2cRead(uint8_t id, uint8_t addr,
     while (len--) {
         *b = i2cReadByteRaw(I2C_ACK);
         ++b;
-    }
-    if (sendStop) {
-        i2cStop();
     }
     return I2C_OK;
 }
