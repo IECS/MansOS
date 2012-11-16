@@ -113,7 +113,7 @@ uint8_t i2cRead(uint8_t busId, uint8_t addr,
  */
 static inline uint8_t i2cReadByte(uint8_t busId, uint8_t slaveAddr) {
     uint8_t byte = 0;
-    i2cRead(busId, slaveAddr, &byte, 1, sendStop);
+    i2cRead(busId, slaveAddr, &byte, 1);
     return byte;
 }
 

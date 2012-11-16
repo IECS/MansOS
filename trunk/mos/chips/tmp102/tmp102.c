@@ -46,8 +46,8 @@
 #define TMP102PRINTF(...) do {} while (0)
 #endif
 
-#ifndef TMP102_I2C_ID
-#define TMP102_I2C_ID 0
+#ifndef PLATFORM_ZOLERTIA 
+#error Zolertia-specific I2C used in this file, bailing out!
 #endif
 
 /* TMP102 registers */
