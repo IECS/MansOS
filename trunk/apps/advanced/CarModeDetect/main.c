@@ -1,6 +1,7 @@
 #include <stdmansos.h>
+#include "user_button.h"
 
-#define MAIN_LOOP_LENGTH 32 // ticks; approximately 1 ms
+#define MAIN_LOOP_LENGTH 320 // ticks; a little less than 10 ms
 
 #define START_DELAY    1000
 
@@ -13,12 +14,22 @@ typedef struct Packet_s {
     uint16_t acc_z;
 } Packet_t;
 
+typedef enum { MODE_STANDING, MODE_DRIVING } VehicleMode_e;
+
+VehicleMode_e currentMode = MODE_STANDING;
+uint8_t modeStateChange;
+
+void buttonStateChanged(void) {
+    modeStateChange++;
+}
 
 //-------------------------------------------
 //      Entry point for the application
 //-------------------------------------------
 void appMain(void)
 {
+    userButtonEnable(buttonStateChanged);
+
     PRINTF("Starting...\n");
 
     accelOn();
@@ -31,9 +42,27 @@ void appMain(void)
         uint16_t now = ALARM_TIMER_VALUE();
         uint16_t endTime = now + MAIN_LOOP_LENGTH;
 
-//        PRINTF("%d %d %d\n", accelReadX(), accelReadY(), accelReadZ());
         Packet_t packet;
         packet.acc_x = accelReadX();
+        packet.acc_y = accelReadY();
+        packet.acc_z = accelReadZ();
+
+        if (modeStateChange >= 2) {
+            Packet_t packet1;
+            modeStateChange = 0;
+            if (currentMode == MODE_DRIVING) {
+                currentMode = MODE_STANDING;
+                redLedOn();
+                packet1.acc_x = packet.acc_y = packet.acc_z = 0xff;
+            } else {
+                currentMode = MODE_DRIVING;
+                redLedOff();
+                packet1.acc_x = packet.acc_y = packet.acc_z = 0xfe;
+            }
+            serialSendData(PRINTF_SERIAL_ID, (uint8_t *)&packet1, sizeof(packet1));
+            serialSendByte(PRINTF_SERIAL_ID, '\n');
+        }
+
         serialSendData(PRINTF_SERIAL_ID, (uint8_t *)&packet, sizeof(packet));
         serialSendByte(PRINTF_SERIAL_ID, '\n');
 
