@@ -112,18 +112,27 @@ i2cError_t i2cWrite(uint8_t busId, uint8_t addr,
     } while (0)
 
     // initalize Tx mode
+#ifdef UCB0CTL0_
     if (busId == 0) {
         I2C_WRITE_INIT(B0);
     } else {
         I2C_WRITE_INIT(B1);
     }
+#else
+    I2C_WRITE_INIT(B0);
+#endif
+
     // Send all bytes sequentially
     for (i = 0; i < len; i++) {
+#ifdef UCB0CTL0_
         if (busId == 0) {
             I2C_WRITE_BYTE(B0, 0, ((const char *)buf)[i]);
         } else {
             I2C_WRITE_BYTE(B1, 1, ((const char *)buf)[i]);
         }
+#else
+        I2C_WRITE_BYTE(B0, 0, ((const char *)buf)[i]);
+#endif
     }
 end:
     return ret;
@@ -162,18 +171,27 @@ uint8_t i2cRead(uint8_t busId, uint8_t addr,
     } while (0)
 
     // initalize Tx mode
+#ifdef UCB0CTL0_
     if (busId == 0) {
         I2C_READ_INIT(B0);
     } else {
         I2C_READ_INIT(B1);
     }
+#else
+    I2C_READ_INIT(B0);
+#endif
+
     // Send all bytes sequentially
     for (i = 0; i < len; i++) {
+#ifdef UCB0CTL0_
         if (busId == 0) {
             I2C_READ_BYTE(B0, 0, ((char *)buf)[i]);
         } else {
             I2C_READ_BYTE(B1, 1, ((char *)buf)[i]);
         }
+#else
+        I2C_READ_BYTE(B0, 0, ((char *)buf)[i]);
+#endif
     }
 end:
     return i;
