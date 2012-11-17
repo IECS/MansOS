@@ -75,8 +75,6 @@ void initPlatform(void);
 #define RADIO_CHIP RADIO_CHIP_CC2420
 #endif
 
-//#define SNUM_CHIP SNUM_DS2411
-
 #ifndef ACCEL_CHIP
 #define ACCEL_CHIP ACCEL_CHIP_ADXL345
 #endif
