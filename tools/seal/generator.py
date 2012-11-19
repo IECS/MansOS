@@ -43,6 +43,16 @@ def formatConditions(conditions):
     # got it
     return result
 
+def formatConditionsUndefined(conditions):
+    result = ""
+    # all except last one
+    for c in conditions[:-1]:
+        result += formatCondition(c) + " == -1"
+        result += " || "  # or
+    # last one
+    result += formatCondition(conditions[-1]) + " == -1"
+    return result
+
 ###############################################
 class Generator(object):
     def generateIncludes(self):
@@ -131,6 +141,8 @@ class Generator(object):
         for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
             conditions = components.componentRegister.branchCollection.getConditions(i)
             self.outputFile.write("static inline bool branch{}Evaluate(void) {}\n".format(i, '{'))
+            self.outputFile.write("    if ({}) return branchStatus[{}];\n".format(
+                    formatConditionsUndefined(conditions), i))
             self.outputFile.write("    return {};\n".format(formatConditions(conditions)))
             self.outputFile.write("}\n\n")
 
@@ -150,9 +162,25 @@ class Generator(object):
                 and len(components.componentRegister.networkComponents) == 0:
             # make sure radio is off
             self.outputFile.write("    radioOff(); // reference to radio is necessary to enter proper LPM\n")
+
+        # generate component initialization code
         for c in self.components:
             c.generateAppMainCode(self.outputFile)
+
+        # evaluate all static conditions
         components.conditionCollection.generateAppMainCode(self.outputFile)
+
+        # start all active branches
+        if (components.componentRegister.branchCollection.getNumBranches() > 1):
+            self.outputFile.write("    bool newBranchStatus;\n")
+        self.outputFile.write("    branch0Start();\n")
+        for br in range(1, components.componentRegister.branchCollection.getNumBranches()):
+            self.outputFile.write("    newBranchStatus = branch{}Evaluate();\n".format(br))
+            self.outputFile.write("    if (newBranchStatus) {\n")
+            self.outputFile.write("        branchStatus[{}] = true;\n".format(br))
+            self.outputFile.write("        branch{}Start();\n".format(br))
+            self.outputFile.write("    }\n")
+        self.outputFile.write("\n")
 
 #        self.outputFile.write("\n")
 #        for i in range(1, components.componentRegister.branchCollection.getNumBranches()):
@@ -160,7 +188,6 @@ class Generator(object):
 #            self.outputFile.write("    bool branch{0}OldStatus = false;\n".format(i))
 #        self.outputFile.write("\n")
 
-        self.outputFile.write("    branch0Start();\n\n")
 
 #        self.outputFile.write("    for (;;) {\n")
 #        self.outputFile.write("        uint32_t iterationEndTime = getRealTime() + CONDITION_EVALUATION_INTERVAL;\n")

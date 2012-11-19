@@ -288,9 +288,22 @@ class ConditionCollection(object):
                     condition.id, component.name))
             outputFile.write("    }\n")
 
+        if not condition.dependentOnPeriodicSensors \
+                and not condition.dependentOnRemoteSensors \
+                and not condition.dependentOnInterrupts \
+                and not condition.dependentOnPackets:
+            # a static (constant!) condition.
+            # evaluate it and start / stop coresponding branches (after all static have been evaluated)
+            outputFile.write("    conditionStatus[{}] = condition{}Check();\n".format(
+                    condition.id - 1, condition.id))
+
     def generateAppMainCode(self, outputFile):
+        if len(self.conditionList):
+            outputFile.write("\n")
         for c in self.conditionList:
             self.generateAppMainCodeForCondition(c, outputFile)
+        if len(self.conditionList):
+            outputFile.write("\n")
 
     def ensureBranchIsPresent(self, componentRegister):
         componentRegister.branchCollection.addBranch(
@@ -502,7 +515,7 @@ class Expression(object):
 #        print "\n\ngetEvaluationCode"
 #        print "getEvaluationCode for", self.right.right.right.value.firstPart
 #        print "getEvaluationCode for", self
-        code = self.getCodeForGenerator(componentRegister, self, inParameter = False)
+        code = self.getCodeForGenerator(componentRegister, self, None)
         return code.replace(" and ", "\n        && ")\
             .replace(" or ", "\n        || ")\
             .replace("(not ", "(! ") + ";\n"
