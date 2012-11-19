@@ -59,15 +59,6 @@ def getUseCaseParameterValue(parameter, parameters):
     if isinstance(val, Value): return val.value
     return val
 
-# this is needed to allow to write for example "...,identifier variables.localAddress, ..."
-def convertToParameterValue(pvalue):
-    if pvalue is not None:
-        if not isinstance(pvalue, Expression): # filter out "where ..." conditions
-            if isinstance(pvalue.value, SealValue):
-                return Value(pvalue.getCodeForGenerator(componentRegister, None, inParameter = True))
-    return pvalue
-
-
 # Update existing parameters.
 # 'parameters' - params in component format: <name, value>
 # 'additionalParametrs' - params in use case format: <name, Value(value)>
@@ -144,20 +135,27 @@ class BranchCollection(object):
 
 ######################################################
 class UseCase(object):
-    def __init__(self, component, parameters, conditions, branchNumber, numInBranch):
-        # print "new use case of " + component.name + ": ", parameters
+    def __init__(self, component):
+        # the parent component
         self.component = component
+        # all the parameters of this, specific use case
         self.parameters = {}
+        # associated use cases (e.g. "use print, format "%d", light" will case light readings to be generated)
+        # self.associatedUseCases = set()
+
+    def setup(self, parameters, conditions, branchNumber, numInBranch):
+        # print "new use case of " + component.name + ": ", parameters
         # use component's parameters as defaults
-        for p in component.parameters:
-            self.parameters[p] = Value(component.parameters[p])
+        for p in self.component.parameters:
+            self.parameters[p] = self.component.convertToParameterValue(
+                self.component.parameters[p], self)
 
         self.associatedUseCase = None
         self.parentUseCase = None
 
         # add user's parameters
         for p in parameters:
-            paramName = component.specification.resolveAlias(p[0])
+            paramName = self.component.specification.resolveAlias(p[0])
 
             #  print paramName, ":", p[1]
 
@@ -173,10 +171,10 @@ class UseCase(object):
                     self.associatedUseCase.parentUseCase = self
                 continue
 
-            if not isinstance(component, Output): # outputs are allowed all fields as params
-                if paramName not in component.parameters:
+            if not isinstance(self.component, Output): # outputs are allowed all fields as params
+                if paramName not in self.component.parameters:
                     componentRegister.userError("Parameter '{0}' not known for component '{1}'\n".format(
-                            paramName, component.name))
+                            paramName, self.component.name))
                     continue
 
             # update parameters with user's value, if given. If no value given, only name: treat it as 'True',
@@ -275,21 +273,23 @@ class UseCase(object):
             self.onCode = self.getParameterValueValue("onFunction")
             self.offCode = self.getParameterValueValue("offFunction")
             if not self.component.syncOnlySensor and self.onCode is None and self.offCode is None:
-                componentRegister.userWarning("turnOnOff parameter specified for component '{0}', but the component has neither 'on' nor 'off' functions\n".format(component.name))
+                componentRegister.userWarning("turnOnOff parameter specified for component '{0}', but the component has neither 'on' nor 'off' functions\n".format(self.component.name))
         else:
             self.onCode = None
             self.offCode = None
 
         if (self.pattern and self.once):
-            componentRegister.userError("Both 'once' and 'pattern' specified for component '{0}' use case\n".format(component.name))
+            componentRegister.userError("Both 'once' and 'pattern' specified for component '{0}' use case\n".format(self.component.name))
         if (self.times and self.once):
-            componentRegister.userError("Both 'once' and 'times' specified for component '{0}' use case\n".format(component.name))
+            componentRegister.userError("Both 'once' and 'times' specified for component '{0}' use case\n".format(self.component.name))
 
         if (self.times and not self.period):
-            componentRegister.userError("'times', but not 'period' specified for component '{0}' use case\n".format(component.name))
+            componentRegister.userError("'times', but not 'period' specified for component '{0}' use case\n".format(self.component.name))
             self.times = None
 
-        if component.isRemote() or isinstance(component, Output) or self.interruptBased:
+        if self.component.isRemote() \
+                or isinstance(self.component, Output) \
+                or self.interruptBased:
             self.generateAlarm = False
         else:
             self.generateAlarm = self.once or self.pattern or self.period
@@ -306,7 +306,7 @@ class UseCase(object):
 
     def getParameterValue(self, parameter, defaultValue = None):
         if parameter in self.parameters:
-            return self.parameters[parameter].getCodeForGenerator(componentRegister, None, inParameter = False)
+            return self.parameters[parameter].getCodeForGenerator(componentRegister, None, None)
         return self.component.getParameterValue(parameter, defaultValue)
 
     def getParameterValueValue(self, parameter, defaultValue = None):
@@ -709,10 +709,24 @@ class Component(object):
         assert self.name != ''
         return self.name[0].upper() + self.name[1:]
 
+    # this is needed to allow to write for example "...,identifier variables.localAddress, ..."
+    def convertToParameterValue(self, pvalue, useCase):
+        if not isinstance (pvalue, Value):
+            return Value(pvalue)
+        if isinstance(pvalue.value, SealValue):
+            return Value(pvalue.getCodeForGenerator(componentRegister, None, useCase))
+        return pvalue
+#        if pvalue is not None:
+#            if not isinstance(pvalue, Expression): # filter out "where ..." conditions
+#                if isinstance(pvalue.value, SealValue):
+#                    return Value(pvalue.getCodeForGenerator(componentRegister, None, useCase))
+#        return Value(pvalue)
+
     def updateParameters(self, dictionary):
         for p in dictionary.items():
-            pvalue = convertToParameterValue(p[1])
-            self.parameters[p[0]] = pvalue
+            self.parameters[p[0]] = p[1]
+#            pvalue = self.convertToParameterValue(p[1])
+#            self.parameters[p[0]] = pvalue
 
     def getParameterValue(self, parameter, defaultValue = None):
         if parameter in self.parameters:
@@ -747,6 +761,7 @@ class Component(object):
                 numInBranch += 1
         finalParameters = {}
         associatedUseCase = None
+        uc = UseCase(self)
         for p in parameters.items():
             # resolve "parameters" parametes (should point to a define)
             pname = p[0].lower()
@@ -763,14 +778,14 @@ class Component(object):
                         if pd[0] in finalParameters:
                             componentRegister.userError("Parameter '{0}' already specified for component '{1}'\n".format(pd[0], self.name))
                         else:
-                            finalParameters[pd[0]] = convertToParameterValue(pd[1])
+                            finalParameters[pd[0]] = self.convertToParameterValue(pd[1], uc)
             else:
                 if pname in finalParameters:
                     componentRegister.userError("Parameter '{0}' already specified for component '{1}'\n".format(p[0], self.name))
                 else:
-                    finalParameters[pname] = convertToParameterValue(pvalue)
+                    finalParameters[pname] = self.convertToParameterValue(pvalue, uc)
 
-        uc = UseCase(self, finalParameters.items(), conditions, branchNumber, numInBranch)
+        uc.setup(finalParameters.items(), conditions, branchNumber, numInBranch)
         self.useCases.append(uc)
         return uc
 
@@ -3377,6 +3392,8 @@ class ComponentRegister(object):
         if not c.isInterruptBased(): return comp
         return self.getInterruptBase(c)
 
+    # inParameter - the component use case which is processed at the moment;
+    #               None if in "when" block condition is processed instead
     def replaceCode(self, componentName, parameterName, condition, inParameter):
         # print "replace code: " + componentName + "." + parameterName
 
@@ -3423,7 +3440,10 @@ class ComponentRegister(object):
 
             # new code:
             if not c.isUsed():
-                self.userError("Sensor '{0}' used in a condition, but never read!\n".format(componentName))
+#                if inParameter:
+#                    print "inParameter of component called '", inParameter.name, "'"
+#                else:
+                self.userError("Sensor '{0}' used in an expression, but never read!\n".format(componentName))
                 return "false"
             if condition: condition.dependentOnPeriodicSensors.add(c.getNameCC())
             return c.getNameCC() + "Value"
