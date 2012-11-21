@@ -26,6 +26,7 @@ import wx
 from wx.lib.scrolledpanel import ScrolledPanel
 import os
 from time import gmtime, strftime
+from serial import Serial, PARITY_NONE, SerialException
 
 from frame import Frame
 from seal_syntax import SealSyntax
@@ -58,7 +59,6 @@ class ApiCore:
                    "platform" : "telosb",
                    "blocklyPort" : '8090',
                    "blocklyHost" : "localhost",
-                   "blocklyLocation" : "../../../seal-blockly/blockly/seal/playground-seal.html",
                    "recentlyOpenedMaxCount" : 10
                }
         # Read settings from file
@@ -91,7 +91,7 @@ class ApiCore:
         self.excludedPlatforms = list()
 
         self.activePlatform = self.platforms.index("telosb")
-        #
+
         self.motelist = []
         self.motelistCallbacks = []
 
@@ -377,6 +377,16 @@ class ApiCore:
             self.infoArea.printLine("Wrong format recieved {}\n".format(type(event.data)))
 
     def motelistChangeCallback(self):
+        # Read motelist from config file
+        if os.path.exists(".motelist") and os.path.isfile(".motelist"):
+            f = open(".motelist", 'r')
+            lines = f.readlines()
+            for x in lines:
+                if x != '':
+                    if x.find("->") != -1:
+                        name, port = x.strip().split("->")
+                        self.motelist.append(["User defined", port, name])
+        # Call callbacks!
         for x in self.motelistCallbacks:
             x()
 
@@ -440,3 +450,24 @@ class ApiCore:
             self.frame.blocklyCheck.Check(True)
         else:
             self.frame.blocklyCheck.Check(False)
+
+
+    def checkPort(self, port):
+        try:
+            ser = Serial(port, 38400, timeout = 0, parity = PARITY_NONE, rtscts = 1)
+            while True:
+                ser.write("")
+                ser.close()
+                return True
+        except SerialException as msg:
+            print msg
+            return False
+
+    def addUserMote(self, name, port):
+        self.motelist.append([ "User defined", str(port), str(name)])
+        os.chdir(self.path)
+        f = open(".motelist", 'w')
+        for key in self.motelist:
+            if key[0] == "User defined":
+                f.write(str(key[1]) + "->" + str(key[2]) + '\n')
+        f.close()
