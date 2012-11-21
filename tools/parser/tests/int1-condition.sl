@@ -6,6 +6,7 @@ define MyOutput DigitalOut, port 2, pin 5;
 
 use MyOutput, on; // by default on
 
+read MyInput;
 when match(MyInput, OffPattern):
    // turn off
    use MyOutput, off;
