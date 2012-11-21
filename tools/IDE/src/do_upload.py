@@ -50,6 +50,10 @@ class DoUpload():
         self.curPath = os.getcwd()
         os.chdir(os.path.split(os.path.realpath(self.editor().filePath))[0])
 
+        self.generateMakefile.generate(self.editor().fileName,
+                                       self.editor().projectType,
+                                       self.API.pathToMansos)
+
         platform = self.API.getActivePlatform()
         if len(self.targets):
             target = self.targets.pop()
