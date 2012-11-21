@@ -144,19 +144,19 @@ class UseCase(object):
         # self.associatedUseCases = set()
 
     def setup(self, parameters, conditions, branchNumber, numInBranch):
+        self.associatedUseCase = None
+        self.parentUseCase = None
+
         # print "new use case of " + component.name + ": ", parameters
         # use component's parameters as defaults
         for p in self.component.parameters:
+            # insert it in parameter dictionary
             self.parameters[p] = self.component.convertToParameterValue(
-                self.component.parameters[p], self)
-
-        self.associatedUseCase = None
-        self.parentUseCase = None
+                self.component.parameters[p], self, unsetAsTrue = False)
 
         # add user's parameters
         for p in parameters:
             paramName = self.component.specification.resolveAlias(p[0])
-
             #  print paramName, ":", p[1]
 
             if paramName == "associate":
@@ -177,12 +177,8 @@ class UseCase(object):
                             paramName, self.component.name))
                     continue
 
-            # update parameters with user's value, if given. If no value given, only name: treat it as 'True',
-            # because value 'None' means that the parameter is supported, but not specified by the user.
-            if p[1] is not None:
-                self.parameters[paramName] = p[1]
-            else:
-                self.parameters[paramName] = Value(True)
+            # insert it in parameter dictionary (can replace component's default!)
+            self.parameters[paramName] = p[1]
 
         self.readFunctionSuffix = ""
         self.conditions = list(conditions)
@@ -710,7 +706,11 @@ class Component(object):
         return self.name[0].upper() + self.name[1:]
 
     # this is needed to allow to write for example "...,identifier variables.localAddress, ..."
-    def convertToParameterValue(self, pvalue, useCase):
+    def convertToParameterValue(self, pvalue, useCase, unsetAsTrue):
+        if unsetAsTrue and pvalue is None:
+            # Update parameters with user's value, if given. If no value given, only name: treat it as 'True',
+            # because value 'None' means that the parameter is supported, but not specified by the user.
+            return Value(True)
         if not isinstance (pvalue, Value):
             return Value(pvalue)
         if isinstance(pvalue.value, SealValue):
@@ -724,8 +724,7 @@ class Component(object):
 
     def updateParameters(self, dictionary):
         for p in dictionary.items():
-#            self.parameters[p[0]] = p[1]
-            pvalue = self.convertToParameterValue(p[1], useCase = True)
+            pvalue = self.convertToParameterValue(p[1], useCase = True, unsetAsTrue = True)
             self.parameters[p[0]] = pvalue
 
     def getParameterValue(self, parameter, defaultValue = None):
@@ -767,7 +766,6 @@ class Component(object):
             pname = p[0].lower()
             pvalue = p[1]
             if pname == "parameters":
-                #print "p[1] = ", p[1].asString()
                 #print "componentRegister = ", componentRegister.defines.keys()
                 d = componentRegister.parameterDefines.get(pvalue.lower())
                 if d is None:
@@ -778,12 +776,12 @@ class Component(object):
                         if pd[0] in finalParameters:
                             componentRegister.userError("Parameter '{0}' already specified for component '{1}'\n".format(pd[0], self.name))
                         else:
-                            finalParameters[pd[0]] = self.convertToParameterValue(pd[1], uc)
+                            finalParameters[pd[0]] = self.convertToParameterValue(pd[1], uc, unsetAsTrue = True)
             else:
                 if pname in finalParameters:
                     componentRegister.userError("Parameter '{0}' already specified for component '{1}'\n".format(p[0], self.name))
                 else:
-                    finalParameters[pname] = self.convertToParameterValue(pvalue, uc)
+                    finalParameters[pname] = self.convertToParameterValue(pvalue, uc, unsetAsTrue = True)
 
         uc.setup(finalParameters.items(), conditions, branchNumber, numInBranch)
         self.useCases.append(uc)
