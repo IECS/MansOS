@@ -83,7 +83,7 @@ platform-upload: build $(UPLOAD_TARGET)
 
 upload-tmote:
 	$(Print) ""
-	$(MOTELIST)
+	-$(MOTELIST)
 
 	$(Print) ""
 	$(BSL) --telosb -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)

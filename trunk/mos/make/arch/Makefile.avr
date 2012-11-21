@@ -76,7 +76,8 @@ platform-upload : build $(UPLOAD_TARGET)
 
 upload-atmega:
 	$(Print) ""
-	$(MOTELIST)
+	-$(MOTELIST)
+
 	$(Print) ""
 	$(BSL) $(BSLCONFIG) -q -q -p $(MCU_MODEL) -c $(PROGRAMMER) -P $(BSLPORT) -b $(PROG_BAUDRATE) -D -Uflash:w:$(OUTDIR)/$(EXECUTABLE):i
 
