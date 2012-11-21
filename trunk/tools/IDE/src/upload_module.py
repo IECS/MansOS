@@ -24,6 +24,8 @@
 
 import wx
 
+from newMote import NewMote
+
 class UploadModule(wx.Panel):
     def __init__(self, parent, API):
         super(UploadModule, self).__init__(parent = parent)
@@ -45,8 +47,9 @@ class UploadModule(wx.Panel):
         self.main = wx.BoxSizer(wx.VERTICAL)
         self.controls = wx.GridBagSizer(10, 10)
 
-        self.source = wx.ComboBox(self, choices = ["USB", "Shell"])
-        self.source.SetValue("USB")
+        #self.source = wx.ComboBox(self, choices = ["USB", "Shell"])
+        #self.source.SetValue("USB")
+        self.newMote = wx.Button(self, label = self.tr("Add mote"))
         self.platforms = wx.ComboBox(self, choices = self.API.getPlatforms())
         self.platforms.SetValue(self.API.getActivePlatform())
         if self.API.platformOnly != None:
@@ -60,7 +63,8 @@ class UploadModule(wx.Panel):
         self.controls.Add(self.upload, (0, 2), span = (2, 2),
                           flag = wx.EXPAND | wx.ALL)
 
-        self.controls.Add(self.source, (1, 1), flag = wx.EXPAND | wx.ALL)
+        #self.controls.Add(self.source, (1, 1), flag = wx.EXPAND | wx.ALL)
+        self.controls.Add(self.newMote, (1, 1), flag = wx.EXPAND | wx.ALL)
         self.controls.Add(self.refresh, (1, 0), flag = wx.EXPAND | wx.ALL)
 
         self.list = wx.CheckListBox(self, wx.ID_ANY, style = wx.MULTIPLE)
@@ -71,7 +75,8 @@ class UploadModule(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.API.doCompile, self.compile)
         self.Bind(wx.EVT_BUTTON, self.API.doUpload, self.upload)
         self.Bind(wx.EVT_BUTTON, self.populateMotelist, self.refresh)
-        self.Bind(wx.EVT_COMBOBOX, self.populateMotelist, self.source)
+        #self.Bind(wx.EVT_COMBOBOX, self.populateMotelist, self.source)
+        self.Bind(wx.EVT_BUTTON, self.openNewMoteDialog, self.newMote)
         self.Bind(wx.EVT_COMBOBOX, self.API.changePlatform, self.platforms)
         self.Bind(wx.EVT_CHECKLISTBOX, self.modifyTargets, self.list)
 
@@ -107,4 +112,11 @@ class UploadModule(wx.Panel):
 
     def modifyTargets(self, event):
         self.API.targets = list(self.list.GetChecked())
+
+    def openNewMoteDialog(self, event):
+        dialog = NewMote(self, self.API)
+        dialog.ShowModal()
+        dialog.Destroy()
+        self.updateMotelist()
+
 

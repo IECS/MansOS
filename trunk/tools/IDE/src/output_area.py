@@ -48,13 +48,16 @@ class OutputArea(wx.Panel):
             self.clear()
         if not text:
             text = "\n"
-        self.outputArea.AppendText(text)
+        try:
+            self.outputArea.AppendText(text)
+        except:
+            pass
         self.outputArea.ScrollLines(1)
         # Ensure output visibility
         if forceSwitching:
             if self.forceCall == None:
                 self.switch()
-                self.forceCall = wx.CallLater(1000, self.switch)
+                self.forceCall = wx.CallLater(1500, self.switch)
             else:
                 if self.forceCall.HasRun():
                     self.switch()
