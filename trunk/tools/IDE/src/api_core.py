@@ -57,6 +57,7 @@ class ApiCore:
         self.__settings = {
                    "activeLanguage" : "LV",
                    "platform" : "telosb",
+                   "blocklyLocation": "..\..\..\seal-blockly\blockly\demos\seal\index.html",
                    "blocklyPort" : '8090',
                    "blocklyHost" : "localhost",
                    "recentlyOpenedMaxCount" : 10
