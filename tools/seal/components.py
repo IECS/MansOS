@@ -724,9 +724,9 @@ class Component(object):
 
     def updateParameters(self, dictionary):
         for p in dictionary.items():
-            self.parameters[p[0]] = p[1]
-#            pvalue = self.convertToParameterValue(p[1])
-#            self.parameters[p[0]] = pvalue
+#            self.parameters[p[0]] = p[1]
+            pvalue = self.convertToParameterValue(p[1], useCase = True)
+            self.parameters[p[0]] = pvalue
 
     def getParameterValue(self, parameter, defaultValue = None):
         if parameter in self.parameters:
