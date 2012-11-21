@@ -19,6 +19,7 @@ define CombinedSensor sum(AcousticSensor, SeismicSensor); // just something
 define EventDetectionFunction difference(
     EWMA(CombinedSensor, EWMA_COEFF_1),
     EWMA(CombinedSensor, EWMA_COEFF_2));
+read EventDetectionFunction;
 when EventDetectionFunction > EVENT_DETECTION_THRESHOLD:
     // event detected (locally), send info to base station
     // (timestamp is appended automatically)

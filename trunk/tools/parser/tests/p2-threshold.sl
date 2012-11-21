@@ -10,6 +10,7 @@ const ACCEL_Z 2;
 
 define AccelZ AnalogIn, channel ACCEL_Z;
 
+read AccelZ;
 when AccelZ < THRESHOLD_LOW or AccelZ > THRESHOLD_HIGH:
    use RedLed, on;
    use Beeper, on, duration 200, frequency 1000;

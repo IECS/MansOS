@@ -13,6 +13,7 @@ define Z_dev stdev(take(AccelZ, 100));
 
 define SDev sum(X_dev, Y_dev, Z_dev), lazy;
 
+read SDev;
 when SDev > THRESHOLD_HIGH:
     set isDriving True;   // movement detected!
 elsewhen SDev < THRESHOLD_LOW:
