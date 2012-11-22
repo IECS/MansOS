@@ -258,7 +258,7 @@ class EditStatement(wx.Panel):
                 try:
                     if len(parameter[1]) == 0:
                         parameter[1].append("")
-                except Exception as e:
+                except Exception:
                     parameter[1] = [""]
                 # Create combobox or checkbox
                 if type(parameter[1][0]) is not bool:

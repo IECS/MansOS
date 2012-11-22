@@ -30,17 +30,16 @@
 """
 
 from subprocess import Popen, PIPE, STDOUT
-from time import sleep
 
 def doPopen(pipe, args):
     retcode = -1
     try:
-        proc = Popen(args, stderr = STDOUT, stdout = PIPE, shell = False)
+        proc = Popen(args, stderr = STDOUT, stdout = PIPE, shell = True)
         out = proc.stdout.readline()
         while out:
             pipe.send(out)
             out = proc.stdout.readline()
-            sleep(0.01)
+            #sleep(0.01)
         proc.wait()
         retcode = proc.returncode
     except OSError as e:
@@ -52,7 +51,7 @@ from serial import Serial, PARITY_NONE, SerialException
 
 def listenSerialPort(pipe, args):
     try:
-        ser = Serial(args['serialPort'], args['baudrate'], timeout = 0,
+        ser = Serial(args['serialPort'].strip(), args['baudrate'], timeout = 0,
                            parity = PARITY_NONE, rtscts = 1)
         while True:
             s = ser.read(100)
