@@ -1947,7 +1947,7 @@ class Sensor(Component):
                 if name in componentRegister.systemStates:
                     # special case for variables ("states")
                     # TODO: should replace code here for X.Y type values
-                    return name
+                    return "sealState_" + name
                 if root and root.containingOutputComponent:
                     # yeah!
                     componentName = root.containingOutputComponent.componentUseCase.outputUseCase.getNameCC()
@@ -2762,8 +2762,8 @@ class Output(Component):
 
 ######################################################
 class SetUseCase(object):
-    def __init__(self, name, expression, conditions, branchNumber, isNew):
-        self.name = name
+    def __init__(self, parent, expression, conditions, branchNumber, isNew):
+        self.parent = parent
         self.expressionCode = expression.getEvaluationCode(componentRegister)
         self.conditions = list(conditions) # deep copy!
         self.branchNumber = branchNumber
@@ -2775,21 +2775,45 @@ class SetUseCase(object):
 
     def generateVariables(self, outputFile):
         if self.isNew:
-            outputFile.write("{0} {1};\n".format(self.getType(), self.name))
+            outputFile.write("{0} {1};\n".format(self.getType(), self.parent.getVariableName()))
 
     def generateBranchEnterCode(self, outputFile):
+        outputFile.write("    {\n")
         if self.expressionCode.find("isFilteredOut") != -1:
             # TODO: semantic problem - what to do when isFilteredOut happens to be true?
-            outputFile.write("    {\n")
             outputFile.write("        bool isFilteredOut = false;\n")
-            outputFile.write("        {0} = {1}".format(self.name, self.expressionCode))
-            outputFile.write("    }\n")
-        else:
-            outputFile.write("    {0} = {1}".format(self.name, self.expressionCode))
+
+        # set the value
+        outputFile.write("        {0} = {1}".format(self.parent.getVariableName(), self.expressionCode))
+        # re-evaluate all conditions that depend on it
+        for c in self.parent.dependentConditions:
+            outputFile.write("        condition{}Callback();\n".format(c.id))
+
+        outputFile.write("    }\n")
 
     def generateBranchExitCode(self, outputFile):
         pass
 
+
+######################################################
+class SystemState(object):
+    def __init__(self, name):
+        self.name = name
+        # list of use cases (i.e. when the state is changed)
+        self.useCases = []
+        # list of conditions that use this system state
+        self.dependentConditions = set()
+
+    def addUseCase(self, expression, conditions, branchNumber):
+        isNew = len(self.useCases) == 0
+        self.useCases.append(
+            SetUseCase(self, expression, conditions, branchNumber, isNew))
+
+    def generateVariables(self, outputFile):
+        self.useCases[0].generateVariables(outputFile)
+
+    def getVariableName(self):
+        return "sealState_" + self.name
 
 ######################################################
 class NetworkComponent(object):
@@ -3338,7 +3362,8 @@ class ComponentRegister(object):
     def setState(self, name):
         # add the state itself, if not already
         if name not in self.systemStates:
-            self.systemStates[name] = []
+            self.systemStates[name] = SystemState(name)
+            name = "sealState_" + name
             # also add a kind of sensor, to later allow these state values to be read
             if name in self.sensors:
                 self.userError("State '{0}' name duplicates a real sensors for architecture '{1}'\n".format(
@@ -3352,15 +3377,9 @@ class ComponentRegister(object):
             # add the sensor to array
             self.sensors[name] = Sensor(name, spec)
 
-    def addStateUseCase(self, name, expression, conditions, branchNumber):
-        # add new use case for this state
-        isNew = len(self.systemStates[name]) == 0
-        self.systemStates[name].append(
-            SetUseCase(name, expression, conditions, branchNumber, isNew))
-
     def generateVariables(self, outputFile):
         for s in self.systemStates.values():
-            s[0].generateVariables(outputFile)
+            s.generateVariables(outputFile)
         for p in self.patterns.values():
             p.generateVariables(outputFile)
 
@@ -3398,6 +3417,16 @@ class ComponentRegister(object):
         n = self.networkComponents.get(componentName)
         if n:
             return n.replaceCode(parameterName, condition)
+
+        s = self.systemStates.get(componentName, None)
+        if s != None:
+            if parameterName.lower() != 'value':
+                self.userError("System state '{}' has only 'value' parameter, not '{}'!\n".format(componentName, parameterName))
+                return "false"
+            if condition:
+                condition.dependentOnStates.add(s)
+                s.dependentConditions.add(condition)
+            return "sealState_" + componentName
 
         c = self.findComponentByName(componentName)
         if c == None:
