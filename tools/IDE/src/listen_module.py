@@ -84,6 +84,8 @@ class ListenModule(wx.Panel):
                 self.clear.SetLabel(self.tr('Start listening'))
                 self.updateStatus("\nListening stopped.\n", False)
             return
+        if self.ports.GetValue() == "No devices found":
+            return;
 
         self.listening = not self.listening
         if self.listening:
@@ -131,4 +133,4 @@ class ListenModule(wx.Panel):
         # Stop listening
         if self.listening:
             self.doClear(None)
-        self.args['serialPort'] = event.GetEventObject().GetValue().strip()
+        self.args['serialPort'] = event.GetEventObject().GetValue().split(" ")[0].strip().strip("\x00")
