@@ -22,9 +22,10 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from multiprocessing import Process, Pipe
+from multiprocessing import Pipe
+import threading
 import wx
-from time import sleep, time
+from time import time
 
 class ResultEvent(wx.PyEvent):
     """Simple event to carry arbitrary result data."""
@@ -70,11 +71,15 @@ class MyThread():
             return
         try:
             parentPipe, childPipe = Pipe()
-            self.process = Process(target = self.target, args = (childPipe, self.args))
+            #self.process = Process(target = self.target, args = (childPipe, self.args))
+            self.process = threading.Thread(target = self.target,
+               name = "Serial communication thread",
+               kwargs = {"pipe": childPipe,
+                         "args": self.args})
             self.process.name = self.name
-            self.process.daemon = False
+            self.process.daemon = True
             self.process.start()
-            while self.process.is_alive() or parentPipe.poll(0.001):
+            while self.process.isAlive() or parentPipe.poll(0.001):
                 if parentPipe.poll(0.001):
                     out = parentPipe.recv()
                     wx.PostEvent(self.notifyWindow, ResultEvent(out, self.EVT_ID))
@@ -85,7 +90,7 @@ class MyThread():
                     if time() > self.stopSignalTime:
                         self.process.terminate()
                 wx.YieldIfNeeded()
-                sleep(0.01)
+                #sleep(0.01)
         except OSError, e:
                 wx.PostEvent(self.notifyWindow, ResultEvent(\
                 "Execution failed in thread '{}', message: {}".format(\

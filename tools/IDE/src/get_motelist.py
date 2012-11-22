@@ -76,7 +76,7 @@ class GetMotelist(object):
         if system() == 'Windows':
             target += ".exe"
         elif system() == "Linux":
-            target += "" # Empty, for if's sake, so mac can be else, cus I don't know what Mac returns
+            pass # Empty, for if's sake, so mac can be else, cus I don't know what Mac returns
         else:
             print "No Linux or Win detected, assuming Mac, output = {}".format(system())
             target += ".apple"
