@@ -31,6 +31,18 @@ import webbrowser
 
 from blockly_handler import listen
 
+# TODO: rewrite this
+def xmlUnescapeMy(code):
+    result = ""
+    for t in code.split():
+        if len(t) == 3 and t[0] == '%':
+            # parse hex symbol
+            t = chr(int(t[1:3], 16))
+        if t[-1] == ';': t += '\n'
+        else: t += ' '
+        result += t
+    return result
+
 
 # TODO: If support is needed convert to using MyThread and OutputArea classes!
 class Blockly(wx.Panel):
@@ -95,7 +107,7 @@ class Blockly(wx.Panel):
                     webbrowser.open_new_tab(filename)
             else:
                 self.printLine("Failed to open {}:{}, port might be in use.".format(host, port))
-            lastSync = time.time() + 10
+            lastSync = time.time() + 20
             self.API.onExit.append(p1.terminate)
             while p1.is_alive() and self.active:
                 if con1.poll(0.1):
@@ -103,8 +115,8 @@ class Blockly(wx.Panel):
                     if data != "Sync recieved":
                         self.handleRecievedCode(data)
                     lastSync = time.time()
-                if time.time() - lastSync > 10:
-                    self.printLine("No sync for 10 sec.\nTerminating...")
+                if time.time() - lastSync > 20:
+                    self.printLine("No sync for 20 sec.\nTerminating...")
                     self.API.onExit.remove(p1.terminate)
                     p1.terminate()
                     break
@@ -119,6 +131,7 @@ class Blockly(wx.Panel):
                 self.API.onExit.remove(p1.terminate)
 
     def handleRecievedCode(self, code):
+        code = xmlUnescapeMy(code)
         self.printLine("\nGot code:\n" + code + "\n")
         if self.choice.GetValue() == 'open':
             self.onOpen(code)
