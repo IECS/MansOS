@@ -51,6 +51,7 @@ class Blockly(wx.Panel):
         self.API = API
         self.tr = self.API.translater.translate
         self.active = False
+        self.tab = None
 
         label = wx.StaticText(self, label = self.tr("When code recieved") + ":")
         self.choice = wx.ComboBox(self, style = wx.CB_DROPDOWN | wx.CB_READONLY,
@@ -141,16 +142,28 @@ class Blockly(wx.Panel):
             self.onUpload(code)
 
     def onOpen(self, code):
-        self.API.tabManager.addPage()
-        self.API.tabManager.GetCurrentPage().changeCode(code)
-        self.API.tabManager.Layout()
+        if self.tab == None:
+            self.API.tabManager.addPage()
+            self.API.tabManager.GetCurrentPage().changeCode(code)
+            self.API.tabManager.Layout()
+            self.tab = self.API.tabManager.GetSelection()
+        else:
+            self.API.tabManager.SetSelection(self.tab, True)
+            self.API.tabManager.GetCurrentPage().changeCode(code, True)
+            self.API.tabManager.Layout()
 
     def onSave(self, code):
         self.onOpen(code)
         self.API.tabManager.doPopupSave(None)
 
     def onUpload(self, code):
-        self.onSave(code)
+        #self.onSave(code)
+        os.chdir(self.path)
+        f = open("blockly.sl", 'w')
+        f.write(code)
+
+        self.API.tabManager.addPage("blockly.sl")
+        self.API.tabManager.Layout()
         self.API.uploadCore.manageUpload()
 
     def printLine(self, text, clear = False):

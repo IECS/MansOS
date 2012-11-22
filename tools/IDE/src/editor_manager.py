@@ -89,8 +89,10 @@ class EditorManager(wx.Panel):
 
     def changeCode(self, newCode = '', overwrite = True):
         if overwrite == True:
+            self.code.SetText(newCode)
+        else:
             self.code.AddText(newCode)
-            self.yieldChanges()
+        self.yieldChanges()
         self.code.setLineNumbers()
         self.redrawAll()
 
