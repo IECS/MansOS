@@ -203,7 +203,7 @@ class ConditionCollection(object):
             self.codeList.append(self.generateCodeForCondition(i, componentRegister))
 
     def writeOutCodeForEventBasedCondition(self, condition, outputFile, branchCollection):
-        if condition.dependentOnPeriodicSensors:
+        if condition.dependentOnPeriodicSensors or condition.dependentOnStates:
             outputFile.write("static void condition{0}Callback(void)\n".format(condition.id))
         elif condition.dependentOnRemoteSensors:
             outputFile.write("static void condition{0}Callback(uint16_t code, int32_t value)\n".format(condition.id))
@@ -245,7 +245,8 @@ class ConditionCollection(object):
     def writeOutCodeForCondition(self, condition, outputFile, branchCollection):
         if condition.isEventBased():
             self.writeOutCodeForEventBasedCondition(condition, outputFile, branchCollection)
-        else:
+
+        if not condition.isEventBased() or condition.dependentOnStates:
             self.writeOutCodeForStaticCondition(condition, outputFile)
 
     def writeOutCode(self, outputFile, branchCollection):
@@ -253,7 +254,7 @@ class ConditionCollection(object):
             self.writeOutCodeForCondition(c, outputFile, branchCollection)
 
     def generateLocalFunctionsForCondition(self, condition, outputFile):
-        if condition.dependentOnPeriodicSensors:
+        if condition.dependentOnPeriodicSensors or condition.dependentOnStates:
             outputFile.write("static void condition{0}Callback(void);\n".format(condition.id))
         elif condition.dependentOnRemoteSensors:
             outputFile.write("static void condition{0}Callback(uint16_t code, int32_t value);\n".format(condition.id))
@@ -292,7 +293,7 @@ class ConditionCollection(object):
                 and not condition.dependentOnRemoteSensors \
                 and not condition.dependentOnInterrupts \
                 and not condition.dependentOnPackets:
-            # a static (constant!) condition.
+            # a static (constant or state-based) condition.
             # evaluate it and start / stop coresponding branches (after all static have been evaluated)
             outputFile.write("    conditionStatus[{}] = condition{}Check();\n".format(
                     condition.id - 1, condition.id))
@@ -453,6 +454,8 @@ class Expression(object):
         self.dependentOnRemoteSensors = set()
         # dependent on these interrupts sensors
         self.dependentOnInterrupts = set()
+        # dependent on these states
+        self.dependentOnStates = set()
         # dependent on these network data sources
         self.dependentOnPackets = set()
         # used for "where" conditions, contains the output use case that has this condition
@@ -460,6 +463,7 @@ class Expression(object):
 
     def isEventBased(self):
         return bool(len(self.dependentOnPeriodicSensors)) \
+            or bool(len(self.dependentOnStates)) \
             or bool(len(self.dependentOnRemoteSensors)) \
             or bool(len(self.dependentOnInterrupts)) \
             or bool(len(self.dependentOnPackets))
@@ -609,9 +613,10 @@ class SetStatement(object):
         componentRegister.setState(self.name)
 
     def finishAdding(self, componentRegister):
-        componentRegister.addStateUseCase(self.name, self.expression,
-                                   self.conditionStack,
-                                   self.branchNumber)
+        componentRegister.systemStates[self.name].addUseCase(
+            self.expression,
+            self.conditionStack,
+            self.branchNumber)
 
     def getCode(self, indent):
         return "set " + self.name + " " + self.expression.getCode() + ';'
