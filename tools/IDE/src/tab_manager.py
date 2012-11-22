@@ -40,7 +40,6 @@ class TabManager(aui.AuiNotebook):
         self.API.tabManager = self
         # Just a shorter name
         self.tr = self.API.tr
-
         # Need to set because next statement uses it
         self.nextPageNr = 1
         self.AddPage(EditorManager(self, self.API), self.tr("Untitled"))
@@ -76,6 +75,8 @@ class TabManager(aui.AuiNotebook):
                                        '', self.tr("Open config file"))
         self.openMakefile = self._rmenu.Append(wx.ID_ANY, '&' + self.tr("Open makefile") +
                                        '', self.tr("Open makefile"))
+        self.doClean = self._rmenu.Append(wx.ID_ANY, '&' + self.tr("Clean target") +
+                                       '', self.tr("Clean target"))
         self.popupReload = self._rmenu.Append(wx.ID_REPLACE, '&' + self.tr("Reload") +
                                        '\tCtrl+R', self.tr("Reload"))
         self.popupSave = self._rmenu.Append(wx.ID_SAVE, '&' + self.tr('Save') +
@@ -90,6 +91,7 @@ class TabManager(aui.AuiNotebook):
         self.Bind(wx.EVT_MENU, self.doPopupSave, self.popupSave)
         self.Bind(wx.EVT_MENU, self.doPopupSaveAs, self.popupSaveAs)
         self.Bind(wx.EVT_MENU, self.doPopupClose, self.popupClose)
+        self.Bind(wx.EVT_MENU, self.API.compiler.clean, self.doClean)
 
         #Disable control if needed
         if self.getPageObject().saveState == True:
