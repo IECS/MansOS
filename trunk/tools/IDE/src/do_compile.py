@@ -32,6 +32,7 @@ class DoCompile():
         self.API = API
         self.generateMakefile = GenerateMakefile()
         self.editor = self.API.tabManager.getPageObject
+        self.curPath = ''
 
     def doCompile(self):
         self.curPath = getcwd()
@@ -48,8 +49,15 @@ class DoCompile():
         chdir(self.curPath)
 
     def clean(self, data = None):
-        self.API.startPopen(["make", "clean"], "Compile", None, False)
-        chdir(self.curPath)
+        curPath = getcwd()
+        chdir(path.split(path.realpath(self.editor().filePath))[0])
+        thread = MyThread(doPopen, ["make", "clean"], \
+                              self.dummy, True, False, "Clean")
+        self.API.startThread(thread)
+        if self.curPath == '':
+            chdir(curPath)
+        else:
+            chdir(self.curPath)
 
     # Passed to thread start as callback, because without callback 
     # there is no Done msg.
