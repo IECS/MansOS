@@ -57,7 +57,7 @@ class ApiCore:
         self.__settings = {
                    "activeLanguage" : "LV",
                    "platform" : "telosb",
-                   "blocklyLocation": "..\..\..\seal-blockly\blockly\demos\seal\index.html",
+                   "blocklyLocation": "../../../seal-blockly/blockly/demos/seal/index.html",
                    "blocklyPort" : '8090',
                    "blocklyHost" : "localhost",
                    "recentlyOpenedMaxCount" : 10
@@ -470,5 +470,5 @@ class ApiCore:
         f = open(".motelist", 'w')
         for key in self.motelist:
             if key[0] == "User defined":
-                f.write(str(key[1]) + "->" + str(key[2]) + '\n')
+                f.write(str(key[2]) + "->" + str(key[1]) + '\n')
         f.close()
