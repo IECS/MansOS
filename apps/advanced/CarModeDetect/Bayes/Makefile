@@ -2,13 +2,13 @@
 SOURCES = main.c
 
 # Module is the name of the main module buit by this makefile
-APPMOD = AccelTestZolertiaZ1
+APPMOD = Test
 
 # --------------------------------------------------------------------
 # Set the key variables
 PROJDIR = $(CURDIR)
 ifndef MOSROOT
-  MOSROOT = $(PROJDIR)/../../..
+  MOSROOT = $(PROJDIR)/../../../..
 endif
 
 # Include the main makefile

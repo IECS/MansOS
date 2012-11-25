@@ -1,0 +1,11 @@
+# Zolertia Z1-specific accelerometer test application
+
+PLATFORM_ONLY=z1
+
+USE_ACCEL=y
+
+BAUDRATE=115200
+
+#CPU_MHZ=16
+
+USE_USER_BUTTON=y
