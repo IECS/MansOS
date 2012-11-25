@@ -53,11 +53,11 @@ void appMain(void)
             if (currentMode == MODE_DRIVING) {
                 currentMode = MODE_STANDING;
                 redLedOn();
-                packet1.acc_x = packet.acc_y = packet.acc_z = 0xff;
+                packet1.acc_x = packet1.acc_y = packet1.acc_z = 0xff;
             } else {
                 currentMode = MODE_DRIVING;
                 redLedOff();
-                packet1.acc_x = packet.acc_y = packet.acc_z = 0xfe;
+                packet1.acc_x = packet1.acc_y = packet1.acc_z = 0xfe;
             }
             serialSendData(PRINTF_SERIAL_ID, (uint8_t *)&packet1, sizeof(packet1));
             serialSendByte(PRINTF_SERIAL_ID, '\n');
