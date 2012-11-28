@@ -39,6 +39,9 @@ def doPopen(pipe, args):
         while out:
             pipe.send(out)
             out = proc.stdout.readline()
+            if pipe.poll(0.001):
+                if pipe.recv() == [False]:
+                    return
             #sleep(0.01)
         proc.wait()
         retcode = proc.returncode
