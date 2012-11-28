@@ -86,9 +86,9 @@ class MyThread():
                 if self.stop:
                     if self.stopSignalTime == 0:
                         self.stopSignalTime = time() + 0.5
-                        parentPipe.send(False)
+                        parentPipe.send([False])
                     if time() > self.stopSignalTime:
-                        self.process.terminate()
+                        self.process._Thread__stop()
                 wx.YieldIfNeeded()
                 #sleep(0.01)
         except OSError, e:

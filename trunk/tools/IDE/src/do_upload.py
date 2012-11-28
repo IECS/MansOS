@@ -47,6 +47,9 @@ class DoUpload():
             self.usbUpload()
 
     def usbUpload(self, data = None):
+        if self.editor() == None:
+            return
+
         self.curPath = os.getcwd()
         os.chdir(os.path.split(os.path.realpath(self.editor().filePath))[0])
 
