@@ -96,6 +96,13 @@ class ListenModule(wx.Panel):
             self.updateStatus("\nListening stopped.\n", False)
         # Redraw button if size have changed
         self.clear.SetSize(self.clear.GetEffectiveMinSize())
+
+        if self.API.getActivePlatform() not in ['xm1000', 'z1'] :
+            # make sure reset pin is low for the platforms that need it
+            self.args['reset'] = True
+        else:
+            self.args['reset'] = False
+
         if self.listening:
             thread = MyThread(listenSerialPort, self.args, \
                               self.doClear, False, True, "Serial port listener", self.updateStatus)

@@ -53,6 +53,10 @@ def listenSerialPort(pipe, args):
     try:
         ser = Serial(args['serialPort'].strip(), args['baudrate'], timeout = 0,
                            parity = PARITY_NONE, rtscts = 1)
+        if args['reset']:
+            # make sure reset pin is low for the platforms that need it
+            ser.setDTR(0)
+            ser.setRTS(0)
         while True:
             s = ser.read(100)
             if len(s) > 0:
