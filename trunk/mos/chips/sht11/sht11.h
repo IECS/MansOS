@@ -65,9 +65,16 @@ uint16_t sht11_cmd(uint_t cmd);
 void sht11_conn_reset(void);
 
 // shortcuts
+#ifdef SHT11_PWR_PORT
 #define SHT11_PWR_HI() pinSet(SHT11_PWR_PORT, SHT11_PWR_PIN)
 #define SHT11_PWR_LO() pinClear(SHT11_PWR_PORT, SHT11_PWR_PIN)
 #define SHT11_PWR_OUT() pinAsOutput(SHT11_PWR_PORT, SHT11_PWR_PIN)
+#else
+// no power control on SM2 and SM3 platforms
+#define SHT11_PWR_HI()
+#define SHT11_PWR_LO()
+#define SHT11_PWR_OUT()
+#endif
 #define SHT11_CLK_OUT() pinAsOutput(SHT11_SCL_PORT, SHT11_SCL_PIN)
 #define SHT11_CLK_HI() pinSet(SHT11_SCL_PORT, SHT11_SCL_PIN)
 #define SHT11_CLK_LO() pinClear(SHT11_SCL_PORT, SHT11_SCL_PIN)

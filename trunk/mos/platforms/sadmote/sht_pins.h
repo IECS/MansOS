@@ -30,7 +30,5 @@
 #define SHT11_SDA_PIN  3
 #define SHT11_SCL_PORT 2
 #define SHT11_SCL_PIN  4
-#define SHT11_PWR_PORT 1
-#define SHT11_PWR_PIN  7
 
 #endif

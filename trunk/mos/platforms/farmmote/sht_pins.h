@@ -31,7 +31,5 @@
 #define SHT11_SDA_PIN  1
 #define SHT11_SCL_PORT 2
 #define SHT11_SCL_PIN  2
-#define SHT11_PWR_PORT 2 /* Pin 2.0 isn't actually connected */
-#define SHT11_PWR_PIN  0
 
 #endif
