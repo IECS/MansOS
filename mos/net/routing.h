@@ -71,18 +71,18 @@ typedef struct RoutingRequestPacket_s {
 #define ROUTING_PROTOCOL_PORT  112
 
 #if 1
-#define ROUTING_ORIGINATE_TIMEOUT    (60 * 1000ul)
-#define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
-#define SAD_SUPERFRAME_LENGTH        524288ul // (10 * 60 * 1000ul)
-#define ROUTING_INFO_VALID_TIME      (1600 * 1000ul)
+# define ROUTING_ORIGINATE_TIMEOUT    (60 * 1000ul)
+# define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
+# define SAD_SUPERFRAME_LENGTH        524288ul // (10 * 60 * 1000ul)
+# define ROUTING_INFO_VALID_TIME      (1600 * 1000ul)
 // during this time, radio is never turned off on forwarders and collectors
-#define NETWORK_STARTUP_TIME         (2 * 60 * 60) // 2h in seconds
+# define NETWORK_STARTUP_TIME         (2 * 60 * 60) // 2h in seconds
 #else // for testing
-#define ROUTING_ORIGINATE_TIMEOUT    (15 * 1000ul)
-#define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
-#define SAD_SUPERFRAME_LENGTH        32768ul // (30 * 1000ul)
-#define ROUTING_INFO_VALID_TIME      (70 * 1000ul)
-#define NETWORK_STARTUP_TIME         0
+# define ROUTING_ORIGINATE_TIMEOUT    (15 * 1000ul)
+# define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
+# define SAD_SUPERFRAME_LENGTH        32768ul // (30 * 1000ul)
+# define ROUTING_INFO_VALID_TIME      (70 * 1000ul)
+# define NETWORK_STARTUP_TIME         0
 #endif
 
 #define MOTE_INFO_VALID_TIME         (5 * SAD_SUPERFRAME_LENGTH)
