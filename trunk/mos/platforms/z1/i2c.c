@@ -273,12 +273,3 @@ ISR(USCIAB1TX, i2c_tx_interrupt)
     }
 #endif
 }
-
-ISR(USCIAB1RX, i2c_rx_interrupt)
-{
-    if (UCB1STAT & UCNACKIFG) {
-        DPRINTF("!!! NACK received in RX\n");
-        UCB1CTL1 |= UCTXSTP;
-        UCB1STAT &= ~UCNACKIFG;
-    }
-}

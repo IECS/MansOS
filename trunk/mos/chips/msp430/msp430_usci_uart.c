@@ -138,13 +138,22 @@ ISR(USCIAB0RX, USCI0InterruptHandler)
     }
 }
 
-#if PLATFORM_TESTBED || PLATFORM_TESTBED2
+#if PLATFORM_TESTBED || PLATFORM_TESTBED2 || PLATFORM_Z1
 
-//
-// XXX: for Z1 this ISR is defined in file platforms/z1/i2c.c and handles NACKs
-//
 ISR(USCIAB1RX, USCI1InterruptHandler)
 {
+    //
+    // For Z1 this ISR is defined used as part of hardware I2C protocol
+    //
+#if PLATFORM_Z1 && USE_I2C
+    if (UCB1STAT & UCNACKIFG) {
+        // PRINTF("!!! NACK received in RX\n");
+        UCB1CTL1 |= UCTXSTP;
+        UCB1STAT &= ~UCNACKIFG;
+        return;
+    }
+#endif
+
     bool error = UCA1STAT & UCRXERR;
     uint8_t data = UCA1RXBUF;
     if (error || UCA1STAT & UCOE) {
@@ -157,6 +166,8 @@ ISR(USCIAB1RX, USCI1InterruptHandler)
         serialRecvCb[1](data);
     }
 }
+
+
 #endif // PLATFORM_TESTBED
 
 #else // !UART_ON_USCI_A0
