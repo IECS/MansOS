@@ -63,5 +63,9 @@
 #include <utils.h>
 #include <sensors.h>
 #include <random.h>
+#ifdef USE_FATFS
+#include <fatfs/fatfs.h>
+#include <fatfs/posix-stdio.h>
+#endif
 
 #endif
