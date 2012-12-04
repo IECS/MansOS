@@ -68,7 +68,7 @@ void initFullBN(void)
 
     fullBNProbabilities[MOVING][0] = 0.01;
     fullBNProbabilities[MOVING][1] = 0.98;
-    fullBNProbabilities[MOVING][2] = 0.80;
+    fullBNProbabilities[MOVING][2] = 0.1;
     fullBNProbabilities[MOVING][3] = 0.9;
 
     fullBNProbabilities[MOVING][4] = 0.94;

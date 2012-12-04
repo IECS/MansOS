@@ -15,9 +15,9 @@ typedef struct Packet_s {
 
 #define MAIN_LOOP_LENGTH 320 // ticks; a little less than 10 ms
 
-#define START_DELAY    1000
+#define START_DELAY     1000
 
-#define NUM_SAMPLES 100
+#define NUM_SAMPLES      100
 
 int16_t xvector[NUM_SAMPLES], yvector[NUM_SAMPLES], zvector[NUM_SAMPLES];
 uint16_t vectorPos;
@@ -267,7 +267,7 @@ static void addMeasurement(Packet_t *packet)
     PRINTF("WasMoving \t%d\n", (int)(wasMoving));
     PRINTF("Diff      \t%d\n", (int)(diffFromPrevious));
 #endif
-    
+
     calcNewProb(s, wasMoving, pastBack, pastFwd, nowFwd, diffFromPrevious);
 }
 
