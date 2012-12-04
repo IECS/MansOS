@@ -26,7 +26,8 @@
 #============================================================================
 
 #===== Component locations =====
-PDFS      = /mos/fs
+PDFS      = $(MOS)/fs
+PDFATFS   = $(MOS)/fatfs
 NET       = $(MOS)/net
 PROTOTHR  = $(MOS)/kernel/protothreads
 
@@ -167,14 +168,18 @@ PSOURCES-$(USE_FLASH_STREAM) += $(MOS)/hil/fstream-light.c
 PSOURCES-$(USE_SDCARD_STREAM) += $(MOS)/hil/sdstream.c
 
 PSOURCES-$(USE_FS) += \
-	$(MOSROOT)$(PDFS)/core.c        \
-	$(MOSROOT)$(PDFS)/prefix.c      \
-	$(MOSROOT)$(PDFS)/dev/dev.c     \
-	$(MOSROOT)$(PDFS)/dev/leds.c    \
-	$(MOSROOT)$(PDFS)/dev/null.c    \
-	$(MOSROOT)$(PDFS)/block/block.c \
-	$(MOSROOT)$(PDFS)/block/meta.c  \
-	$(MOSROOT)$(PDFS)/block/alloc.c
+	$(PDFS)/core.c        \
+	$(PDFS)/prefix.c      \
+	$(PDFS)/dev/dev.c     \
+	$(PDFS)/dev/leds.c    \
+	$(PDFS)/dev/null.c    \
+	$(PDFS)/block/block.c \
+	$(PDFS)/block/meta.c  \
+	$(PDFS)/block/alloc.c
+
+PSOURCES-$(USE_FATFS) += \
+	$(PDFATFS)/posix-stdio.c \
+	$(PDFATFS)/fatfs.c       \
 
 PSOURCES-$(USE_SEAL_COMM) += $(MOS)/net/seal_comm.c
 
