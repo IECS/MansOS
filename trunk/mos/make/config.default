@@ -54,6 +54,7 @@ USE_I2C ?= n
 USE_REPROGRAMMING ?= n
 USE_SMP ?= n
 USE_FS ?= n
+USE_FATFS ?= n
 USE_ASSERT ?= y
 USE_HUMIDITY ?= n
 USE_ACCEL ?= n
