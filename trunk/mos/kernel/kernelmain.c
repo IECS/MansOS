@@ -179,6 +179,12 @@ static inline void initSystem(void)
     INIT_PRINTF("init file system...\n");
     fsInit();
 #endif
+#ifdef USE_FATFS
+    INIT_PRINTF("init FAT file system...\n");
+    fatFsInit();
+    INIT_PRINTF("init POSIX-like file routines...\n");
+    posixStdioInit();
+#endif
 #ifdef USE_SEAL_COMM
     INIT_PRINTF("init SEAL communications...\n");
     sealCommInit();
