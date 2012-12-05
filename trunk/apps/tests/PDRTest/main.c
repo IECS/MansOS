@@ -103,6 +103,11 @@ void extFlashPrepare(void)
 //-------------------------------------------
 void appMain(void)
 {
+#if PLATFORM_SM3
+    // disable addr mode
+    amb8420EnterAddressingMode(AMB8420_ADDR_MODE_NONE, 0);
+#endif
+
 #if RECV
 //    alarmInit(&alarm, alarmCb, NULL);
 //    alarmSchedule(&alarm, 1000);
