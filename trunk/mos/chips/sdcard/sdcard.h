@@ -38,29 +38,39 @@
 
 #define SDCARD_SIZE  (SDCARD_SECTOR_SIZE * SDCARD_SECTOR_COUNT)
 
-// initialize pin directions and SPI in general. Enter low power mode afterwards
+// some of these functions are kept for compatibility with external flash only
+
+// initialize the card (I/O pins, SPI interface)
 bool sdcardInit(void);
-// Enter low power mode (wait for last instruction to complete)
-void sdcardSleep(void);
-// Exit low power mode
-void sdcardWake(void);
-// Read a block of data from addr
-void sdcardRead(uint32_t addr, void* buffer, uint16_t len);
-// Write len bytes (len <= 256) to flash at addr
-// Block can split over multiple sectors/pages
-void sdcardWrite(uint32_t addr, const void *buf, uint16_t len);
+// Enter low power mode (SD card does this automatically)
+static inline void sdcardSleep(void) {}
+// Exit low power mode (SD card does this automatically)
+static inline void sdcardWake(void) {}
 // Erase the entire flash
 void sdcardBulkErase(void);
 // Erase on sector, containing address addr. Addr is not the number of sector,
 // rather an address (any) inside the sector
 void sdcardEraseSector(uint32_t addr);
 
-// internal
+#ifndef USE_FATFS
+// Read a block of data from addr
+void sdcardRead(uint32_t addr, void* buffer, uint16_t len);
+// Write len bytes (len <= 256) to flash at addr
+// Block can split over multiple sectors/pages
+void sdcardWrite(uint32_t addr, const void *buf, uint16_t len);
+// flush the cache to disk
+void sdcardFlush(void);
+#else
+//
+// Internal functions; also used by FAT FS code
+//
 bool sdcardReadBlock(uint32_t addr, void* buffer);
 bool sdcardWriteBlock(uint32_t addr, const void *buf);
 
+#endif // USE_FATFS
+
+// (re)initialize serial (actually SPI) interface
 void sdcardInitSerial(void);
 
-void sdcardFlush(void);
 
 #endif

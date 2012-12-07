@@ -21,25 +21,64 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdmansos.h"
-#include <lib/assert.h>
+#ifndef MANSOS_POSIX_FILE_H
+#define MANSOS_POSIX_FILE_H
 
-void appMain(void)
-{
-    FILE *f = fopen("hello.txt", "r");
-    ASSERT(f);
-    ASSERT(f->fd != -1);
+#include <kernel/defines.h>
 
-    char buffer[12] = {0};
-    fgets(buffer, sizeof(buffer), f);
-    PRINTF("buffer=%s\n", buffer);
+// End-of-file character
+#ifndef EOF
+# define EOF (-1)
+#endif
 
-    // change case
-    buffer[0] ^= 0x20;
-    rewind(f);
-    PRINTF("buffer now=%s\n", buffer);
-    fwrite(buffer, 1, sizeof(buffer) - 1, f);
+// defines for fseek() function
+#ifndef SEEK_SET
+# define SEEK_SET  0  // Seek from beginning of file.
+# define SEEK_CUR  1  // Seek from current position.
+# define SEEK_END  2  // Seek from end of file.
+#endif
 
-    fclose(f);
-    ASSERT(f->fd == -1);
-}
+
+// File-system sector and cluster types
+typedef uint16_t cluster_t;
+#if FAT32_SUPPORT
+typedef uint32_t sector_t;
+#else
+typedef uint16_t sector_t;
+#endif
+
+
+//
+// File structure. It has a lot of file system-specific information!
+//
+typedef struct FILE_s {
+    // file descriptor, -1 if not opened
+    int16_t fd;
+    // file size in bytes
+    uint32_t fileSize;
+    // firts cluster of the file
+    cluster_t firstCluster;
+    // current cluster (on disk)
+    cluster_t currentCluster;
+    // directory entry index
+    uint16_t directoryEntry;
+    // read/write position
+    uint32_t position;
+    // O_RDONLY, O_WRONLY etc.
+    uint16_t flags;
+    // EOF indicator set etc.
+    uint8_t state;
+} FILE;
+
+
+// File access flags
+#define O_RDONLY    00000000
+#define O_WRONLY    00000001
+#define O_RDWR      00000002
+#define O_CREAT     00000100
+#define O_EXCL      00000200
+#define O_TRUNC     00001000
+#define O_APPEND    00002000
+
+
+#endif

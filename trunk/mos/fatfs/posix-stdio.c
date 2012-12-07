@@ -23,10 +23,11 @@
 
 #include "fatfs.h"
 #include "posix-stdio.h"
+#include <lib/byteorder.h>
 #include <errors.h>
 
 #ifndef MAX_OPEN_FILES
-#define MAX_OPEN_FILES 1
+#define MAX_OPEN_FILES 2
 #endif
 
 static FILE openFiles[MAX_OPEN_FILES];
@@ -37,6 +38,13 @@ void posixStdioInit(void)
     for (i = 0; i < MAX_OPEN_FILES; ++i) {
         openFiles[i].fd = -1;
     }
+}
+
+// flush a file
+int fflush(FILE *fp)
+{
+    fatFsFileFlush(fp);
+    return 0;
 }
 
 // open a file
@@ -52,24 +60,68 @@ FILE *fopen(const char *__restrict filename,
         errno = ENFILE;
         return NULL;
     }
+
     FILE *result = &openFiles[i];
+    result->flags = 0;
+    while (*modes) {
+        switch (*modes) {
+        case 'r':
+            result->flags |= O_RDONLY;
+            break;
+        case 'w':
+            result->flags |= O_WRONLY | O_TRUNC | O_CREAT;
+            break;
+        case 'a':
+            result->flags |= O_WRONLY | O_CREAT;
+            break;
+        case '+':
+            result->flags &= ~(O_WRONLY | O_RDONLY);
+            result->flags |= O_RDWR;
+            break;
+        case 't':
+        case 'b':
+            break;
+        }
+        modes++;
+    }
 
-    // TODO: open it on file system...
+    // open it on file system
+    DirectoryEntry_t *de = fatFsFileSearch(filename, &result->directoryEntry);
+    if (de == NULL) {
+        if (result->flags & O_CREAT) {
+            de = fatFsFileCreate(filename);
+        }
+    }
 
+    if (de == NULL) {
+        return NULL;
+    }
+
+#if FAT32_SUPPORT
+    result->firstCluster = le16read(de->startClusterHiword);
+    result->firstCluster <<= 16;
+#else
+    result->firstCluster = 0;
+#endif
+    result->firstCluster |= le16read(de->startClusterLoword);
+    result->currentCluster = result->firstCluster;
+    result->position = 0;
+    result->fileSize = le32read(de->fileSize);
+    result->fd = 1; // XXX
     return result;
 }
 
 // close a file
 int fclose(FILE *fp)
 {
+    // flush it
+    // fflush(fp);
+
+    // close it on the file system
+    fatFsFileClose(fp);
+
     fp->fd = -1;
 
-    return -1;
-}
-
-// flush a file
-int fflush (FILE *fp)
-{
     return -1;
 }
 
@@ -77,18 +129,19 @@ int fflush (FILE *fp)
 size_t fread(void *__restrict ptr, size_t size,
              size_t n, FILE *__restrict fp)
 {
-    return 0;
+    return fatFsRead(fp, ptr, size * n);
 }
 
 // write to a file
 size_t fwrite(const void *__restrict ptr, size_t size,
               size_t n, FILE *__restrict fp)
 {
-    return 0;
+    return fatFsWrite(fp, ptr, size * n);
 }
 
 // delete a file
 int remove (const char *filename)
 {
-    return -1;
+    fatFsFileRemove(filename);
+    return 0;
 }

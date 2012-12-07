@@ -68,9 +68,12 @@ static bool initOk;
 
 static uint8_t cardType;
 
+#ifndef USE_FATFS
+// card cache
 static uint8_t cacheBuffer[SDCARD_SECTOR_SIZE];
 static uint32_t cacheAddress;
 static bool cacheChanged;
+#endif
 
 #define IN_SECTOR(address, sectorStartAdddress)                 \
     (((address) >= (sectorStartAdddress)) &&                    \
@@ -336,22 +339,14 @@ uint8_t sdcardAppCommand(uint8_t cmd, uint32_t arg)
     return sdcardCommand(cmd, arg, 0xff);
 }
 
-void sdcardSleep(void)
-{
-    // enter deep sleep mode
-}
-
-void sdcardWake(void)
-{
-    // exit deep sleep mode
-}
-
 bool sdcardInit(void)
 {
     uint8_t i;
+    bool ok;
+#if PLATFORM_SM3
     uint8_t status;
     uint32_t arg;
-    bool ok;
+#endif
 
     SPRINTF("sdcardInit\n");
 
@@ -445,10 +440,13 @@ bool sdcardInit(void)
 
 #endif // PLATFORM_SM3
 
+#ifndef USE_FATFS
     // make cache valid
     mdelay(1);
     sdcardReadBlock(cacheAddress, cacheBuffer);
     SPRINTF("cache read OK\n");
+#endif // USE_FATFS not defined 
+
     return (initOk = true);
 
  fail:
@@ -636,6 +634,8 @@ bool sdcardWriteBlock(uint32_t address, const void *buf)
  
 // -----------------------------------------------------------------
 
+#ifndef USE_FATFS
+
 void sdcardFlush(void)
 {
     sdcardWriteBlock(cacheAddress, cacheBuffer);
@@ -740,3 +740,5 @@ void sdcardWrite(uint32_t address, const void *buffer, uint16_t len)
     }
     sdcardWriteInBlock(address, buf, len);
 }
+
+#endif // USE_FATFS not defined
