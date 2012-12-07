@@ -44,7 +44,7 @@ else
 CPU_MHZ ?= 1  # actually the default DCO frequency is around 800 kHz
 endif
 
-XM1000-BSL = $(MOS)/make/scripts/xm1000-bsl
+XM1000-BSL = python $(MOS)/make/scripts/xm1000-bsl
 
 INTERRUPT_VECTOR_COUNT=32
 

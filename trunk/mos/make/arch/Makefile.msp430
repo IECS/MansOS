@@ -40,11 +40,11 @@ OUTDIRDOS = $(subst /cygdrive/c,C:,$(OUTDIR))
 
 ifeq ($(SHORT_UNAME),CYGWIN)
 #cygwin!
-BSL ?= tos-bsl
-MSP430-BSL ?= tos-bsl
+BSL ?= python tos-bsl
+MSP430-BSL ?= python tos-bsl
 else
-BSL ?= $(MOS)/make/scripts/tos-bsl
-MSP430-BSL ?= $(MOSROOT)/mos/make/scripts/bsl.py
+BSL ?= python $(MOS)/make/scripts/tos-bsl
+MSP430-BSL ?= python $(MOSROOT)/mos/make/scripts/bsl.py
 endif
 
 # this option is needed for testbed device
