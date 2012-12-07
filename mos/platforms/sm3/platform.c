@@ -26,6 +26,7 @@
 //----------------------------------------------------------
 #include "platform.h"
 #include <serial_number.h>
+#include <amb8420/amb8420.h>
 
 //----------------------------------------------------------
 //      Init the platform as if on cold reset
@@ -36,4 +37,8 @@ void initPlatform(void)
 #if USE_SERIAL_NUMBER
     halSerialNumberInit();
 #endif
+    // make sure radio is off when it is not used
+    if (amb8420Init == NULL) {
+        amb8420EnsureOff();
+    }
 }
