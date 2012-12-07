@@ -166,4 +166,13 @@ int amb8420EnterAddressingMode(AMB8420AddrMode_t, uint8_t srcAddress);
 
 bool amb8420SetDstAddress(uint8_t dstAddress);
 
+// must be inline. Saves energy: used iff the radio chip is present, but not used.
+static inline void amb8420EnsureOff(void)
+{
+    pinAsOutput(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);
+    pinAsOutput(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);
+    pinSet(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);
+    pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);
+}
+
 #endif
