@@ -78,3 +78,38 @@ uint16_t intSqrt(uint32_t val)
     }
     return 0;
 }
+
+uint16_t triangleWaveValue(uint16_t period, uint16_t low, uint16_t high)
+{
+    const uint16_t amplitude = high - low;
+    const uint16_t halfPeriod = period / 2;
+    uint16_t positionX = getJiffies() % (halfPeriod + 1);
+    const bool invert = (getJiffies() % period) > halfPeriod;
+    if (invert) {
+        positionX = halfPeriod - positionX;
+    }
+    const uint16_t positionY = (positionX * amplitude) / halfPeriod + low;
+    return positionY;
+}
+
+//
+// Calculate approximate sawtooth wave value at given point of time
+//
+uint16_t sawtoothWaveValue(uint16_t period, uint16_t low, uint16_t high)
+{
+    const uint16_t amplitude = high - low;
+    uint16_t positionX = getJiffies() % period;
+    const uint16_t positionY = (positionX * amplitude) / period + low;
+    return positionY;
+}
+
+//
+// Calculate approximate sine wave value at given point of time
+//
+uint16_t sineWaveValue(uint16_t period, uint16_t low, uint16_t high)
+{
+    const uint16_t amplitude = high - low;
+    // TODO...
+    // XXX: too complicated?
+    return low + (amplitude / 2);
+}

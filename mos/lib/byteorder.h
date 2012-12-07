@@ -89,28 +89,30 @@
 // data reading & writing
 
 #define le16read(p)                             \
-    (((uint16_t)*((p) + 1) << 8) | *(p));
+    (((uint16_t)*((p) + 1) << 8) | *(p))
 
 #define le32read(p)                             \
     (((uint32_t)*((p) + 3) << 24)               \
             | ((uint32_t)*((p) + 2) << 16)      \
             | ((uint32_t)*((p) + 1) << 8)       \
-            | *(p));
+            | *(p))
 
 #define be32read(p)                             \
     (((uint32_t)*(p) << 24)                     \
             | ((uint32_t)*((p) + 1) << 16)      \
             | ((uint32_t)*((p) + 2) << 8)       \
-            | *(p + 3));
+            | *(p + 3))
 
-#define le16write(p, u)                         \
-    *(p) = (u) & 0xff;                          \
-    *((p) + 1) = ((u) >> 8) & 0xff;
+#define le16write(p, u) do {                    \
+        *(p) = (u) & 0xff;                      \
+        *((p) + 1) = ((u) >> 8) & 0xff;         \
+    } while (0)
 
-#define le32write(p, u)                         \
-    *(p) = (u) & 0xff;                          \
-    *((p) + 1) = ((u) >> 8) & 0xff;             \
-    *((p) + 2) = ((u) >> 16) & 0xff;            \
-    *((p) + 3) = (u) >> 24;
+#define le32write(p, u) do {                    \
+        *(p) = (u) & 0xff;                      \
+        *((p) + 1) = ((u) >> 8) & 0xff;         \
+        *((p) + 2) = ((u) >> 16) & 0xff;        \
+        *((p) + 3) = (u) >> 24;                 \
+    } while (0)
 
 #endif

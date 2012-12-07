@@ -54,7 +54,6 @@ USE_I2C ?= n
 USE_REPROGRAMMING ?= n
 USE_SMP ?= n
 USE_FS ?= n
-USE_FATFS ?= n
 USE_ASSERT ?= y
 USE_HUMIDITY ?= n
 USE_ACCEL ?= n
@@ -75,10 +74,18 @@ USE_RAM_EXECUTION ?= n
 # e.g. by default timestamps will repeat after ~40 days.
 USE_LONG_LIFETIME ?= n
 
-# SD card
+# FAT file system (only on SD card)
+USE_FATFS ?= n
+ifeq ($(USE_FATFS),y)
+  USE_SDCARD ?= y
+  USE_SDCARD_STREAM = n
+endif
+
+# SD card stream
 USE_SDCARD_STREAM ?= n
 ifeq ($(USE_SDCARD_STREAM),y)
   USE_SDCARD ?= y
+  USE_FATFS = n
 endif
 USE_SDCARD ?= n
 

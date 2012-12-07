@@ -28,12 +28,41 @@
 // FAT file system high-level interface
 //
 
-#include <kernel/defines.h>
+#include "posix-file.h"
+#include "structures.h"
 
-//#include "posix-stdio.h"
+// Memory card sector size
+#define SDCARD_SECTOR_SIZE 512
 
-void fatFsInit(void);
+//
+// We do not support FAT32 at the moment;
+// FAT16 is fine for accessing 2GB SD cards.
+//
+#define FAT32_SUPPORT 0
 
-int fatfsFormat(void);
+bool fatFsInitPartition(uint8_t partition);
+
+static inline bool fatFsInit(void)
+{
+    // try to use partition #1 by default
+    if (fatFsInitPartition(1)) return true;
+    // if this fails, try to init the device as without partition table
+    if (fatFsInitPartition(0)) return true;
+    return false;
+}
+
+DirectoryEntry_t *fatFsFileSearch(const char *__restrict name, uint16_t *__restrict entryIndex);
+
+DirectoryEntry_t *fatFsFileCreate(const char *name);
+
+void fatFsFileRemove(const char *name);
+
+void fatFsFileClose(FILE *handle);
+
+uint16_t fatFsRead(FILE *handle, void *buffer, uint16_t maxLength);
+
+uint16_t fatFsWrite(FILE *handle, const void *buffer, uint16_t length);
+
+void fatFsFileFlush(FILE *handle);
 
 #endif

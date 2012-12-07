@@ -28,8 +28,9 @@
 #ifndef MANSOS_ALGO_H
 #define MANSOS_ALGO_H
 
-#include "stdmansos.h" // TODO
+#include <kernel/defines.h>
 
+// swap two values
 #define swap(p1, p2) \
     do {                                         \
         typeof(p1) t = p2;                       \
@@ -37,9 +38,25 @@
         p1 = t;                                  \
     } while (0)
 
+// get minimum of two values
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
+// get maximum of two values
 #define max(a, b) ((a) > (b) ? (a) : (b))
+
+// // rounding macros. 'to' must be a power of 2
+// #define ROUND_DOWN(x, to) (((x) / (to)) * (to))
+// #define ROUND_UP(x, to)  ((((x) + ((to) - 1) / (to)) * (to))
+
+// // check whether 'x' is multiple of 'to', which must be a power of 2
+// #define IS_ALIGNED(x, to) ((x) & ((to) - 1) == 0)
+
+// calculate logarithm in base 2
+//static inline uint8_t log2(uint32_t
+#define log2(x) \
+    ({  typeof(x) x1 = (x) >> 1; uint8_t log = 0; while (x1) { x1 >>= 1; log++; } log; })
+
+
 
 // Calculate square root, rounded down.
 uint16_t intSqrt(uint32_t);
@@ -48,40 +65,17 @@ uint16_t intSqrt(uint32_t);
 //
 // Calculate approximate triangle wave value at given point of time
 //
-static inline uint16_t triangleWaveValue(uint16_t period, uint16_t low, uint16_t high)
-{
-    const uint16_t amplitude = high - low;
-    const uint16_t halfPeriod = period / 2;
-    uint16_t positionX = getJiffies() % (halfPeriod + 1);
-    const bool invert = (getJiffies() % period) > halfPeriod;
-    if (invert) {
-        positionX = halfPeriod - positionX;
-    }
-    const uint16_t positionY = (positionX * amplitude) / halfPeriod + low;
-    return positionY;
-}
+uint16_t triangleWaveValue(uint16_t period, uint16_t low, uint16_t high);
 
 //
 // Calculate approximate sawtooth wave value at given point of time
 //
-static inline uint16_t sawtoothWaveValue(uint16_t period, uint16_t low, uint16_t high)
-{
-    const uint16_t amplitude = high - low;
-    uint16_t positionX = getJiffies() % period;
-    const uint16_t positionY = (positionX * amplitude) / period + low;
-    return positionY;
-}
+uint16_t sawtoothWaveValue(uint16_t period, uint16_t low, uint16_t high);
 
 //
 // Calculate approximate sine wave value at given point of time
 //
-static inline uint16_t sineWaveValue(uint16_t period, uint16_t low, uint16_t high)
-{
-    const uint16_t amplitude = high - low;
-    // TODO...
-    // XXX: too complicated?
-    return low + (amplitude / 2);
-}
+uint16_t sineWaveValue(uint16_t period, uint16_t low, uint16_t high);
 
 //
 // Map a specific value from input range to output range

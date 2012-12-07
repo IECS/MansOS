@@ -24,8 +24,14 @@
 #include "stdmansos.h"
 #include <lib/assert.h>
 
+int fatFsFormat(void)
+{
+    // TODO
+    return 0;
+}
+
 void appMain(void)
 {
-    int result = fatfsFormat();
+    int result = fatFsFormat();
     ASSERT(result == 0);
 }

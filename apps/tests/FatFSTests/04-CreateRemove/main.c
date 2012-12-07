@@ -24,11 +24,21 @@
 #include "stdmansos.h"
 #include <lib/assert.h>
 
+#define FILE_NAME "newfile1.txt"
+
 void appMain(void)
 {
-    FILE *f = fopen("hello.txt", "r");
+    FILE *f = fopen(FILE_NAME, "w");
     ASSERT(f);
     ASSERT(f->fd != -1);
     fclose(f);
     ASSERT(f->fd == -1);
+
+    f = fopen(FILE_NAME, "r");
+    ASSERT(f);
+    fclose(f);
+
+    remove(FILE_NAME);
+    f = fopen(FILE_NAME, "r");
+    ASSERT(!f);
 }

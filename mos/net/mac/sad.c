@@ -159,21 +159,21 @@ static bool filterPass(MacInfo_t *mi)
 
 #if 1
     // 0x0001 - base station
-    // 0x3B88 - forwarder
-    // 0x71C0 - collector
+    // 0x71C0 - forwarder
+    // 0x7BAA - collector
     switch (localAddress) {
     case BASE_STATION_ADDRESS:
-        if (mi->immedSrc.shortAddr != 0x3B88) return false;
-        break;
-    case 0x3B88:
-        if (mi->immedSrc.shortAddr != BASE_STATION_ADDRESS
-                && mi->immedSrc.shortAddr != 0x71C0) return false;
+        if (mi->immedSrc.shortAddr != 0x71C0) return false;
         break;
     case 0x71C0:
+        if (mi->immedSrc.shortAddr != BASE_STATION_ADDRESS
+                && mi->immedSrc.shortAddr != 0x7BAA) return false;
+        break;
+    case 0x7BAA:
         if (mi->immedSrc.shortAddr == BASE_STATION_ADDRESS) return false;
         break;
     default:
-        if (mi->immedSrc.shortAddr != 0x71C0) return false;
+        if (mi->immedSrc.shortAddr != 0x7BAA) return false;
         break;
     }
 #else
