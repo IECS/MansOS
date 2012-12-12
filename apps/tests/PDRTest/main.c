@@ -34,6 +34,8 @@
 
 #define TEST_PACKET_SIZE            30
 
+#define ADDRESS 0xAA
+
 #if PLATFORM_SM3
 // AMB8420 is MUCH slower on the default settings
 #define PACKETS_IN_TEST             10u
@@ -104,8 +106,12 @@ void extFlashPrepare(void)
 void appMain(void)
 {
 #if PLATFORM_SM3
+#if 0
     // disable addr mode
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_NONE, 0);
+#else
+    amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, ADDRESS);
+#endif
 #endif
 
 #if RECV
@@ -445,6 +451,7 @@ void sendCounter(void)
 {
     static uint8_t sendBuffer[TEST_PACKET_SIZE];
     uint16_t testNumber;
+    amb8420SetDstAddress(ADDRESS);
     for (testNumber = 1; ; testNumber++) {
         uint8_t i;
         uint16_t crc;
