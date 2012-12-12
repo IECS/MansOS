@@ -110,7 +110,11 @@ void appMain(void)
     // disable addr mode
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_NONE, 0);
 #else
+#if RECV
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, ADDRESS);
+#else
+    amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, ADDRESS ^ 0x1);
+#endif
 #endif
 #endif
 
