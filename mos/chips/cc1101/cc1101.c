@@ -415,7 +415,9 @@ static cc1101Callback_t callback;
 void cc1101SetChannel(int channel)
 {
     chipSelect();
-    setreg(REG_CHANNR, channel);
+    strobe(STROBE_SIDLE);
+    setreg(REG_CHANNR, channel); // Can only be updated in IDLE state
+    strobe(STROBE_SRX);
     chipRelease();
 }
 
