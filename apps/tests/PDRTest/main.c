@@ -134,6 +134,14 @@ void appMain(void)
 #endif
 }
 
+static inline int16_t platformFixRssi(uint16_t rssi)
+{
+#if PLATFORM_TELOSB
+    rssi -= 128;
+#endif
+    return (int16_t) rssi;
+}
+
 #if RECV
 
 volatile bool testInProgress;
@@ -141,6 +149,8 @@ volatile uint32_t testStartTime;
 volatile uint16_t currentTestNumber;
 volatile uint16_t currentTestPacketsRx;
 volatile uint16_t prevTestPacketsRx;
+volatile uint16_t prevTestRssiSum;
+volatile uint16_t prevTestLqiSum;
 volatile uint16_t rssiSum;
 volatile uint16_t lqiSum;
 
@@ -229,12 +239,9 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx,
     samplesAvgNe = (sumSamplesNe + (numSamplesNe / 2)) / numSamplesNe;
     rssiAvg = (sumRssiNe + (numSamplesNe / 2)) / numSamplesNe;
     lqiAvg = (sumLqiNe + (numSamplesNe / 2)) / numSamplesNe;
-#if PLATFROM_TELOSB
-    rssiAvg -= 128;
-#endif
 
     PRINTF("nonempty avg (%d runs): %d, rssi: %d, lqi: %d\n",
-            numSamplesNe, samplesAvgNe, rssiAvg, lqiAvg);
+            numSamplesNe, samplesAvgNe, platformFixRssi(rssiAvg), lqiAvg);
 
     RadioInfoPacket_t packet;
     packet.testId = testId;
@@ -269,14 +276,18 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx,
 }
 
 void endTest(void) {
+    // PRINTF("end test %u\n", currentTestNumber);
     testInProgress = false;
     prevTestPacketsRx = currentTestPacketsRx;
+    prevTestRssiSum = rssiSum;
+    prevTestLqiSum = lqiSum;
     currentTestPacketsRx = 0;
     // greenLedOff();
     redLedToggle();
 }
 
 void startTest(uint16_t newTestNumber) {
+    // PRINTF("start test %u\n", newTestNumber);
     testInProgress = true;
     currentTestNumber = newTestNumber;
     testStartTime = getJiffies();
@@ -315,7 +326,7 @@ void recvCallback(uint8_t *data, int16_t len)
     }
 
     uint8_t rssi;
-#if PLATFROM_TELOSB
+#if PLATFORM_TELOSB
     rssi = radioGetLastRSSI() + 128;
 #else
     rssi = radioGetLastRSSI();
@@ -370,8 +381,8 @@ void recvCounter(void)
                     avgRssi = 0;
                     avgLqi = 0;
                 } else {
-                    avgRssi = rssiSum / prevTestPacketsRx;
-                    avgLqi = lqiSum / prevTestPacketsRx;
+                    avgRssi = prevTestRssiSum / prevTestPacketsRx;
+                    avgLqi = prevTestLqiSum / prevTestPacketsRx;
                 }
                 PRINTF("Test %u: %d%%, %d avg RSSI\n",
                         prevTestNumber, prevTestPacketsRx * PERCENT, avgRssi, avgLqi);
@@ -427,11 +438,11 @@ void recvCounter(void)
                     avgRssi = 0;
                     avgLqi = 0;
                 } else {
-                    avgRssi = rssiSum / prevTestPacketsRx;
-                    avgLqi = lqiSum / prevTestPacketsRx;
+                    avgRssi = prevTestRssiSum / prevTestPacketsRx;
+                    avgLqi = prevTestLqiSum / prevTestPacketsRx;
                 }
                 PRINTF("Test %u: %d%%, %d avg RSSI\n",
-                        prevTestNumber, prevTestPacketsRx * PERCENT, avgRssi, avgLqi);
+                        prevTestNumber, prevTestPacketsRx * PERCENT, platformFixRssi(avgRssi), avgLqi);
                 addAvgStatistics(prevTestNumber, prevTestPacketsRx, avgRssi, avgLqi);
             }
             if (testInProgress) {
@@ -455,7 +466,9 @@ void sendCounter(void)
 {
     static uint8_t sendBuffer[TEST_PACKET_SIZE];
     uint16_t testNumber;
+#if PLATFORM_SM3
     amb8420SetDstAddress(ADDRESS);
+#endif
     for (testNumber = 1; ; testNumber++) {
         uint8_t i;
         uint16_t crc;
@@ -473,7 +486,7 @@ void sendCounter(void)
             mdelay(SEND_INTERVAL);
             if (result != 0) {
                 PRINTF("radio send failed\n"); 
-#if PLATFROM_SM3
+#if PLATFORM_SM3
                 amb8420Reset();
 #endif
             }
