@@ -68,6 +68,8 @@ typedef struct FILE_s {
     uint16_t flags;
     // EOF indicator set etc.
     uint8_t state;
+    // whether the directory entry has been modified
+    bool dirEntryDirty;
 } FILE;
 
 
@@ -79,6 +81,8 @@ typedef struct FILE_s {
 #define O_EXCL      00000200
 #define O_TRUNC     00001000
 #define O_APPEND    00002000
+
+#define O_WRITE     (O_WRONLY | O_RDWR)
 
 
 #endif

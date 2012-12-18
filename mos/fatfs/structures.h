@@ -439,16 +439,32 @@ struct DirectoryEntry_s {
     uint8_t attributes;
     uint8_t reserved;
     uint8_t timeCreatedSplitSeconds;
-    uint8_t timeCreated[2];
-    uint8_t dateCreated[2];
-    uint8_t dateAccessed[2];
-    uint8_t startClusterHiword[2];
-    uint8_t timeWritten[2];
-    uint8_t dateWritten[2];
-    uint8_t startClusterLoword[2];
-    uint8_t fileSize[4];
-};
+    uint16_t timeCreated;
+    uint16_t dateCreated;
+    uint16_t dateAccessed;
+    uint16_t startClusterHiword;
+    uint16_t timeWritten;
+    uint16_t dateWritten;
+    uint16_t startClusterLoword;
+    uint32_t fileSize;
+} PACKED;
 typedef struct DirectoryEntry_s DirectoryEntry_t;
+
+typedef uint16_t fat_t;
+
+typedef union Cache16_u {
+          /** Used to access cached file data blocks. */
+  uint8_t data[512];
+          /** Used to access cached FAT entries. */
+  fat_t   fat[256];
+          /** Used to access cached directory entries. */
+  DirectoryEntry_t entries[16];
+          /** Used to access a cached Master Boot Record. */
+  mbr_t   mbr;
+          /** Used to access to a cached FAT16 boot sector. */
+  Fat32BootBlock_t fbs;
+} Cache16_t;
+
 
 // constants used in filename entries
 #define FILENAME_UNUSED    0x00
@@ -490,6 +506,7 @@ static inline uint32_t clusterToBytes(cluster_t cluster) {
 }
 
 static inline sector_t clusterToBlock(cluster_t cluster) {
+    cluster -= 2; // cluster numbering starts from 2
     return (sector_t) cluster << (fatInfo.bytesPerClusterShift - 9);
 }
 

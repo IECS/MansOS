@@ -98,16 +98,20 @@ FILE *fopen(const char *__restrict filename,
     }
 
 #if FAT32_SUPPORT
-    result->firstCluster = le16read(de->startClusterHiword);
+    result->firstCluster = de->startClusterHiword;
     result->firstCluster <<= 16;
 #else
     result->firstCluster = 0;
 #endif
-    result->firstCluster |= le16read(de->startClusterLoword);
+    result->firstCluster |= de->startClusterLoword;
     result->currentCluster = result->firstCluster;
     result->position = 0;
-    result->fileSize = le32read(de->fileSize);
+    result->fileSize = de->fileSize;
     result->fd = 1; // XXX
+    result->dirEntryDirty = false;
+
+    // TODO: truncate if needed
+
     return result;
 }
 
