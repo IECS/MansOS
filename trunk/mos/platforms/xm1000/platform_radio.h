@@ -30,6 +30,10 @@ static inline void radioInit(void) {
     if (cc2420Init) cc2420Init();
 }
 
+static inline void radioReinit(void) {
+    cc2420InitSpi();
+}
+
 static inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
                                      const void *data, uint16_t dataLength) {
     return cc2420Send(header, headerLength, data, dataLength);

@@ -73,6 +73,12 @@ typedef void (*RadioRecvFunction)(void);
 //
 void radioInit(void);
 
+
+//
+// (Re)initialize radio communications (serial/SPI) interface
+//
+void radioReinit(void);
+
 //
 // Send two data buffers to radio; either of the pointers is allowed to be NULL
 // (except both at the same time) in case the respective length paramater is 0
