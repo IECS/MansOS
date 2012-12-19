@@ -526,7 +526,7 @@ void sdcardEraseSector(uint32_t address)
 
 bool sdcardReadBlock(uint32_t address, void* buffer)
 {
-    // PRINTF("sdcardReadBlock at %lu\n", address);
+    SPRINTF("sdcardReadBlock at %lu\n", address);
     bool result = false;
     Handle_t h;
 
@@ -545,6 +545,7 @@ bool sdcardReadBlock(uint32_t address, void* buffer)
   fail:
     SDCARD_SPI_DISABLE();
     ATOMIC_END(h);
+    SPRINTF("  done\n");
     return result;
 }
 
@@ -601,7 +602,7 @@ static bool sdcardWriteData(uint8_t token, const uint8_t* data)
 // Write len bytes (len == 512) to card at address
 bool sdcardWriteBlock(uint32_t address, const void *buf)
 {
-    // PRINTF("sdcardWriteBlock at %lu\n", address);
+    SPRINTF("sdcardWriteBlock at %lu\n", address);
     Handle_t handle;
     ATOMIC_START(handle);
 
@@ -629,6 +630,7 @@ bool sdcardWriteBlock(uint32_t address, const void *buf)
  fail:
     SDCARD_SPI_DISABLE();
     ATOMIC_END(handle);
+    SPRINTF("  done\n");
     return false;
 }
  

@@ -30,6 +30,10 @@ static inline void radioInit(void) {
     if (mrf24j40Init) mrf24j40Init();
 }
 
+static inline void radioReinit(void) {
+    // TODO
+}
+
 static inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
                                      const void *data, uint16_t dataLength) {
     return mrf24j40Send(header, headerLength, data, dataLength);

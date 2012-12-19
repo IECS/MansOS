@@ -533,6 +533,7 @@ uint16_t fatFsRead(FILE *handle, void *buffer, uint16_t maxLength)
     //     // advance the cluster
     //     handle->currentCluster = nextCluster;
     // }
+
     return maxLength + maxLength2;
 }
 
@@ -591,7 +592,6 @@ uint16_t fatFsWrite(FILE *handle, const void *buffer, uint16_t length)
         return 0;
     }
     memcpy(cache.data + offsetInBlock, buffer, length);
-
 
     if (length2) {
         if (useTwoClusters) {
