@@ -4,7 +4,7 @@ APPMOD = Blink
 
 PROJDIR = $(CURDIR)
 ifndef MOSROOT
-  MOSROOT = $(PROJDIR)/../../..
+  MOSROOT = $(PROJDIR)/../../../..
 endif
 
 # Include the main makefile
