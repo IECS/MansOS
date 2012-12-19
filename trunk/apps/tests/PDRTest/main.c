@@ -27,6 +27,7 @@
 #include <extflash.h>
 #include <string.h>
 #include <kernel/threads/radio.h>
+#include <stdio.h>
 
 #define TEST_ID 01
 
@@ -48,6 +49,10 @@
 #define MAX_TEST_TIME               ((SEND_INTERVAL + 20) *  PACKETS_IN_TEST)
 #define PAUSE_BETWEEN_TESTS_MS      0 // ms
 #endif
+
+#define STRBUF_SIZE 50
+char strBuf[STRBUF_SIZE];
+FILE *outFile;
 
 #define PERCENT (100 / PACKETS_IN_TEST)
 
@@ -105,6 +110,8 @@ void extFlashPrepare(void)
 //-------------------------------------------
 void appMain(void)
 {
+    outFile = fopen("data.txt", "a");
+
 #if PLATFORM_SM3
 #if 0
     // disable addr mode
@@ -349,6 +356,9 @@ void recvCallback(uint8_t *data, int16_t len)
 }
 
 #if USE_THREADS
+//
+// THREADED version
+//
 void recvCounter(void)
 {
     RADIO_PACKET_BUFFER(radioBuffer, RADIO_MAX_PACKET);
@@ -385,7 +395,12 @@ void recvCounter(void)
                     avgLqi = prevTestLqiSum / prevTestPacketsRx;
                 }
                 PRINTF("Test %u: %d%%, %d avg RSSI\n",
-                        prevTestNumber, prevTestPacketsRx * PERCENT, avgRssi, avgLqi);
+                        prevTestNumber, prevTestPacketsRx * PERCENT, avgRssi);
+                sprintf(strBuf, "Test %u: %d%%, %d avg RSSI\n",
+                        prevTestNumber, prevTestPacketsRx * PERCENT, platformFixRssi(avgRssi));
+                fwrite(strBuf, 1, strlen(strBuf), outFile);
+                radioReinit();
+
                 addAvgStatistics(prevTestNumber, prevTestPacketsRx, avgRssi, avgLqi);
             }
             if (testInProgress) {
@@ -416,6 +431,9 @@ void recvCallback1(void)
     }
 }
 
+//
+// Version WITHOUT threads
+//
 void recvCounter(void)
 {
     bool prevTestInProgress = false;
@@ -442,7 +460,12 @@ void recvCounter(void)
                     avgLqi = prevTestLqiSum / prevTestPacketsRx;
                 }
                 PRINTF("Test %u: %d%%, %d avg RSSI\n",
-                        prevTestNumber, prevTestPacketsRx * PERCENT, platformFixRssi(avgRssi), avgLqi);
+                        prevTestNumber, prevTestPacketsRx * PERCENT, platformFixRssi(avgRssi));
+                sprintf(strBuf, "Test %u: %d%%, %d avg RSSI\n",
+                        prevTestNumber, prevTestPacketsRx * PERCENT, platformFixRssi(avgRssi));
+                fwrite(strBuf, 1, strlen(strBuf), outFile);
+                radioReinit();
+
                 addAvgStatistics(prevTestNumber, prevTestPacketsRx, avgRssi, avgLqi);
             }
             if (testInProgress) {
