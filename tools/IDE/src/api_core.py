@@ -43,7 +43,7 @@ from blockly import Blockly
 from globals import * #@UnusedWildImport
 
 #from seal_parser import SealParser
-from seal import seal_parser
+from seal import seal_parser #@UnresolvedImport
 
 class ApiCore:
     def __init__(self, argv):
