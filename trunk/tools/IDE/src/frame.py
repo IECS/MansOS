@@ -66,7 +66,8 @@ class Frame(wx.Frame):
 
         self.API.tabManager.Reparent(self)
         self.API.editPanel.Reparent(self)
-        self.API.blockly.Reparent(self)
+        if self.API.foundBlockly:
+            self.API.blockly.Reparent(self)
         self.API.listenModules[0].Reparent(self)
         self.API.infoArea.Reparent(self)
 
@@ -518,6 +519,8 @@ IDE developed by: Janis Judvaitis, (c) 2011-2012, janis.judvaitis@gmail.com
     #    self.blocklyToolVisible = not self.blocklyToolVisible
 
     def layoutBlocklyPane(self):
+        if not self.API.foundBlockly:
+            return;
         blocklyPane = (aui.AuiPaneInfo().Caption("Seal-Blockly handler").
                 Name("blocklyPane").BestSize(wx.Size(500, 150)))
         self.auiManager.AddPane(self.API.blockly, blocklyPane,
