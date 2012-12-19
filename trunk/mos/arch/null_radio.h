@@ -27,6 +27,9 @@
 static inline void radioInit(void) {
 }
 
+static inline void radioReinit(void) {
+}
+
 static inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
                                      const void *data, uint16_t dataLength) {
     return 0;
