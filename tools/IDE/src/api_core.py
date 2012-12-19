@@ -156,8 +156,12 @@ class ApiCore:
         self.clearInfoArea = self.infoArea.clear
 
         # Init blockly handler
-        self.blockly = Blockly(self.emptyFrame, self)
-
+        if os.path.exists(os.path.join(self.path, self.getSetting('blocklyLocation'))):
+            self.blockly = Blockly(self.emptyFrame, self)
+            self.foundBlockly = True
+        else:
+            print "Warning: No SEAL-Blockly found!"
+            self.foundBlockly = False
         # Init seal parser
         self.sealParser = seal_parser.SealParser("msp430", self.printInfo, False, True)
 
