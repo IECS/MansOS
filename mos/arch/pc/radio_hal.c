@@ -50,6 +50,10 @@ void radioInit(void) {
     pthread_mutex_init(&pcRadioSendMutex, NULL);
 }
 
+void radioReinit(void) {
+    // do nothing
+}
+
 int8_t radioSendHeader(const void *header, uint16_t headerLength,
                        const void *data, uint16_t dataLength) {
     // first byte(s) in the packet is packet size
