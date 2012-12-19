@@ -75,12 +75,16 @@ static void printFatEntry(DirectoryEntry_t *entry) {
     memcpy(name, entry->filename, 8);
     memcpy(extension, entry->extension, 3);
     PRINTF("entry: %s.%s\n", name, extension);
+    PRINTF("  cluster %u\n", entry->startClusterLoword);
+    PRINTF("  size %lu\n", entry->fileSize);
 #endif
 }
 
 static bool cacheFlush(void)
 {
     if (cacheDirty) {
+        DPRINTF("write block %lu (rootDirStart=%lu, dataStartBlock=%lu)\n",
+                cacheBlockNumber, fatInfo.rootDirStart, fatInfo.dataStartBlock);
         if (!sdcardWriteBlock(cacheBlockNumber * SDCARD_SECTOR_SIZE, cache.data)) {
             goto fail;
         }
@@ -96,6 +100,7 @@ static bool cacheFlush(void)
     return true;
     
   fail:
+    DPRINTF(" write fail!\n");
     return false;
 }
 
@@ -103,6 +108,7 @@ static bool cacheRawBlock(uint32_t blockNumber, bool makeDirty)
 {
     if (cacheBlockNumber != blockNumber) {
         if (!cacheFlush()) goto fail;
+        DPRINTF("read block %lu\n", blockNumber);
         if (!sdcardReadBlock(blockNumber * SDCARD_SECTOR_SIZE, cache.data)) goto fail;
         cacheBlockNumber = blockNumber;
     }
@@ -110,6 +116,7 @@ static bool cacheRawBlock(uint32_t blockNumber, bool makeDirty)
     return true;
 
   fail:
+    DPRINTF(" cache fail!\n");
     return false;
 }
 
@@ -201,7 +208,7 @@ bool fatFsInitPartition(uint8_t partition)
     return true;
 
   fail:
-    DPRINTF("fail\n");
+    DPRINTF("init part fail\n");
     errno = ENXIO;
     return false;
 }
@@ -213,6 +220,7 @@ void fatFsFileRemove(const char *filename)
     if (de) {
         de->filename[0] = FILENAME_DELETED;
         cacheDirty = true;
+        cacheFlush();
     }
 }
 
@@ -320,22 +328,22 @@ DirectoryEntry_t *fatFsFileSearch(const char *__restrict name, uint16_t *__restr
         goto fail;
     }
 
+    *entryIndex = 0;
     for (i = 0; i < numRootSectors; ++i) {
         if (!cacheRawBlock(fatInfo.rootDirStart + i, false)) {
             goto fail;
         }
         uint16_t j;
-        *entryIndex = 0;
 //        DirectoryEntry_t *entries = cache.dir;
         for (j = 0; j < SDCARD_SECTOR_SIZE / 32; ++j) {
-            (*entryIndex)++;
             DirectoryEntry_t *e = &cache.entries[j];
-            // DPRINTF("check entry %u\n", j);
+            DPRINTF("check entry %u\n", j);
             printFatEntry(e);
             if (fatNameMatch(e, filename, extension)) {
-                // DPRINTF("fatFsFileOpen: matched!\n", name);
+                DPRINTF("fatFsFileOpen: matched %s!\n", name);
                 return e;
             }
+            (*entryIndex)++;
         }
         break;
     }
@@ -345,7 +353,7 @@ DirectoryEntry_t *fatFsFileSearch(const char *__restrict name, uint16_t *__restr
     return NULL;
 }
 
-DirectoryEntry_t *fatFsFileCreate(const char *name)
+DirectoryEntry_t *fatFsFileCreate(const char *__restrict name, uint16_t *__restrict entryIndex /* out */)
 {
     DPRINTF("fatFsFileCreate... %s\n", name);
 
@@ -358,6 +366,7 @@ DirectoryEntry_t *fatFsFileCreate(const char *name)
         goto fail;
     }
 
+    *entryIndex = 0;
     for (i = 0; i < numRootSectors; ++i) {
         if (!cacheRawBlock(fatInfo.rootDirStart + i, false)) {
             DPRINTF("cacheRawBlock failed\n");
@@ -374,6 +383,7 @@ DirectoryEntry_t *fatFsFileCreate(const char *name)
                 cacheDirty = true;
                 return entry;
             }
+            (*entryIndex)++;
         }
     }
 
@@ -406,6 +416,8 @@ static bool fatPut(fat_t cluster, fat_t value) {
 }
 
 static bool fatFsAllocateCluster(FILE *handle) {
+    DPRINTF("fatFsAllocateCluster\n");
+
     fat_t freeCluster = handle->currentCluster ? handle->currentCluster : 1;
     uint16_t i;
     for (i = 0; ; i++) {
@@ -418,8 +430,9 @@ static bool fatFsAllocateCluster(FILE *handle) {
         if (!fatGet(freeCluster, &value)) return false;
         if (value == 0) break;
     }
+
     if (!fatPut(freeCluster, FAT16_END)) return false;
-    
+
     if (handle->currentCluster != 0) {
         if (!fatPut(handle->currentCluster, freeCluster)) return false;
     } else {
@@ -432,6 +445,7 @@ static bool fatFsAllocateCluster(FILE *handle) {
 
 static DirectoryEntry_t* cacheDirEntry(uint16_t index, bool makeDirty)
 {
+    DPRINTF("cacheDirEntry, index=%u\n", index);
     if (index >= fatInfo.rootDirEntryCount) return NULL;
     if (!cacheRawBlock(fatInfo.rootDirStart + (index >> 4), makeDirty)) return NULL;
     return &cache.entries[index & 0xF];
@@ -448,11 +462,8 @@ void fatFsFileFlush(FILE *handle)
         d->fileSize = handle->fileSize;
         d->startClusterLoword = handle->firstCluster;
 
-        // set modify time if user supplied a callback date/time function
-        // if (dateTime_) {
-        //     dateTime_(&d->lastWriteDate, &d->lastWriteTime);
-        //     d->lastAccessDate = d->lastWriteDate;
-        // }
+        // TODO: set modification time
+
         handle->dirEntryDirty = false;
     }
     cacheFlush();
@@ -541,10 +552,20 @@ uint16_t fatFsWrite(FILE *handle, const void *buffer, uint16_t length)
     if (handle->currentCluster == 0) {
         fatFsAllocateCluster(handle);
     }
+    DPRINTF("  currentCluster=%u\n", handle->currentCluster);
 
     uint16_t offsetInCluster = handle->position & fatInfo.bytesPerClusterMask;
     uint16_t offsetInBlock = offsetInCluster & (SDCARD_SECTOR_SIZE - 1);
     uint16_t blockNumber = fatInfo.dataStartBlock + clusterToBlock(handle->currentCluster);
+
+    uint16_t beforeEnd = handle->fileSize - handle->position;
+    if (beforeEnd < length) {
+        // the file is going to grow
+        handle->fileSize += length - beforeEnd;
+    }
+    handle->position += length;
+    handle->dirEntryDirty = true;
+    DPRINTF("  pos=%lu fileSize=%lu\n", handle->position, handle->fileSize);
 
     bool useTwoClusters;
     if ((offsetInCluster + length) >= (1 << fatInfo.bytesPerClusterShift)) {
@@ -566,11 +587,11 @@ uint16_t fatFsWrite(FILE *handle, const void *buffer, uint16_t length)
     }
     DPRINTF("write in block %d\n", blockNumber);
     if (!cacheRawBlock(blockNumber, true)) {
-        DPRINTF("fatFsWrite: raw read failed\n");
+        DPRINTF("fatFsWrite: raw write failed\n");
         return 0;
     }
     memcpy(cache.data + offsetInBlock, buffer, length);
-    handle->position += length;
+
 
     if (length2) {
         if (useTwoClusters) {
@@ -583,7 +604,7 @@ uint16_t fatFsWrite(FILE *handle, const void *buffer, uint16_t length)
             blockNumber += 1;
         }
         if (!cacheRawBlock(blockNumber, true)) {
-            DPRINTF("fatFsWrite: raw read (2) failed\n");
+            DPRINTF("fatFsWrite: raw write (2) failed\n");
             return 0;
         }
         memcpy(cache.data, buffer + length, length2);

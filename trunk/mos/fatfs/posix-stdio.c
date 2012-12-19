@@ -25,6 +25,7 @@
 #include "posix-stdio.h"
 #include <lib/byteorder.h>
 #include <errors.h>
+#include <lib/dprint.h>
 
 #ifndef MAX_OPEN_FILES
 #define MAX_OPEN_FILES 2
@@ -89,7 +90,7 @@ FILE *fopen(const char *__restrict filename,
     DirectoryEntry_t *de = fatFsFileSearch(filename, &result->directoryEntry);
     if (de == NULL) {
         if (result->flags & O_CREAT) {
-            de = fatFsFileCreate(filename);
+            de = fatFsFileCreate(filename, &result->directoryEntry);
         }
     }
 
@@ -144,7 +145,7 @@ size_t fwrite(const void *__restrict ptr, size_t size,
 }
 
 // delete a file
-int remove (const char *filename)
+int remove(const char *filename)
 {
     fatFsFileRemove(filename);
     return 0;

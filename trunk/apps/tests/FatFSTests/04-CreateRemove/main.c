@@ -38,6 +38,10 @@ void appMain(void)
     ASSERT(f);
     fclose(f);
 
+    f = fopen(FILE_NAME, "a");
+    fwrite("hello world", 1, 11, f);
+    fclose(f);
+
     remove(FILE_NAME);
     f = fopen(FILE_NAME, "r");
     ASSERT(!f);

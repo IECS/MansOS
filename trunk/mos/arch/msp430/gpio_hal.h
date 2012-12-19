@@ -35,8 +35,8 @@
 //===========================================================
 
 
-#define PORT_AS_OUTPUT(portnum)  P##portnum##DIR = 0xff;
-#define PORT_AS_INPUT(portnum)   P##portnum##DIR = 0x00;
+#define PORT_AS_OUTPUT(portnum)  P##portnum##DIR = 0xff
+#define PORT_AS_INPUT(portnum)   P##portnum##DIR = 0x00
 
 #define PIN_AS_OUTPUT(portnum, pinnum)   \
   (P##portnum##DIR |= (1 << (pinnum)))

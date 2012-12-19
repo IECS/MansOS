@@ -53,7 +53,7 @@ static inline bool fatFsInit(void)
 
 DirectoryEntry_t *fatFsFileSearch(const char *__restrict name, uint16_t *__restrict entryIndex);
 
-DirectoryEntry_t *fatFsFileCreate(const char *name);
+DirectoryEntry_t *fatFsFileCreate(const char *__restrict name, uint16_t *__restrict entryIndex);
 
 void fatFsFileRemove(const char *name);
 

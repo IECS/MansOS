@@ -24,6 +24,8 @@
 #ifndef MANSOS_WATCHDOG_HAL_H
 #define MANSOS_WATCHDOG_HAL_H
 
+#include <msp430/msp430_timers.h>
+
 #define watchdogStop() msp430WatchdogStop()
 
 #define watchdogRebootSimple() do { \

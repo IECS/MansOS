@@ -26,7 +26,7 @@
 
 void appMain(void)
 {
-    FILE *f = fopen("hello.txt", "r");
+    FILE *f = fopen("hello.txt", "r+");
     ASSERT(f);
     ASSERT(f->fd != -1);
 
