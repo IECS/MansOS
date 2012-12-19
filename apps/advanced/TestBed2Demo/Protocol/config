@@ -1,0 +1,5 @@
+# only for testbed
+PLATFORM_ONLY=testbed testbed2
+
+USE_ADS8638=y
+BAUDRATE=9600

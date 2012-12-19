@@ -94,7 +94,6 @@ ADVANCED_TARGETS = \
 	SensorToLcd				\
 	SensorToLeds			\
 	TimerSense				\
-    TestBed2Demo            
 
 SEAL_TARGETS = \
 	Blink					\
