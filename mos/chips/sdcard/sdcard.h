@@ -52,6 +52,16 @@ void sdcardBulkErase(void);
 // rather an address (any) inside the sector
 void sdcardEraseSector(uint32_t addr);
 
+//
+// Internal functions; also used by FAT FS code
+//
+bool sdcardReadBlock(uint32_t addr, void* buffer);
+bool sdcardWriteBlock(uint32_t addr, const void *buf);
+
+//
+// High-level API in case filesystem is not used.
+// Do not use both filesystem and these functions together.
+//
 #ifndef USE_FATFS
 // Read a block of data from addr
 void sdcardRead(uint32_t addr, void* buffer, uint16_t len);
@@ -60,13 +70,6 @@ void sdcardRead(uint32_t addr, void* buffer, uint16_t len);
 void sdcardWrite(uint32_t addr, const void *buf, uint16_t len);
 // flush the cache to disk
 void sdcardFlush(void);
-#else
-//
-// Internal functions; also used by FAT FS code
-//
-bool sdcardReadBlock(uint32_t addr, void* buffer);
-bool sdcardWriteBlock(uint32_t addr, const void *buf);
-
 #endif // USE_FATFS
 
 // (re)initialize serial (actually SPI) interface
