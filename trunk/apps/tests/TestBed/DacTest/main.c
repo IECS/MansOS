@@ -28,9 +28,8 @@ void appMain(void)
 {
     uint16_t i;
 
-    PRINTF("starting..\n");
+    PRINTF("starting appMain...\n");
 
-    dac7718Init();
     dac7718SelectChannel(DAC7718_CHANNEL_0);
 
     dac7718WriteBroadcast(1000ul);

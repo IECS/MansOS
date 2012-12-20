@@ -21,57 +21,28 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+//
+// Reads all 8 ADC channels periodically, sends values to serial
+//
+
 #include "stdmansos.h"
 #include "ads8638/ads8638.h"
 
+#define READING_PERIOD 1000 // miliseconds
+
 void appMain(void)
 {
-    uint16_t val;
-    uint16_t i;
+    for (;;) {
+        uint16_t i;
+        for (i = 0; i < 8; i++) {
+            // Loop through all channels
+            ads8638SelectChannel(i, ADS8638_RANGE_2_5V);
 
-//    pinClear(ADS8638_CS_PORT, ADS8638_CS_PIN);
-    // pinAsOutput(3, 0);
-    // pinSet(3, 0);
+            uint16_t val;
+            ads8638Read(&val);
 
-    ads8638Init();
-//    ads8638SelectChannel(ADS8638_CHANNEL_0, ADS8638_RANGE_2_5V);
-//    ads8638SelectChannel(ADS8638_CHANNEL_0, ADS8638_RANGE_PLUS_10V);
-    ads8638SelectChannel(ADS8638_CHANNEL_0, ADS8638_RANGE_CONFIG);
-
-    uint8_t reg;
-    reg = ads8638RegRead(ADS8638_REG_RANGE_SEL_BASE);
-    PRINTF("ranges 1: %#02x\n", (uint16_t)reg);
-
-    reg = ads8638RegRead(ADS8638_REG_RANGE_SEL_BASE + 1);
-    PRINTF("ranges 2: %#02x\n", (uint16_t)reg);
-
-    for (i = 0; ; i++) {
-        i %= 8;
-
-    //     // ads8638Init();
-    //     // mdelay(1);
-	if (i == 1) {
-   	    ads8638SelectChannel(i, ADS8638_RANGE_2_5V);
+            PRINTF("ADC%d=%u\n", i, val);
         }
-    //     // ads8638Read(&val);
-
-    //     // USARTInit(PRINTF_USART_ID, SERIAL_PORT_BAUDRATE, 0);
-    //     // USARTEnableTX(PRINTF_USART_ID);
-
-        uint8_t reg;
-
-        reg = ads8638RegRead(ADS8638_REG_RESET);
-        PRINTF("reset: %#x\n", reg);
-
-        reg = ads8638RegRead(ADS8638_REG_AUX_CONFIG);
-        PRINTF("aux coding: %#x\n", reg);
-
-        reg = ads8638RegRead(ADS8638_REG_TEMP_FLAG);
-        PRINTF("temp flag: %#x\n", reg);
-
-        ads8638Read(&val);
-        PRINTF("Conversion result from AIN%d: %#x\n", i, val);
-
-        mdelay(1000);
+        mdelay(READING_PERIOD);
     }
 }
