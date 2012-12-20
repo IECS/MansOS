@@ -24,13 +24,13 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <poll.h>
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
 #include <radio.h>
+#include <print.h>
 #include <net/addr.h>
 #include <pthread.h>
 #include "sem_hal.h"
@@ -92,7 +92,7 @@ static pthread_t intThread;
 // simulate interrupt handler in separate thread
 void *intHandler(void *dummy) {
     if (makeSocketPair() != 0) {
-        printf("cannot create outgoing socket pair!\n");
+        PRINTF("cannot create outgoing socket pair!\n");
         return NULL;
     }
 
@@ -107,7 +107,7 @@ void *intHandler(void *dummy) {
         socklen_t slen = sizeof(saddr);
         if (getsockname(cloudSock, (struct sockaddr *) &saddr, &slen) == 0) {
             localAddress = htons(saddr.sin_port);
-            printf("set local address to port number: 0x%04x\n", localAddress);
+            PRINTF("set local address to port number: 0x%04x\n", localAddress);
         }
     }
 
@@ -173,7 +173,7 @@ void *intHandler(void *dummy) {
         } else if (p == 0) {
             // timeout
         } else {
-            printf("poll error: %s\n", strerror(errno));
+            PRINTF("poll error: %s\n", strerror(errno));
         }
     }
 
@@ -198,25 +198,25 @@ int16_t readExactly(int sock, void *buf, uint16_t len) {
     if (len == 0) return 0;
     int16_t l = read(sock, buf, len);
     if (l == 0) {
-        printf("socket %i disconnected\n", sock);
+        PRINTF("socket %i disconnected\n", sock);
         return -1;
     }
     if (l < 0) {
-        printf("socket %i reading error: %s\n", sock, strerror(errno));
+        PRINTF("socket %i reading error: %s\n", sock, strerror(errno));
     }
     return l;
 }
 
 int16_t pcRadioSend(int sock, const void *buf, uint16_t bufLen) {
-//    printf("pcRadioSend(%i, %i, %i)\n", sock, (int) buf, bufLen);
+//    PRINTF("pcRadioSend(%i, %i, %i)\n", sock, (int) buf, bufLen);
     if (bufLen == 0) return 0;
     int16_t l = write(sock, buf, bufLen);
     if (l == 0) {
-        printf("socket %i disconnected\n", sock);
+        PRINTF("socket %i disconnected\n", sock);
         return -1;
     }
     if (l < 0) {
-        printf("socket %i writing error: %s\n", sock, strerror(errno));
+        PRINTF("socket %i writing error: %s\n", sock, strerror(errno));
     }
     return l;
 }
@@ -225,14 +225,14 @@ int connectSock(unsigned port) {
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0)
     {
-        printf("error = %s\n", strerror(errno));
+        PRINTF("error = %s\n", strerror(errno));
         radioOff();
         return sock;
     }
     int on = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)))
     {
-        printf("cannot set socket to reuse addr: %s\n",
+        PRINTF("cannot set socket to reuse addr: %s\n",
                 strerror(errno));
         close(sock);
         return -1;
@@ -244,7 +244,7 @@ int connectSock(unsigned port) {
     proxyAddr.sin_port = htons(port);
     if (connect(sock, (struct sockaddr *) &proxyAddr, sizeof(proxyAddr)) < 0)
     {
-        printf("can not connect to cloud: %s\n", strerror(errno));
+        PRINTF("can not connect to cloud: %s\n", strerror(errno));
         radioOff();
         close(sock);
         return -1;
@@ -262,9 +262,9 @@ int8_t makeSocketPair() {
 
 void closeSocket(int sock) {
     if (close(sock) < 0) {
-        printf("error closing socket: %s\n", strerror(errno));
+        PRINTF("error closing socket: %s\n", strerror(errno));
     } else {
-        //printf("socket closed\n");
+        //PRINTF("socket closed\n");
     }
 }
 

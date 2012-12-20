@@ -29,8 +29,6 @@
 #include <winsock.h>
 #endif
 #include <serial.h>
-#include <string.h>
-#include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -58,13 +56,13 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
     return 0;
 }
 
-void serialSendByte( uint8_t id, uint8_t data)
+void serialSendByte(uint8_t id, uint8_t data)
 {
     if (id >= SERIAL_COUNT) return;
 
     if (txEnabled[id]) {
-        printf("%c", data);
-        fflush(stdout);
+        int ret = write(STDOUT_FILENO, &data, 1);
+        (void) ret;
     }
 }
 

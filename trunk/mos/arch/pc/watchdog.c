@@ -29,6 +29,6 @@
 
 void watchdogReboot(void)
 {
-    printf("reboot requested!\n");    
+    PRINTF("reboot requested!\n");    
     exit(0); // ?
 }

@@ -25,7 +25,7 @@
 #include <kernel/timing.h>
 #include <lib/assert.h>
 
-#include <lib/dprint.h>
+#include <print.h>
 
 void msp430TimerBSet(uint16_t ms)
 {

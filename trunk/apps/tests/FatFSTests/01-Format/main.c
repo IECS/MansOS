@@ -23,15 +23,159 @@
 
 #include "stdmansos.h"
 #include <lib/assert.h>
+#include <sdcard/sdcard.h>
+#include <fatfs/structures.h>
+
+//
+// FAT16 formatting application.
+// If DO_ERASE is true, filesystem image is erased (all set to zeros).
+// If DO_FORMAT is true, FAT16 filesystem is cear
+// If PARTITION_TABLE is true, filesystem is created in partition 1
+// (with 1MB offset); otherwise whole disk is used.
+//
+// For quick format comment out DO_ERASE;
+// for erasing without formatting comment out DO_FORMAT.
+//
+// The formatting is modelled after Linux 3.2 command line utilities
+// "fdisk" and "mkdosfs -F 16" with the default values.
+//
+
+#define DO_ERASE 1
+#define DO_FORMAT 1
+
+#define PARTITION_TABLE 1
+
+#define LINUX_PARTITION  0x83
+
+//
+// SD-card dependent constants.
+// The values below are suitable for 2GB card.
+//
+#define BLOCK_SIZE                 512
+#define PARTITION_OFFSET_BLOCKS    2048ul
+#define PARTITION_OFFSET           (PARTITION_OFFSET_BLOCKS * BLOCK_SIZE)
+#define TOTAL_SIZE                 (2ul * 1024 * 1024 * 1024)
+#define TOTAL_BLOCKS               (TOTAL_SIZE / BLOCK_SIZE)
+
+#define BLOCKS_PER_CLUSTER         64
+
+#define FAT_COUNT                  2
+#define ROOT_DIR_ENTRY_COUNT       2048
+#define BLOCKS_PER_FAT            256
+
+#if PARTITION_TABLE
+//#define FAT1_OFFSET                0x00108000
+//#define FAT2_OFFSET                0x00128000
+#define FAT1_OFFSET                ((PARTITION_OFFSET_BLOCKS + BLOCKS_PER_CLUSTER) * BLOCK_SIZE)
+#define FAT2_OFFSET                ((PARTITION_OFFSET_BLOCKS + BLOCKS_PER_CLUSTER + BLOCKS_PER_FAT) * BLOCK_SIZE)
+#else
+#define FAT1_OFFSET                (BLOCKS_PER_CLUSTER * BLOCK_SIZE)
+#define FAT2_OFFSET                ((BLOCKS_PER_CLUSTER +  BLOCKS_PER_FAT) * BLOCK_SIZE)
+#endif
+
+static uint8_t buffer[SDCARD_SECTOR_SIZE];
 
 int fatFsFormat(void)
 {
-    // TODO
-    return 0;
+    MasterBootRecord_t *mbr;
+    FatBootBlock_t *fbs;
+    int ret = -1;
+    
+    redLedOn();
+
+#if DO_ERASE
+    sdcardBulkErase();
+#endif // DO_ERASE
+
+#if DO_FORMAT
+    if (!sdcardReadBlock(0, buffer)) goto fail;
+
+    // TODO: allow to use superblock only!
+
+    mbr = (MasterBootRecord_t *) buffer;
+    mbr->part[0].boot = 0;
+    mbr->part[0].beginHead = 0;
+    mbr->part[0].beginSector = 0;
+    mbr->part[0].beginCylinderHigh = 0;
+    mbr->part[0].beginCylinderLow = 0;
+    mbr->part[0].type = LINUX_PARTITION;
+    mbr->part[0].endHead = 0;
+    mbr->part[0].endSector = 0;
+    mbr->part[0].endCylinderHigh = 0;
+    mbr->part[0].endCylinderLow = 0;
+    mbr->part[0].firstSector = PARTITION_OFFSET_BLOCKS;
+    mbr->part[0].totalSectors = TOTAL_BLOCKS - PARTITION_OFFSET_BLOCKS;
+    mbr->mbrSig0 = 0x55;
+    mbr->mbrSig1 = 0xAA;
+
+    if (!sdcardWriteBlock(0, buffer)) goto fail;
+
+    
+    if (!sdcardReadBlock(PARTITION_OFFSET, buffer)) goto fail;
+
+    fbs = (FatBootBlock_t *) buffer;
+    fbs->jump[0] = 0xEB;
+    fbs->jump[1] = 0x3C;
+    fbs->jump[2] = 0x90;
+    memcpy(fbs->oemId, "mansos\0\0", 8);
+    fbs->bytesPerSector = BLOCK_SIZE;
+    fbs->sectorsPerCluster = 64;
+    fbs->reservedSectorCount = 64;
+    fbs->fatCount = FAT_COUNT;
+    fbs->rootDirEntryCount = ROOT_DIR_ENTRY_COUNT;
+    if (TOTAL_BLOCKS < 0x10000) {
+        fbs->totalSectors16 = (uint16_t) TOTAL_BLOCKS;
+    } else {
+        fbs->totalSectors16 = 0; // set to zero and use totalSectors32 instead
+    }
+    fbs->mediaType = 0xf8;
+    fbs->sectorsPerFat16 = BLOCKS_PER_FAT;
+    fbs->sectorsPerTrack = 0;
+    fbs->headCount = 0;
+    fbs->hidddenSectors = 0;
+    fbs->totalSectors32 = TOTAL_BLOCKS;
+    fbs->driveNumber = 0;
+    fbs->reserved1 = 0;
+    fbs->bootSignature = 0x29; // valid serial number, volume label and FS type
+    fbs->volumeSerialNumber = ((uint32_t)randomNumber() << 16) + randomNumber();
+    memcpy(fbs->volumeLabel, "         ", 11);
+    memcpy(fbs->fileSystemType, "FAT16   ", 8);
+    fbs->bootSectorSig0 = 0x55;
+    fbs->bootSectorSig1 = 0xAA;
+
+    if (!sdcardWriteBlock(PARTITION_OFFSET, buffer)) goto fail;
+
+    // FAT #1
+    if (!sdcardReadBlock(FAT1_OFFSET, buffer)) goto fail;
+    buffer[0] = 0xf8;
+    buffer[1] = 0xff;
+    buffer[2] = 0xff;
+    buffer[3] = 0xff;
+    if (!sdcardWriteBlock(FAT1_OFFSET, buffer)) goto fail;
+
+    // FAT #2
+    if (!sdcardReadBlock(FAT2_OFFSET, buffer)) goto fail;
+    buffer[0] = 0xf8;
+    buffer[1] = 0xff;
+    buffer[2] = 0xff;
+    buffer[3] = 0xff;
+    if (!sdcardWriteBlock(FAT2_OFFSET, buffer)) goto fail;
+
+#endif // DO_FORMAT
+
+    ret = 0; // success!
+
+  fail:
+    redLedOff();
+    return ret;
 }
 
 void appMain(void)
 {
+    COMPILE_TIME_ASSERT(BLOCK_SIZE == SDCARD_SECTOR_SIZE, sizecheck);
+
     int result = fatFsFormat();
     ASSERT(result == 0);
+
+    PRINTF("done!\n");
 }

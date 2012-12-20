@@ -33,13 +33,13 @@
 
 FILE *flashFile;
 
-static void flashFileClose();
+static void flashFileClose(void);
 
 void extFlashInit(void)
 {
     static bool initCalled;
     if (initCalled) {
-        fprintf(stderr, "extFlashInit: already called\n");
+        PRINTF("extFlashInit: already called\n");
         return;
     }
 
@@ -60,7 +60,7 @@ void extFlashInit(void)
     flashFile = NULL;
 }
 
-static void flashFileClose()
+static void flashFileClose(void)
 {
     // make sure the flash file is closed on application exit
     if (flashFile) {
@@ -89,11 +89,11 @@ void extFlashWake(void)
 void extFlashRead(uint32_t addr, void *buf, uint16_t len)
 {
     if (!flashFile) {
-        fprintf(stderr, "extFlashRead: flash not opened\n");
+        PRINTF("extFlashRead: flash not opened\n");
         return;
     }
     if (addr + len > EXT_FLASH_SIZE) {
-        fprintf(stderr, "extFlashRead: address out of bounds!\n");
+        PRINTF("extFlashRead: address out of bounds!\n");
         return;
     }
     if (fseek(flashFile, addr, SEEK_SET) != 0) {
@@ -108,11 +108,11 @@ void extFlashRead(uint32_t addr, void *buf, uint16_t len)
 void extFlashWrite(uint32_t addr, const void *buf, uint16_t len)
 {
     if (!flashFile) {
-        fprintf(stderr, "extFlashWrite: flash not opened\n");
+        PRINTF("extFlashWrite: flash not opened\n");
         return;
     }
     if (addr + len > EXT_FLASH_SIZE) {
-        fprintf(stderr, "extFlashWrite: address out of bounds!\n");
+        PRINTF("extFlashWrite: address out of bounds!\n");
         return;
     }
 
@@ -128,7 +128,7 @@ void extFlashWrite(uint32_t addr, const void *buf, uint16_t len)
     uint32_t i;
     for (i = 0; i < len; ++i) {
         if (oldContents[i] != 0xff) {
-            fprintf(stderr, "extFlashWrite: attempt to write in a sector that was not erased!\n");
+            PRINTF("extFlashWrite: attempt to write in a sector that was not erased!\n");
             return;
         }
     }
@@ -147,7 +147,7 @@ void extFlashWrite(uint32_t addr, const void *buf, uint16_t len)
 void extFlashBulkErase(void)
 {
     if (!flashFile) {
-        fprintf(stderr, "extFlashBulkErase: flash not opened\n");
+        PRINTF("extFlashBulkErase: flash not opened\n");
         return;
     }
 
@@ -163,15 +163,15 @@ void extFlashBulkErase(void)
 
 void extFlashEraseSector(uint32_t addr)
 {
-    // printf("extFlashEraseSector: addr=%u\n", addr);
+    // PRINTF("extFlashEraseSector: addr=%u\n", addr);
 
     if (!flashFile) {
-        fprintf(stderr, "extFlashEraseSector: flash not opened\n");
+        PRINTF("extFlashEraseSector: flash not opened\n");
         return;
     }
     addr = ALIGN_DOWN_U32(addr, EXT_FLASH_SECTOR_SIZE);
     if (addr >= EXT_FLASH_SIZE) {
-        fprintf(stderr, "extFlashEraseSector: address out of bounds!\n");
+        PRINTF("extFlashEraseSector: address out of bounds!\n");
         return;
     }
 

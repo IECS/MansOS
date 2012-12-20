@@ -24,8 +24,6 @@
 #ifndef _PLATFORM_PC_H_
 #define _PLATFORM_PC_H_
 
-#include <unistd.h>
-#include <stdio.h>
 #include "sem_hal.h"
 #include "leds_hal.h"
 #include "alarms_hal.h"
@@ -34,6 +32,9 @@
 #include <arch/null_spi.h>
 
 #include <digital.h>
+
+// because stdio.h cannot be included
+extern void perror(const char *s);
 
 // PC platform uses NO timers
 #define DISABLE_INTS() // nothing

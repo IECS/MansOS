@@ -32,7 +32,7 @@ void appMain(void)
 
     char buffer[12] = {0};
     fgets(buffer, sizeof(buffer), f);
-    PRINTF("buffer=%s\n", buffer);
+    PRINTF("buffer    =%s\n", buffer);
 
     // change case
     buffer[0] ^= 0x20;
@@ -42,4 +42,6 @@ void appMain(void)
 
     fclose(f);
     ASSERT(f->fd == -1);
+
+    PRINTF("done!\n");
 }

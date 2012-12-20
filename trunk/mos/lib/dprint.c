@@ -24,9 +24,10 @@
 #include "dprint.h"
 #include <string.h>
 #include <stdarg.h>
-#include <stdio.h>
 
-static char * _print_buf;
+extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
+
+static char *_print_buf;
 
 void printInitReal(void)
 {

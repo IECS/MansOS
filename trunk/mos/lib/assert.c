@@ -32,15 +32,11 @@
 
 #include "assert.h"
 
-#ifdef PLATFORM_PC
-#  define ASSERT_PRINT printf
+#ifdef USE_PRINT
+#  define ASSERT_PRINT(...) PRINTF(__VA_ARGS__)
 #else
-#  ifdef USE_PRINT
-#    define ASSERT_PRINT(...) PRINTF(__VA_ARGS__)
-#  else
-#    define ASSERT_PRINT(...)
-#  endif /* USE_PRINT */
-#endif /* PLATFORM_PC */
+#  define ASSERT_PRINT(...)
+#endif /* USE_PRINT */
 
 void panic(void)
 {

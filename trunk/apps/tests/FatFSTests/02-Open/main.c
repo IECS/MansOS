@@ -31,4 +31,6 @@ void appMain(void)
     ASSERT(f->fd != -1);
     fclose(f);
     ASSERT(f->fd == -1);
+
+    PRINTF("done!\n");
 }

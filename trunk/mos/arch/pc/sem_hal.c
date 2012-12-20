@@ -28,7 +28,7 @@
 
 #include "sem_hal.h"
 #include <errno.h>
-#include <stdio.h>
+#include "platform.h"
 
 #ifdef __APPLE__
 #include <mach/task.h>

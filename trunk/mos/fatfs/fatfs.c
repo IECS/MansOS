@@ -158,17 +158,19 @@ bool fatFsInitPartition(uint8_t partition)
 
     uint32_t totalBlocks;
 
-    Fat32BootBlock_t *fbs = &cache.fbs;
-    if (fbs->bytesPerSector != 512 ||
-            fbs->fatCount == 0 ||
-            fbs->reservedSectorCount == 0 ||
-            fbs->sectorsPerCluster == 0) {
+//    Fat32BootBlock_t *fbs = &cache.fbs;
+    FatBootBlock_t *fbs = &cache.fbs;
+    if (fbs->bytesPerSector != 512
+            || fbs->fatCount == 0
+            || fbs->reservedSectorCount == 0
+            || fbs->sectorsPerCluster == 0) {
         // not valid FAT volume
         goto fail;
     }
     fatInfo.fatCount = fbs->fatCount;
-    fatInfo.blocksPerFat = fbs->sectorsPerFat16 ?
-            fbs->sectorsPerFat16 : fbs->sectorsPerFat32;
+    // fatInfo.blocksPerFat = fbs->sectorsPerFat16 ?
+    //         fbs->sectorsPerFat16 : fbs->sectorsPerFat32;
+    fatInfo.blocksPerFat = fbs->sectorsPerFat16;
 
     fatInfo.bytesPerClusterShift = 9 + log2(fbs->sectorsPerCluster);
     fatInfo.bytesPerClusterMask = (1 << fatInfo.bytesPerClusterShift) - 1;
@@ -418,7 +420,7 @@ static bool fatPut(fat_t cluster, fat_t value) {
     return true;
 }
 
-static bool fatFsAllocateCluster(MFILE *handle) {
+static bool fatFsAllocateCluster(FILE *handle) {
     DPRINTF("fatFsAllocateCluster\n");
 
     fat_t freeCluster = handle->currentCluster ? handle->currentCluster : 1;
@@ -454,7 +456,7 @@ static DirectoryEntry_t* cacheDirEntry(uint16_t index, bool makeDirty)
     return &cache.entries[index & 0xF];
 }
 
-void fatFsFileFlush(MFILE *handle)
+void fatFsFileFlush(FILE *handle)
 {
     if (handle->dirEntryDirty) {
         // cache directory entry
@@ -472,12 +474,12 @@ void fatFsFileFlush(MFILE *handle)
     cacheFlush();
 }
 
-void fatFsFileClose(MFILE *handle)
+void fatFsFileClose(FILE *handle)
 {
     fatFsFileFlush(handle);
 }
 
-uint16_t fatFsRead(MFILE *handle, void *buffer, uint16_t maxLength)
+uint16_t fatFsRead(FILE *handle, void *buffer, uint16_t maxLength)
 {
     uint16_t offsetInCluster = handle->position & fatInfo.bytesPerClusterMask;
     uint16_t offsetInBlock = offsetInCluster & (SDCARD_SECTOR_SIZE - 1);
@@ -540,7 +542,7 @@ uint16_t fatFsRead(MFILE *handle, void *buffer, uint16_t maxLength)
     return maxLength + maxLength2;
 }
 
-uint16_t fatFsWrite(MFILE *handle, const void *buffer, uint16_t length)
+uint16_t fatFsWrite(FILE *handle, const void *buffer, uint16_t length)
 {
     if (!(handle->flags & O_WRITE))  {
         // TODO: report error
