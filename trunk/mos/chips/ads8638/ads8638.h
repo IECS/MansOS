@@ -28,7 +28,7 @@
 #include <kernel/defines.h>
 
 #define ADS8638_REG_MANUAL         0x04
-#define ADS8638_REG_AUTO           0x04
+#define ADS8638_REG_AUTO           0x05
 #define ADS8638_REG_RESET          0x01
 #define ADS8638_REG_AUX_CONFIG     0x06
 #define ADS8638_REG_CHAN_SEL       0x0C // channel select for auto mode
