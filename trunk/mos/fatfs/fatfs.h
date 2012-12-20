@@ -28,8 +28,8 @@
 // FAT file system high-level interface
 //
 
-#include "posix-file.h"
 #include "structures.h"
+#include "posix-file.h"
 
 // Memory card sector size
 #define SDCARD_SECTOR_SIZE 512
@@ -57,12 +57,12 @@ DirectoryEntry_t *fatFsFileCreate(const char *__restrict name, uint16_t *__restr
 
 void fatFsFileRemove(const char *name);
 
-void fatFsFileClose(FILE *handle);
+void fatFsFileClose(MFILE *handle);
 
-uint16_t fatFsRead(FILE *handle, void *buffer, uint16_t maxLength);
+uint16_t fatFsRead(MFILE *handle, void *buffer, uint16_t maxLength);
 
-uint16_t fatFsWrite(FILE *handle, const void *buffer, uint16_t length);
+uint16_t fatFsWrite(MFILE *handle, const void *buffer, uint16_t length);
 
-void fatFsFileFlush(FILE *handle);
+void fatFsFileFlush(MFILE *handle);
 
 #endif

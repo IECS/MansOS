@@ -21,14 +21,17 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "fatfs.h"
-#include "posix-stdio.h"
-#include "structures.h"
-#include <errors.h>
+// #include "fatfs.h"
+// #include "posix-stdio.h"
+// #include "structures.h"
+// #include <errors.h>
+// #include <lib/byteorder.h>
+
+
+#include "stdmansos.h"
 #include <sdcard/sdcard.h>
-#include <lib/byteorder.h>
-#include <lib/algo.h>
 #include <ctype.h>
+#include <lib/algo.h>
 
 #if DEBUG
 #define FATFS_DEBUG 1
@@ -415,7 +418,7 @@ static bool fatPut(fat_t cluster, fat_t value) {
     return true;
 }
 
-static bool fatFsAllocateCluster(FILE *handle) {
+static bool fatFsAllocateCluster(MFILE *handle) {
     DPRINTF("fatFsAllocateCluster\n");
 
     fat_t freeCluster = handle->currentCluster ? handle->currentCluster : 1;
@@ -451,7 +454,7 @@ static DirectoryEntry_t* cacheDirEntry(uint16_t index, bool makeDirty)
     return &cache.entries[index & 0xF];
 }
 
-void fatFsFileFlush(FILE *handle)
+void fatFsFileFlush(MFILE *handle)
 {
     if (handle->dirEntryDirty) {
         // cache directory entry
@@ -469,12 +472,12 @@ void fatFsFileFlush(FILE *handle)
     cacheFlush();
 }
 
-void fatFsFileClose(FILE *handle)
+void fatFsFileClose(MFILE *handle)
 {
     fatFsFileFlush(handle);
 }
 
-uint16_t fatFsRead(FILE *handle, void *buffer, uint16_t maxLength)
+uint16_t fatFsRead(MFILE *handle, void *buffer, uint16_t maxLength)
 {
     uint16_t offsetInCluster = handle->position & fatInfo.bytesPerClusterMask;
     uint16_t offsetInBlock = offsetInCluster & (SDCARD_SECTOR_SIZE - 1);
@@ -537,7 +540,7 @@ uint16_t fatFsRead(FILE *handle, void *buffer, uint16_t maxLength)
     return maxLength + maxLength2;
 }
 
-uint16_t fatFsWrite(FILE *handle, const void *buffer, uint16_t length)
+uint16_t fatFsWrite(MFILE *handle, const void *buffer, uint16_t length)
 {
     if (!(handle->flags & O_WRITE))  {
         // TODO: report error

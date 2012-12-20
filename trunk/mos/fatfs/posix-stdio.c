@@ -21,11 +21,15 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "fatfs.h"
-#include "posix-stdio.h"
-#include <lib/byteorder.h>
-#include <errors.h>
-#include <lib/dprint.h>
+//#include "fatfs.h"
+// #include "posix-stdio.h"
+// #include <lib/byteorder.h>
+// #include <errors.h>
+// #include <lib/dprint.h>
+
+#include "stdmansos.h"
+
+#if !PLATFORM_PC
 
 #ifndef MAX_OPEN_FILES
 #define MAX_OPEN_FILES 2
@@ -150,3 +154,5 @@ int remove(const char *filename)
     fatFsFileRemove(filename);
     return 0;
 }
+
+#endif
