@@ -50,6 +50,12 @@
 #include <sdcard/sdcard.h>
 #include <net/timesync.h>
 #include <lib/energy.h>
+#if USE_ADS8638
+#include <ads8638/ads8638.h>
+#endif
+#if USE_DAC7718
+#include <dac7718/dac7718.h>
+#endif
 
 #if (defined DEBUG && !defined DPRINT_TO_RADIO)
 #define INIT_PRINTF(...) PRINTF(__VA_ARGS__)
@@ -182,8 +188,10 @@ static inline void initSystem(void)
 #ifdef USE_FATFS
     INIT_PRINTF("init FAT file system...\n");
     fatFsInit();
+# if !PLATFORM_PC
     INIT_PRINTF("init POSIX-like file routines...\n");
     posixStdioInit();
+# endif
 #endif
 #ifdef USE_SEAL_COMM
     INIT_PRINTF("init SEAL communications...\n");
