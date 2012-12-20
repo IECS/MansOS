@@ -57,12 +57,12 @@ DirectoryEntry_t *fatFsFileCreate(const char *__restrict name, uint16_t *__restr
 
 void fatFsFileRemove(const char *name);
 
-void fatFsFileClose(MFILE *handle);
+void fatFsFileClose(FILE *handle);
 
-uint16_t fatFsRead(MFILE *handle, void *buffer, uint16_t maxLength);
+uint16_t fatFsRead(FILE *handle, void *buffer, uint16_t maxLength);
 
-uint16_t fatFsWrite(MFILE *handle, const void *buffer, uint16_t length);
+uint16_t fatFsWrite(FILE *handle, const void *buffer, uint16_t length);
 
-void fatFsFileFlush(MFILE *handle);
+void fatFsFileFlush(FILE *handle);
 
 #endif

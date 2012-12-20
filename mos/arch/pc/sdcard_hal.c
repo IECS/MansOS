@@ -25,45 +25,46 @@
 // SD card emulation driver
 //
 
-#define _XOPEN_SOURCE 600 /* For ftruncate() */
-
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include <eeprom.h>
 #include <lib/assert.h>
+#include <print.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-#define FILENAME "sdcard"
+#define SDCARD_SECTOR_COUNT 32768 // 512 * 32768 = 16 MB card size
+#include <sdcard/sdcard.h>
 
-#define SDCARD_SIZE 16 * 1024 * 1024 // 16 MB
-#define SDCARD_SECTOR_SIZE 512
+#define FILENAME "sdcard.dat"
 
-void sdcardInit(void)
+//#define SDCARD_SIZE 16 * 1024 * 1024 // 16 MB
+//#define SDCARD_SECTOR_SIZE 512
+//#define SDCARD_NUM_SECTORS (SDCARD_SIZE / SDCARD_NUM_SECTORS)
+
+static const uint8_t zeroSector[SDCARD_SECTOR_SIZE];
+
+bool sdcardInit(void)
 {
-    fputs("Opening SDCARD image `" FILENAME "'...\n", stderr);
+    PRINTF("Opening SDCARD image `" FILENAME "'...\n");
 
-    FILE *data = fopen(FILENAME, "r+b");
-    if (!data)
-    {
-        data = fopen(FILENAME, "w+b");
-        ASSERT(data != NULL);
-
-        int ret = ftruncate(fileno(data), SDCARD_SIZE);
-        ASSERT(ret == 0);
+    int data = open(FILENAME, O_RDONLY);
+    if (data < 0) {
+        sdcardBulkErase();
     }
-    fclose(data);
+    close(data);
+    return true;
 }
 
 bool sdcardReadBlock(uint32_t addr, void* buffer)
 {
     ASSERT(addr + SDCARD_SECTOR_SIZE <= SDCARD_SIZE);
 
-    FILE *data = fopen(FILENAME, "r+b");
-    if (!data) return false;
-    fseek(data, addr, SEEK_SET);
-    size_t ret = fread(buffer, 1, SDCARD_SECTOR_SIZE, data);
-    fclose(data);
+    int data = open(FILENAME, O_RDONLY);
+    if (data < 0) return false;
+    lseek(data, addr, SEEK_SET);
+    size_t ret = read(data, buffer, SDCARD_SECTOR_SIZE);
+    close(data);
     return ret == SDCARD_SECTOR_SIZE;
 }
 
@@ -71,41 +72,63 @@ bool sdcardWriteBlock(uint32_t addr, const void *buffer)
 {
     ASSERT(addr + SDCARD_SECTOR_SIZE <= SDCARD_SIZE);
 
-    FILE *data = fopen(FILENAME, "w+b");
-    if (!data) return false;
-    fseek(data, addr, SEEK_SET);
-    int ret = fwrite(buffer, 1, SDCARD_SECTOR_SIZE, data);
-    fclose(data);
+    int data = open(FILENAME, O_WRONLY);
+    if (data < 0) return false;
+    lseek(data, addr, SEEK_SET);
+    int ret = write(data, buffer, SDCARD_SECTOR_SIZE);
+    close(data);
     return ret == SDCARD_SECTOR_SIZE;
+}
+
+void sdcardBulkErase(void)
+{
+    int data = creat(FILENAME, 0644);
+    ASSERT(data > 0);
+    uint16_t i;
+    for (i = 0; i < SDCARD_SECTOR_COUNT; ++i) {
+        int r = write(data, zeroSector, sizeof(zeroSector));
+        (void) r;
+    }
+}
+
+void sdcardEraseSector(uint32_t address)
+{
+    int data = open(FILENAME, O_WRONLY);
+    if (data < 0) return;
+    lseek(data, address, SEEK_SET);
+    int r = write(data, zeroSector, sizeof(zeroSector));
+    (void) r;
 }
 
 #ifndef USE_FATFS
 void sdcardRead(uint32_t addr, void *buf, uint16_t len)
 {
-    ASSERT(!ferror(data) && addr + len <= EEPROM_SIZE);
+    ASSERT(addr + len <= SDCARD_SIZE);
 
-    FILE *data = fopen(FILENAME, "r+b");
-    if (!data) return false;
-    int ret = fseek(data, addr, SEEK_SET);
-    size_t ret2 = fread(buf, 1, len, data);
+    int data = open(FILENAME, O_RDONLY);
+    if (data < 0) return;
+    int ret = lseek(data, addr, SEEK_SET);
+    size_t ret2 = read(data, buf, len);
     ASSERT(ret == 0 && ret2 == len);
-    fclose(data);
+    close(data);
 }
 
 void sdcardWrite(uint32_t addr, const void *buf, uint16_t len)
 {
     ASSERT(addr + len <= SDCARD_SIZE);
 
-    FILE *data = fopen(FILENAME, "w+b");
-    if (!data) return;
+    int data = open(FILENAME, O_WRONLY);
+    if (data < 0) return;
 
-    fseek(data, addr, SEEK_SET);
-    fwrite(buf, 1, len, data);
-    fclose(data);
+    lseek(data, addr, SEEK_SET);
+    int r = write(data, buf, len);
+    (void) r;
+    close(data);
 }
 
 void sdcardFlush(void)
 {
+    // nothing
 }
 
-#endif
+#endif // USE_FATFS not defined

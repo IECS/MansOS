@@ -23,7 +23,7 @@ def genSuperblock(f):
     writeZeros(f, 440)
     f.write("\x2d\x0e\x60\x8c\x00\x00") # 6 bytes of garbage
     # partition #1
-    # begin/end baliues are more or less random - assume the are not going to be used
+    # begin/end values are more or less random - assume the are not going to be used
     f.write("\x00") # boot flag
     f.write("\x21") # begin head
     f.write("\x03") # begin sector, begin cylinder high
@@ -54,7 +54,7 @@ def genFile(filename, isPartitioned):
     f.write("\x00\x04") # root dir entry count (2048)
     f.write("\x00\x00") # total sectors-16
     f.write("\xf8")     # media type - fixed (non-removable) media (?)
-    f.write("\x00\x01") # sectors per fat (512)
+    f.write("\x00\x01") # sectors per fat (256)
     f.write("\x3e\x00") # sectors per track
     f.write("\x3e\x00") # head count
     f.write("\x00\x00\x00\x00") # hidden sectors

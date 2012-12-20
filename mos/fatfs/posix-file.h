@@ -63,15 +63,9 @@ struct FILE_s {
     bool dirEntryDirty;
 };
 
-// MansOS file typedef
-typedef struct FILE_s MFILE;
-
-// For MCU platforms also typedef FILE
-#if !PLATFORM_PC
+// MansOS file typedef (conflicts with FILE in stdio.h for PC platform)
+#undef FILE
 typedef struct FILE_s FILE;
-#else
-#include <stdio.h>
-#endif
 
 // File access flags
 #define O_RDONLY    00000000

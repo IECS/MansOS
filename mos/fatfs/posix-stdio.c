@@ -29,7 +29,7 @@
 
 #include "stdmansos.h"
 
-#if !PLATFORM_PC
+//#if !PLATFORM_PC
 
 #ifndef MAX_OPEN_FILES
 #define MAX_OPEN_FILES 2
@@ -155,4 +155,4 @@ int remove(const char *filename)
     return 0;
 }
 
-#endif
+// #endif

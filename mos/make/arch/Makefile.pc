@@ -59,6 +59,11 @@ PSOURCES-$(USE_EXT_FLASH) += $(PLATFORM_HAL)/extflash_hal.c
 PSOURCES-$(USE_EEPROM) += $(PLATFORM_HAL)/eeprom_hal.c
 PSOURCES-$(USE_SDCARD) += $(PLATFORM_HAL)/sdcard_hal.c
 
+ifeq ($(USE_FATFS),y)
+# HACK: avoid including stdio.h in this case
+CFLAGS += -D_STDIO_H
+endif
+
 #===== Build and upload rules =====
 
 EXECUTABLE = $(APPMOD).exe

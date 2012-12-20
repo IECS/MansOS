@@ -31,8 +31,11 @@
 
 #include "adc_hal.h"
 #include <string.h>
-#include <stdio.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 // where the valueas are red from
 #define ADC_FILE_NAME "adcValues.txt"
@@ -55,7 +58,7 @@ static uint16_t currPos[PC_ADC_CHANNEL_COUNT];
 static uint8_t currChannel = 0;
 
 // reads number from CSV file, updates isNewLine (true, when new line started)
-uint16_t readNum(FILE *f, bool *isNewLine);
+static uint16_t readNum(int fd, bool *isNewLine, bool *isEOF);
 
 
 void hplAdcInit() {
@@ -63,23 +66,24 @@ void hplAdcInit() {
     memset(valueCount, 0, sizeof(valueCount));
     memset(currPos, 0, sizeof(currPos));
 
-    FILE *f = fopen(ADC_FILE_NAME, "r");
-    if (!f) return;
+    int fd = open(ADC_FILE_NAME, O_RDONLY);
+    if (fd < 0) return;
     uint8_t chnum = 255;
     bool wasNewLine = false;
-    while (!feof(f))
+    bool isEOF = false;
+    while (!isEOF)
     {
         bool isNewLine;
-        uint16_t num = readNum(f, &isNewLine);
+        uint16_t num = readNum(fd, &isNewLine, &isEOF);
         if (num != 0xffff) {
             if (wasNewLine || chnum == 255) {
                 chnum = num;
-                //printf("chnum = %u\n", chnum);
+                //PRINTF("chnum = %u\n", chnum);
                 wasNewLine = false;
             } else {
                 if (chnum < PC_ADC_CHANNEL_COUNT) {
                     values[chnum][valueCount[chnum]] = num;
-                    //printf("values[%u, %u] = %u\n", chnum, valueCount[chnum], num);
+                    //PRINTF("values[%u, %u] = %u\n", chnum, valueCount[chnum], num);
                     ++valueCount[chnum];
                 }
             }
@@ -88,17 +92,23 @@ void hplAdcInit() {
             }
         }
     }
-    fclose (f);
+    close(fd);
     adcOk = true;
 }
 
-uint16_t readNum(FILE *f, bool *isNewLine) {
+static uint16_t readNum(int fd, bool *isNewLine, bool *isEOF) {
     *isNewLine = false;
     uint16_t n = 0xffff;
     bool numStarted = false;
-    while (!feof(f))
+    while (!*isEOF)
     {
-        int c = fgetc(f);
+        uint8_t c;
+        //fgetc(f);
+        int ret = read(fd, &c, 1);
+        if (ret != 1) {
+            *isEOF = true;
+            break;
+        }
         if (c >= '0' && c <= '9') {
             if (n != 0xffff) {
                 n = n * 10;

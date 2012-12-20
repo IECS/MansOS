@@ -32,9 +32,11 @@
 // maximal unit that can be written
 #define SDCARD_PAGE_SIZE      512
 
-// 1 GB total (the minimal size - use this only for compatibility with flash drivers)
+// 2 GB total card size. Cards like that are used for in-house projects.
 // The maximal size is 4GB due to addressing constraints (32 bit)
+#ifndef SDCARD_SECTOR_COUNT
 #define SDCARD_SECTOR_COUNT   (2 * 1024 * 1024ul)
+#endif
 
 #define SDCARD_SIZE  (SDCARD_SECTOR_SIZE * SDCARD_SECTOR_COUNT)
 

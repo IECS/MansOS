@@ -24,17 +24,17 @@
 #ifndef PC_BEEPER_HAL_H
 #define PC_BEEPER_HAL_H
 
-#include <stdio.h>
+#include <lib/dprint.h>
 
 #define beeperInit()  
-#define beeperToggle() printf("beep!\n")
+#define beeperToggle() PRINTF("beep!\n")
 
 static inline void beeperBeep(uint16_t ms) {
-    printf("beep for %u ms in the default frequency\n", ms);
+    PRINTF("beep for %u ms in the default frequency\n", ms);
 }
 
 static inline void beeperBeepEx(uint16_t ms, uint16_t frequency) {
-    printf("beep for %u ms in %u Hz frequency\n", ms, frequency);
+    PRINTF("beep for %u ms in %u Hz frequency\n", ms, frequency);
 }
 
 #endif

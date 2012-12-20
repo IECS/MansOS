@@ -45,4 +45,6 @@ void appMain(void)
     remove(FILE_NAME);
     f = fopen(FILE_NAME, "r");
     ASSERT(!f);
+
+    PRINTF("done!\n");
 }

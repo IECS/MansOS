@@ -23,7 +23,6 @@
 
 #include <unistd.h>
 #include <string.h>
-#include <stdio.h>
 #include <errno.h>
 #include <pthread.h>
 #include <sem_hal.h>
@@ -81,7 +80,7 @@ int8_t radioSendHeader(const void *header, uint16_t headerLength,
     if (l < 0) {
         perror("radioSendHeader write");
     } else if (l == 0) {
-        printf("radioSendHeader: EOF on socket\n");
+        PRINTF("radioSendHeader: EOF on socket\n");
     }
     pthread_mutex_unlock(&pcRadioSendMutex);
     return 0;
@@ -89,7 +88,7 @@ int8_t radioSendHeader(const void *header, uint16_t headerLength,
 
 int16_t radioRecv(void *buffer, uint16_t buffLen) {
     if (!pcRadioOn) {
-        fprintf(stderr, "radioRecv: radio is off\n");
+        PRINTF("radioRecv: radio is off\n");
         return 0;
     }
 

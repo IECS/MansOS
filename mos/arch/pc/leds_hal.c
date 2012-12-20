@@ -25,9 +25,10 @@
 #include <kernel/stdtypes.h>
 
 #include "leds.h"
+#include <print.h>
 
 #define DEBUG_PINS(_)
-//#define DEBUG_PINS(name) printf( #name " pin %d:%d \n", port, pin);
+//#define DEBUG_PINS(name) PRINTF( #name " pin %d:%d \n", port, pin);
 
 
 #define TERM_ESC "\033"
@@ -91,27 +92,27 @@ void printLeds()
 {
     if (printingSupressed) return;
 
-    printf("LEDs:");
+    PRINTF("LEDs:");
     uint_t i;
     for (i = 0; i < LEDS_COUNT; i++) {
         if (ledData[i].isOn) 
         {
-            printf(" %s%s%s", 
+            PRINTF(" %s%s%s", 
                    PC_LED_ON_PREFIX, 
                    ledData[i].upcaseName,
                    PC_LED_ON_POSTFIX
                    );
         } else 
         {
-            printf(" %s%s%s", 
+            PRINTF(" %s%s%s", 
                    PC_LED_OFF_PREFIX, 
                    ledData[i].name,
                    PC_LED_OFF_POSTFIX
                    );
         }
     }
-    printf("\n");
-    fflush(stdout);
+    PRINTF("\n");
+    // fflush(stdout);
 }
 
 //----------------------------------------------------------
