@@ -24,6 +24,10 @@
 #ifndef MANSOS_POSIX_STDIO_H
 #define MANSOS_POSIX_STDIO_H
 
+#if PLATFORM_PC
+#error This file conflicts with standard C library API
+#endif
+
 //
 // POSIX-compatible high level file routines
 //

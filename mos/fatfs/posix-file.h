@@ -25,6 +25,7 @@
 #define MANSOS_POSIX_FILE_H
 
 #include <kernel/defines.h>
+#include "structures.h"
 
 // End-of-file character
 #ifndef EOF
@@ -38,20 +39,10 @@
 # define SEEK_END  2  // Seek from end of file.
 #endif
 
-
-// File-system sector and cluster types
-typedef uint16_t cluster_t;
-#if FAT32_SUPPORT
-typedef uint32_t sector_t;
-#else
-typedef uint16_t sector_t;
-#endif
-
-
 //
 // File structure. It has a lot of file system-specific information!
 //
-typedef struct FILE_s {
+struct FILE_s {
     // file descriptor, -1 if not opened
     int16_t fd;
     // file size in bytes
@@ -70,8 +61,17 @@ typedef struct FILE_s {
     uint8_t state;
     // whether the directory entry has been modified
     bool dirEntryDirty;
-} FILE;
+};
 
+// MansOS file typedef
+typedef struct FILE_s MFILE;
+
+// For MCU platforms also typedef FILE
+#if !PLATFORM_PC
+typedef struct FILE_s FILE;
+#else
+#include <stdio.h>
+#endif
 
 // File access flags
 #define O_RDONLY    00000000

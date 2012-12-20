@@ -26,6 +26,14 @@
 
 #include <kernel/defines.h>
 
+// File-system sector and cluster types
+typedef uint16_t cluster_t;
+#if FAT32_SUPPORT
+typedef uint32_t sector_t;
+#else
+typedef uint16_t sector_t;
+#endif
+
 // struct FatBootBlock_s {
 //     uint8_t bootstrapProg[3]; // unused
 //     uint8_t oemDescription[8]; // unused
