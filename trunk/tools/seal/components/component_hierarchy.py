@@ -674,14 +674,20 @@ class InternalFlashOutput(SealOutput):
 class ExternalFlashOutput(SealOutput):
     def __init__(self):
         super(ExternalFlashOutput, self).__init__("ExternalFlash")
-        self.useFunction.value = "flashStreamWriteRecord(&externalflashPacket, sizeof(externalflashPacket), true)"
+        # XXX: radio should be re-initialized only on those platforms where it conficts with flash
+        self.useFunction.value = """
+    flashStreamWriteRecord(&externalflashPacket, sizeof(externalflashPacket), true);
+    radioReinit()"""
         self.extraIncludes.value = "#include <fstream-light.h>"
         self.extraConfig.value = "USE_FLASH_STREAM=y"
 
 class SdCardOutput(SealOutput):
     def __init__(self):
         super(SdCardOutput, self).__init__("SdCard")
-        self.useFunction.value = "sdStreamWriteRecord(&sdcardPacket, sizeof(sdcardPacket), true)"
+        # XXX: radio should be re-initialized only on those platforms where it conficts with SD card
+        self.useFunction.value = """
+    sdStreamWriteRecord(&sdcardPacket, sizeof(sdcardPacket), true);
+    radioReinit()"""
         self.extraIncludes.value = "#include <sdstream.h>"
         self.extraConfig.value = "USE_SDCARD_STREAM=y"
         self.address.value = True # true by default
