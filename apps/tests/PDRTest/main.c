@@ -35,6 +35,7 @@
 
 #define TEST_PACKET_SIZE            30
 
+#define WRITE_TO_FILE         1
 #define ENABLE_HW_ADDRESSING  1
 #define ADDRESS 0xAA
 
@@ -53,7 +54,9 @@
 
 #define STRBUF_SIZE 50
 char strBuf[STRBUF_SIZE];
+#if WRITE_TO_FILE
 FILE *outFile;
+#endif
 
 #define PERCENT (100 / PACKETS_IN_TEST)
 
@@ -111,10 +114,11 @@ void extFlashPrepare(void)
 //-------------------------------------------
 void appMain(void)
 {
-#if PLATFORM_SM3
+#if WRITE_TO_FILE
     outFile = fopen("data.txt", "a");
-#if ENABLE_HW_ADDRESSING
+#endif
 
+#if ENABLE_HW_ADDRESSING
 #if RECV
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, ADDRESS);
 #else
@@ -125,8 +129,6 @@ void appMain(void)
     // disable addr mode
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_NONE, 0);
 #endif // ENABLE_HW_ADDRESSING
-
-#endif // PLATFORM_SM3
 
 #if RECV
 //    alarmInit(&alarm, alarmCb, NULL);
@@ -242,7 +244,12 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx,
 
     samplesAvg = (sumSamples + (numSamples / 2)) / numSamples;
 
-    PRINTF("avg (%d runs): %d\n", numSamples, samplesAvg);
+    sprintf(strBuf, "avg (%d runs): %d\n", numSamples, samplesAvg);
+    PRINTF(strBuf);
+#if WRITE_TO_FILE
+    fwrite(strBuf, 1, strlen(strBuf), outFile);
+    radioReinit();
+#endif
 
     if (numSamplesNe == 0) return;
 
@@ -250,8 +257,13 @@ void addAvgStatistics(uint16_t prevTestNumber, uint16_t prevTestPacketsRx,
     rssiAvg = (sumRssiNe + (numSamplesNe / 2)) / numSamplesNe;
     lqiAvg = (sumLqiNe + (numSamplesNe / 2)) / numSamplesNe;
 
-    PRINTF("nonempty avg (%d runs): %d, rssi: %d, lqi: %d\n",
+    sprintf(strBuf, "nonempty avg (%d runs): %d, rssi: %d, lqi: %d\n",
             numSamplesNe, samplesAvgNe, platformFixRssi(rssiAvg), lqiAvg);
+    PRINTF(strBuf);
+#if WRITE_TO_FILE
+    fwrite(strBuf, 1, strlen(strBuf), outFile);
+    radioReinit();
+#endif
 
     RadioInfoPacket_t packet;
     packet.testId = testId;
@@ -397,11 +409,10 @@ void recvCounter(void)
                     avgRssi = prevTestRssiSum / prevTestPacketsRx;
                     avgLqi = prevTestLqiSum / prevTestPacketsRx;
                 }
-                PRINTF("Test %u: %d%%, %d avg RSSI\n",
-                        prevTestNumber, prevTestPacketsRx * PERCENT, avgRssi);
-#if PLATFORM_SM3
                 sprintf(strBuf, "Test %u: %d%%, %d avg RSSI\n",
                         prevTestNumber, prevTestPacketsRx * PERCENT, platformFixRssi(avgRssi));
+                PRINTF(strBuf);
+#if WRITE_TO_FILE
                 fwrite(strBuf, 1, strlen(strBuf), outFile);
                 radioReinit();
 #endif
@@ -464,11 +475,10 @@ void recvCounter(void)
                     avgRssi = prevTestRssiSum / prevTestPacketsRx;
                     avgLqi = prevTestLqiSum / prevTestPacketsRx;
                 }
-                PRINTF("Test %u: %d%%, %d avg RSSI\n",
-                        prevTestNumber, prevTestPacketsRx * PERCENT, platformFixRssi(avgRssi));
-#if PLATFORM_SM3
                 sprintf(strBuf, "Test %u: %d%%, %d avg RSSI\n",
                         prevTestNumber, prevTestPacketsRx * PERCENT, platformFixRssi(avgRssi));
+                PRINTF(strBuf);
+#if WRITE_TO_FILE
                 fwrite(strBuf, 1, strlen(strBuf), outFile);
                 radioReinit();
 #endif
