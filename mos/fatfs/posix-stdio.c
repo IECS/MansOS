@@ -106,10 +106,20 @@ FILE *fopen(const char *__restrict filename,
     result->firstCluster |= de->startClusterLoword;
     result->currentCluster = result->firstCluster;
     result->position = 0;
-    result->fileSize = de->fileSize;
+    if (result->flags & O_TRUNC) {
+        // resize the file to zero
+        result->fileSize = 0;
+        if (de->fileSize != 0) {
+            // write the new size to disk
+            result->dirEntryDirty = true;
+            fatFsFileFlush(result);
+        }
+    } else {
+        result->dirEntryDirty = false;
+        result->fileSize = de->fileSize;
+    }
     // PRINTF("file opened, size=%lu\n", result->fileSize);
     result->fd = 1; // XXX
-    result->dirEntryDirty = false;
 
     // TODO: truncate if needed
 
