@@ -65,4 +65,6 @@ uint16_t fatFsWrite(FILE *handle, const void *buffer, uint16_t length);
 
 void fatFsFileFlush(FILE *handle);
 
+bool fatfsGoToPosition(FILE *handle, uint32_t newPosition);
+
 #endif

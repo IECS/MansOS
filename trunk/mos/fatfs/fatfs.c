@@ -21,17 +21,14 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// #include "fatfs.h"
-// #include "posix-stdio.h"
-// #include "structures.h"
-// #include <errors.h>
-// #include <lib/byteorder.h>
-
-
-#include "stdmansos.h"
-#include <sdcard/sdcard.h>
+#include "fatfs.h"
+#include "posix-stdio.h"
+#include "structures.h"
+#include <errors.h>
 #include <ctype.h>
 #include <lib/algo.h>
+#include <lib/byteorder.h>
+#include <sdcard/sdcard.h>
 
 #if DEBUG
 #define FATFS_DEBUG 1
@@ -48,31 +45,27 @@
 // variables
 
 FatInfo_t fatInfo;
-//-----
 
 static Cache16_t cache;
 static uint32_t cacheBlockNumber;
 static bool cacheDirty;
 static uint32_t cacheMirrorBlock;
 
-#define FAT16_END     0xFFFF
-#define FAT16_END_MIN 0xFFF8
-
 // ------------------------------------------------
 // functions
 
 static void printFatInfo(FatInfo_t *fi) {
-#if DEBUG
-    PRINTF("blocksPerFat=%u\n", fatInfo.blocksPerFat);
-    PRINTF("reservedSectorCount=%u\n", fbs->reservedSectorCount);
-    PRINTF("dataStartBlock=%u\n", fatInfo.dataStartBlock);
-    PRINTF("numFATs=%u\n", (uint16_t) fi->fatCount);
-    PRINTF("numRootEntries=%u\n", (uint16_t) fi->rootDirEntryCount);
+#if FATFS_DEBUG
+    PRINTF("sectorsPerFAT=%u\n", fi->sectorsPerFAT);
+    PRINTF("clusterCount=%u\n", fi->clusterCount);  
+    PRINTF("dataStartBlock=%u\n", fi->dataStartBlock);
+    PRINTF("numFATs=%u\n", (uint16_t) fi->numFATs);
+    PRINTF("numRootEntries=%u\n", fi->numRootEntries);
 #endif
 }
 
 static void printFatEntry(DirectoryEntry_t *entry) {
-#if DEBUG
+#if FATFS_DEBUG
     char name[9] = {0};
     char extension[4] = {0};
     memcpy(name, entry->filename, 8);
@@ -156,42 +149,40 @@ bool fatFsInitPartition(uint8_t partition)
         goto fail;
     }
 
-    uint32_t totalBlocks;
+    uint32_t totalSectors;
 
-//    Fat32BootBlock_t *fbs = &cache.fbs;
     FatBootBlock_t *fbs = &cache.fbs;
-    if (fbs->bytesPerSector != 512
-            || fbs->fatCount == 0
-            || fbs->reservedSectorCount == 0
+    if (le16read(fbs->bytesPerSector) != 512
+            || fbs->numFATs == 0
+            || le16read(fbs->numReservedSectors) == 0
             || fbs->sectorsPerCluster == 0) {
         // not valid FAT volume
         goto fail;
     }
-    fatInfo.fatCount = fbs->fatCount;
-    // fatInfo.blocksPerFat = fbs->sectorsPerFat16 ?
-    //         fbs->sectorsPerFat16 : fbs->sectorsPerFat32;
-    fatInfo.blocksPerFat = fbs->sectorsPerFat16;
-
+    fatInfo.numFATs = fbs->numFATs;
+    fatInfo.sectorsPerFAT = le16read(fbs->sectorsPerFAT16);
     fatInfo.bytesPerClusterShift = 9 + log2(fbs->sectorsPerCluster);
     fatInfo.bytesPerClusterMask = (1 << fatInfo.bytesPerClusterShift) - 1;
 
-    fatInfo.fatStartBlock = volumeStartBlock + fbs->reservedSectorCount;
+    fatInfo.fatStartBlock = volumeStartBlock + le16read(fbs->numReservedSectors);
     // count for FAT16, zero for FAT32
-    fatInfo.rootDirEntryCount = fbs->rootDirEntryCount;
+    fatInfo.numRootEntries = le16read(fbs->numRootEntries);
 
     // directory start for FAT16, dataStart for FAT32
-    fatInfo.rootDirStart = fatInfo.fatStartBlock + fbs->fatCount * fatInfo.blocksPerFat;
+    fatInfo.rootDirStart = fatInfo.fatStartBlock + fbs->numFATs * fatInfo.sectorsPerFAT;
 
     // data start for FAT16 and FAT32
     fatInfo.dataStartBlock = fatInfo.rootDirStart
-            + ALIGN_UP_U32(32ul * fbs->rootDirEntryCount, 512) / 512;
+            + ALIGN_UP_U32(32ul * le16read(fbs->numRootEntries), 512) / 512;
 
     // total blocks for FAT16 or FAT32
-    totalBlocks = fbs->totalSectors16 ?
-            fbs->totalSectors16 : fbs->totalSectors32;
+    totalSectors = le16read(fbs->totalSectors16);
+    if (totalSectors == 0) {
+        totalSectors = le32read(fbs->totalSectors32);
+    }
 
     // total data blocks
-    fatInfo.clusterCount = totalBlocks - (fatInfo.dataStartBlock - volumeStartBlock);
+    fatInfo.clusterCount = totalSectors - (fatInfo.dataStartBlock - volumeStartBlock);
     // divide by cluster size to get cluster count
     fatInfo.clusterCount >>= (fatInfo.bytesPerClusterShift - 9);
 
@@ -200,12 +191,10 @@ bool fatFsInitPartition(uint8_t partition)
         DPRINTF("FAT12 not supported!\n");
         goto fail;
     } else if (fatInfo.clusterCount < 65525) {
-        // fatType_ = 16;
+        // all ok - FAT16 supported
     } else {
         DPRINTF("FAT32 not supported!\n");
         goto fail;
-        // rootDirStart_ = fbs->fat32RootCluster;
-        // fatType_ = 32;
     }
 
     printFatInfo(&fatInfo);
@@ -322,10 +311,11 @@ bool fatNameAcceptable(const char *name)
     return name[i] == 0;
 }
 
-DirectoryEntry_t *fatFsFileSearch(const char *__restrict name, uint16_t *__restrict entryIndex /* out */)
+DirectoryEntry_t *fatFsFileSearch(const char *__restrict name,
+                                  uint16_t *__restrict entryIndex /* out */)
 {
     uint16_t i;
-    sector_t numRootSectors = fatInfo.rootDirEntryCount * 32 / SDCARD_SECTOR_SIZE;
+    sector_t numRootSectors = fatInfo.numRootEntries * 32 / SDCARD_SECTOR_SIZE;
 
     uint8_t filename[9] = {0};
     uint8_t extension[4] = {0};
@@ -339,7 +329,6 @@ DirectoryEntry_t *fatFsFileSearch(const char *__restrict name, uint16_t *__restr
             goto fail;
         }
         uint16_t j;
-//        DirectoryEntry_t *entries = cache.dir;
         for (j = 0; j < SDCARD_SECTOR_SIZE / 32; ++j) {
             DirectoryEntry_t *e = &cache.entries[j];
             DPRINTF("check entry %u\n", j);
@@ -358,12 +347,13 @@ DirectoryEntry_t *fatFsFileSearch(const char *__restrict name, uint16_t *__restr
     return NULL;
 }
 
-DirectoryEntry_t *fatFsFileCreate(const char *__restrict name, uint16_t *__restrict entryIndex /* out */)
+DirectoryEntry_t *fatFsFileCreate(const char *__restrict name,
+                                  uint16_t *__restrict entryIndex /* out */)
 {
     DPRINTF("fatFsFileCreate... %s\n", name);
 
     uint16_t i;
-    sector_t numRootSectors = fatInfo.rootDirEntryCount * 32 / SDCARD_SECTOR_SIZE;
+    sector_t numRootSectors = fatInfo.numRootEntries * 32 / SDCARD_SECTOR_SIZE;
 
     uint8_t filename[9] = {0};
     uint8_t extension[4] = {0};
@@ -407,7 +397,8 @@ static uint8_t fatGet(fat_t cluster, fat_t* value) {
 }
 
 static bool fatPut(fat_t cluster, fat_t value) {
-    if (cluster < 2) return false;
+    DPRINTF("fatPut %u: %u\n", cluster, value);
+    if (cluster < INITIAL_CLUSTER) return false;
     if (cluster > (fatInfo.clusterCount + 1)) return false;
     uint32_t lba = fatInfo.fatStartBlock + (cluster >> 8);
     if (lba != cacheBlockNumber) {
@@ -416,7 +407,7 @@ static bool fatPut(fat_t cluster, fat_t value) {
     cache.fat[cluster & 0XFF] = value;
     cacheDirty = true;
     // mirror second FAT
-    if (fatInfo.fatCount > 1) cacheMirrorBlock = lba + fatInfo.blocksPerFat;
+    if (fatInfo.numFATs > 1) cacheMirrorBlock = lba + fatInfo.sectorsPerFAT;
     return true;
 }
 
@@ -426,20 +417,32 @@ static bool fatFsAllocateCluster(FILE *handle) {
     fat_t freeCluster = handle->currentCluster ? handle->currentCluster : 1;
     uint16_t i;
     for (i = 0; ; i++) {
-        if (i >= fatInfo.clusterCount) return false;
+        if (i >= fatInfo.clusterCount) {
+            DPRINTF("no free clusters (%lu total)\n", fatInfo.clusterCount);
+            return false;
+        }
 
         if (freeCluster > fatInfo.clusterCount) freeCluster = 1;
         freeCluster++;
 
         fat_t value;
-        if (!fatGet(freeCluster, &value)) return false;
+        if (!fatGet(freeCluster, &value)) {
+            DPRINTF("fatGet failed\n");
+            return false;
+        }
         if (value == 0) break;
     }
 
-    if (!fatPut(freeCluster, FAT16_END)) return false;
+    if (!fatPut(freeCluster, FAT16_END)) {
+        DPRINTF("fatPut (1) failed\n");
+        return false;
+    }
 
     if (handle->currentCluster != 0) {
-        if (!fatPut(handle->currentCluster, freeCluster)) return false;
+        if (!fatPut(handle->currentCluster, freeCluster)) {
+            DPRINTF("fatPut (2) failed\n");
+            return false;
+        }
     } else {
         handle->dirEntryDirty = true;
         handle->firstCluster = freeCluster;
@@ -451,8 +454,10 @@ static bool fatFsAllocateCluster(FILE *handle) {
 static DirectoryEntry_t* cacheDirEntry(uint16_t index, bool makeDirty)
 {
     DPRINTF("cacheDirEntry, index=%u\n", index);
-    if (index >= fatInfo.rootDirEntryCount) return NULL;
-    if (!cacheRawBlock(fatInfo.rootDirStart + (index >> 4), makeDirty)) return NULL;
+    if (index >= fatInfo.numRootEntries) return NULL;
+    if (!cacheRawBlock(fatInfo.rootDirStart + (index >> 4), makeDirty)) {
+        return NULL;
+    }
     return &cache.entries[index & 0xF];
 }
 
@@ -481,9 +486,21 @@ void fatFsFileClose(FILE *handle)
 
 uint16_t fatFsRead(FILE *handle, void *buffer, uint16_t maxLength)
 {
+    if (!(handle->flags = O_RDWR))  {
+        // TODO: report error
+        return 0;
+    }
+
+    // if the file is empty, return 0
+    if (handle->currentCluster == 0) return 0;
+    // if end of file is reached, also return 0
+    // if (handle->currentCluster >= FAT16_END_MIN) return 0;
+    if (handle->position == handle->fileSize) return 0;
+
     uint16_t offsetInCluster = handle->position & fatInfo.bytesPerClusterMask;
     uint16_t offsetInBlock = offsetInCluster & (SDCARD_SECTOR_SIZE - 1);
     uint16_t blockNumber = fatInfo.dataStartBlock + clusterToBlock(handle->currentCluster);
+    blockNumber += offsetInCluster / SDCARD_SECTOR_SIZE;
 
     // check the file size and do not allow to read too much
     if (handle->position + maxLength > handle->fileSize) {
@@ -519,9 +536,10 @@ uint16_t fatFsRead(FILE *handle, void *buffer, uint16_t maxLength)
 
     if (maxLength2) {
         if (useTwoClusters) {
-            // TODO: set handle->currentCluster to the next cluster
-            // TODO: set to the first block in the next cluster
-            blockNumber = 0;
+            // set handle->currentCluster to the next cluster
+            fatGet(handle->currentCluster, &handle->currentCluster);
+            // set to the first block in the next cluster
+            blockNumber = fatInfo.dataStartBlock + clusterToBlock(handle->currentCluster);
         } else {
             // simply advance the block number by one
             blockNumber += 1;
@@ -534,11 +552,6 @@ uint16_t fatFsRead(FILE *handle, void *buffer, uint16_t maxLength)
         handle->position += maxLength2;
     }
 
-    // if (nextCluster) {
-    //     // advance the cluster
-    //     handle->currentCluster = nextCluster;
-    // }
-
     return maxLength + maxLength2;
 }
 
@@ -550,19 +563,20 @@ uint16_t fatFsWrite(FILE *handle, const void *buffer, uint16_t length)
     }
 
     if ((handle->flags & O_APPEND) && handle->position != handle->fileSize) {
-        // TODO: handle append
-        return 0;
+        // handle append (move to the end of the file)
+        if (!fatfsGoToPosition(handle, handle->fileSize)) return 0;
     }
 
     // if currentCluster is 0, allocate space on disk!
     if (handle->currentCluster == 0) {
-        fatFsAllocateCluster(handle);
+        if (!fatFsAllocateCluster(handle)) return 0;
     }
     DPRINTF("  currentCluster=%u\n", handle->currentCluster);
 
     uint16_t offsetInCluster = handle->position & fatInfo.bytesPerClusterMask;
     uint16_t offsetInBlock = offsetInCluster & (SDCARD_SECTOR_SIZE - 1);
     uint16_t blockNumber = fatInfo.dataStartBlock + clusterToBlock(handle->currentCluster);
+    blockNumber += offsetInCluster / SDCARD_SECTOR_SIZE;
 
     uint16_t beforeEnd = handle->fileSize - handle->position;
     if (beforeEnd < length) {
@@ -571,7 +585,8 @@ uint16_t fatFsWrite(FILE *handle, const void *buffer, uint16_t length)
     }
     handle->position += length;
     handle->dirEntryDirty = true;
-    DPRINTF("  pos=%lu fileSize=%lu\n", handle->position, handle->fileSize);
+    DPRINTF("  pos=%lu fileSize=%lu off-in-block=%u\n",
+            handle->position, handle->fileSize, offsetInBlock);
 
     bool useTwoClusters;
     if ((offsetInCluster + length) >= (1 << fatInfo.bytesPerClusterShift)) {
@@ -600,8 +615,20 @@ uint16_t fatFsWrite(FILE *handle, const void *buffer, uint16_t length)
 
     if (length2) {
         if (useTwoClusters) {
-            // allocate new cluster
-            fatFsAllocateCluster(handle); // TODO: allocating is not always necessary!
+            fat_t nextCluster;
+            fatGet(handle->currentCluster, &nextCluster);
+            if (nextCluster >= FAT16_END_MIN) {
+                // end reached; allocate new cluster
+                DPRINTF("!!! alloc new cluster\n");
+                if (!fatFsAllocateCluster(handle)) {
+                    return length; // 'length' bytes were already written
+                }
+            }
+            else {
+                // next cluster is already allocated to the file; use it
+                handle->currentCluster = nextCluster;
+                DPRINTF("use existing next cluster\n");
+            }
             // set to the first block in the next cluster
             blockNumber = fatInfo.dataStartBlock + clusterToBlock(handle->currentCluster);
         } else {
@@ -613,16 +640,39 @@ uint16_t fatFsWrite(FILE *handle, const void *buffer, uint16_t length)
             return 0;
         }
         memcpy(cache.data, buffer + length, length2);
-        handle->position += length2;
     }
-
-    // if (nextCluster) {
-    //     // advance the cluster
-    //     handle->currentCluster = nextCluster;
-    // }
+    else if (useTwoClusters) {
+        // next read will be exactly at the start of the next cluster
+        // fatGet(handle->currentCluster, &handle->currentCluster);
+        fat_t nextCluster;
+        fatGet(handle->currentCluster, &nextCluster);
+        if (nextCluster >= FAT16_END_MIN) {
+            // end reached; allocate new cluster
+            DPRINTF("!!! alloc new cluster\n");
+            fatFsAllocateCluster(handle);
+        }
+        else {
+            // next cluster is already allocated to the file; use it
+            handle->currentCluster = nextCluster;
+            DPRINTF("use existing next cluster\n");
+        }
+    }
 
     // flush it (also writes changes to dir entry table)
     fatFsFileFlush(handle);
 
-    return length;
+    return length + length2;
+}
+
+bool fatfsGoToPosition(FILE *handle, uint32_t newPosition)
+{
+    cluster_t clusterIndex = newPosition >> fatInfo.bytesPerClusterShift;
+    fat_t nextCluster = handle->firstCluster;
+    while (clusterIndex) {
+        if (!fatGet(nextCluster, &nextCluster)) return false;
+        clusterIndex--;
+    }
+    handle->currentCluster = nextCluster;
+    handle->position = newPosition;
+    return true;
 }

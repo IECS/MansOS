@@ -24,10 +24,6 @@
 #ifndef MANSOS_POSIX_STDIO_H
 #define MANSOS_POSIX_STDIO_H
 
-// #if PLATFORM_PC
-// #error This file conflicts with standard C library API
-// #endif
-
 //
 // POSIX-compatible high level file routines
 //
@@ -116,18 +112,7 @@ static inline void rewind(FILE *fp)
     fp->currentCluster = fp->firstCluster;
 }
 
-static inline int fseek(FILE *fp, long offset, int whence)
-{
-    // only position from start supported
-    if (whence != SEEK_SET) return -1;
-    
-    // onlye zero offset supported
-    if (offset != 0) return -1;
-
-    rewind(fp);
-
-    return 0;
-}
+int fseek(FILE *fp, long offset, int whence);
 
 static inline int feof(FILE *fp)
 {
@@ -135,7 +120,7 @@ static inline int feof(FILE *fp)
 }
 
 // delete a file
-int remove (const char *filename);
+int remove(const char *filename);
 
 //
 // Initialization routine (interal use only!)

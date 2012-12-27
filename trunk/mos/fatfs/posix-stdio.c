@@ -21,15 +21,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//#include "fatfs.h"
-// #include "posix-stdio.h"
-// #include <lib/byteorder.h>
-// #include <errors.h>
-// #include <lib/dprint.h>
-
-#include "stdmansos.h"
-
-//#if !PLATFORM_PC
+#include "fatfs.h"
+#include "posix-stdio.h"
+#include <errors.h>
+#include <lib/dprint.h>
 
 #ifndef MAX_OPEN_FILES
 #define MAX_OPEN_FILES 2
@@ -77,7 +72,7 @@ FILE *fopen(const char *__restrict filename,
             result->flags |= O_WRONLY | O_TRUNC | O_CREAT;
             break;
         case 'a':
-            result->flags |= O_WRONLY | O_CREAT;
+            result->flags |= O_WRONLY | O_CREAT | O_APPEND;
             break;
         case '+':
             result->flags &= ~(O_WRONLY | O_RDONLY);
@@ -112,6 +107,7 @@ FILE *fopen(const char *__restrict filename,
     result->currentCluster = result->firstCluster;
     result->position = 0;
     result->fileSize = de->fileSize;
+    // PRINTF("file opened, size=%lu\n", result->fileSize);
     result->fd = 1; // XXX
     result->dirEntryDirty = false;
 
@@ -155,4 +151,32 @@ int remove(const char *filename)
     return 0;
 }
 
-// #endif
+// go to a specific position in the file 
+int fseek(FILE *fp, long offset, int whence)
+{
+    uint32_t newPos;
+    switch (whence) {
+    case SEEK_SET:
+        newPos = 0;
+        break;
+    case SEEK_CUR:
+        newPos = fp->position;
+        break;
+    case SEEK_END:
+    default:
+        newPos = fp->fileSize;
+        break;
+    }
+    if (offset < 0 && newPos < -offset) {
+        // wants before the start of the file 
+        return -1;
+    }
+    if (offset > 0 && newPos + offset > fp->fileSize) {
+        // wants after the end of the file 
+        return -1;
+    }
+    // fine; do it!
+    newPos += offset;
+    fatfsGoToPosition(fp, newPos);
+    return 0;
+}
