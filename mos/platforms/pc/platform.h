@@ -33,8 +33,13 @@
 
 #include <digital.h>
 
-// because stdio.h cannot be included
+//
+// As stdio.h cannot be included: define some of
+// frequently used function prototypes.
+//
+extern int sprintf(const char *str, const char *format, ...);
 extern void perror(const char *s);
+
 
 // PC platform uses NO timers
 #define DISABLE_INTS() // nothing

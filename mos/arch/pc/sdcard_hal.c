@@ -38,10 +38,6 @@
 
 #define FILENAME "sdcard.dat"
 
-//#define SDCARD_SIZE 16 * 1024 * 1024 // 16 MB
-//#define SDCARD_SECTOR_SIZE 512
-//#define SDCARD_NUM_SECTORS (SDCARD_SIZE / SDCARD_NUM_SECTORS)
-
 static const uint8_t zeroSector[SDCARD_SECTOR_SIZE];
 
 bool sdcardInit(void)

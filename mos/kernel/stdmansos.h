@@ -65,9 +65,7 @@
 #include <random.h>
 #ifdef USE_FATFS
 #include <fatfs/fatfs.h>
-//# if !PLATFORM_PC
-# include <fatfs/posix-stdio.h>
-//# endif
+#include <fatfs/posix-stdio.h>
 #endif
 
 #endif
