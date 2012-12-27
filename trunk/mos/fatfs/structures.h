@@ -35,18 +35,19 @@ typedef uint16_t sector_t;
 #endif
 
 struct FatBootBlock_s {
-    uint8_t bootstrapProg[3]; // unused
-    uint8_t oemDescription[8]; // unused
+    uint8_t bootstrapProg[3];
+    uint8_t oemDescription[8];
     uint8_t bytesPerSector[2]; // only 512 supported
     uint8_t sectorsPerCluster; // 1 to 128
-    uint8_t numReservedSectors[2]; // usually 1
+    uint8_t numReservedSectors[2];
     uint8_t numFATs;  // FAT count
     // root directory entry count, including unused ones. zero for FAT32
     uint8_t numRootEntries[2];
     // total blocks in disk. set to zero if > 65535
     uint8_t totalSectors16[2];
     uint8_t mediaDescriptor; // unused
-    uint8_t sectorsPerFAT16[2]; // usually 1
+    uint8_t sectorsPerFAT16[2];
+
     uint8_t sectorsPerTrack[2]; // for "bootstrap prog"
     uint8_t numHeads[2]; // for "bootstrap prog"
     uint8_t numHiddenBlocks[4]; // unused

@@ -55,13 +55,16 @@
 #define BLOCK_SIZE                 512
 #define PARTITION_OFFSET_BLOCKS    2048ul
 #define PARTITION_OFFSET           (PARTITION_OFFSET_BLOCKS * BLOCK_SIZE)
-#define TOTAL_SIZE                 (2ul * 1024 * 1024 * 1024)
-#define TOTAL_BLOCKS               (TOTAL_SIZE / BLOCK_SIZE)
+//#define TOTAL_SIZE                 (2ul * 1024 * 1024 * 1024)
+//#define TOTAL_SIZE                 1990197248ul
+//#define TOTAL_BLOCKS               (TOTAL_SIZE / BLOCK_SIZE)
+//#define TOTAL_PARTITION_BLOCKS     (TOTAL_BLOCKS - PARTITION_OFFSET_BLOCKS)
 
 #define BLOCKS_PER_CLUSTER         64
 
 #define FAT_COUNT                  2
-#define ROOT_DIR_ENTRY_COUNT       2048
+//#define ROOT_DIR_ENTRY_COUNT       2048
+#define ROOT_DIR_ENTRY_COUNT       1024
 #define BLOCKS_PER_FAT             256
 #define SECTORS_PER_CLUSTER        64 // depends on media size
 
@@ -83,9 +86,14 @@ int fatFsFormat(void)
     
     redLedOn();
 
+    const uint32_t cardSizeInBlocks = sdcardGetSize();
+    const uint32_t partitionSizeInBlocks = cardSizeInBlocks - PARTITION_OFFSET_BLOCKS;
+    PRINTF("cardSizeInBlocks = %lu\n", cardSizeInBlocks);
+
 #if DO_ERASE
     sdcardBulkErase();
 #endif // DO_ERASE
+
 
 #if DO_FORMAT
     if (!sdcardReadBlock(0, buffer)) goto fail;
@@ -104,7 +112,7 @@ int fatFsFormat(void)
     mbr->part[0].endCylinderHigh = 0;
     mbr->part[0].endCylinderLow = 0;
     mbr->part[0].firstSector = PARTITION_OFFSET_BLOCKS;
-    mbr->part[0].totalSectors = TOTAL_BLOCKS - PARTITION_OFFSET_BLOCKS;
+    mbr->part[0].totalSectors = partitionSizeInBlocks;
     mbr->mbrSig0 = 0x55;
     mbr->mbrSig1 = 0xAA;
 
@@ -126,19 +134,20 @@ int fatFsFormat(void)
     le16write(fbs->numReservedSectors, 64);
     fbs->numFATs = FAT_COUNT;
     le16write(fbs->numRootEntries, ROOT_DIR_ENTRY_COUNT);
-    if (TOTAL_BLOCKS < 0x10000) {
-        le16write(fbs->totalSectors16, (uint16_t) TOTAL_BLOCKS);
+    if (partitionSizeInBlocks < 0x10000) {
+        le16write(fbs->totalSectors16, partitionSizeInBlocks);
     } else {
         le16write(fbs->totalSectors16, 0); // set to zero and use totalSectors32 instead
     }
     fbs->mediaDescriptor = 0xf8;
     le16write(fbs->sectorsPerFAT16, BLOCKS_PER_FAT);
-    le16write(fbs->sectorsPerTrack, 0);
-    le16write(fbs->numHeads, 0);
+    // le16write(fbs->sectorsPerTrack, 0x3e); // XXX
+    // le16write(fbs->numHeads, 0x3e);        // XXX
+    le16write(fbs->sectorsPerTrack, 0x0);
+    le16write(fbs->numHeads, 0x0);
     le32write(fbs->numHiddenBlocks, 0ul);
-    le32write(fbs->totalSectors32, TOTAL_BLOCKS);
+    le32write(fbs->totalSectors32, partitionSizeInBlocks);
     le16write(fbs->physicalDriveNumber, 0);
-//    fbs->reserved1 = 0;
     fbs->bootRecordSignature = 0x29; // valid serial number, volume label and FS type
     le32write(fbs->volumeSerialNumber, ((uint32_t)randomNumber() << 16) + randomNumber());
     memcpy(fbs->volumeLabel, "         ", 11);

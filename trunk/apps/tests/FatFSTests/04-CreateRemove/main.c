@@ -46,5 +46,9 @@ void appMain(void)
     f = fopen(FILE_NAME, "r");
     ASSERT(!f);
 
+    f = fopen("hello.txt", "w");
+    fwrite("hello world", 1, 11, f);
+    fclose(f);
+
     PRINTF("done!\n");
 }

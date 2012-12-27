@@ -32,10 +32,11 @@
 // maximal unit that can be written
 #define SDCARD_PAGE_SIZE      512
 
-// 2 GB total card size. Cards like that are used for in-house projects.
-// The maximal size is 4GB due to addressing constraints (32 bit)
+// 16 MB total default card size.
+// The real size can be found using sdcardGetSize() function.
+// Maximal supported size is 4GB due to addressing constraints (32 bit)
 #ifndef SDCARD_SECTOR_COUNT
-#define SDCARD_SECTOR_COUNT   (2 * 1024 * 1024ul)
+#define SDCARD_SECTOR_COUNT   (16ul * 1024 * 1024 / SDCARD_SECTOR_SIZE)
 #endif
 
 #define SDCARD_SIZE  (SDCARD_SECTOR_SIZE * SDCARD_SECTOR_COUNT)
@@ -73,6 +74,9 @@ void sdcardWrite(uint32_t addr, const void *buf, uint16_t len);
 // flush the cache to disk
 void sdcardFlush(void);
 #endif // USE_FATFS
+
+// return the number of 512-byte sectors
+uint32_t sdcardGetSize(void);
 
 // (re)initialize serial (actually SPI) interface
 void sdcardInitSerial(void);

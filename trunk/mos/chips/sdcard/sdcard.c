@@ -744,3 +744,25 @@ void sdcardWrite(uint32_t address, const void *buffer, uint16_t len)
 }
 
 #endif // USE_FATFS not defined
+
+uint32_t sdcardGetSize(void)
+{
+    csd_t csd;
+    if (!sdcardReadCSD(&csd)) goto fail;
+
+    if (csd.v1.csd_ver == 0) {
+        uint16_t size = (csd.v1.c_size_high << 10)
+                | (csd.v1.c_size_mid << 2) | csd.v1.c_size_low;
+        uint8_t sizeMult = (csd.v1.c_size_mult_high << 1)
+                | csd.v1.c_size_mult_low;
+        return (uint32_t)(size + 1) << (sizeMult + csd.v1.read_bl_len - 7);
+    }
+    if (csd.v2.csd_ver == 1) {
+        uint32_t size = ((uint32_t)csd.v2.c_size_high << 16)
+                | (csd.v2.c_size_mid << 8) | csd.v2.c_size_low;
+        return (size + 1) << 10;
+    }
+
+  fail:
+    return SDCARD_SECTOR_COUNT;
+}

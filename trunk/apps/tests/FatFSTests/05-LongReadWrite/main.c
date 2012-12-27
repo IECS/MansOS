@@ -24,39 +24,30 @@
 #include "stdmansos.h"
 #include <lib/assert.h>
 
-// test read/write in two blocks 
-// #define NUM_TESTS 41
-// #define DATA_LEN 13
+// test read/write in two blocks
+#define NUM_TESTS 41
+#define DATA_LEN 13
 
-// test read/write in two clusters 
+// test read/write in two clusters
 // #define NUM_TESTS 2050
 // #define DATA_LEN 16
 
 // test read/write in many clusters
-#define NUM_TESTS 10000
-#define DATA_LEN 13
+//#define NUM_TESTS 10000
+//#define DATA_LEN 13
 
 #define TEST_READ 1
 
 void appMain(void)
 {
-    FILE *f = fopen("hello.txt", "r+");
+    uint16_t i;
+    char buffer[DATA_LEN] = "0123456789abcdef";
+    FILE *f = fopen("hello.txt", "w+");
     ASSERT(f);
     ASSERT(f->fd != -1);
 
-    char buffer[DATA_LEN] = "0123456789abcdef";
-    uint16_t i;
-#if TEST_READ
-    char readBuffer[DATA_LEN];
-    for (i = 0; i < NUM_TESTS; ++i) {
-        int len = fread(readBuffer, 1, DATA_LEN, f);
-        ASSERT(len == DATA_LEN);
-        ASSERT(!memcmp(readBuffer, buffer, DATA_LEN));
-    }
-    PRINTF("read ok!\n");
-#endif
+    redLedOn();
 
-    rewind(f);
     for (i = 0; i < NUM_TESTS; ++i) {
         int len = fwrite(buffer, 1, DATA_LEN, f);
         // PRINTF("len=%d\n", len);
@@ -65,6 +56,18 @@ void appMain(void)
 
     fclose(f);
     ASSERT(f->fd == -1);
+    rewind(f);
+
+#if TEST_READ
+    char readBuffer[DATA_LEN];
+    for (i = 0; i < NUM_TESTS; ++i) {
+        int len = fread(readBuffer, 1, DATA_LEN, f);
+        ASSERT(len == DATA_LEN);
+        ASSERT(!memcmp(readBuffer, buffer, DATA_LEN));
+    }
+#endif
+
+    redLedOff();
 
     PRINTF("done!\n");
 }
