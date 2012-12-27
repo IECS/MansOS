@@ -35,6 +35,7 @@
 
 #define TEST_PACKET_SIZE            30
 
+#define ENABLE_HW_ADDRESSING  1
 #define ADDRESS 0xAA
 
 #if PLATFORM_SM3
@@ -110,20 +111,22 @@ void extFlashPrepare(void)
 //-------------------------------------------
 void appMain(void)
 {
-    outFile = fopen("data.txt", "a");
-
 #if PLATFORM_SM3
-#if 0
-    // disable addr mode
-    amb8420EnterAddressingMode(AMB8420_ADDR_MODE_NONE, 0);
-#else
+    outFile = fopen("data.txt", "a");
+#if ENABLE_HW_ADDRESSING
+
 #if RECV
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, ADDRESS);
 #else
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, ADDRESS ^ 0x1);
-#endif
-#endif
-#endif
+#endif // RECV
+
+#else
+    // disable addr mode
+    amb8420EnterAddressingMode(AMB8420_ADDR_MODE_NONE, 0);
+#endif // ENABLE_HW_ADDRESSING
+
+#endif // PLATFORM_SM3
 
 #if RECV
 //    alarmInit(&alarm, alarmCb, NULL);
@@ -396,10 +399,12 @@ void recvCounter(void)
                 }
                 PRINTF("Test %u: %d%%, %d avg RSSI\n",
                         prevTestNumber, prevTestPacketsRx * PERCENT, avgRssi);
+#if PLATFORM_SM3
                 sprintf(strBuf, "Test %u: %d%%, %d avg RSSI\n",
                         prevTestNumber, prevTestPacketsRx * PERCENT, platformFixRssi(avgRssi));
                 fwrite(strBuf, 1, strlen(strBuf), outFile);
                 radioReinit();
+#endif
 
                 addAvgStatistics(prevTestNumber, prevTestPacketsRx, avgRssi, avgLqi);
             }
@@ -461,10 +466,12 @@ void recvCounter(void)
                 }
                 PRINTF("Test %u: %d%%, %d avg RSSI\n",
                         prevTestNumber, prevTestPacketsRx * PERCENT, platformFixRssi(avgRssi));
+#if PLATFORM_SM3
                 sprintf(strBuf, "Test %u: %d%%, %d avg RSSI\n",
                         prevTestNumber, prevTestPacketsRx * PERCENT, platformFixRssi(avgRssi));
                 fwrite(strBuf, 1, strlen(strBuf), outFile);
                 radioReinit();
+#endif
 
                 addAvgStatistics(prevTestNumber, prevTestPacketsRx, avgRssi, avgLqi);
             }
