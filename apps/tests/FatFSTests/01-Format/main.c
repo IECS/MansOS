@@ -22,6 +22,7 @@
  */
 
 #include "stdmansos.h"
+#include <lib/byteorder.h>
 #include <lib/assert.h>
 #include <sdcard/sdcard.h>
 #include <fatfs/structures.h>
@@ -61,11 +62,10 @@
 
 #define FAT_COUNT                  2
 #define ROOT_DIR_ENTRY_COUNT       2048
-#define BLOCKS_PER_FAT            256
+#define BLOCKS_PER_FAT             256
+#define SECTORS_PER_CLUSTER        64 // depends on media size
 
 #if PARTITION_TABLE
-//#define FAT1_OFFSET                0x00108000
-//#define FAT2_OFFSET                0x00128000
 #define FAT1_OFFSET                ((PARTITION_OFFSET_BLOCKS + BLOCKS_PER_CLUSTER) * BLOCK_SIZE)
 #define FAT2_OFFSET                ((PARTITION_OFFSET_BLOCKS + BLOCKS_PER_CLUSTER + BLOCKS_PER_FAT) * BLOCK_SIZE)
 #else
@@ -114,32 +114,35 @@ int fatFsFormat(void)
     if (!sdcardReadBlock(PARTITION_OFFSET, buffer)) goto fail;
 
     fbs = (FatBootBlock_t *) buffer;
-    fbs->jump[0] = 0xEB;
-    fbs->jump[1] = 0x3C;
-    fbs->jump[2] = 0x90;
-    memcpy(fbs->oemId, "mansos\0\0", 8);
-    fbs->bytesPerSector = BLOCK_SIZE;
-    fbs->sectorsPerCluster = 64;
-    fbs->reservedSectorCount = 64;
-    fbs->fatCount = FAT_COUNT;
-    fbs->rootDirEntryCount = ROOT_DIR_ENTRY_COUNT;
+    // put jump insrtuction the the first three bytes
+    fbs->bootstrapProg[0] = 0xEB;
+    fbs->bootstrapProg[1] = 0x3C;
+    fbs->bootstrapProg[2] = 0x90;
+    // put "mansos" as the formatter string
+    memcpy(fbs->oemDescription, "mansos\0\0", 8);
+    // put constants
+    le16write(fbs->bytesPerSector, BLOCK_SIZE);
+    fbs->sectorsPerCluster = SECTORS_PER_CLUSTER;
+    le16write(fbs->numReservedSectors, 64);
+    fbs->numFATs = FAT_COUNT;
+    le16write(fbs->numRootEntries, ROOT_DIR_ENTRY_COUNT);
     if (TOTAL_BLOCKS < 0x10000) {
-        fbs->totalSectors16 = (uint16_t) TOTAL_BLOCKS;
+        le16write(fbs->totalSectors16, (uint16_t) TOTAL_BLOCKS);
     } else {
-        fbs->totalSectors16 = 0; // set to zero and use totalSectors32 instead
+        le16write(fbs->totalSectors16, 0); // set to zero and use totalSectors32 instead
     }
-    fbs->mediaType = 0xf8;
-    fbs->sectorsPerFat16 = BLOCKS_PER_FAT;
-    fbs->sectorsPerTrack = 0;
-    fbs->headCount = 0;
-    fbs->hidddenSectors = 0;
-    fbs->totalSectors32 = TOTAL_BLOCKS;
-    fbs->driveNumber = 0;
-    fbs->reserved1 = 0;
-    fbs->bootSignature = 0x29; // valid serial number, volume label and FS type
-    fbs->volumeSerialNumber = ((uint32_t)randomNumber() << 16) + randomNumber();
+    fbs->mediaDescriptor = 0xf8;
+    le16write(fbs->sectorsPerFAT16, BLOCKS_PER_FAT);
+    le16write(fbs->sectorsPerTrack, 0);
+    le16write(fbs->numHeads, 0);
+    le32write(fbs->numHiddenBlocks, 0ul);
+    le32write(fbs->totalSectors32, TOTAL_BLOCKS);
+    le16write(fbs->physicalDriveNumber, 0);
+//    fbs->reserved1 = 0;
+    fbs->bootRecordSignature = 0x29; // valid serial number, volume label and FS type
+    le32write(fbs->volumeSerialNumber, ((uint32_t)randomNumber() << 16) + randomNumber());
     memcpy(fbs->volumeLabel, "         ", 11);
-    memcpy(fbs->fileSystemType, "FAT16   ", 8);
+    memcpy(fbs->fileSystemIdentifier, "FAT16   ", 8);
     fbs->bootSectorSig0 = 0x55;
     fbs->bootSectorSig1 = 0xAA;
 
