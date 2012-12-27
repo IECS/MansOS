@@ -1,0 +1,8 @@
+#
+# Application specific config file
+#
+
+# only for platforms with SD card
+PLATFORM_ONLY=telosb sm3 pc
+
+USE_FATFS = y
