@@ -1,0 +1,15 @@
+<br/>
+  <label for="code">Enter C or SEAL source code:</label><br/>
+  <textarea name="code" cols="80" rows="20"></textarea><br/>
+  <label for="code">Enter configuration options:</label><br/>
+  <textarea name="config" cols="80" rows="4"></textarea><br/>
+  <input type="submit" name="compile" value="Compile and upload">
+<br/><br/>
+</form>
+
+<form method="post" enctype="multipart/form-data">
+  <label for="file">Or specify IHex filename: </label>
+<br/>
+  <input type="file" name="file" id="file">
+  <input type="submit" name="upload" value="Upload">
+</form>
