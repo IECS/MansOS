@@ -1,0 +1,19 @@
+<script>
+function autoRefresh()
+{
+    var url    = "listen-data";
+    var target = document.getElementById("listen_div");
+
+    var doRefresh = function() 
+    {
+       var xmlhttp=new XMLHttpRequest();
+       xmlhttp.open("GET",url,false);
+       xmlhttp.send();
+       if (xmlhttp.readyState==4 && xmlhttp.status==200) {
+           target.innerHTML=xmlhttp.responseText;
+       }
+    }
+    setInterval(doRefresh, 500);
+}
+onload = autoRefresh;
+</script>
