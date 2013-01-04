@@ -15,24 +15,31 @@ def isascii(c, printable = True):
         return False
 
 class Mote(object):
+    counter = 0
     def __init__(self, portName):
+        self.number = Mote.counter
+        Mote.counter += 1
         self.portName = portName
         self.port = None
         self.performAction = False
         self.buffer = ""
         self.writebuffer = ""
+        self.platform = "telosb"
 
     def openSerial(self):
         if not self.performAction: return
         try:
             baudrate = settingsInstance.getCfgValueAsInt("baudrate", SERIAL_BAUDRATE)
             self.port = serial.Serial(self.portName,
-                                  baudrate,
-                                  timeout=1,
-                                  parity=serial.PARITY_NONE,
-                                  rtscts=1)
-            self.port.setDTR(0)
-            self.port.setRTS(0)
+                                      baudrate,
+                                      timeout=1,
+                                      parity=serial.PARITY_NONE)
+            self.port.flushInput()
+            self.port.flushOutput()
+            if self.platform not in ['xm1000', 'z1'] :
+                # make sure reset pin is low for the platforms that need it
+                self.port.setDTR(0)
+                self.port.setRTS(0)
         except Exception, e:
             print "\nSerial exception:\n\t", e
             self.port = None
@@ -45,25 +52,34 @@ class Mote(object):
             self.port.close()
             self.port = None
 
+    def tryToOpenSerial(self):
+        if not self.port:
+            self.performAction = True
+            self.openSerial()
 
-    def tryRead(self):
+    def tryRead(self, binaryToo):
+        numRead = 0
         if self.port:
             while self.port.inWaiting():
                 c = self.port.read(1)
-                if isascii(c):
+                if binaryToo or isascii(c):
                     self.buffer += c
+                    numRead += 1
+        return numRead
 
     def tryToUpload(self, filename):
-        self.performAction = True #XXX
-        self.openSerial()
+        self.tryToOpenSerial()
         if not self.port: return 0
 
-        # TODO: this should be platform specific!
-        # bsl = settingsInstance.getCfgValue("pathToMansOS") + "/mos/make/scripts/bsl.py"
-        # arglist = ["python", bsl, "--invert-reset", "--invert-test", "-c", self.port.portstr, "-r", "-e", "-I", "-p", filename]
+        if self.platform == "telosb":
+            bsl = settingsInstance.getCfgValue("pathToMansOS") + "/mos/make/scripts/tos-bsl"
+            platformArgs = ["--telosb"]
+        else:
+            bsl = settingsInstance.getCfgValue("pathToMansOS") + "/mos/make/scripts/bsl.py"
+            platformArgs = ["--invert-reset", "--invert-test"]
 
-        bsl = settingsInstance.getCfgValue("pathToMansOS") + "/mos/make/scripts/tos-bsl"
-        arglist = ["python", bsl, "--telosb", "-c", self.port.portstr, "-r", "-e", "-I", "-p", filename]
+        arglist = ["python", bsl, "-c", self.port.portstr, "-r", "-e", "-I", "-p", filename]
+        argist.extend(platformArgs)
         if SLOW: arglist.append(SLOW)
 
         try:
@@ -75,8 +91,7 @@ class Mote(object):
         return retcode
 
     def tryToCompileAndUpload(self, filename):
-        self.performAction = True #XXX
-        self.openSerial()
+        self.tryToOpenSerial()
         if not self.port: return 0
 
         arglist = ["make", "telosb", "upload"]

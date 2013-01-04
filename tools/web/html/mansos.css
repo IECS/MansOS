@@ -1,0 +1,42 @@
+body {
+    font-size:12px;
+    background-color:#eeeef6;
+    font-family: sans;
+    line-height:120%;
+    margin-left:20px;
+    padding-right:20px;
+}
+div.body {
+    border-bottom:thin dashed;
+    padding-bottom:10px;
+}
+div.motes {
+    border-bottom:thin dashed;
+    margin-bottom:15px;
+}
+div.contents {
+    margin-top:60px;
+    padding-left:20px;
+}
+div.subcontents {
+    margin-top:5px;
+    margin-bottom:10px;
+    padding-left:15px;
+}
+div.topmenu {
+    float:left;
+    word-spacing:12px;
+    font-size:100%;
+    padding-left:20px;
+    padding-top:6px;
+    padding-bottom:10px;
+    white-space:nowrap;
+    text-align:left;
+    border-top:thin dashed;
+    border-bottom:thin dashed;
+    width:100%;
+}
+div.form {
+}
+a.module {
+}

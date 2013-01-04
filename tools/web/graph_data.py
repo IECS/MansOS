@@ -5,8 +5,10 @@ class GraphData(object):
         self.columns = []
         self.data = []
         self.tempData = []
+        self.seenInThisPacket = set()
 
     def finishPacket(self):
+        self.seenInThisPacket = set()
         if len(self.tempData) == 0:
             return
         # print "finishPacket"
@@ -16,8 +18,9 @@ class GraphData(object):
                 if n.lower() != "timestamp":
                     self.columns.append(n)
         # print "self.columns", self.columns
+        # print "self.data", self.tempData
 
-        if len(self.tempData) != len(self.columns):
+        if len(self.tempData) + 1 != len(self.columns):
             self.tempData = []
             return
 
@@ -27,7 +30,6 @@ class GraphData(object):
         for (n,v) in self.tempData:
             if n.lower() != "timestamp":
                 tmpRow.append(v)
-        #print "tmpRow", tmpRow
         self.data.append(tmpRow)
         self.tempData = []
 
@@ -41,6 +43,10 @@ class GraphData(object):
             return
 
         dataName = string[:eqSignPos].strip()
+        if dataName in self.seenInThisPacket:
+            self.finishPacket()
+        self.seenInThisPacket.add(dataName)
+
         try:
             value = int(string[eqSignPos + 1:].strip(), 0)
         except:
@@ -63,6 +69,9 @@ class GraphData(object):
     # return all sensor readings 
     def getData(self):
         return [self.getColumns()] + self.getRows()
+
+    def hasData(self):
+        return len(self.columns) != 0
 
 
 graphData = GraphData()
