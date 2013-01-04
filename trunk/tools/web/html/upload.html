@@ -1,15 +1,16 @@
-<br/>
-  <label for="code">Enter C or SEAL source code:</label><br/>
-  <textarea name="code" cols="80" rows="20"></textarea><br/>
-  <label for="code">Enter configuration options:</label><br/>
-  <textarea name="config" cols="80" rows="4"></textarea><br/>
-  <input type="submit" name="compile" value="Compile and upload">
+  <p><input type="radio" name="language" value="C" %CCODE_CHECKED%/>C code
+  <input type="radio" name="language" value="SEAL" %SEALCODE_CHECKED%/>SEAL code</p>
+  <label for="code">Enter code:</label><br/>
+  <textarea id="code" name="code" cols="80" rows="20">%UPLOAD_CODE%</textarea><br/>
+  <label for="config">Enter configuration options (one per line):</label><br/>
+  <textarea id="config" name="config" cols="80" rows="4">%UPLOAD_CONFIG%</textarea><br/>
+  <input type="submit" name="compile" value="Compile and upload"/>
 <br/><br/>
-</form>
+</div></form>
 
-<form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data" action="upload"><div class="form">
   <label for="file">Or specify IHex filename: </label>
 <br/>
-  <input type="file" name="file" id="file">
-  <input type="submit" name="upload" value="Upload">
-</form>
+  <input type="file" name="file" id="file" value="%UPLOAD_FILENAME%"/>
+  <input type="submit" name="upload" value="Upload"/>
+</div></form>

@@ -26,7 +26,7 @@ def listenSerial():
     
     try:
         ser = serial.Serial(cliArgs.serialPort, cliArgs.baudRate, timeout=1, 
-            parity=serial.PARITY_NONE, rtscts=1)
+                            parity=serial.PARITY_NONE, rtscts=1)
 
         if cliArgs.platform not in ['xm1000', 'z1'] :
             # make sure reset pin is low for the platforms that need it
