@@ -1,0 +1,10 @@
+#
+# Application specific config file
+#
+
+USE_HUMIDITY=y
+
+USE_WMP=y
+
+#DEBUG=y
+#BAUDRATE=9600
