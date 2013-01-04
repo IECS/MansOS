@@ -30,7 +30,7 @@ class Mote(object):
         if mote == None:
             self.port = None
             self.name = "No motes found!"
-            self.description = "Make sure mote are connected and drivers are installed."
+            self.description = "Make sure mote(s) are connected and drivers are installed."
         elif len(mote) == 3:
             self.port = mote[0]
             self.name = mote[1]
