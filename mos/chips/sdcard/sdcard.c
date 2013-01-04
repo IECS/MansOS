@@ -68,12 +68,12 @@ static bool initOk;
 
 static uint8_t cardType;
 
-#ifndef USE_FATFS
+#if USE_SDCARD_LOW_LEVEL_API
 // card cache
 static uint8_t cacheBuffer[SDCARD_SECTOR_SIZE];
 static uint32_t cacheAddress;
 static bool cacheChanged;
-#endif
+#endif // USE_SDCARD_LOW_LEVEL_API
 
 #define IN_SECTOR(address, sectorStartAdddress)                 \
     (((address) >= (sectorStartAdddress)) &&                    \
@@ -440,12 +440,12 @@ bool sdcardInit(void)
 
 #endif // PLATFORM_SM3
 
-#ifndef USE_FATFS
+#if USE_SDCARD_LOW_LEVEL_API
     // make cache valid
     mdelay(1);
     sdcardReadBlock(cacheAddress, cacheBuffer);
     SPRINTF("cache read OK\n");
-#endif // USE_FATFS not defined 
+#endif // USE_SDCARD_LOW_LEVEL_API
 
     return (initOk = true);
 
@@ -636,7 +636,7 @@ bool sdcardWriteBlock(uint32_t address, const void *buf)
  
 // -----------------------------------------------------------------
 
-#ifndef USE_FATFS
+#if USE_SDCARD_LOW_LEVEL_API
 
 void sdcardFlush(void)
 {
@@ -743,7 +743,7 @@ void sdcardWrite(uint32_t address, const void *buffer, uint16_t len)
     sdcardWriteInBlock(address, buf, len);
 }
 
-#endif // USE_FATFS not defined
+#endif // USE_SDCARD_LOW_LEVEL_API
 
 uint32_t sdcardGetSize(void)
 {

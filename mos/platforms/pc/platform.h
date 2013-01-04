@@ -38,6 +38,7 @@
 // frequently used function prototypes.
 //
 extern int sprintf(const char *str, const char *format, ...);
+extern int snprintf(const char *str, size_t size, const char *format, ...);
 extern void perror(const char *s);
 
 

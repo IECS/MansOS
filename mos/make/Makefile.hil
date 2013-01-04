@@ -177,9 +177,8 @@ PSOURCES-$(USE_FS) += \
 	$(PDFS)/block/meta.c  \
 	$(PDFS)/block/alloc.c
 
-PSOURCES-$(USE_FATFS) += \
-	$(PDFATFS)/posix-stdio.c \
-	$(PDFATFS)/fatfs.c       \
+PSOURCES-$(USE_FATFS) += $(PDFATFS)/fatfs.c
+PSOURCES += $(PDFATFS)/posix-stdio.c
 
 PSOURCES-$(USE_SEAL_COMM) += $(MOS)/net/seal_comm.c
 

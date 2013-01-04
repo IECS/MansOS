@@ -64,7 +64,7 @@
 #define SERIAL_COUNT 2
 
 // use USART 1 for PRINTF
-#define PRINTF_SERIAL_ID 1
+#define PRINTF_SERIAL_ID  1
 
 static inline bool serialIsUART(uint8_t id) {
     if (id == 0) return !(U0CTL & SYNC);

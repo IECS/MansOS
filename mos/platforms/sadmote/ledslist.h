@@ -60,7 +60,9 @@ LED_DEFINE(redLed,   LEDS_PORT, 4, LEDS_ON_PIN_VALUE)
 #define LED_DEFAULT redLed
 
 // Optionally, you can define aliases to the other leds.
-// LED_ALIAS(myled, redLed)
+LED_ALIAS(led0, redLed)
+LED_ALIAS(led1, greenLed)
+LED_ALIAS(led2, blueLed)
 
 #endif // LEDS_DEFINE
 
