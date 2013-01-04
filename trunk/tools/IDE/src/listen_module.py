@@ -27,11 +27,11 @@ import wx
 from output_area import OutputArea
 from helperFunctions import listenSerialPort
 from myThread import MyThread
+from src.Motelist import Motelist, Mote
 
 class ListenModule(wx.Panel):
     def __init__(self, parent, API):
         super(ListenModule, self).__init__(parent)
-            #title = title, size = (500, 400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.API = API
         # Just a shorter name
         self.tr = self.API.translater.translate
@@ -42,7 +42,7 @@ class ListenModule(wx.Panel):
              'baudrate': 38400
          }
 
-        self.API.motelistCallbacks.append(self.updateMotelist)
+        Motelist.addUpdateCallback(self.updateMotelist)
 
         self.SetBackgroundColour("white")
         self.main = wx.BoxSizer(wx.VERTICAL)
@@ -73,6 +73,7 @@ class ListenModule(wx.Panel):
         self.SetSizer(self.main)
         self.main.Fit(self)
         self.Show()
+        Motelist.update()
 
     def doClear(self, event = None):
         self.API.stopThread("Serial port listener")
@@ -116,28 +117,29 @@ class ListenModule(wx.Panel):
         self.ports.Clear()
         self.ports.Append(self.tr("Searching devices") + "...", 0)
         self.ports.Disable()
-        self.API.populateMotelist()
+        Motelist.update()
 
     def updateMotelist(self):
         self.ports.Clear()
-        motelist = self.API.motelist
         if not self.ports.IsEnabled():
             self.updateStatus("Done!\n")
-        if len(motelist) > 0:
-            for x in motelist:
-                if len(x) > 2:
-                    self.ports.Append(x[1] + " - " + x[2])
-            self.haveMote = True
-            self.ports.SetValue(self.tr("Use default device"))
-            if len(motelist[0]) > 1:
-                self.args['serialPort'] = motelist[0][1].strip().strip("\x00")
+        for x in Motelist.motes:
+            self.ports.Append(x.getNiceName(), x)
+        self.haveMote = True
+
+        self.ports.SetValue(Motelist.getActiveMote().getNiceName())
+        if Motelist.getActiveMote().port != None:
+            self.args['serialPort'] = Motelist.getActiveMote().port
             self.ports.Enable()
         else:
-            self.ports.SetValue(self.tr("No devices found"))
             self.haveMote = False
+            self.ports.Disable()
 
     def changeTarget(self, event):
         # Stop listening
         if self.listening:
             self.doClear(None)
-        self.args['serialPort'] = event.GetEventObject().GetValue().split(" ")[0].strip().strip("\x00")
+        if type(event.GetClientData()) is Mote:
+            self.args['serialPort'] = event.GetClientData().port
+        else:
+            self.args['serialPort'] = event.GetString()

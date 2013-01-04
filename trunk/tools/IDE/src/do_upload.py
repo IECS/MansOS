@@ -28,6 +28,8 @@ from generate_makefile import GenerateMakefile
 from helperFunctions import doPopen
 from myThread import MyThread
 from globals import * #@UnusedWildImport
+from src.upload_module import UploadModule
+from src.Motelist import Motelist
 
 class DoUpload():
     def __init__(self, API):
@@ -36,7 +38,7 @@ class DoUpload():
         self.editor = self.API.tabManager.getPageObject
 
     def doUpload(self):
-        self.targets = list(self.API.targets)
+        self.targets = list(UploadModule.targets)
         # If no target specified, use default
         if len(self.targets) == 0:
             self.targets.append(None)
@@ -110,7 +112,7 @@ class DoUpload():
         if newTarget == None:
             os.unsetenv("BSLPORT")
         else:
-            newTarget = self.API.motelist[newTarget][1]
+            newTarget = Motelist.motes[newTarget].port
             # Windows puts "\x00" at port end and it is not allowed in 
             # environment variable
             os.environ["BSLPORT"] = str(newTarget.strip().strip("\x00"))
