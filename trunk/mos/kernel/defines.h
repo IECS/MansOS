@@ -75,6 +75,11 @@
     COUNT_PARMS2(__VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
 
 //
+// Determine array length
+//
+#define ARRAYLEN(a) (sizeof(a) / sizeof(*(a)))
+
+//
 // Is 'a' is after 'b'?
 // Use for comparing time values. Handles overflow correctly.
 //
@@ -125,12 +130,16 @@ typedef uint32_t ticks_t;
 #define CPU_HZ (CPU_MHZ * 1024ul * 1024)
 #endif
 
+#ifndef TIMER_INTERRUPT_HZ
 // timer frequency, times per second;
 #if CPU_MHZ > 4 && MCU_AVR
 // sorry, cannot support once-per-10ms ticks - 8-bit timer overflow!
 #define TIMER_INTERRUPT_HZ  1000
 #else
-#define TIMER_INTERRUPT_HZ  100
+//#define TIMER_INTERRUPT_HZ  100
+// always use 1000: this leads to faster context switching when threads are used
+#define TIMER_INTERRUPT_HZ  1000
+#endif
 #endif
 
 // timer A feeds from from ACLK (32'768 Hz)

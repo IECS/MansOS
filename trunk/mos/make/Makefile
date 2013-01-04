@@ -202,6 +202,8 @@ endif
 endif
 endif
 
+SENSORLIST ?= python $(MOS)/make/scripts/sensorlist.py
+
 # Set up the correct programmer port
 BSLPORT ?= "$(shell $(MOTELIST) -c | xargs -0 echo | xargs echo | cut -f2 -d, )"
 
@@ -253,7 +255,7 @@ OBJS = $(APP_OBJS) $(POBJS)
 OBJDIRS = $(dir $(OBJS))
 
 # ===== Targets =====
-.PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs motelist listen clean cleanall
+.PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs motelist listen sensorlist clean cleanall
 
 all: build
 
@@ -422,3 +424,6 @@ motelist:
 
 listen:
 	$(_QUIET) $(LISTENER) -s $(BSLPORT) -b $(BAUDRATE) -p $(PLATFORM)
+
+sensorlist:
+	$(_QUIET) $(SENSORLIST) $(PLATFORM) "$(CFLAGS) $(LDFLAGS)"

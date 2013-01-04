@@ -293,6 +293,8 @@ ISR(UART0RX, UART0InterruptHandler)
 
     uint8_t x = U0RXBUF;
 
+    // PRINTF("serial 0 char %#02x\n", (uint16_t) x);
+
     if (serialRecvCb[0]) serialRecvCb[0](x);
 }
 
@@ -305,6 +307,8 @@ ISR(UART1RX, UART1InterruptHandler)
     }
 
     uint8_t x = U1RXBUF;
+
+    // PRINTF("serial 1 char %#02x\n", (uint16_t) x);
 
     if (serialRecvCb[1]) serialRecvCb[1](x);
 }
