@@ -1,3 +1,7 @@
+#
+# MansOS Web Management Protocol (WMP) constants
+#
+
 WMP_SENSOR_LIGHT     = 1
 WMP_SENSOR_HUMIDITY  = 2
 WMP_SENSOR_BATTERY   = 3

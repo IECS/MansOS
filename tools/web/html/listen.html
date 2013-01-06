@@ -1,5 +1,10 @@
-<div id="listen_div" style="min-width: 400px; height: 400px; margin: 0 auto">%LISTEN_TXT%</div>
-<br/>
-<p><input type="hidden" name="action" value="%LISTEN_ACTION%"/>
-<input type="submit" value="%LISTEN_CMD%"/></p>
+<p>Last 30 output lines:</p>
+<div id="listen_div">%LISTEN_TXT%</div>
+<p><input type="hidden" name="action" value="%MOTE_ACTION%"/>
+<input type="submit" value="%MOTE_ACTION% listening"/></p>
+<p>
+<label for="dataFile">Save data to file (empty to disable):</label><br/>
+<label><input type="text" name="dataFile" value="%DATA_FILENAME%"/>
+<input type="radio" name="dataType" value="raw" %RAWDATA_CHECKED%/>Raw data
+<input type="radio" name="dataType" value="processed" %PROCDATA_CHECKED%/>Processed values</p>
 </div></form> 
