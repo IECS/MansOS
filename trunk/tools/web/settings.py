@@ -1,4 +1,9 @@
-from constants import *
+#
+# MansOS web server - server-side configuration settings
+#
+
+HTTP_SERVER_PORT = 30000
+SERIAL_BAUDRATE = 38400
 
 #
 # Class that contains all global settings
@@ -12,6 +17,11 @@ class Settings(object):
             self.htmlDirectory = "html"
             self.pathToMansOS = "../.."
             self.motes = []
+            self.selectedMotes = []
+            self.isSealCode = "False"
+            self.saveToFilename = ""
+            self.saveProcessedData = "False"
+            self.slowUpload = "False"
 
     cfg = ConfigValues()
 
@@ -62,12 +72,18 @@ class Settings(object):
     def getCfgValue(self, name):
         return self.cfg.__getattribute__(name)
 
-    def getCfgValueAsInt(self, name, default):
+    def getCfgValueAsInt(self, name, default = 0):
         try:
             result = int(self.cfg.__getattribute__(name), 0)
         except:
             result = default
         return result
+
+    def setCfgValue(self, name, value):
+        if isinstance(value, list):
+            self.cfg.__setattr__(name, value)
+        else:
+            self.cfg.__setattr__(name, str(value))
 
 
 # global variable

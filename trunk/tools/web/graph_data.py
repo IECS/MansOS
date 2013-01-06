@@ -1,3 +1,7 @@
+#
+# MansOS web server - data parsing, storing and visualization
+#
+
 import time
 
 class GraphData(object):
@@ -12,10 +16,12 @@ class GraphData(object):
         if len(self.tempData) == 0:
             return
         # print "finishPacket"
+        firstPacket = False
         if len(self.columns) == 0:
-            self.columns.append("timestamp")
+            firstPacket = True
+            self.columns.append("serverTimestamp")
             for (n,v) in self.tempData:
-                if n.lower() != "timestamp":
+                if n.lower() != "serverTimestamp":
                     self.columns.append(n)
         # print "self.columns", self.columns
         # print "self.data", self.tempData
@@ -28,10 +34,19 @@ class GraphData(object):
         timestamp = time.strftime("%H:%M:%S", time.localtime())
         tmpRow.append(timestamp)
         for (n,v) in self.tempData:
-            if n.lower() != "timestamp":
+            if n.lower() != "serverTimestamp":
                 tmpRow.append(v)
         self.data.append(tmpRow)
         self.tempData = []
+
+        # save to file if required
+        if settingsInstance.saveToFilename \
+                and settingsInstance.saveProcessedData:
+            with open(settingsInstance.saveToFilename, "a") as f:
+                if firstPacket:
+                    f.write(str(self.getColumns()))
+                f.write(str(tmpRow))
+                f.close()
 
     def addNewData(self, string):
         # print "addNewData", string

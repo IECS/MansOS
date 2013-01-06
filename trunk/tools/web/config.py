@@ -1,6 +1,12 @@
-from constants import *
+#
+# MansOS web server - mote configuration
+#
+
 from wmp import *
 import time
+
+MAX_TIME_WAIT_FOR_REPLY = 0.1 # max time to wait for a single reply
+MAX_RETRIES = 3               # send 3 times before giving up
 
 def toTitleCase(s):
     if s == '': return ''
@@ -30,7 +36,7 @@ def le32write(number):
 
 
 # TODO: populate this from mansos Makefiles?
-supportedPlatforms = ["telosb", "testbed", "testbed2", "sm3"]
+supportedPlatforms = ["telosb", "testbed", "testbed2", "sm3", "xm1000", "z1"]
 
 class Platform(object):
     def __init__(self, name, sensors, outputs):
@@ -154,6 +160,37 @@ class Config(object):
             return ("platform not selected!", False)
         return (None, True)
 
+    def wmpExchangeCommand(self, command, arguments):
+        returnArguments = [] # default
+        ok = False
+        for i in range(MAX_RETRIES):
+            iterEndTime = time.time() + MAX_TIME_WAIT_FOR_REPLY
+            self.lastSp = None
+            wmpSendCommand(self.mote.port, command, arguments)
+            time.sleep(0.01)
+            while time.time() < iterEndTime:
+                if self.lastSp:
+                    if self.lastSp.command == command:
+                        returnArguments = self.lastSp.arguments
+                        ok = True
+                    self.lastSp = None
+                    break
+                print "waiting..."
+                time.sleep(0.01)
+        if not ok: print "reply NOT received!"
+        return returnArguments
+
+    def wmpGetSensorConfig(self, sensorCode):
+        args = self.wmpExchangeCommand(WMP_CMD_GET_SENSOR, [sensorCode])
+        if len(args) < 5:
+            return 0 # default
+        return le32read(args[1:])
+
+    def wmpGetOutputConfig(self, sensorCode):
+        args = self.wmpExchangeCommand(WMP_CMD_GET_OUTPUT, [sensorCode])
+        if len(args) < 2:
+            return 0 # default
+        return bool(args[1])
 
     def getConfigValues(self):
         (errstr, ok) = self.checkValid()
@@ -163,26 +200,10 @@ class Config(object):
         self.configMode = True
 
         for s in self.activePlatform.sensors:
-            print "process sensor", s.varname
-            wmpSendCommand(self.mote.port, WMP_CMD_GET_SENSOR, [s.code])
-            while True:
-                if self.lastSp and self.lastSp.command == WMP_CMD_GET_SENSOR:
-                    s.period = le32read(self.lastSp.arguments[1:])
-                    self.lastSp = None
-                    break
-#                print "waiting..."
-                time.sleep(0.1)
+            s.period = wmpGetSensorConfig(s.code)
 
         for s in self.activePlatform.outputs:
-            print "process output", s.varname
-            wmpSendCommand(self.mote.port, WMP_CMD_GET_OUTPUT, [s.code])
-            while True:
-                if self.lastSp and self.lastSp.command == WMP_CMD_GET_OUTPUT:
-                    s.selected = bool(self.lastSp.arguments[1])
-                    self.lastSp = None
-                    break
-#                print "waiting..."
-                time.sleep(0.1)
+            s.selected = wmpGetOutputConfig(s.code)
 
         self.configMode = False
         return "<strong>Configuration values read!</strong><br/>"
@@ -196,27 +217,15 @@ class Config(object):
         self.configMode = True
 
         for s in self.activePlatform.sensors:
-            print "process sensor", s.varname
+#            print "process sensor", s.varname
             args = [s.code]
             args.extend(le32write(s.period))
-            wmpSendCommand(self.mote.port, WMP_CMD_SET_SENSOR, args)
-            while True:
-                if self.lastSp and self.lastSp.command == WMP_CMD_SET_SENSOR:
-                    self.lastSp = None
-                    break
-#                print "waiting..."
-                time.sleep(0.1)
+            self.wmpExchangeCommand(self.mote.port, WMP_CMD_SET_SENSOR, args)
 
         for s in self.activePlatform.outputs:
-            print "process output", s.varname
+#            print "process output", s.varname
             args = [s.code, int(s.selected)]
-            wmpSendCommand(self.mote.port, WMP_CMD_SET_OUTPUT, args)
-            while True:
-                if self.lastSp and self.lastSp.command == WMP_CMD_SET_OUTPUT:
-                    self.lastSp = None
-                    break
-#                print "waiting..."
-                time.sleep(0.1)
+            self.wmpExchangeCommand(self.mote.port, WMP_CMD_SET_OUTPUT, args)
 
         print "done!"
         self.configMode = False

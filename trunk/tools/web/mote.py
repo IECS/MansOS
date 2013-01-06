@@ -1,5 +1,12 @@
+#
+# MansOS web server - mote handler class
+#
+
 import serial, subprocess, sys
+from serial.tools import list_ports
 from settings import *
+
+motes = []
 
 #SLOW = "--slow"
 SLOW = ""
@@ -21,13 +28,14 @@ class Mote(object):
         Mote.counter += 1
         self.portName = portName
         self.port = None
-        self.performAction = False
+        self.isSelected = False
+        self.isStatic = False
         self.buffer = ""
         self.writebuffer = ""
         self.platform = "telosb"
 
     def openSerial(self):
-        if not self.performAction: return
+        if not self.isSelected: return
         try:
             baudrate = settingsInstance.getCfgValueAsInt("baudrate", SERIAL_BAUDRATE)
             self.port = serial.Serial(self.portName,
@@ -54,7 +62,7 @@ class Mote(object):
 
     def tryToOpenSerial(self):
         if not self.port:
-            self.performAction = True
+            self.isSelected = True
             self.openSerial()
 
     def tryRead(self, binaryToo):
@@ -62,9 +70,19 @@ class Mote(object):
         if self.port:
             while self.port.inWaiting():
                 c = self.port.read(1)
+
+                # save to file if required
+                if settingsInstance.saveToFilename \
+                        and not settingsInstance.saveProcessedData:
+                    with open(settingsInstance.saveToFilename, "a") as f:
+                        f.write(c)
+                        f.close()
+
+                # add to the local buffer
                 if binaryToo or isascii(c):
                     self.buffer += c
                     numRead += 1
+
         return numRead
 
     def tryToUpload(self, filename):
@@ -102,3 +120,36 @@ class Mote(object):
             retcode = 1
 
         return retcode
+
+def storeSelectedMotes():
+    selected = []
+    for m in motes:
+        if m.isSelected:
+            selected.append(m.portName)
+    settingsInstance.setCfgValue("selectedMotes", selected)
+    settingsInstance.save()
+
+def retrieveSelectedMotes():
+    selected = settingsInstance.getCfgValue("selectedMotes")
+    for m in motes:
+        m.isSelected = m.portName in selected
+
+def addAllMotes():
+    global motes
+    motes = []
+    print "static ports are", settingsInstance.getCfgValue("motes")
+    staticPorts = set(settingsInstance.getCfgValue("motes"))
+
+    dynamicPorts = set()
+    for x in list_ports.comports():
+        # skip ports that are not connected
+        if x[2] == "n/a": continue
+        portName = x[0]
+        if not ("USB" in portName or "ACM" in portName): continue
+        dynamicPorts.add(portName)
+
+    for port in dynamicPorts.union(staticPorts):
+        print "add mote ", port
+        motes.append(Mote(port))
+
+    retrieveSelectedMotes()
