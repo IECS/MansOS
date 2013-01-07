@@ -122,6 +122,11 @@ static inline int feof(FILE *fp)
 // delete a file
 int remove(const char *filename);
 
+
+// fprintf() is not provided because of efficiency issues:
+// use fputs() combined with sprintf() in an application-specific buffer.
+
+
 //
 // Initialization routine (interal use only!)
 //
