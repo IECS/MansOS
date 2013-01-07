@@ -3,6 +3,7 @@
 #
 
 import time
+from settings import *
 
 class GraphData(object):
     def __init__(self):
@@ -40,9 +41,9 @@ class GraphData(object):
         self.tempData = []
 
         # save to file if required
-        if settingsInstance.saveToFilename \
-                and settingsInstance.saveProcessedData:
-            with open(settingsInstance.saveToFilename, "a") as f:
+        if settingsInstance.cfg.saveToFilename \
+                and settingsInstance.cfg.saveProcessedData:
+            with open(settingsInstance.cfg.saveToFilename, "a") as f:
                 if firstPacket:
                     f.write(str(self.getColumns()))
                 f.write(str(tmpRow))

@@ -6,10 +6,6 @@ import serial, subprocess, sys
 from serial.tools import list_ports
 from settings import *
 
-motes = []
-
-#SLOW = "--slow"
-SLOW = ""
 
 def isascii(c, printable = True):
     if 0x00 <= ord(c) <= 0x7f:
@@ -20,6 +16,7 @@ def isascii(c, printable = True):
         return False
     else:
         return False
+
 
 class Mote(object):
     counter = 0
@@ -60,9 +57,9 @@ class Mote(object):
             self.port.close()
             self.port = None
 
-    def tryToOpenSerial(self):
+    def tryToOpenSerial(self, makeSelected):
         if not self.port:
-            self.isSelected = True
+            if makeSelected: self.isSelected = True
             self.openSerial()
 
     def tryRead(self, binaryToo):
@@ -72,9 +69,9 @@ class Mote(object):
                 c = self.port.read(1)
 
                 # save to file if required
-                if settingsInstance.saveToFilename \
-                        and not settingsInstance.saveProcessedData:
-                    with open(settingsInstance.saveToFilename, "a") as f:
+                if settingsInstance.cfg.saveToFilename \
+                        and not settingsInstance.cfg.saveProcessedData:
+                    with open(settingsInstance.cfg.saveToFilename, "a") as f:
                         f.write(c)
                         f.close()
 
@@ -86,19 +83,27 @@ class Mote(object):
         return numRead
 
     def tryToUpload(self, filename):
-        self.tryToOpenSerial()
+        self.tryToOpenSerial(False)
         if not self.port: return 0
 
         if self.platform == "telosb":
-            bsl = settingsInstance.getCfgValue("pathToMansOS") + "/mos/make/scripts/tos-bsl"
+            bsl = "mos/make/scripts/tos-bsl"
             platformArgs = ["--telosb"]
+        elif self.platform == "xm1000":
+            bsl = "mos/make/scripts/xm1000-bsl"
+            platformArgs = ["--telosb"] # "telosb" is still the right arg
+        elif self.platform == "z1":
+            bsl = "mos/make/scripts/z1-bsl-nopic"
+            platformArgs = ["--z1"]
         else:
-            bsl = settingsInstance.getCfgValue("pathToMansOS") + "/mos/make/scripts/bsl.py"
+            bsl = "mos/make/scripts/bsl.py"
             platformArgs = ["--invert-reset", "--invert-test"]
 
+        bsl = os.path.join(settingsInstance.getCfgValue("pathToMansOS"), bsl)
         arglist = ["python", bsl, "-c", self.port.portstr, "-r", "-e", "-I", "-p", filename]
         argist.extend(platformArgs)
-        if SLOW: arglist.append(SLOW)
+        if settingsInstance.getCfgValueAsInt("slowUpload"):
+            arglist.append("--slow")
 
         try:
             retcode = subprocess.call(" ".join(arglist), shell=True)
@@ -109,7 +114,7 @@ class Mote(object):
         return retcode
 
     def tryToCompileAndUpload(self, filename):
-        self.tryToOpenSerial()
+        self.tryToOpenSerial(False)
         if not self.port: return 0
 
         arglist = ["make", "telosb", "upload"]
@@ -121,35 +126,49 @@ class Mote(object):
 
         return retcode
 
-def storeSelectedMotes():
-    selected = []
-    for m in motes:
-        if m.isSelected:
-            selected.append(m.portName)
-    settingsInstance.setCfgValue("selectedMotes", selected)
-    settingsInstance.save()
 
-def retrieveSelectedMotes():
-    selected = settingsInstance.getCfgValue("selectedMotes")
-    for m in motes:
-        m.isSelected = m.portName in selected
+class MoteCollection(object):
+    def __init__(self):
+        self.motes = []
 
-def addAllMotes():
-    global motes
-    motes = []
-    print "static ports are", settingsInstance.getCfgValue("motes")
-    staticPorts = set(settingsInstance.getCfgValue("motes"))
+    def storeSelected(self):
+        selected = []
+        for m in self.motes:
+            if m.isSelected:
+                selected.append(m.portName)
+        settingsInstance.setCfgValue("selectedMotes", selected)
+        settingsInstance.save()
 
-    dynamicPorts = set()
-    for x in list_ports.comports():
-        # skip ports that are not connected
-        if x[2] == "n/a": continue
-        portName = x[0]
-        if not ("USB" in portName or "ACM" in portName): continue
-        dynamicPorts.add(portName)
+    def retrieveSelected(self):
+        selected = settingsInstance.getCfgValue("selectedMotes")
+        for m in self.motes:
+            m.isSelected = m.portName in selected
 
-    for port in dynamicPorts.union(staticPorts):
-        print "add mote ", port
-        motes.append(Mote(port))
+    def addAll(self):
+        self.motes = []
+        print "static ports are", settingsInstance.getCfgValue("motes")
+        staticPorts = set(settingsInstance.getCfgValue("motes"))
 
-    retrieveSelectedMotes()
+        dynamicPorts = set()
+        for x in list_ports.comports():
+            # skip ports that are not connected
+            if x[2] == "n/a": continue
+            portName = x[0]
+            if not ("USB" in portName or "ACM" in portName): continue
+            dynamicPorts.add(portName)
+
+        allPorts = dynamicPorts.union(staticPorts)
+        for port in allPorts:
+            print "add mote", port
+            self.motes.append(Mote(port))
+
+        self.retrieveSelected()
+
+    def getMotes(self):
+        return self.motes
+
+    def getMote(self, num):
+        return self.motes[num]
+
+    def isEmpty(self):
+        return len(self.motes) == 0
