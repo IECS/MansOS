@@ -172,3 +172,13 @@ class MoteCollection(object):
 
     def isEmpty(self):
         return len(self.motes) == 0
+
+    def anySelected(self):
+        for m in self.motes:
+            if m.isSelected: return True
+        return False
+
+    def deselectAll(self):
+        for m in self.motes:
+            assert m.port is None
+            m.isSelected = False
