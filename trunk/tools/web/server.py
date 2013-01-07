@@ -6,6 +6,7 @@
 
 import os, platform, urlparse, BaseHTTPServer, threading, time, serial, select, socket, cgi, subprocess, struct
 import json
+import SocketServer
 from settings import *
 from mote import *
 from graph_data import *
@@ -248,7 +249,7 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def serveError(self, message):
         if not self.headerIsServed:
             self.serveHeader("error")
-        self.writeChunk("\n<strong>Error: " + message + "</strong>\n")
+        self.writeChunk("\n<strong>Error: " + message + "</strong></div>\n")
         self.serveFooter()
 
     def serveDefault(self):
@@ -337,17 +338,23 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        self.serveHeader("graphs")
+        self.serveHeader("graph")
         self.serveMotes("Graph", qs, False)
 
         if "action" in qs:
             if qs["action"][0] == "Start":
+                if not motes.anySelected():
+                    self.serveError("no motes selected!")
+                    return
+                if isListening:
+                    self.serveError("already listening!")
+                    return
                 openAllSerial()
             else:
                 closeAllSerial()
 
         action = "Stop" if isListening else "Start"
-        self.serveBody("graphs", {"MOTE_ACTION": action})
+        self.serveBody("graph", {"MOTE_ACTION": action})
         self.serveFooter()
 
     def serveListen(self, qs):
@@ -360,6 +367,12 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         if "action" in qs:
             if qs["action"][0] == "Start":
+                if not motes.anySelected():
+                    self.serveError("no motes selected!")
+                    return
+                if isListening:
+                    self.serveError("already listening!")
+                    return
                 openAllSerial()
             else:
                 closeAllSerial()
@@ -479,9 +492,9 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.serveConfig(qs)
         elif o.path == "/files":
             self.serveFiles(qs)
-        elif o.path == "/graphs":
+        elif o.path == "/graph":
             self.serveGraphs(qs)
-        elif o.path == "/graphs-data":
+        elif o.path == "/graph-data":
             self.serveGraphsData(qs)
         elif o.path == "/upload":
             self.serveUpload(qs)
@@ -491,7 +504,7 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.serveListenData(qs)
         elif o.path == "/test":
             self.serveTest(qs)
-        elif o.path[:8] == "/jquery-":
+        elif o.path[-3:] == ".js":
             self.serveFile("javascript" + o.path, 'application/javascript')
         elif o.path[-4:] == ".css":
             self.serveFile(settingsInstance.getCfgValue("htmlDirectory") + o.path, 'text/css')
@@ -521,10 +534,16 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         file_data = None
 
         if "compile" in form:
-            lastUploadWasSEAL = form["language"].value.strip() == "SEAL"
+            if "language" in form:
+                lastUploadWasSEAL = form["language"].value.strip() == "SEAL"
+            else:
+                lastUploadWasSEAL = False
             settingsInstance.setCfgValue("isSealCode", lastUploadWasSEAL)
         if "upload" in form:
-            slow = form["slow"].value == "on"
+            if "slow" in form:
+                slow = form["slow"].value == "on"
+            else:
+                slow = False
             settingsInstance.setCfgValue("slowUpload", slow)
         settingsInstance.save()
 
@@ -538,9 +557,31 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             file_data = None
 
+        # check if what to upload is provided
         if not file_data and not code:
             self.serveHeader("upload")
             self.serveError("neither filename nor code specified!")
+            return
+
+        i = 0
+        for m in motes.getMotes():
+            name = "mote" + str(i)
+            if name in form:
+                isChecked = form[name].value == "on"
+            else:
+                isChecked = False
+
+            if isChecked:
+                m.isSelected = True
+            else:
+                m.isSelected = False
+            i += 1
+        # remembed which motes were selected and which not
+        motes.storeSelected()
+        # check if any motes are selected upload is provided
+        if not motes.anySelected():
+            self.serveHeader("upload")
+            self.serveError("no motes selected!")
             return
 
         retcode = 0
@@ -603,16 +644,20 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.serveHeader("upload")
         self.serveMotes("Upload", {}, True)
         if retcode == 0:
-            self.writeChunk("<strong>Upload done!</strong>")
+            self.writeChunk("<strong>Upload done!</strong></div>")
         else:
-            self.writeChunk("<strong>Upload failed!</strong>")
+            self.writeChunk("<strong>Upload failed!</strong></div>")
         self.serveFooter()
+        motes.deselectAll()
+
+class ThreadingHTTPServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
+    pass
+
 
 def main():
     try:
-        # openAllSerial()
         port = settingsInstance.getCfgValueAsInt("port", HTTP_SERVER_PORT)
-        server = BaseHTTPServer.HTTPServer(('', port), HttpServerHandler)
+        server = ThreadingHTTPServer(('', port), HttpServerHandler)
         motes.addAll()
         time.sleep(1)
         print("<http-server>: started, listening to TCP port {}, serial baudrate {}".format(port,
