@@ -67,4 +67,6 @@ void fatFsFileFlush(FILE *handle);
 
 bool fatfsGoToPosition(FILE *handle, uint32_t newPosition);
 
+void fatFsGetFiles(char *buffer, uint16_t bufferSize);
+
 #endif

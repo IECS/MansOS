@@ -43,7 +43,9 @@ void posixStdioInit(void)
 // flush a file
 int fflush(FILE *fp)
 {
+#if USE_FATFS
     fatFsFileFlush(fp);
+#endif
     return 0;
 }
 
@@ -51,6 +53,7 @@ int fflush(FILE *fp)
 FILE *fopen(const char *__restrict filename,
             const char *__restrict modes)
 {
+#if USE_FATFS
     int i;
     for (i = 0; i < MAX_OPEN_FILES; ++i) {
         if (openFiles[i].fd == -1) break;
@@ -124,16 +127,18 @@ FILE *fopen(const char *__restrict filename,
     // TODO: truncate if needed
 
     return result;
+#else
+    return NULL;
+#endif
 }
 
 // close a file
 int fclose(FILE *fp)
 {
-    // flush it
-    // fflush(fp);
-
+#if USE_FATFS
     // close it on the file system
     fatFsFileClose(fp);
+#endif
 
     fp->fd = -1;
 
@@ -144,20 +149,30 @@ int fclose(FILE *fp)
 size_t fread(void *__restrict ptr, size_t size,
              size_t n, FILE *__restrict fp)
 {
+#if USE_FATFS
     return fatFsRead(fp, ptr, size * n);
+#else
+    return 0;
+#endif
 }
 
 // write to a file
 size_t fwrite(const void *__restrict ptr, size_t size,
               size_t n, FILE *__restrict fp)
 {
+#if USE_FATFS
     return fatFsWrite(fp, ptr, size * n);
+#else
+    return 0;
+#endif
 }
 
 // delete a file
 int remove(const char *filename)
 {
+#if USE_FATFS
     fatFsFileRemove(filename);
+#endif
     return 0;
 }
 
@@ -187,6 +202,8 @@ int fseek(FILE *fp, long offset, int whence)
     }
     // fine; do it!
     newPos += offset;
+#if USE_FATFS
     fatfsGoToPosition(fp, newPos);
+#endif
     return 0;
 }
