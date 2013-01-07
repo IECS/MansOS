@@ -62,8 +62,9 @@ class Settings(object):
                 f.write('=')
                 if isinstance(value, list):
                     # value list
-                    for v in value:
-                        f.write(v + ",")
+#                    for v in value:
+#                        f.write(v + ",")
+                    f.write(",".join(value))
                 else:
                     # single value
                     f.write(value)

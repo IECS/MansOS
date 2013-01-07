@@ -245,7 +245,7 @@ class Config(object):
             return
 
         self.mote.platform = platform
-        self.mote.tryToOpenSerial()
+        self.mote.tryToOpenSerial(True)
         if not self.mote.port:
             # self.mote = None
             return
@@ -301,8 +301,9 @@ class Config(object):
         # end of form
         motename = "mote" + str(self.mote.number)
         text += '<input type="hidden" name="' + motename + '_cfg" value="1"/>\n'
-        text += '<input type="hidden" name="sel_' + motename + '" value="' + self.activePlatform.name + '" />\n'
-        text += '<br/><input type="submit" name="get" value="Get values"/> '
+        text += '<input type="hidden" name="sel_' + motename \
+            + '" value="' + self.activePlatform.name + '" />\n'
+        text += '<input type="submit" name="get" value="Get values"/> \n'
         text += '<input type="submit" name="set" value="Set values"/>\n'
         text += '</div></form>\n'
         return (text, True)

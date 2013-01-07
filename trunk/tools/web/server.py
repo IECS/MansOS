@@ -20,10 +20,12 @@ lastUploadCode = ""
 lastUploadConfig = ""
 lastUploadFile = ""
 
+motes = MoteCollection()
+
 def listenSerial():
     global listenTxt
     while isListening:
-        for m in motes:
+        for m in motes.getMotes():
 
             length = m.tryRead(binaryToo = configInstance.configMode)
             if length == 0:
@@ -59,7 +61,7 @@ def closeAllSerial():
     if listenThread:
         listenThread.join()
         listenThread = None
-    for m in motes:
+    for m in motes.getMotes():
         m.closeSerial()
 
 
@@ -73,8 +75,8 @@ def openAllSerial():
     isListening = True
     listenThread = threading.Thread(target=listenSerial)
     listenThread.start()
-    for m in motes:
-        m.tryToOpenSerial()
+    for m in motes.getMotes():
+        m.tryToOpenSerial(False)
 
 # --------------------------------------------
 
@@ -156,7 +158,7 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         c = ""
         i = 0
-        for m in motes:
+        for m in motes.getMotes():
             name = "mote" + str(i)
             isChecked = qs.get(name)
             if isChecked: isChecked = isChecked[0] == 'on'
@@ -169,7 +171,7 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 + ' <input type="checkbox" name="' + name + '"' + isChecked + '/>' + action + '</div>\n'
             i += 1
         # remembed which motes were selected and which not
-        storeSelectedMotes()
+        motes.storeSelected()
 
         if c:
             c = '<div class="motes1">\nDirectly attached motes:\n<br/>\n' + c + '</div>\n'
@@ -179,7 +181,7 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
     def serveMoteMotes(self, qs):
-        if len(motes) == 0:
+        if motes.isEmpty():
             self.serveError("No motes connected!")
             return
 
@@ -187,7 +189,7 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         text += 'Directly attached motes:<br/>\n'
 
         i = 0
-        for m in motes:
+        for m in motes.getMotes():
             name = "mote" + str(i)
 #            isChecked = qs.get(name)
 #            if isChecked: isChecked = isChecked[0] == 'on'
@@ -284,7 +286,7 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     pass
                 break
 
-        if moteIndex is None or moteIndex >= len(motes):
+        if moteIndex is None or moteIndex >= len(motes.getMotes()):
             self.serveError("Config page requested, but mote not specified!")
             return
         
@@ -302,7 +304,7 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                          {"MOTEID_CONFIG" : moteidQS + "_cfg=1",
                           "MOTEID_FILES" : moteidQS + "_files=1"})
 
-        configInstance.setMote(motes[moteIndex], platform)
+        configInstance.setMote(motes.getMote(moteIndex), platform)
 
         # fill config values from the mote / send new values to the mote
         if "get" in qs:
@@ -355,15 +357,17 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
         self.serveHeader("listen")
         self.serveMotes("Listen", qs, False)
+
         if "action" in qs:
-            if qs["action"][0] == "start":
+            if qs["action"][0] == "Start":
                 openAllSerial()
             else:
                 closeAllSerial()
 
         txt = ""
         for line in listenTxt:
-            txt += "&nbsp;&nbsp;&nbsp;&nbsp;" + line + "<br/>"
+            txt += line + "<br/>"
+
         action = "Stop" if isListening else "Start"
 
         if "dataFile" in qs:
@@ -456,7 +460,7 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
         text = ""
         for line in listenTxt:
-            text += "&nbsp;&nbsp;&nbsp;&nbsp;" + line + "<br/>"
+            text += line + "<br/>"
         if text:
             self.writeChunk(text)
         self.writeFinalChunk()
@@ -553,7 +557,7 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 outFile.close()
 
             closeAllSerial()
-            for m in motes:
+            for m in motes.getMotes():
                 r = m.tryToUpload(filename)
                 if r != 0: retcode = r
 
@@ -590,7 +594,7 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 outFile.close()
 
             closeAllSerial()
-            for m in motes:
+            for m in motes.getMotes():
                 r = m.tryToCompileAndUpload(filename)
                 if r != 0: retcode = r
 
@@ -609,8 +613,7 @@ def main():
         # openAllSerial()
         port = settingsInstance.getCfgValueAsInt("port", HTTP_SERVER_PORT)
         server = BaseHTTPServer.HTTPServer(('', port), HttpServerHandler)
-        addAllMotes()
-        print "motes=", motes
+        motes.addAll()
         time.sleep(1)
         print("<http-server>: started, listening to TCP port {}, serial baudrate {}".format(port,
               settingsInstance.getCfgValueAsInt("baudrate", SERIAL_BAUDRATE)))

@@ -36,6 +36,7 @@ div.topmenu {
     width:100%;
 }
 div.form {
+    margin-bottom:12px;
 }
 div.title {
     font-size:120%;
@@ -60,6 +61,7 @@ div.error2 {
     margin:0 auto;
     padding-top:6px;
     padding-bottom:10px;
+    padding-left:12px;
     border:2px;
     border-style:dashed;
 }
