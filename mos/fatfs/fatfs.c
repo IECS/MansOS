@@ -271,7 +271,7 @@ static inline bool fatNameGet(DirectoryEntry_t *entry, char *buffer)
     if (entry->filename[0] == FILENAME_E5) {
         buffer[0] = 0xE5;
     }
-    buffer[9] = '.';
+    buffer[8] = '.';
     memcpy(buffer + 9, entry->extension, 3);
     return true;
 }
@@ -283,18 +283,18 @@ static inline bool fatNameMatch(DirectoryEntry_t *entry,
             && !memcmp(extension, entry->extension, 3);
 }
 
-static inline bool fatCharacterAcceptable(char c)
+static inline bool isFatCharacterAcceptable(char c)
 {
     if (isalnum(c)) return true;
     if (c == ' ') return true;
     if (c >= 128) return true;
     if (c == '!' || c == '#'
-            || c =='$' || c == '%'
-            || c =='&' || c == '\''
-            || c =='(' || c ==')'
+            || c == '$' || c == '%'
+            || c == '&' || c == '\''
+            || c == '(' || c == ')'
             || c == '-' || c == '@'
             || c == '^' || c == '_'
-            || c == '`' || c =='{'
+            || c == '`' || c == '{'
             || c == '}' || c == '~') {
         return true;
     }
@@ -314,12 +314,12 @@ bool fatNameAcceptable(const char *name)
             // extension
             for (j = 0; j < 3; ++j) {
                 if (name[i + j] == 0) return true;
-                if (!fatCharacterAcceptable(name[i + j])) return false;
+                if (!isFatCharacterAcceptable(name[i + j])) return false;
             }
             i += j;
             break;
         }
-        if (!fatCharacterAcceptable(name[i])) return false;
+        if (!isFatCharacterAcceptable(name[i])) return false;
     }
 
     // too long?
@@ -362,11 +362,12 @@ DirectoryEntry_t *fatFsFileSearch(const char *__restrict name,
     return NULL;
 }
 
-void fatFsGetFiles(char *p, uint16_t bufferSize)
+uint16_t fatFsGetFiles(char *p, uint16_t bufferSize)
 {
     const char *end = p + bufferSize;
     uint16_t i;
     sector_t numRootSectors = fatInfo.numRootEntries * 32 / SDCARD_SECTOR_SIZE;
+    uint16_t length = 0;
 
     if (bufferSize == 0) goto fail;
     for (i = 0; i < numRootSectors; ++i) {
@@ -376,10 +377,11 @@ void fatFsGetFiles(char *p, uint16_t bufferSize)
         uint16_t j;
         for (j = 0; j < SDCARD_SECTOR_SIZE / 32; ++j) {
             DirectoryEntry_t *e = &cache.entries[j];
-            if (end - p >= 8 + 1 + 3 + 1) {
+            if (end - p >= 13) {
                 if (fatNameGet(e, p)) {
-                    p += 8 + 1 + 3;
+                    p += 12;
                     *p++ = '\n';
+                    length += 13;
                 }
             }
         }
@@ -388,7 +390,7 @@ void fatFsGetFiles(char *p, uint16_t bufferSize)
     *(p - 1) = '\0';
 
   fail:
-    return;
+    return length;
 }
 
 DirectoryEntry_t *fatFsFileCreate(const char *__restrict name,
@@ -406,6 +408,7 @@ DirectoryEntry_t *fatFsFileCreate(const char *__restrict name,
     }
 
     *entryIndex = 0;
+
     for (i = 0; i < numRootSectors; ++i) {
         if (!cacheRawBlock(fatInfo.rootDirStart + i, false)) {
             DPRINTF("cacheRawBlock failed\n");

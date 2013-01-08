@@ -39,7 +39,7 @@ void appMain(void)
     fclose(f);
 
     f = fopen(FILE_NAME, "a");
-    fwrite("hello world", 1, 11, f);
+    fwrite("hello " FILE_NAME, 1, 18, f);
     fclose(f);
 
     remove(FILE_NAME);
