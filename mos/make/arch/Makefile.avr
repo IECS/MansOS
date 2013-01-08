@@ -34,12 +34,14 @@ CFLAGS += -g -Wall
 BSL ?= avrdude
 BSLCONFIG ?=
 
-PROGRAMMER ?= stk500v1 
-PROG_BAUDRATE ?= 57600
+# for Arduino Duemilanove use this in application's config file:
+#PROGRAMMER ?= stk500v1 
+#PROG_BAUDRATE ?= 57600
 
 # for Arduino Uno use this in application's config file:
-#PROG_BAUDRATE=115200
-#PROGRAMMER=arduino
+PROG_BAUDRATE=115200
+PROGRAMMER=arduino
+CFLAGS += -DARDUINO_UNO=1
 
 include $(MAKEFILE_GCC)
 
