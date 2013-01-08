@@ -88,8 +88,9 @@ void eepromWrite(uint16_t addr, const void *buf, size_t len)
     msp430flashWrite(new, &v, sizeof(v));
 
     /* Copy data, don't use msp430flashRead() to avoid the need of a buffer */
-    if (0 < addr)
+    if (0 < addr) {
         msp430flashWrite(new + 1, (const void *)(old + 1), addr);
+    }
     msp430flashWrite(new + 1 + addr, buf, len);
     if (addr + len < EEPROM_SIZE)
     {
