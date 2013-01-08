@@ -30,7 +30,6 @@ from serial import Serial, PARITY_NONE, SerialException
 
 from frame import Frame
 from seal_syntax import SealSyntax
-from translater import Translater
 from output_area import OutputArea
 from tab_manager import TabManager
 from listen_module import ListenModule
@@ -146,10 +145,6 @@ class ApiCore:
         # Defines seal syntax
         self.sealSyntax = SealSyntax(self)
 
-        # Init translation module
-        self.translater = Translater(self)
-        self.tr = self.translater.translate
-
         # Init output_tools
         #self.outputTools = OutputTools(self.emptyFrame, self)
 
@@ -193,8 +188,7 @@ class ApiCore:
 # should go through here, but this ain't perfect world :(
 
         self.getKeywords = self.sealSyntax.getKeywords
-        self.tr = self.translater.translate
-        #self.printInfo = self.dummyPrint
+
         self.printOutput = self.dummyPrint
 
 # Check if icon can be found
@@ -211,7 +205,7 @@ class ApiCore:
         self.syncModuleCheckboxes()
 
 # Initialize upload targets
-        self.uploadTargets = ([], self.tr('the default device'))
+        self.uploadTargets = ([], localize('the default device'))
 
 # Load last used tabs
         self.tabManager.loadRememberedTabs()
@@ -389,7 +383,7 @@ class ApiCore:
             self.activePlatform = self.platforms.index(platform)
         else:
             self.activePlatform = self.platforms.index("telosb")
-        self.printInfo(self.tr("Changed platform to") + " " + self.getActivePlatform() + "\n")
+        self.printInfo(localize("Changed platform to") + " " + self.getActivePlatform() + "\n")
 
     def getActivePlatform(self):
         if self.platformOnly == None:
