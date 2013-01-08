@@ -159,6 +159,9 @@ PSOURCES-$(USE_SMP) += $(MOS)/smp/proxy.c
 PSOURCES-$(USE_SMP) += $(MOS)/smp/codec.c
 PSOURCES-$(USE_SMP) += $(MOS)/smp/command.c
 
+# Web management protocol
+PSOURCES-$(USE_WMP) += $(MOS)/wmp/wmp.c
+
 ifneq ($(USE_NET),y)
 PSOURCES-$(USE_ADDRESSING) += $(MOS)/net/nonet.c
 endif

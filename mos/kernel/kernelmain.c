@@ -30,6 +30,7 @@
 #include <random.h>
 #include <fs/init.h>
 #include <smp/smp.h>
+#include <wmp/wmp.h>
 #include <lib/assert.h>
 #if USE_EXT_FLASH
 #include <extflash.h>
@@ -56,6 +57,7 @@
 #if USE_DAC7718
 #include <dac7718/dac7718.h>
 #endif
+#include <fatfs/fatfs.h>
 
 #if (defined DEBUG && !defined DPRINT_TO_RADIO)
 #define INIT_PRINTF(...) PRINTF(__VA_ARGS__)
@@ -192,6 +194,10 @@ static inline void initSystem(void)
     INIT_PRINTF("init POSIX-like file routines...\n");
     posixStdioInit();
 //# endif
+#endif
+#ifdef USE_WMP
+    INIT_PRINTF("init WMP...\n");
+    wmpInit();
 #endif
 #ifdef USE_SEAL_COMM
     INIT_PRINTF("init SEAL communications...\n");

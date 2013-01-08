@@ -51,6 +51,7 @@ configComponents = set()
 
 allSensors = []
 allOutputs = []
+allLeds = []
 
 def escape(name):
     return name.replace(" ", "")
@@ -76,7 +77,12 @@ class Sensor(Component):
 class Output(Component):
     def __init__(self, name, varname, code):
         super(Output, self).__init__(name, varname, code)
-        self.selected = False
+        self.isSelected = False
+
+class Led(Component):
+    def __init__(self, name, varname, code):
+        super(Led, self).__init__(name, varname, code)
+        self.isOn = False
 
 """
     outputFile.write(s)
@@ -92,6 +98,12 @@ def generateOutput(outputFile, name, varname):
     codename = "WMP_OUTPUT_" + varname.upper()
     outputFile.write(varname + ' = Output("' + name + '", "' + varname + '", ' + codename + ')\n')
     allOutputs.append(varname)
+
+
+def generateLed(outputFile, name, code):
+    varname = name[0].lower() + name[1:]
+    outputFile.write(varname + ' = Led("' + name + '", "' + varname + '", ' + str(code) + ')\n')
+    allLeds.append(varname)
 
 
 def generateBody(outputFile):
@@ -127,6 +139,7 @@ def generateBody(outputFile):
 
     outputFile.write("\n")
     generateOutput(outputFile, "Serial port", "serial")
+    outputFile.write("serial.isSelected = True\n") # enabled by default
     if platform == "testbed"\
             or platform == "testbed2"\
             or platform == "sm3":
@@ -134,12 +147,18 @@ def generateBody(outputFile):
         generateOutput(outputFile, "SD card (without using filesystem)", "SDcard")
         generateOutput(outputFile, "File (on SD card)", "file")
 
+    outputFile.write("\n")
+    generateLed(outputFile, "Red", 0)
+    generateLed(outputFile, "Green", 1)
+    generateLed(outputFile, "Blue", 2)
+
 
 def generateFooter(outputFile):
     # footer
     outputFile.write("\n")
     outputFile.write("sensors = [" + ", ".join(allSensors) + "]\n")
     outputFile.write("outputs = [" + ", ".join(allOutputs) + "]\n")
+    outputFile.write("leds = [" + ", ".join(allLeds) + "]\n")
 
 
 def main():
