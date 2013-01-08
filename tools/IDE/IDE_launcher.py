@@ -100,7 +100,10 @@ try:
             exit(1)
 
         print ("Launching MansOS IDE...")
-        os.execl(executable, executable, * ['IDE.pyw'])
+        args = "IDE.pyw "
+        if len(argv) > 1:
+            args += argv[1]
+        os.execl(executable, executable, args)
     except Exception as e:
         print ("Oops! something went wrong!")
         print (e)
