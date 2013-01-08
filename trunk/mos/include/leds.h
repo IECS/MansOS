@@ -105,7 +105,7 @@ uint_t ledsGet(void);              // Which leds are on? Returns a bitmask
 #define LED_ALIAS2( alias, name )                                       \
     enum { alias##_mask = name##_mask };                                \
     static inline uint_t alias##Mask()   { return name##Mask(); }       \
-    static inline uint_t alias##Get()    { return name##Mask(); }       \
+    static inline uint_t alias##Get()    { return name##Get(); }        \
     static inline void alias##Set( val ) { name##Set( val ); }          \
     static inline void alias##On()       { name##On(); }                \
     static inline void alias##Off()      { name##Off(); }               \
