@@ -2,7 +2,7 @@
 # MansOS web server - mote handler class
 #
 
-import serial, subprocess, sys
+import serial, subprocess, sys, time
 from serial.tools import list_ports
 from settings import *
 
@@ -65,7 +65,8 @@ class Mote(object):
     def tryRead(self, binaryToo):
         numRead = 0
         if self.port:
-            while self.port.inWaiting():
+            try:
+              while self.port.inWaiting():
                 c = self.port.read(1)
 
                 # save to file if required
@@ -79,6 +80,10 @@ class Mote(object):
                 if binaryToo or isascii(c):
                     self.buffer += c
                     numRead += 1
+            except Exception, e:
+              print "\ntryRead exception:\t", e
+              self.port.close()
+              self.port = None
 
         return numRead
 

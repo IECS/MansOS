@@ -16,7 +16,12 @@ class Sensor(Component):
 class Output(Component):
     def __init__(self, name, varname, code):
         super(Output, self).__init__(name, varname, code)
-        self.selected = False
+        self.isSelected = False
+
+class Led(Component):
+    def __init__(self, name, varname, code):
+        super(Led, self).__init__(name, varname, code)
+        self.isOn = False
 
 light = Sensor("Light", "light", WMP_SENSOR_LIGHT)
 humidity = Sensor("Humidity", "humidity", WMP_SENSOR_HUMIDITY)
@@ -31,8 +36,14 @@ ADC6 = Sensor("ADC channel 6", "ADC6", WMP_SENSOR_ADC6)
 ADC7 = Sensor("ADC channel 7", "ADC7", WMP_SENSOR_ADC7)
 
 serial = Output("Serial port", "serial", WMP_OUTPUT_SERIAL)
+serial.isSelected = True
 SDcard = Output("SD card (without using filesystem)", "SDcard", WMP_OUTPUT_SDCARD)
 file = Output("File (on SD card)", "file", WMP_OUTPUT_FILE)
 
+red = Led("Red", "red", 0)
+green = Led("Green", "green", 1)
+blue = Led("Blue", "blue", 2)
+
 sensors = [light, humidity, battery, ADC0, ADC1, ADC2, ADC3, ADC4, ADC5, ADC6, ADC7]
 outputs = [serial, SDcard, file]
+leds = [red, green, blue]
