@@ -24,17 +24,17 @@
 
 import wx
 
-from output_area import OutputArea
-from helperFunctions import listenSerialPort
-from myThread import MyThread
+from src.output_area import OutputArea
+from src.helperFunctions import listenSerialPort
+from src.myThread import MyThread
 from src.Motelist import Motelist, Mote
+from src.globals import localize
 
 class ListenModule(wx.Panel):
     def __init__(self, parent, API):
         super(ListenModule, self).__init__(parent)
         self.API = API
-        # Just a shorter name
-        self.tr = self.API.translater.translate
+
         self.haveMote = False
         self.listening = False
         self.args = {
@@ -49,8 +49,8 @@ class ListenModule(wx.Panel):
         self.listenControls = wx.BoxSizer(wx.HORIZONTAL)
 
         self.ports = wx.ComboBox(self, choices = [], size = (300, -1))
-        self.clear = wx.Button(self, label = self.tr("Start listening"))
-        self.refresh = wx.Button(self, label = self.tr("Refresh"))
+        self.clear = wx.Button(self, label = localize("Start listening"))
+        self.refresh = wx.Button(self, label = localize("Refresh"))
 
         # Init outputArea for output
         self.outputArea = OutputArea(self, self.API, 1)
@@ -82,7 +82,7 @@ class ListenModule(wx.Panel):
         if type(event) is str:
             if self.listening:
                 self.listening = False
-                self.clear.SetLabel(self.tr('Start listening'))
+                self.clear.SetLabel(localize('Start listening'))
                 self.updateStatus("\nListening stopped.\n", False)
             return
         if self.ports.GetValue() == "No devices found":
@@ -90,10 +90,10 @@ class ListenModule(wx.Panel):
 
         self.listening = not self.listening
         if self.listening:
-            self.clear.SetLabel(self.tr('Stop listening'))
+            self.clear.SetLabel(localize('Stop listening'))
             self.updateStatus("\nListening started.\n", False)
         else:
-            self.clear.SetLabel(self.tr('Start listening'))
+            self.clear.SetLabel(localize('Start listening'))
             self.updateStatus("\nListening stopped.\n", False)
         # Redraw button if size have changed
         self.clear.SetSize(self.clear.GetEffectiveMinSize())
@@ -115,7 +115,7 @@ class ListenModule(wx.Panel):
         self.API.supressTabSwitching = True
         self.updateStatus("Populating motelist ... ", False)
         self.ports.Clear()
-        self.ports.Append(self.tr("Searching devices") + "...", 0)
+        self.ports.Append(localize("Searching devices") + "...", 0)
         self.ports.Disable()
         Motelist.update()
 
