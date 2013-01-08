@@ -5,7 +5,11 @@
 from wmp import *
 import time
 
-MAX_TIME_WAIT_FOR_REPLY = 0.1 # max time to wait for a single reply
+# TODO: populate this from mansos Makefiles?
+supportedPlatforms = ["telosb", "testbed", "testbed2", "sm3", "xm1000", "z1"]
+
+#MAX_TIME_WAIT_FOR_REPLY = 0.1 # max time to wait for a single reply
+MAX_TIME_WAIT_FOR_REPLY = 1   # max time to wait for a single reply, seconds
 MAX_RETRIES = 3               # send 3 times before giving up
 
 def toTitleCase(s):
@@ -34,18 +38,59 @@ def le32write(number):
     args[3] = (number >> 24) & 0xff
     return args
 
+def isFatCharacterAcceptable(c):
+    if c.isalnum(): return True
+    if c == ' ': return True
+    if c >= 128: return True
+    if c == '!' or c == '#' \
+            or c == '$' or c == '%' \
+            or c == '&' or c == '\'' \
+            or c == '(' or c == ')' \
+            or c == '-' or c == '@' \
+            or c == '^' or c == '_' \
+            or c == '`' or c == '{' \
+            or c == '}' or c == '~':
+        return True
+    return False
 
-# TODO: populate this from mansos Makefiles?
-supportedPlatforms = ["telosb", "testbed", "testbed2", "sm3", "xm1000", "z1"]
+
+def isValidFatFilename(filename):
+    baseLen = 0
+    extLen = 0
+    numDots = 0
+    for c in filename:
+        if c == '.' and numDots == 0:
+            numDots += 1
+            continue
+
+        if numDots == 0:
+            baseLen += 1
+        else:
+            extLen += 1
+
+        if not isFatCharacterAcceptable(c):
+            return False
+
+    return baseLen >= 1 and baseLen <= 8 and extLen <= 3
+
+def fatFilenamePrettify(filename):
+    result = ""
+    for c in filename:
+        if c != ' ' and isFatCharacterAcceptable(c):
+            result += c
+    return result
+
 
 class Platform(object):
-    def __init__(self, name, sensors, outputs):
+    def __init__(self, name, sensors, outputs, leds):
         self.name = name
         self.sensors = sensors
         self.outputs = outputs
+        self.leds = leds
 
 
 def wmpSendCommand(ser, command, args):
+    print "send cmd=", command, "args=", args
     txFrame = "%c%c%c" % (WMP_START_CHARACTER, command, len(args))
     for a in args:
         txFrame += chr(a)
@@ -56,7 +101,7 @@ def wmpSendCommand(ser, command, args):
         ser.write(bytearray([ord(c)]))
     ser.write(bytearray([crc]))
 
-    print "command sent!"
+    # print "command sent!"
 
 
 class SerialPacket(object):
@@ -99,12 +144,13 @@ class Config(object):
             except:
                 module = None
             if module:
-                self.platforms[platform] = Platform(platform, module.sensors, module.outputs)
+                self.platforms[platform] = Platform(platform,
+                                                    module.sensors, module.outputs, module.leds)
 
 
     def wmpProcessCommand(self):
-        print "wmpProcessCommand"
-        print "command=", self.currentSp.command
+        #print "wmpProcessCommand"
+        print "rcdv command=", (self.currentSp.command & ~WMP_CMD_REPLY_FLAG), " args=", self.currentSp.arguments
         if not (self.currentSp.command & WMP_CMD_REPLY_FLAG):
             print "not a reply, ignoring"
             return
@@ -161,6 +207,7 @@ class Config(object):
         return (None, True)
 
     def wmpExchangeCommand(self, command, arguments):
+#        print self.mote.port
         returnArguments = [] # default
         ok = False
         for i in range(MAX_RETRIES):
@@ -171,12 +218,17 @@ class Config(object):
             while time.time() < iterEndTime:
                 if self.lastSp:
                     if self.lastSp.command == command:
+                        # print "  command OK"
                         returnArguments = self.lastSp.arguments
                         ok = True
+                    else:
+                        # print "  wrong/unexpected command"
+                        pass
                     self.lastSp = None
                     break
-                print "waiting..."
+                # print "waiting..."
                 time.sleep(0.01)
+            if ok: break
         if not ok: print "reply NOT received!"
         return returnArguments
 
@@ -189,8 +241,46 @@ class Config(object):
     def wmpGetOutputConfig(self, sensorCode):
         args = self.wmpExchangeCommand(WMP_CMD_GET_OUTPUT, [sensorCode])
         if len(args) < 2:
-            return 0 # default
+            return False # default
         return bool(args[1])
+
+    def wmpGetLedConfig(self, ledCode):
+        args = self.wmpExchangeCommand(WMP_CMD_GET_LED, [ledCode])
+        if len(args) < 2:
+            return False # default
+        return bool(args[1])
+
+    def updateConfigValues(self, qs):
+        if "set" not in qs:
+            return
+
+        for s in self.activePlatform.sensors:
+            if s.varname in qs:
+                try:
+                    t = int(qs[s.varname][0], 0)
+                    s.period = t
+                except:
+                    pass
+
+        for s in self.activePlatform.outputs:
+            if s.varname in qs:
+                try:
+                    t = qs[s.varname][0] == "on"
+                    s.isSelected = t
+                except:
+                    pass
+            else:
+                s.isSelected = False
+
+        for s in self.activePlatform.leds:
+            if s.varname in qs:
+                try:
+                    t = qs[s.varname][0] == "on"
+                    s.isOn = t
+                except:
+                    pass
+            else:
+                s.isOn = False
 
     def getConfigValues(self):
         (errstr, ok) = self.checkValid()
@@ -200,10 +290,13 @@ class Config(object):
         self.configMode = True
 
         for s in self.activePlatform.sensors:
-            s.period = wmpGetSensorConfig(s.code)
+            s.period = self.wmpGetSensorConfig(s.code)
 
         for s in self.activePlatform.outputs:
-            s.selected = wmpGetOutputConfig(s.code)
+            s.isSelected = self.wmpGetOutputConfig(s.code)
+
+        for s in self.activePlatform.leds:
+            s.isOn = self.wmpGetLedConfig(s.code)
 
         self.configMode = False
         return "<strong>Configuration values read!</strong><br/>"
@@ -217,15 +310,17 @@ class Config(object):
         self.configMode = True
 
         for s in self.activePlatform.sensors:
-#            print "process sensor", s.varname
             args = [s.code]
-            args.extend(le32write(s.period))
-            self.wmpExchangeCommand(self.mote.port, WMP_CMD_SET_SENSOR, args)
+            args += le32write(s.period)
+            self.wmpExchangeCommand(WMP_CMD_SET_SENSOR, args)
 
         for s in self.activePlatform.outputs:
-#            print "process output", s.varname
-            args = [s.code, int(s.selected)]
-            self.wmpExchangeCommand(self.mote.port, WMP_CMD_SET_OUTPUT, args)
+            args = [s.code, int(s.isSelected)]
+            self.wmpExchangeCommand(WMP_CMD_SET_OUTPUT, args)
+
+        for s in self.activePlatform.leds:
+            args = [s.code, int(s.isOn)]
+            self.wmpExchangeCommand(WMP_CMD_SET_LED, args)
 
         print "done!"
         self.configMode = False
@@ -233,8 +328,9 @@ class Config(object):
 
 
     def setMote(self, mote, platform):
-        if self.mote:
+        if self.mote and self.mote != mote:
             self.mote.closeSerial()
+            time.sleep(0.1)
 
         self.mote = mote
         self.activePlatform = self.platforms.get(platform, None)
@@ -245,18 +341,69 @@ class Config(object):
             return
 
         self.mote.platform = platform
-        self.mote.tryToOpenSerial(True)
+        if not self.mote.port:
+            self.mote.tryToOpenSerial(True)
+            time.sleep(2)
         if not self.mote.port:
             # self.mote = None
             return
 
 
-    def getFileListHTML(self):
+    def getFileContentsHTML(self, qs):
         (errst, ok) = self.checkValid()
         if not ok:
             return (errst, False)
 
-        text = 'File list will be here!\n'
+        if "filename" not in qs:
+            errst = "file name no specified!"
+            return (errst, False)
+
+        filename = qs["filename"][0]
+        if not isValidFatFilename(filename):
+            errst = 'file name "' + filename + '" is not valid!'
+            return (errst, False)
+
+        self.configMode = True
+        args = self.wmpExchangeCommand(WMP_CMD_GET_FILE, bytearray(filename))
+        self.configMode = False
+
+        contents = str(bytearray(args))
+
+        text = 'File ' + filename + ' contents:<br/>\n'
+        text += contents
+        text += '\n</br>\n'
+
+        return (text, True)
+
+
+    def getFileListHTML(self, moteIndex):
+        (errst, ok) = self.checkValid()
+        if not ok:
+            return (errst, False)
+
+        self.configMode = True
+        args = self.wmpExchangeCommand(WMP_CMD_GET_FILELIST, [])
+        self.configMode = False
+
+        namelist = str(bytearray(args)).split('\n')
+
+        motename = "mote" + str(moteIndex)
+
+        if len(namelist) == 0:
+            text = "The SD card is empty!"
+        else:
+            text = '<strong>Files:</strong><br/>\n'
+            text += '<div class="files">'
+            for filename in namelist:
+                text += '<div class="entry">'
+                filename = fatFilenamePrettify(filename)
+                text += filename
+                text += '&nbsp;&nbsp;<a href="config?filename=' + filename + '&' \
+                    + motename + '_files=1&sel_' + motename + '=' + self.activePlatform.name \
+                    + '">File contents</a>'
+                text += "</div>\n"
+            text += "</div>"
+
         return (text, True)
 
 
@@ -279,7 +426,7 @@ class Config(object):
         text += '<strong>Sensor reading periods (in milliseconds, "0" means disabled):</strong><br/>\n'
         text += '<div class="subcontents">\n'
         for s in self.activePlatform.sensors:
-            text += '<div class="sensor">'
+            text += '<div class="entry">'
             text += toTitleCase(s.name) + ": "
             text += '<input type="text" name="' + s.varname + '" value="' + str(s.period) + '"/><br/></div>\n'
         text += '</div>\n'
@@ -288,13 +435,24 @@ class Config(object):
         text += '<strong>System outputs:</strong><br/>\n'
         text += '<div class="subcontents">\n'
         for s in self.activePlatform.outputs:
-            text += '<div class="output">'
+            text += '<div class="entry">'
             text += '<input type="checkbox" name="' + s.varname + '"'
-            if s.selected: text += ' checked="checked"'
+            if s.isSelected: text += ' checked="checked"'
             text += '/> Write to ' + toCamelCase(s.name)
             if s.varname == "file":
                 text += '<br/><label for="filename">Filename: </label>'
                 text += '<input type="input" name="filename"/>\n'
+            text += '<br/></div>\n'
+        text += '</div>\n'
+
+        # leds
+        text += '<strong>LED:</strong><br/>\n'
+        text += '<div class="subcontents">\n'
+        for s in self.activePlatform.leds:
+            text += '<div class="entry">'
+            text += '<input type="checkbox" name="' + s.varname + '"'
+            if s.isOn: text += ' checked="checked"'
+            text += '/> ' + s.name + " LED on"
             text += '<br/></div>\n'
         text += '</div>\n'
 

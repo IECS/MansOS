@@ -161,17 +161,17 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         i = 0
         for m in motes.getMotes():
             name = "mote" + str(i)
-            isChecked = qs.get(name)
-            if isChecked: isChecked = isChecked[0] == 'on'
-            if isChecked:
-                m.isSelected = True
-            else:
-                m.isSelected = False
-            isChecked = ' checked="checked"' if isChecked else ""
+
+            if name in qs:
+                m.isSelected = qs[name][0] == 'on'
+
+            checked = ' checked="checked"' if m.isSelected else ""
+
             c += '<div class="mote"><strong>Mote: </strong>' + m.portName \
-                + ' <input type="checkbox" name="' + name + '"' + isChecked + '/>' + action + '</div>\n'
+                + ' <input type="checkbox" name="' + name + '"' + checked + '/>' + action + '</div>\n'
             i += 1
-        # remembed which motes were selected and which not
+
+        # remember which motes were selected and which were not
         motes.storeSelected()
 
         if c:
@@ -276,13 +276,13 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         openAllSerial()
 
         moteIndex = None
-        fileListRequired = False
+        filesRequired = False
         for s in qs:
             if s[:4] == "mote":
                 pair = s[4:].split('_')
                 try:
                     moteIndex = int(pair[0])
-                    fileListRequired = pair[1] == "files"
+                    filesRequired = pair[1] == "files"
                 except:
                     pass
                 break
@@ -307,6 +307,8 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         configInstance.setMote(motes.getMote(moteIndex), platform)
 
+        configInstance.updateConfigValues(qs)
+
         # fill config values from the mote / send new values to the mote
         if "get" in qs:
             reply = configInstance.getConfigValues()
@@ -315,8 +317,11 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             reply = configInstance.setConfigValues()
             #self.writeChunk(reply)
 
-        if fileListRequired:
-            (text,ok) = configInstance.getFileListHTML()
+        if filesRequired:
+            if "filename" in qs:
+                (text,ok) = configInstance.getFileContentsHTML(qs)
+            else:
+                (text,ok) = configInstance.getFileListHTML(moteIndex)
         else:
             (text,ok) = configInstance.getConfigHTML()
         if not ok:
