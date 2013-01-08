@@ -50,31 +50,38 @@ TEST_TARGETS = \
 	SharingTest				\
 	SleepTest				\
 	SnumTest				\
-	TinyOSEncapsuleTest		\
+	TinyOSEncapsuleTest			\
 	TMP102Test				\
-	UARTRecvPacketTest		\
+	UARTRecvPacketTest			\
 	UARTTest				\
-	SmpTest/DemoBlueLed			        \
-	SmpTest/DemoRedLed			        \
-	UserButtonTest			            \
-	ExpThreadTests/0-Lockup			    \
+	SmpTest/DemoBlueLed			\
+	SmpTest/DemoRedLed			\
+	UserButtonTest				\
+	ExpThreadTests/0-Lockup			\
 	ExpThreadTests/0-Overflow-User		\
 	ExpThreadTests/0-Overflow-Kernel	\
 	ExpThreadTests/1a-Blink-mdelay		\
 	ExpThreadTests/1b-Blink-msleep		\
 	ExpThreadTests/1c-Blink-Multi		\
-	ExpThreadTests/2-Alarms			    \
-	ExpThreadTests/3-Locking		    \
+	ExpThreadTests/2-Alarms			\
+	ExpThreadTests/3-Locking		\
 	ExpThreadTests/3-Locking-Multi		\
-	ExpThreadTests/4-Exit			    \
-	ExpThreadTests/5-Radio		        \
-	ExpThreadTests/6-MAC			    \
+	ExpThreadTests/4-Exit			\
+	ExpThreadTests/5-Radio			\
+	ExpThreadTests/6-MAC			\
 	ExpThreadTests/7-Sockets		\
 	TestBed/AdsTest				\
 	TestBed/DacTest				\
 	ProtoThreadTests/01-PTYield		\
 	ProtoThreadTests/02-PTBlink		\
 	ProtoThreadTests/03-PTRadio		\
+	FatFSTests/01-Format			\
+	FatFSTests/02-Open			\
+	FatFSTests/03-ReadWrite			\
+	FatFSTests/04-CreateRemove		\
+	FatFSTests/05-LongReadWrite		\
+	FatFSTests/06-FilePrint			\
+	FatFSTests/07-FileSeek			\
 
 
 ADVANCED_TARGETS = \
@@ -87,13 +94,14 @@ ADVANCED_TARGETS = \
 	Calendar				\
 	GPSParsing				\
 	GpsProxy				\
-	IMU					    \
-	LPL					    \
+	IMU					\
+	LPL					\
 	Sarauj					\
 	SeePoga					\
 	SensorToLcd				\
-	SensorToLeds			\
+	SensorToLeds				\
 	TimerSense				\
+	WMPTest 				\
 
 SEAL_TARGETS = \
 	Blink					\
