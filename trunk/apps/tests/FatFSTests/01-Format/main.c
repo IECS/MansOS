@@ -83,7 +83,7 @@ int fatFsFormat(void)
     MasterBootRecord_t *mbr;
     FatBootBlock_t *fbs;
     int ret = -1;
-    
+
     redLedOn();
 
     const uint32_t cardSizeInBlocks = sdcardGetSize();
@@ -96,7 +96,10 @@ int fatFsFormat(void)
 
 
 #if DO_FORMAT
-    if (!sdcardReadBlock(0, buffer)) goto fail;
+    if (!sdcardReadBlock(0, buffer)) {
+        PRINTF("read block failed!\n");
+        goto fail;
+    }
 
     // TODO: allow to use superblock only!
 
@@ -116,9 +119,11 @@ int fatFsFormat(void)
     mbr->mbrSig0 = 0x55;
     mbr->mbrSig1 = 0xAA;
 
-    if (!sdcardWriteBlock(0, buffer)) goto fail;
+    if (!sdcardWriteBlock(0, buffer)) {
+        PRINTF("write block failed!\n");
+        goto fail;
+    }
 
-    
     if (!sdcardReadBlock(PARTITION_OFFSET, buffer)) goto fail;
 
     fbs = (FatBootBlock_t *) buffer;
