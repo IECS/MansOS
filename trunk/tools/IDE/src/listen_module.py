@@ -57,21 +57,22 @@ class ListenModule(wx.Panel):
         self.updateStatus = self.outputArea.printLine
         self.clearOutputArea = self.outputArea.clear
 
-        self.listenControls.Add(self.ports)
-        self.listenControls.Add(self.refresh)
-        self.listenControls.Add(self.clear)
+        self.listenControls.Add(self.ports, 1, wx.EXPAND | wx.ALL)
+        self.listenControls.Add(self.refresh, 0, wx.EXPAND | wx.ALL)
+        self.listenControls.Add(self.clear, 0, wx.EXPAND | wx.ALL)
 
         self.main.Add(self.listenControls, 0,
-                      wx.EXPAND | wx.wx.TOP | wx.LEFT | wx.RIGHT, 10);
-        self.main.Add(self.outputArea, 1, wx.EXPAND | wx.ALL, 5);
+                      wx.EXPAND | wx.wx.TOP | wx.LEFT | wx.RIGHT, 5);
+        self.main.Add(self.outputArea, 1, wx.EXPAND | wx.ALL, 0);
 
         self.Bind(wx.EVT_BUTTON, self.doClear, self.clear)
         self.Bind(wx.EVT_BUTTON, self.getMotelist, self.refresh)
         self.Bind(wx.EVT_COMBOBOX, self.changeTarget, self.ports)
         self.Bind(wx.EVT_TEXT, self.changeTarget, self.ports)
 
-        self.SetSizer(self.main)
+        self.SetSizerAndFit(self.main)
         self.main.Fit(self)
+        self.SetAutoLayout(1)
         self.Show()
         Motelist.update()
 

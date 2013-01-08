@@ -139,3 +139,6 @@ class Translater:
             Translater.parent.logMsg(LOG_WARNING, "No translation for " +
                              "'" + lang + "': '" + data + "'")
         return data
+
+
+

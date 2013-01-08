@@ -448,10 +448,11 @@ IDE developed by: Janis Judvaitis, (c) 2011-2012, janis.judvaitis@gmail.com
         # Result is that window stays with maximized height and width, 
         # but is not maximized.
         # TODO: FIX: cache all sizes when resizing and not in maximized mode.
-        self.API.setSetting("Width", self.GetSize()[0])
-        self.API.setSetting("Height", self.GetSize()[1])
-        self.API.setSetting("LocX", self.GetScreenPositionTuple()[0])
-        self.API.setSetting("LocY", self.GetScreenPositionTuple()[1])
+        if not self.IsMaximized():
+            self.API.setSetting("Width", self.GetSize()[0])
+            self.API.setSetting("Height", self.GetSize()[1])
+            self.API.setSetting("LocX", self.GetScreenPositionTuple()[0])
+            self.API.setSetting("LocY", self.GetScreenPositionTuple()[1])
         self.API.setSetting("Maximized", self.IsMaximized())
 
     def loadPositioning(self):
