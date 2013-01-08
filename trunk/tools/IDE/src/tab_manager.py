@@ -201,6 +201,15 @@ class TabManager(aui.AuiNotebook):
             self.AddPage(EditorManager(self, self.API),
                 localize("Untitled") + ' ' + str(self.nextPageNr) + '.sl')
         else:
+            for x in self.API.editors:
+                try:
+                    if x.filePath == newFile:
+                        for y in range(self.GetPageCount()):
+                            if x == self.GetPage(y):
+                                self.SetSelection(y, True)
+                                return
+                except:
+                    pass
             self.AddPage(EditorManager(self, self.API), newFile)
         self.nextPageNr += 1
         self.SetSelection(self.GetPageCount() - 1)
