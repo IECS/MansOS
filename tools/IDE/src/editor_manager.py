@@ -73,6 +73,10 @@ class EditorManager(wx.Panel):
 
         self.parseConfigFile()
 
+
+    def __del__(self):
+        self.API.editors.remove(self.updateMotelist)
+
     def initUI(self):
         self.main = wx.BoxSizer(wx.HORIZONTAL)
 
