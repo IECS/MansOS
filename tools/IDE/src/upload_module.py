@@ -45,7 +45,6 @@ class UploadModule(wx.Panel):
         self.moteOrder = list()
         # this is path from /mansos/tools/IDE
         self.pathToMansos = self.API.path + "/../.."
-        self.motes = []
 
         self.main = wx.BoxSizer(wx.VERTICAL)
         self.controls = wx.GridBagSizer(10, 10)
@@ -100,7 +99,7 @@ class UploadModule(wx.Panel):
             self.list.Insert(localize("No devices found!"), 0)
         else:
             for x in Motelist.motes:
-                self.list.Append(x.getNiceName(), x)
+                self.list.Append(x.getNiceName())
             self.list.Enable()
 
     def modifyTargets(self, event):
