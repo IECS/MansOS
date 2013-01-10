@@ -6,7 +6,6 @@ import serial, subprocess, sys, time
 from serial.tools import list_ports
 from settings import *
 
-
 def isascii(c, printable = True):
     if 0x00 <= ord(c) <= 0x7f:
         if 0x20 <= ord(c) <= 0x7e:
@@ -16,6 +15,51 @@ def isascii(c, printable = True):
         return False
     else:
         return False
+
+def runSubprocess(args, server):
+    retcode = -1
+    try:
+        print "runSubprocess, args = ", args
+        output = subprocess.check_output(args, stderr = subprocess.STDOUT)
+        server.uploadCallback(output)
+        retcode = 0
+    except OSError as e:
+        print "runSubprocess OSError:" + str(e)
+    except CalledProcessError as e:
+        print "runSubprocess CalledProcessError:" + str(e)
+        retcode = e.returncode
+    except Exception as e:
+        print "runSubprocess exception:" + str(e)
+    finally:
+        return retcode
+
+def runSubprocess1(args, server):
+    retcode = -1
+    try:
+        print "runSubprocess1, args = ", args
+        proc = subprocess.Popen(args, stderr = subprocess.STDOUT, stdout = subprocess.PIPE, shell = False)
+        while proc.poll() is None:
+            line = proc.stdout.readline()
+            if line:
+                if not server.uploadCallback(line):
+                    break
+            time.sleep(0.01)
+        proc.wait()
+        retcode = proc.returncode
+    except OSError as e:
+        print "runSubprocess1 OSError:" + str(e)
+    except CalledProcessError as e:
+        print "runSubprocess1 CalledProcessError:" + str(e)
+        retcode = e.returncode
+    except Exception as e:
+        print "runSubprocess1 exception:" + str(e)
+    finally:
+        return retcode
+
+
+def simpleCallback(line):
+    print "simpleCallback: got", line
+    return True
 
 
 class Mote(object):
@@ -45,12 +89,12 @@ class Mote(object):
                 # make sure reset pin is low for the platforms that need it
                 self.port.setDTR(0)
                 self.port.setRTS(0)
-        except Exception, e:
-            print "\nSerial exception:\n\t", e
+        except Exception as e:
+            print("\nSerial exception:\n\t" + str(e))
             self.port = None
             return
 
-        print "Listening to serial port: ", self.port.portstr, ", rate: ", baudrate
+        print("Listening to serial port: " + self.port.portstr + ", rate: " + str(baudrate))
 
     def closeSerial(self):
         if self.port:
@@ -80,16 +124,16 @@ class Mote(object):
                 if binaryToo or isascii(c):
                     self.buffer += c
                     numRead += 1
-            except Exception, e:
-              print "\ntryRead exception:\t", e
+            except Exception as e:
+              print("\nserial read exception:\t" + str(e))
               self.port.close()
               self.port = None
 
         return numRead
 
-    def tryToUpload(self, filename):
+    def tryToUpload(self, server, filename):
         self.tryToOpenSerial(False)
-        if not self.port: return 0
+        if not self.port: return 1
 
         if self.platform == "telosb":
             bsl = "mos/make/scripts/tos-bsl"
@@ -110,24 +154,16 @@ class Mote(object):
         if settingsInstance.getCfgValueAsInt("slowUpload"):
             arglist.append("--slow")
 
-        try:
-            retcode = subprocess.call(" ".join(arglist), shell=True)
-        except OSError as e:
-            sys.stderr.write("execution failed: {}".format(str(e)))
-            retcode = 1
+        retcode = runSubprocess1(arglist, server)
 
         return retcode
 
-    def tryToCompileAndUpload(self, filename):
+    def tryToCompileAndUpload(self, server, filename):
         self.tryToOpenSerial(False)
-        if not self.port: return 0
+        if not self.port: return 1
 
-        arglist = ["make", "telosb", "upload"]
-        try:
-            retcode = subprocess.call(" ".join(arglist), shell=True)
-        except OSError as e:
-            sys.stderr.write("execution failed: {}".format(str(e)))
-            retcode = 1
+        arglist = ["make", self.platform, "upload"]
+        retcode = runSubprocess1(arglist, server)
 
         return retcode
 
@@ -138,20 +174,31 @@ class MoteCollection(object):
 
     def storeSelected(self):
         selected = []
+        platforms = []
         for m in self.motes:
             if m.isSelected:
                 selected.append(m.portName)
+            platforms.append(m.portName + ":" + m.platform)
         settingsInstance.setCfgValue("selectedMotes", selected)
+        settingsInstance.setCfgValue("motePlatforms", platforms)
         settingsInstance.save()
 
     def retrieveSelected(self):
         selected = settingsInstance.getCfgValue("selectedMotes")
+        platforms = settingsInstance.getCfgValue("motePlatforms")
         for m in self.motes:
             m.isSelected = m.portName in selected
+        for p in platforms:
+            try:
+                (portName, platform) = p.split(':')
+                for m in self.motes:
+                    if m.portName == portName:
+                        m.platform = platform
+            except:
+                pass
 
     def addAll(self):
         self.motes = []
-        print "static ports are", settingsInstance.getCfgValue("motes")
         staticPorts = set(settingsInstance.getCfgValue("motes"))
 
         dynamicPorts = set()
@@ -164,7 +211,6 @@ class MoteCollection(object):
 
         allPorts = dynamicPorts.union(staticPorts)
         for port in allPorts:
-            print "add mote", port
             self.motes.append(Mote(port))
 
         self.retrieveSelected()
@@ -183,7 +229,6 @@ class MoteCollection(object):
             if m.isSelected: return True
         return False
 
-    def deselectAll(self):
+    def closeAll(self):
         for m in self.motes:
-            assert m.port is None
-            m.isSelected = False
+            m.closeSerial()

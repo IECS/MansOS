@@ -16,7 +16,6 @@ class GraphData(object):
         self.seenInThisPacket = set()
         if len(self.tempData) == 0:
             return
-        # print "finishPacket"
         firstPacket = False
         if len(self.columns) == 0:
             firstPacket = True
@@ -24,8 +23,6 @@ class GraphData(object):
             for (n,v) in self.tempData:
                 if n.lower() != "serverTimestamp":
                     self.columns.append(n)
-        # print "self.columns", self.columns
-        # print "self.data", self.tempData
 
         if len(self.tempData) + 1 != len(self.columns):
             self.tempData = []
@@ -50,7 +47,6 @@ class GraphData(object):
                 f.close()
 
     def addNewData(self, string):
-        # print "addNewData", string
         eqSignPos = string.find('=')
         if eqSignPos == -1: return
 

@@ -18,10 +18,13 @@ class Settings(object):
             self.pathToMansOS = "../.."
             self.motes = []
             self.selectedMotes = []
+            self.motePlatforms = [] # in format <port>:<platform>, e.g. /dev/ttyUSB0:telosb
             self.isSealCode = "False"
             self.saveToFilename = ""
+            self.saveToFilenameOnMote = ""
             self.saveProcessedData = "False"
             self.slowUpload = "False"
+            self.sealBlocklyPath = "../../.."
 
     cfg = ConfigValues()
 
@@ -91,6 +94,6 @@ class Settings(object):
 settingsInstance = Settings()
 try:
     settingsInstance.load()
-except Exception, e:
+except Exception as e:
     print("Failed to load configuration:")
     print(e)
