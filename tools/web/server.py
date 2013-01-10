@@ -4,24 +4,45 @@
 # MansOS web server - main file
 #
 
-import os, platform, urlparse, BaseHTTPServer, threading, time, serial, select, socket, cgi, subprocess, struct
+import os, sys, platform
+import threading, time, serial, select, socket, cgi, subprocess, struct
 import json
-import SocketServer
 from settings import *
 from mote import *
 from graph_data import *
 from config import *
 
+def isPython3():
+    return sys.version_info[0] >= 3
+
+if isPython3():
+    from http.server import *
+    from socketserver import *
+    from urllib.parse import *
+else:
+    from BaseHTTPServer import *
+    from SocketServer import *
+    from urlparse import *
+
 listenTxt = []
 isListening = False
 listenThread = None
 
-#lastUploadWasSEAL = False
 lastUploadCode = ""
 lastUploadConfig = ""
 lastUploadFile = ""
+lastJsonData = ""
+
+isInSubprocess = False
+uploadResult = ""
 
 motes = MoteCollection()
+
+htmlDirectory = "html"
+
+sealBlocklyPath = "../../.."
+
+# --------------------------------------------
 
 def listenSerial():
     global listenTxt
@@ -79,22 +100,21 @@ def openAllSerial():
     for m in motes.getMotes():
         m.tryToOpenSerial(False)
 
-# --------------------------------------------
 
-dataIteration = 0
-
-def getMansosVersion():
+def getMansOSVersion():
     path = settingsInstance.getCfgValue("pathToMansOS")
     result = ""
     try:
         with open(os.path.join(path, "doc/VERSION")) as versionFile:
             result = versionFile.readline().strip()
     except Exception as e:
-        print e
+        print(e)
     return result
 
-class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
-    server_version = 'MansOS/' + getMansosVersion() + ' Web Server'
+# --------------------------------------------
+
+class HttpServerHandler(BaseHTTPRequestHandler):
+    server_version = 'MansOS/' + getMansOSVersion() + ' Web Server'
     protocol_version = 'HTTP/1.1' # 'HTTP/1.0' is the default, but we want chunked encoding
 
     def writeChunk(self, buffer):
@@ -108,19 +128,19 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write("0\r\n")
         self.wfile.write("\r\n")
 
-    def serveHeader(self, name, isGeneric = True, replaceValues = None):
+    def serveHeader(self, name, isGeneric = True, includeBodyStart = True, replaceValues = None):
         self.headerIsServed = True
         if name == "default":
             pagetitle = ""
         else:
             pagetitle = " &#8211; " + toTitleCase(name)
 
-        with open(settingsInstance.getCfgValue("htmlDirectory") + "/header.html", "r") as f:
+        with open(htmlDirectory + "/header.html", "r") as f:
             contents = f.read()
             contents = contents.replace("%PAGETITLE%", pagetitle)
             self.writeChunk(contents)
         try:
-            with open(settingsInstance.getCfgValue("htmlDirectory") + "/" + name + ".header.html", "r") as f:
+            with open(htmlDirectory + "/" + name + ".header.html", "r") as f:
                 contents = f.read()
                 if replaceValues:
                     for v in replaceValues:
@@ -129,19 +149,20 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         except:
             pass
 
-        suffix = "generic" if isGeneric else "mote"
+        if includeBodyStart:
+            suffix = "generic" if isGeneric else "mote"
 
-        with open(settingsInstance.getCfgValue("htmlDirectory") + "/bodystart-" + suffix + ".html", "r") as f:
-            contents = f.read()
-            if replaceValues:
-                for v in replaceValues:
-                    contents = contents.replace("%" + v + "%", replaceValues[v])
-            contents = contents.replace("%PAGETITLE%", pagetitle)
-            self.writeChunk(contents)
+            with open(htmlDirectory + "/bodystart-" + suffix + ".html", "r") as f:
+                contents = f.read()
+                if replaceValues:
+                    for v in replaceValues:
+                        contents = contents.replace("%" + v + "%", replaceValues[v])
+                contents = contents.replace("%PAGETITLE%", pagetitle)
+                self.writeChunk(contents)
 
 
     def serveBody(self, name, replaceValues = None):
-        with open(settingsInstance.getCfgValue("htmlDirectory") + "/" + name + ".html", "r") as f:
+        with open(htmlDirectory + "/" + name + ".html", "r") as f:
             contents = f.read()
             if replaceValues:
                 for v in replaceValues:
@@ -167,8 +188,9 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
             checked = ' checked="checked"' if m.isSelected else ""
 
-            c += '<div class="mote"><strong>Mote: </strong>' + m.portName \
-                + ' <input type="checkbox" name="' + name + '"' + checked + '/>' + action + '</div>\n'
+            c += '<div class="mote"><strong>Mote: </strong>' + m.portName
+            c += ' (<strong>Platform: </strong>' + m.platform + ') '
+            c += ' <input type="checkbox" name="' + name + '"' + checked + '/>' + action + '</div>\n'
             i += 1
 
         # remember which motes were selected and which were not
@@ -192,28 +214,25 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         i = 0
         for m in motes.getMotes():
             name = "mote" + str(i)
-#            isChecked = qs.get(name)
-#            if isChecked: isChecked = isChecked[0] == 'on'
-#            if isChecked:
-#                m.performAction = True
-#            else:
-#                m.performAction = False
             text += '<div class="mote"><strong>Mote: </strong>' + m.portName
             text += ' <input type="submit" name="' + name + '_cfg" value="Configuration..."/>\n'
             text += ' <input type="submit" name="' + name + '_files" value="Files..."/>\n'
             text += ' Platform: <select name="sel_' + name + '">\n'
             for platform in supportedPlatforms:
-                text += '  <option value="' + platform+ '">' + platform + '</option>\n'
+                selected = ' selected="selected"' if platform == m.platform else ''
+                text += '  <option value="' + platform+ '"' + selected + '>' + platform + '</option>\n'
             text += ' </select>\n'
-            text += '<br/></div>\n'
+            text += '</div>\n'
 
             i += 1
+
+        text += '<input type="submit" name="platform_set" value="Update platforms"/><br/>\n'
         text += "</div></form>"
         self.writeChunk(text)
 
 
     def serveFooter(self):
-        with open(settingsInstance.getCfgValue("htmlDirectory") + "/footer.html", "r") as f:
+        with open(htmlDirectory + "/footer.html", "r") as f:
             contents = f.read()
             self.writeChunk(contents)
         self.writeFinalChunk()
@@ -225,7 +244,11 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         # disable caching
         self.send_header('Cache-Control', 'no-store');
 
-    def serveFile(self, filename, mimetype):
+    def serveFile(self, filename):
+        mimetype = 'text/html'
+        if filename[-4:] == '.css': mimetype = 'text/css'
+        elif filename[-4:] == '.js': mimetype = 'application/javascript'
+
         try:
             with open(filename, "r") as f:
                 contents = f.read()
@@ -236,7 +259,8 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.wfile.write(contents)
                 f.close()
         except:
-            self.serve404Error(path, qs)
+            print "problem with file", filename
+            self.serve404Error(filename, {})
 
     def serve404Error(self, path, qs):
         self.send_response(404)
@@ -273,6 +297,21 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.sendDefaultHeaders()
         self.end_headers()
 
+        if "platform_set" in qs:
+            i = 0
+            for m in motes.getMotes():
+                motename = "sel_mote" + str(i)
+                if motename in qs:
+                    m.platform = qs[motename][0]
+                i += 1
+            motes.storeSelected()
+
+            text = '<strong>Mote platforms updated!</strong></div>\n'
+            self.serveHeader("config", isGeneric = True)
+            self.writeChunk(text)
+            self.serveFooter()
+            return
+
         openAllSerial()
 
         moteIndex = None
@@ -301,13 +340,16 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             return
 
         moteidQS = "?sel_mote" + str(moteIndex) + "=" + platform + "&" + "mote" + str(moteIndex)
-        self.serveHeader("config", False,
-                         {"MOTEID_CONFIG" : moteidQS + "_cfg=1",
+        self.serveHeader("config", isGeneric = False,
+                         replaceValues = {"MOTEID_CONFIG" : moteidQS + "_cfg=1",
                           "MOTEID_FILES" : moteidQS + "_files=1"})
 
         configInstance.setMote(motes.getMote(moteIndex), platform)
 
-        configInstance.updateConfigValues(qs)
+        (errmsg,ok) = configInstance.updateConfigValues(qs)
+        if not ok:
+            self.serveError(errmsg)
+            return
 
         # fill config values from the mote / send new values to the mote
         if "get" in qs:
@@ -329,13 +371,12 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             return
         self.writeChunk(text)
         self.serveFooter()
-        print "config served!"
 
     def serveFiles(self, qs):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        self.serveHeader("files", False)
+        self.serveHeader("files", isGeneric = False)
         self.serveBody("files")
         self.serveFooter()
 
@@ -363,7 +404,6 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.serveFooter()
 
     def serveListen(self, qs):
-        print "serveListen, qs=", qs
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -427,52 +467,85 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         "SLOW_CHECKED" : 'checked="checked"' if isSlow else ""})
         self.serveFooter()
 
-    lastJsonData = ""
+    def uploadCallback(self, line):
+        global uploadResult
+        uploadResult += line
+        return True
+
+    def serveUploadResult(self, qs):
+        global uploadResult
+        global isInSubprocess
+        isInSubprocess = True
+        try:
+            self.send_response(200)
+            self.sendDefaultHeaders()
+            self.end_headers()
+            self.serveHeader("upload")
+            self.writeChunk("Upload result:<br/><pre>\n")
+            while isInSubprocess or uploadResult:
+                if uploadResult:
+                    self.writeChunk(uploadResult)
+                    uploadResult = ""
+                else:
+                    time.sleep(0.001)
+            self.writeChunk("</pre>\n")
+            self.writeChunk('<button type="button" onclick="window.open(\'\', \'_self\', \'\'); window.close();">OK</button>')
+            self.serveFooter()
+        except:
+            raise
+        finally:
+            uploadResult = ""
+
+    def serveBlockly(self, qs):
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+        # no bodystart: the file has a frameset
+        self.serveHeader("blockly", includeBodyStart = False)
+        self.serveBody("blockly")
+        self.writeFinalChunk()
+
+    def serveBlocklyHeader(self, qs):
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+        self.serveHeader("blockly-header")
+        self.writeChunk("</html>")
+        self.writeFinalChunk()
+
+    def serveSealFrame(self, qs):
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+        path = os.path.join(sealBlocklyPath, "seal-blockly/blockly/demos/seal/index.html")
+        with open(path) as f:
+            self.writeChunk(f.read())
+        self.writeFinalChunk()
 
     def serveGraphsData(self, qs):
-        print "serve graphs text"
+        global lastJsonData
+
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
 
         self.end_headers()
 
-        if self.lastJsonData and not isListening:
-            self.writeChunk(self.lastJsonData)
+        if lastJsonData and not isListening:
+            self.writeChunk(lastJsonData)
             self.writeFinalChunk()
             return
-
-#        jsonData="""{
-#"cols": [
-#    {"id":"","label":"Timestamp","pattern":"","type":"string"},
-#    {"id":"","label":"Light","pattern":"","type":"number"}
-#],
-#  "rows": [
-#"""
-#        if isGraphing:
-#            for (k,v) in listenGraphData:
-#                jsonData += '{"c":[{"v":"' + str(k) + '"},{"v":' + str(v) + '}]},'
-#        jsonData += "]}"
-
-#        jsonData = json.JSONEncoder().encode([['Year', 'Sales', 'Expenses'],
-#          ['2004',  1000,      400],
-#          ['2005',  1170,      460],
-#          ['2006',  660,       1120],
-#          ['2007',  1030,      540]
-#        ]);
 
         if graphData.hasData():
             jsonData = json.JSONEncoder().encode(graphData.getData())
         else:
             jsonData = ""
-        # print jsonData
 
-        self.lastJsonData = jsonData
+        lastJsonData = jsonData
         self.writeChunk(jsonData)
         self.writeFinalChunk()
 
     def serveListenData(self, qs):
-        print "serve listen text"
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -486,8 +559,8 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
         self.headerIsServed = False
 
-        o = urlparse.urlparse(self.path)
-        qs = urlparse.parse_qs(o.query)
+        o = urlparse(self.path)
+        qs = parse_qs(o.query)
 
         if o.path == "/" or o.path == "/default":
             self.serveDefault()
@@ -503,16 +576,22 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.serveGraphsData(qs)
         elif o.path == "/upload":
             self.serveUpload(qs)
+        elif o.path == "/upload-result":
+            self.serveUploadResult(qs)
         elif o.path == "/listen":
             self.serveListen(qs)
         elif o.path == "/listen-data":
             self.serveListenData(qs)
-        elif o.path == "/test":
-            self.serveTest(qs)
-        elif o.path[-3:] == ".js":
-            self.serveFile("javascript" + o.path, 'application/javascript')
+        elif o.path == "/blockly":
+            self.serveBlockly(qs)
+        elif o.path == "/blockly-header":
+            self.serveBlocklyHeader(qs)
+        elif o.path == "/seal-frame":
+            self.serveSealFrame(qs)
+        elif o.path[:13] == "/seal-blockly":
+            self.serveFile(os.path.join(sealBlocklyPath, o.path[1:]))
         elif o.path[-4:] == ".css":
-            self.serveFile(settingsInstance.getCfgValue("htmlDirectory") + o.path, 'text/css')
+            self.serveFile(htmlDirectory + o.path)
         else:
             self.serve404Error(o.path, qs)
 
@@ -520,6 +599,7 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         global lastUploadCode
         global lastUploadConfig
         global lastUploadFile
+        global isInSubprocess
 
         self.headerIsServed = False
 
@@ -544,12 +624,12 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 lastUploadWasSEAL = False
             settingsInstance.setCfgValue("isSealCode", lastUploadWasSEAL)
-        if "upload" in form:
-            if "slow" in form:
-                slow = form["slow"].value == "on"
-            else:
-                slow = False
-            settingsInstance.setCfgValue("slowUpload", slow)
+
+        if "slow" in form:
+            slow = form["slow"].value == "on"
+        else:
+            slow = False
+        settingsInstance.setCfgValue("slowUpload", slow)
         settingsInstance.save()
 
         if "code" in form.keys():
@@ -558,12 +638,12 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             code = None
 
         if "file" in form.keys():
-            file_data = form["file"].file.read()
+            fileContents = form["file"].file.read()
         else:
-            file_data = None
+            fileContents = None
 
         # check if what to upload is provided
-        if not file_data and not code:
+        if not fileContents and not code:
             self.serveHeader("upload")
             self.serveError("neither filename nor code specified!")
             return
@@ -581,7 +661,8 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 m.isSelected = False
             i += 1
-        # remembed which motes were selected and which not
+
+        # remember which motes were selected and which not
         motes.storeSelected()
         # check if any motes are selected upload is provided
         if not motes.anySelected():
@@ -592,19 +673,21 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         retcode = 0
         if not os.path.exists("build"):
             os.mkdir("build")
+        # TODO FIXME: should do this in a new thread!
+        isInSubprocess = True
         os.chdir("build")
 
-        if file_data:
+        if fileContents:
             lastUploadFile = form["file"].filename
 
             filename = "tmp-file.ihex"
             with open(filename, "w") as outFile:
-                outFile.write(file_data)
+                outFile.write(fileContents)
                 outFile.close()
 
             closeAllSerial()
             for m in motes.getMotes():
-                r = m.tryToUpload(filename)
+                r = m.tryToUpload(self, filename)
                 if r != 0: retcode = r
 
         elif code:
@@ -620,6 +703,9 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 if "config" in form.keys():
                     lastUploadConfig = form["config"].value
                     outFile.write(lastUploadConfig)
+                if slow:
+                    outFile.write("\n")
+                    outFile.write("SLOW_UPLOAD=y\n")
                 outFile.close()
 
             with open("Makefile", "w") as outFile:
@@ -641,10 +727,12 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
             closeAllSerial()
             for m in motes.getMotes():
-                r = m.tryToCompileAndUpload(filename)
-                if r != 0: retcode = r
+                r = m.tryToCompileAndUpload(self, filename)
+                if r != 0 and m.port:
+                    retcode = r
 
         os.chdir("..")
+        isInSubprocess = False
 
         self.serveHeader("upload")
         self.serveMotes("Upload", {}, True)
@@ -653,22 +741,28 @@ class HttpServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             self.writeChunk("<strong>Upload failed!</strong></div>")
         self.serveFooter()
-        motes.deselectAll()
+        motes.closeAll()
 
-class ThreadingHTTPServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
-    pass
 
+class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+   pass
+
+# --------------------------------------------
 
 def main():
+    global htmlDirectory
+    global sealBlocklyPath
     try:
         port = settingsInstance.getCfgValueAsInt("port", HTTP_SERVER_PORT)
+        htmlDirectory = os.path.abspath(settingsInstance.getCfgValue("htmlDirectory"))
+        sealBlocklyPath = os.path.abspath(settingsInstance.getCfgValue("sealBlocklyPath"))
         server = ThreadingHTTPServer(('', port), HttpServerHandler)
         motes.addAll()
         time.sleep(1)
         print("<http-server>: started, listening to TCP port {}, serial baudrate {}".format(port,
               settingsInstance.getCfgValueAsInt("baudrate", SERIAL_BAUDRATE)))
         server.serve_forever()
-    except Exception, e:
+    except Exception as e:
         print("<http-server>: exception occurred:")
         print(e)
         return 1

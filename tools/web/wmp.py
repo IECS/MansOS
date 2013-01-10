@@ -38,16 +38,18 @@ WMP_CMD_GET_OUTPUT   = 6
 WMP_CMD_SET_ADDR     = 7
 # get local network address
 WMP_CMD_GET_ADDR     = 8
-# get list of all files on FAT filesystem
-WMP_CMD_GET_FILELIST = 9
 # set file name (to use for data logging)
-WMP_CMD_SET_FILE     = 10
+WMP_CMD_SET_FILENAME = 9
+# get file name (used for data logging)
+WMP_CMD_GET_FILENAME = 10
+# get list of all files on FAT filesystem
+WMP_CMD_GET_FILELIST = 11
 # get contents of a file
-WMP_CMD_GET_FILE     = 11
+WMP_CMD_GET_FILE     = 12
 # set DAC channel value
-WMP_CMD_SET_DAC      = 12
+WMP_CMD_SET_DAC      = 13
 # get DAC channel value
-WMP_CMD_GET_DAC      = 13
+WMP_CMD_GET_DAC      = 14
 
 # this bit is set in replies to commands
 WMP_CMD_REPLY_FLAG   = 0x80

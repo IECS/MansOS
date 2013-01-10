@@ -3,13 +3,14 @@
 #
 
 from wmp import *
+from settings import *
 import time
 
+# names of all platforms the web interface supports.
 # TODO: populate this from mansos Makefiles?
-supportedPlatforms = ["telosb", "testbed", "testbed2", "sm3", "xm1000", "z1"]
+supportedPlatforms = ["telosb", "testbed", "testbed2", "sm3", "xm1000"]
 
-#MAX_TIME_WAIT_FOR_REPLY = 0.1 # max time to wait for a single reply
-MAX_TIME_WAIT_FOR_REPLY = 1   # max time to wait for a single reply, seconds
+MAX_TIME_WAIT_FOR_REPLY = 0.1 # max time to wait for a single reply, seconds
 MAX_RETRIES = 3               # send 3 times before giving up
 
 def toTitleCase(s):
@@ -90,7 +91,7 @@ class Platform(object):
 
 
 def wmpSendCommand(ser, command, args):
-    print "send cmd=", command, "args=", args
+    print("send cmd=" + str(command) + " args=" + str(map(hex, args)))
     txFrame = "%c%c%c" % (WMP_START_CHARACTER, command, len(args))
     for a in args:
         txFrame += chr(a)
@@ -100,8 +101,6 @@ def wmpSendCommand(ser, command, args):
         crc ^= ord(c)
         ser.write(bytearray([ord(c)]))
     ser.write(bytearray([crc]))
-
-    # print "command sent!"
 
 
 class SerialPacket(object):
@@ -138,6 +137,7 @@ class Config(object):
         self.state = self.READ_START_CHARACTER
         self.currentSp = SerialPacket()
         self.lastSp = None
+        self.filenameOnMote = settingsInstance.getCfgValue("saveToFilenameOnMote")
         for platform in supportedPlatforms:
             try:
                 module = __import__("sensorlist_" + platform)
@@ -149,14 +149,14 @@ class Config(object):
 
 
     def wmpProcessCommand(self):
-        #print "wmpProcessCommand"
-        print "rcdv command=", (self.currentSp.command & ~WMP_CMD_REPLY_FLAG), " args=", self.currentSp.arguments
+        print("rcdv command=" + str(self.currentSp.command & ~WMP_CMD_REPLY_FLAG) +\
+            " args=" + str(map(hex, self.currentSp.arguments)))
         if not (self.currentSp.command & WMP_CMD_REPLY_FLAG):
-            print "not a reply, ignoring"
+            print("not a reply, ignoring")
             return
 
         if self.lastSp:
-            print "previous reply not processed, ignoring"
+            print("previous reply not processed, ignoring")
             return
 
         self.lastSp = self.currentSp
@@ -165,7 +165,6 @@ class Config(object):
 
     def byteRead(self, x):
         assert self.configMode
-#        print "read", ord(x)
 
         if self.state == self.READ_START_CHARACTER:
             if x == WMP_START_CHARACTER:
@@ -207,52 +206,54 @@ class Config(object):
         return (None, True)
 
     def wmpExchangeCommand(self, command, arguments):
-#        print self.mote.port
         returnArguments = [] # default
         ok = False
-        for i in range(MAX_RETRIES):
-            iterEndTime = time.time() + MAX_TIME_WAIT_FOR_REPLY
-            self.lastSp = None
-            wmpSendCommand(self.mote.port, command, arguments)
-            time.sleep(0.01)
-            while time.time() < iterEndTime:
-                if self.lastSp:
-                    if self.lastSp.command == command:
-                        # print "  command OK"
-                        returnArguments = self.lastSp.arguments
-                        ok = True
-                    else:
-                        # print "  wrong/unexpected command"
-                        pass
-                    self.lastSp = None
-                    break
-                # print "waiting..."
+        try:
+            for i in range(MAX_RETRIES):
+                iterEndTime = time.time() + MAX_TIME_WAIT_FOR_REPLY
+                self.lastSp = None
+                wmpSendCommand(self.mote.port, command, arguments)
                 time.sleep(0.01)
-            if ok: break
-        if not ok: print "reply NOT received!"
-        return returnArguments
+                while time.time() < iterEndTime:
+                    if self.lastSp:
+                        if self.lastSp.command == command:
+                            # print("  command OK")
+                            returnArguments = self.lastSp.arguments
+                            ok = True
+                        else:
+                            # print("  wrong/unexpected command")
+                            pass
+                        self.lastSp = None
+                        break
+                    # print("waiting...")
+                    time.sleep(0.01)
+                if ok: break
+        except Exception as e:
+            pass
+        if not ok: print("reply NOT received!")
+        return (returnArguments, ok)
 
     def wmpGetSensorConfig(self, sensorCode):
-        args = self.wmpExchangeCommand(WMP_CMD_GET_SENSOR, [sensorCode])
-        if len(args) < 5:
+        (args, ok) = self.wmpExchangeCommand(WMP_CMD_GET_SENSOR, [sensorCode])
+        if not ok or len(args) < 5:
             return 0 # default
         return le32read(args[1:])
 
     def wmpGetOutputConfig(self, sensorCode):
-        args = self.wmpExchangeCommand(WMP_CMD_GET_OUTPUT, [sensorCode])
-        if len(args) < 2:
+        (args, ok) = self.wmpExchangeCommand(WMP_CMD_GET_OUTPUT, [sensorCode])
+        if not ok or len(args) < 2:
             return False # default
         return bool(args[1])
 
     def wmpGetLedConfig(self, ledCode):
-        args = self.wmpExchangeCommand(WMP_CMD_GET_LED, [ledCode])
-        if len(args) < 2:
+        (args, ok) = self.wmpExchangeCommand(WMP_CMD_GET_LED, [ledCode])
+        if not ok or len(args) < 2:
             return False # default
         return bool(args[1])
 
     def updateConfigValues(self, qs):
         if "set" not in qs:
-            return
+            return (None, True)
 
         for s in self.activePlatform.sensors:
             if s.varname in qs:
@@ -282,6 +283,20 @@ class Config(object):
             else:
                 s.isOn = False
 
+        if "filename" in qs:
+            newFilename = qs["filename"][0]
+            if isValidFatFilename(newFilename):
+                self.filenameOnMote = newFilename
+            else:
+                return ("The filename specified is not a valid FAT file name!", False)
+        else:
+            self.filenameOnMote = ""
+
+        settingsInstance.setCfgValue("saveToFilenameOnMote", self.filenameOnMote)
+        settingsInstance.save()
+        return (None, True)
+
+
     def getConfigValues(self):
         (errstr, ok) = self.checkValid()
         if not ok:
@@ -297,6 +312,12 @@ class Config(object):
 
         for s in self.activePlatform.leds:
             s.isOn = self.wmpGetLedConfig(s.code)
+
+        (args, ok) = self.wmpExchangeCommand(WMP_CMD_GET_FILENAME, [])
+        if ok and str(args) != self.filenameOnMote:
+            self.filenameOnMote = str(args)
+            settingsInstance.setCfgValue("saveToFilenameOnMote", self.filenameOnMote)
+            settingsInstance.save()
 
         self.configMode = False
         return "<strong>Configuration values read!</strong><br/>"
@@ -322,7 +343,9 @@ class Config(object):
             args = [s.code, int(s.isOn)]
             self.wmpExchangeCommand(WMP_CMD_SET_LED, args)
 
-        print "done!"
+        args = bytearray(self.filenameOnMote)
+        self.wmpExchangeCommand(WMP_CMD_SET_FILENAME, args)
+
         self.configMode = False
         return "<strong>Configuration values written!</strong><br/>"
 
@@ -364,14 +387,18 @@ class Config(object):
             return (errst, False)
 
         self.configMode = True
-        args = self.wmpExchangeCommand(WMP_CMD_GET_FILE, bytearray(filename))
+        (args, ok) = self.wmpExchangeCommand(WMP_CMD_GET_FILE, bytearray(filename))
         self.configMode = False
+
+        if not ok:
+            errst = 'communication failed!'
+            return (errst, False)
 
         contents = str(bytearray(args))
 
-        text = 'File ' + filename + ' contents:<br/>\n'
+        text = '<em>File ' + filename + ' contents:</em><br/>\n'
         text += contents
-        text += '\n</br>\n'
+        text += '\n<br/>\n'
 
         return (text, True)
 
@@ -382,26 +409,31 @@ class Config(object):
             return (errst, False)
 
         self.configMode = True
-        args = self.wmpExchangeCommand(WMP_CMD_GET_FILELIST, [])
+        (args, ok) = self.wmpExchangeCommand(WMP_CMD_GET_FILELIST, [])
         self.configMode = False
+
+        if not ok:
+            errst = 'communication failed!'
+            return (errst, False)
 
         namelist = str(bytearray(args)).split('\n')
 
         motename = "mote" + str(moteIndex)
 
-        if len(namelist) == 0:
+        if len(namelist) == 0 or len(namelist[0]) == 0:
             text = "The SD card is empty!"
         else:
             text = '<strong>Files:</strong><br/>\n'
             text += '<div class="files">'
             for filename in namelist:
-                text += '<div class="entry">'
+                text += '<div class="entry"><span class="column1">'
                 filename = fatFilenamePrettify(filename)
                 text += filename
+                text += '</span><span class="column2">'
                 text += '&nbsp;&nbsp;<a href="config?filename=' + filename + '&' \
                     + motename + '_files=1&sel_' + motename + '=' + self.activePlatform.name \
                     + '">File contents</a>'
-                text += "</div>\n"
+                text += "</span></div>\n"
             text += "</div>"
 
         return (text, True)
@@ -441,7 +473,7 @@ class Config(object):
             text += '/> Write to ' + toCamelCase(s.name)
             if s.varname == "file":
                 text += '<br/><label for="filename">Filename: </label>'
-                text += '<input type="input" name="filename"/>\n'
+                text += '<input type="input" name="filename" value="' + self.filenameOnMote + '"/>\n'
             text += '<br/></div>\n'
         text += '</div>\n'
 
