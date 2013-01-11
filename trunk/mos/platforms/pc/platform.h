@@ -88,10 +88,6 @@ enum {
 
 #define JIFFY_TIMER_MS 1
 
-// number of jiffies in a second
-// Contiki compatibility, added by Girts, 2012-07-16
-enum { CLOCK_SECOND = 1000 / JIFFY_TIMER_MS };
-
 #define SLEEP_CYCLES        1
 #define SLEEP_CYCLES_DEC    0
 #define SLEEP_CLOCK_SPEED   1

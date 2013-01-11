@@ -22,7 +22,7 @@ PROCESS_THREAD(send_process, ev, data)
       radioSend(&counter, sizeof(counter));
       ++counter;
       redLedToggle();
-      waitTimer(timer, CLOCK_SECOND);
+      waitTimer(timer, TIMER_INTERRUPT_HZ);
   }
 
   PROCESS_END();

@@ -19,7 +19,7 @@ PROCESS_THREAD(blink_red_process, ev, data)
   static struct etimer timer;
 
   while (1) {
-      etimer_set(&timer, CLOCK_SECOND / 2);
+      etimer_set(&timer, TIMER_INTERRUPT_HZ / 2);
       PROCESS_WAIT_UNTIL(etimer_expired(&timer));
       redLedToggle();
       yellowLedToggle(); // for Atmega
@@ -35,7 +35,7 @@ PROCESS_THREAD(blink_green_process, ev, data)
   static struct etimer timer;
 
   while (1) {
-      etimer_set(&timer, CLOCK_SECOND);
+      etimer_set(&timer, TIMER_INTERRUPT_HZ);
       PROCESS_WAIT_UNTIL(etimer_expired(&timer));
       greenLedToggle();
   }
@@ -50,7 +50,7 @@ PROCESS_THREAD(blink_blue_process, ev, data)
   static struct etimer timer;
 
   while (1) {
-      etimer_set(&timer, CLOCK_SECOND * 2);
+      etimer_set(&timer, TIMER_INTERRUPT_HZ * 2);
       PROCESS_WAIT_UNTIL(etimer_expired(&timer));
       blueLedToggle();
   }
