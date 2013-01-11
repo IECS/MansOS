@@ -24,9 +24,7 @@
 #ifndef MANSOS_ENERGY_H
 #define MANSOS_ENERGY_H
 
-#include <kernel/timing.h>
-
-//#include <lib/dprint.h>
+#include <timing.h>
 
 //
 // List all potential energy consumers in the system

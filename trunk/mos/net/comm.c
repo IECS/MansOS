@@ -40,8 +40,7 @@ MosShortAddr localAddress;
 
 #ifndef USE_ROLE_BASE_STATION
 MosShortAddr rootAddress;
-int32_t rootClockDelta;
-int32_t rootClockDeltaMs;
+int64_t rootClockDeltaMs;
 #endif
 
 #ifdef DEBUG
@@ -165,7 +164,7 @@ void commForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len) {
             break;
         }
 #endif
-        if (IS_LOCAL(macInfo)){
+        if (IS_LOCAL(macInfo)) {
             INC_NETSTAT(NETSTAT_PACKETS_SENT, macInfo->originalDst.shortAddr);
         }
         macSendEx(macInfo, data, len);

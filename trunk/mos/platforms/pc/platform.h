@@ -33,12 +33,14 @@
 
 #include <digital.h>
 
+#if USE_FATFS
 //
 // As stdio.h cannot be included: define some of
 // frequently used function prototypes.
 //
 extern int sprintf(const char *str, const char *format, ...);
 extern int snprintf(const char *str, size_t size, const char *format, ...);
+#endif
 extern void perror(const char *s);
 
 
@@ -90,8 +92,10 @@ enum {
 // Contiki compatibility, added by Girts, 2012-07-16
 enum { CLOCK_SECOND = 1000 / JIFFY_TIMER_MS };
 
-#define SLEEP_CYCLES 0
-#define SLEEP_CYCLES_DEC 0
+#define SLEEP_CYCLES        1
+#define SLEEP_CYCLES_DEC    0
+#define SLEEP_CLOCK_SPEED   1
+#define SLEEP_CLOCK_DIVIDER 1
 
 #define ATOMIC_START(x) (x) = 0
 #define ATOMIC_END(x)   ((void) x)

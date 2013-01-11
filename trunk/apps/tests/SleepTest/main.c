@@ -88,7 +88,7 @@ void appMain(void) {
         energyStatsDump();
 
         msleep(PAUSE); // sleep PAUSE seconds
-        //PRINT("hello world\n");
+        // PRINTF("%lu: hello world\n", (uint32_t) getJiffies());
         ledToggle();
     }
 }

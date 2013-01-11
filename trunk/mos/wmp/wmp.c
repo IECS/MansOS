@@ -25,10 +25,12 @@
 #include "stdmansos.h"
 #include <lib/byteorder.h>
 #include <lib/algo.h>
+#include <lib/assert.h>
 #include <fatfs/fatfs.h>
 #include <stdio.h>
 #include <sdstream.h>
 #include <eeprom.h>
+#include <timing.h>
 
 //#define WMP_DEBUG DEBUG
 
@@ -52,13 +54,16 @@ static uint8_t wmpCrc(void);
 
 // -------------------------------------------------------
 
-typedef struct SerialPacket_s {
+struct SerialPacket_s {
     uint8_t command;    // WMP command
     uint8_t argLen;     // promised argument length
     uint8_t argLenRead; // actual argument length read so far
-    uint8_t arguments[100];
+    uint8_t arguments[99];
+    uint8_t zero;
     uint8_t crc;        // XOR of packet fields
-} SerialPacket_t;
+} PACKED;
+
+typedef struct SerialPacket_s SerialPacket_t;
 SerialPacket_t sp;
 
 static bool commandMode;
@@ -75,11 +80,17 @@ typedef int32_t (*WmpSensorReadFunction)(void);
 // Description of a WMP-enabled sensor
 typedef struct {
     WmpSensorType_t code;        // numerical code (NOT SEAL-compatible!)
+    bool isRead;                 // whether is read in the last period
     const char *name;            // ASCII name of the sensor (SEAL-compatible)
     uint32_t period;             // set to 0 to disable reading
+    int32_t lastReadValue;       // last reading value
     Alarm_t alarm;               // read alarm
     WmpSensorReadFunction func;  // reading function
 } WmpSensor_t;
+
+static uint8_t numReadSensors;
+static uint8_t numTotalActiveSensors;
+static bool csvFileFirstLinePending;
 
 // sensor-reading functions
 int32_t wmpReadLight(void) {
@@ -134,14 +145,12 @@ static WmpSensor_t availableSensors[] = {
     {
         .code = WMP_SENSOR_LIGHT,
         .name = "Light",
-//        .period = 1000,
         .func = wmpReadLight,
     },
 #if USE_HUMIDITY
     {
         .code = WMP_SENSOR_HUMIDITY,
         .name = "Humidity",
-//        .period = 1000,
         .func = wmpReadHumidity,
     },
 #endif
@@ -150,59 +159,122 @@ static WmpSensor_t availableSensors[] = {
     {
         .code = WMP_SENSOR_ADC0,
         .name = "ADC0",
-//        .period = 1000,
         .func = wmpReadADC0,
     },
     {
         .code = WMP_SENSOR_ADC1,
         .name = "ADC0",
-//        .period = 1000,
         .func = wmpReadADC1,
     },
     {
         .code = WMP_SENSOR_ADC2,
         .name = "ADC2",
-//        .period = 1000,
         .func = wmpReadADC2,
     },
     {
         .code = WMP_SENSOR_ADC3,
         .name = "ADC3",
-//        .period = 1000,
         .func = wmpReadADC3,
     },
     {
         .code = WMP_SENSOR_ADC4,
         .name = "ADC4",
-//        .period = 1000,
         .func = wmpReadADC4,
     },
     {
         .code = WMP_SENSOR_ADC5,
         .name = "ADC5",
-//        .period = 1000,
         .func = wmpReadADC5,
     },
     {
         .code = WMP_SENSOR_ADC6,
         .name = "ADC6",
-//        .period = 1000,
         .func = wmpReadADC6,
     },
     {
         .code = WMP_SENSOR_ADC7,
         .name = "ADC7",
-//        .period = 1000,
         .func = wmpReadADC7,
     },
     {
         .code = WMP_SENSOR_BATTERY,
         .name = "Battery",
-//        .period = 1000,
         .func = wmpReadBattery,
     }
 #endif
 };
+
+// -------------------------------------------------------
+
+static void writeCsvFileRecord(void)
+{
+    uint8_t i;
+    char str[12];
+
+    if (csvFileFirstLinePending) {
+        // write first (header) line with sensor names
+        fputs("\ntimestamp,", outputFile);
+        for (i = 0; i < ARRAYLEN(availableSensors); ++i) {
+            if (availableSensors[i].period != 0) {
+                fputs(availableSensors[i].name, outputFile);
+                fputc(',', outputFile);
+            }
+        }
+        fputc('\n', outputFile);
+        csvFileFirstLinePending = false;
+    }
+
+    // write timestamp first
+    sprintf(str, "%ld", getSyncTimeSec());
+    fputs(str, outputFile);
+    fputc(',', outputFile);
+    // write all active sensors
+    for (i = 0; i < ARRAYLEN(availableSensors); ++i) {
+        if (availableSensors[i].isRead) {
+            sprintf(str, "%ld", availableSensors[i].lastReadValue);
+            fputs(str, outputFile);
+            fputc(',', outputFile);
+            availableSensors[i].isRead = false;
+        }
+    }
+    // end with a newline
+    fputc('\n', outputFile);
+    numReadSensors = 0;
+}
+
+// void
+// onActiveSensorNumberChanged();
+
+void wmpReadSensor(void *sensor_)
+{
+    WmpSensor_t *sensor = (WmpSensor_t *) sensor_;
+    static char buffer[32];
+
+    sensor->lastReadValue = sensor->func();
+    snprintf(buffer, sizeof(buffer), "%s=%ld\n", sensor->name, sensor->lastReadValue);
+
+    // handle serial output
+    if (wmpSerialOutputEnabled) {
+        serialSendString(PRINTF_SERIAL_ID, buffer);
+    }
+    // handle output to SD card
+    if (wmpSdCardOutputEnabled) {
+#if USE_SDCARD_STREAM
+        sdStreamWriteRecord(buffer, strlen(buffer), false);
+#endif
+    }
+    // handle output to file 
+    else if (wmpFileOutputEnabled && outputFile) {
+        if (!sensor->isRead) {
+            sensor->isRead = true;
+            numReadSensors++;
+        }
+        if (numReadSensors >= numTotalActiveSensors) {
+            writeCsvFileRecord();
+        }
+    }
+    alarmSchedule(&sensor->alarm, sensor->period);
+}
 
 // -------------------------------------------------------
 
@@ -230,38 +302,16 @@ static void wmpSendReply(void)
     serialSendByte(PRINTF_SERIAL_ID, sp.crc);
 }
 
-void wmpReadSensor(void *sensor_)
-{
-    WmpSensor_t *sensor = (WmpSensor_t *) sensor_;
-    static char buffer[32];
-
-    snprintf(buffer, sizeof(buffer), "%s=%ld\n", sensor->name, sensor->func());
-
-    // handle serial output
-    if (wmpSerialOutputEnabled) {
-        serialSendString(PRINTF_SERIAL_ID, buffer);
-    }
-    // handle output to SD card
-    if (wmpSdCardOutputEnabled) {
-#if USE_SDCARD_STREAM
-        sdStreamWriteRecord(buffer, strlen(buffer), false);
-#endif
-    }
-    // handle output to file 
-    else if (wmpFileOutputEnabled) {
-        if (outputFile) {
-            fputs(buffer, outputFile);
-        }
-    }
-    alarmSchedule(&sensor->alarm, sensor->period);
-}
-
 // -------------------------------------------------------
 
 static inline bool checkArgLen(uint8_t minLen)
 {
     if (sp.argLen < minLen) {
         DPRINTF("checkArgLen: too short!\n");
+        return false;
+    }
+    if (sp.argLen > sizeof(sp.arguments)) {
+        DPRINTF("checkArgLen: too long!\n");
         return false;
     }
     return true;
@@ -342,7 +392,19 @@ static void processSensorSet(void)
     uint8_t returnCode = WMP_ERROR;
     if (!sensor) goto error;
 
+    uint32_t oldPeriod = sensor->period;
     sensor->period = le32read(sp.arguments + 1);
+
+    if ((oldPeriod == 0) != (sensor->period == 0)) {
+        if (oldPeriod == 0) numTotalActiveSensors++;
+        else {
+            ASSERT(numTotalActiveSensors);
+            numTotalActiveSensors--;
+            sensor->isRead = false;
+        }
+        csvFileFirstLinePending = true;
+    }
+
     if (sensor->period) {
         alarmSchedule(&sensor->alarm, sensor->period);
     } else {
@@ -446,8 +508,9 @@ static void processAddressGet(void)
     wmpSendReply();
 }
 
-static void processFileSet(void)
+static void processFilenameSet(void)
 {
+    uint8_t returnCode = WMP_ERROR;
     uint8_t len = min(sizeof(wmpOutputFileName) - 1, sp.argLen);
     memcpy(wmpOutputFileName, sp.arguments, len);
     wmpOutputFileName[len] = '\0';
@@ -459,12 +522,22 @@ static void processFileSet(void)
 
     if (wmpOutputFileName[0]) {
         outputFile = fopen(wmpOutputFileName, "a");
+        if (!outputFile) goto error;
     }
 
     eepromWrite(WMP_EEPROM_FILE_BASE, wmpOutputFileName, 12);
 
-    sp.arguments[0] = WMP_SUCCESS;
+    returnCode = WMP_SUCCESS;
+  error:
+    sp.arguments[0] = returnCode;
     sp.argLen = 1;
+    wmpSendReply();
+}
+
+static void processFilenameGet(void)
+{
+    strcpy((char *)sp.arguments, wmpOutputFileName);
+    sp.argLen = strlen(wmpOutputFileName);
     wmpSendReply();
 }
 
@@ -483,15 +556,17 @@ static void processFilelistGet(void)
 // TODO: do this properly, e.g. with a callback
 static void processFileGet(void)
 {
+    sp.arguments[sp.argLen] = '\0';
     FILE *f = fopen((char *) sp.arguments, "r");
-    sp.argLen = 0;
+    sp.argLen = 1;
+    sp.arguments[0] = WMP_ERROR;
     if (f) {
         size_t len = fread(sp.arguments, 1, sizeof(sp.arguments), f);
         if (len >= 0) {
             sp.argLen = len;
         }
         fclose(f);
-    } 
+    }
     wmpSendReply();
 }
 
@@ -534,12 +609,15 @@ static void wmpProcessCommand(void)
     case WMP_CMD_GET_ADDR:
         processAddressGet();
         break;
+    case WMP_CMD_SET_FILENAME:
+        if (!checkArgLen(1)) return;
+        processFilenameSet();
+        break;
+    case WMP_CMD_GET_FILENAME:
+        processFilenameGet();
+        break;
     case WMP_CMD_GET_FILELIST:
         processFilelistGet();
-        break;
-    case WMP_CMD_SET_FILE:
-        if (!checkArgLen(1)) return;
-        processFileSet();
         break;
     case WMP_CMD_GET_FILE:
         if (!checkArgLen(1)) return;
@@ -629,6 +707,7 @@ void wmpInit(void)
             eepromRead(addr, &sensor->period, 4);
             if (sensor->period) {
                 alarmSchedule(&sensor->alarm, sensor->period);
+                numTotalActiveSensors++;
             }
         } else {
             eepromWrite(addr, &sensor->period, 4);
@@ -651,6 +730,10 @@ void wmpInit(void)
         eepromWrite(WMP_EEPROM_OUTPUT_BASE + WMP_OUTPUT_SDCARD, &wmpSdCardOutputEnabled, 1);
         eepromWrite(WMP_EEPROM_OUTPUT_BASE + WMP_OUTPUT_FILE, &wmpFileOutputEnabled, 1);
         eepromWrite(WMP_EEPROM_FILE_BASE, "", 1);
+    }
+
+    if (numTotalActiveSensors) {
+        csvFileFirstLinePending = true;
     }
 
     bool on;

@@ -229,21 +229,21 @@ class TimeCounterSensor(SealSensor):
 class SystemTimeSensor(SealSensor):
     def __init__(self):
         super(SystemTimeSensor, self).__init__("SystemTime")
-        self.useFunction.value = "getFixedUptime()"
-        self.readFunction.value = "getFixedUptime()"
+        self.useFunction.value = "getSyncTimeSec()"
+        self.readFunction.value = "getSyncTimeSec()"
 
 class TimestampSensor(SealSensor):
     def __init__(self):
         super(TimestampSensor, self).__init__("Timestamp")
-        self.useFunction.value = "getFixedUptime()"
-        self.readFunction.value = "getFixedUptime()"
+        self.useFunction.value = "getSyncTimeSec()"
+        self.readFunction.value = "getSyncTimeSec()"
 
 # TODO: allow aliases!
 class UptimeSensor(SealSensor):
     def __init__(self):
         super(UptimeSensor, self).__init__("Uptime")
-        self.useFunction.value = "getUptime()"
-        self.readFunction.value = "getUptime()"
+        self.useFunction.value = "getTimeSec()"
+        self.readFunction.value = "getTimeSec()"
 
 #
 # Generic sensor with a predefined waveform.

@@ -2340,7 +2340,7 @@ class OutputUseCase(object):
             outputFile.write("        {0}Packet.sequenceNumber = ++seqnum;\n".format(self.getNameCC()))
         if PACKET_FIELD_ID_TIMESTAMP in self.usedIds:
             outputFile.write("    if (!({0}Packet.typeMask1 & TIMESTAMP_TYPE_MASK))\n".format(self.getNameCC()))
-            outputFile.write("        {0}Packet.timestamp = getFixedUptime();\n".format(self.getNameCC()))
+            outputFile.write("        {0}Packet.timestamp = getSyncTimeSec();\n".format(self.getNameCC()))
         if PACKET_FIELD_ID_ADDRESS in self.usedIds:
             outputFile.write("    if (!({0}Packet.typeMask1 & ADDRESS_TYPE_MASK))\n".format(self.getNameCC()))
             outputFile.write("        {0}Packet.address = localAddress;\n".format(self.getNameCC()))

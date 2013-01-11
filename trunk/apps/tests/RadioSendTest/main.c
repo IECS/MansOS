@@ -31,10 +31,24 @@
 #include <random.h>
 #include <string.h>
 
-#define RECV 1
+#define RECV 0
+#define HW_ADDRESSING 1
+
+//-------------------------------------------
 
 void sendCounter(void);
 void recvCounter(void);
+
+void setLocalAddress(void) {
+#if RADIO_CHIP==RADIO_CHIP_AMB8420
+#if HW_ADDRESSING
+    uint8_t localHwAddress = RECV ? 0x1 : 0x2;
+    amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, localHwAddress);
+#else
+    amb8420EnterAddressingMode(AMB8420_ADDR_MODE_NONE, 0x0);
+#endif // HW_ADDRESSING
+#endif // RADIO_CHIP_AMB8420
+}
 
 //-------------------------------------------
 //      Entry point for the application
@@ -45,11 +59,9 @@ void appMain(void)
     PRINTF("%s %#04x starting...\n",
             RECV ? "Receiver" : "Sender", localAddress);
 
+    setLocalAddress();
+
 #if RECV
-#if RADIO_CHIP==RADIO_CHIP_AMB8420
-    amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, 0x1);
-#endif
-    // PRINTF("recvCounter = %p\n", recvCounter);
     radioSetReceiveHandle(recvCounter);
     radioOn();
 
@@ -67,9 +79,6 @@ void appMain(void)
 #else
     // radioSetReceiveHandle(radioDiscard);
     radioOn();
-#if RADIO_CHIP==RADIO_CHIP_AMB8420
-    amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, 0x2);
-#endif
     sendCounter();
 #endif
 }
@@ -82,8 +91,6 @@ void recvCounter(void)
     uint16_t sender;
     uint8_t counter;
     int8_t rssi = 0;
-
-    PRINTF("recvCounter\n");
 
     greenLedToggle();
     len = radioRecv(buffer, sizeof(buffer));
@@ -118,7 +125,7 @@ void sendCounter(void) {
     while (1) {
         PRINTF("0x%04x: sending counter %i\n", localAddress, *counter);
         ledOn();
-#if RADIO_CHIP==RADIO_CHIP_AMB8420
+#if HW_ADDRESSING && RADIO_CHIP==RADIO_CHIP_AMB8420
         amb8420SetDstAddress(0x1);
 #endif
         int8_t result = radioSend(sendBuffer, sizeof(sendBuffer));

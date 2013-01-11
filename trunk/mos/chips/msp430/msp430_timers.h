@@ -127,7 +127,7 @@ enum {
 #define msp430StartTimerA() TACTL |= MC_CONT
 #define msp430StopTimerA() TACTL &= ~(MC_3)
 
-#define msp430StartTimerB() TBCTL |= MC_UPTO_CCR0 | TBIE
+#define msp430StartTimerB()  TBCTL |= MC_UPTO_CCR0 | TBIE
 #define msp430StopTimerB() TBCTL &= ~(MC_3 | TBIE)
 
 // TODO - make register values dynamic (use constants defined above)
@@ -185,8 +185,8 @@ extern void msp430TimerBSet(uint16_t ms);
 #define SLEEP_TIMER_INIT() msp430InitTimerB()
 #define SLEEP_TIMER_START() msp430StartTimerB()
 #define SLEEP_TIMER_STOP() msp430StopTimerB()
-// #define SET_SLEEP_TIMER_VALUE(time) TBR = time
-// #define SET_SLEEP_OCR_VALUE(value) TBCCR0  = value
+#define SLEEP_TIMER_VALUE() (TBR)
+#define SLEEP_TIMER_EXPIRY_TIME() (TBCCR0)
 // make sure the interrupt was triggered
 // because of a capture
 #define SLEEP_TIMER_EXPIRED() (TBIV == 14)

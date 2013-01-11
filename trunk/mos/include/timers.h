@@ -25,7 +25,7 @@
 #define MANSOS_TIMERS_H
 
 #include <platform.h>
-#include <kernel/timing.h>
+#include <timing.h>
 
 // used when waking up from sleep during which the realtime
 // counter was not incremented
@@ -39,6 +39,11 @@ static inline uint16_t msToSleepCycles(uint16_t ms)
 {
     return ms * SLEEP_CYCLES
         + (uint16_t) ((uint32_t) ms * (uint32_t) SLEEP_CYCLES_DEC / 1000ull);
+}
+
+static inline uint16_t sleepCyclesToMs(uint16_t ocr)
+{
+    return ocr * 1000ul / (SLEEP_CLOCK_SPEED / SLEEP_CLOCK_DIVIDER);
 }
 
 #endif

@@ -58,8 +58,8 @@ struct RoutingInfoPacket_s {
     MosShortAddr rootAddress;  // address of the base station / gateway
     uint16_t hopCount;         // distance from root
     Seqnum_t seqnum;           // sequence number
-    uint32_t rootClock;        // used for time sync to calculate the delta
     uint16_t moteNumber;
+    uint64_t rootClockMs;      // milliseconds, used for time sync to calculate the delta
 } PACKED;
 typedef struct RoutingInfoPacket_s RoutingInfoPacket_t;
 
@@ -70,29 +70,29 @@ typedef struct RoutingRequestPacket_s {
 
 #define ROUTING_PROTOCOL_PORT  112
 
-#if 1
+#if 0
 # define ROUTING_ORIGINATE_TIMEOUT    (60 * 1000ul)
 # define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
 # define SAD_SUPERFRAME_LENGTH        524288ul // (10 * 60 * 1000ul)
 # define ROUTING_INFO_VALID_TIME      (1600 * 1000ul)
 // during this time, radio is never turned off on forwarders and collectors
-# define NETWORK_STARTUP_TIME         (2 * 60 * 60) // 2h in seconds
+# define NETWORK_STARTUP_TIME_SEC     (2 * 60 * 60) // 2h in seconds
 #else // for testing
 # define ROUTING_ORIGINATE_TIMEOUT    (15 * 1000ul)
 # define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
 # define SAD_SUPERFRAME_LENGTH        32768ul // (30 * 1000ul)
 # define ROUTING_INFO_VALID_TIME      (70 * 1000ul)
-# define NETWORK_STARTUP_TIME         0
+# define NETWORK_STARTUP_TIME_SEC     0
 #endif
 
 #define MOTE_INFO_VALID_TIME         (5 * SAD_SUPERFRAME_LENGTH)
 
 #define TIMESLOT_LENGTH              1000
 // timeslot is adjusted (to both ends) by this number
-#define TIMESLOT_IMPRECISION         2000 // XXX: investigate why so much!
+#define TIMESLOT_IMPRECISION         1000 // because time sync protocol has second graduality
 #define TOTAL_LISTENING_TIME         (TIMESLOT_LENGTH + 2 * TIMESLOT_IMPRECISION)
 
-#define ROUTING_REPLY_WAIT_TIMEOUT   TIMESLOT_IMPRECISION
+#define ROUTING_REPLY_WAIT_TIMEOUT   1000 + TIMESLOT_IMPRECISION
 
 // XXX: this must be chip-specific. For AMB8420 its quite large (all the serial comm)
 #define RADIO_TX_TIME 0
@@ -107,7 +107,7 @@ typedef struct RoutingRequestPacket_s {
 #if USE_ROLE_FORWARDER || USE_ROLE_COLLECTOR
 // turn off radio, but only after two hours of uninterrupted listening
 #define RADIO_OFF_ENERGSAVE() \
-    if (getUptime() > NETWORK_STARTUP_TIME) radioOff()
+    if (getTimeSec() > NETWORK_STARTUP_TIME_SEC) radioOff()
 #else
 // on mote: always turn off radio
 #define RADIO_OFF_ENERGSAVE() \
@@ -116,9 +116,6 @@ typedef struct RoutingRequestPacket_s {
 
 extern MosShortAddr rootAddress;
 
-extern int32_t rootClockDelta;
-extern int32_t rootClockDeltaMs;
-
 //===========================================================
 // Procedures
 //===========================================================
@@ -126,14 +123,5 @@ extern int32_t rootClockDeltaMs;
 void initRouting(void);
 
 RoutingDecision_e routePacket(MacInfo_t *info);
-
-// TODO: move this somewhere
-#if !USE_ROLE_BASE_STATION && USE_NET
-#define getFixedTime() ((uint32_t)((uint32_t)getJiffies() + rootClockDeltaMs))
-#define getFixedUptime() ((uint32_t)(getUptime() + rootClockDelta))
-#else
-#define getFixedTime() ((uint32_t)getJiffies())
-#define getFixedUptime() getUptime()
-#endif
 
 #endif

@@ -29,7 +29,7 @@
 #include "../routing.h"
 #include "../socket.h"
 #include <alarms.h>
-#include <kernel/timing.h>
+#include <timing.h>
 #include <print.h>
 #include <net/net-stats.h>
 
@@ -40,8 +40,8 @@ static Seqnum_t mySeqnum;
 static void roOriginateTimerCb(void *);
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len);
 
-uint32_t lastRootSyncJiffies;
-uint32_t lastRootClockSeconds;
+uint32_t lastRootSyncMilliseconds;
+uint32_t lastRootClockMilliseconds;
 
 // -----------------------------------------------
 
@@ -63,13 +63,13 @@ static void roOriginateTimerCb(void *x) {
     routingInfo.rootAddress = localAddress;
     routingInfo.hopCount = 1;
     routingInfo.seqnum = ++mySeqnum;
-    if (lastRootSyncJiffies) {
-        routingInfo.rootClock = lastRootClockSeconds
-                + (getJiffies() - lastRootSyncJiffies);
-    } else {
-        routingInfo.rootClock = getJiffies();
-    }
     routingInfo.moteNumber = 0;
+    if (lastRootSyncMilliseconds) {
+        routingInfo.rootClockMs = lastRootClockMilliseconds
+                + (getTimeMs64() - lastRootSyncMilliseconds);
+    } else {
+        routingInfo.rootClockMs = getTimeMs64();
+    }
 
     socketSend(&roSocket, &routingInfo, sizeof(routingInfo));
     alarmSchedule(&roOriginateTimer, ROUTING_ORIGINATE_TIMEOUT);

@@ -29,7 +29,7 @@
 #include "../routing.h"
 #include "../socket.h"
 #include <alarms.h>
-#include <kernel/timing.h>
+#include <timing.h>
 #include <lib/unaligned.h>
 #include <print.h>
 #include <random.h>
@@ -95,7 +95,7 @@ static void roForwardTimerCb(void *x)
     routingInfo.rootAddress = rootAddress;
     routingInfo.hopCount = hopCountToRoot + 1;
     routingInfo.seqnum = lastSeenSeqnum;
-    routingInfo.rootClock = getUptime() + rootClockDeltaMs;
+    routingInfo.rootClockMs = getSyncTimeMs64();
     routingInfo.moteNumber = 0;
 
     // XXX: INC_NETSTAT(NETSTAT_PACKETS_SENT, EMPTY_ADDR);
@@ -192,7 +192,6 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         }
 #endif
         lastRootMessageTime = getJiffies();
-        rootClockDeltaMs = (int32_t)(ri.rootClock - getUptime());
     }
 }
 

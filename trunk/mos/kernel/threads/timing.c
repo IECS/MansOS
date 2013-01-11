@@ -35,10 +35,6 @@ ALARM_TIMER_INTERRUPT()
 
     jiffies += JIFFY_TIMER_MS;
 
-#if USE_ENERGY_STATS
-    energestOnTick();
-#endif
-
     //
     // Clock error (software, due to rounding) is 32/32768 seconds per second,
     // or 0.99609375 milliseconds per each 1.02 seconds

@@ -111,8 +111,11 @@ static void rxPacket(uint8_t checksum)
 
 #if USE_THREADS
     // disable Rx interrupts
-    serialDisableRX(AMB8420_UART_ID);
+    serialDisableRX(AMB8420_UART_ID); // TODO: is this ok?
     processFlags.bits.radioProcess = true;
+    // wake up the kernel thread
+    // XXX: done in ISR because it cannot be done here!
+    // EXIT_SLEEP_MODE();
 #else
     if (rxHandle) {
         rxHandle();
@@ -532,7 +535,7 @@ void amb8420SetTxPower(uint8_t power)
     RPRINTF("set tx power to %d\n", power);
     AMB8420ModeContext_t ctx;
     AMB8420_ENTER_STANDBY_MODE(ctx);
-    while (amb8420Set1b(PHY_DEFAULT_CHANNEL_POS, power));
+    while (amb8420Set1b(PHY_PA_POWER_POS, power));
     amb8420Reset();
     AMB8420_RESTORE_MODE(ctx);
 }

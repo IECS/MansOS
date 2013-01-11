@@ -569,10 +569,9 @@ ISR(PORT1, cc2420Interrupt)
     // USARTSendByte(1, 'I');
 
 #if USE_THREADS
-    // simply set the "interrupt happened" flag;
-    // yes, this does NOT wake the MCU!
-    // XXX: add support for MCU "wake on radio" in future?
     processFlags.bits.radioProcess = true;
+    // wake up the kernel thread!
+    EXIT_SLEEP_MODE();
 #elif USE_PROTOTHREADS
     // poll protothread
     //RPRINTF("%lu, calling radio poll\n", getJiffies());
@@ -585,10 +584,6 @@ ISR(PORT1, cc2420Interrupt)
         flushrx();
     }
 #endif
-
-    // wake MCU up, if it was sleeping
-    //RPRINTF("Exit sleep mode\n");
-    EXIT_SLEEP_MODE();
 
     energyConsumerOffIRQ(ENERGY_CONSUMER_MCU);
 }

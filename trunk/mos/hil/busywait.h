@@ -62,14 +62,14 @@ static inline uint16_t timerTicksRead(void)
 // interrupts must be enabled!
 #define BUSYWAIT_UNTIL_LONG(cond, maxTime, ok)                          \
     do {                                                                \
-        uint32_t endTime = getRealTime() + maxTime;                     \
+        uint32_t endTime = getTimeMs() + maxTime;                       \
         ok = false;                                                     \
         do {                                                            \
             if (cond) {                                                 \
                 ok = true;                                              \
                 break;                                                  \
             }                                                           \
-        } while (timeAfter32(endTime, getRealTime()));                  \
+        } while (timeAfter32(endTime, getTimeMs()));                    \
     } while (0)
 
 

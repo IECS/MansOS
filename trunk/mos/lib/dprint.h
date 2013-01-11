@@ -91,8 +91,8 @@
 // TPRINTF: print text with timestamp
 //
 #if PLATFORM_PC
-#include <timers.h> // for getRealTime()
-#define TPRINTF(format, ...) debugPrintf(PRINT_FUNCTION, "[%u] " format, getRealTime(), ##__VA_ARGS__)
+#include <timing.h> // for getTimeMs()
+#define TPRINTF(format, ...) debugPrintf(PRINT_FUNCTION, "[%u] " format, getTimeMs(), ##__VA_ARGS__)
 #else
 #define TPRINTF(...) PRINTF(__VA_ARGS__)
 #endif

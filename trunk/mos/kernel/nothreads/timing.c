@@ -23,7 +23,7 @@
 
 #include <kernel/alarms_system.h>
 #include <platform.h>
-#include <kernel/timing.h>
+#include <timing.h>
 
 #if USE_PROTOTHREADS
 #include <etimer.h>

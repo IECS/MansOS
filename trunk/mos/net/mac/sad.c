@@ -85,10 +85,11 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     int8_t ret;
 #if DELAYED_SEND
     if (mi->timeWhenSend) {
+        PRINTF("delayed send!\n");
         if (delayedDataLength) {
             return -1; // busy
         }
-        uint32_t now = getFixedTime();
+        uint32_t now = getSyncTimeMs();
         if (now < mi->timeWhenSend) {
             // PRINTF("delayed send after %ld\n", mi->timeWhenSend - now);
             delayedNexthop = getNexthop(mi) & 0xff;
@@ -101,16 +102,14 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
         }
     }
 #endif
-    // PRINTF("%lu: mac tx %u bytes\n", getFixedTime(), length);
-    INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
-#ifndef PLATFORM_ARDUINO
     // use least significant byte
     uint8_t nh = getNexthop(mi) & 0xff;
     if (lastNexthop != nh) {
         amb8420SetDstAddress(nh);
         lastNexthop = nh;
     }
-#endif
+    // PRINTF("%lu: mac tx %u bytes\n", getSyncTimeMs(), length);
+    INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
     // if (!amb8420SetDstAddress(getNexthop(mi) & 0xff)) {
     //     bool b = amb8420SetDstAddress(getNexthop(mi) & 0xff);
     //     PRINTF("MAC ADDR SET RETRY = %d\n", (int) b);
@@ -123,7 +122,7 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
 #if DELAYED_SEND
 static void delayTimerCb(void *unused)
 {
-    // PRINTF("%lu: mac tx %u bytes\n", getFixedTime(), delayedDataLength);
+    // PRINTF("%lu: mac tx %u bytes\n", getSyncTimeMs(), delayedDataLength);
     // redLedToggle();
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
 #ifndef PLATFORM_ARDUINO
@@ -149,44 +148,44 @@ static void delayTimerCb(void *unused)
 static bool filterPass(MacInfo_t *mi)
 {
 // #if USE_ROLE_BASE_STATION
-//     PRINTF("filter: from=%#04x, orig=%#04x\n",
-//             mi->immedSrc.shortAddr, mi->originalSrc.shortAddr);
+    // PRINTF("filter: from=%#04x, orig=%#04x\n",
+    //         mi->immedSrc.shortAddr, mi->originalSrc.shortAddr);
 // #endif
 
     if (!mi->immedSrc.shortAddr) return true; // XXX
 
 #define BASE_STATION_ADDRESS 0x0001
+#define FORWARDER_ADDRESS    0x1690
+#define COLLECTOR_ADDRESS    0x7BAA
 
 #if 1
-    // 0x0001 - base station
-    // 0x71C0 - forwarder
-    // 0x7BAA - collector
+    // network with all four mote roles, two intermediate hops
     switch (localAddress) {
     case BASE_STATION_ADDRESS:
-        if (mi->immedSrc.shortAddr != 0x71C0) return false;
+        if (mi->immedSrc.shortAddr != FORWARDER_ADDRESS) return false;
         break;
-    case 0x71C0:
+    case FORWARDER_ADDRESS:
         if (mi->immedSrc.shortAddr != BASE_STATION_ADDRESS
-                && mi->immedSrc.shortAddr != 0x7BAA) return false;
+                && mi->immedSrc.shortAddr != COLLECTOR_ADDRESS) return false;
         break;
-    case 0x7BAA:
+    case COLLECTOR_ADDRESS:
         if (mi->immedSrc.shortAddr == BASE_STATION_ADDRESS) return false;
         break;
-    default:
-        if (mi->immedSrc.shortAddr != 0x7BAA) return false;
+    default: // mote
+        if (mi->immedSrc.shortAddr != COLLECTOR_ADDRESS) return false;
         break;
     }
 #else
-    // 0x0001 - base station
-    // 0x3B88 - collector
+    // smaller network with three mote roles, one intermediate hop
     switch (localAddress) {
-    case 0x7BAA:
-        if (mi->immedSrc.shortAddr != 0x3B88) return false;
+    case BASE_STATION_ADDRESS:
+        if (mi->immedSrc.shortAddr != COLLECTOR_ADDRESS) return false;
         break;
-    case 0x3B88:
+    case COLLECTOR_ADDRESS:
+        // receive from all
         break;
     default:
-        if (mi->immedSrc.shortAddr == 0x7BAA) return false;
+        if (mi->immedSrc.shortAddr == COLLECTOR_ADDRESS) return false;
         break;
     }
 #endif
@@ -197,21 +196,24 @@ static bool filterPass(MacInfo_t *mi)
 
 static void pollSadMac(void) {
     MacInfo_t mi;
+        
     INC_NETSTAT(NETSTAT_RADIO_RX, EMPTY_ADDR);
     if (isRadioPacketReceived()) {
 // #if USE_ROLE_COLLECTOR
 //         greenLedToggle();
 // #endif
-        // PRINTF("%lu: mac rx %u bytes\n",
-        //         getFixedTime(),
-        //         radioPacketBuffer->receivedLength);
-
         if (macProtocol.recvCb) {
             uint8_t *data = defaultParseHeader(radioPacketBuffer->buffer,
                     radioPacketBuffer->receivedLength, &mi);
+
+            // PRINTF("%lu: mac rx %u bytes from %#04x\n",
+            //         getSyncTimeMs(),
+            //         radioPacketBuffer->receivedLength,
+            //         mi.immedSrc.shortAddr);
+
 #if TEST_FILTERS
             if (!filterPass(&mi)) {
-                // PRINTF("filtered out\n");
+                // PRINTF("  filtered out\n");
                 data = NULL;
             }
 #endif
