@@ -37,8 +37,10 @@ void msp430TimerBSet(uint16_t ms)
         ms = PLATFORM_MIN_SLEEP_MS;
     }
     uint16_t ocr = msToSleepCycles(ms);
-    incRealtime(ms);
-    TBCCR0 = TBR + ocr;
+//    incRealtime(ms);
+//    TBCCR0 = TBR + ocr;
+    TBR = 0;      // clear TBR
+    TBCCR0 = ocr; // set CCR0 to the desired time interval 
 }
 
 #endif

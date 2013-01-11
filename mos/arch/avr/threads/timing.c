@@ -21,13 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <platform.h>
-#include <kernel/timing.h>
-
-static inline uint16_t msToSleepCycles(uint16_t ms) {
-    return ms * SLEEP_CYCLES
-        + (uint16_t) ((uint32_t) ms * (uint32_t) SLEEP_CYCLES_DEC / 1000ull);
-}
+#include <plaform.h>
 
 void atmegaTimer1Set(uint16_t ms)
 {
@@ -38,6 +32,6 @@ void atmegaTimer1Set(uint16_t ms)
     }
 
     uint16_t ocr = msToSleepCycles(ms);
-    jiffies += ms2jiffies(ms);
-    OCR1A = TCNT1 + ocr;
+    TCNT1 = 0;    // reset timer counter
+    OCR1A = ocr;  // set capture register to desired value
 }

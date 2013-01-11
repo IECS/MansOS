@@ -29,7 +29,7 @@
 #include "../routing.h"
 #include "../socket.h"
 #include <alarms.h>
-#include <kernel/timing.h>
+#include <timing.h>
 #include <lib/unaligned.h>
 #include <print.h>
 #include <random.h>
@@ -85,7 +85,7 @@ static uint32_t calcSendTime(void)
     // leave 1 second for each mote
     t += 1000 * moteNumber;
 
-    uint32_t now = getFixedTime() % SAD_SUPERFRAME_LENGTH;
+    uint32_t now = getSyncTimeMs() % SAD_SUPERFRAME_LENGTH;
 
     if (t < now) {
         if (t + 1000 > now) {
@@ -96,7 +96,7 @@ static uint32_t calcSendTime(void)
     t -= now;
     // add random jitter [300..900]
     t += randomInRange(300, 900);
-    return t + getFixedTime();
+    return t + getSyncTimeMs();
 }
 
 static uint32_t calcListenStartTime(void)
@@ -109,7 +109,7 @@ static uint32_t calcListenStartTime(void)
 
     //PRINTF("  l=%lu, t=%lu\n", SAD_SUPERFRAME_LENGTH, t);
 
-    uint32_t toEnd = SAD_SUPERFRAME_LENGTH - getFixedTime() % SAD_SUPERFRAME_LENGTH;
+    uint32_t toEnd = SAD_SUPERFRAME_LENGTH - getSyncTimeMs() % SAD_SUPERFRAME_LENGTH;
     if (toEnd < t + TOTAL_LISTENING_TIME) toEnd += SAD_SUPERFRAME_LENGTH;
     //PRINTF("  toEnd=%lu\n", toEnd);
     t = toEnd - t;
@@ -137,7 +137,7 @@ static void roStartListeningTimerCb(void *x)
 
     // listen to info only when routing info is already valid (?)
     if (isRoutingInfoValid()) {
-        RPRINTF("%lu: --- START LISTENING\n", getFixedTime());
+        RPRINTF("%lu: --- START LISTENING\n", getSyncTimeMs());
         radioOn();
         alarmSchedule(&roStopListeningTimer, TOTAL_LISTENING_TIME);
     }
@@ -145,7 +145,7 @@ static void roStartListeningTimerCb(void *x)
 
 static void roStopListeningTimerCb(void *x)
 {
-    RPRINTF("%lu: turn radio off\n", getFixedTime());
+    RPRINTF("%lu: turn radio off\n", getSyncTimeMs());
     RADIO_OFF_ENERGSAVE();
 }
 
@@ -227,11 +227,9 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         lastSeenSeqnum = ri.seqnum;
         hopCountToRoot = ri.hopCount;
         lastRootMessageTime = (uint32_t)getJiffies();
-//        rootClockDelta = (int32_t)(ri.rootClock - (uint32_t)getJiffies());
-        rootClockDelta = (int32_t)(ri.rootClock - getUptime());
-        rootClockDeltaMs = rootClockDelta * 1000;
+        rootClockDeltaMs = ri.rootClockMs - getTimeMs64();
         moteNumber = ri.moteNumber;
-        // PRINTF("%lu: ++++++++++++ fixed local time\n", getFixedTime());
+        // PRINTF("%lu: ++++++++++++ fixed local time\n", getSyncTimeMs());
     }
 }
 

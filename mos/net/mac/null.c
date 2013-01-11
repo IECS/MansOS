@@ -21,6 +21,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+//
+// NULL MAC protocol.
+// Directly bridges upper-layer network stack with a radio driver.
+// Does not add any network addressing information!
+//
+
 #include "../mac.h"
 #include <lib/buffer.h>
 #include <radio.h>

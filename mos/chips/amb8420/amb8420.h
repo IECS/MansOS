@@ -66,6 +66,9 @@
 #define PHY_DEFAULT_CHANNEL_POS       42
 #define PHY_CCA_LEVEL_POS             43
 
+#define AMB8420_MIN_PA_POWER          0
+#define AMB8420_MAX_PA_POWER         195
+
 // addressing modes
 typedef enum {
     AMB8420_ADDR_MODE_NONE    = 0, // no address
@@ -143,7 +146,7 @@ AMB8420RxHandle amb8420SetReceiver(AMB8420RxHandle);
 // radio channel control
 void amb8420SetChannel(int channel);
 
-// transmit power control (0..31)
+// transmit power control (AMB8420_MIN_PA_POWER..AMB8420_MAX_PA_POWER)
 void amb8420SetTxPower(uint8_t power);
 
 // get RSSI (Received Signal Strength Indication) of the last received packet

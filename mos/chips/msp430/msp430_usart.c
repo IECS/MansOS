@@ -37,6 +37,10 @@
 
 #include <lib/dprint.h>
 
+#if USE_THREADS
+#include <kernel/threads/threads.h>
+#endif
+
 //===========================================================
 // Data types and constants
 //===========================================================
@@ -296,6 +300,13 @@ ISR(UART0RX, UART0InterruptHandler)
     // PRINTF("serial 0 char %#02x\n", (uint16_t) x);
 
     if (serialRecvCb[0]) serialRecvCb[0](x);
+
+#if RADIO_ON_UART0 && USE_THREADS
+    // wake up the kernel thread in case radio packet is received
+    if (processFlags.value) {
+        EXIT_SLEEP_MODE();
+    }
+#endif
 }
 
 ISR(UART1RX, UART1InterruptHandler)
@@ -311,6 +322,13 @@ ISR(UART1RX, UART1InterruptHandler)
     // PRINTF("serial 1 char %#02x\n", (uint16_t) x);
 
     if (serialRecvCb[1]) serialRecvCb[1](x);
+
+#if RADIO_ON_UART1 && USE_THREADS
+    // wake up the kernel thread in case radio packet is received
+    if (processFlags.value) {
+        EXIT_SLEEP_MODE();
+    }
+#endif
 }
 
 #endif // USE_SERIAL_RX

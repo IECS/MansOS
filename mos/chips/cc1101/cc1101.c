@@ -618,6 +618,8 @@ XISR(CC1101_INTR_PORT, cc1011Interrupt)
 
 #if USE_THREADS
         processFlags.bits.radioProcess = true;
+        // wake up the kernel thread
+        EXIT_SLEEP_MODE();
 #else
         if (!callback)
         {

@@ -47,17 +47,22 @@ static inline ticks_t ms2jiffies(ticks_t ms)
 }
 
 //
-// For backwards compatibility
+// Get milliseconds elapsed since system start
 //
-static inline ticks_t getRealTime(void) {
+static inline uint32_t getTimeMs(void) {
+    return (uint32_t) jiffies2ms(jiffies);
+}
+
+static inline uint64_t getTimeMs64(void) {
     return jiffies2ms(jiffies);
 }
+
 
 //
 // Get seconds elapsed since system start
 // 32-bit value is OK: ~136 year system lifetime sounds long enough ;)
 //
-static inline uint32_t getUptime(void) {
+static inline uint32_t getTimeSec(void) {
     return jiffies2ms(jiffies) / 1000;
 }
 
@@ -65,5 +70,25 @@ static inline uint32_t getUptime(void) {
 // Internal use only: this functions does the actual sleeping
 //
 void doMsleep(uint16_t milliseconds);
+
+
+//
+// Synchronized time functions: return time that is synchronized
+// (fixed) root clock from the time synchronization protocol.
+//
+#if !USE_ROLE_BASE_STATION && USE_NET
+
+extern int64_t rootClockDeltaMs;
+#define getSyncTimeMs()   ((uint32_t)(getTimeMs() + rootClockDeltaMs))
+#define getSyncTimeMs64() (getTimeMs() + rootClockDeltaMs)
+#define getSyncTimeSec()  ((uint32_t)(getTimeSec() + rootClockDeltaMs / 1000))
+
+#else
+
+#define getSyncTimeMs()  getTimeMs()
+#define getSyncTimeSec() getTimeSec()
+
+#endif
+
 
 #endif

@@ -533,6 +533,8 @@ bool mrf24j40PollForPacket(void)
 
 #if USE_THREADS    
     if (process) processFlags.bits.radioProcess = true;
+    // wake up the kernel thread
+    EXIT_SLEEP_MODE();
 #endif
     return process;
 }

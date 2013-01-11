@@ -58,8 +58,9 @@ enum WmpCommandType_e {
     WMP_CMD_GET_OUTPUT,   // get output status (enabled/disabled)
     WMP_CMD_SET_ADDR,     // set local network address
     WMP_CMD_GET_ADDR,     // get local network address
+    WMP_CMD_SET_FILENAME, // set file name (to use for data logging)
+    WMP_CMD_GET_FILENAME, // get file name (used for data logging)
     WMP_CMD_GET_FILELIST, // get list of all files on FAT filesystem
-    WMP_CMD_SET_FILE,     // set file name (to use for data logging)
     WMP_CMD_GET_FILE,     // get contents of a file
     WMP_CMD_SET_DAC,      // set DAC channel value
     WMP_CMD_GET_DAC,      // get DAC channel value

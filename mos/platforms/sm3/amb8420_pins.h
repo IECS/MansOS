@@ -28,6 +28,9 @@
 
 #define AMB8420_UART_ID     0
 
+// the only platform so far where this is so
+#define RADIO_ON_UART0      1
+
 #define AMB8420_SERIAL_BAUDRATE  9600
 
 // when low: restart the module

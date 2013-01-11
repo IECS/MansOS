@@ -22,18 +22,18 @@
  */
 
 #include <platform.h>
-#include <kernel/timing.h>
 #include <lib/assert.h>
-
 #include <print.h>
 
 void msp430TimerBSet(uint16_t ms)
 {
     // assume the 'ms' value passed here is correct (below maximum supported by HW)
+#if DEBUG
     if (ms >= 15984) {
         PRINTF("ms=%u\n", ms);
     }
     ASSERT(ms < 15984); // 15984 * 4.1 ~= 0xfffe
+#endif
 
     uint16_t ocr;
     if (ms > 0) {
@@ -47,10 +47,6 @@ void msp430TimerBSet(uint16_t ms)
         ocr = 1;
     }
 
-    // Note: this means that jiffies will contain incorrect value when someone
-    //       wakes from sleep because of an interrupt!
-    // XXX: also, a rounding error is introduced here
-    jiffies += ms2jiffies(ms);
-
-    TBCCR0 = TBR + ocr;
+    TBR = 0;
+    TBCCR0 = ocr;
 }

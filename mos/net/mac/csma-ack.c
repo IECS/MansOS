@@ -33,7 +33,7 @@
 #include <random.h>
 #include <lib/assert.h>
 #include <net/radio_packet_buffer.h>
-#include <kernel/timing.h>
+#include <timing.h>
 #include <net/net-stats.h>
 
 #define TEST_FILTERS 1
@@ -91,7 +91,7 @@ static int8_t sendCsmaMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     ret = queueAddPacket(mi, data, length, true, &p);
     if (ret) return ret;
 
-    //PRINTF("%lu: packet added!\n", getRealTime());
+    //PRINTF("%lu: packet added!\n", getTimeMs());
 
     p->sendTries = 0;
     p->ackTime = getJiffies() + MAC_PROTOCOL_ACK_TIME;

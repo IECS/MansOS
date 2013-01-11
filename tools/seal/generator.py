@@ -63,15 +63,14 @@ class Generator(object):
         self.outputFile.write("#include <net/seal_comm.h>\n")
         # XXX: only when network is used
         self.outputFile.write("#include <net/socket.h>\n")
-        # XXX: for getFixedTime() and getFixedUptime()
-        self.outputFile.write("#include <net/routing.h>\n")
+        self.outputFile.write("#include <timing.h>\n")
         self.outputFile.write("\n")
 
     def generateConstants(self):
         # main loop is executed once in second by default
-        self.outputFile.write("#ifndef CONDITION_EVALUATION_INTERVAL\n")
-        self.outputFile.write("#define CONDITION_EVALUATION_INTERVAL  100\n") # ms
-        self.outputFile.write("#endif\n\n")
+#        self.outputFile.write("#ifndef CONDITION_EVALUATION_INTERVAL\n")
+#        self.outputFile.write("#define CONDITION_EVALUATION_INTERVAL  100\n") # ms
+#        self.outputFile.write("#endif\n\n")
 
         self.outputFile.write("#define NUM_CONDITIONS {0}\n".format(
                 components.conditionCollection.totalConditions()))

@@ -45,6 +45,21 @@ void initAlarms(void);
 // or from interrupt context (when threads are not enabled)
 void alarmsProcess(void);
 
+// used for kernel
+static inline bool hasAnyAlarms(void)
+{
+    Alarm_t *first = SLIST_FIRST(&alarmListHead);
+    return first != NULL;
+}
+
+// used for kernel to determine how long to put kernel thread to sleep
+static inline uint32_t getNextAlarmTime(void)
+{
+    Alarm_t *first = SLIST_FIRST(&alarmListHead);
+    // PRINTF("getNextAlarmTime: %p: %lu\n", first, first ? first->jiffies : getJiffies());
+    return first->jiffies;
+}
+
 #if USE_THREADS
 // called from interrupt context
 static inline void scheduleProcessAlarms(uint32_t now)
@@ -55,14 +70,6 @@ static inline void scheduleProcessAlarms(uint32_t now)
     if (timeAfter(SLIST_FIRST(&alarmListHead)->jiffies, now) == false) {
         processFlags.bits.alarmsProcess = true;
     }
-}
-
-// used for kernel to determine how long to put kernel thread to sleep
-static inline uint32_t getNextAlarmTime(void)
-{
-    Alarm_t *first = SLIST_FIRST(&alarmListHead);
-    // PRINTF("getNextAlarmTime: %p: %lu\n", first, first ? first->jiffies : getJiffies());
-    return first ? first->jiffies : getJiffies(); // + MAX_KERNEL_SLEEP_TIME;
 }
 
 #else // not using threads

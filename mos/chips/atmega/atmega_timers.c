@@ -33,6 +33,8 @@ void atmegaTimer1Set(uint16_t ms) {
     }
 
     uint16_t ocr = msToSleepCycles(ms);
-    incRealtime(ms);
-    OCR1A = TCNT1 + ocr;
+//    incRealtime(ms);
+//    OCR1A = TCNT1 + ocr;
+    TCNT1 = 0;
+    OCR1A = ocr;
 }

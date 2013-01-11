@@ -149,12 +149,11 @@ enum {
 #define ALARM_TIMER_VALUE() (TCNT0)
 #define RESET_ALARM_TIMER() { TCNT0 = 0; OCR0A = PLATFORM_ALARM_TIMER_PERIOD - 1; }
 #define SET_NEXT_ALARM_TIMER(value) OCR0A += value
-// #define SET_ALARM_OCR_VALUE(value) OCR0A  = value
-// #define SET_SLEEP_TIMER_VALUE(time) TCNT1 = time
-// #define SET_SLEEP_OCR_VALUE(value) OCR1A  = value
 
 extern void atmegaTimer1Set(uint16_t ms);
 #define SLEEP_TIMER_SET(ms) atmegaTimer1Set(ms)
+#define SLEEP_TIMER_VALUE() (TCNT1)
+#define SLEEP_TIMER_EXPIRY_TIME() (OCR1A)
 
 #define DISABLE_ALARM_INTERRUPT() TIMSK0 &= ~(1 << OCIE0A)
 #define ENABLE_ALARM_INTERRUPT() TIMSK0 |= (1 << OCIE0A)

@@ -33,8 +33,8 @@
 // TODO: lock the usart in rx mode (resource arbitration)
 //
 
-extern uint32_t lastRootSyncSeconds;
-extern uint32_t lastRootClockSeconds;
+extern uint64_t lastRootSyncMilliseconds;
+extern uint64_t lastRootClockMilliseconds;
 
 #define DELIMITER '$'
 
@@ -55,8 +55,9 @@ static void parsePacket(TimeSyncPacket_t *packet)
         PRINTF("timesync: wrong format\n");
         return;
     }
-    lastRootSyncSeconds = getUptime();
-    lastRootClockSeconds = packet->time;
+    lastRootSyncMilliseconds = getTimeMs64();
+    // TODO: also include milliseconds in the packet itself!
+    lastRootClockMilliseconds = packet->time * 1000;
     // PRINTF("will use time from router: %lu\n", packet->time);
 }
 

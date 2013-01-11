@@ -22,7 +22,7 @@
  */
 
 #include <kernel/alarms_system.h>
-#include <kernel/timing.h>
+#include <timing.h>
 
 #include <lib/dprint.h>
 

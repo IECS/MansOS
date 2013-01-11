@@ -29,7 +29,8 @@
 #include "../routing.h"
 #include "../socket.h"
 #include <alarms.h>
-#include <kernel/timing.h>
+#include <timing.h>
+#include <random.h>
 #include <print.h>
 #include <net/net-stats.h>
 
@@ -40,14 +41,15 @@ static Seqnum_t mySeqnum;
 static void roOriginateTimerCb(void *);
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len);
 
-uint32_t lastRootSyncSeconds;
-uint32_t lastRootClockSeconds;
+uint64_t lastRootSyncMilliseconds;
+uint64_t lastRootClockMilliseconds;
+
+// this can serve just one downstream; use this specific address as the nexthop!
+static uint16_t downstreamAddress = MOS_ADDR_BROADCAST;
 
 // -----------------------------------------------
 
 void initRouting(void) {
-//    rootAddress = localAddress;
-
     socketOpen(&roSocket, routingReceive);
     socketBind(&roSocket, ROUTING_PROTOCOL_PORT);
     socketSetDstAddress(&roSocket, MOS_ADDR_BROADCAST);
@@ -59,7 +61,7 @@ void initRouting(void) {
 }
 
 static void roOriginateTimerCb(void *x) {
-    // PRINTF("originate routing packet, root=local=%#04x\n", localAddress);
+    PRINTF("originate routing packet, downstreamAddress=%#04x\n", downstreamAddress);
 
     RoutingInfoPacket_t routingInfo;
     routingInfo.packetType = ROUTING_INFORMATION;
@@ -67,23 +69,21 @@ static void roOriginateTimerCb(void *x) {
     routingInfo.rootAddress = localAddress;
     routingInfo.hopCount = 1;
     routingInfo.seqnum = ++mySeqnum;
-    if (lastRootSyncSeconds) {
-        routingInfo.rootClock = lastRootClockSeconds
-                + (getUptime() - lastRootSyncSeconds);
-    } else {
-        routingInfo.rootClock = getUptime();
-    }
-    // routingInfo.rootClock += RADIO_TX_TIME;
-    // routingInfo.rootClock = getUptime();
     routingInfo.moteNumber = 0;
+    if (lastRootSyncMilliseconds) {
+        routingInfo.rootClockMs = lastRootClockMilliseconds
+                + (getTimeMs64() - lastRootSyncMilliseconds);
+    } else {
+        routingInfo.rootClockMs = getTimeMs64();
+    }
 
-    socketSend(&roSocket, &routingInfo, sizeof(routingInfo));
-    alarmSchedule(&roOriginateTimer, ROUTING_ORIGINATE_TIMEOUT);
+    socketSendEx(&roSocket, &routingInfo, sizeof(routingInfo), downstreamAddress);
+    alarmSchedule(&roOriginateTimer, ROUTING_ORIGINATE_TIMEOUT + randomNumberBounded(500));
 }
 
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 {
-    // PRINTF("BS: routingReceive %d bytes, ignoring\n", len);
+    PRINTF("BS: routingReceive %d bytes\n", len);
     if (len < 2) {
         PRINTF("routingReceive: too short!\n");
         return;
@@ -92,8 +92,8 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
     uint8_t type = *data;
     if (type == ROUTING_REQUEST) {
         // reschedule the origination timer sooner
-        if (getAlarmTime(&roOriginateTimer) > 500) {
-            alarmSchedule(&roOriginateTimer, 500);
+        if (getAlarmTime(&roOriginateTimer) > 1200) {
+            alarmSchedule(&roOriginateTimer, randomInRange(800, 1200));
         }
     }
 }
@@ -102,6 +102,9 @@ RoutingDecision_e routePacket(MacInfo_t *info) {
     // This is simple. Base station never forwards packets,
     // just sends and receives.
     MosAddr *dst = &info->originalDst;
+    if (!IS_LOCAL(info) && info->immedSrc.shortAddr) {
+        downstreamAddress = info->immedSrc.shortAddr;
+    }
     fillLocalAddress(&info->immedSrc);
 
     // PRINTF("dst address=0x%04x, nexthop=0x%04x\n", dst->shortAddr,

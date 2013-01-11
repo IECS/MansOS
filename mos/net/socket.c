@@ -58,7 +58,7 @@ int8_t socketClose(Socket_t *s)
     return 0; // XXX
 }
 
-int8_t socketSend(Socket_t *s,const void *data, uint16_t len)
+int8_t socketSend(Socket_t *s, const void *data, uint16_t len)
 {
     return sendPacket(s->dstAddress, s->port, data, len);
 }

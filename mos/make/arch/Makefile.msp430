@@ -48,7 +48,11 @@ MSP430-BSL ?= python $(MOSROOT)/mos/make/scripts/bsl.py
 endif
 
 # this option is needed for testbed device
+ifeq ($(SLOW_UPLOAD),y)
 SLOW = --slow
+else
+SLOW =
+endif
 
 #===== Additional includes =====
 
@@ -89,17 +93,17 @@ upload-tmote:
 	$(BSL) --telosb -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-msp430: 
-	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-msp430-sm3: 
-	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 #	$(MSP430-BSL) -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-z1:
-	$(Z1-BSL) --z1 -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+	$(Z1-BSL) --z1 -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-xm1000:
-	$(XM1000-BSL) --telosb -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+	$(XM1000-BSL) --telosb -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-launchpad:
 	$(MSPDEBUG) rf2500 "prog $(OUTDIR)/$(EXECUTABLE)"

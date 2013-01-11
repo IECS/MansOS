@@ -27,7 +27,7 @@ void appMain(void)
     socketBind(&socket, DATA_PORT);
 
     for (;;) {
-        PRINTF("%lu BS: in app main\n", getFixedTime());
+        PRINTF("%lu BS: in app main\n", getSyncTimeSec());
         redLedToggle();
         mdelay(SLEEP_TIME_MS);
     }
@@ -42,9 +42,9 @@ void appMain(void)
 {
     for (;;) {
 #ifdef USE_ROLE_FORWARDER
-        PRINTF("%lu Forwarder: in app main\n", getFixedTime());
+        PRINTF("%lu Forwarder: in app main\n", getSyncTimeSec());
 #else
-        PRINTF("%lu Collector: in app main\n", getFixedTime());
+        PRINTF("%lu Collector: in app main\n", getSyncTimeSec());
 #endif
         redLedToggle();
         mdelay(1000);
@@ -68,7 +68,7 @@ void appMain(void)
 
     uint16_t counter = 0;
     for (;;) {
-        PRINTF("%lu sending counter %i\n", getFixedTime(), counter);
+        PRINTF("%lu sending counter %i\n", getSyncTimeSec(), counter);
         blueLedToggle();
 
         if (socketSend(&socket, &counter, sizeof(counter))) {
