@@ -43,10 +43,6 @@
 enum {
     JIFFY_TIMER_MS = 1000 / TIMER_INTERRUPT_HZ,
 
-    // number of jiffies in a second
-    // Contiki compatibility, added by Girts, 2012-07-16
-    CLOCK_SECOND = TIMER_INTERRUPT_HZ,
-
     // how many ticks per jiffy
     PLATFORM_ALARM_TIMER_PERIOD = JIFFY_TIMER_MS *
            (CPU_HZ / TIMER_INTERRUPT_HZ / JIFFY_CLOCK_DIVIDER),
