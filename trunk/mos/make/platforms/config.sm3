@@ -1,0 +1,7 @@
+# for SM3, ext flash is actually SD card
+ifeq ($(USE_EXT_FLASH),y)
+ifneq ($(USE_SDCARD),y)
+  USE_SDCARD=y
+  USE_SDCARD_LOW_LEVEL_API=y
+endif
+endif

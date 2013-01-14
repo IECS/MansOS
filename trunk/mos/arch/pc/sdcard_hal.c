@@ -27,11 +27,12 @@
 
 #include <stdlib.h>
 #include <unistd.h>
-#include <lib/assert.h>
-#include <print.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+#include <lib/assert.h>
+#include <print.h>
 
 #define SDCARD_SECTOR_COUNT 32768 // 512 * 32768 = 16 MB card size
 #include <sdcard/sdcard.h>
@@ -96,7 +97,6 @@ void sdcardEraseSector(uint32_t address)
     (void) r;
 }
 
-#ifndef USE_FATFS
 void sdcardRead(uint32_t addr, void *buf, uint16_t len)
 {
     ASSERT(addr + len <= SDCARD_SIZE);
@@ -127,4 +127,8 @@ void sdcardFlush(void)
     // nothing
 }
 
-#endif // USE_FATFS not defined
+uint32_t sdcardGetSize(void)
+{
+    return SDCARD_SECTOR_COUNT;
+}
+ 

@@ -43,7 +43,7 @@ void posixStdioInit(void)
 // flush a file
 int fflush(FILE *fp)
 {
-#if USE_FATFS
+#if USE_FATFS && USE_SDCARD
     fatFsFileFlush(fp);
 #endif
     return 0;
@@ -53,7 +53,7 @@ int fflush(FILE *fp)
 FILE *fopen(const char *__restrict filename,
             const char *__restrict modes)
 {
-#if USE_FATFS
+#if USE_FATFS && USE_SDCARD
     int i;
     for (i = 0; i < MAX_OPEN_FILES; ++i) {
         if (openFiles[i].fd == -1) break;
@@ -135,7 +135,7 @@ FILE *fopen(const char *__restrict filename,
 // close a file
 int fclose(FILE *fp)
 {
-#if USE_FATFS
+#if USE_FATFS && USE_SDCARD
     // close it on the file system
     fatFsFileClose(fp);
 #endif
@@ -149,7 +149,7 @@ int fclose(FILE *fp)
 size_t fread(void *__restrict ptr, size_t size,
              size_t n, FILE *__restrict fp)
 {
-#if USE_FATFS
+#if USE_FATFS && USE_SDCARD
     return fatFsRead(fp, ptr, size * n);
 #else
     return 0;
@@ -160,7 +160,7 @@ size_t fread(void *__restrict ptr, size_t size,
 size_t fwrite(const void *__restrict ptr, size_t size,
               size_t n, FILE *__restrict fp)
 {
-#if USE_FATFS
+#if USE_FATFS && USE_SDCARD
     return fatFsWrite(fp, ptr, size * n);
 #else
     return 0;
@@ -170,7 +170,7 @@ size_t fwrite(const void *__restrict ptr, size_t size,
 // delete a file
 int remove(const char *filename)
 {
-#if USE_FATFS
+#if USE_FATFS && USE_SDCARD
     fatFsFileRemove(filename);
 #endif
     return 0;
@@ -202,7 +202,7 @@ int fseek(FILE *fp, long offset, int whence)
     }
     // fine; do it!
     newPos += offset;
-#if USE_FATFS
+#if USE_FATFS && USE_SDCARD
     fatfsGoToPosition(fp, newPos);
 #endif
     return 0;

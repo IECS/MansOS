@@ -25,9 +25,7 @@
 #
 
 ifeq ($(OPTIMIZE),yes)
-# cannot use -Os because of "compiler bugs"
-# (see TinyOS ML discussions for details)
-	CFLAGS += -O
+	CFLAGS += -Os
 endif
 
 GCC_VERSION := $(shell $(CC) -v 2>&1 | grep "gcc version" | cut -b 13)

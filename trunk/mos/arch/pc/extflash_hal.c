@@ -28,6 +28,7 @@
 #include <unistd.h>
 
 #include <extflash.h>
+#include <lib/dprint.h>
 
 #define FLASH_FILE_NAME "extflash.dat"
 

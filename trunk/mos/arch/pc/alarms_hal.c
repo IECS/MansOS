@@ -22,7 +22,7 @@
  */
 
 #include <unistd.h>
-#include <timers.h>
+#include <timing.h>
 #include <kernel/alarms_system.h>
 #include <sys/time.h>
 
@@ -64,7 +64,7 @@ void *alarmIntHandler(void *dummy) {
         usleep(10000);
 
         uint32_t now = getPcTime();
-        incRealtime(now - lastTime);
+        jiffies += now - lastTime;
         lastTime = now;
 
 // TODO

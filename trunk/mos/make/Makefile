@@ -207,8 +207,8 @@ SENSORLIST ?= python $(MOS)/make/scripts/sensorlist.py
 # Set up the correct programmer port
 BSLPORT ?= "$(shell $(MOTELIST) -c | xargs -0 echo | xargs echo | cut -f2 -d, )"
 
-# listening application
-LISTENER ?= $(MOSROOT)/tools/dumpserial/dumpser.py
+# serial port application
+SERIAL ?= $(MOSROOT)/tools/serial/ser.py
 
 # this is for listening (use PROG_BAUDRATE for programming!)
 BAUDRATE ?= 38400
@@ -423,7 +423,7 @@ motelist:
 	$(_QUIET) $(MOTELIST)
 
 listen:
-	$(_QUIET) $(LISTENER) -s $(BSLPORT) -b $(BAUDRATE) -p $(PLATFORM)
+	$(_QUIET) $(SERIAL) -s $(BSLPORT) -b $(BAUDRATE) -p $(PLATFORM)
 
 sensorlist:
 	$(_QUIET) $(SENSORLIST) $(PLATFORM) "$(CFLAGS) $(LDFLAGS)"

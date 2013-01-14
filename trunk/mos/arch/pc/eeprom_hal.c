@@ -29,56 +29,53 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include <eeprom.h>
 #include <lib/assert.h>
+#include <print.h>
 
 #define FILENAME "eeprom"
 
-static FILE *data;
-
-static void eepromClose(void);
-
 void eepromInit(void)
 {
-    int ret;
+    PRINTF("Opening EEPROM image `" FILENAME "'...\n");
 
-    ret = atexit(eepromClose);
-    ASSERT(ret == 0);
+    int data = open(FILENAME, O_RDONLY);
+    if (data < 0) {
+        data = creat(FILENAME, 0644);
+        ASSERT(data > 0);
 
-    fputs("Opening EEPROM image `" FILENAME "'...\n", stderr);
-
-    data = fopen(FILENAME, "r+b");
-    if (!data)
-    {
-        data = fopen(FILENAME, "w+b");
-        ASSERT(data != NULL);
-
-        ret = ftruncate(fileno(data), EEPROM_SIZE);
+        int ret = ftruncate(data, EEPROM_SIZE);
         ASSERT(ret == 0);
     }
-}
-
-static void eepromClose(void)
-{
-    ASSERT(!ferror(data));
-    int ret = fclose(data);
-    ASSERT(ret == 0);
+    close(data);
 }
 
 void eepromRead(uint16_t addr, void *buf, size_t len)
 {
-    ASSERT(!ferror(data) && addr + len <= EEPROM_SIZE);
+    int data = open(FILENAME, O_RDONLY);
+    if (data < 0) return;
 
-    int ret = fseek(data, addr, SEEK_SET);
-    size_t ret2 = fread(buf, 1, len, data);
+    ASSERT(addr + len <= EEPROM_SIZE);
+
+    int ret = lseek(data, addr, SEEK_SET);
+    size_t ret2 = read(data, buf, len);
     ASSERT(ret == 0 && ret2 == len);
+    close(data);
 }
 
 void eepromWrite(uint16_t addr, const void *buf, size_t len)
 {
     ASSERT(addr + len <= EEPROM_SIZE);
 
-    fseek(data, addr, SEEK_SET);
-    fwrite(buf, 1, len, data);
+    int data = open(FILENAME, O_WRONLY);
+    if (data < 0) return;
+
+    lseek(data, addr, SEEK_SET);
+    int r = write(data, buf, len);
+    (void) r;
+    close(data);
 }

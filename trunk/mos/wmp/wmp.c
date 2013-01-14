@@ -43,11 +43,6 @@
 #define DPRINTF(...) do {} while (0)
 #endif
 
-#ifndef led3Set
-#define led3Set(x)
-#define led3Get()   0
-#endif
-
 
 static void wmpSendReply(void);
 static uint8_t wmpCrc(void);
@@ -545,7 +540,7 @@ static void processFilenameGet(void)
 static void processFilelistGet(void)
 {
     sp.arguments[0] = '\0';
-#if USE_FATFS
+#if USE_FATFS && USE_SDCARD
     sp.argLen = fatFsGetFiles((char *) sp.arguments, sizeof(sp.arguments));
 #else
     sp.argLen = 0;

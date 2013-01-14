@@ -42,7 +42,7 @@ PSOURCES-$(USE_LEDS) += $(MOS)/hil/leds.c
 PSOURCES-$(USE_SOFT_I2C) += $(MOS)/hil/i2c_soft.c
 PSOURCES-$(USE_SOFT_SPI) += $(MOS)/hil/spi_soft.c
 
-PSOURCES-$(USE_KERNEL_MAIN) += $(MOS)/kernel/kernelmain.c
+PSOURCES += $(MOS)/kernel/kernelmain.c
 PSOURCES-$(USE_ALARMS) += $(MOS)/kernel/alarms.c
 
 PSOURCES-$(USE_PRINT) += $(MOS)/lib/dprint.c

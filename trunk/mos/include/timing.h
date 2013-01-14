@@ -24,7 +24,7 @@
 #ifndef MANSOS_TIMING_H
 #define MANSOS_TIMING_H
 
-#include <kernel/defines.h>
+#include <platform.h>
 
 extern volatile ticks_t jiffies;
 
@@ -65,6 +65,24 @@ static inline uint64_t getTimeMs64(void) {
 static inline uint32_t getTimeSec(void) {
     return jiffies2ms(jiffies) / 1000;
 }
+
+//
+// Internal use: convert from milliseconds to sleep clock ticks
+//
+static inline uint16_t msToSleepCycles(uint16_t ms)
+{
+    return ms * SLEEP_CYCLES
+        + (uint16_t) ((uint32_t) ms * (uint32_t) SLEEP_CYCLES_DEC / 1000ul);
+}
+
+//
+// Internal use: convert from sleep clock ticks to milliseconds
+//
+static inline uint16_t sleepCyclesToMs(uint16_t ocr)
+{
+    return ocr * 1000ul / (SLEEP_CLOCK_SPEED / SLEEP_CLOCK_DIVIDER);
+}
+
 
 //
 // Internal use only: this functions does the actual sleeping

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,93 +26,118 @@
 #include "threads/threads.h"
 #endif
 #include <lib/energy.h>
-#include <timers.h>
+#include <timing.h>
 #include <print.h>
 
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 
-static volatile bool prematureWakeup;
+//
+// Include sleep functionality only on platforms where timer B is available.
+//
+#if defined TBCTL || defined TBCTL_ || defined TOIE1
+
+volatile uint16_t timeWentToSleep;
+volatile uint16_t millisecondsInSleepMode;
 
 //
 // sleep timer interrupt for the case when threads are not used
 //
 SLEEP_TIMER_INTERRUPT()
 {
-    if (!SLEEP_TIMER_EXPIRED()) return;
+    if (SLEEP_TIMER_WRAPAROUND()) {
+        // PRINTF("SLEEP_TIMER_WRAPAROUND!\n");
+        //
+        // Fix jiffies for greater good/precision!
+        //
+        uint16_t milliseconds = sleepCyclesToMs(-timeWentToSleep);
+        jiffies += milliseconds;
+        millisecondsInSleepMode += milliseconds;
+        // Now we know we have slept for exactly 16000 milliseconds;
+        // use the value of how much we *think* we have slept to calc correction.
+        int16_t correction = 16000 - millisecondsInSleepMode;
+        // PRINTF("correction = %d\n", correction);
+        jiffies += correction;
 
-    // we waited till the end, so its not premature
-    prematureWakeup = false;
+        timeWentToSleep = 0;
+        millisecondsInSleepMode = 0;
+        SLEEP_TIMER_RESET_WRAPAROUND();
+        return;
+    }
+
+    if (!SLEEP_TIMER_EXPIRED()) return;
 
     // exit low power mode
     EXIT_SLEEP_MODE();
 }
 
-#endif // !CUSTOM_TIMER_INTERRUPT_HANDLERS
+static inline void sleepTimerSet(uint16_t ms)
+{
+    if (ms > PLATFORM_MAX_SLEEP_MS) {
+        ms = PLATFORM_MAX_SLEEP_MS;
+    } else if (ms < PLATFORM_MIN_SLEEP_MS) {
+        ms = PLATFORM_MIN_SLEEP_MS;
+    }
 
-//
-// Include msleep() function only on platforms where timer B is available.
-//
-#if defined TBCTL || defined TBCTL_ || defined TOIE1
+    uint16_t tbr = SLEEP_TIMER_READ_STOPPED();
+    timeWentToSleep = tbr;
+
+    SLEEP_TIMER_SET(tbr + msToSleepCycles(ms));
+}
 
 void doMsleep(uint16_t milliseconds)
 {
-    // It is pointless to sleep for 0 time;
-    // but do not mess the scheduler and allow this.
-    if (!milliseconds) return;
+    // It is pointless to sleep for zero time;
+    // but do not mess with the scheduler and allow this.
+    if (milliseconds) {
+        // PRINTF("doMsleep, ms=%u\n", milliseconds);
 
-    // PRINTF("doMsleep, ms=%u\n", milliseconds);
+        DISABLE_INTS();
+        // change energy accounting mode
+        energyConsumerOff(ENERGY_CONSUMER_MCU);
+        energyConsumerOn(ENERGY_CONSUMER_LPM);
+        // setup sleep timer
+        sleepTimerSet(milliseconds);
+        // start timer B
+        SLEEP_TIMER_START();
+        // stop timer A
+        ALARM_TIMER_STOP();
+        // enter low power mode
+        ENTER_SLEEP_MODE();
 
-    DISABLE_INTS();
-    // change energy accounting mode
-    energyConsumerOff(ENERGY_CONSUMER_MCU);
-    energyConsumerOn(ENERGY_CONSUMER_LPM);
-    // setup sleep timer
-    SLEEP_TIMER_SET(milliseconds);
-    // start timer B
-    SLEEP_TIMER_START();
-    // stop timer A
-    DISABLE_ALARM_INTERRUPT();
-    // its premature unless we have got sleep timer interrupt
-    prematureWakeup = true;
-    // enter low power mode 3
-    ENTER_SLEEP_MODE();
+        // zzz... sleep... zzz...
 
-    // zzz... sleep... zzz...
+        // after wakeup: determine for how long we actually slept
+        // (unexpected wakeups are possible because of interrupts)
+        milliseconds = sleepCyclesToMs(SLEEP_TIMER_READ() - timeWentToSleep);
+        // adjust jiffies accordingly
+        jiffies += milliseconds;
+        millisecondsInSleepMode += milliseconds;
 
-    // after wakeup: adjust jiffies
-    uint16_t tbr = SLEEP_TIMER_VALUE();
-    uint16_t tccr = SLEEP_TIMER_EXPIRY_TIME();
-    uint32_t ms = sleepCyclesToMs(prematureWakeup ? tbr : tccr);
-    // PRINTF("wakeup from doMsleep, prematureWakeup=%d!\n", (int) prematureWakeup);
-    // PRINTF("tbr=%u, tccr=%u, ms=%lu\n", tbr, tccr, ms);
-    incRealtime(ms);
+        // change energy accounting mode back to active
+        energyConsumerOff(ENERGY_CONSUMER_LPM);
+        energyConsumerOn(ENERGY_CONSUMER_MCU);
 
-    // change energy accounting mode back to active
-    energyConsumerOff(ENERGY_CONSUMER_LPM);
-    energyConsumerOn(ENERGY_CONSUMER_MCU);
+        // restart timer A (count from the place where it left)
+        ALARM_TIMER_START();
 
-    // restart alarm interrupts
-    RESET_ALARM_TIMER();
-    ENABLE_ALARM_INTERRUPT();
-
-    // sleep timer should not automatically restart
-    SLEEP_TIMER_STOP();
+        // sleep timer should not automatically restart
+        SLEEP_TIMER_STOP();
+    }
 
 #if USE_THREADS
     // wake up the current thread
     threadWakeup(currentThread->index, THREAD_RUNNING);
 
-    if (processFlags.value
-            && (currentThread->index != KERNEL_THREAD_INDEX
-            || currentThread->state == THREAD_SLEEPING)) {
+    if (processFlags.value) {
         // wake up the kernel thread to process all events that have happened
         threadWakeup(KERNEL_THREAD_INDEX, THREAD_READY);
-        // XXX: do not call yield() here to avoid recursion.
-        // rather, assume that all user code is well behaved.
-        // (i.e. has no excessively long interrupt handlers!)
-        // yield();
+        // Do not call yield() here to avoid recursion!
+        // rather, assume that all user code is well-behaved.
+        // (i.e. has no excessively long interrupt handlers)
     }
 #endif
 }
+
+#endif // Timer B present
 
 #endif // CUSTOM_TIMER_INTERRUPT_HANDLERS not defined

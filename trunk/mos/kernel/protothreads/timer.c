@@ -52,7 +52,7 @@
 
 // !!!
 //#include "contiki-conf.h"
-#include <timers.h>
+#include <timing.h>
 #include <kernel/protothreads/timer.h>
 
 /*---------------------------------------------------------------------------*/

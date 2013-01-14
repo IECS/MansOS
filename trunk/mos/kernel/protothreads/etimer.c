@@ -57,7 +57,7 @@
 
 #include <kernel/protothreads/etimer.h>
 #include <kernel/protothreads/process.h>
-#include <timers.h>
+#include <timing.h>
 
 static struct etimer *timerlist;
 static clock_time_t next_expiration;

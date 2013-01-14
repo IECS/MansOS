@@ -1,0 +1,3 @@
+# no SD card
+USE_SDCARD=n
+USE_SDCARD_STREAM=n

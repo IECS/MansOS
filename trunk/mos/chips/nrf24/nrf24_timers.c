@@ -23,15 +23,4 @@
 
 #include "nrf24_timers.h"
 
-// set OCR for sleep timer, taking sleep clock and divider into account
-void nrf24Timer1Set(uint16_t ms) {
-    if (ms > MAX_SLEEP_MS) {
-        ms = MAX_SLEEP_MS;
-    } else if (ms < MIN_SLEEP_MS) {
-        ms = MIN_SLEEP_MS;
-    }
-
-    uint16_t ocr = msToSleepCycles(ms);
-    incRealtime(ms);
-    OCR1A = TCNT1 + ocr;
-}
+// TODO

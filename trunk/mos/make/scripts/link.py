@@ -95,6 +95,7 @@ def get_symbols(file):
             if s[0:2] != '__':
                 unresolved.append(s)
 
+    # print "unresolved symbols in " + file + ":", unresolved
     return [exported, unresolved]
 
 

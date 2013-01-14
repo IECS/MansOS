@@ -89,20 +89,8 @@ static void cc2420SetPanAddr(unsigned pan,
 
 /*---------------------------------------------------------------------------*/
 
-typedef uint16_t rtimer_clock_t;
-
-rtimer_clock_t rtimer_arch_now(void)
-{
-    rtimer_clock_t t1, t2;
-    do {
-        t1 = TAR;
-        t2 = TAR;
-    } while (t1 != t2);
-    return t1;
-}
-
 #define RTIMER_SECOND 32768 // timer A feeds from from ACLK
-#define RTIMER_NOW() rtimer_arch_now()
+#define RTIMER_NOW() ALARM_TIMER_READ()
 #define RTIMER_CLOCK_LT(a,b)     ((signed short)((a)-(b)) < 0)
 
 #undef BUSYWAIT_UNTIL

@@ -44,7 +44,6 @@
 #include <serial.h>
 #endif
 #include <delay.h>
-#include <timers.h>
 #include <errors.h>
 #ifdef USE_PRINT
 #include <print.h>
