@@ -28,8 +28,6 @@
 
 #include <digital.h>
 #include <serial.h>
-#include <kernel/defines.h>
-#include <kernel/stdtypes.h>
 
 #include "msp430_usci.h"
 
@@ -121,7 +119,6 @@ void serialSendByte(uint8_t id, uint8_t data)
 }
 
 // UART mode receive handler
-#if UART_ON_USCI_A0
 
 ISR(USCIAB0RX, USCI0InterruptHandler)
 {
@@ -138,7 +135,7 @@ ISR(USCIAB0RX, USCI0InterruptHandler)
     }
 }
 
-#if PLATFORM_TESTBED || PLATFORM_TESTBED2 || PLATFORM_Z1
+#ifdef UCA1CTL1_
 
 ISR(USCIAB1RX, USCI1InterruptHandler)
 {
@@ -167,24 +164,4 @@ ISR(USCIAB1RX, USCI1InterruptHandler)
     }
 }
 
-
-#endif // PLATFORM_TESTBED
-
-#else // !UART_ON_USCI_A0
-
-ISR(USCIAB1RX, USCI0InterruptHandler)
-{
-    bool error = UCA1STAT & UCRXERR;
-    uint8_t data = UCA1RXBUF;
-    if (error || UCA1STAT & UCOE) {
-        // There was an error or a register overflow; clear UCOE and exit
-        data = UCA1RXBUF;
-        return;
-    }
-
-    if (serialRecvCb[0]) {
-        serialRecvCb[0](data);
-    }
-}
-
-#endif // UART_ON_USCI_A0
+#endif // UCA1CTL1_
