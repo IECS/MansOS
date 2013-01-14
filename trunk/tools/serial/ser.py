@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-# Dump serial output to console
+#
+# Serial port communicator (listener/sender) application
+#
 
 import operator
 import time
@@ -13,6 +15,7 @@ import argparse
 
 global flDone
 global cliArgs
+global writeBuffer
 
 def getUserInput(prompt):
     if sys.version[0] >= '3':
@@ -23,11 +26,13 @@ def getUserInput(prompt):
 def listenSerial():
     global flDone
     global cliArgs
+    global writeBuffer
     
     try:
         ser = serial.Serial(cliArgs.serialPort, cliArgs.baudRate, timeout=1, 
                             parity=serial.PARITY_NONE, rtscts=1)
-
+        ser.flushInput()
+        ser.flushOutput()
         if cliArgs.platform not in ['xm1000', 'z1'] :
             # make sure reset pin is low for the platforms that need it
             ser.setDTR(0)
@@ -41,11 +46,19 @@ def listenSerial():
     sys.stderr.write("Using port {}, baudrate {}\n".format(ser.portstr, cliArgs.baudRate))
 
     while (not flDone):
-        s = ser.read(1)
-        if len(s) >= 1:
-            if type(s) is str: sys.stdout.write( s )
-            else: sys.stdout.write( "{}".format(chr(s[0])) )
-            sys.stdout.flush()
+        # write
+        if writeBuffer:
+            ser.write(writeBuffer)
+            writeBuffer = ""
+        # read
+        if ser.inWaiting():
+            s = ser.read(1)
+            if len(s) >= 1:
+                if type(s) is str: sys.stdout.write( s )
+                else: sys.stdout.write( "{}".format(chr(s[0])) )
+                sys.stdout.flush()
+        # allow other threads to run
+        time.sleep(0.001)
 
     sys.stderr.write("\nDone\n")
     ser.close()
@@ -55,9 +68,9 @@ def listenSerial():
 def getCliArgs():
     defaultSerialPort = "/dev/ttyUSB0"
     defaultBaudRate = 38400
-    version = "0.3/2012.10.26"
+    version = "0.4/2013.01.14"
 
-    parser = argparse.ArgumentParser(description="MansOS serial listener", prog="dumpser")
+    parser = argparse.ArgumentParser(description="MansOS serial communicator", prog="serial")
 
     parser.add_argument('-s', '--serial_port', dest='serialPort', action='store', default=defaultSerialPort,
         help='serial port to listen (default: ' + defaultSerialPort + ' )')
@@ -73,6 +86,8 @@ def getCliArgs():
 def main():
     global flDone
     global cliArgs
+    global writeBuffer
+
     flDone = False
 
     cliArgs = getCliArgs()
@@ -81,10 +96,11 @@ def main():
         cliArgs.serialPort = "/dev/ttyACM0" 
         cliArgs.baudRate = 115200
 
-    sys.stderr.write("MansOS serial listener, press Ctrl+C or Q+Enter to exit\n")
+    sys.stderr.write("MansOS serial port access app, press Ctrl+C to exit\n")
     threading.Thread(target=listenSerial).start() 
-    
+
     #Keyboard scanning loop
+    writeBuffer = ""
     while (not flDone):
         try:
             s = getUserInput("")
@@ -92,9 +108,8 @@ def main():
             sys.stderr.write("\nKeyboard interrupt\n")
             flDone = True
             return 0
-             
-        if s.strip().lower() == 'q' :
-            flDone = True 
+
+        writeBuffer += s
     
     return 0
 
