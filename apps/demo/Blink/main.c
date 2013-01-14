@@ -29,9 +29,6 @@
 
 void appMain(void)
 {
-    PRINTF("SLEEP_CYCLES=%u\n", SLEEP_CYCLES);
-    PRINTF("SLEEP_CYCLES_DEC=%u\n", SLEEP_CYCLES_DEC);
-
     while (1) {
         // change the default LED status
         ledToggle();
