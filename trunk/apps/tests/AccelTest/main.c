@@ -1,7 +1,5 @@
 #include "stdmansos.h"
-#include "print.h"
 #include <sleep.h>
-#include <timers.h>
 #include <beeper.h>
 #include <string.h>
 
@@ -70,7 +68,7 @@ void appMain(void)
     redLedOn();
 
     for (;;) {
-        uint32_t now = getRealTime();
+        uint32_t now = getTimeMs();
         uint32_t endTime = now + MAIN_LOOP_LENGTH;
 
         Packet_t p;
@@ -89,6 +87,6 @@ void appMain(void)
 
         printPacket(&p);
 
-        while (timeAfter32(endTime, getRealTime()));
+        while (timeAfter32(endTime, getTimeMs()));
     }
 }

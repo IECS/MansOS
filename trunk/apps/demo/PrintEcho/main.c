@@ -22,7 +22,7 @@
  */
 
 //-------------------------------------------
-//  Serial port echo applicatio.
+//  Serial port echo application.
 //  Reads input from serial port (terminate with newline!),
 //  echoes it back to serial port.
 //-------------------------------------------
@@ -32,7 +32,7 @@
 #define PROMPT "$ "
 
 void serialReceive(uint8_t byte) {
-    static uint16_t bytesReceived;
+    static uint16_t numBytesReceived;
     static char buffer[255];
 
 #if !PLATFORM_PC
@@ -41,17 +41,17 @@ void serialReceive(uint8_t byte) {
 #endif
 
     // store it in the buffer
-    buffer[bytesReceived++] = byte;
+    buffer[numBytesReceived++] = byte;
 
-    if (byte == '\n' || byte == '\r' || bytesReceived == sizeof(buffer) - 1) {
-        buffer[bytesReceived] = 0;
+    if (byte == '\n' || byte == '\r' || numBytesReceived == sizeof(buffer) - 1) {
+        buffer[numBytesReceived] = 0;
         if (byte == '\r') serialSendByte(PRINTF_SERIAL_ID, '\n');
         PRINTF("%s", buffer);
         if (byte != '\n') {
             // print newline as well
             PRINTF("\n");
         }
-        bytesReceived = 0; // reset reception
+        numBytesReceived = 0; // reset counter
         PRINTF(PROMPT);
     }
 }

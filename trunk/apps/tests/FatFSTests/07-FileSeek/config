@@ -6,3 +6,4 @@
 PLATFORM_ONLY=telosb sm3 pc
 
 USE_FATFS = y
+USE_SDCARD = y

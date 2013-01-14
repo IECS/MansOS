@@ -60,9 +60,9 @@ extern void cc2420ContinousWave(bool on);
 int16_t lplSend(const uint8_t *data, uint16_t length)
 {
     // -- send preamble
-    uint32_t preambleEndTime = getRealTime() + DUTY_CYCLE_LENGTH;
+    uint32_t preambleEndTime = getTimeMs() + DUTY_CYCLE_LENGTH;
     cc2420ContinousWave(true);
-    while (!timeAfter32(getRealTime(), preambleEndTime));
+    while (!timeAfter32(getTimeMs(), preambleEndTime));
     cc2420ContinousWave(false);
 
     // -- send packet
@@ -146,7 +146,7 @@ uint8_t lastRx;
 void rxPacket(void)
 {
     bool yes = false;
-    uint32_t end = getRealTime() + PACKET_WAIT_TIME; // + 200; // XXX
+    uint32_t end = getTimeMs() + PACKET_WAIT_TIME; // + 200; // XXX
     do {
         if (rxBufferLength != 0) {
             if (isPacketReceived()) {
@@ -155,7 +155,7 @@ void rxPacket(void)
             }
             rxBufferLength = 0;
         }
-    } while (timeAfter32(end, getRealTime()));
+    } while (timeAfter32(end, getTimeMs()));
 
     if (yes) {
         PRINTF("rx %d bytes (%#x)\n", rxBufferLength, *rxBuffer);
@@ -176,11 +176,11 @@ void recvTest(void)
 
     for (;;) {
         greenLedOn();
-        uint32_t dutyCycleEnd = getRealTime() + DUTY_CYCLE_LENGTH;
+        uint32_t dutyCycleEnd = getTimeMs() + DUTY_CYCLE_LENGTH;
         if (checkPreamble()) {
             rxPacket();
         }
-        uint32_t now = getRealTime();
+        uint32_t now = getTimeMs();
         if (timeAfter32(dutyCycleEnd, now)) {
             uint16_t sleepTime = dutyCycleEnd - now;
             radioOff();

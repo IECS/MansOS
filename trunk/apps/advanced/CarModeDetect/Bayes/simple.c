@@ -141,7 +141,7 @@ void appMain(void)
     initSimpleBN();
 
     for (;;) {
-        uint32_t now = getRealTime();
+        uint32_t now = getTimeMs();
         uint32_t endTime = now + MAIN_LOOP_LENGTH;
 
         uint16_t start = ALARM_TIMER_VALUE();
@@ -158,6 +158,6 @@ void appMain(void)
 
         PRINTF("prob=%d%%, time to calc = %u ticks\n", (int)(prob * 100), end - start);
 
-        while (timeAfter32(endTime, getRealTime()));
+        while (timeAfter32(endTime, getTimeMs()));
     }
 }

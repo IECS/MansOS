@@ -26,9 +26,7 @@
 //-------------------------------------------
 
 #include "stdmansos.h"
-#include "dprint.h"
 #include "extflash.h"
-#include "timers.h"
 #include <string.h>
 #include <utils.h>
 #include <lib/assert.h>
@@ -92,12 +90,12 @@ void writeData() {
 }
 
 void writeDataSpeedTest() {
-    uint32_t startTime = getRealTime();
+    uint32_t startTime = getTimeMs();
     uint32_t i;
     for (i = 0; i < 0x10000; i += 100) {
         extFlashWrite(START_ADDR + i, buf, 100);
     }
-    PRINTF("to write 64 kb: %lu ms \n", getRealTime() - startTime);
+    PRINTF("to write 64 kb: %lu ms \n", getTimeMs() - startTime);
 }
 
 void printResults() {

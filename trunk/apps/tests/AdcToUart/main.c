@@ -44,12 +44,12 @@ void appMain(void)
     adcSetChannel(ADC_CHAN);
     uint32_t i;
     for (;;) {
-        uint32_t time1 = getRealTime();
+        uint32_t time1 = getTimeMs();
         for (i = 0; i < STATS_AFTER; ++i) {
             uint16_t val = adcReadFast();
             PRINTF("%i\n", val);
         }
-        uint32_t time2 = getRealTime();
+        uint32_t time2 = getTimeMs();
         uint32_t samplesHz = STATS_AFTER * 1000ul / (uint32_t) (time2 - time1);
         PRINTF("Sampling rate: %i Hz\n", samplesHz);
     }

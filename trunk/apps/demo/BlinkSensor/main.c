@@ -22,7 +22,7 @@
  */
 
 //------------------------------------------------------------------------
-// Reads light from ADC and displays value (three youngest bits) on LEDs
+// Reads light from ADC and displays value (three bits) on LEDs
 //------------------------------------------------------------------------
 
 #include "stdmansos.h"
@@ -36,7 +36,7 @@ void appMain(void)
     while(1)
     {
         uint16_t light = lightRead();
-        ledsSet(light); // display value on LEDs
+        ledsSet(light / 16); // display value on LEDs
         msleep(1000); // sleep one second
     }
 }

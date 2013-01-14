@@ -5,13 +5,100 @@
 #   (telosb must have all targets, otherwise they will not be cleared)
 #
 
-PLATFORMS = pc telosb sadmote farmmote atmega z1
+PLATFORMS = pc telosb sadmote sm3 farmmote atmega z1
 # launchpad
 
 DEMO_TARGETS = \
 	Blink					\
 	BlinkCounter				\
 	BlinkRadio				\
+	BlinkSensor				\
+	PrintADC				\
+	PrintCounter				\
+	PrintEcho				\
+	PrintRadio				\
+	PrintSensors				\
+
+TEST_TARGETS = \
+	AccelTest				\
+	AccelTestZolertiaZ1			\
+	AdaptiveRate				\
+	AdcTest					\
+	AdcToUart				\
+	Ads111xTest				\
+	ADXL345Test				\
+	AlarmTest				\
+	ApdsTest				\
+	AssertTest				\
+	BeeperTest				\
+	BlinkTest				\
+	ExtFlashTest				\
+	FSTest					\
+	GPSParseTest				\
+	HumidityTest				\
+	IntFlashTest				\
+	IslLightSensorTest			\
+	LinkTest				\
+	ListTest				\
+	Null					\
+	PDRTest					\
+	RadioSendTest				\
+	RadioTest				\
+	RealTimeTest				\
+	SdCardTest				\
+	SerialPipe				\
+	SharingTest				\
+	SleepTest				\
+	SnumTest				\
+	TinyOSEncapsuleTest			\
+	TMP102Test				\
+	UARTRecvPacketTest			\
+	UARTTest				\
+	SmpTest/DemoBlueLed			\
+	SmpTest/DemoRedLed			\
+	UserButtonTest				\
+	ExpThreadTests/0-Lockup			\
+	ExpThreadTests/0-Overflow-User		\
+	ExpThreadTests/0-Overflow-Kernel	\
+	ExpThreadTests/1a-Blink-mdelay		\
+	ExpThreadTests/1b-Blink-msleep		\
+	ExpThreadTests/1c-Blink-Multi		\
+	ExpThreadTests/2-Alarms			\
+	ExpThreadTests/3-Locking		\
+	ExpThreadTests/3-Locking-Multi		\
+	ExpThreadTests/4-Exit			\
+	ExpThreadTests/5-Radio			\
+	ExpThreadTests/6-MAC			\
+	ExpThreadTests/7-Sockets		\
+	TestBed/AdsTest				\
+	TestBed/DacTest				\
+	ProtoThreadTests/01-PTYield		\
+	ProtoThreadTests/02-PTBlink		\
+	ProtoThreadTests/03-PTRadio		\
+	FatFSTests/01-Format			\
+	FatFSTests/02-Open			\
+	FatFSTests/03-ReadWrite			\
+	FatFSTests/04-CreateRemove		\
+	FatFSTests/05-LongReadWrite		\
+	FatFSTests/06-FilePrint			\
+	FatFSTests/07-FileSeek			\
+	WMPTest 				\
+
+
+ADVANCED_TARGETS = \
+	Accel3DTest				\
+	AccelDice				\
+	AccelMusic				\
+	AccelTrack				\
+	BlinkGlow				\
+	Bootloader				\
+	Calendar				\
+	GPSParsing				\
+	GpsProxy				\
+	IMU					\
+	LPL					\
+	Sarauj					\
+	SensorToLcd				\
 	PrintADC				\
 	PrintCounter				\
 	PrintEcho				\
@@ -82,6 +169,7 @@ TEST_TARGETS = \
 	FatFSTests/05-LongReadWrite		\
 	FatFSTests/06-FilePrint			\
 	FatFSTests/07-FileSeek			\
+	WMPTest 				\
 
 
 ADVANCED_TARGETS = \
@@ -97,11 +185,8 @@ ADVANCED_TARGETS = \
 	IMU					\
 	LPL					\
 	Sarauj					\
-	SeePoga					\
 	SensorToLcd				\
-	SensorToLeds				\
 	TimerSense				\
-	WMPTest 				\
 
 SEAL_TARGETS = \
 	Blink					\

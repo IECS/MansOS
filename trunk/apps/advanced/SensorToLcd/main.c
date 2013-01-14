@@ -27,7 +27,6 @@
 
 #include "stdmansos.h"
 #include "lcd.h"
-#include <stdio.h>
 
 //-------------------------------------------
 //      Entry point for the application
