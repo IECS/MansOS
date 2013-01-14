@@ -115,6 +115,21 @@ uint_t ledsGet(void);              // Which leds are on? Returns a bitmask
 #endif // LED_ALIAS     
 
 
+#ifndef LED_UNIMPLEMENTED     
+#define LED_UNIMPLEMENTED(name) LED_UNIMPLEMENTED2(name)
+#define LED_UNIMPLEMENTED2(name)                                        \
+    enum { name##_mask = 0 };                                           \
+    static inline uint_t name##Mask()   { return 0; }                   \
+    static inline uint_t name##Get()    { return 0; }                   \
+    static inline void name##Set( val ) { }                             \
+    static inline void name##On()       { }                             \
+    static inline void name##Off()      { }                             \
+    static inline void name##Toggle()   { }                             \
+    static inline void name##Init()     {  }                            \
+
+#endif // LED_UNIMPLEMENTED     
+
+
 //----------------------------------------------------------
 // Declare all LEDs.
 // Prerequisite: ledslist.h file with the LED names.

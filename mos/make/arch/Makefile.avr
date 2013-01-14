@@ -56,11 +56,6 @@ PSOURCES-$(USE_WATCHDOG) += $(MOS)/arch/avr/watchdog.c
 
 PSOURCES-$(USE_SERIAL) += $(MOS)/chips/atmega/atmega_usart.c
 PSOURCES-$(USE_I2C) += $(MOS)/chips/atmega/atmega_2wire.c
-ifneq ($(USE_THREADS),y)
-PSOURCES += $(MOS)/chips/atmega/atmega_timers.c
-endif
-
-PSOURCES-$(USE_THREADS) += $(MOS)/arch/avr/threads/timing.c
 
 #===== Build and Upload Rules =====
 

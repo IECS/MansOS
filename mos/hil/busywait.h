@@ -25,38 +25,28 @@
 #define MANSOS_BUSWYAIT_H
 
 #include <kernel/defines.h>
-#include <timers.h>
-
-static inline uint16_t timerTicksRead(void)
-{
-    uint16_t t1 = ALARM_TIMER_VALUE();
-    uint16_t t2;
-    do {
-        t2 = ALARM_TIMER_VALUE();
-    } while (t1 == t2);
-    return t2;
-}
+#include <timing.h>
 
 // works with interrupts disabled, but max time is ~2 seconds
 #define BUSYWAIT_UNTIL(cond, maxTime, ok)                               \
     do {                                                                \
-        uint16_t endTime = timerTicksRead() + maxTime;                  \
+        uint16_t endTime = ALARM_TIMER_READ() + maxTime;                \
         ok = false;                                                     \
         do {                                                            \
             if (cond) {                                                 \
                 ok = true;                                              \
                 break;                                                  \
             }                                                           \
-        } while (timeAfter16(endTime, timerTicksRead()));               \
+        } while (timeAfter16(endTime, ALARM_TIMER_READ()));             \
     } while (0)
 
 // buswait for courtesy only: do not care about the result
 #define BUSYWAIT_UNTIL_NORET(cond, maxTime)                             \
     do {                                                                \
-        uint16_t endTime = timerTicksRead() + maxTime;                  \
+        uint16_t endTime = ALARM_TIMER_READ() + maxTime;                \
         do {                                                            \
             if (cond) break;                                            \
-        } while (timeAfter16(endTime, timerTicksRead()));               \
+        } while (timeAfter16(endTime, ALARM_TIMER_READ()));             \
     } while (0)
 
 // interrupts must be enabled!

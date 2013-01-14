@@ -54,7 +54,7 @@
 #include <process.h>
 #include <pt-sem.h>
 #include <radio.h>
-#include <timers.h> // !!! for getJiffies
+#include <timing.h> // !!! for getJiffies
 #include <net/radio_packet_buffer.h>
 
 #if DEBUG

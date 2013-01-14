@@ -72,11 +72,11 @@ static inline void energyConsumerSet(EnergyConsumer_t type, uint8_t on) {
 //
 #define energyConsumerOnNoints(type)                      \
     {                                                     \
-        const uint16_t _start_time = ALARM_TIMER_VALUE(); \
+        const uint16_t _start_time = ALARM_TIMER_READ();  \
         energyStats[type].on = true
 
 #define energyConsumerOffNoints(type) {                                 \
-        const uint_t _time_diff = ALARM_TIMER_VALUE() - _start_time;    \
+        const uint_t _time_diff = ALARM_TIMER_READ() - _start_time;     \
         energyStats[type].totalTicks += TIMER_TICKS_TO_MS(_time_diff);  \
         energyStats[type].on = false;                                   \
     }                                                                   \

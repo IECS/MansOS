@@ -52,15 +52,18 @@ extern void perror(const char *s);
 #define SLEEP_TIMER_INTERRUPT() void sleepTimerInterrupt(void)
 
 #define ALARM_TIMER_START()
-#define ENABLE_ALARM_INTERRUPT()
-#define DISABLE_ALARM_INTERRUPT()
+// #define ENABLE_ALARM_INTERRUPT()
+// #define DISABLE_ALARM_INTERRUPT()
 #define ALARM_TIMER_EXPIRED() (1)
-#define RESET_ALARM_TIMER()
-#define ALARM_TIMER_VALUE() 0
+#define ALARM_TIMER_READ() 0
 #define SET_NEXT_ALARM_TIMER(value)
+
+#define ALARM_TIMER_WRAPAROUND() false
+#define ALARM_TIMER_RESET_WRAPAROUND()
 
 #define SLEEP_TIMER_STOP()
 #define SLEEP_TIMER_EXPIRED() (1)
+#define SLEEP_TIMER_READ() 0
 
 #define PLATFORM_CAN_SLEEP() (1)
 #define ENTER_SLEEP_MODE()
@@ -78,7 +81,7 @@ void initPlatform(void);
 #endif
 
 enum {
-    PLATFORM_MIN_SLEEP_MS = 10, // min sleep amount = 10ms
+    PLATFORM_MIN_SLEEP_MS = 1, // min sleep amount = 1ms
     PLATFORM_MAX_SLEEP_MS = 0xffff,
     PLATFORM_MAX_SLEEP_SECONDS = PLATFORM_MAX_SLEEP_MS / 1000,
     PLATFORM_ALARM_TIMER_PERIOD = 1,
@@ -103,5 +106,7 @@ enum {
 // use the only "USART" for PRINTF
 #define PRINTF_SERIAL_ID 0
 
+// SD card ID
+#define SDCARD_SPI_ID 0
 
 #endif

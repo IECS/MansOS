@@ -32,6 +32,7 @@
 
 #include "amb8420_pins.h"
 #include "sht_pins.h"
+#include "sdcard_pins.h"
 #ifdef USE_ISL29003
 #include <isl29003/isl29003.h>
 #endif

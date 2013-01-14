@@ -25,9 +25,8 @@
 #include "threads/threads.h"
 #endif
 #include "alarms_system.h"
-#include <timers.h>
-
-#include <print.h> // XXX
+#include <timing.h>
+#include <print.h>
 
 // the global list with all alarms
 AlarmList_t alarmListHead;
@@ -37,7 +36,6 @@ void initAlarms(void)
     SLIST_INIT(&alarmListHead);
 
     ALARM_TIMER_START();
-    ENABLE_ALARM_INTERRUPT();
 }
 
 void alarmsProcess(void)

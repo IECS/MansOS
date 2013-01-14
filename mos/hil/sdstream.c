@@ -28,7 +28,7 @@
 #include "sdstream.h"
 #include <dynamic_memory.h>
 #include <sdcard/sdcard.h>
-#include <sdcard_pins.h> // from platform
+#include <platform.h>
 #include <lib/assert.h>
 #include <lib/codec/crc.h>
 #include <print.h>

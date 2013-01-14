@@ -26,7 +26,7 @@
 
 #include "timesync.h"
 #include <print.h>
-#include <timers.h>
+#include <timing.h>
 #include <lib/codec/crc.h>
 
 //
@@ -40,24 +40,26 @@ extern uint64_t lastRootClockMilliseconds;
 
 typedef struct TimeSyncPacket_s {
     uint8_t delimiter1;
-    uint8_t delimiter2;
+    uint8_t isExtended;
     uint16_t crc;
     uint32_t time;
+    uint16_t milliseconds;
 } TimeSyncPacket_t;
 
 static uint8_t rxBytes;
 
 static void parsePacket(TimeSyncPacket_t *packet) 
 {
-    uint16_t calcCrc = crc16((uint8_t *)&packet->time, sizeof(packet->time));
-    if (packet->delimiter2 != 0
-            || packet->crc != calcCrc) {
+    uint16_t calcCrc = crc16((uint8_t *)&packet->time, packet->isExtended ? 6 : 4);
+    if (packet->crc != calcCrc) {
         PRINTF("timesync: wrong format\n");
         return;
     }
     lastRootSyncMilliseconds = getTimeMs64();
-    // TODO: also include milliseconds in the packet itself!
     lastRootClockMilliseconds = packet->time * 1000;
+    if (packet->isExtended) {
+        lastRootClockMilliseconds += packet->milliseconds;
+    }
     // PRINTF("will use time from router: %lu\n", packet->time);
 }
 

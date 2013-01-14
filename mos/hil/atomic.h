@@ -36,12 +36,12 @@ extern volatile ticks_t jiffies;
 // so delays < 10ms will be handled by the default logic
 //
 #define ATOMIC_START_TIMESAVE(h) {                                    \
-    const uint16_t _start_time = ALARM_TIMER_VALUE();                 \
+    const uint16_t _start_time = ALARM_TIMER_READ();                  \
     ATOMIC_START(h)
 
 #define ATOMIC_END_TIMESAVE(h)                                        \
     if (h != 0) {                                                     \
-        const uint16_t _time_diff = ALARM_TIMER_VALUE() - _start_time;\
+        const uint16_t _time_diff = ALARM_TIMER_READ() - _start_time; \
         if (_time_diff > PLATFORM_ALARM_TIMER_PERIOD) {               \
             jiffies += TIMER_TICKS_TO_MS(                             \
                     _time_diff - PLATFORM_ALARM_TIMER_PERIOD);        \

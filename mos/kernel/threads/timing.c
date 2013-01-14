@@ -30,36 +30,53 @@
 
 ALARM_TIMER_INTERRUPT()
 {
+    static volatile bool isWraparound;
+
+    if (ALARM_TIMER_WRAPAROUND()) {
+        //
+        // On MSP430 platforms binary ACLK oscillator usually is used.
+        // It has constant rate 32768 Hz (the ACLK_SPEED define)
+        // When ACLK ticks are converted to milliseconds, rounding error is introduced.
+        // When TIMER_INTERRUPT_HZ = 1000, there are 33 ACLK ticks per millisecond.
+        // When TIMER_INTERRUPT_HZ = 100, there are 32.8 ACLK ticks per milliseconds.
+        // The clock errors are 2000 - (65536 / 33) = 14.(06) milliseconds
+        // and 1.95 milliseconds per wraparound period respectively.
+        // We assume its precisely 14 milliseconds and 2 milliseconds respectively
+        // and improve the precision by applying the fix once per every wraparound.
+        // It is improved 232 and 40 times respectively.
+        // The final imprecision at 1000 Hz is 30.3 ppm, or 109.09 ms drift per hour.
+        //
+        jiffies += IMPRECISION_PER_WRAPAROUND;
+#if TIMER_INTERRUPT_HZ == 1000
+        // Fix even that small imprecision by adding 2 milliseconds
+        // once every 33 wraparound periods. This precision time accounting
+        // is supported only with 1000 Hz interrupt frequency!
+        static uint8_t numWraparoundTimes;
+        numWraparoundTimes++;
+        if (numWraparoundTimes == 33) {
+            jiffies += 2;
+            numWraparoundTimes = 0;
+        }
+#endif
+        isWraparound = true;
+        ALARM_TIMER_RESET_WRAPAROUND();
+        return;
+    }
+
+    if (!ALARM_TIMER_EXPIRED()) return;
+
     // advance the CCR
     SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
 
     jiffies += JIFFY_TIMER_MS;
 
-    //
-    // Clock error (software, due to rounding) is 32/32768 seconds per second,
-    // or 0.99609375 milliseconds per each 1.02 seconds
-    // We assume it's precisely 1 millisecond per each 1.02 seconds and fix that error here.
-    // The precision is improved 255 times: 0.99609375 compared to 1 - 0.99609375 = 0.00390625
-    //
-    bool fixed = false;
-    static ticks_t lastFixedJiffies;
-    if (jiffies - lastFixedJiffies > 1020) {
-        // fix them
-        ++jiffies;
-        fixed = true;
-        lastFixedJiffies += 1020;
-    }
-
-// #ifdef DEBUG_THREADS
-//     if (!(jiffies & 127)) {
-//         checkThreadLockups();
-//     }
-// #endif
-
 #if USE_RADIO && (RADIO_CHIP==RADIO_CHIP_MRF24J40)
     // TODO: fix radio interrupts and remove this code!
     if (mrf24j40PollForPacket) mrf24j40PollForPacket();
 #endif
+
+    bool wasWraparound = isWraparound;
+    isWraparound = false;
 
     // check if any alarm has expired and mark it for processing
     if (!processFlags.bits.alarmsProcess) {
@@ -73,7 +90,7 @@ ALARM_TIMER_INTERRUPT()
             threadWakeup(KERNEL_THREAD_INDEX, THREAD_READY);
             yield();
         }
-    } else if (fixed) {
+    } else if (wasWraparound) {
         // forced preemption in user context: possibly schedule a new thread
         yield();
     }

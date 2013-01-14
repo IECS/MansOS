@@ -29,32 +29,34 @@
 #include <etimer.h>
 #endif
 
-//----------------------------------------------------------
-// internal variables
-//----------------------------------------------------------
-
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 
 // alarm timer interrupt handler
 ALARM_TIMER_INTERRUPT()
 {
+    if (ALARM_TIMER_WRAPAROUND()) {
+        //
+        // On MSP430 platforms binary ACLK oscillator usually is used.
+        // It has constant rate 32768 Hz (the ACLK_SPEED define)
+        // When ACLK ticks are converted to milliseconds, rounding error is introduced.
+        // When TIMER_INTERRUPT_HZ = 1000, there are 32 ACLK ticks per millisecond;
+        // when TIMER_INTERRUPT_HZ = 100, there are 32.7 ACLK ticks per millisecond.
+        // The clock errors are (65536 / 32) - 2000 = 48 milliseconds
+        // and 4.159 or approximately 4 milliseconds respectively.
+        // We improve the precision by applying the fix once per every wraparound.
+        //
+        jiffies += IMPRECISION_PER_WRAPAROUND;
+
+        ALARM_TIMER_RESET_WRAPAROUND();
+        return;
+    }
+
+    if (!ALARM_TIMER_EXPIRED()) return;
+
     // advance the CCR
     SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
 
     jiffies += JIFFY_TIMER_MS;
-
-    //
-    // Clock error (software, due to rounding) is 32/32768 seconds per second,
-    // or 0.99609375 milliseconds per each 1.02 seconds
-    // We assume it's precisely 1 millisecond per each 1.02 seconds and fix that error here.
-    // The precision is improved 255 times: 0.99609375 compared to 1 - 0.99609375 = 0.00390625
-    //
-    static ticks_t lastFixedJiffies;
-    if (jiffies - lastFixedJiffies > 1020) {
-        // fix them
-        ++jiffies;
-        lastFixedJiffies += 1020;
-    }
 
 #ifdef USE_ALARMS
     if (hasAnyReadyAlarms(jiffies)) {
@@ -68,11 +70,6 @@ ALARM_TIMER_INTERRUPT()
          EXIT_SLEEP_MODE();
     }
 #endif
-
-    // TODO: remove this code!
-// #if USE_RADIO && (RADIO_CHIP==RADIO_CHIP_MRF24J40)
-//     if (mrf24j40PollForPacket) mrf24j40PollForPacket();
-// #endif
 }
 
 #endif // !CUSTOM_TIMER_INTERRUPT_HANDLERS

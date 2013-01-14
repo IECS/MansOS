@@ -67,6 +67,7 @@ LED_DEFINE(blueLed,  LEDS_PORT, 6, LEDS_ON_PIN_VALUE)
 LED_ALIAS(led0, redLed)
 LED_ALIAS(led1, greenLed)
 LED_ALIAS(led2, blueLed)
+LED_UNIMPLEMENTED(led3)
 
 #endif // LEDS_DEFINE
 

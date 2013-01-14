@@ -34,6 +34,7 @@
 #include <net/addr.h>
 #include <pthread.h>
 #include "sem_hal.h"
+#include <unistd.h>
 
 //----------------------------------------------------------
 // constants

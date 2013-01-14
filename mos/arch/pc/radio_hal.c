@@ -56,7 +56,10 @@ void radioReinit(void) {
 int8_t radioSendHeader(const void *header, uint16_t headerLength,
                        const void *data, uint16_t dataLength) {
     // first byte(s) in the packet is packet size
-    unsigned char tmpBuf[MAX_PACKET_SIZE + sizeof(PcRadioPackSize_t)];
+    union {
+        unsigned char buf[MAX_PACKET_SIZE + sizeof(PcRadioPackSize_t)];
+        PcRadioPackSize_t msgLength;
+    } tmpBuf;
     uint16_t len, done;
 
     if (mosSendSock < 0) return -1;
@@ -65,18 +68,18 @@ int8_t radioSendHeader(const void *header, uint16_t headerLength,
     pthread_mutex_lock(&pcRadioSendMutex);
 
     // set length in first byte(s)
-    *((PcRadioPackSize_t *) tmpBuf) = headerLength + dataLength;
+    tmpBuf.msgLength = headerLength + dataLength;
     // copy msg
     if (headerLength) {
-        memcpy(tmpBuf + sizeof(PcRadioPackSize_t), header, headerLength);
+        memcpy(tmpBuf.buf + sizeof(PcRadioPackSize_t), header, headerLength);
     }
-    memcpy(tmpBuf + headerLength + sizeof(PcRadioPackSize_t), data, dataLength);
+    memcpy(tmpBuf.buf + headerLength + sizeof(PcRadioPackSize_t), data, dataLength);
     
     // send until done
     len = sizeof(PcRadioPackSize_t) + headerLength + dataLength;
     done = 0;
 
-    int16_t l = write(mosSendSock, tmpBuf + done, len - done);
+    int16_t l = write(mosSendSock, tmpBuf.buf + done, len - done);
     if (l < 0) {
         perror("radioSendHeader write");
     } else if (l == 0) {

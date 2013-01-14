@@ -48,7 +48,7 @@ enum {
            (CPU_HZ / TIMER_INTERRUPT_HZ / JIFFY_CLOCK_DIVIDER),
     // in 1 jiffy = 1 ms case, 1 jiffy = 16000 / 64 = 250 clock cycles
 
-    PLATFORM_MIN_SLEEP_MS = 10, // min sleep amount = 10ms
+    PLATFORM_MIN_SLEEP_MS = 1, // min sleep amount = 1ms
     PLATFORM_MAX_SLEEP_MS = 0xffff / (CPU_HZ / 1000 / SLEEP_CLOCK_DIVIDER + 1),
     PLATFORM_MAX_SLEEP_SECONDS = PLATFORM_MAX_SLEEP_MS / 1000,
 
@@ -144,21 +144,30 @@ enum {
 #define SLEEP_TIMER_INIT() atmegaInitTimer1()
 #define SLEEP_TIMER_START() atmegaStartTimer1()
 #define SLEEP_TIMER_STOP() atmegaStopTimer1()
+//#define ALARM_TIMER_VALUE() (TCNT0)
+//#define RESET_ALARM_TIMER() { TCNT0 = 0; OCR0A = PLATFORM_ALARM_TIMER_PERIOD - 1; }
+#define ALARM_TIMER_WRAPAROUND() false
+#define ALARM_TIMER_RESET_WRAPAROUND() 
 
-#define ALARM_TIMER_VALUE() (TCNT0)
-#define RESET_ALARM_TIMER() { TCNT0 = 0; OCR0A = PLATFORM_ALARM_TIMER_PERIOD - 1; }
 #define SET_NEXT_ALARM_TIMER(value) OCR0A += value
 
-extern void atmegaTimer1Set(uint16_t ms);
-#define SLEEP_TIMER_SET(ms) atmegaTimer1Set(ms)
-#define SLEEP_TIMER_VALUE() (TCNT1)
-#define SLEEP_TIMER_EXPIRY_TIME() (OCR1A)
+// this expands to ALARM_TIMER_READ
+ACTIVE_TIMER_READ(ALARM, TCNT0)
 
-#define DISABLE_ALARM_INTERRUPT() TIMSK0 &= ~(1 << OCIE0A)
-#define ENABLE_ALARM_INTERRUPT() TIMSK0 |= (1 << OCIE0A)
+#define SLEEP_TIMER_SET(value) OCR1A = (value)
 
-#define DISABLE_SLEEP_INTERRUPT() TIMSK1 &= ~(1 << OCIE1A)
-#define ENABLE_SLEEP_INTERRUPT() TIMSK1 |= (1 << OCIE1A)
+#define SLEEP_TIMER_WRAPAROUND() false
+#define SLEEP_TIMER_RESET_WRAPAROUND()
+
+// this expands to SLEEP_TIMER_READ
+ACTIVE_TIMER_READ(SLEEP, TCNT1)
+#define SLEEP_TIMER_READ_STOPPED(ms) (TCNT1)
+
+// #define DISABLE_ALARM_INTERRUPT() TIMSK0 &= ~(1 << OCIE0A)
+// #define ENABLE_ALARM_INTERRUPT() TIMSK0 |= (1 << OCIE0A)
+
+// #define DISABLE_SLEEP_INTERRUPT() TIMSK1 &= ~(1 << OCIE1A)
+// #define ENABLE_SLEEP_INTERRUPT() TIMSK1 |= (1 << OCIE1A)
 
 // perform sleep/idle
 // FIXME: why is power-save mode not working?
@@ -195,4 +204,4 @@ extern void atmegaTimer1Set(uint16_t ms);
 #define SLEEP_TIMER_INTERRUPT() SIGNAL(TIMER1_COMPA_vect)
 
 
-#endif  // _atmega_timers_h_
+#endif

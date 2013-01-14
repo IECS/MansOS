@@ -190,10 +190,8 @@ static inline void initSystem(void)
 #ifdef USE_FATFS
     INIT_PRINTF("init FAT file system...\n");
     fatFsInit();
-//# if !PLATFORM_PC
     INIT_PRINTF("init POSIX-like file routines...\n");
     posixStdioInit();
-//# endif
 #endif
 #ifdef USE_WMP
     INIT_PRINTF("init WMP...\n");
@@ -207,6 +205,7 @@ static inline void initSystem(void)
     INIT_PRINTF("starting the application...\n");
 }
 
+#if USE_KERNEL_MAIN
 //----------------------------------------------------------
 //      Main entry point
 //----------------------------------------------------------
@@ -248,3 +247,4 @@ int main(void)
 
     return 0;
 }
+#endif // USE_KERNEL_MAIN

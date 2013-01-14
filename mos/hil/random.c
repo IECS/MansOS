@@ -22,7 +22,7 @@
  */
 
 #include "random.h"
-#include <timers.h>
+#include <timing.h>
 #include <serial_number.h>
 
 #if PLATFORM_PC

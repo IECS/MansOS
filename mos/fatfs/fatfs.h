@@ -40,10 +40,12 @@
 //
 #define FAT32_SUPPORT 0
 
-bool fatFsInitPartition(uint8_t partition);
+bool fatFsInitPartition(uint8_t partition) WEAK_SYMBOL;
 
 static inline bool fatFsInit(void)
 {
+    if (fatFsInitPartition == NULL) return true;
+
     // try to use partition #1 by default
     if (fatFsInitPartition(1)) return true;
     // if this fails, try to init the device as without partition table

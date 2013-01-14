@@ -347,6 +347,12 @@ ISR(PORT1, mrf24Interrupt)
         RPRINTF("****************** got radio interrupt!\n");
 
         mrf24j40PollForPacket();
+#if USE_THREADS
+        if (processFlags.bits.radioProcess) {
+            // wake up the kernel thread
+            EXIT_SLEEP_MODE();
+        }
+#endif
     } else {
         RPRINTF("got some other port1 interrupt!\n");
     }
@@ -531,10 +537,8 @@ bool mrf24j40PollForPacket(void)
         resetRx();
     }
 
-#if USE_THREADS    
+#if USE_THREADS
     if (process) processFlags.bits.radioProcess = true;
-    // wake up the kernel thread
-    EXIT_SLEEP_MODE();
 #endif
     return process;
 }

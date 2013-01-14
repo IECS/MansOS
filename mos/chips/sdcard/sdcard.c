@@ -26,7 +26,7 @@
 #include "sdcard_const.h"
 #include <spi.h>
 #include <delay.h>
-#include <timers.h>
+#include <timing.h>
 #include <utils.h>
 #include <serial.h>
 #include <hil/busywait.h>

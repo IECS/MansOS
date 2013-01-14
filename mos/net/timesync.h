@@ -25,7 +25,8 @@
 #define MANSOS_TIMESYNC_H
 
 //
-// Base station-router time sync
+// Base station-router time synchronization implementation.
+// Relies on periodic messages of the router that contain UNIX timestamp.
 //
 
 void timesyncInit(void);
