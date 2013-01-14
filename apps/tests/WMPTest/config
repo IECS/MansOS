@@ -2,6 +2,8 @@
 # Application specific config file
 #
 
+PLATFORM_EXCLUDE=farmmote
+
 USE_HUMIDITY=y
 
 USE_WMP=y

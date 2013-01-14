@@ -23,7 +23,7 @@
 
 //-------------------------------------------
 //  RealTimeTest application.
-//	Calls getRealTime periodically, displays value on serial
+//	Calls getTimeMs periodically, displays value on serial
 //-------------------------------------------
 
 #include "stdmansos.h"
@@ -42,7 +42,7 @@ void appMain(void) {
 void appMainx(void)
 {
     for (;;) {
-        uint32_t t = getRealTime();
+        uint32_t t = getTimeMs();
         PRINTF("real time = %lu\n", t);
         mdelay(1000);
     }
@@ -57,7 +57,7 @@ void appMainLong(void)
     extern volatile ticks_t jiffies;
     jiffies = ULONG_MAX - 2000;
     for (;;) {
-        ticks_t time = getRealTime();
+        ticks_t time = getTimeMs();
         uint8_t *t = (uint8_t *)&time;
         PRINTF("real time = 0x%02x%02x%02x%02x%02x%02x%02x%02x\n",
                 t[7], t[6], t[5], t[4],
@@ -73,7 +73,7 @@ void appMainLong(void)
 void appMainTimesave(void)
 {
     for (;;) {
-        uint32_t t = getRealTime();
+        uint32_t t = getTimeMs();
         PRINTF("real time = %lu\n", t);
         Handle_t handle;
         ATOMIC_START_TIMESAVE(handle);

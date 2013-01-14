@@ -31,7 +31,6 @@
 // --------------------------------------------------------------
 
 #include "stdmansos.h"
-#include "timers.h"
 
 // calibrate this - the RSSI range we are interested in
 #ifndef RSSI_UPPER_BOUND
@@ -75,16 +74,16 @@ void appMain(void)
     radioSetReceiveHandle(rcvRadio);
     radioOn();
 
-    uint32_t lastTime = getRealTime();
+    uint32_t lastTime = getTimeMs();
 
     for (;;) {
         int8_t rssi = radioGetLastRSSI();
 
-        if ((int32_t) getRealTime() - (int32_t) lastTime > 1000) {
+        if ((int32_t) getTimeMs() - (int32_t) lastTime > 1000) {
             radioSend(buffer, sizeof(buffer));
 
             PRINTF("rssi=%d\n", rssi);
-            lastTime = getRealTime();
+            lastTime = getTimeMs();
             if (rxOk) --rxOk;
 
             if (!rxOk) redLedOn();

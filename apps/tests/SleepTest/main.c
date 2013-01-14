@@ -84,11 +84,12 @@ void appMain(void) {
     DMA1CTL = 0;
 #endif
 
+
     while (1) {
-        energyStatsDump();
+	// energyStatsDump();
 
         msleep(PAUSE); // sleep PAUSE seconds
-        // PRINTF("%lu: hello world\n", (uint32_t) getJiffies());
+        PRINTF("%lu: hello world\n", (uint32_t) getJiffies());
         ledToggle();
     }
 }

@@ -27,7 +27,6 @@
 
 #include "stdmansos.h"
 #include <string.h>
-#include <stdio.h>
 
 #define GPS_SERIAL_ID  0
 #define USB_SERIAL_ID  1

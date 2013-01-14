@@ -35,8 +35,8 @@
 
 #define TEST_PACKET_SIZE            30
 
-#define WRITE_TO_FILE         1
-#define ENABLE_HW_ADDRESSING  1
+#define WRITE_TO_FILE               PLATFORM_SM3
+#define ENABLE_HW_ADDRESSING        1 // has effect only on SM3
 #define ADDRESS 0xAA
 
 #if PLATFORM_SM3
@@ -118,17 +118,18 @@ void appMain(void)
     outFile = fopen("data.txt", "a");
 #endif
 
+#if PLATFORM_SM3
 #if ENABLE_HW_ADDRESSING
-#if RECV
+# if RECV
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, ADDRESS);
-#else
+# else
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, ADDRESS ^ 0x1);
-#endif // RECV
-
+# endif // RECV
 #else
     // disable addr mode
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_NONE, 0);
 #endif // ENABLE_HW_ADDRESSING
+#endif // PLATFORM_SM3
 
 #if RECV
 //    alarmInit(&alarm, alarmCb, NULL);
