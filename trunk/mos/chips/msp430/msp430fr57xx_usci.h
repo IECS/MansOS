@@ -66,7 +66,6 @@
 
 #define SERIAL_COUNT      2
 #define PRINTF_SERIAL_ID  1
-#define UART_ON_USCI_A0   1
 
 
 #define UC0IE     UCA0IE

@@ -87,15 +87,12 @@
 #if PLATFORM_XM1000
 #define SERIAL_COUNT       2
 #define PRINTF_SERIAL_ID   1
-#define UART_ON_USCI_A1    1
 #elif PLATFORM_Z1 || PLATFORM_TESTBED || PLATFORM_TESTBED2
 #define SERIAL_COUNT       2
 #define PRINTF_SERIAL_ID   0
-#define UART_ON_USCI_A0    1
 #else
 #define SERIAL_COUNT       1
 #define PRINTF_SERIAL_ID   0
-#define UART_ON_USCI_A0    1
 #endif
 
 
@@ -105,10 +102,6 @@ static inline void serialDisableTX(uint8_t id) {  }
 
 
 // Enable receive interrupt
-#if PLATFORM_Z1 || PLATFORM_TESTBED || PLATFORM_TESTBED2
-//
-// Zolertia & TestBed specific code
-//
 static inline void serialEnableRX(uint8_t id) {
     if (id == 0) UC0IE |= UCA0RXIE;
     else UC1IE |= UCA1RXIE;
@@ -118,45 +111,6 @@ static inline void serialDisableRX(uint8_t id) {
     if (id == 0) UC0IE &= ~UCA0RXIE;
     else UC1IE &= ~UCA1RXIE;
 }
-
-// #elif PLATFORM_TESTBED2
-// //
-// // TestBed specific code
-// //
-// static inline void serialEnableRX(uint8_t id) {
-//     if (id == 0) UC0IE |= UCA0RXIE;
-//     if (id == 1) UC0IE |= UCB0RXIE;
-//     if (id == 2) UC1IE |= UCA1RXIE;
-//     else UC1IE |= UCB1RXIE;
-// }
-// // Disable receive interrupt
-// static inline void serialDisableRX(uint8_t id) {
-//     if (id == 0) UC0IE &= ~UCA0RXIE;
-//     else if (id == 1) UC0IE &= ~UCB0RXIE;
-//     else if (id == 2) UC1IE &= ~UCA1RXIE;
-//     else UC1IE &= ~UCB1RXIE;
-// }
-
-#else
-//
-// For other motes
-//
-static inline void serialEnableRX(uint8_t id) {
-#if UART_ON_USCI_A0
-    UC0IE |= UCA0RXIE;
-#elif UART_ON_USCI_A1
-    UC1IE |= UCA1RXIE;
-#endif
-}
-// Disable receive interrupt
-static inline void serialDisableRX(uint8_t id) {
-#if UART_ON_USCI_A0
-    UC0IE &= ~UCA0RXIE;
-#elif UART_ON_USCI_A1
-    UC1IE &= ~UCA1RXIE;
-#endif
-}
-#endif
 
 static inline void hw_spiBusOn(uint8_t busId) { }
 static inline void hw_spiBusOff(uint8_t busId) { }

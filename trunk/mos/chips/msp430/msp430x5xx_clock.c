@@ -25,6 +25,10 @@
 // msp430x5xx series clock calibration
 //
 
+//
+// WARNING: this code is not tested yet!
+//
+
 #include "msp430_clock.h"
 #include "msp430_timers.h"
 #include "msp430_int.h"
