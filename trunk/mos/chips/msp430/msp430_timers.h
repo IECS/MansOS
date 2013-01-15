@@ -130,20 +130,18 @@ enum {
 // otherwise mspsim generates interrupts even when the timer is not counting.
 //
 #define msp430StartTimerA() TACTL |= MC_CONT | TAIE
-#define msp430StopTimerA() TACTL &= ~(MC_3 | TAIE)
+#define msp430StopTimerA()  TACTL &= ~(MC_3 | TAIE)
 
-#define msp430StartTimerB()  TBCTL |= MC_CONT | TBIE
-#define msp430StopTimerB() TBCTL &= ~(MC_3 | TBIE)
+#define msp430StartTimerB() TBCTL |= MC_CONT | TBIE
+#define msp430StopTimerB()  TBCTL &= ~(MC_3 | TBIE)
 
 #define msp430InitTimerA() \
     /* begin reset/init */ \
     TACTL = TACLR; \
     /* source: 32768Hz ACLK, DIV = 1, interrupt disabled */ \
     TACTL = TASSEL_ACLK | ID_DIV1;  \
-    /* clear all other registers */ \
-    TAR = 0; \
-    TACCTL0 = TACCTL1 = 0; \
-    TACCR0 = TACCR1 = 0; \
+    /* enable CCR0 interrupt */ \
+    TACCTL0 = CCIE; \
     /* we want the timer to work every single HZ */ \
     TACCR0 = PLATFORM_ALARM_TIMER_PERIOD; \
 
@@ -166,28 +164,29 @@ enum {
 #define msp430WatchdogStop() WDTCTL = WDTPW + WDTHOLD
 
 // Alarm timer
-#define ALARM_TIMER_INIT() msp430InitTimerA()
+#define ALARM_TIMER_INIT()  msp430InitTimerA()
 #define ALARM_TIMER_START() msp430StartTimerA()
-#define ALARM_TIMER_STOP() msp430StopTimerA()
-#define ALARM_TIMER_EXPIRED() (TAIV == 10)
+#define ALARM_TIMER_STOP()  msp430StopTimerA()
 #define ALARM_TIMER_WRAPAROUND() (TACTL & TAIFG)
 #define ALARM_TIMER_RESET_WRAPAROUND() (TACTL &= ~TAIFG)
+#define ALARM_TIMER_READ_STOPPED(ms) (TAR)
+#define NEXT_ALARM_TIMER(value) TACCR0
 #define SET_NEXT_ALARM_TIMER(value) TACCR0 += value
 
 // this expands to ALARM_TIMER_READ
 ACTIVE_TIMER_READ(ALARM, TAR)
 
 // Sleep timer
-#define SLEEP_TIMER_INIT() msp430InitTimerB()
+#define SLEEP_TIMER_INIT()  msp430InitTimerB()
 #define SLEEP_TIMER_START() msp430StartTimerB()
-#define SLEEP_TIMER_STOP() msp430StopTimerB()
+#define SLEEP_TIMER_STOP()  msp430StopTimerB()
 // make sure the interrupt was triggered
 // because of a capture of CCR1
 #define SLEEP_TIMER_EXPIRED() (TBIV == 2)
 
 #define SLEEP_TIMER_SET(value) TBCCR1 = (value)
 
-#define SLEEP_TIMER_WRAPAROUND() (TBCTL & TBIFG)
+#define SLEEP_TIMER_WRAPAROUND() (TBIV == 14)
 #define SLEEP_TIMER_RESET_WRAPAROUND() (TBCTL &= ~TBIFG)
 
 // this expands to SLEEP_TIMER_READ
@@ -195,14 +194,13 @@ ACTIVE_TIMER_READ(SLEEP, TBR)
 #define SLEEP_TIMER_READ_STOPPED(ms) (TBR)
 
 #ifdef TIMERA0_VECTOR
-#define ALARM_TIMER_INTERRUPT() ISR(TIMERA0, alarmTimerInterrupt)
+#define ALARM_TIMER_INTERRUPT0() ISR(TIMERA0, alarmTimerInterrupt0)
+#define ALARM_TIMER_INTERRUPT1() ISR(TIMERA1, alarmTimerInterrupt1)
 #else // for MSP430F5438
-#define ALARM_TIMER_INTERRUPT() ISR(TIMER0_A0, alarmTimerInterrupt)
+#define ALARM_TIMER_INTERRUPT0() ISR(TIMER0_A0, alarmTimerInterrupt0)
+#define ALARM_TIMER_INTERRUPT1() ISR(TIMER0_A1, alarmTimerInterrupt1)
 #endif
-#define SLEEP_TIMER_INTERRUPT() ISR(TIMERB1, sleepTimerInterrupt)
-
-#define platformTurnAlarmsOff() DISABLE_ALARM_INTERRUPT()
-#define platformTurnAlarmsOn() ENABLE_ALARM_INTERRUPT()
+#define SLEEP_TIMER_INTERRUPT()  ISR(TIMERB1, sleepTimerInterrupt)
 
 //===========================================================
 //===========================================================
