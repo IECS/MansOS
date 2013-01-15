@@ -104,12 +104,16 @@ static inline void serialDisableTX(uint8_t id) {  }
 // Enable receive interrupt
 static inline void serialEnableRX(uint8_t id) {
     if (id == 0) UC0IE |= UCA0RXIE;
+#ifdef UCA1CTL1_
     else UC1IE |= UCA1RXIE;
+#endif
 }
 // Disable receive interrupt
 static inline void serialDisableRX(uint8_t id) {
     if (id == 0) UC0IE &= ~UCA0RXIE;
+#ifdef UCA1CTL1_
     else UC1IE &= ~UCA1RXIE;
+#endif
 }
 
 static inline void hw_spiBusOn(uint8_t busId) { }
