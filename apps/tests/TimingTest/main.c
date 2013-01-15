@@ -22,19 +22,25 @@
  */
 
 //-------------------------------------------
-//  RealTimeTest application.
+//  TimingTest application.
 //	Calls getTimeMs periodically, displays value on serial
 //-------------------------------------------
 
 #include "stdmansos.h"
+#include <hil/atomic.h>
 
 void appMainx(void);
 void appMainLong(void);
 void appMainTimesave(void);
 
 void appMain(void) {
+    // XXX: if alarms are not used, this must be done manually!
+    ALARM_TIMER_START();
+
     appMainx();
 }
+
+//extern volatile bool hadWr;
 
 //
 // Simple time accounting, no tricks

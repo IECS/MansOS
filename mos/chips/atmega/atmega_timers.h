@@ -136,7 +136,8 @@ enum {
     /* reset counter */ \
     TCNT1 = 0;
 
-#define ALARM_TIMER_INTERRUPT() ISR(TIMER0_COMPA_vect)
+#define ALARM_TIMER_INTERRUPT0() ISR(TIMER0_COMPA_vect)
+#define ALARM_TIMER_INTERRUPT1() ISR(TIMER0_COMPB_vect)
 
 #define ALARM_TIMER_INIT() atmegaInitTimer0()
 #define ALARM_TIMER_START() atmegaStartTimer0()
@@ -144,11 +145,11 @@ enum {
 #define SLEEP_TIMER_INIT() atmegaInitTimer1()
 #define SLEEP_TIMER_START() atmegaStartTimer1()
 #define SLEEP_TIMER_STOP() atmegaStopTimer1()
-//#define ALARM_TIMER_VALUE() (TCNT0)
-//#define RESET_ALARM_TIMER() { TCNT0 = 0; OCR0A = PLATFORM_ALARM_TIMER_PERIOD - 1; }
+#define ALARM_TIMER_READ_STOPPED() (TCNT0)
 #define ALARM_TIMER_WRAPAROUND() false
-#define ALARM_TIMER_RESET_WRAPAROUND() 
+#define ALARM_TIMER_RESET_WRAPAROUND()
 
+#define NEXT_ALARM_TIMER(value) OCR0A
 #define SET_NEXT_ALARM_TIMER(value) OCR0A += value
 
 // this expands to ALARM_TIMER_READ
@@ -162,12 +163,6 @@ ACTIVE_TIMER_READ(ALARM, TCNT0)
 // this expands to SLEEP_TIMER_READ
 ACTIVE_TIMER_READ(SLEEP, TCNT1)
 #define SLEEP_TIMER_READ_STOPPED(ms) (TCNT1)
-
-// #define DISABLE_ALARM_INTERRUPT() TIMSK0 &= ~(1 << OCIE0A)
-// #define ENABLE_ALARM_INTERRUPT() TIMSK0 |= (1 << OCIE0A)
-
-// #define DISABLE_SLEEP_INTERRUPT() TIMSK1 &= ~(1 << OCIE1A)
-// #define ENABLE_SLEEP_INTERRUPT() TIMSK1 |= (1 << OCIE1A)
 
 // perform sleep/idle
 // FIXME: why is power-save mode not working?
@@ -195,9 +190,6 @@ ACTIVE_TIMER_READ(SLEEP, TCNT1)
 
 // no need to check explicitly
 #define ALARM_TIMER_EXPIRED() (1)
-
-#define platformTurnAlarmsOff() DISABLE_ALARM_INTERRUPT()
-#define platformTurnAlarmsOn() ENABLE_ALARM_INTERRUPT()
 
 // assume that timer compare interrupt occurs only on compare match
 #define SLEEP_TIMER_EXPIRED() (1)

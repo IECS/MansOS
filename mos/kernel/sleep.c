@@ -45,7 +45,6 @@ volatile uint16_t millisecondsInSleepMode;
 SLEEP_TIMER_INTERRUPT()
 {
     if (SLEEP_TIMER_WRAPAROUND()) {
-        // PRINTF("SLEEP_TIMER_WRAPAROUND!\n");
         //
         // Fix jiffies for greater good/precision!
         //
@@ -55,16 +54,15 @@ SLEEP_TIMER_INTERRUPT()
         // Now we know we have slept for exactly 16000 milliseconds;
         // use the value of how much we *think* we have slept to calc correction.
         int16_t correction = 16000 - millisecondsInSleepMode;
-        // PRINTF("correction = %d\n", correction);
+        // PRINTF("sleep timer correction = %d ms\n", correction);
         jiffies += correction;
 
         timeWentToSleep = 0;
         millisecondsInSleepMode = 0;
         SLEEP_TIMER_RESET_WRAPAROUND();
-        return;
-    }
 
-    if (!SLEEP_TIMER_EXPIRED()) return;
+        if (!(SLEEP_TIMER_EXPIRED())) return;
+    }
 
     // exit low power mode
     EXIT_SLEEP_MODE();

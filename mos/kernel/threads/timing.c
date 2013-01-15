@@ -28,46 +28,11 @@
 
 // --------------------------------------------- alarm / time accounting timer
 
-ALARM_TIMER_INTERRUPT()
+static volatile bool wasWraparound;
+
+ALARM_TIMER_INTERRUPT0()
 {
-    static volatile bool isWraparound;
-
-    if (ALARM_TIMER_WRAPAROUND()) {
-        //
-        // On MSP430 platforms binary ACLK oscillator usually is used.
-        // It has constant rate 32768 Hz (the ACLK_SPEED define)
-        // When ACLK ticks are converted to milliseconds, rounding error is introduced.
-        // When TIMER_INTERRUPT_HZ = 1000, there are 33 ACLK ticks per millisecond.
-        // When TIMER_INTERRUPT_HZ = 100, there are 32.8 ACLK ticks per milliseconds.
-        // The clock errors are 2000 - (65536 / 33) = 14.(06) milliseconds
-        // and 1.95 milliseconds per wraparound period respectively.
-        // We assume its precisely 14 milliseconds and 2 milliseconds respectively
-        // and improve the precision by applying the fix once per every wraparound.
-        // It is improved 232 and 40 times respectively.
-        // The final imprecision at 1000 Hz is 30.3 ppm, or 109.09 ms drift per hour.
-        //
-        jiffies += IMPRECISION_PER_WRAPAROUND;
-#if TIMER_INTERRUPT_HZ == 1000
-        // Fix even that small imprecision by adding 2 milliseconds
-        // once every 33 wraparound periods. This precision time accounting
-        // is supported only with 1000 Hz interrupt frequency!
-        static uint8_t numWraparoundTimes;
-        numWraparoundTimes++;
-        if (numWraparoundTimes == 33) {
-            jiffies += 2;
-            numWraparoundTimes = 0;
-        }
-#endif
-        isWraparound = true;
-        ALARM_TIMER_RESET_WRAPAROUND();
-        return;
-    }
-
-    if (!ALARM_TIMER_EXPIRED()) return;
-
-    // advance the CCR
-    SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
-
+    // Advance the jiffies (MansOS internal time counter)
     jiffies += JIFFY_TIMER_MS;
 
 #if USE_RADIO && (RADIO_CHIP==RADIO_CHIP_MRF24J40)
@@ -75,8 +40,7 @@ ALARM_TIMER_INTERRUPT()
     if (mrf24j40PollForPacket) mrf24j40PollForPacket();
 #endif
 
-    bool wasWraparound = isWraparound;
-    isWraparound = false;
+    bool doYield = false;
 
     // check if any alarm has expired and mark it for processing
     if (!processFlags.bits.alarmsProcess) {
@@ -88,10 +52,49 @@ ALARM_TIMER_INTERRUPT()
                 || currentThread->state == THREAD_SLEEPING) {
             // wake up the kernel thread to process all events that have happened
             threadWakeup(KERNEL_THREAD_INDEX, THREAD_READY);
-            yield();
+            doYield = true;
         }
     } else if (wasWraparound) {
         // forced preemption in user context: possibly schedule a new thread
+        doYield = true;
+    }
+
+    wasWraparound = false;
+
+    // Advance the counter register
+    SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
+
+    // If TAR still > TACCR0 at this point, we are in trouble:
+    // the interrupt will not be generated until the next wraparound (2 seconds).
+    // So avoid it at all costs.
+    while (!timeAfter16(NEXT_ALARM_TIMER(), ALARM_TIMER_READ_STOPPED())) {
+        jiffies += JIFFY_TIMER_MS;
+        SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
+    }
+
+    if (doYield) {
         yield();
+    }
+}
+
+
+ALARM_TIMER_INTERRUPT1()
+{
+    if (ALARM_TIMER_WRAPAROUND()) {
+        //
+        // On MSP430 platforms binary ACLK oscillator usually is used.
+        // It has constant rate 32768 Hz (the ACLK_SPEED define)
+        // When ACLK ticks are converted to milliseconds, rounding error is introduced.
+        // When TIMER_INTERRUPT_HZ = 1000, there are 32 ACLK ticks per millisecond;
+        // when TIMER_INTERRUPT_HZ = 100, there are 32.7 ACLK ticks per millisecond.
+        // The clock errors are (65536 / 32) - 2000 = 48 milliseconds
+        // and 4.159 or approximately 4 milliseconds respectively.
+        // We improve the precision by applying the fix once per every wraparound.
+        //
+        jiffies += IMPRECISION_PER_WRAPAROUND;
+
+        wasWraparound = true;
+
+        ALARM_TIMER_RESET_WRAPAROUND();
     }
 }

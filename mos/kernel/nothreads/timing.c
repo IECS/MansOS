@@ -32,7 +32,37 @@
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 
 // alarm timer interrupt handler
-ALARM_TIMER_INTERRUPT()
+ALARM_TIMER_INTERRUPT0()
+{
+    // Advance the jiffies (MansOS internal time counter)
+    jiffies += JIFFY_TIMER_MS;
+
+#ifdef USE_ALARMS
+    if (hasAnyReadyAlarms(jiffies)) {
+        alarmsProcess();
+    }
+#endif
+#ifdef USE_PROTOTHREADS
+    if (etimer_pending() && !etimer_polled()
+            && !timeAfter32(jiffies, etimer_next_expiration_time())) {
+         etimer_request_poll();
+         EXIT_SLEEP_MODE();
+    }
+#endif
+    
+    // Advance the counter register
+    SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
+
+    // If TAR still > TACCR0 at this point, we are in trouble:
+    // the interrupt will not be generated until the next wraparound (2 seconds).
+    // So avoid it at all costs.
+    while (!timeAfter16(NEXT_ALARM_TIMER(), ALARM_TIMER_READ_STOPPED())) {
+        jiffies += JIFFY_TIMER_MS;
+        SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
+    }
+}
+
+ALARM_TIMER_INTERRUPT1()
 {
     if (ALARM_TIMER_WRAPAROUND()) {
         //
@@ -48,28 +78,7 @@ ALARM_TIMER_INTERRUPT()
         jiffies += IMPRECISION_PER_WRAPAROUND;
 
         ALARM_TIMER_RESET_WRAPAROUND();
-        return;
     }
-
-    if (!ALARM_TIMER_EXPIRED()) return;
-
-    // advance the CCR
-    SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
-
-    jiffies += JIFFY_TIMER_MS;
-
-#ifdef USE_ALARMS
-    if (hasAnyReadyAlarms(jiffies)) {
-        alarmsProcess();
-    }
-#endif
-#ifdef USE_PROTOTHREADS
-    if (etimer_pending() && !etimer_polled()
-            && !timeAfter32(jiffies, etimer_next_expiration_time())) {
-         etimer_request_poll();
-         EXIT_SLEEP_MODE();
-    }
-#endif
 }
 
 #endif // !CUSTOM_TIMER_INTERRUPT_HANDLERS

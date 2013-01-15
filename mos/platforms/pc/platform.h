@@ -26,7 +26,6 @@
 
 #include "sem_hal.h"
 #include "leds_hal.h"
-#include "alarms_hal.h"
 #include "adc_hal.h"
 
 #include <arch/null_spi.h>
@@ -48,15 +47,15 @@ extern void perror(const char *s);
 #define DISABLE_INTS() // nothing
 #define ENABLE_INTS()  // nothing
 
-#define ALARM_TIMER_INTERRUPT() void alarmTimerInterrupt(void)
+#define ALARM_TIMER_INTERRUPT0() void alarmTimerInterrupt0(void)
+#define ALARM_TIMER_INTERRUPT1() void alarmTimerInterrupt1(void)
 #define SLEEP_TIMER_INTERRUPT() void sleepTimerInterrupt(void)
 
 #define ALARM_TIMER_START()
-// #define ENABLE_ALARM_INTERRUPT()
-// #define DISABLE_ALARM_INTERRUPT()
 #define ALARM_TIMER_EXPIRED() (1)
-#define ALARM_TIMER_READ() 0
+#define ALARM_TIMER_READ_STOPPED() 0
 #define SET_NEXT_ALARM_TIMER(value)
+#define NEXT_ALARM_TIMER() 0
 
 #define ALARM_TIMER_WRAPAROUND() false
 #define ALARM_TIMER_RESET_WRAPAROUND()

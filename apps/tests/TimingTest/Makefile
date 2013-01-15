@@ -34,7 +34,7 @@
 SOURCES = main.c
 
 # Module is the name of the main module buit by this makefile
-APPMOD = RealTimeTest
+APPMOD = Test
 
 # --------------------------------------------------------------------
 # Set the key variables

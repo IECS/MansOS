@@ -30,18 +30,6 @@
 // platform-specific functions, required by alarm in HIL
 //----------------------------------------------------------
 
-// disable alarms for a while
-void platformTurnAlarmsOff(void) {
-// TODO
-//    mos_mutex_lock(&alarmMutex);
-}
-
-// turn alarms back on
-void platformTurnAlarmsOn(void) {
-// TODO
-//    mos_mutex_unlock(&alarmMutex);
-}
-
 static uint32_t getPcTime(void)
 {
     struct timeval tv;
