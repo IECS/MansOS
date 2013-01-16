@@ -59,6 +59,9 @@ void ads8638Init(void)
 
     // turn on internal ref
     ads8638RegWrite(ADS8638_REG_AUX_CONFIG, ADS8638_INTERNAL_VREF_ON);
+
+    // select channel 0 with configured range
+    ads8638SelectChannel(ADS8638_CHANNEL_0, ADS8638_RANGE_CONFIG);
 }
 
 void ads8638SelectChannel(uint8_t channel, uint8_t range)

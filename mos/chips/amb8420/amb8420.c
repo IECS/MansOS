@@ -116,6 +116,8 @@ static void rxPacket(uint8_t checksum)
     // wake up the kernel thread
     // XXX: done in ISR because it cannot be done here!
     // EXIT_SLEEP_MODE();
+    PRINTF("%lu: packet rx\n", (uint32_t) getTimeMs());
+    redLedOn();
 #else
     if (rxHandle) {
         rxHandle();
@@ -322,7 +324,7 @@ int amb8420Send(const void *header_, uint16_t headerLen,
     AMB8420_WAIT_FOR_RTS_READY(ok);
     if (!ok) {
         amb8420Reset(); // XXX: reset the radio in hope it will help
-        greenLedOn();
+        blueLedOn();
         goto end;
     }
 

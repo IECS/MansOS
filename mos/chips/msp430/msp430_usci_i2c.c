@@ -26,6 +26,8 @@
  * msp430_usci_i2c.c -- USCI module on MSP430, I2C mode
  */
 
+// FIXME? this seems to be broken, at least not working very well.
+
 #include <digital.h>
 #include <i2c.h>
 #include "msp430_usci.h"
@@ -106,6 +108,7 @@ i2cError_t i2cWrite(uint8_t busId, uint8_t addr,
         }                                                      \
     } while (0)
 
+// TODO: will not work for B0?
 #define I2C_WRITE_BYTE(letterid, id, byte) do {             \
         while (!(UC1IFG & UCB1TXIFG) && !(UCB1STAT & UCNACKIFG)); \
         UC##letterid##TXBUF = byte; \

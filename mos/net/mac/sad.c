@@ -71,8 +71,6 @@ static void delayTimerCb(void *);
 // -----------------------------------------------
 
 static void initSadMac(RecvFunction recvCb) {
-//    macProtocol.recvCb = recvCb;
-
     // use least significant byte of localAddress AMB8420 address  
     amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, localAddress & 0xff);
 
@@ -85,7 +83,7 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     int8_t ret;
 #if DELAYED_SEND
     if (mi->timeWhenSend) {
-        PRINTF("delayed send!\n");
+        // PRINTF("delayed send!\n");
         if (delayedDataLength) {
             return -1; // busy
         }
@@ -131,10 +129,6 @@ static void delayTimerCb(void *unused)
         lastNexthop = delayedNexthop;
     }
 #endif
-    // if (!amb8420SetDstAddress(delayedNexthop)) {
-    //     bool b = amb8420SetDstAddress(delayedNexthop);
-    //     PRINTF("MAC ADDR SET RETRY = %d\n", (int) b);
-    // }
     radioSendHeader(NULL, 0, delayedData, delayedDataLength);
     delayedDataLength = 0;
 }

@@ -104,14 +104,14 @@ uint8_t IslI2cReadByte(i2cAck_t ack)
 bool islOn(){
     uint8_t val;
     // Get current register value
-    if (readIslRegister(ISL_COMMAND_REGISTER, &val)){
+    if (readIslRegister(ISL_COMMAND_REGISTER, &val)) {
         return false;    // fail!
-        }
+    }
     // Append on value
     val &= ~ISL_ENABLE_BIT; // binary 0111 1111
     val += ISL_ENABLE_BIT;
     // Update control register
-    if (writeIslRegister(ISL_COMMAND_REGISTER, val)){
+    if (writeIslRegister(ISL_COMMAND_REGISTER, val)) {
         return false;    // fail!
     }
     return true;
@@ -121,13 +121,13 @@ bool islOn(){
 bool islOff(){
     uint8_t val;
     // Get current register value
-    if (readIslRegister(ISL_COMMAND_REGISTER, &val)){
+    if (readIslRegister(ISL_COMMAND_REGISTER, &val)) {
         return false;    // fail!
     }
     // Append on value
     val &= ~ISL_ENABLE_BIT; // binary 0111 1111
     // Update control register
-    if (writeIslRegister(ISL_COMMAND_REGISTER, val)){
+    if (writeIslRegister(ISL_COMMAND_REGISTER, val)) {
         return false;    // fail!
     }
     return true;
@@ -153,14 +153,14 @@ bool islWake(){
 bool islSleep(){
     uint8_t val;
     // Get current register value
-    if (readIslRegister(ISL_COMMAND_REGISTER, &val)){
+    if (readIslRegister(ISL_COMMAND_REGISTER, &val)) {
         return false;    // fail!
     }
     // Append on value
     val &= ~ISL_SLEEP_BIT; // binary 1011 1111
     val += ISL_SLEEP_BIT;
     // Update control register
-    if (writeIslRegister(ISL_COMMAND_REGISTER, val)){
+    if (writeIslRegister(ISL_COMMAND_REGISTER, val)) {
         return false;    // fail!
     }
     return true;
@@ -168,9 +168,9 @@ bool islSleep(){
 
 //Check if ISL29003 is ON
 bool isIslOn(){
-        uint8_t val;
+    uint8_t val;
     // Get current register value
-    if (readIslRegister(ISL_COMMAND_REGISTER, &val)){
+    if (readIslRegister(ISL_COMMAND_REGISTER, &val)) {
         return false;    // fail!
     }
     return val & ISL_ENABLE_BIT;
@@ -180,7 +180,7 @@ bool isIslOn(){
 bool isIslWake(){
     uint8_t val;
     // Get current register value
-    if (readIslRegister(ISL_COMMAND_REGISTER, &val)){
+    if (readIslRegister(ISL_COMMAND_REGISTER, &val)) {
         return false;    // fail!
     }
     return !(val & ISL_SLEEP_BIT);
@@ -213,7 +213,7 @@ bool writeIslRegister(uint8_t reg, uint8_t val){
     Handle_t intHandle;
     ATOMIC_START(intHandle);
     i2cStart();
-    err |= IslI2cWriteByte(ISL_WRITE_FLAG);
+    err |= IslI2cWriteByte((ISL_ADDRESS << 1) | I2C_WRITE_FLAG);
     err |= IslI2cWriteByte(reg);
     err |= IslI2cWriteByte(val);
     i2cStop();
@@ -227,11 +227,11 @@ bool readIslRegister(uint8_t reg, uint8_t *val){
     Handle_t intHandle;
     ATOMIC_START(intHandle);
     i2cStart();
-    err |= IslI2cWriteByte(ISL_WRITE_FLAG);
+    err |= IslI2cWriteByte((ISL_ADDRESS << 1) | I2C_WRITE_FLAG);
     err |= IslI2cWriteByte(reg);
     i2cStop();
     i2cStart();
-    err |= IslI2cWriteByte(ISL_READ_FLAG); 
+    err |= IslI2cWriteByte((ISL_ADDRESS << 1) | I2C_READ_FLAG); 
     *val = IslI2cReadByte(I2C_ACK);
     ISL_I2C_SDA_LO();
     I2C_SCL_LO();
@@ -260,11 +260,11 @@ bool configureIsl(IslConfigure_t newConf){
         val += newConf.clock_cycles;
     }
     // Update command register
-    if (writeIslRegister(ISL_COMMAND_REGISTER, val)){
+    if (writeIslRegister(ISL_COMMAND_REGISTER, val)) {
         return false;    // fail!
     }
     // Get current register value
-    if (readIslRegister(ISL_CONTROL_REGISTER, &val)){
+    if (readIslRegister(ISL_CONTROL_REGISTER, &val)) {
         return false;    // fail!
     }
     // Append range_gain
@@ -279,7 +279,7 @@ bool configureIsl(IslConfigure_t newConf){
         val += newConf.integration_cycles;
     }
     // Update control register
-    if (writeIslRegister(ISL_CONTROL_REGISTER, val)){
+    if (writeIslRegister(ISL_CONTROL_REGISTER, val)) {
         return false;    // fail!
     }
     return true;
@@ -289,13 +289,13 @@ bool configureIsl(IslConfigure_t newConf){
 bool islInterupt(bool clearIfHave){
     uint8_t val;
     /* Get current state. */
-    if (readIslRegister(ISL_CONTROL_REGISTER,&val)){
+    if (readIslRegister(ISL_CONTROL_REGISTER, &val)) {
         return true;               //fail! returning true for nonblock in case of isl failure
     }
     /* Check for interrupt. */
-    if (val & ISL_INTERUPT_BIT){
+    if (val & ISL_INTERUPT_BIT) {
         if (clearIfHave){
-            if (clearIslInterupt()){
+            if (clearIslInterupt()) {
                 return true;           //fail! returning true for nonblock in case of isl failure
             }
         }
@@ -310,7 +310,7 @@ bool clearIslInterupt(){
     Handle_t intHandle;
     ATOMIC_START(intHandle);
     i2cStart();
-    err |= IslI2cWriteByte(ISL_WRITE_FLAG);
+    err |= IslI2cWriteByte((ISL_ADDRESS << 1) | I2C_WRITE_FLAG);
     err |= IslI2cWriteByte(ISL_CLEAR_INTERUPT_REGISTER);
     i2cStop();
     ATOMIC_END(intHandle);
@@ -321,32 +321,33 @@ bool clearIslInterupt(){
 bool islRead(uint16_t *data, bool checkInterupt){
     uint8_t val;
     /* Check ISL29003 current state. */
-    bool on=isIslOn(), wake=isIslWake();
+    bool on = isIslOn();
+    bool awake = isIslWake();
     /* Enable device if necessary. */
     if (!on){
         islOn();
     }
-    if (!wake){
+    if (!awake){
         islWake();
     }
     if (checkInterupt){
         while (!islInterupt(true));
     }
     /* Reads register 5 - MSB */
-    if (readIslRegister(0x05, &val)){
+    if (readIslRegister(0x05, &val)) {
         return false;    //fail!
     }
     *data = val<<8;
     /* Reads register 4 - LSB*/
-    if(readIslRegister(0x04, &val)){
+    if(readIslRegister(0x04, &val)) {
         return false;    //fail!
     }
     *data+=val;
     /* Hide our tracks... */
-    if (!on){
+    if (!on) {
         islOff();
     }
-    if (!wake){
+    if (!awake) {
         islSleep();
     }
     return true;

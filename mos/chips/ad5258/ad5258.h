@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,19 +21,41 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//------------------------------------------------
-// Sends counter over serial port
-//------------------------------------------------
+#ifndef MANSOS_AD5258_H
+#define MANSOS_AD5258_H
 
-#include "stdmansos.h"
+#include <kernel/defines.h>
 
-void appMain(void)
-{
-    uint8_t counter = 0;
+// I2C address when both address pins are zero
+#define AD5258_ADDRESS    0x18
 
-    while (1) {
-        redLedToggle();
-        PRINTF("counter = %u\n", counter++);
-        mdelay(1000); // delay one second
-    }
-}
+// traditional for I2C access; combined with the slave address
+#define AD5258_WRITE_FLAG  0x0
+#define AD5258_READ_FLAG   0x1
+
+//
+// AD5258 configuration commands
+//
+#define AD5258_CMD_ACCESS_RDAC       0x00
+#define AD5258_CMD_ACCESS_EEPROM     0x20
+#define AD5258_CMD_SET_WRITEPROTECT  0x40
+// RDAC -> EEPROM
+#define AD5258_CMD_STORE_TO_EEPROM   0xC0
+// EEPROM -> RDAC
+#define AD5258_CMD_STORE_TO_RDAC     0xA0
+// consecutively & individually (the first byte!)
+#define AD5258_CMD_READ_TOLERANCE    0x3E
+#define AD5258_CMD_READ_TOLERANCE    0x3E
+
+
+// Initialize the AD5258 digital potentiometer
+void ad5258Init(void);
+
+//
+// Write out voltage vaue to AD5258 digital potentiometer.
+// Supported values are 0..63; the chip accepts 6 config bits.
+//
+bool ad5258Write(uint8_t value);
+
+
+#endif

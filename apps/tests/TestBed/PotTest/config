@@ -1,0 +1,17 @@
+#
+# Application specific config file
+#
+
+# only for testbed
+PLATFORM_ONLY=testbed testbed2
+
+USE_I2C=y
+USE_SOFT_I2C=y
+USE_AD5258=y
+
+CONST_SDA_PORT=5
+CONST_SDA_PIN=1
+CONST_SCL_PORT=5
+CONST_SCL_PIN=2
+
+DEBUG=y
