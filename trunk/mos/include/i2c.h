@@ -78,7 +78,7 @@ void i2cOff(uint8_t busId);
 
 /**
  * Writes a byte to I2C and checks acknowledge
- * @param   addr    address of the slave receiver
+ * @param   addr    address of the slave receiver (7 bits!)
  * @param   txByte  byte to transmit
  * @return          0 on success, error code otherwise
  */
@@ -87,7 +87,7 @@ void i2cOff(uint8_t busId);
 
 /*
  * Writes a string to I2C and checks acknowledge
- * @param   addr        address of the slave receiver
+ * @param   addr        address of the slave receiver (7 bits!)
  * @param   buf         the buffer containing the string
  * @param   len         buffer length in bytes
  * @return  0           on success, error code otherwise
@@ -97,7 +97,7 @@ i2cError_t i2cWrite(uint8_t busId, uint8_t addr,
 
 /*
  * Reads a message into buffer from I2C - requests it from a slave
- * @param   addr        address of the slave transmitter
+ * @param   addr        address of the slave transmitter (7 bits!)
  * @param   buf         the buffer to store the message
  * @param   len         buffer length in bytes
  * @return  received byte count
@@ -107,7 +107,7 @@ uint8_t i2cRead(uint8_t busId, uint8_t addr,
 
 /*
  * Reads a byte from I2C - requests it from a slave
- * @param   addr        address of the slave transmitter
+ * @param   addr        address of the slave transmitter (7 bits!)
  * @param   rxByte      buffer, where the received data will be stored
  * @return  received byte count (1 on success, 0 on error)
  */

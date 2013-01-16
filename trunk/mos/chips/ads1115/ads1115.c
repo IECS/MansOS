@@ -26,6 +26,8 @@
 
 #define ADS111X_I2C_ID I2C_BUS_SW
 
+uint16_t adsActiveConfig;
+
 // Write ADS1114 register
 bool writeAdsRegister(uint8_t reg, uint16_t val)
 {
@@ -33,13 +35,13 @@ bool writeAdsRegister(uint8_t reg, uint16_t val)
     Handle_t intHandle;
     ATOMIC_START(intHandle);
     i2cStart();
-    err |= i2cWriteByteRaw(ADS_WRITE_FLAG);
+    err |= i2cWriteByteRaw((ADS_ADDRESS << 1) | I2C_WRITE_FLAG);
     err |= i2cWriteByteRaw(reg);
     err |= i2cWriteByteRaw(val >> 8);
     err |= i2cWriteByteRaw(val & 0xff);
     i2cStop();
     ATOMIC_END(intHandle);
-    //PRINTF("Writed:%#x%x\n",val >> 8,val & 0xff);
+    //PRINTF("wrote: %#x%x\n",val >> 8,val & 0xff);
     return err == 0;
 }
 
@@ -51,17 +53,17 @@ bool readAdsRegister(uint8_t reg, uint16_t *val)
     Handle_t intHandle;
     ATOMIC_START(intHandle);
     i2cStart();
-    err |= i2cWriteByteRaw(ADS_WRITE_FLAG);
+    err |= i2cWriteByteRaw((ADS_ADDRESS << 1) | I2C_WRITE_FLAG);
     err |= i2cWriteByteRaw(reg);
     i2cStop();
     i2cStart();
-    err |= i2cWriteByteRaw(ADS_READ_FLAG);
+    err |= i2cWriteByteRaw((ADS_ADDRESS << 1) | I2C_READ_FLAG);
     uint8_t hi = i2cReadByteRaw(I2C_ACK);
     uint8_t lo = i2cReadByteRaw(I2C_NO_ACK);
-    *val = (hi << 8) | lo ;
+    *val = (hi << 8) | lo;
     i2cStop();
     ATOMIC_END(intHandle);
-    //PRINTF("recieved %#x%x\n",hi,lo);
+    //PRINTF("recieved: %#x%x\n",hi,lo);
     return err == 0;
 }
 
@@ -89,7 +91,7 @@ void adsInit(void)
 bool readAds(uint16_t *val)
 {
     // check for mode, begin conversion if neccesary
-    if (adsActiveConfig & ADS_MODE_MASK){
+    if (adsActiveConfig & ADS_MODE_MASK) {
         adsBeginSingleConversion();
     }
     return readAdsRegister(ADS_CONVERSION_REGISTER,val);

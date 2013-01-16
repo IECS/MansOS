@@ -282,8 +282,6 @@ RoutingDecision_e routePacket(MacInfo_t *info)
             if (rootAddress != 0 && info->immedSrc.shortAddr != rootAddress) {
                 downstreamAddress = info->immedSrc.shortAddr;
             }
-        } else {
-            PRINTF("no immed src!\n");
         }
     }
     fillLocalAddress(&info->immedSrc);

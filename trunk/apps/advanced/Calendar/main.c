@@ -79,7 +79,7 @@ void copyDayNames(const char **pgmSource, char *ramCopy) {
 ///////////////////////////////////////////
 // I2C stuff
 ///////////////////////////////////////////
-#define slaveAddress  81        // The datasheet says A2 to write and A3 to read
+#define slaveAddress  (0xA2 >> 1)     // The datasheet says A2 to write and A3 to read
 // But that's 8 bit addressing, we use 7 bit.
 // So shift 1 bit to the right and we get 81 decimal
 

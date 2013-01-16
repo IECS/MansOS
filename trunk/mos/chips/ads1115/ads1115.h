@@ -27,10 +27,8 @@
 
 #include "i2c_soft.h"
 
-// Command to read ADS1115 register
-#define ADS_READ_FLAG 0x91
-// Command to write ADS1115 register
-#define ADS_WRITE_FLAG 0x90
+// ADS1115 I2C address
+#define ADS_ADDRESS 0x48
 
 #define ADS_CONVERSION_REGISTER 0x0
 #define ADS_CONFIG_REGISTER 0x1
@@ -77,7 +75,7 @@
 #define adsSelectForthInput() adsConfig(ADS_FORTH_INPUT, ADS_MUX_MASK)
 #define adsSelectInput(input) adsConfig(input + ADS_FIRST_INPUT, ADS_MUX_MASK)
 
-uint16_t adsActiveConfig;
+extern uint16_t adsActiveConfig;
 
 // ----------------------------------------
 // user API

@@ -21,19 +21,25 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//------------------------------------------------
-// Sends counter over serial port
-//------------------------------------------------
+//
+// Digital potentiometer test application
+//
 
 #include "stdmansos.h"
+#include <ad5258/ad5258.h>
+
+#define PERIOD 1000 // miliseconds
 
 void appMain(void)
 {
-    uint8_t counter = 0;
-
-    while (1) {
-        redLedToggle();
-        PRINTF("counter = %u\n", counter++);
-        mdelay(1000); // delay one second
+    uint16_t i;
+    for (i = 0; ; i++) {
+	i %= 64;
+        PRINTF("calibrate potentiometer to %u\n", i);
+        if (!ad5258Write(i)) {
+            PRINTF("write failed!\n");
+        }
+        mdelay(PERIOD);
+        ledToggle();
     }
 }

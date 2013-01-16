@@ -41,6 +41,10 @@
 #include <digital.h>
 #include <delay.h>
 
+// these value are commonly used in I2C protocol
+#define I2C_WRITE_FLAG   0x0
+#define I2C_READ_FLAG    0x1
+
 #ifndef SDA_PORT
 #error SDA_PORT not defined for software i2c!
 #endif

@@ -57,6 +57,9 @@
 #if USE_DAC7718
 #include <dac7718/dac7718.h>
 #endif
+#if USE_AD5258
+#include <ad5258/ad5258.h>
+#endif
 #include <fatfs/fatfs.h>
 
 #if (defined DEBUG && !defined DPRINT_TO_RADIO)
@@ -161,7 +164,10 @@ static inline void initSystem(void)
 #if USE_ADS8638
     INIT_PRINTF("init ADS8638 ADC converter chip...\n");
     ads8638Init();
-    ads8638SelectChannel(ADS8638_CHANNEL_0, ADS8638_RANGE_CONFIG);
+#endif
+#if USE_AD5258
+    INIT_PRINTF("init AD5258 digital potentiometer...\n");
+    ad5258Init();
 #endif
 #ifdef USE_HUMIDITY
     INIT_PRINTF("init humidity sensor...\n");

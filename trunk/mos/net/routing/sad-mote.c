@@ -49,6 +49,8 @@ static uint32_t lastRootMessageTime;
 static MosShortAddr nexthopToRoot;
 static uint8_t moteNumber;
 
+static bool isListening;
+
 static void roStartListeningTimerCb(void *);
 static void roStopListeningTimerCb(void *);
 
@@ -138,6 +140,7 @@ static void roStartListeningTimerCb(void *x)
     // listen to info only when routing info is already valid (?)
     if (isRoutingInfoValid()) {
         RPRINTF("%lu: --- START LISTENING\n", getSyncTimeMs());
+        isListening = true;
         radioOn();
         alarmSchedule(&roStopListeningTimer, TOTAL_LISTENING_TIME);
     }
@@ -146,7 +149,8 @@ static void roStartListeningTimerCb(void *x)
 static void roStopListeningTimerCb(void *x)
 {
     RPRINTF("%lu: turn radio off\n", getSyncTimeMs());
-    RADIO_OFF_ENERGSAVE();
+//    RADIO_OFF_ENERGSAVE();
+    isListening = false;
 }
 
 static void roRequestTimerCb(void *x)
@@ -160,6 +164,7 @@ static void roRequestTimerCb(void *x)
     RPRINTF("send routing request\n");
 
     radioOn(); // wait for response
+    isListening = true;
 
     RoutingRequestPacket_t req;
     req.packetType = ROUTING_REQUEST;
@@ -227,9 +232,12 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         lastSeenSeqnum = ri.seqnum;
         hopCountToRoot = ri.hopCount;
         lastRootMessageTime = (uint32_t)getJiffies();
+        int64_t oldRootClockDeltaMs = rootClockDeltaMs;
         rootClockDeltaMs = ri.rootClockMs - getTimeMs64();
         moteNumber = ri.moteNumber;
         // PRINTF("%lu: ++++++++++++ fixed local time\n", getSyncTimeMs());
+        PRINTF("delta: old=%ld, new=%ld\n", (int32_t)oldRootClockDeltaMs, (int32_t)rootClockDeltaMs);
+        PRINTF("%lu: OK!%s\n", getSyncTimeSec(), isListening ? "" : " (not listening)");
     }
 }
 

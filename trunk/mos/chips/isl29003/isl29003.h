@@ -31,10 +31,8 @@
 #define ISL_I2C_SDA_LO()   pinClear(SDA_PORT, SDA_PIN)
 /* End of ISL29003 soft I2C support */
 
-// Command to read ISL29003 register
-#define ISL_READ_FLAG 0x89
-// Command to write ISL29003 register
-#define ISL_WRITE_FLAG 0x88
+// ISL29003 I2C address
+#define ISL_ADDRESS 0x44
 // Command register number
 #define ISL_COMMAND_REGISTER 0x00
 // Control register number

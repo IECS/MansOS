@@ -48,4 +48,12 @@ void initPlatform(void);
 
 //#define SNUM_CHIP SNUM_DS2411
 
+
+// AD5258 digital potentimeter configuration
+
+//#define AD5258_I2C_ID 1  // ID2 is on bus B1 on testbed2
+
+#define AD5258_I2C_ID I2C_BUS_SW    // use soft i2c as alternative
+
+
 #endif
