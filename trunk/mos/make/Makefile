@@ -255,7 +255,7 @@ OBJS = $(APP_OBJS) $(POBJS)
 OBJDIRS = $(dir $(OBJS))
 
 # ===== Targets =====
-.PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs motelist listen sensorlist clean cleanall
+.PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs motelist serial sensorlist clean cleanall
 
 all: build
 
@@ -422,7 +422,7 @@ objDirs:
 motelist:
 	$(_QUIET) $(MOTELIST)
 
-listen:
+serial:
 	$(_QUIET) $(SERIAL) -s $(BSLPORT) -b $(BAUDRATE) -p $(PLATFORM)
 
 sensorlist:

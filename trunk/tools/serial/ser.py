@@ -30,7 +30,7 @@ def listenSerial():
     
     try:
         ser = serial.Serial(cliArgs.serialPort, cliArgs.baudRate, timeout=1, 
-                            parity=serial.PARITY_NONE, rtscts=1)
+                            parity=serial.PARITY_NONE, rtscts=cliArgs.flowcontrol)
         ser.flushInput()
         ser.flushOutput()
         if cliArgs.platform not in ['xm1000', 'z1'] :
@@ -52,11 +52,12 @@ def listenSerial():
             writeBuffer = ""
         # read
         if ser.inWaiting():
-            s = ser.read(1)
-            if len(s) >= 1:
-                if type(s) is str: sys.stdout.write( s )
-                else: sys.stdout.write( "{}".format(chr(s[0])) )
-                sys.stdout.flush()
+            s = ser.read(ser.inWaiting())
+            if type(s) is str: sys.stdout.write( s )
+            else:
+                for c in s:
+                    sys.stdout.write( "{}".format(chr(c)) )
+            sys.stdout.flush()
         # allow other threads to run
         time.sleep(0.001)
 
@@ -68,7 +69,7 @@ def listenSerial():
 def getCliArgs():
     defaultSerialPort = "/dev/ttyUSB0"
     defaultBaudRate = 38400
-    version = "0.4/2013.01.14"
+    version = "0.5/2013.01.17"
 
     parser = argparse.ArgumentParser(description="MansOS serial communicator", prog="serial")
 
@@ -78,6 +79,8 @@ def getCliArgs():
         help='baud rate (default: ' + str(defaultBaudRate) + ')')
     parser.add_argument('-p', '--platform', dest='platform', action='store', default='telosb',
         help='platform (default: telosb)')
+    parser.add_argument('-f', '--flowcontrol', dest='flowcontrol', action='store', default=False,
+        help='enable hardware flow control (default: False)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + version)
     return parser.parse_args()
 
@@ -109,7 +112,7 @@ def main():
             flDone = True
             return 0
 
-        writeBuffer += s
+        writeBuffer += s + '\r\n'
     
     return 0
 
