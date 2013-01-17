@@ -34,24 +34,20 @@
 void serialReceive(uint8_t byte) {
     static uint16_t numBytesReceived;
     static char buffer[255];
+    static bool hadCr = false;
 
-#if !PLATFORM_PC
-    // echo the byte back
-    serialSendByte(PRINTF_SERIAL_ID, byte);
-#endif
-
-    // store it in the buffer
+    // store the byte in a buffer
     buffer[numBytesReceived++] = byte;
 
-    if (byte == '\n' || byte == '\r' || numBytesReceived == sizeof(buffer) - 1) {
+    if (byte == '\r') hadCr = true;
+
+    if (byte == '\n' || numBytesReceived == sizeof(buffer) - 1) {
         buffer[numBytesReceived] = 0;
-        if (byte == '\r') serialSendByte(PRINTF_SERIAL_ID, '\n');
         PRINTF("%s", buffer);
-        if (byte != '\n') {
-            // print newline as well
-            PRINTF("\n");
-        }
+        if (!hadCr) serialSendByte(PRINTF_SERIAL_ID, '\r');
+	if (byte != '\n') serialSendByte(PRINTF_SERIAL_ID, '\n');
         numBytesReceived = 0; // reset counter
+        hadCr = false;
         PRINTF(PROMPT);
     }
 }
@@ -60,6 +56,6 @@ void appMain(void)
 {
     serialSetReceiveHandle(PRINTF_SERIAL_ID, serialReceive);
 
-    PRINTF("Type your text here, press enter, and the mote will echo it back\n");
+    PRINTF("# Type your text, press [Enter], and the mote will echo it back\n");
     PRINTF(PROMPT);
 }
