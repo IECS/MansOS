@@ -34,12 +34,13 @@ void appMain(void)
 {
     uint16_t i;
     for (i = 0; ; i++) {
-	i %= 64;
+        i %= 64;
         PRINTF("calibrate potentiometer to %u\n", i);
         if (!ad5258Write(i)) {
             PRINTF("write failed!\n");
         }
         mdelay(PERIOD);
+        PRINTF("read adc: %u\n", adcRead(0));
         ledToggle();
     }
 }
