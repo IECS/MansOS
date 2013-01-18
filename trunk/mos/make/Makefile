@@ -425,5 +425,8 @@ motelist:
 serial:
 	$(_QUIET) $(SERIAL) -s $(BSLPORT) -b $(BAUDRATE) -p $(PLATFORM)
 
+listen:
+	$(_QUIET) $(SERIAL) -s $(BSLPORT) -b $(BAUDRATE) -p $(PLATFORM)
+
 sensorlist:
 	$(_QUIET) $(SENSORLIST) $(PLATFORM) "$(CFLAGS) $(LDFLAGS)"
