@@ -117,9 +117,9 @@ static inline void initSystem(void)
     }
 #endif
 #ifdef USE_ADC
-    if (initAdc != NULL) {
+    if (adcInit != NULL) {
         INIT_PRINTF("init ADC...\n");
-        initAdc();
+        adcInit();
     }
 #endif
 #ifdef USE_RANDOM

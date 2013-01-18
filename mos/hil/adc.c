@@ -40,17 +40,17 @@ static uint16_t adcVal;
     pinAsFunction(port, pin);   \
     pinAsInput(port, pin);
 
-void adcOn() {
+void adcOn(void) {
     hplAdcOn();
     adcIsOn = true;
 }
 
-void adcOff() {
+void adcOff(void) {
     hplAdcOff();
     adcIsOn = false;
 }
 
-void initAdc()
+void adcInit(void)
 {
     hplAdcInit();
     hplAdcOff();
@@ -111,7 +111,7 @@ uint16_t adcRead(uint8_t ch)
     return retval;
 }
 
-uint16_t adcReadFast()
+uint16_t adcReadFast(void)
 {
     hplAdcStartConversion();
 

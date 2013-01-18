@@ -44,8 +44,11 @@ static inline uint16_t generateLocalAddress(void)
         result += snum[i];
     }
 
-    // XXX: do not allow the result to be 0
-    if (result == 0) result = 0x1;
+    // do not allow the result to be one of reserved addresses
+    if (result == MOS_ADDR_ROOT
+            || result == MOS_ADDR_BASESTATION) {
+        result = 0x2;
+    }
 
     // set highest bit to zero
     return result & ~0x8000;
@@ -71,8 +74,9 @@ static inline void setupLocalAddr(void)
 }
 
 void initArchComm(void) {
+#if USE_ROLE_BASE_STATION
+    localAddress = MOS_ADDR_BASESTATION;
+#else
     setupLocalAddr();
-#if PLATFORM_Z1
-    localAddress = 0x0001; // XXX
 #endif
 }
