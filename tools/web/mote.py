@@ -3,7 +3,7 @@
 #
 
 import serial, subprocess, sys, time
-from serial.tools import list_ports
+#from serial.tools import list_ports
 from settings import *
 
 def runSubprocess(args, server):
@@ -194,12 +194,12 @@ class MoteCollection(object):
         staticPorts = set(settingsInstance.getCfgValue("motes"))
 
         dynamicPorts = set()
-        for x in list_ports.comports():
-            # skip ports that are not connected
-            if x[2] == "n/a": continue
-            portName = x[0]
-            if not ("USB" in portName or "ACM" in portName): continue
-            dynamicPorts.add(portName)
+#        for x in list_ports.comports():
+#            # skip ports that are not connected
+#            if x[2] == "n/a": continue
+#            portName = x[0]
+#            if not ("USB" in portName or "ACM" in portName): continue
+#            dynamicPorts.add(portName)
 
         allPorts = dynamicPorts.union(staticPorts)
         for port in allPorts:
