@@ -55,7 +55,7 @@ uint16_t adcReadFast(void);
 // channel count defined in platform-specific part
 // uint_t adcGetChannelCount();
 
-void initAdc(void) WEAK_SYMBOL; // for kernel only
+void adcInit(void) WEAK_SYMBOL; // for kernel only
 
 
 #endif

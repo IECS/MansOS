@@ -28,7 +28,7 @@
 #ifndef MANSOS_HUMIDITY_H
 #define MANSOS_HUMIDITY_H
 
-#include "humidity_hal.h"
+#include <kernel/stdtypes.h>
 
 //===========================================================
 // Data types and constants
@@ -40,14 +40,16 @@
 //===========================================================
 
 // such functions are accessible (defined in platform-specific part)
-// void humidityInit();      // init humidity sensor, do not turn it on
-// void humidityOn();        // turn on humidity sensor
-// void humidityOff();       // turn off humidity sensor
-// uint16_t humidityRead();  // read humidity value
-// bool humidityIsError(void);
+extern inline void humidityInit(void);      // init humidity sensor, do not turn it on
+extern inline void humidityOn(void);        // turn on humidity sensor
+extern inline void humidityOff(void);       // turn off humidity sensor
+extern inline uint16_t humidityRead();      // read humidity value
+extern inline bool humidityIsError(void);
 
-// Optional part
-// some humidity sensors (SHT11) also provide temperature reading
-// uint16_t temperatureRead();  // read temperature value from humidity sensor
+// Humidity sensors also provide temperature reading
+extern inline uint16_t temperatureRead(void);  // read temperature value from humidity sensor
+
+// include the definitions of these functions/macros
+#include "humidity_hal.h"
 
 #endif

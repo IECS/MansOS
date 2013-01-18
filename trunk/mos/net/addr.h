@@ -86,6 +86,7 @@ enum {
 
 #define MOS_ADDR_BROADCAST        0xffff
 #define MOS_ADDR_ROOT             0x0000 // as destination, filled in by network stack
+#define MOS_ADDR_BASESTATION      0x0001 // for now, BS always has this address
 
 //----------------------------------------------------------
 // Types

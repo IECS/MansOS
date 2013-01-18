@@ -22,13 +22,11 @@
  */
 
 //
-// TODO: rewrite this to allow record with different sizes
+// TODO: rewrite this to allow records with different sizes
 //
 
-#include "fstream-light.h"
+#include <flash_stream.h>
 #include <dynamic_memory.h>
-//#include <sdcard/sdcard.h>
-//#include <sdcard_pins.h> // from platform
 #include <extflash.h>
 #include <platform.h>
 #include <lib/assert.h>
@@ -56,7 +54,7 @@ static volatile uint32_t extFlashAddress;
 
 static uint8_t tmpBuffer[FSTREAM_MAX_RECORD_SIZE];
 
-// XXX: crc, if present, is acutrrently always at buffer[2]
+// XXX: crc, if present, is currently always at buffer[2]
 struct HeaderWithCrc_s {
     uint16_t __unused;
     uint16_t crc;

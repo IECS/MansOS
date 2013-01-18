@@ -24,6 +24,10 @@
 #ifndef MANSOS_SENSORS_H
 #define MANSOS_SENSORS_H
 
+//
+// Joint header for all platform-specific sensors
+//
+
 #include <hil/light.h>
 #if USE_HUMIDITY
 #include <hil/humidity.h>
@@ -31,5 +35,6 @@
 #if USE_ACCEL
 #include <hil/accel.h>
 #endif
+#include <adc.h>
 
 #endif
