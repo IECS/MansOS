@@ -4,7 +4,8 @@
 <input type="submit" value="%MOTE_ACTION% listening"/></p>
 <p>
 <label for="dataFile">Save data to file (empty to disable saving):</label><br/>
-<label><input type="text" name="dataFile" value="%DATA_FILENAME%"/>
+<label><input type="text" name="dataFile" value="%DATA_FILENAME%"/>.csv<br/>
 <input type="radio" name="dataType" value="raw" %RAWDATA_CHECKED%/>Raw data
-<input type="radio" name="dataType" value="processed" %PROCDATA_CHECKED%/>Processed values</p>
+<input type="radio" name="dataType" value="sprocessed" %SPROCDATA_CHECKED%/>CSV data, single file
+<input type="radio" name="dataType" value="mprocessed" %MPROCDATA_CHECKED%/>CSV data, multiple files</p>
 </div></form> 

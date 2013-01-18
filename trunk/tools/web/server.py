@@ -433,21 +433,28 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         else:
             dataFilename = settingsInstance.getCfgValue("saveToFilename")
 
+        saveMultipleFiles = settingsInstance.getCfgValueAsBool("saveMultipleFiles")
+        saveProcessedData = settingsInstance.getCfgValueAsBool("saveProcessedData")
         if "dataType" in qs:
-            saveProcessedData = qs["dataType"][0] == "processed"
-        else:
-            saveProcessedData = settingsInstance.getCfgValueAsInt("saveProcessedData")
+            saveProcessedData = not qs["dataType"][0] == "raw"
+            saveMultipleFiles = qs["dataType"][0] == "mprocessed"
+
+        rawdataChecked = not saveProcessedData
+        sprocessedChecked = saveProcessedData and not saveMultipleFiles
+        mprocessedChecked = saveProcessedData and saveMultipleFiles
 
         settingsInstance.setCfgValue("saveToFilename", dataFilename)
-        settingsInstance.setCfgValue("saveProcessedData", saveProcessedData)
+        settingsInstance.setCfgValue("saveProcessedData", bool(saveProcessedData))
+        settingsInstance.setCfgValue("saveMultipleFiles", bool(saveMultipleFiles))
         settingsInstance.save()
 
         self.serveBody("listen",
                        {"LISTEN_TXT" : txt,
                         "MOTE_ACTION": action,
                         "DATA_FILENAME" : dataFilename,
-                        "RAWDATA_CHECKED" : 'checked="checked"' if not saveProcessedData else "",
-                        "PROCDATA_CHECKED" : 'checked="checked"' if saveProcessedData else ""})
+                        "RAWDATA_CHECKED" : 'checked="checked"' if rawdataChecked else "",
+                        "SPROCDATA_CHECKED" : 'checked="checked"' if sprocessedChecked else "",
+                        "MPROCDATA_CHECKED" : 'checked="checked"' if mprocessedChecked else ""})
         self.serveFooter()
 
     def serveUpload(self, qs):
@@ -755,6 +762,9 @@ def main():
     try:
         port = settingsInstance.getCfgValueAsInt("port", HTTP_SERVER_PORT)
         htmlDirectory = os.path.abspath(settingsInstance.getCfgValue("htmlDirectory"))
+        dataDirectory = os.path.abspath(settingsInstance.getCfgValue("dataDirectory"))
+        if not os.path.exists(dataDirectory):
+                os.makedirs(dataDirectory)
         sealBlocklyPath = os.path.abspath(settingsInstance.getCfgValue("sealBlocklyPath"))
         server = ThreadingHTTPServer(('', port), HttpServerHandler)
         motes.addAll()
