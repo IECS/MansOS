@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2011, Institute of Electronics and Computer Science
  * All rights reserved.
  *
