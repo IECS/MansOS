@@ -2,7 +2,7 @@
 # MansOS web server - data parsing, storing and visualization
 #
 
-import time
+import time, os
 from settings import *
 
 class GraphData(object):
@@ -11,18 +11,20 @@ class GraphData(object):
         self.data = []
         self.tempData = []
         self.seenInThisPacket = set()
+        self.firstPacket = True
 
     def finishPacket(self):
         self.seenInThisPacket = set()
         if len(self.tempData) == 0:
             return
-        firstPacket = False
+
         if len(self.columns) == 0:
-            firstPacket = True
             self.columns.append("serverTimestamp")
             for (n,v) in self.tempData:
                 if n.lower() != "serverTimestamp":
                     self.columns.append(n)
+        else:
+            self.firstPacket = False
 
         if len(self.tempData) + 1 != len(self.columns):
             self.tempData = []
@@ -37,11 +39,14 @@ class GraphData(object):
         self.data.append(tmpRow)
         self.tempData = []
 
-        # save to file if required
+        # save to file if required (single file)
         if settingsInstance.cfg.saveToFilename \
-                and settingsInstance.cfg.saveProcessedData:
-            with open(settingsInstance.cfg.saveToFilename, "a") as f:
-                if firstPacket:
+                and settingsInstance.cfg.saveProcessedData \
+                and not settingsInstance.cfg.saveMultipleFiles:
+            filename = settingsInstance.cfg.dataDirectory + "/" \
+                + settingsInstance.cfg.saveToFilename + ".csv"
+            with open(filename, "a") as f:
+                if self.firstPacket:
                     f.write(str(self.getColumns()))
                 f.write(str(tmpRow))
                 f.close()
@@ -55,6 +60,9 @@ class GraphData(object):
             return
 
         dataName = string[:eqSignPos].strip()
+        if not isasciiString(dataName):
+            return
+
         if dataName in self.seenInThisPacket:
             self.finishPacket()
         self.seenInThisPacket.add(dataName)
@@ -65,12 +73,26 @@ class GraphData(object):
             value = 0
         self.tempData.append((dataName, value))
 
+        # save to file if required (multiple files)
+        if settingsInstance.cfg.saveToFilename \
+                and settingsInstance.cfg.saveProcessedData \
+                and settingsInstance.cfg.saveMultipleFiles:
+            filename = settingsInstance.cfg.dataDirectory + "/" \
+                + settingsInstance.cfg.saveToFilename + "_" + dataName + ".csv"
+            with open(filename, "a") as f:
+                if os.path.getsize(filename) == 0:
+                    f.write(dataName + ",serverTimestamp\n")
+                f.write("{}, {}\n".format(value, time.strftime("%H:%M:%S", time.localtime())))
+                f.close()
+
+
     def resize(self, newMaxSize):
         self.data = self.data[:newMaxSize]
 
     def reset(self):
         self.resize(0)
         self.columns = []
+        self.firstPacket = True
 
     def getColumns(self):
         return self.columns

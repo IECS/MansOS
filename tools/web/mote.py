@@ -6,16 +6,6 @@ import serial, subprocess, sys, time
 from serial.tools import list_ports
 from settings import *
 
-def isascii(c, printable = True):
-    if 0x00 <= ord(c) <= 0x7f:
-        if 0x20 <= ord(c) <= 0x7e:
-            return True
-        if c == '\r' or c == '\n' or c == '\t':
-            return True
-        return False
-    else:
-        return False
-
 def runSubprocess(args, server):
     retcode = -1
     try:
@@ -116,7 +106,9 @@ class Mote(object):
                 # save to file if required
                 if settingsInstance.cfg.saveToFilename \
                         and not settingsInstance.cfg.saveProcessedData:
-                    with open(settingsInstance.cfg.saveToFilename, "a") as f:
+                    filename = settingsInstance.cfg.dataDirectory + "/" \
+                        + settingsInstance.cfg.saveToFilename
+                    with open(filename, "a") as f:
                         f.write(c)
                         f.close()
 
