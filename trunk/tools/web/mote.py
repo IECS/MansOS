@@ -62,7 +62,6 @@ class Mote(object):
         self.isSelected = False
         self.isStatic = False
         self.buffer = ""
-        self.writebuffer = ""
         self.platform = "telosb"
 
     def openSerial(self):

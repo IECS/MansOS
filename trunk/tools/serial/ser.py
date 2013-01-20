@@ -4,14 +4,7 @@
 # Serial port communicator (listener/sender) application
 #
 
-import operator
-import time
-import string
-
-import serial
-import sys
-import threading
-import argparse
+import time, serial, sys, threading, argparse
 
 global flDone
 global cliArgs
@@ -48,7 +41,8 @@ def listenSerial():
     while (not flDone):
         # write
         if writeBuffer:
-            ser.write(writeBuffer)
+            for c in writeBuffer:
+                ser.write(bytearray([c]))
             writeBuffer = ""
         # read
         if ser.inWaiting():
