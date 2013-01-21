@@ -314,8 +314,9 @@ class Config(object):
             s.isOn = self.wmpGetLedConfig(s.code)
 
         (args, ok) = self.wmpExchangeCommand(WMP_CMD_GET_FILENAME, [])
-        if ok and str(args) != self.filenameOnMote:
-            self.filenameOnMote = str(args)
+        newFilename = "".join(args)
+        if ok and newFilename != self.filenameOnMote:
+            self.filenameOnMote = newFilename
             settingsInstance.setCfgValue("saveToFilenameOnMote", self.filenameOnMote)
             settingsInstance.save()
 
