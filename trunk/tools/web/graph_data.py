@@ -59,7 +59,7 @@ class GraphData(object):
             self.finishPacket()
             return
 
-        dataName = string[:eqSignPos].strip()
+        dataName = string[:eqSignPos].strip().lower()
         if not isasciiString(dataName):
             return
 
