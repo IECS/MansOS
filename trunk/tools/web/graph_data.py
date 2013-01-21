@@ -31,7 +31,7 @@ class GraphData(object):
             return
 
         tmpRow = []
-        timestamp = time.strftime("%H:%M:%S", time.localtime())
+        timestamp = time.strftime("%d %b %Y %H:%M:%S", time.localtime())
         tmpRow.append(timestamp)
         for (n,v) in self.tempData:
             if n.lower() != "serverTimestamp":
@@ -82,7 +82,7 @@ class GraphData(object):
             with open(filename, "a") as f:
                 if os.path.getsize(filename) == 0:
                     f.write(dataName + ",serverTimestamp\n")
-                f.write("{}, {}\n".format(value, time.strftime("%H:%M:%S", time.localtime())))
+                f.write("{}, {}\n".format(value, time.strftime("%d %b %Y %H:%M:%S", time.localtime())))
                 f.close()
 
 
