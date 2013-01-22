@@ -5,7 +5,7 @@
 #
 
 import os, sys, platform
-import threading, time, serial, select, socket, cgi, subprocess, struct
+import threading, time, serial, select, socket, cgi, subprocess, struct, signal
 import json
 from settings import *
 from mote import *
@@ -41,6 +41,9 @@ motes = MoteCollection()
 htmlDirectory = "html"
 
 sealBlocklyPath = "../../.."
+
+# TODO: this variable should be per-user
+hasWriteAccess = True
 
 # --------------------------------------------
 
@@ -128,6 +131,15 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.wfile.write("0\r\n")
         self.wfile.write("\r\n")
 
+    def handleGenericQS(self, qs):
+        global hasWriteAccess
+        if "accessType" in qs:
+            val = qs["accessType"][0]
+            if val[:3].lower() == "get":
+                hasWriteAccess = True
+            else:
+                hasWriteAccess = False
+
     def serveHeader(self, name, isGeneric = True, includeBodyStart = True, replaceValues = None):
         self.headerIsServed = True
         if name == "default":
@@ -157,7 +169,13 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 if replaceValues:
                     for v in replaceValues:
                         contents = contents.replace("%" + v + "%", replaceValues[v])
+                # page title
                 contents = contents.replace("%PAGETITLE%", pagetitle)
+                action = "Release" if hasWriteAccess else "Get"
+                # read / write access
+                contents = contents.replace("%ACCESSACTION%", action)
+                # this page (for form)
+                contents = contents.replace("%THISPAGE%", name)
                 self.writeChunk(contents)
 
 
@@ -276,10 +294,11 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.writeChunk("\n<strong>Error: " + message + "</strong></div>\n")
         self.serveFooter()
 
-    def serveDefault(self):
+    def serveDefault(self, qs):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
+        self.handleGenericQS(qs)
         self.serveHeader("default")
         self.serveBody("default")
         self.serveFooter()
@@ -288,6 +307,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
+        self.handleGenericQS(qs)
         self.serveHeader("motes")
         self.serveMoteMotes(qs)
         self.serveFooter()
@@ -296,6 +316,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
+
+        self.handleGenericQS(qs)
 
         if "platform_set" in qs:
             i = 0
@@ -376,6 +398,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
+        self.handleGenericQS(qs)
         self.serveHeader("files", isGeneric = False)
         self.serveBody("files")
         self.serveFooter()
@@ -384,6 +407,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
+        self.handleGenericQS(qs)
         self.serveHeader("graph")
         self.serveMotes("Graph", qs, False)
 
@@ -407,6 +431,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
+        self.handleGenericQS(qs)
         self.serveHeader("listen")
         self.serveMotes("Listen", qs, False)
 
@@ -461,6 +486,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
+        self.handleGenericQS(qs)
         self.serveHeader("upload")
         self.serveMotes("Upload", qs, True)
         isSealCode = settingsInstance.getCfgValueAsInt("isSealCode")
@@ -507,6 +533,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
+        self.handleGenericQS(qs)
         # no bodystart: the file has a frameset
         self.serveHeader("blockly", includeBodyStart = False)
         self.serveBody("blockly")
@@ -570,7 +597,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         qs = parse_qs(o.query)
 
         if o.path == "/" or o.path == "/default":
-            self.serveDefault()
+            self.serveDefault(qs)
         elif o.path == "/motes":
             self.serveMoteSelect(qs)
         elif o.path == "/config":
@@ -752,7 +779,29 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
-   pass
+    # Overrides BaseServer function to get better control over interrupts
+    def serve_forever(self, poll_interval=0.5):
+        """Handle one request at a time until shutdown.
+
+        Polls for shutdown every poll_interval seconds. Ignores
+        self.timeout. If you need to do periodic tasks, do them in
+        another thread.
+        """
+        self._BaseServer__is_shut_down.clear()
+        try:
+            while not self._BaseServer__shutdown_request:
+                # XXX: Consider using another file descriptor or
+                # connecting to the socket to wake this up instead of
+                # polling. Polling reduces our responsiveness to a
+                # shutdown request and wastes cpu at all other times.
+                r, w, e = select.select([self], [], [], poll_interval)
+                if self in r:
+                    self._handle_request_noblock()
+        finally:
+            self._BaseServer__shutdown_request = False
+            self._BaseServer__is_shut_down.set()
+            # kill the process to make sure it exits
+            os.kill(os.getpid(), signal.SIGKILL)
 
 # --------------------------------------------
 
