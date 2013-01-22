@@ -245,7 +245,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             text += '<div class="mote"><strong>Mote: </strong>' + m.portName
             text += ' <input type="submit" name="' + name + '_cfg" title="Get/set mote\'s configuration (e.g. sensor reading periods)" value="Configuration..." ' + disabled + '/>\n'
             text += ' <input type="submit" name="' + name + '_files" title="View files on mote\'s filesystem" value="Files..." ' + disabled + '/>\n'
-            text += ' Platform: <select name="sel_' + name + '" ' + disabled + ' title="Select the mote\'s platform. Determines the list of sensors the mote has. Also has effect on code compilation and uploading">\n'
+            text += ' Platform: <select name="sel_' + name + '" ' + disabled + ' title="Select the mote\'s platform: determines the list of sensors the mote has. Also has effect on code compilation and uploading">\n'
             for platform in supportedPlatforms:
                 selected = ' selected="selected"' if platform == m.platform else ''
                 text += '  <option value="' + platform+ '"' + selected + '>' + platform + '</option>\n'

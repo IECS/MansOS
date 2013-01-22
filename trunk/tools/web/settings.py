@@ -42,7 +42,7 @@ class Settings(object):
                 line += 1
                 x = x.strip()
                 if x == '' or x[0] == '#': # skip comments and empty lines
-                    tmpComment += x + '\n'
+                    tmpComment += x + '\r\n'
                     continue
 
                 # extract key=value
