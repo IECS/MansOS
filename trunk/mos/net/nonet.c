@@ -26,10 +26,10 @@
 // compiled in only when the rest of the networking code is disabled.
 //
 
-#include "comm.h"
+#include "networking.h"
 
 MosShortAddr localAddress;
 
-void initComm(void) {
-    initArchComm();
+void networkingInit(void) {
+    networkingArchInit();
 }

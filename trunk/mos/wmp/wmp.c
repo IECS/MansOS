@@ -237,9 +237,6 @@ static void writeCsvFileRecord(void)
     numReadSensors = 0;
 }
 
-// void
-// onActiveSensorNumberChanged();
-
 void wmpReadSensor(void *sensor_)
 {
     WmpSensor_t *sensor = (WmpSensor_t *) sensor_;
@@ -247,6 +244,8 @@ void wmpReadSensor(void *sensor_)
 
     sensor->lastReadValue = sensor->func();
     snprintf(buffer, sizeof(buffer), "%s=%ld\n", sensor->name, sensor->lastReadValue);
+
+    PRINTF("File enabled=%s, output=%p\n", wmpFileOutputEnabled ? "yes" : "no", outputFile);
 
     // handle serial output
     if (wmpSerialOutputEnabled) {
@@ -263,7 +262,10 @@ void wmpReadSensor(void *sensor_)
         if (!sensor->isRead) {
             sensor->isRead = true;
             numReadSensors++;
+        } else {
+            PRINTF("sensor already read!\n");
         }
+        PRINTF("numReadSensors=%u, total=%u\n", numReadSensors, numTotalActiveSensors);
         if (numReadSensors >= numTotalActiveSensors) {
             writeCsvFileRecord();
         }

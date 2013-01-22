@@ -21,6 +21,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/// @file
+/// MansOS network addressing
+///
+
 #ifndef MANSOS_ADDR_H
 #define MANSOS_ADDR_H
 

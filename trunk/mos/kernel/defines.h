@@ -114,8 +114,8 @@ typedef uint32_t ticks_t;
 //
 // Serial port default baudrate (XXX: move this)
 //
-#ifndef SERIAL_PORT_BAUDRATE
-#define SERIAL_PORT_BAUDRATE 38400
+#ifndef SERIAL_BAUDRATE
+#define SERIAL_BAUDRATE 38400
 #endif
 
 #ifndef CPU_MHZ
@@ -165,7 +165,7 @@ typedef uint32_t ticks_t;
 // This idiom should be used for reading active timers
 //
 #define ACTIVE_TIMER_READ(name, timer)             \
-static inline uint16_t name ## _TIMER_READ(void)     \
+static inline uint16_t name ## _TIMER_READ(void)   \
 {                                                  \
     uint16_t t1 = timer;                           \
     uint16_t t2;                                   \

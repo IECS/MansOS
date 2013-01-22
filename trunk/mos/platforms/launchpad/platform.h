@@ -29,6 +29,8 @@
 #include <msp430/msp430_int.h>
 #include <msp430/msp430_adc10.h>
 
+#include "serial_soft.h"
+
 void initPlatform(void);
 
 #define USER_BUTTON_PORT 1

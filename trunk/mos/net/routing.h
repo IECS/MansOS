@@ -24,7 +24,7 @@
 #ifndef MANSOS_ROUTING_H
 #define MANSOS_ROUTING_H
 
-#include "addr.h"
+#include "address.h"
 
 //===========================================================
 // Data types and constants

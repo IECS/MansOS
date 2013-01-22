@@ -270,7 +270,8 @@ void closeSocket(int sock) {
 }
 
 
-void initArchComm(void) {
+void networkingInitArch(void)
+{
     mos_sem_init(&alarmMutex, 0);
     // this is a "specific thread", not part of the scheduler
     // create it even, when threads are turned off

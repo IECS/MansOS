@@ -21,8 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "seal_comm.h"
-#include "addr.h"
+#include "seal_networking.h"
+#include "address.h"
 #include "socket.h"
 #include <lib/codec/crc.h>
 #include <lib/assert.h>

@@ -26,6 +26,8 @@
 
 #include "msp430_usart_spi.h"
 
+#ifndef USE_SOFT_SERIAL
+
 //===========================================================
 // Data types and constants
 //===========================================================
@@ -60,12 +62,6 @@
 #define U1IFG             IFG2
 #endif
 
-// available USART count
-#define SERIAL_COUNT 2
-
-// use USART 1 for PRINTF
-#define PRINTF_SERIAL_ID  1
-
 static inline bool serialIsUART(uint8_t id) {
     if (id == 0) return !(U0CTL & SYNC);
     else return !(U1CTL & SYNC);
@@ -98,7 +94,7 @@ static inline void serialEnableTX(uint8_t id) {
 }
 
 static inline void serialDisableTX(uint8_t id) {
-    if (id == 0) U1ME &= ~UTXE0;
+    if (id == 0) U0ME &= ~UTXE0;
     else U1ME &= ~UTXE1;
 }
 
@@ -127,5 +123,7 @@ static inline void serialDisableRX(uint8_t id) {
 
 // Not on all platforms SPI and I2C is part of USART
 uint_t msp430SerialInitI2C(uint8_t id);
+
+#endif
 
 #endif

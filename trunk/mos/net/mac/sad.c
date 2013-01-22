@@ -38,7 +38,7 @@ static void initSadMac(RecvFunction cb);
 static int8_t sendSadMac(MacInfo_t *, const uint8_t *data, uint16_t length);
 static void pollSadMac(void);
 
-extern void commForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len);
+extern void networkingForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len);
 
 TEXTDATA MacProtocol_t macProtocol = {
     .name = MAC_PROTOCOL_SAD,
@@ -47,7 +47,7 @@ TEXTDATA MacProtocol_t macProtocol = {
     .poll = pollSadMac,
     .buildHeader = defaultBuildHeader,
     .isKnownDstAddress = defaultIsKnownDstAddress,
-    .recvCb = commForwardData,
+    .recvCb = networkingForwardData,
 };
 
 static uint8_t lastNexthop = 0xff;

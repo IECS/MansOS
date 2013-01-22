@@ -71,4 +71,10 @@ void initPlatform(void);
 #define DS2411_PORT 2
 #define DS2411_PIN  4
 
+
+// available USART count
+#define SERIAL_COUNT 2
+// use USART 1 for PRINTF
+#define PRINTF_SERIAL_ID  1
+
 #endif

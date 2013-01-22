@@ -34,7 +34,7 @@
 //
 // Include sleep functionality only on platforms where timer B is available.
 //
-#if defined TBCTL || defined TBCTL_ || defined TOIE1
+#if PLATFORM_HAS_TIMERB
 
 volatile uint16_t timeWentToSleep;
 volatile uint16_t millisecondsInSleepMode;

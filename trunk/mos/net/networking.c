@@ -21,7 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "comm.h"
+#include "networking.h"
 #include "routing.h"
 #include "socket.h"
 #include "queue.h"
@@ -57,14 +57,16 @@ RadioPacketBuffer_t *radioPacketBuffer = (RadioPacketBuffer_t *) &realBuf;
 
 // -----------------------------------
 
-void initComm(void) {
-    initArchComm();
-    macProtocol.init(commForwardData);
+void networkingInit(void)
+{
+    networkingArchInit();
+    macProtocol.init(networkingForwardData);
     socketsInit();
     initRouting();
 }
 
-void fillLocalAddress(MosAddr *result) {
+void fillLocalAddress(MosAddr *result)
+{
 #if SUPPORT_LONG_ADDR
     if (localAddress) {
         result->type = MOS_ADDR_TYPE_SHORT;
@@ -136,7 +138,7 @@ static bool isDuplicate(MacInfo_t *macInfo, uint8_t *data, uint16_t len)
 #endif
 
 // send smth to address 'addr', port 'port' 
-void commForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len) {
+void networkingForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len) {
     // PRINTF("commForwardData, len=%u\n", len);
     
     switch (routePacket(macInfo)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,41 +21,21 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// CPU dependent datatypes, constants and defines.
+#ifndef MANSOS_SERIAL_SOFT_H
+#define MANSOS_SERIAL_SOFT_H
 
-#ifndef _ARCH_DATATYPES_H_
-#define _ARCH_DATATYPES_H_
+#include <kernel/stdtypes.h>
 
-#include <limits.h>
+static inline void serialEnableTX(uint8_t id) {
+}
 
-#ifndef uint_t
-typedef uint16_t uint_t;
-#endif
+static inline void serialDisableTX(uint8_t id) {
+}
 
-#ifndef int_t
-typedef int16_t int_t;
-#endif
+static inline void serialEnableRX(uint8_t id) {
+}
 
-// Signed counterpart of size_t
-#ifndef SSIZE_MAX
-typedef int ssize_t;
-#define SSIZE_MAX INT_MAX
-#endif
-
-// storage for status register
-typedef uint16_t Handle_t;
-
-// physical address type
-typedef uint16_t MemoryAddress_t;
-
-// the default size of print buffer
-#ifndef PRINT_BUFFER_SIZE
-# if PLATFORM_FARMMOTE || PLATFORM_LAUNCHPAD
-#  define PRINT_BUFFER_SIZE 31
-# else
-#  define PRINT_BUFFER_SIZE 127
-# endif
-#endif
+static inline void serialDisableRX(uint8_t id) {
+}
 
 #endif

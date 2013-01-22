@@ -22,7 +22,7 @@
  */
 
 #include "socket.h"
-#include "comm.h"
+#include "networking.h"
 #include <string.h>
 #include <print.h>
 #include <kernel/threads/mutex.h>
@@ -111,6 +111,8 @@ int8_t sendPacket(MosShortAddr addr, NetPort_t port,
     intToAddr(mi.originalDst, addr);
     mi.dstPort = port;
     mi.flags |= MI_FLAG_LOCALLY_ORIGINATED;
-    commForwardData(&mi, (uint8_t *) buf, bufLen);
+
+    networkingForwardData(&mi, (uint8_t *) buf, bufLen);
+
     return 0;
 }

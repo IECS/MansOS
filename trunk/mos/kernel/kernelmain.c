@@ -28,7 +28,6 @@
 #include <eeprom.h>
 #include <watchdog.h>
 #include <random.h>
-#include <fs/init.h>
 #include <smp/smp.h>
 #include <wmp/wmp.h>
 #include <lib/assert.h>
@@ -39,8 +38,8 @@
 #include "boot.h"
 #endif
 #include "alarms_system.h"
-#include <net/comm.h>
-#include <net/seal_comm.h>
+#include <net/networking.h>
+#include <net/seal_networking.h>
 #include <beeper.h>
 #if USE_THREADS
 #include "threads/threads.h"
@@ -60,6 +59,7 @@
 #if USE_AD5258
 #include <ad5258/ad5258.h>
 #endif
+#include <fs/init.h>
 #include <fatfs/fatfs.h>
 
 #if (defined DEBUG && !defined DPRINT_TO_RADIO)
@@ -136,7 +136,7 @@ static inline void initSystem(void)
 #endif
 #ifdef USE_ADDRESSING
     INIT_PRINTF("init communication stack...\n");
-    initComm();
+    networkingInit();
 #endif
 #ifdef USE_EXT_FLASH
     INIT_PRINTF("init external flash...\n");
