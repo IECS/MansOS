@@ -65,7 +65,7 @@ def getCliArgs():
     defaultBaudRate = 38400
     version = "0.5/2013.01.17"
 
-    parser = argparse.ArgumentParser(description="MansOS serial communicator", prog="serial")
+    parser = argparse.ArgumentParser(description="MansOS serial communicator", prog="ser")
 
     parser.add_argument('-s', '--serial_port', dest='serialPort', action='store', default=defaultSerialPort,
         help='serial port to listen (default: ' + defaultSerialPort + ' )')
@@ -89,7 +89,7 @@ def main():
 
     cliArgs = getCliArgs()
 
-    if cliArgs.serialPort in ("ACM", "chronos") :
+    if cliArgs.serialPort in ("ACM", "chronos"):
         cliArgs.serialPort = "/dev/ttyACM0" 
         cliArgs.baudRate = 115200
 
