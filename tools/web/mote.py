@@ -6,27 +6,9 @@ import serial, subprocess, sys, time
 #from serial.tools import list_ports
 from settings import *
 
-def runSubprocess(args, server):
-    retcode = -1
-    try:
-        print "runSubprocess, args = ", args
-        output = subprocess.check_output(args, stderr = subprocess.STDOUT)
-        server.uploadCallback(output)
-        retcode = 0
-    except OSError as e:
-        print "runSubprocess OSError:" + str(e)
-    except CalledProcessError as e:
-        print "runSubprocess CalledProcessError:" + str(e)
-        retcode = e.returncode
-    except Exception as e:
-        print "runSubprocess exception:" + str(e)
-    finally:
-        return retcode
-
 def runSubprocess1(args, server):
     retcode = -1
     try:
-        print "runSubprocess1, args = ", args
         proc = subprocess.Popen(args, stderr = subprocess.STDOUT, stdout = subprocess.PIPE, shell = False)
         while proc.poll() is None:
             line = proc.stdout.readline()
@@ -37,19 +19,14 @@ def runSubprocess1(args, server):
         proc.wait()
         retcode = proc.returncode
     except OSError as e:
-        print "runSubprocess1 OSError:" + str(e)
+        print("runSubprocess1 OSError:" + str(e))
     except CalledProcessError as e:
-        print "runSubprocess1 CalledProcessError:" + str(e)
+        print("runSubprocess1 CalledProcessError:" + str(e))
         retcode = e.returncode
     except Exception as e:
-        print "runSubprocess1 exception:" + str(e)
+        print("runSubprocess1 exception:" + str(e))
     finally:
         return retcode
-
-
-def simpleCallback(line):
-    print "simpleCallback: got", line
-    return True
 
 
 class Mote(object):

@@ -43,6 +43,7 @@ class GraphData(object):
         if settingsInstance.cfg.saveToFilename \
                 and settingsInstance.cfg.saveProcessedData \
                 and not settingsInstance.cfg.saveMultipleFiles:
+            # filename is determined by config only
             filename = settingsInstance.cfg.dataDirectory + "/" \
                 + settingsInstance.cfg.saveToFilename + ".csv"
             with open(filename, "a") as f:
@@ -60,6 +61,7 @@ class GraphData(object):
             return
 
         dataName = string[:eqSignPos].strip().lower()
+        # sanity check of dataName
         if not isasciiString(dataName):
             return
 
@@ -77,8 +79,15 @@ class GraphData(object):
         if settingsInstance.cfg.saveToFilename \
                 and settingsInstance.cfg.saveProcessedData \
                 and settingsInstance.cfg.saveMultipleFiles:
+
+            # one more sanity check of dataName
+            if len(dataName) > 64:
+                return
+
+            # filename is determind by config + sensor name
             filename = settingsInstance.cfg.dataDirectory + "/" \
                 + settingsInstance.cfg.saveToFilename + "_" + dataName
+
             with open(filename, "a") as f:
                 if os.path.getsize(filename) == 0:
                     f.write(dataName + ",serverTimestamp\n")
