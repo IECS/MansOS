@@ -50,6 +50,12 @@
 #define SSEL_SMCLK    SSEL_2
 #endif // TASSEL_ACLK
 
+#ifndef PLATFORM_HAS_TIMERB
+# if defined TBCTL || defined TBCTL_ || defined TOIE1
+#  define PLATFORM_HAS_TIMERB 1
+# endif
+#endif
+
 #ifndef ACLK_SPEED
 #define ACLK_SPEED 32768
 #endif
@@ -163,7 +169,9 @@ enum {
 // Stop watchdog timer
 #define msp430WatchdogStop() WDTCTL = WDTPW + WDTHOLD
 
-// Alarm timer
+///
+/// Alarm timer
+///
 #define ALARM_TIMER_INIT()  msp430InitTimerA()
 #define ALARM_TIMER_START() msp430StartTimerA()
 #define ALARM_TIMER_STOP()  msp430StopTimerA()
@@ -176,7 +184,11 @@ enum {
 // this expands to ALARM_TIMER_READ
 ACTIVE_TIMER_READ(ALARM, TAR)
 
-// Sleep timer
+///
+/// Sleep timer
+///
+#ifdef PLATFORM_HAS_TIMERB
+
 #define SLEEP_TIMER_INIT()  msp430InitTimerB()
 #define SLEEP_TIMER_START() msp430StartTimerB()
 #define SLEEP_TIMER_STOP()  msp430StopTimerB()
@@ -192,6 +204,8 @@ ACTIVE_TIMER_READ(ALARM, TAR)
 // this expands to SLEEP_TIMER_READ
 ACTIVE_TIMER_READ(SLEEP, TBR)
 #define SLEEP_TIMER_READ_STOPPED(ms) (TBR)
+
+#endif // PLATFORM_HAS_TIMERB
 
 #ifdef TIMERA0_VECTOR
 #define ALARM_TIMER_INTERRUPT0() ISR(TIMERA0, alarmTimerInterrupt0)

@@ -73,7 +73,8 @@ static inline void setupLocalAddr(void)
 #endif
 }
 
-void initArchComm(void) {
+void networkingInitArch(void)
+{
 #if USE_ROLE_BASE_STATION
     localAddress = MOS_ADDR_BASESTATION;
 #else

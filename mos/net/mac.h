@@ -24,7 +24,7 @@
 #ifndef MANSOS_MAC_H
 #define MANSOS_MAC_H
 
-#include "addr.h"
+#include "address.h"
 #include <radio.h>
 
 //===========================================================

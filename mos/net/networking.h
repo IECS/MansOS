@@ -42,20 +42,20 @@ enum {
 // Functions
 //----------------------------------------------------------
 
-//
-// Calls initCommHal() and other functions; two version are defined in comm.c and nonet.c
-//
-void initComm(void);
+///
+/// Calls networkingArchInit() and other functions; two version are defined in comm.c and nonet.c
+///
+void networkingInit(void);
 
-//
-// Defined in HAL
-//
-void initArchComm(void);
+///
+/// Defined in HAL
+///
+void networkingArchInit(void);
 
 //
 // This function is "narrow point" of the communications stack:
 // almost all packets, incoming and outgoing, are passed thorugh it.
 //
-void commForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len);
+void networkingForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len);
 
 #endif

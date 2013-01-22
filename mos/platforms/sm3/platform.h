@@ -85,4 +85,11 @@ static inline uint16_t sq100LightRead(void)
 
 #define SNUM_CHIP SNUM_DS2401
 
+
+// available USART count
+#define SERIAL_COUNT 2
+// use USART 1 for PRINTF
+#define PRINTF_SERIAL_ID  1
+
+
 #endif

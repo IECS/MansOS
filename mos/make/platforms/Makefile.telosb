@@ -62,7 +62,9 @@ PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/m25p80/m25p80.c
 PSOURCES-$(USE_ISL29003) += $(MOS)/chips/isl29003/isl29003.c
 PSOURCES-$(USE_APDS9300) += $(MOS)/chips/apds9300/apds9300.c
 
+ifneq ($(USE_SOFT_SERIAL),y)
 PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usart.c
+endif
 PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usart_spi.c
 
 PSOURCES-$(USE_SDCARD) += $(MOS)/chips/sdcard/sdcard.c

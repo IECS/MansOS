@@ -69,6 +69,8 @@ PSOURCES-$(USE_FLASH) += $(MOS)/chips/msp430/msp430_flash.c
 PSOURCES-$(USE_HUMIDITY) += $(MOS)/chips/sht11/sht11.c
 PSOURCES-$(USE_HUMIDITY) += $(MOS)/chips/sht11/sht11_conv.c
 
+PSOURCES-$(USE_SOFT_SERIAL) += $(MOS)/arch/msp430/serial_soft.c
+
 #===== Build and Upload Rules =====
 
 EXECUTABLE = image.ihex

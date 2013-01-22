@@ -62,7 +62,7 @@
 //
 #  define PRINT_INIT(len) \
      PRINT_INIT_DEFAULT(len);                                   \
-     serialInit(PRINTF_SERIAL_ID, SERIAL_PORT_BAUDRATE, 0);     \
+     serialInit(PRINTF_SERIAL_ID, SERIAL_BAUDRATE, 0);          \
      serialEnableTX(PRINTF_SERIAL_ID);                          \
      serial[PRINTF_SERIAL_ID].function = SERIAL_FUNCTION_PRINT
 #  define PRINT_FUNCTION serialPrint

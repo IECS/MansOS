@@ -26,9 +26,7 @@
 
 #if USE_NET_STATS
 
-#include "addr.h"
-#include "string.h"
-#include "dprint.h"
+#include "address.h"
 
 #ifndef LINQ_MAX_NEIGHBOR_COUNT
 #define LINQ_MAX_NEIGHBOR_COUNT 10

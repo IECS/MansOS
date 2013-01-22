@@ -24,30 +24,33 @@
 #ifndef MANSOS_WATCHDOG_H
 #define MANSOS_WATCHDOG_H
 
-//
-// These function control the platform's built-in watchdog, if any.
-// They are implemented in HAL level.
-//
-
-#include <watchdog_hal.h>
+/// @file
+/// These function control the platform's built-in watchdog, if any.
+/// They are implemented in HAL level.
+///
 
 //===========================================================
 // Procedures
 //===========================================================
 
-//
-// Defined as macro HAL
-//
-// void watchdogStop();
+///
+/// Defined as a macro in HAL
+///
+extern inline void watchdogStop(void);
 
-//
-// Reboot the mote by using watchdog interface
-//
+///
+/// Reboot the mote by using watchdog interface.
+/// Resets the mote configuration before rebooting
+/// (useful for staring from a clean, known state).
+///
 void watchdogReboot(void);
 
-//
-// Defined as macro in HAL
-//
-// void watchdogRebootSimple(void);
+///
+/// Defined as a macro in HAL.
+/// Does not attempt any config changes before rebooting.
+///
+extern inline void watchdogRebootSimple(void);
+
+#include <watchdog_hal.h>
 
 #endif

@@ -21,7 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void initArchComm() {
+void networkingInitArch(void)
+{
     // ?
 }
 
