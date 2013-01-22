@@ -17,7 +17,7 @@ def importsOk():
 
     try:
         import serial #@UnusedImport
-        if serial.VERSION != '2.6':
+        if float(serial.VERSION) < float('2.6'):
             serialModuleOK = False
     except ImportError:
         serialModuleOK = False
