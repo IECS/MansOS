@@ -34,6 +34,7 @@ div.topmenu {
     border-bottom:thin dashed;
     margin-bottom:12px;
     width:100%;
+    min-width:600px;
 }
 div.form {
     margin-bottom:12px;

@@ -78,7 +78,7 @@ class GraphData(object):
                 and settingsInstance.cfg.saveProcessedData \
                 and settingsInstance.cfg.saveMultipleFiles:
             filename = settingsInstance.cfg.dataDirectory + "/" \
-                + settingsInstance.cfg.saveToFilename + "_" + dataName + ".csv"
+                + settingsInstance.cfg.saveToFilename + "_" + dataName
             with open(filename, "a") as f:
                 if os.path.getsize(filename) == 0:
                     f.write(dataName + ",serverTimestamp\n")

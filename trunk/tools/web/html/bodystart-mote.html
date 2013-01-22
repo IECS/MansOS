@@ -3,9 +3,14 @@
 <div class="title">MansOS Web Interface %PAGETITLE%</div>
 
 <div class="topmenu">
+<span style="float:left;">
 <a class="module" href="motes">Motes</a>
 <a class="module" href="config%MOTEID_CONFIG%">Configuration</a>
 <a class="module" href="config%MOTEID_FILES%">Files</a>
+</span>
+<form action="%THISPAGE%">
+<span style="float:right;"><input type="submit" name="accessType" value="%ACCESSACTION% write access"/></span>
+</form>
 </div>
 
 <div class="contents">

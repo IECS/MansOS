@@ -37,7 +37,7 @@ class Settings(object):
             for x in f.readlines():
                 x = x.strip()
                 if x == '': continue       # skip empty lines
-                if x[0] == '#': continue   # skip comments
+                if x[0] == '#': continue   # skip comments (TODO: save them!)
 
                 # extract key=value
                 kv = x.split("=")
@@ -67,8 +67,6 @@ class Settings(object):
                 f.write('=')
                 if isinstance(value, list):
                     # value list
-#                    for v in value:
-#                        f.write(v + ",")
                     f.write(",".join(value))
                 else:
                     # single value
