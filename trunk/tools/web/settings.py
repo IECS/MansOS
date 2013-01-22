@@ -33,21 +33,33 @@ class Settings(object):
     configurationFileName = "server.cfg"
     
     def load(self):
+        self.comments = {}
+        tmpComment = ""
+
         with open(self.configurationFileName, 'r') as f:
+            line = 0
             for x in f.readlines():
+                line += 1
                 x = x.strip()
-                if x == '': continue       # skip empty lines
-                if x[0] == '#': continue   # skip comments (TODO: save them!)
+                if x == '' or x[0] == '#': # skip comments and empty lines
+                    tmpComment += x + '\n'
+                    continue
 
                 # extract key=value
                 kv = x.split("=")
-                if len(kv) != 2: continue
+                if len(kv) != 2:
+                    print("Syntax error in configuration file line {}".format(line))
+                    continue
 
                 key = kv[0]
                 if key not in self.cfg.__dict__:
                     print("Unknown configuration key " + key)
                     continue
-                
+
+                if tmpComment:
+                    self.comments[key] = tmpComment
+                    tmpComment = ""
+
                 # extract value list
                 vv = kv[1].strip('"').split(",")
 
@@ -58,11 +70,17 @@ class Settings(object):
                     # value list
                     self.cfg.__setattr__(key, vv)
 
+            if tmpComment:
+                self.comments["__EOF"] = tmpComment
+
     def save(self):
         with open(self.configurationFileName, 'w') as f:
             for key in self.cfg.__dict__:
                 if key[0] == '_': continue  # skip generic and special attributes
                 value = self.cfg.__dict__[key]
+                comment = self.comments.get(key, "")
+                if comment:
+                    f.write(comment)
                 f.write(key)
                 f.write('=')
                 if isinstance(value, list):
@@ -72,6 +90,10 @@ class Settings(object):
                     # single value
                     f.write(value)
                 f.write("\r\n")
+
+            comment = self.comments.get("__EOF", "")
+            if comment:
+                f.write(comment)
 
     def getCfgValue(self, name):
         return self.cfg.__getattribute__(name)

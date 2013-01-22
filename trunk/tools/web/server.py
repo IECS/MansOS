@@ -42,7 +42,7 @@ htmlDirectory = "html"
 
 sealBlocklyPath = "../../.."
 
-# TODO: this variable should be per-user
+# TODO: this variable should set for each user
 hasWriteAccess = True
 
 # --------------------------------------------
@@ -180,11 +180,14 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
 
     def serveBody(self, name, replaceValues = None):
+        disabled = "" if hasWriteAccess else 'disabled="disabled" '
+
         with open(htmlDirectory + "/" + name + ".html", "r") as f:
             contents = f.read()
             if replaceValues:
                 for v in replaceValues:
                     contents = contents.replace("%" + v + "%", replaceValues[v])
+            contents = contents.replace("%DISABLED%", disabled)
             self.writeChunk(contents)
 
 
@@ -196,6 +199,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             text += '<form action="' + toCamelCase(action) + '">'
         self.writeChunk(text)
 
+        disabled = "" if hasWriteAccess else 'disabled="disabled" '
+
         c = ""
         i = 0
         for m in motes.getMotes():
@@ -203,12 +208,15 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
             if name in qs:
                 m.isSelected = qs[name][0] == 'on'
+            elif "action" in qs:
+                m.isSelected = False
 
             checked = ' checked="checked"' if m.isSelected else ""
 
             c += '<div class="mote"><strong>Mote: </strong>' + m.portName
             c += ' (<strong>Platform: </strong>' + m.platform + ') '
-            c += ' <input type="checkbox" name="' + name + '"' + checked + '/>' + action + '</div>\n'
+            c += ' <input type="checkbox" title="Select the mote" name="' + name + '"'
+            c += checked + ' ' + disabled + '/>' + action + '</div>\n'
             i += 1
 
         # remember which motes were selected and which were not
@@ -229,13 +237,15 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         text = '<form action="config"><div class="motes2">\n'
         text += 'Directly attached motes:<br/>\n'
 
+        disabled = "" if hasWriteAccess else 'disabled="disabled" '
+
         i = 0
         for m in motes.getMotes():
             name = "mote" + str(i)
             text += '<div class="mote"><strong>Mote: </strong>' + m.portName
-            text += ' <input type="submit" name="' + name + '_cfg" value="Configuration..."/>\n'
-            text += ' <input type="submit" name="' + name + '_files" value="Files..."/>\n'
-            text += ' Platform: <select name="sel_' + name + '">\n'
+            text += ' <input type="submit" name="' + name + '_cfg" title="Get/set mote\'s configuration (e.g. sensor reading periods)" value="Configuration..." ' + disabled + '/>\n'
+            text += ' <input type="submit" name="' + name + '_files" title="View files on mote\'s filesystem" value="Files..." ' + disabled + '/>\n'
+            text += ' Platform: <select name="sel_' + name + '" ' + disabled + ' title="Select the mote\'s platform. Determines the list of sensors the mote has. Also has effect on code compilation and uploading">\n'
             for platform in supportedPlatforms:
                 selected = ' selected="selected"' if platform == m.platform else ''
                 text += '  <option value="' + platform+ '"' + selected + '>' + platform + '</option>\n'
@@ -244,7 +254,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
             i += 1
 
-        text += '<input type="submit" name="platform_set" value="Update platforms"/><br/>\n'
+        text += '<input type="submit" name="platform_set" value="Update platforms" ' + disabled + '/><br/>\n'
         text += "</div></form>"
         self.writeChunk(text)
 
@@ -277,7 +287,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 self.wfile.write(contents)
                 f.close()
         except:
-            print "problem with file", filename
+            print("problem with file " + filename)
             self.serve404Error(filename, {})
 
     def serve404Error(self, path, qs):
@@ -316,6 +326,10 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
+
+        if not hasWriteAccess:
+            self.serveError("You are not in write access mode!")
+            return
 
         self.handleGenericQS(qs)
 
@@ -394,15 +408,6 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.writeChunk(text)
         self.serveFooter()
 
-    def serveFiles(self, qs):
-        self.send_response(200)
-        self.sendDefaultHeaders()
-        self.end_headers()
-        self.handleGenericQS(qs)
-        self.serveHeader("files", isGeneric = False)
-        self.serveBody("files")
-        self.serveFooter()
-
     def serveGraphs(self, qs):
         self.send_response(200)
         self.sendDefaultHeaders()
@@ -414,10 +419,10 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         if "action" in qs:
             if qs["action"][0] == "Start":
                 if not motes.anySelected():
-                    self.serveError("no motes selected!")
+                    self.serveError("No motes selected!")
                     return
                 if isListening:
-                    self.serveError("already listening!")
+                    self.serveError("Already listening!")
                     return
                 openAllSerial()
             else:
@@ -438,10 +443,10 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         if "action" in qs:
             if qs["action"][0] == "Start":
                 if not motes.anySelected():
-                    self.serveError("no motes selected!")
+                    self.serveError("No motes selected!")
                     return
                 if isListening:
-                    self.serveError("already listening!")
+                    self.serveError("Already listening!")
                     return
                 openAllSerial()
             else:
@@ -602,8 +607,6 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.serveMoteSelect(qs)
         elif o.path == "/config":
             self.serveConfig(qs)
-        elif o.path == "/files":
-            self.serveFiles(qs)
         elif o.path == "/graph":
             self.serveGraphs(qs)
         elif o.path == "/graph-data":
@@ -636,6 +639,10 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         global isInSubprocess
 
         self.headerIsServed = False
+
+        if not hasWriteAccess:
+            self.serveError("You are not in write access mode!")
+            return
 
         # Parse the form data posted
         form = cgi.FieldStorage(
@@ -679,7 +686,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         # check if what to upload is provided
         if not fileContents and not code:
             self.serveHeader("upload")
-            self.serveError("neither filename nor code specified!")
+            self.serveError("Neither filename nor code specified!")
             return
 
         i = 0
@@ -701,7 +708,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         # check if any motes are selected upload is provided
         if not motes.anySelected():
             self.serveHeader("upload")
-            self.serveError("no motes selected!")
+            self.serveError("No motes selected!")
             return
 
         retcode = 0

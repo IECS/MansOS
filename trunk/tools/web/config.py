@@ -474,7 +474,8 @@ class Config(object):
             text += '/> Write to ' + toCamelCase(s.name)
             if s.varname == "file":
                 text += '<br/><label for="filename">Filename: </label>'
-                text += '<input type="input" name="filename" value="' + self.filenameOnMote + '"/>\n'
+                text += '<input type="input" name="filename" value="' + self.filenameOnMote + '"'
+                text += ' title="The file will be created on mote\'s SD card" />\n'
             text += '<br/></div>\n'
         text += '</div>\n'
 
@@ -494,8 +495,8 @@ class Config(object):
         text += '<input type="hidden" name="' + motename + '_cfg" value="1"/>\n'
         text += '<input type="hidden" name="sel_' + motename \
             + '" value="' + self.activePlatform.name + '" />\n'
-        text += '<input type="submit" name="get" value="Get values"/> \n'
-        text += '<input type="submit" name="set" value="Set values"/>\n'
+        text += '<input type="submit" name="get" title="Read the currently active configuration values from the mote" value="Get values"/> \n'
+        text += '<input type="submit" name="set" title="Set the web configuration values as active" value="Set values"/>\n'
         text += '</div></form>\n'
         return (text, True)
 
