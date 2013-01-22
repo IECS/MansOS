@@ -54,7 +54,7 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
 
         UCA0CTL1  = UCSWRST;   // Hold the module in reset state
         UCA0CTL1 |= UCSSEL_2;  // SMCLK clock source
-        if (speed <= CPU_HZ / 16) {
+        if (0 /* speed <= CPU_HZ / 16 */) { // FIXME
             // Use oversampling mode
             UCA0BR0  = (CPU_HZ / (speed * 16)) & 0xFF;
             UCA0BR1  = (CPU_HZ / (speed * 16)) >> 8;
@@ -76,7 +76,7 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
 
         UCA1CTL1  = UCSWRST;   // Hold the module in reset state
         UCA1CTL1 |= UCSSEL_2;  // SMCLK clock source
-        if (speed <= CPU_HZ / 16)  {
+        if (0 /* speed <= CPU_HZ / 16 */) { // FIXME
             // Use oversampling mode
             UCA1BR0  = (CPU_HZ / (speed * 16)) & 0xFF;
             UCA1BR1  = (CPU_HZ / (speed * 16)) >> 8;
