@@ -47,7 +47,7 @@ def launchBrowser():
     controller.open_new_tab(url)
 
 
-def isProcessRunning(names):
+def isProcessRunningPosix(names):
     myPid = os.getpid()
     output = subprocess.check_output(["ps", "x"])
     for line in output.splitlines():
@@ -60,6 +60,19 @@ def isProcessRunning(names):
                 continue
             return True
     return False
+
+
+def isProcessRunningWindows(names):
+    # Finding process info on Windows (including WinXP Home)
+    # is too complicated without Python extension packages :(
+    return False
+
+
+def isProcessRunning(names):
+    if os.name == "posix":
+        return isProcessRunningPosix(names)
+    else:
+        return isProcessRunningWindows(names)
 
 
 def main():
@@ -76,6 +89,7 @@ def main():
             mansos_server.main()
     except Exception as e:
         raise
+
 
 if __name__ == '__main__':
     main()
