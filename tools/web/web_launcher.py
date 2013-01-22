@@ -37,8 +37,10 @@ def launchBrowser():
             except:
                 serverPort = DEFAULT_PORT
 
+    # open the web browser (Firefox in Linux, user's preferred on Windows)
     url = "http://localhost:" + str(serverPort)
     if os.name == "posix":
+        # will return default system's browser if Firefox is not installed
         controller = webbrowser.get('Firefox')
     else:
         controller = webbrowser.get('windows-default')
