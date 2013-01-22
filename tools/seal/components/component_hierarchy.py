@@ -678,7 +678,7 @@ class ExternalFlashOutput(SealOutput):
         self.useFunction.value = """
     flashStreamWriteRecord(&externalflashPacket, sizeof(externalflashPacket), true);
     radioReinit()"""
-        self.extraIncludes.value = "#include <fstream.h>"
+        self.extraIncludes.value = "#include <flash_stream.h>"
         self.extraConfig.value = "USE_FLASH_STREAM=y"
 
 class SdCardOutput(SealOutput):

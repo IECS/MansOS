@@ -60,7 +60,7 @@ class Generator(object):
             c.generateIncludes(self.outputFile)
         if components.componentRegister.numCachedSensors:
             self.outputFile.write("#include <lib/processing/cache.h>\n")
-        self.outputFile.write("#include <net/seal_comm.h>\n")
+        self.outputFile.write("#include <net/seal_networking.h>\n")
         # XXX: only when network is used
         self.outputFile.write("#include <net/socket.h>\n")
         self.outputFile.write("#include <timing.h>\n")
@@ -326,7 +326,7 @@ endif
         with open(os.path.join(path, 'config'), 'w') as outputFile:
             for x in components.componentRegister.systemParams:
                 outputFile.write(x.getConfigLine() + "\n")
-            outputFile.write("USE_SEAL_COMM=y\n")
+            outputFile.write("USE_SEAL_NET=y\n")
             outputFile.write("USE_ROLE_BASE_STATION=y\n")
             c = components.componentRegister.findComponentByName("network")
             if c: outputFile.write(c.getConfig())
@@ -334,7 +334,7 @@ endif
         with open(os.path.join(path, 'main.c'), 'w') as outputFile:
             # TODO: named values!
             outputFile.write("#include <stdmansos.h>\n")
-            outputFile.write("#include <net/seal_comm.h>\n")
+            outputFile.write("#include <net/seal_networking.h>\n")
             outputFile.write("#include <net/socket.h>\n")
             outputFile.write("\n")
             outputFile.write("const char *sensorNames[32] = {\n")
