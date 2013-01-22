@@ -820,7 +820,7 @@ def main():
         htmlDirectory = os.path.abspath(settingsInstance.getCfgValue("htmlDirectory"))
         dataDirectory = os.path.abspath(settingsInstance.getCfgValue("dataDirectory"))
         if not os.path.exists(dataDirectory):
-                os.makedirs(dataDirectory)
+            os.makedirs(dataDirectory)
         sealBlocklyPath = os.path.abspath(settingsInstance.getCfgValue("sealBlocklyPath"))
         server = ThreadingHTTPServer(('', port), HttpServerHandler)
         motes.addAll()
