@@ -32,10 +32,7 @@
 #include <eeprom.h>
 #include <timing.h>
 
-//#define WMP_DEBUG DEBUG
-
-// XXX
-#define WMP_DEBUG 1
+#define WMP_DEBUG DEBUG
 
 #if WMP_DEBUG
 #define DPRINTF(...) PRINTF(__VA_ARGS__)
@@ -245,7 +242,7 @@ void wmpReadSensor(void *sensor_)
     sensor->lastReadValue = sensor->func();
     snprintf(buffer, sizeof(buffer), "%s=%ld\n", sensor->name, sensor->lastReadValue);
 
-    PRINTF("File enabled=%s, output=%p\n", wmpFileOutputEnabled ? "yes" : "no", outputFile);
+    DPRINTF("File enabled=%s, output=%p\n", wmpFileOutputEnabled ? "yes" : "no", outputFile);
 
     // handle serial output
     if (wmpSerialOutputEnabled) {
@@ -263,9 +260,9 @@ void wmpReadSensor(void *sensor_)
             sensor->isRead = true;
             numReadSensors++;
         } else {
-            PRINTF("sensor already read!\n");
+            DPRINTF("sensor already read!\n");
         }
-        PRINTF("numReadSensors=%u, total=%u\n", numReadSensors, numTotalActiveSensors);
+        DPRINTF("numReadSensors=%u, total=%u\n", numReadSensors, numTotalActiveSensors);
         if (numReadSensors >= numTotalActiveSensors) {
             writeCsvFileRecord();
         }
