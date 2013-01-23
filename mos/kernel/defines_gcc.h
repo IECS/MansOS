@@ -90,13 +90,6 @@
 #define PRAGMA(x) _Pragma(#x)
 #define MESSAGE(x) PRAGMA(message x)
 
-// Use restrict when available
-#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
-# ifdef __GNUC__
-#  define restrict __restrict__
-# else
-#  define restrict
-# endif // __GNUC__
-#endif // __STDC_VERSION__
+#define restrict __restrict__
 
 #endif

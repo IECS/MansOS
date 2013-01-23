@@ -30,6 +30,7 @@
 
 #include "structures.h"
 #include "posix-file.h"
+#include <kernel/defines.h>
 
 // Memory card sector size
 #define SDCARD_SECTOR_SIZE 512
@@ -53,9 +54,9 @@ static inline bool fatFsInit(void)
     return false;
 }
 
-DirectoryEntry_t *fatFsFileSearch(const char *__restrict name, uint16_t *__restrict entryIndex);
+DirectoryEntry_t *fatFsFileSearch(const char *restrict name, uint16_t *restrict entryIndex);
 
-DirectoryEntry_t *fatFsFileCreate(const char *__restrict name, uint16_t *__restrict entryIndex);
+DirectoryEntry_t *fatFsFileCreate(const char *restrict name, uint16_t *restrict entryIndex);
 
 void fatFsFileRemove(const char *name);
 

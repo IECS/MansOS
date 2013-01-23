@@ -25,6 +25,7 @@
 #include "posix-stdio.h"
 #include <errors.h>
 #include <lib/dprint.h>
+#include <kernel/defines.h>
 
 #ifndef MAX_OPEN_FILES
 #define MAX_OPEN_FILES 2
@@ -50,8 +51,8 @@ int fflush(FILE *fp)
 }
 
 // open a file
-FILE *fopen(const char *__restrict filename,
-            const char *__restrict modes)
+FILE *fopen(const char *restrict filename,
+            const char *restrict modes)
 {
 #if USE_FATFS && USE_SDCARD
     int i;
@@ -146,8 +147,8 @@ int fclose(FILE *fp)
 }
 
 // read from a file
-size_t fread(void *__restrict ptr, size_t size,
-             size_t n, FILE *__restrict fp)
+size_t fread(void *restrict ptr, size_t size,
+             size_t n, FILE *restrict fp)
 {
 #if USE_FATFS && USE_SDCARD
     return fatFsRead(fp, ptr, size * n);
@@ -157,8 +158,8 @@ size_t fread(void *__restrict ptr, size_t size,
 }
 
 // write to a file
-size_t fwrite(const void *__restrict ptr, size_t size,
-              size_t n, FILE *__restrict fp)
+size_t fwrite(const void *restrict ptr, size_t size,
+              size_t n, FILE *restrict fp)
 {
 #if USE_FATFS && USE_SDCARD
     return fatFsWrite(fp, ptr, size * n);
@@ -176,7 +177,7 @@ int remove(const char *filename)
     return 0;
 }
 
-// go to a specific position in the file 
+// go to a specific position in the file
 int fseek(FILE *fp, long offset, int whence)
 {
     uint32_t newPos;
@@ -193,11 +194,11 @@ int fseek(FILE *fp, long offset, int whence)
         break;
     }
     if (offset < 0 && newPos < -offset) {
-        // wants before the start of the file 
+        // wants before the start of the file
         return -1;
     }
     if (offset > 0 && newPos + offset > fp->fileSize) {
-        // wants after the end of the file 
+        // wants after the end of the file
         return -1;
     }
     // fine; do it!
