@@ -29,10 +29,11 @@
 //
 
 #include "posix-file.h"
+#include <kernel/defines.h>
 
 // open a file
-FILE *fopen(const char *__restrict filename,
-            const char *__restrict modes);
+FILE *fopen(const char *restrict filename,
+            const char *restrict modes);
 
 // close a file
 int fclose(FILE *fp);
@@ -41,8 +42,8 @@ int fclose(FILE *fp);
 int fflush(FILE *fp);
 
 // read from a file
-size_t fread(void *__restrict ptr, size_t size,
-             size_t n, FILE *__restrict fp);
+size_t fread(void *restrict ptr, size_t size,
+             size_t n, FILE *restrict fp);
 
 //
 // fgetc(3):
@@ -64,7 +65,7 @@ static inline int fgetc(FILE *fp)
 // ing null byte ('\0') is stored after the last character in the buffer.
 //
 //
-static inline char *fgets(char *__restrict s, int size, FILE *__restrict fp)
+static inline char *fgets(char *restrict s, int size, FILE *restrict fp)
 {
     uint16_t i;
     if (size == 0) return s;
@@ -84,8 +85,8 @@ static inline char *fgets(char *__restrict s, int size, FILE *__restrict fp)
 }
 
 // write to a file
-size_t fwrite(const void *__restrict ptr, size_t size,
-              size_t n, FILE *__restrict fp);
+size_t fwrite(const void *restrict ptr, size_t size,
+              size_t n, FILE *restrict fp);
 
 static inline int fputc(int c, FILE *fp)
 {
@@ -93,7 +94,7 @@ static inline int fputc(int c, FILE *fp)
     return fwrite(&b, 1, 1, fp) == 1 ? b : EOF;
 }
 
-static inline int fputs(const char *__restrict s, FILE *__restrict fp)
+static inline int fputs(const char *restrict s, FILE *restrict fp)
 {
     uint16_t length = strlen(s);
     if (fwrite(s, 1, length, fp) != length) return EOF;

@@ -69,6 +69,5 @@
 #define NAKED // nothing
 #define NO_EPILOGUE PRAGMA(no_epilogue)
 #define WEAK_SYMBOL // nothing
-#define restrict // nothing
 
 #endif

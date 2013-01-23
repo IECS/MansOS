@@ -29,6 +29,7 @@
 #include <lib/algo.h>
 #include <lib/byteorder.h>
 #include <sdcard/sdcard.h>
+#include <kernel/defines.h>
 
 #if DEBUG
 #define FATFS_DEBUG 1
@@ -57,7 +58,7 @@ static uint32_t cacheMirrorBlock;
 static void printFatInfo(FatInfo_t *fi) {
 #if FATFS_DEBUG
     PRINTF("sectorsPerFAT=%u\n", fi->sectorsPerFAT);
-    PRINTF("clusterCount=%u\n", fi->clusterCount);  
+    PRINTF("clusterCount=%u\n", fi->clusterCount);
     PRINTF("dataStartBlock=%u\n", fi->dataStartBlock);
     PRINTF("numFATs=%u\n", (uint16_t) fi->numFATs);
     PRINTF("numRootEntries=%u\n", fi->numRootEntries);
@@ -94,7 +95,7 @@ static bool cacheFlush(void)
         cacheDirty = false;
     }
     return true;
-    
+
   fail:
     DPRINTF(" write fail!\n");
     return false;
@@ -326,8 +327,8 @@ bool fatNameAcceptable(const char *name)
     return name[i] == 0;
 }
 
-DirectoryEntry_t *fatFsFileSearch(const char *__restrict name,
-                                  uint16_t *__restrict entryIndex /* out */)
+DirectoryEntry_t *fatFsFileSearch(const char *restrict name,
+                                  uint16_t *restrict entryIndex /* out */)
 {
     uint16_t i;
     sector_t numRootSectors = fatInfo.numRootEntries * 32 / SDCARD_SECTOR_SIZE;
@@ -393,8 +394,8 @@ uint16_t fatFsGetFiles(char *p, uint16_t bufferSize)
     return length;
 }
 
-DirectoryEntry_t *fatFsFileCreate(const char *__restrict name,
-                                  uint16_t *__restrict entryIndex /* out */)
+DirectoryEntry_t *fatFsFileCreate(const char *restrict name,
+                                  uint16_t *restrict entryIndex /* out */)
 {
     DPRINTF("fatFsFileCreate... %s\n", name);
 
