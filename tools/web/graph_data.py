@@ -69,10 +69,14 @@ class GraphData(object):
             self.finishPacket()
         self.seenInThisPacket.add(dataName)
 
+        valueString = string[eqSignPos + 1:].strip()
         try:
-            value = int(string[eqSignPos + 1:].strip(), 0)
+            value = int(valueString, 0)
         except:
-            value = 0
+            try:
+                value = float(valueString)
+            except:
+                value = 0
         self.tempData.append((dataName, value))
 
         # save to file if required (multiple files)
