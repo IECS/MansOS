@@ -169,7 +169,8 @@ enum reg {
 
 typedef enum reg reg_t;
 
-#define LQI_CRC_OK (1 << 7) // 7th bit of the LQI register
+#define LQI_CRC_OK (1 << 7)    // 7th bit of the LQI register
+#define PKTSTATUS_CCA (1 << 4) // 4th bit of the PKTSTATUS register
 
 
 //
@@ -478,8 +479,9 @@ uint8_t cc1101GetLastLQI(void)
 int8_t cc1101Send(const uint8_t *header, uint8_t hlen,
                   const uint8_t *data,   uint8_t dlen)
 {
-    uint8_t len = hlen + dlen; // FIXME: might overflow
+    uint8_t  len = hlen + dlen; // FIXME: might overflow
     Handle_t h;
+    int8_t   res = 0;
 
     if (len > CC1101_MAX_PACKET_LEN)
     {
@@ -489,21 +491,22 @@ int8_t cc1101Send(const uint8_t *header, uint8_t hlen,
     ATOMIC_START(h);
 
     chipSelect();
-    waitForListen(); // Ensure any previous outbound packet has been sent
 
-    if (getreg(REG_TXBYTES) != 0)
+    // Wait until we are not in the TX state
+    waitForListen();
+
+    if (!(getreg(REG_PKTSTATUS) & PKTSTATUS_CCA))
     {
-        // TX FIFO is not empty and the radio is not in TX, which means that
-        // the last send operation did not start due to CCA failure. Currently,
-        // no re-send is attempted. Hence, we clear the TX FIFO to avoid
-        // possible overflow. This is done inside an "if" as to not disrupt
-        // the packet reception process, if possible.
-        strobe(STROBE_SIDLE);
-        strobe(STROBE_SFTX);
-        // Get back to RX to enable TX-if-CCA
-        strobe(STROBE_SRX);
+        // CCA assessment failed
+        res = -1;
+        goto end;
     }
 
+    // Go to IDLE to disable TX-if-CCA. Another option would be to leave
+    // TX-if-CCA enabled, but clear the TX FIFO here if it's not empty.
+    strobe(STROBE_SIDLE);
+
+    // Write data to TX FIFO
     setreg(REG_FIFO, len);
     if (header)
     {
@@ -514,13 +517,15 @@ int8_t cc1101Send(const uint8_t *header, uint8_t hlen,
         burstWrite(REG_FIFO, data, dlen);
     }
 
+    // Send it
     strobe(STROBE_STX);
 
+end:
     chipRelease();
 
     ATOMIC_END(h);
 
-    return 0;
+    return res;
 }
 
 static inline void flushrx(void)
