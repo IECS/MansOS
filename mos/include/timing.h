@@ -137,7 +137,7 @@ static inline uint64_t getSyncTimeMs64(void) {
     return getTimeMs64() + rootClockDeltaMs;
 }
 //! Get the network-wide synchronized time in seconds as 32-bit value
-static inline uint32_ getSyncTimeSec(void) {
+static inline uint32_t getSyncTimeSec(void) {
     return (uint32_t) (getTimeSec() + rootClockDeltaMs / 1000);
 }
 
