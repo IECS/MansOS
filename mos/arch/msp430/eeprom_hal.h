@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -20,12 +20,13 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- * eeprom_hal.h -- non-volatile configuration memory for TelosB
- */
 
 #ifndef _EEPROM_MSP430_H_
 #define _EEPROM_MSP430_H_
+
+/*
+ * eeprom_hal.h -- non-volatile configuration memory for TelosB
+ */
 
 #include <msp430/msp430_flash.h>
 

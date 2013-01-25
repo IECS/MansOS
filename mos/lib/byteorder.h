@@ -31,6 +31,7 @@
 ///
 
 #include <string.h> // memcpy
+#include <stdtypes.h>
 
 #ifdef PLATFORM_PC
 

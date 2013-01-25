@@ -25,7 +25,7 @@
 #define _MANSOS_STDTYPES_H_
 
 /// \file
-/// This file provides definitions of MansOS standard primitive datatypes
+/// Definitions of MansOS standard primitive datatypes (uint8_t, uint16_t, uint32_t etc.)
 ///
 
 #include <stdint.h>  // integer types
@@ -42,7 +42,7 @@
 
 // MansOS custom types
 
-// SPI bus mode
+//! SPI bus mode
 typedef enum {
     SPI_MODE_MASTER = 1,
     SPI_MODE_SLAVE

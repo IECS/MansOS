@@ -45,8 +45,8 @@ bool flashStreamWriteRecord(void *data, uint16_t length, bool crc);
 ///
 bool flashStreamReadRecord(void *data, uint16_t length, bool crc);
 
-#ifndef EXT_FLASH_RESERVED
 //! Number of bytes reserved (unused by the stream module) at the start of external flash memory
+#ifndef EXT_FLASH_RESERVED
 #define EXT_FLASH_RESERVED  (256 * 1024ul) // 256kb
 #endif
 

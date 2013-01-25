@@ -28,9 +28,9 @@
 /// Unique serial number chip API
 ///
 
-///
-/// List all supported serial number chips here
-///
+//
+// List all supported serial number chips here
+//
 #define SNUM_DS2411 1
 #define SNUM_DS2401 2
 

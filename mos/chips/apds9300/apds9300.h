@@ -24,8 +24,7 @@
 #ifndef MANSOS_APDS9300_H
 #define MANSOS_APDS9300_H
 
-#include "i2c_soft.h"
-#include "stdmansos.h"
+#include <i2c_soft.h>
 
 #define APDS_INT_PORT      2
 #define APDS_INT_PIN       5
@@ -82,7 +81,8 @@ void apdsOff(void);
 
 ISR(PORT2, apds_interrupt);
 
-bool apdsData0Read(uint16_t *data);
+uint8_t apdsData0Read(uint16_t *data);
 
-bool apdsData1Read(uint16_t *data);
+uint8_t apdsData1Read(uint16_t *data);
+
 #endif

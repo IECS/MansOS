@@ -45,6 +45,11 @@ CFLAGS += -DARDUINO_UNO=1
 
 include $(MAKEFILE_GCC)
 
+ifeq ($(USE_FATFS),y)
+# HACK: avoid including stdio.h in this case
+CFLAGS += -D_STDIO_H_
+endif
+
 #===== Additional includes =====
 
 

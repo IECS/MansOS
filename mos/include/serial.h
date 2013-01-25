@@ -119,8 +119,11 @@ enum {
     SERIAL_FUNCTION_SDCARD,  // used as sdcard interface
 };
 
+//! Serial port information
 struct Serial_s {
+    //! Is the port actively used at the moment?
     uint8_t busy : 1;
+    //! To what function is the port used/configured for?
     uint8_t function : 3;
 } PACKED;
 typedef struct Serial_s Serial_t;

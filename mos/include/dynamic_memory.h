@@ -27,6 +27,11 @@
 /// \file
 /// Dynamic memory managment routines. Use with care!
 ///
+/// The implementation is adopted from Mantis OS.
+///
+/// Note: on small-memory & long-lifetime HW static allocation is almost always better.
+/// Avoid using dynamic memory whener possible!
+///
 
 #include <stdtypes.h>
 

@@ -34,20 +34,27 @@
 // Data types and constants
 //===========================================================
 
+//! Routing decision
 typedef enum {
-    RD_DROP,      // ignore
-    RD_LOCAL,     // receive locally
-    RD_UNICAST,   // send/forward as unicast packet
-    RD_BROADCAST, // send/forward as broadcast packet
+    //! Discard the packet
+    RD_DROP,
+    //! Receive the packet locally
+    RD_LOCAL,
+    //! Send/forward as unicast packet
+    RD_UNICAST,
+    //! Send/forward as broadcast packet, also receive locally
+    RD_BROADCAST,
 } RoutingDecision_e;
 
 typedef uint16_t Seqnum_t;
 
+//! Routing packet type
 enum {
     ROUTING_INFORMATION,
     ROUTING_REQUEST,
 };
 
+//! Routing packet sender role
 enum {
     SENDER_BS,
     SENDER_FORWARDER,
@@ -55,23 +62,34 @@ enum {
     SENDER_MOTE,
 };
 
-// routing information, sent out from base station, forwarded by nodes
+//! Routing information, sent out from base station, forwarded by nodes
 struct RoutingInfoPacket_s {
-    uint8_t packetType;        // ROUTING_INFORMATION
+    //! Always set to ROUTING_INFORMATION
+    uint8_t packetType;
+    //! The role of the sender 
     uint8_t senderType;
-    MosShortAddr rootAddress;  // address of the base station / gateway
-    uint16_t hopCount;         // distance from root
-    Seqnum_t seqnum;           // sequence number
+    //! Address of the base station / gateway
+    MosShortAddr rootAddress;
+    //! Distance from root in hops
+    uint16_t hopCount;
+    //! Sequence number
+    Seqnum_t seqnum;
+    //! The automatically allocated number of the mote this packet is addressed to
     uint16_t moteNumber;
-    uint64_t rootClockMs;      // milliseconds, used for time sync to calculate the delta
+    //! The time on the network's root node in milliseconds. Used for time sync
+    uint64_t rootClockMs;
 } PACKED;
 typedef struct RoutingInfoPacket_s RoutingInfoPacket_t;
 
+//! Routing information, sent out by all nodes except base station
 typedef struct RoutingRequestPacket_s {
-    uint8_t packetType;        // ROUTING_REQUEST
+    //! Always set to ROUTING_REQUEST
+    uint8_t packetType;
+    //! The role of the sender
     uint8_t senderType;
 } RoutingRequestPacket_t;
 
+//! The destination port used by the MansOS routing protocol
 #define ROUTING_PROTOCOL_PORT  112
 
 #if 0
@@ -102,8 +120,9 @@ typedef struct RoutingRequestPacket_s {
 #define RADIO_TX_TIME 0
 
 
+//! The maximal number of nodes with the "mote" role serverd by a single collector
 #ifndef MAX_MOTES
-#define MAX_MOTES 22 // max nodes this collector can serve
+#define MAX_MOTES 22
 #endif
 
 #define MAX_HOP_COUNT 16
@@ -118,14 +137,15 @@ typedef struct RoutingRequestPacket_s {
     radioOff()
 #endif
 
+//! The address of the root node
 extern MosShortAddr rootAddress;
 
-//===========================================================
-// Procedures
 //===========================================================
 
 void initRouting(void);
 
+/// Route a packet
+/// @param info  The header of the packet
 RoutingDecision_e routePacket(MacInfo_t *info);
 
 #endif

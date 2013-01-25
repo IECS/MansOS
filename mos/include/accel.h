@@ -37,12 +37,20 @@
 #include <platform.h>
 
 // these functions are accessible (defined in platform-specific part):
-extern inline void accelInit(void);       // init accelerometer sensor, do not turn it on
-extern inline void accelOn(void);         // turn on accelerometer sensor
-extern inline void accelOff(void);        // turn off accelerometer sensor
-extern inline uint16_t accelReadX(void);  // read acceleration on X axis
-extern inline uint16_t accelReadY(void);  // read acceleration on Y axis
-extern inline uint16_t accelReadZ(void);  // read acceleration on Z axis
+
+//! Turn on the accelerometer sensor
+extern inline void accelOn(void);
+//! Turn off the accelerometer sensor
+extern inline void accelOff(void);
+//! Read acceleration on X axis
+extern inline uint16_t accelReadX(void);
+//! Read acceleration on Y axis
+extern inline uint16_t accelReadY(void);
+//! Read acceleration on Z axis
+extern inline uint16_t accelReadZ(void);
+
+// Init accelerometer sensor, do not turn it on
+extern inline void accelInit(void);
 
 // Note: accel sensor may not support on/off
 

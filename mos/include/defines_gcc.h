@@ -49,26 +49,35 @@
 #include <avr/io.h>
 #endif
 
+//! Bit vector
 #ifndef BV
 #  define BV(x) (1 << (x))
 #endif
 
-#ifndef ISR // Interrupt Service Routine syntax
+//! Interrupt Service Routine
+#ifndef ISR
 #define ISR(vec, name) interrupt(vec ## _VECTOR) name(void)
 #endif
-// use XISR instead of ISR if symbolic names are wanted
 #define XXISR(port, func) ISR(PORT ## port, func)
+//! Use XISR instead of ISR if symbolic names are wanted
 #define XISR(port, func)  XXISR(port, func)
 
+//! Assembler code
 #define ASM_VOLATILE(x) __asm__ __volatile__(x)
+//! Function in .data segment (i.e. in RAM)
 #define RAMFUNC __attribute__ ((section (".data")))
+//! Data in .text segment (i.e. in the flash memory). For constant data only.
 #define TEXTDATA __attribute__ ((section (".text")))
 
+//! Memory barrier for the compiler
 #define MEMORY_BARRIER()                           \
     ASM_VOLATILE("" : : : "memory")
 
+//! Always inline this funcion, even when not optimizing
 #define INLINE __attribute__((always_inline))
+//! This function does not return
 #define NORETURN __attribute__((noreturn))
+//! This structure is packed (i.e. aligned to 1 byte)
 #define PACKED __attribute__((packed))
 #define NO_EPILOGUE // nothing
 #undef NAKED
@@ -80,19 +89,20 @@
 
 #define PRINTF_LIKE __attribute__ ((format (printf, 1, 2)))
 
-//#ifndef PLATFORM_PC
-# ifdef __APPLE__
-#  define WEAK_SYMBOL  __attribute__ ((weak_import))
-# else // !__APPLE__
-#  define WEAK_SYMBOL  __attribute__ ((weak))
-# endif // __APPLE__
-//#else
-//# define WEAK_SYMBOL // nothing
-//#endif
+/// A WEAK_SYMBOL is used for function that might not be resolved by the linker.
+///
+/// Before callling such a fucntion f, always check if it for NULL, e.g.: if (f != NULL) f()
+#ifdef __APPLE__
+# define WEAK_SYMBOL  __attribute__ ((weak_import))
+#else // !__APPLE__
+# define WEAK_SYMBOL  __attribute__ ((weak))
+#endif // __APPLE__
 
 #define PRAGMA(x) _Pragma(#x)
+//! Print a message during the compilation
 #define MESSAGE(x) PRAGMA(message x)
 
+//! Restrict keyword, as in C99 standard
 #define restrict __restrict__
 
 #endif

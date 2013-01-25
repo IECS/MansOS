@@ -27,39 +27,39 @@
 /** \file
   \brief General, platform independent I/O interface.
 
-  Two versions are present: macros in all caps defined in HPL,
+  Two versions are present: macros in all caps defined in arch layer,
   and macros implemented here that are allowing macro defined symbols
   as parameters for the ports and pins as readable names.
 
-  Usually, the following macros are supported as defined in HPL:
+  Usually, the following macros are supported as defined in arch layer:
 
-#define PORT_AS_OUTPUT( portnum )
-#define PORT_AS_INPUT( portnum )
-#define PORT_READ( portnum )
-#define PORT_WRITE( portnum, val )
+    - PORT_AS_OUTPUT( portnum )
+    - PORT_AS_INPUT( portnum )
+    - PORT_READ( portnum )
+    - PORT_WRITE( portnum, val )
 
-#define PIN_AS_OUTPUT( portnum, pinnum )
-#define PIN_AS_INPUT( portnum, pinnum )
-#define PIN_AS_FUNCTION( portnum, pinnum )
-#define PIN_AS_DATA( portnum, pinnum )
+    - PIN_AS_OUTPUT( portnum, pinnum )
+    - PIN_AS_INPUT( portnum, pinnum )
+    - PIN_AS_FUNCTION( portnum, pinnum )
+    - PIN_AS_DATA( portnum, pinnum )
 
-#define PIN_READ( portnum, pinnum )
-#define PIN_WRITE( portnum, pinnum, val )
-#define PIN_SET( portnum, pinnum )
-#define PIN_CLEAR( portnum, pinnum )
-#define PIN_TOGGLE( portnum, pinnum )
+    - PIN_READ( portnum, pinnum )
+    - PIN_WRITE( portnum, pinnum, val )
+    - PIN_SET( portnum, pinnum )
+    - PIN_CLEAR( portnum, pinnum )
+    - PIN_TOGGLE( portnum, pinnum )
 
   The following macros relate to GPIO interrupt handling
   and may not be supported by all the platforms
 
-#define PIN_ENABLE_INT( portnum, pinnum )
-#define PIN_DISABLE_INT( portnum, pinnum )
-#define PIN_INT_RISING( portnum, pinnum )
-#define PIN_INT_FALLING( portnum, pinnum )
-#define PIN_IS_INT_RISING( portnum, pinnum )
-#define PORT_INT_FLAG( portnum )
-#define PIN_READ_INT_FLAG( portnum, pinnum )
-#define PIN_CLEAR_INT_FLAG( portnum, pinnum )
+    - PIN_ENABLE_INT( portnum, pinnum )
+    - PIN_DISABLE_INT( portnum, pinnum )
+    - PIN_INT_RISING( portnum, pinnum )
+    - PIN_INT_FALLING( portnum, pinnum )
+    - PIN_IS_INT_RISING( portnum, pinnum )
+    - PORT_INT_FLAG( portnum )
+    - PIN_READ_INT_FLAG( portnum, pinnum )
+    - PIN_CLEAR_INT_FLAG( portnum, pinnum )
 
  */
 

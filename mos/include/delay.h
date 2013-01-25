@@ -38,7 +38,7 @@
 extern inline void udelay(uint16_t microseconds);
 
 ///
-// Delay for approximate amount of milliseconds.
+/// Delay for approximate number of milliseconds.
 /// The function is not very precise! If precise delays are required, use timers.
 ///
 extern inline void mdelay(uint16_t miliseconds);

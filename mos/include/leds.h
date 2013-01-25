@@ -77,7 +77,16 @@ uint_t ledsGet(void);
 // LED definition (uses platform dependant ledslist.h)
 //=========================================================
 
-///----------------------------------------------------------
+// XXX: undef all leds for Doxygen, so they will be "defined" in this file
+#ifdef DOXYGEN
+#undef RED_LED_DEFINED
+#undef GREEN_LED_DEFINED
+#undef BLUE_LED_DEFINED
+#undef YELLOW_LED_DEFINED
+#undef LED_DEFAULT
+#endif
+
+///
 /// LED_DEFINE defines the functions for each individual LED.
 ///
 /// "name" must be the same as used in the leds_t enum declaration.
@@ -85,7 +94,7 @@ uint_t ledsGet(void);
 /// "valOn" specifies whether to set pin to 1 or 0 to turn the LED on.
 /// Note: the defines use double indirection here so that the 
 /// parameters that are macros get evaluated.
-///----------------------------------------------------------
+///
 #ifndef LED_DEFINE
 #define LED_DEFINE( name, port, pin, valOn )  LED_DEFINE2( name, port, pin, valOn )
 #define LED_DEFINE2( name, port, pin, valOn )                            \
@@ -136,10 +145,10 @@ uint_t ledsGet(void);
 #endif // LED_UNIMPLEMENTED     
 
 
-///----------------------------------------------------------
+///
 /// Declare all LEDs.
 /// Prerequisite: ledslist.h file with the LED names.
-///----------------------------------------------------------
+///
 typedef enum {
 #  define DOIT(_led) _led##_num, 
 #  include "ledslist.h"

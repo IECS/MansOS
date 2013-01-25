@@ -35,24 +35,24 @@
 // -1 MUST be used for corresponding constant. These constants can be
 // also specified in application's config file
 
-#ifndef ADC_LIGHT_TOTAL
 //! Platform-specific ADC channel index for TSR light sensor
+#ifndef ADC_LIGHT_TOTAL
 #define ADC_LIGHT_TOTAL -1
 #endif
-#ifndef ADC_LIGHT_PHOTOSYNTHETIC
 //! Platform-specific ADC channel index for PAR light sensor
+#ifndef ADC_LIGHT_PHOTOSYNTHETIC
 #define ADC_LIGHT_PHOTOSYNTHETIC -1
 #endif
-#ifndef ADC_INTERNAL_VOLTAGE
 //! Platform-specific ADC channel index for internal voltage sensor
+#ifndef ADC_INTERNAL_VOLTAGE
 #define ADC_INTERNAL_VOLTAGE -1
 #endif
-#ifndef ADC_INTERNAL_TEMPERATURE
 //! Platform-specific ADC channel index for internal temperature sensor
+#ifndef ADC_INTERNAL_TEMPERATURE
 #define ADC_INTERNAL_TEMPERATURE -1
 #endif
 
-/// Platform-specific ADC channel index for generic light sensor (same as PAR light on TelosB)
+//! Platform-specific ADC channel index for generic light sensor (same as PAR light on TelosB)
 #define ADC_LIGHT ADC_LIGHT_PHOTOSYNTHETIC
 
 //! Turn ADC on

@@ -22,6 +22,9 @@
  */
 
 #include "apds9300.h"
+#include <i2c.h>
+#include <print.h>
+#include <platform.h>
 
 #define APDS9300_I2C_ID I2C_BUS_SW
 
@@ -43,13 +46,13 @@ uint8_t apdsWriteByte(uint8_t cmd, uint8_t val) {
     uint8_t err = 0;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
-    i2cStart();
+    i2cSoftStart();
     err |= i2cSoftWriteByte(SLAVE_ADDRESS << 1);
     err <<= 1;
     err |= i2cSoftWriteByte(cmd);
     err <<= 1;
     err |= i2cSoftWriteByte(val);
-    i2cStop();
+    i2cSoftStop();
     ATOMIC_END(intHandle);
     return err;
 }
@@ -58,7 +61,7 @@ uint8_t apdsWriteWord(uint8_t cmd, uint16_t val) {
     uint8_t err = 0;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
-    i2cStart();
+    i2cSoftStart();
     err |= i2cSoftWriteByte(SLAVE_ADDRESS << 1);
     err <<= 1;
     err |= i2cSoftWriteByte(cmd | I2C_WORD);
@@ -66,7 +69,7 @@ uint8_t apdsWriteWord(uint8_t cmd, uint16_t val) {
     err |= i2cSoftWriteByte(val & 0xff);
     err <<= 1;
     err |= i2cSoftWriteByte(val >> 8);
-    i2cStop();
+    i2cSoftStop();
     ATOMIC_END(intHandle);
     return err;
 }
@@ -75,17 +78,17 @@ uint8_t apdsReadByte(uint8_t cmd, uint8_t *value) {
     uint8_t err = 0;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
-    i2cStart();
+    i2cSoftStart();
     err |= i2cSoftWriteByte(SLAVE_ADDRESS << 1 );
     err <<= 1;
     err |= i2cSoftWriteByte(cmd);
     err <<= 1;
-    i2cStop();
-    i2cStart();
+    i2cSoftStop();
+    i2cSoftStart();
     err |= i2cSoftWriteByte((SLAVE_ADDRESS << 1)  | 0x1);
     uint8_t tempVal = i2cSoftReadByte(I2C_ACK);
     *value = tempVal;
-    i2cStop();
+    i2cSoftStop();
     ATOMIC_END(intHandle);
     return err;
 }
@@ -94,18 +97,18 @@ uint8_t apdsReadWord(uint8_t cmd, uint16_t *value) {
     uint8_t err = 0;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
-    i2cStart();
+    i2cSoftStart();
     err |= i2cSoftWriteByte(SLAVE_ADDRESS << 1);
     err <<= 1;
     err |= i2cSoftWriteByte(cmd | I2C_WORD);
     err <<= 1;
-    i2cStop();
-    i2cStart();
+    i2cSoftStop();
+    i2cSoftStart();
     err |= i2cSoftWriteByte((SLAVE_ADDRESS << 1) | 0x1);
     uint8_t tempValLo = i2cSoftReadByte(I2C_ACK);
     uint8_t tempValHi = i2cSoftReadByte(I2C_ACK);
     *value = tempValLo | (tempValHi << 8);
-    i2cStop();
+    i2cSoftStop();
     ATOMIC_END(intHandle);
     return err;
 }
@@ -135,7 +138,7 @@ ISR(PORT2, apds_interrupt)
 }
 #endif
 
-uint8_t apdsData0Read(uint16_t *data){
+uint8_t apdsData0Read(uint16_t *data) {
     uint8_t err = false;
     uint8_t datalow, datahigh;
     err |= apdsReadByte(COMMAND | DATA0LOW_REG, &datalow);
@@ -145,7 +148,7 @@ uint8_t apdsData0Read(uint16_t *data){
     return err;
 }
 
-uint8_t apdsData1Read(uint16_t *data){
+uint8_t apdsData1Read(uint16_t *data) {
     uint8_t err = false;
     uint8_t datalow, datahigh;
     err |= apdsReadByte(COMMAND | DATA1LOW_REG, &datalow);

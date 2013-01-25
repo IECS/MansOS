@@ -30,7 +30,7 @@
 
 #include <stdtypes.h>
 
-//! Toggle beeper (produces single tick)
+//! Toggle beeper (produces single audible tick)
 extern inline void beeperToggle();
 
 //! Beep for specific amount of time

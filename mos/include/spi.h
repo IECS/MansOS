@@ -109,7 +109,7 @@ static inline uint8_t spiWriteByte(uint8_t busId, uint8_t b) {
     return spiExchByte(busId, b);
 }
 
-/*
+/**
  * Reads a byte from SPI - writes a 0 on the MOSI line and waits for response
  * @param   busId     SPI bus ID (use SPI_BUS_SW for soft SPI)
  * @return  received byte
@@ -118,7 +118,7 @@ static inline uint8_t spiReadByte(uint8_t busId) {
     return spiExchByte(busId, 0);
 }
 
-/*
+/**
  * Writes a 16-bit word to SPI (performs 2 byte writes)
  * @param   busId   SPI bus ID (use SPI_BUS_SW for soft SPI)
  * @param   w       the word to be written
@@ -128,7 +128,7 @@ static inline uint16_t spiWriteWord(uint8_t busId, uint16_t w) {
     return spiExchWord(busId, w);
 }
 
-/*
+/**
  * Reads a 16-bit word from SPI - writes a 0 on the MOSI line and waits for response
  * @param   busId     SPI bus ID (use SPI_BUS_SW for soft SPI)
  * @return  received byte
@@ -137,7 +137,7 @@ static inline uint16_t spiReadWord(uint8_t busId) {
     return spiExchWord(busId, 0);
 }
 
-/*
+/**
  * Writes a string to SPI (performs len byte writes)
  * @param   busId   SPI bus ID (use SPI_BUS_SW for soft SPI)
  * @param   buf     the buffer containing the string
@@ -146,7 +146,7 @@ static inline uint16_t spiReadWord(uint8_t busId) {
  */
 void spiWrite(uint8_t busId, const void *buf, uint16_t len);
 
-/*
+/**
  * Reads a message into buffer from SPI (performs len byte reads)
  *
  * @param   busId   SPI bus ID (use SPI_BUS_SW for soft SPI)
@@ -156,7 +156,7 @@ void spiWrite(uint8_t busId, const void *buf, uint16_t len);
  */
 void spiRead(uint8_t busId, void *buf, uint16_t len);
 
-/*
+/**
  * Reads a message, discards it (without storing anywhere)
  * @param   busId   SPI bus ID (use SPI_BUS_SW for soft SPI)
  * @param   len     discarded message length in bytes
