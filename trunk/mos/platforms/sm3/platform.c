@@ -35,7 +35,7 @@ void initPlatform(void)
 {
     msp430Init();
 #if USE_SERIAL_NUMBER
-    halSerialNumberInit();
+    serialNumberInit();
 #endif
     // make sure radio is off when it is not used
     if (amb8420Init == NULL) {

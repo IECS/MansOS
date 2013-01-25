@@ -21,6 +21,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <defines.h>
+
+#if MANSOS_STDIO
+
 #include "fatfs.h"
 #include "posix-stdio.h"
 #include <errors.h>
@@ -207,3 +211,5 @@ int fseek(FILE *fp, long offset, int whence)
 #endif
     return 0;
 }
+
+#endif // MANSOS_STDIO

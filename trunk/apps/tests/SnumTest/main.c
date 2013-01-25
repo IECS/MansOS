@@ -30,7 +30,7 @@ void appMain(void)
     uint8_t snumBuffer[8] = {0};
     uint_t i;
 
-    bool ok = halGetSerialNumber(snumBuffer);
+    bool ok = serialNumberRead(snumBuffer);
     PRINTF("ok=%s, snum=", (ok ? "yes" : "no"));
     for (i = 0; i < 8; ++i) {
         PRINTF("0x%02x ", snumBuffer[i]);

@@ -28,6 +28,8 @@
 /// External flash chip driver
 ///
 
+#include <stdtypes.h>
+
 ///
 /// List all supported external flash models here (before including extflash_hal.h)
 ///
@@ -37,15 +39,15 @@
 
 
 //! Enter low power mode
-void extFlashSleep();
+void extFlashSleep(void);
 //! Wake up from low power mode
-void extFlashWake();
+void extFlashWake(void);
 //! Read len bytes from flash starting at address addr into buf
 void extFlashRead(uint32_t addr, uint8_t *buf, uint16_t len);
 //! Write len bytes from buf to flash starting at address addr
-void extFlashWrite(uint32_t addr, uint8_t *buf, uint16_t len);
+void extFlashWrite(uint32_t addr, const uint8_t *buf, uint16_t len);
 //! Erase the whole flash memory
-void extFlashBulkErase();
+void extFlashBulkErase(void);
 ///
 /// Erase one sector at address
 ///

@@ -25,7 +25,7 @@
 #include "networking.h"
 #include <string.h>
 #include <print.h>
-#include <kernel/threads/mutex.h>
+#include <mutex.h>
 
 static SLIST_HEAD(head, Socket_s) socketList;
 static Mutex_t socketListMutex;

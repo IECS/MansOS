@@ -24,6 +24,7 @@
 #ifndef _PLATFORM_PC_H_
 #define _PLATFORM_PC_H_
 
+#include <defines.h>
 #include "sem_hal.h"
 #include "leds_hal.h"
 #include "adc_hal.h"
@@ -38,7 +39,7 @@
 // As stdio.h cannot be included: define some of
 // frequently used function prototypes.
 //
-#ifndef _STDIO_H
+#if MANSOS_STDIO
 extern int sprintf(const char *str, const char *format, ...);
 extern int snprintf(const char *str, size_t size, const char *format, ...);
 #endif

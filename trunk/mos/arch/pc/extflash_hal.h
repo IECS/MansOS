@@ -33,8 +33,8 @@
 void extFlashInit(void);
 void extFlashSleep(void);
 void extFlashWake(void);
-void extFlashRead(uint32_t addr, void *buf, uint16_t len);
-void extFlashWrite(uint32_t addr, const void *buf, uint16_t len);
+void extFlashRead(uint32_t addr, uint8_t *buf, uint16_t len);
+void extFlashWrite(uint32_t addr, const uint8_t *buf, uint16_t len);
 void extFlashBulkErase(void);
 void extFlashEraseSector(uint32_t addr);
 
