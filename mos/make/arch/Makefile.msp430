@@ -60,7 +60,7 @@ INCLUDES +=
 
 #===== Sources =====
 
-PSOURCES-$(USE_ADDRESSING) += $(MOS)/arch/msp430/comm_hal.c
+PSOURCES-$(USE_ADDRESSING) += $(MOS)/arch/msp430/net_hal.c
 PSOURCES-$(USE_EEPROM) += $(MOS)/arch/msp430/eeprom_hal.c
 PSOURCES-$(USE_WATCHDOG) += $(MOS)/arch/msp430/watchdog.c
 

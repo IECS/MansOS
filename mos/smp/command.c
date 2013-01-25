@@ -57,7 +57,7 @@ bool getIeeeAddress(bool set, uint8_t oidLen, SmpOid_t oid,
     }
 
     response->type = ST_UINTEGER64;
-    return halGetSerialNumber((uint8_t *) &response->u.uint64);
+    return serialNumberRead((uint8_t *) &response->u.uint64);
 }
 
 bool processLedCommand(bool set, uint8_t oidLen, SmpOid_t oid,

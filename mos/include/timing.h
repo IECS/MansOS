@@ -129,18 +129,24 @@ static inline uint16_t msToSleepTimerTicks(uint16_t ms)
 //! Time difference with network root node's clock in milliseconds
 extern int64_t rootClockDeltaMs;
 //! Get the network-wide synchronized time in milliseconds as 32-bit value
-#define getSyncTimeMs()   ((uint32_t)(getTimeMs() + rootClockDeltaMs))
+static inline uint32_t getSyncTimeMs(void) {
+    return (uint32_t) (getTimeMs() + rootClockDeltaMs);
+}
 //! Get the network-wide synchronized time in milliseconds as 64-bit value
-#define getSyncTimeMs64() (getTimeMs() + rootClockDeltaMs)
+static inline uint64_t getSyncTimeMs64(void) {
+    return getTimeMs64() + rootClockDeltaMs;
+}
 //! Get the network-wide synchronized time in seconds as 32-bit value
-#define getSyncTimeSec()  ((uint32_t)(getTimeSec() + rootClockDeltaMs / 1000))
+static inline uint32_ getSyncTimeSec(void) {
+    return (uint32_t) (getTimeSec() + rootClockDeltaMs / 1000);
+}
 
 #else
 
-#define getSyncTimeMs()  getTimeMs()
-#define getSyncTimeSec() getTimeSec()
+#define getSyncTimeMs()    getTimeMs()
+#define getSyncTimeMs64()  getTimeMs64()
+#define getSyncTimeSec()   getTimeSec()
 
 #endif
-
 
 #endif

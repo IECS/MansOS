@@ -119,6 +119,11 @@ typedef uint32_t ticks_t;
 #error CPU_MHZ must be defined!
 #endif
 
+#if !defined PLATFORM_PC || defined USE_FATFS
+#define MANSOS_STDIO 1
+#else
+#define MANSOS_STDIO 0
+#endif
 
 #if MCU_AVR
 //! Atmel has straight decimal MHz

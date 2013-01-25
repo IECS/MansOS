@@ -53,7 +53,7 @@ void initPlatform(void)
     REN(DS2411_PORT) |= BV(DS2411_PIN);
 
     // Read the serial number
-    halSerialNumberInit();
+    serialNumberInit();
 
     // Disable Vcc
     pinClear(DS2411_VCC_PORT, DS2411_VCC_PIN);

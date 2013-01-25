@@ -33,7 +33,7 @@
 static inline uint16_t generateLocalAddress(void) 
 {
     uint16_t snum[4];
-    bool ok = halGetSerialNumber((uint8_t *) snum);
+    bool ok = serialNumberRead((uint8_t *) snum);
     (void)ok;
     // PRINTF("generateLocalAddress... ok=%s\n", (ok ? "yes" : "no"));
 

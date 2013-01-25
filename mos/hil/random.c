@@ -40,7 +40,7 @@ void randomInit() {
 #elif PLATFORM_TELOSB || PLATFORM_SADMOTE || PLATFORM_SM3
     // generate a random key from serial number
     uint32_t snum[2];
-    halGetSerialNumber((uint8_t *) snum);
+    serialNumberRead((uint8_t *) snum);
     randomKey = snum[0] + snum[1];
 #else
 #warning Hardware seed for RNG not implemented!

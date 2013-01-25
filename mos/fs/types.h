@@ -60,7 +60,7 @@ typedef enum {
 } fsMode_t;
 
 /* Temp fix to make filesystem code compile with new threads - Atis */
-#include <kernel/threads/mutex.h>
+#include <mutex.h>
 typedef Mutex_t mos_mutex_t;
 #define mos_mutex_init    mutexInit
 #define mos_mutex_lock    mutexLock

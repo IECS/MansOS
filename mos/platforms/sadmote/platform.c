@@ -34,6 +34,6 @@ void initPlatform(void)
 {
     msp430Init();
 #if USE_SERIAL_NUMBER
-    halSerialNumberInit();
+    serialNumberInit();
 #endif
 }

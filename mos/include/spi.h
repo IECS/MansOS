@@ -105,16 +105,18 @@ uint16_t spiExchWord(uint8_t busId, uint16_t w);
  * @param   b       byte to transmit
  * @return          byte received from the slave
  */
-#define spiWriteByte(busId, b) \
-        spiExchByte(busId, b)
+static inline uint8_t spiWriteByte(uint8_t busId, uint8_t b) {
+    return spiExchByte(busId, b);
+}
 
 /*
  * Reads a byte from SPI - writes a 0 on the MOSI line and waits for response
  * @param   busId     SPI bus ID (use SPI_BUS_SW for soft SPI)
  * @return  received byte
  */
-#define spiReadByte(busId) \
-        spiExchByte(busId, 0)
+static inline uint8_t spiReadByte(uint8_t busId) {
+    return spiExchByte(busId, 0);
+}
 
 /*
  * Writes a 16-bit word to SPI (performs 2 byte writes)
@@ -122,16 +124,18 @@ uint16_t spiExchWord(uint8_t busId, uint16_t w);
  * @param   w       the word to be written
  * @return          word received from the slave
  */
-#define spiWriteWord(busId, w) \
-    spiExchWord(busId, w)
+static inline uint16_t spiWriteWord(uint8_t busId, uint16_t w) {
+    return spiExchWord(busId, w);
+}
 
 /*
  * Reads a 16-bit word from SPI - writes a 0 on the MOSI line and waits for response
  * @param   busId     SPI bus ID (use SPI_BUS_SW for soft SPI)
  * @return  received byte
  */
-#define spiReadWord(busId) \
-        spiExchWord(busId, 0)
+static inline uint16_t spiReadWord(uint8_t busId) {
+    return spiExchWord(busId, 0);
+}
 
 /*
  * Writes a string to SPI (performs len byte writes)

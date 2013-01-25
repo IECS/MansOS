@@ -60,7 +60,9 @@
 #include <ad5258/ad5258.h>
 #endif
 #include <fs/init.h>
+#if USE_FATFS
 #include <fatfs/fatfs.h>
+#endif
 
 #if (defined DEBUG && !defined DPRINT_TO_RADIO)
 #define INIT_PRINTF(...) PRINTF(__VA_ARGS__)

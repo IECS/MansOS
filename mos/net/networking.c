@@ -73,7 +73,7 @@ void fillLocalAddress(MosAddr *result)
         result->shortAddr = localAddress;
     } else {
         result->type = MOS_ADDR_TYPE_LONG;
-        halGetSerialNumber(result->longAddr);
+        serialNumberRead(result->longAddr);
     }
 #else
     result->shortAddr = localAddress;
@@ -86,7 +86,7 @@ bool isLocalAddress(MosAddr *addr) {
     case MOS_ADDR_TYPE_SHORT:
         return addr->shortAddr == localAddress;
     case MOS_ADDR_TYPE_LONG:
-        return halSerialNumberMatches(addr->longAddr);
+        return serialNumberMatches(addr->longAddr);
     default:
         return false;
     }

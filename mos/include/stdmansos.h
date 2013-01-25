@@ -71,7 +71,9 @@
 #endif
 #include <utils.h>
 #include <random.h>
+#if MANSOS_STDIO
 #include <fatfs/posix-stdio.h>
+#endif
 
 
 ///
