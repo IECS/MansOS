@@ -142,39 +142,6 @@
       </data>
     </settings>
     <settings>
-      <name>SIM430</name>
-      <archiveVersion>1</archiveVersion>
-      <data>
-        <version>4</version>
-        <wantNonLocal>1</wantNonLocal>
-        <debug>1</debug>
-        <option>
-          <name>SimOddAddressCheckP7</name>
-          <state>1</state>
-        </option>
-        <option>
-          <name>CSimMandatory</name>
-          <state>1</state>
-        </option>
-        <option>
-          <name>derivativeSim</name>
-          <state>0</state>
-        </option>
-        <option>
-          <name>SimEnablePSP</name>
-          <state>0</state>
-        </option>
-        <option>
-          <name>SimPspOverrideConfig</name>
-          <state>0</state>
-        </option>
-        <option>
-          <name>SimPspConfigFile</name>
-          <state>$TOOLKIT_DIR$\CONFIG\test.psp.config</state>
-        </option>
-      </data>
-    </settings>
-    <settings>
       <name>430FET</name>
       <archiveVersion>1</archiveVersion>
       <data>
@@ -256,7 +223,7 @@
         </option>
         <option>
           <name>UsbComPort</name>
-          <state>HID0002:COM6</state>
+          <state>Automatic</state>
         </option>
         <option>
           <name>FetConnection</name>
@@ -314,6 +281,39 @@
         <option>
           <name>Retain</name>
           <state>0</state>
+        </option>
+      </data>
+    </settings>
+    <settings>
+      <name>SIM430</name>
+      <archiveVersion>1</archiveVersion>
+      <data>
+        <version>4</version>
+        <wantNonLocal>1</wantNonLocal>
+        <debug>1</debug>
+        <option>
+          <name>SimOddAddressCheckP7</name>
+          <state>1</state>
+        </option>
+        <option>
+          <name>CSimMandatory</name>
+          <state>1</state>
+        </option>
+        <option>
+          <name>derivativeSim</name>
+          <state>0</state>
+        </option>
+        <option>
+          <name>SimEnablePSP</name>
+          <state>0</state>
+        </option>
+        <option>
+          <name>SimPspOverrideConfig</name>
+          <state>0</state>
+        </option>
+        <option>
+          <name>SimPspConfigFile</name>
+          <state>$TOOLKIT_DIR$\CONFIG\test.psp.config</state>
         </option>
       </data>
     </settings>
@@ -508,39 +508,6 @@
       </data>
     </settings>
     <settings>
-      <name>SIM430</name>
-      <archiveVersion>1</archiveVersion>
-      <data>
-        <version>4</version>
-        <wantNonLocal>1</wantNonLocal>
-        <debug>0</debug>
-        <option>
-          <name>SimOddAddressCheckP7</name>
-          <state>1</state>
-        </option>
-        <option>
-          <name>CSimMandatory</name>
-          <state>1</state>
-        </option>
-        <option>
-          <name>derivativeSim</name>
-          <state>0</state>
-        </option>
-        <option>
-          <name>SimEnablePSP</name>
-          <state>0</state>
-        </option>
-        <option>
-          <name>SimPspOverrideConfig</name>
-          <state>0</state>
-        </option>
-        <option>
-          <name>SimPspConfigFile</name>
-          <state>$TOOLKIT_DIR$\CONFIG\test.psp.config</state>
-        </option>
-      </data>
-    </settings>
-    <settings>
       <name>430FET</name>
       <archiveVersion>1</archiveVersion>
       <data>
@@ -680,6 +647,39 @@
         <option>
           <name>Retain</name>
           <state>0</state>
+        </option>
+      </data>
+    </settings>
+    <settings>
+      <name>SIM430</name>
+      <archiveVersion>1</archiveVersion>
+      <data>
+        <version>4</version>
+        <wantNonLocal>1</wantNonLocal>
+        <debug>0</debug>
+        <option>
+          <name>SimOddAddressCheckP7</name>
+          <state>1</state>
+        </option>
+        <option>
+          <name>CSimMandatory</name>
+          <state>1</state>
+        </option>
+        <option>
+          <name>derivativeSim</name>
+          <state>0</state>
+        </option>
+        <option>
+          <name>SimEnablePSP</name>
+          <state>0</state>
+        </option>
+        <option>
+          <name>SimPspOverrideConfig</name>
+          <state>0</state>
+        </option>
+        <option>
+          <name>SimPspConfigFile</name>
+          <state>$TOOLKIT_DIR$\CONFIG\test.psp.config</state>
         </option>
       </data>
     </settings>
