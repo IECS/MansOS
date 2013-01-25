@@ -27,76 +27,29 @@
 #include "sem_hal.h"
 #include "leds_hal.h"
 #include "adc_hal.h"
+#include "timers_hal.h"
+#include "ints_hal.h"
 
 #include <arch/null_spi.h>
 
 #include <digital.h>
 
-#if USE_FATFS
 //
 // As stdio.h cannot be included: define some of
 // frequently used function prototypes.
 //
+#ifndef _STDIO_H
 extern int sprintf(const char *str, const char *format, ...);
 extern int snprintf(const char *str, size_t size, const char *format, ...);
 #endif
 extern void perror(const char *s);
 
 
-// PC platform uses NO timers
-#define DISABLE_INTS() // nothing
-#define ENABLE_INTS()  // nothing
-
-#define ALARM_TIMER_INTERRUPT0() void alarmTimerInterrupt0(void)
-#define ALARM_TIMER_INTERRUPT1() void alarmTimerInterrupt1(void)
-#define SLEEP_TIMER_INTERRUPT() void sleepTimerInterrupt(void)
-
-#define ALARM_TIMER_START()
-#define ALARM_TIMER_EXPIRED() (1)
-#define ALARM_TIMER_READ_STOPPED() 0
-#define SET_NEXT_ALARM_TIMER(value)
-#define NEXT_ALARM_TIMER() 0
-
-#define ALARM_TIMER_WRAPAROUND() false
-#define ALARM_TIMER_RESET_WRAPAROUND()
-
-#define SLEEP_TIMER_STOP()
-#define SLEEP_TIMER_EXPIRED() (1)
-#define SLEEP_TIMER_READ() 0
-
-#define PLATFORM_CAN_SLEEP() (1)
-#define ENTER_SLEEP_MODE()
-#define EXIT_SLEEP_MODE()
-
-// semaphore used for SLEEP implementation
-extern sem_t sleepSem;
-#define SLEEP() mos_sem_wait(&sleepSem)
-#define EXIT_SLEEP() mos_sem_post(&sleepSem)
-
 void initPlatform(void);
 
 #ifndef PRINT_BUFFER_SIZE
 #define PRINT_BUFFER_SIZE 127
 #endif
-
-enum {
-    PLATFORM_MIN_SLEEP_MS = 1, // min sleep amount = 1ms
-    PLATFORM_MAX_SLEEP_MS = 0xffff,
-    PLATFORM_MAX_SLEEP_SECONDS = PLATFORM_MAX_SLEEP_MS / 1000,
-    PLATFORM_ALARM_TIMER_PERIOD = 1,
-};
-
-#define TIMER_TICKS_TO_MS(ticks) ticks
-
-#define JIFFY_TIMER_MS 1
-
-#define SLEEP_CYCLES        1
-#define SLEEP_CYCLES_DEC    0
-#define SLEEP_CLOCK_SPEED   1
-#define SLEEP_CLOCK_DIVIDER 1
-
-#define ATOMIC_START(x) (x) = 0
-#define ATOMIC_END(x)   ((void) x)
 
 // LEDs: all present! Defined in pc/ledslist.h
 
@@ -107,5 +60,7 @@ enum {
 
 // SD card ID
 #define SDCARD_SPI_ID 0
+
+#define RADIO_CHIP  RADIO_CHIP_SOFTWARE // simulation
 
 #endif

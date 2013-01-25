@@ -36,7 +36,7 @@
 #ifndef MANSOS_ADXL345_H
 #define MANSOS_ADXL345_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 //---------------------------------------------------------------
 // Global constants

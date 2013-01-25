@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,6 @@
 #include <lib/algo.h>
 #include <lib/byteorder.h>
 #include <sdcard/sdcard.h>
-#include <kernel/defines.h>
 
 #if DEBUG
 #define FATFS_DEBUG 1
@@ -153,33 +152,33 @@ bool fatFsInitPartition(uint8_t partition)
     uint32_t totalSectors;
 
     FatBootBlock_t *fbs = &cache.fbs;
-    if (le16read(fbs->bytesPerSector) != 512
+    if (le16Read(fbs->bytesPerSector) != 512
             || fbs->numFATs == 0
-            || le16read(fbs->numReservedSectors) == 0
+            || le16Read(fbs->numReservedSectors) == 0
             || fbs->sectorsPerCluster == 0) {
         // not valid FAT volume
         goto fail;
     }
     fatInfo.numFATs = fbs->numFATs;
-    fatInfo.sectorsPerFAT = le16read(fbs->sectorsPerFAT16);
+    fatInfo.sectorsPerFAT = le16Read(fbs->sectorsPerFAT16);
     fatInfo.bytesPerClusterShift = 9 + log2(fbs->sectorsPerCluster);
     fatInfo.bytesPerClusterMask = (1 << fatInfo.bytesPerClusterShift) - 1;
 
-    fatInfo.fatStartBlock = volumeStartBlock + le16read(fbs->numReservedSectors);
+    fatInfo.fatStartBlock = volumeStartBlock + le16Read(fbs->numReservedSectors);
     // count for FAT16, zero for FAT32
-    fatInfo.numRootEntries = le16read(fbs->numRootEntries);
+    fatInfo.numRootEntries = le16Read(fbs->numRootEntries);
 
     // directory start for FAT16, dataStart for FAT32
     fatInfo.rootDirStart = fatInfo.fatStartBlock + fbs->numFATs * fatInfo.sectorsPerFAT;
 
     // data start for FAT16 and FAT32
     fatInfo.dataStartBlock = fatInfo.rootDirStart
-            + ALIGN_UP_U32(32ul * le16read(fbs->numRootEntries), 512) / 512;
+            + ALIGN_UP_U32(32ul * le16Read(fbs->numRootEntries), 512) / 512;
 
     // total blocks for FAT16 or FAT32
-    totalSectors = le16read(fbs->totalSectors16);
+    totalSectors = le16Read(fbs->totalSectors16);
     if (totalSectors == 0) {
-        totalSectors = le32read(fbs->totalSectors32);
+        totalSectors = le32Read(fbs->totalSectors32);
     }
 
     // total data blocks

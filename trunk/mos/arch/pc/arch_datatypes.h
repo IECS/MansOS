@@ -43,4 +43,7 @@ typedef uint16_t Handle_t;
 // physical address (simulated) type
 typedef uint32_t MemoryAddress_t;
 
+// Unsigned type large enough for holding flash address range
+typedef uint16_t FlashAddress_t;
+
 #endif

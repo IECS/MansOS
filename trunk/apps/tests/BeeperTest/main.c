@@ -25,8 +25,7 @@
 //      Blink application.
 //-------------------------------------------
 
-#include "mansos.h"
-#include "delay.h"
+#include "stdmansos.h"
 #include "beeper.h"
 
 //-------------------------------------------

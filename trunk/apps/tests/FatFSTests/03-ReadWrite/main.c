@@ -22,7 +22,7 @@
  */
 
 #include "stdmansos.h"
-#include <lib/assert.h>
+#include <assert.h>
 
 void appMain(void)
 {

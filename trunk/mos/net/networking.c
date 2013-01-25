@@ -25,7 +25,7 @@
 #include "routing.h"
 #include "socket.h"
 #include "queue.h"
-#include "net-stats.h"
+#include "net_stats.h"
 #include "radio_packet_buffer.h"
 #include <serial_number.h>
 #include <print.h>
@@ -59,7 +59,7 @@ RadioPacketBuffer_t *radioPacketBuffer = (RadioPacketBuffer_t *) &realBuf;
 
 void networkingInit(void)
 {
-    networkingArchInit();
+    networkingInitArch();
     macProtocol.init(networkingForwardData);
     socketsInit();
     initRouting();

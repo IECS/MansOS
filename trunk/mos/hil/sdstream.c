@@ -22,15 +22,15 @@
  */
 
 //
-// TODO: rewrite this to allow record with different sizes
+// TODO: rewrite this to allow records with different sizes
 //
 
 #include "sdstream.h"
 #include <dynamic_memory.h>
 #include <sdcard/sdcard.h>
 #include <platform.h>
-#include <lib/assert.h>
-#include <lib/codec/crc.h>
+#include <assert.h>
+#include <codec.h>
 #include <print.h>
 
 #if DEBUG

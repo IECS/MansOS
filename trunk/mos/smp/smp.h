@@ -24,7 +24,7 @@
 #ifndef MANSOS_SMP_H
 #define MANSOS_SMP_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 typedef enum {
     SMP_PACKET_REQUEST,

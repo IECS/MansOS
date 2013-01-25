@@ -71,12 +71,16 @@ class GraphData(object):
 
         valueString = string[eqSignPos + 1:].strip()
         try:
+            # try to parse the vakue as int (in any base)
             value = int(valueString, 0)
         except:
             try:
+                # try to parse the value as float
                 value = float(valueString)
             except:
+                print("Sensor " + dataName + " value is in unknown format: " + value + "\n")
                 value = 0
+
         self.tempData.append((dataName, value))
 
         # save to file if required (multiple files)

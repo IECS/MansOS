@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,15 +21,15 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//--------------------------------------------------------------------------------
-// MansOS Communication
-//--------------------------------------------------------------------------------
+#ifndef MANSOS_NETWORKING_H
+#define MANSOS_NETWORKING_H
 
-#ifndef _MANSOS_COMM_H_
-#define _MANSOS_COMM_H_
+/// \file
+/// MansOS networking public API
+///
 
+#include "net_internal.h"
 #include "mac.h"
-#include <kernel/defines.h>
 
 //----------------------------------------------------------
 // constants
@@ -43,14 +43,14 @@ enum {
 //----------------------------------------------------------
 
 ///
-/// Calls networkingArchInit() and other functions; two version are defined in comm.c and nonet.c
+/// Calls networkingInitArch() and other functions; two version are defined in comm.c and nonet.c
 ///
 void networkingInit(void);
 
 ///
-/// Defined in HAL
+/// Architecture-specific initalization. Defined in HAL
 ///
-void networkingArchInit(void);
+void networkingInitArch(void);
 
 //
 // This function is "narrow point" of the communications stack:

@@ -28,7 +28,7 @@
 #ifndef _MANSOS_ARCH_MEM_H_
 #define _MANSOS_ARCH_MEM_H_
 
-#include <kernel/defines.h>
+#include <defines.h>
 #include <dynamic_memory.h>
 
 // linker will provide symbol for end-of-memory

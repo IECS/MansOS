@@ -24,9 +24,9 @@
 #ifndef MANSOS_THREADS_H
 #define MANSOS_THREADS_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 #include "timing.h"
-#include <lib/assert.h>
+#include <assert.h>
 #include <platform.h>
 
 #ifndef NUM_USER_THREADS
@@ -209,11 +209,11 @@ static inline void setPriority(Thread_t *t, uint8_t priority) {
 static inline void msleep(uint16_t ms)
 {
     while (ms > PLATFORM_MAX_SLEEP_MS) {
-        jiffiesToSleep = ms2jiffies(PLATFORM_MAX_SLEEP_MS);
+        jiffiesToSleep = PLATFORM_MAX_SLEEP_MS;
         ms -= PLATFORM_MAX_SLEEP_MS;
         schedule();
     }
-    jiffiesToSleep = ms2jiffies(ms);
+    jiffiesToSleep = ms;
     schedule();
 }
 

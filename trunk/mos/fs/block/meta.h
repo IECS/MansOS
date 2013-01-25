@@ -29,7 +29,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 #include "common.h"
 

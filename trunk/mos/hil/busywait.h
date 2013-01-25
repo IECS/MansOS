@@ -24,7 +24,7 @@
 #ifndef MANSOS_BUSWYAIT_H
 #define MANSOS_BUSWYAIT_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 #include <timing.h>
 
 // works with interrupts disabled, but max time is ~2 seconds

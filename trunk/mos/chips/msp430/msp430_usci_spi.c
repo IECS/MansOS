@@ -27,9 +27,6 @@
  */
 
 #include <digital.h>
-#include <kernel/defines.h>
-#include <kernel/stdtypes.h>
-
 #include "msp430_usci.h"
 
 

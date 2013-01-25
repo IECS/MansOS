@@ -27,7 +27,6 @@
 #include <net/mac.h>
 #include <lib/activemsg.h>
 #include <random.h>
-#include <sensors.h>
 #include <sdstream.h>
 #include "protocol.h"
 

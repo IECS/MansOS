@@ -24,7 +24,7 @@
 #ifndef _MSP430_TIMERS_H_
 #define _MSP430_TIMERS_H_
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 #ifndef TASSEL_ACLK
 #define TASSEL_ACLK   TASSEL_1
@@ -96,13 +96,11 @@ enum {
     SLEEP_CYCLES = (SLEEP_CLOCK_SPEED / 1000 / SLEEP_CLOCK_DIVIDER),
     SLEEP_CYCLES_DEC = (SLEEP_CLOCK_SPEED / SLEEP_CLOCK_DIVIDER) % 1000,
 
-    TICKS_IN_MS = ACLK_SPEED / 1000 + 1,
-};
+    ALARM_CYCLES = (ACLK_SPEED / 1000 / JIFFY_CLOCK_DIVIDER),
+    ALARM_CYCLES_DEC = (ACLK_SPEED / JIFFY_CLOCK_DIVIDER) % 1000,
 
-// this is more precise:
-//#define TIMER_TICKS_TO_MS(ticks) ((ticks) / TICKS_IN_MS)
-// but this is much faster (ACLK MUST be power of two!):
-#define TIMER_TICKS_TO_MS(ticks) ((ticks) * 1024ul / ACLK_SPEED)
+    TICKS_IN_MS = ACLK_SPEED / 1000,
+};
 
 //===========================================================
 // Macros
@@ -177,8 +175,8 @@ enum {
 #define ALARM_TIMER_STOP()  msp430StopTimerA()
 #define ALARM_TIMER_WRAPAROUND() (TACTL & TAIFG)
 #define ALARM_TIMER_RESET_WRAPAROUND() (TACTL &= ~TAIFG)
-#define ALARM_TIMER_READ_STOPPED(ms) (TAR)
-#define NEXT_ALARM_TIMER(value) TACCR0
+#define ALARM_TIMER_READ_STOPPED() (TAR)
+#define NEXT_ALARM_TIMER() TACCR0
 #define SET_NEXT_ALARM_TIMER(value) TACCR0 += value
 
 // this expands to ALARM_TIMER_READ

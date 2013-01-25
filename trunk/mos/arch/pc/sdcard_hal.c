@@ -31,7 +31,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include <lib/assert.h>
+#include <assert.h>
 #include <print.h>
 
 #define SDCARD_SECTOR_COUNT 32768 // 512 * 32768 = 16 MB card size

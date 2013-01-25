@@ -24,11 +24,17 @@
 #ifndef MANSOS_TIMESYNC_H
 #define MANSOS_TIMESYNC_H
 
-//
-// Base station-router time synchronization implementation.
-// Relies on periodic messages of the router that contain UNIX timestamp.
-//
+/// \file
+/// The implementation of base station/router time synchronization
+///
+/// Relies on periodic messages of the router that contain UNIX timestamp.
+/// Does not provide time synchronization in the network - routing protocol does that!
+///
 
 void timesyncInit(void);
+
+void timesyncOn(void);
+
+void timesyncOff(void);
 
 #endif

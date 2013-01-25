@@ -25,11 +25,10 @@
 // Testing resource sharing between radio and external flash
 //
 
-#include "stdmansos.h"
-#include <print.h>
+#include <stdmansos.h>
 #include <extflash.h>
-#include "lib/assert.h"
-#include "random.h"
+#include <assert.h>
+#include <random.h>
 #include <string.h>
 
 // while working with flash, radio must be turned off

@@ -25,7 +25,7 @@
 #include "unaligned.h"
 #include "activemsg.h"
 #include <string.h>
-#include <net/addr.h>
+#include <net/address.h>
 
 static uint8_t localSendId;
 
@@ -34,11 +34,11 @@ void activeMessageSend(const void *data, uint16_t length)
     CC2420Header_t header;
 
     header.length = length + sizeof(header);
-    putU16(header.fcf, 0x1234);
+    le16write(header.fcf, 0x1234);
     header.dsn = localSendId++;
-    putU16(header.destpan, 0x0);
-    putU16(header.dest, 0xffff); // broadcast
-    putU16(header.src, localAddress);
+    le16write(header.destpan, 0x0);
+    le16write(header.dest, 0xffff); // broadcast
+    le16write(header.src, localAddress);
     header.type = 0xAA;
 
     radioSendHeader(&header, sizeof(header), data, length);

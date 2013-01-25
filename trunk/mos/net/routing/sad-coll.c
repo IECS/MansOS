@@ -34,10 +34,9 @@
 #include "../socket.h"
 #include <alarms.h>
 #include <timing.h>
-#include <lib/unaligned.h>
 #include <print.h>
 #include <random.h>
-#include <net/net-stats.h>
+#include <net/net_stats.h>
 
 #include <leds.h>
 

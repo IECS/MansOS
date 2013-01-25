@@ -26,8 +26,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <kernel/defines.h>
-
 #include "common.h"
 #include "prefix.h"
 #include "subsystems.h"

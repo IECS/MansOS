@@ -24,7 +24,7 @@
 #ifndef MANSOS_HAMMING_H
 #define MANSOS_HAMMING_H
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 static const uint8_t hammingEncodeTable[] = {
     0x0,
@@ -107,4 +107,4 @@ static inline uint16_t hammingDecodeInplace(uint8_t *data, uint16_t length)
     return length;
 }
 
-#endif // MANSOS_HAMMING_H
+#endif

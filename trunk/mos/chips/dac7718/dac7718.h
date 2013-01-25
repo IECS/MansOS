@@ -25,7 +25,7 @@
 #define MANSOS_DAC7718_H
 
 #include "adc_dac_pins.h"
-#include <kernel/defines.h>
+#include <defines.h>
 
 #define DAC7718_REG_CONFIG         0x0
 #define DAC7718_REG_MONITOR        0x1

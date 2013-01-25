@@ -21,9 +21,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sleep.h>
+#include <sleep_internal.h>
 #include "threads.h"
-#include "threads/context_switch.h" // arch-specific file
-#include <lib/assert.h>
+#include <threads/context_switch.h> // arch-specific file
+#include <assert.h>
 #include <print.h>
 #include <sleep.h>
 #include <string.h>
@@ -283,7 +285,7 @@ NO_EPILOGUE void schedule(void)
 
     if (currentThread->state == THREAD_SLEEPING) {
         THREADS_PRINTF("schedule: go to sleep for %u jiffies\n", jiffiesToSleep);
-        doMsleep(jiffies2ms(jiffiesToSleep));
+        doMsleep(jiffiesToSleep);
     } else {
         THREADS_PRINTF("schedule: keep running\n");
     }

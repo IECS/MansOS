@@ -2,7 +2,7 @@
 #include "smp.h"
 #include <kernel/reprogramming.h>
 #include <serial_number.h>
-#include <net/addr.h>
+#include <net/address.h>
 
 bool getMoteType(bool set, uint8_t oidLen, SmpOid_t oid,
                  SmpVariant_t *arg, SmpVariant_t *response) {

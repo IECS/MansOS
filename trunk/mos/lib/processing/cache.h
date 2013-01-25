@@ -24,7 +24,7 @@
 #ifndef MANSOS_CACHE_H
 #define MANSOS_CACHE_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 //
 // Sensor cache module.

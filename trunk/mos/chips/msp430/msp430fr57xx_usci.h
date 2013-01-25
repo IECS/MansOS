@@ -28,7 +28,7 @@
 #ifndef _MSP430FR57XX_USCI_H_
 #define _MSP430FR57XX_USCI_H_
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 #define USCI_A0_RXTX_PORT 2
 #define USCI_A0_TX_PIN    0

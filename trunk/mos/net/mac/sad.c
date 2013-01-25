@@ -27,7 +27,7 @@
 #include <alarms.h>
 #include <timing.h>
 #include <print.h>
-#include <net/net-stats.h>
+#include <net/net_stats.h>
 #include <net/routing.h>
 #include <net/radio_packet_buffer.h>
 #include <leds.h>

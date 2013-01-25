@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,17 +24,14 @@
 #ifndef MANSOS_FILE_H
 #define MANSOS_FILE_H
 
-//
-// File system top level interface
-//
+/// \file
+/// File system top-level interface (convenience functions)
+///
 
-#include <kernel/defines.h>
+#include <defines.h>
+#include <fatfs/posix-stdio.h>
 
-#if PLATFORM_PC
-
-// use FILE * defined in C library
-#include <stdio.h>
-
+//! Write to a file
 static inline bool writeToFile(const char *fileName, const void *data, uint16_t length)
 {
     bool result = false;
@@ -47,11 +44,5 @@ static inline bool writeToFile(const char *fileName, const void *data, uint16_t 
     }
     return result;
 }
-
-#else // PLATFORM_PC
-
-#error TODO
-
-#endif // !PLATFORM_PC
 
 #endif

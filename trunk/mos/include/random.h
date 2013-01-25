@@ -24,16 +24,17 @@
 #ifndef MANSOS_RANDOM_H
 #define MANSOS_RANDOM_H
 
-//
-// Pseudorandom number generator
-//
+/// \file
+/// Pseudorandom number generator
+///
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 //===========================================================
 // Data types and constants
 //===========================================================
 
+//! The maximal value of a random integer (minimal is 0)
 #undef RANDOM_MAX
 #define RANDOM_MAX 65535u
 
@@ -41,33 +42,39 @@
 // Procedures
 //===========================================================
 
-//
-// Initialize the random number with some random or unique bits from hardware
-//
+///
+/// Initialize the random number generator
+///
+/// Random or unique bits from hardware, if available.
+///
 void randomInit(void);
 
-//
-// Seed the random number generator with a specific integer
-//
+///
+/// Seed the random number generator with a specific integer
+///
 void randomSeed(uint16_t seed);
 
-//
-// Get a random integer between 0 and RANDOM_MAX (including)
-//
+///
+/// Get a random integer between 0 and RANDOM_MAX (including)
+///
 uint16_t randomNumber(void);
 
-//
-// Get a random integer between 0 and limit
-//
+///
+/// Get a random integer between 0 and 'limit'
+/// @param limit    Upper bound
+///
 static inline uint16_t randomNumberBounded(uint16_t limit)
 {
     if (limit == 0) return 0;
     return randomNumber() % limit;
 }
 
-//
-// Get a random integer in a specific range
-//
+///
+/// Get a random integer in a specific range ['low' .. 'high']
+///
+/// @param low    Lower bound
+/// @param high   Upper bound
+///
 static inline uint16_t randomInRange(uint16_t low, uint16_t high)
 {
     if (low >= high) return low;

@@ -29,7 +29,7 @@
 #ifndef MANSOS_MEM_H
 #define MANSOS_MEM_H
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 //----------------------------------------------------------
 // functions

@@ -24,6 +24,13 @@
 #ifndef MOS_BYTEORDER_H
 #define MOS_BYTEORDER_H
 
+// -- This file is part of the public MansOS API --
+
+/// \file
+/// API for unaligned memory access and big/little endian data conversion
+///
+
+#include <string.h> // memcpy
 
 #ifdef PLATFORM_PC
 
@@ -35,7 +42,7 @@
 #define bswap_16 bswap_16
 #endif
 
-#if __BYTE_ORDER == __BIG_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 #define tobe16(x)       (x) 
 #define tole16(x)       bswap_16(x)
 #else // __LITTLE_ENDIAN
@@ -49,10 +56,10 @@
 // AVR is little endian
 #define __IEEE_LITTLE_ENDIAN
 #else
-#include <sys/config.h>
+#include <endian.h>
 #endif
 
-#ifdef __IEEE_BIG_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 #define ntohl(x)    (x)
 #define ntohs(x)    (x)
 #define htonl(x)    (x)
@@ -62,7 +69,7 @@
 #define tobe32(x)   (x)
 #define tole32(x)   bswap_32(x)
 #else
-#ifdef __IEEE_LITTLE_ENDIAN
+#if BYTE_ORDER == LITTLE_ENDIAN
 #define ntohl(x)    bswap_32(x)
 #define ntohs(x)    bswap_16(x)
 #define htonl(x)    ntohl(x)
@@ -86,33 +93,65 @@
 #define bswap_16(x) (((x) >> 8) | (((x) & 0xff) << 8))
 #endif
 
-// data reading & writing
+// data reading & writing (for little-endian MCU only!)
 
-#define le16read(p)                             \
-    (((uint16_t)*((p) + 1) << 8) | *(p))
+#if BYTE_ORDER != LITTLE_ENDIAN
+#error The functions are suitable for little-endian architcture only
+#endif
 
-#define le32read(p)                             \
-    (((uint32_t)*((p) + 3) << 24)               \
-            | ((uint32_t)*((p) + 2) << 16)      \
-            | ((uint32_t)*((p) + 1) << 8)       \
-            | *(p))
+//! Read little endian 16 bit value
+static inline uint16_t le16Read(const void *ptr) {
+    uint16_t result;
+    memcpy(&result, ptr, sizeof(result));
+    return result;
+}
 
-#define be32read(p)                             \
-    (((uint32_t)*(p) << 24)                     \
-            | ((uint32_t)*((p) + 1) << 16)      \
-            | ((uint32_t)*((p) + 2) << 8)       \
-            | *(p + 3))
+//! Write little endian 16 bit value
+static inline void le16Write(void *ptr, uint16_t v) {
+    memcpy(ptr, &v, sizeof(v));
+}
 
-#define le16write(p, u) do {                    \
-        *(p) = (u) & 0xff;                      \
-        *((p) + 1) = ((u) >> 8) & 0xff;         \
-    } while (0)
+//! Read little endian 32 bit value
+static inline uint32_t le32Read(const void *ptr) {
+    uint32_t result;
+    memcpy(&result, ptr, sizeof(result));
+    return result;
+}
 
-#define le32write(p, u) do {                    \
-        *(p) = (u) & 0xff;                      \
-        *((p) + 1) = ((u) >> 8) & 0xff;         \
-        *((p) + 2) = ((u) >> 16) & 0xff;        \
-        *((p) + 3) = (u) >> 24;                 \
-    } while (0)
+//! Write little endian 32 bit value
+static inline void le32Write(void *ptr, uint32_t v) {
+    memcpy(ptr, &v, sizeof(v));
+}
+
+//! Read big endian 16 bit value
+static inline uint16_t be16Read(const void *ptr) {
+    const uint8_t *p = (const uint8_t *) ptr;
+    return ((uint16_t)p[0] << 8) | p[1];
+}
+
+//! Write big endian 16 bit value
+static inline void be16Write(void *ptr, uint16_t v) {
+    uint8_t *p = (uint8_t *) ptr;
+    p[0] = v >> 8;
+    p[1] = v & 0xff;
+}
+
+//! Read big endian 32 bit value
+static inline uint32_t be32Read(const void *ptr) {
+    const uint8_t *p = (const uint8_t *) ptr;
+    return ((uint32_t)p[0] << 24) 
+            | ((uint32_t)p[1] << 16) 
+            | ((uint16_t)p[2] << 8) 
+            | p[3];
+}
+
+//! Write big endian 32 bit value
+static inline void be32Write(void *ptr, uint32_t v) {
+    uint8_t *p = (uint8_t *) ptr;
+    p[0] = v >> 24;
+    p[1] = (v >> 16) & 0xff;
+    p[2] = (v >> 8) & 0xff;
+    p[3] = v & 0xff;
+}
 
 #endif

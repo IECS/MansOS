@@ -24,7 +24,7 @@
 #ifndef MANSOS_AVERAGE_H
 #define MANSOS_AVERAGE_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 // For 2^32
 #define BUFFERING_START_TRESHOLD 2147483648U // 2^31

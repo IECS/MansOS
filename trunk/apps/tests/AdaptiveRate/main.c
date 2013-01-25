@@ -24,14 +24,9 @@
  * AdaptiveRate -- implement adaptive sample rate using file system facilities
  */
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-
 #include <fs.h>
-#include <mansos.h>
-#include <lib/assert.h>
-#include <lib/dprint.h>
+#include <stdmansos.h>
+#include <assert.h>
 
 #define FILE_PARTS 2
 

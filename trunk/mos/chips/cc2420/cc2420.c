@@ -59,7 +59,6 @@
 #include <radio.h>
 #include <errors.h>
 #include <lib/codec/crc.h>
-#include <kernel/defines.h>
 #include <kernel/threads/threads.h>
 #include <lib/energy.h>
 #include <digital.h>

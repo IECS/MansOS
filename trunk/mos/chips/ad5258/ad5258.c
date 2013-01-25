@@ -32,14 +32,7 @@ static bool writeAdRegister(uint8_t command)
     uint8_t err = 0;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
-#if USE_SOFT_I2C
-    i2cStart();
-    err |= i2cWriteByteRaw((AD5258_ADDRESS << 1) | AD5258_WRITE_FLAG);
-    err |= i2cWriteByteRaw(command);
-    i2cStop();
-#else
     err = i2cWrite(AD5258_I2C_ID, AD5258_ADDRESS, &command, 1) != 0;
-#endif
     ATOMIC_END(intHandle);
     return err == 0;
 }
@@ -50,18 +43,8 @@ static bool writeAdRegisterData(uint8_t command, uint8_t data)
     uint8_t err = 0;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
-#if USE_SOFT_I2C
-    i2cStart();
-    err |= i2cWriteByteRaw((AD5258_ADDRESS << 1) | AD5258_WRITE_FLAG);
-    err <<= 1;
-    err |= i2cWriteByteRaw(command);
-    err <<= 1;
-    err |= i2cWriteByteRaw(data);
-    i2cStop();
-#else
     uint8_t buf[2] = {command, data};
     err = i2cWrite(AD5258_I2C_ID, AD5258_ADDRESS, buf, 2) != 2;
-#endif
     ATOMIC_END(intHandle);
     // PRINTF("err=%u\n", (uint16_t) err);
     return err == 0;
@@ -74,19 +57,8 @@ static bool readAdRegisterData(uint8_t command, uint8_t *val)
     *val = 0;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
-#if USE_SOFT_I2C
-    i2cStart();
-    err |= i2cWriteByteRaw((AD5258_ADDRESS << 1) | AD5258_WRITE_FLAG);
-    err |= i2cWriteByteRaw(command);
-    i2cStop();
-    i2cStart();
-    err |= i2cWriteByteRaw((AD5258_ADDRESS << 1) | AD5258_READ_FLAG);
-    *val = i2cReadByteRaw(I2C_NO_ACK);
-    i2cStop();
-#else
     err = i2cWrite(AD5258_I2C_ID, AD5258_ADDRESS, &command, 1) != 1;
     err |= i2cRead(AD5258_I2C_ID, AD5258_ADDRESS, val, 1) != 1;
-#endif
     ATOMIC_END(intHandle);
     // PRINTF("read %#02x, err %#02x\n", *val, err);
     return err == 0;
@@ -98,7 +70,6 @@ void ad5258Init(void)
 {
     i2cInit(AD5258_I2C_ID);
 }
-
 
 bool ad5258Write(uint8_t value)
 {

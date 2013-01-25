@@ -611,13 +611,13 @@ class UseCase(object):
                 for f in self.component.remoteFields:
                     outputFile.write("\n            | {}_TYPE_MASK".format(f.upper()))
                 outputFile.write(";\n")
-                outputFile.write("        sealCommPacketRegisterInterest(typeMask, {}{}Callback, buffer);\n".format(
+                outputFile.write("        sealNetPacketRegisterInterest(typeMask, {}{}Callback, buffer);\n".format(
                         self.component.getNameCC(), self.numInBranch))
                 outputFile.write("    }\n")
             else:
                 # TODO: do not generate any code here or above if this is not used
                 typeID = self.component.remoteFields[0].upper() + "_TYPE_ID"
-                outputFile.write("    sealCommRegisterInterest({}, {}{}Callback);\n".format(
+                outputFile.write("    sealNetRegisterInterest({}, {}{}Callback);\n".format(
                         typeID, self.component.getNameCC(), self.numInBranch))
         elif self.interruptBased:
             outputFile.write("    pinEnableInt({}, {});\n".format(self.port, self.pin))
@@ -1084,7 +1084,7 @@ class Sensor(Component):
     def getRawReadFunction(self, suffix, root):
         if self.isRemote():
             # remote sensors require specialHandling
-            return "sealCommReadValue({}_TYPE_ID)".format(self.getNameUC())
+            return "sealNetReadValue({}_TYPE_ID)".format(self.getNameUC())
 
         rawReadFunc = "{}ReadRaw{}".format(self.getNameCC(), suffix)
         if self.cacheNeeded:

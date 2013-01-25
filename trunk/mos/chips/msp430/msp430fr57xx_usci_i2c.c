@@ -29,7 +29,7 @@
 // Initialization
 //
 
-void i2cInit(uint8_t busId)
+void i2cHwInit(uint8_t busId)
 {
      // I2C mode: master, 7-bit addressing, 100 kbaud
 #define I2C_MODE (UCMST | UCMODE_3 | UCSYNC)
@@ -46,15 +46,12 @@ void i2cInit(uint8_t busId)
     UCB0CTL1 &= ~UCSWRST;                  // Release hold
 }
 
-void i2cOn(uint8_t busId) { }
-void i2cOff(uint8_t busId) { }
-
 
 //
 // Send/receive functions
 //
 
-uint8_t i2cWrite(uint8_t busId, uint8_t addr, const void *buf, uint8_t len)
+uint8_t i2cHwWrite(uint8_t busId, uint8_t addr, const void *buf, uint8_t len)
 {
     size_t i;
     int    ret = I2C_OK;
@@ -89,7 +86,7 @@ end:
     return ret;
 }
 
-uint8_t i2cRead(uint8_t busId, uint8_t addr, void *buf, uint8_t len)
+uint8_t i2cHwRead(uint8_t busId, uint8_t addr, void *buf, uint8_t len)
 {
     size_t i;
 

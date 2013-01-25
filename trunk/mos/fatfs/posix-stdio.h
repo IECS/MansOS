@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,32 +24,33 @@
 #ifndef MANSOS_POSIX_STDIO_H
 #define MANSOS_POSIX_STDIO_H
 
-//
-// POSIX-compatible high level file routines
-//
+/// \file
+/// POSIX-compatible high level file routines
+///
+/// Availabe on on platforms with SD card, including PC.
+/// Uses FAT file system internally.
+///
+/// Note: fprintf() is not provided because of efficiency issues!
+/// Use fputs() combined with sprintf() in an application-specific buffer.
+///
 
 #include "posix-file.h"
-#include <kernel/defines.h>
 
-// open a file
+//! Open a file
 FILE *fopen(const char *restrict filename,
             const char *restrict modes);
 
-// close a file
+//! Close a file
 int fclose(FILE *fp);
 
-// flush a file
-int fflush(FILE *fp);
-
-// read from a file
+//! Read from the file
 size_t fread(void *restrict ptr, size_t size,
              size_t n, FILE *restrict fp);
 
-//
-// fgetc(3):
-// fgetc() reads the next character from stream and returns it as an unsigned
-// char cast to an int, or EOF on end of file or error.
-//
+///
+/// fgetc() reads the next character from stream and returns it as an unsigned
+/// char cast to an int, or EOF on end of file or error.
+///
 static inline int fgetc(FILE *fp)
 {
     uint8_t b;
@@ -57,14 +58,12 @@ static inline int fgetc(FILE *fp)
     return (int) b;
 }
 
-//
-// fgets(3):
-// fgets()  reads  in  at  most  one  less than size characters from stream and
-// stores them into the buffer pointed to by s.  Reading stops after an EOF  or
-// a newline.  If a newline is read, it is stored into the buffer.  A terminat‐
-// ing null byte ('\0') is stored after the last character in the buffer.
-//
-//
+///
+/// fgets()  reads  in  at  most  one  less than size characters from stream and
+/// stores them into the buffer pointed to by s.  Reading stops after an EOF  or
+/// a newline.  If a newline is read, it is stored into the buffer.
+/// A terminating null byte ('\0') is stored after the last character in the buffer.
+///
 static inline char *fgets(char *restrict s, int size, FILE *restrict fp)
 {
     uint16_t i;
@@ -84,16 +83,18 @@ static inline char *fgets(char *restrict s, int size, FILE *restrict fp)
     return s;
 }
 
-// write to a file
+//! Write to the file
 size_t fwrite(const void *restrict ptr, size_t size,
               size_t n, FILE *restrict fp);
 
+//! Put a character in the file
 static inline int fputc(int c, FILE *fp)
 {
     uint8_t b = (uint8_t) c;
     return fwrite(&b, 1, 1, fp) == 1 ? b : EOF;
 }
 
+//! Put a string to the file
 static inline int fputs(const char *restrict s, FILE *restrict fp)
 {
     uint16_t length = strlen(s);
@@ -101,36 +102,41 @@ static inline int fputs(const char *restrict s, FILE *restrict fp)
     return (int) length;
 }
 
-// tell current position in a file
+//! Tell the current position in the file
 static inline long ftell(FILE *fp)
 {
     return fp->position;
 }
 
+//! Rewind the current position back to the start
 static inline void rewind(FILE *fp)
 {
     fp->position = 0;
     fp->currentCluster = fp->firstCluster;
 }
 
+//! Change the current position in the file
 int fseek(FILE *fp, long offset, int whence);
 
+///
+/// Returns true if end of file is reached.
+///
+/// Note: as opposed to POSIX, end-of-file flag is not set.
+/// EOF condition can be reverted by simply fseek()'ing back in the file.
+///
 static inline int feof(FILE *fp)
 {
     return fp->position == -1;
 }
 
-// delete a file
+//! Flush all active buffers to SD card
+int fflush(FILE *fp);
+
+//! Delete a file
 int remove(const char *filename);
 
 
-// fprintf() is not provided because of efficiency issues:
-// use fputs() combined with sprintf() in an application-specific buffer.
-
-
-//
-// Initialization routine (interal use only!)
-//
+// Initialization routine (internal use only!)
 void posixStdioInit(void);
 
 

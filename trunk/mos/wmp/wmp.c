@@ -25,7 +25,7 @@
 #include "stdmansos.h"
 #include <lib/byteorder.h>
 #include <lib/algo.h>
-#include <lib/assert.h>
+#include <assert.h>
 #include <fatfs/fatfs.h>
 #include <stdio.h>
 #include <sdstream.h>
@@ -387,7 +387,7 @@ static void processSensorSet(void)
     if (!sensor) goto error;
 
     uint32_t oldPeriod = sensor->period;
-    sensor->period = le32read(sp.arguments + 1);
+    sensor->period = le32Read(sp.arguments + 1);
 
     if ((oldPeriod == 0) != (sensor->period == 0)) {
         if (oldPeriod == 0) numTotalActiveSensors++;
@@ -420,7 +420,7 @@ static void processSensorGet(void)
     if (!sensor) return;
 
     sp.argLen = 5;
-    le32write(sp.arguments + 1, sensor->period);
+    le32Write(sp.arguments + 1, sensor->period);
     wmpSendReply();
 }
 
@@ -493,7 +493,7 @@ static void processAddressSet(void)
 static void processAddressGet(void)
 {
 #if USE_ADDRESSING
-    le16write(sp.arguments, localAddress);
+    le16Write(sp.arguments, localAddress);
     sp.argLen = 2;
 #else
     sp.arguments[0] = WMP_ERROR;

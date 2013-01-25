@@ -25,8 +25,7 @@
 //      Blink application.
 //-------------------------------------------
 
-#include <kernel/stdmansos.h>
-#include "dprint.h"
+#include <stdmansos.h>
 
 void serialReceive(uint8_t byte) {
     PRINTF("Pong #%i\n", byte);

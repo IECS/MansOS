@@ -22,7 +22,7 @@
  */
 
 #include "mutex.h"
-#include <lib/assert.h>
+#include <assert.h>
 
 #if !DISABLE_LOCKING
 

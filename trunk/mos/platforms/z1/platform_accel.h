@@ -36,17 +36,17 @@ static inline void accelInit(void) {
 #define accelOff() while (0) {}
 
 // read acceleration on X axis
-static inline uint16_t accelReadX() {
+static inline uint16_t accelReadX(void) {
     return adxl345ReadAxis(ADXL345_X_AXIS);
 }
 
 // read acceleration on Y axis
-static inline uint16_t accelReadY() {
+static inline uint16_t accelReadY(void) {
     return adxl345ReadAxis(ADXL345_Y_AXIS);
 }
 
 // read acceleration on Z axis
-static inline uint16_t accelReadZ() {
+static inline uint16_t accelReadZ(void) {
     return adxl345ReadAxis(ADXL345_Z_AXIS);
 }
 

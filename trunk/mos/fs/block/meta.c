@@ -33,7 +33,7 @@
 #include <extflash.h>
 #include <fs/common.h>
 #include <fs/types.h>
-#include <kernel/defines.h>
+#include <defines.h>
 
 #include "alloc.h"
 #include "init.h"

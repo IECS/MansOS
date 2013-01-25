@@ -23,7 +23,7 @@
 
 #include "stdmansos.h"
 #include <lib/nmea/nmea.h>
-#include <lib/assert.h>
+#include <assert.h>
 
 
 void appMain() {

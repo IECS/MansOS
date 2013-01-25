@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,57 +24,69 @@
 #ifndef MANSOS_I2C_H
 #define MANSOS_I2C_H
 
-//==============================================================================
-// Hardware controlled I2C, master mode only
-// The actual implementation is in HPL. HAL layer provides macros which
-// call the real code
-//==============================================================================
+/// \file
+/// Generic I2C interface.
+///
+/// Depending on bus ID, either hardware or software implementation can be selected.
+/// Only I2C master mode is supported.
+///
 
-#include <stdtypes.h>
-
-// I2C acknowledge
-typedef enum {
-  I2C_NO_ACK = 0,
-  I2C_ACK    = 1,
-} i2cAck_t;
-
-typedef enum {
-  I2C_OK = 0,
-  I2C_ACK_ERROR = 1,
-  I2C_OTHER = 2
-} i2cError_t;
-
-// I2C command type: read or write (used in the last bit of the address byte)
-typedef enum {
-    I2C_CMD_WRITE = 0,
-    I2C_CMD_READ = 1
-} I2CCmd_t;
-
-#ifdef USE_SOFT_I2C
-// Use software I2C module
+#include <i2c_types.h>
 #include <i2c_soft.h>
-#else
-// Use hardware I2C module
-//#include <i2c_hw.h>
-#endif
-
-// constant used to specify software-I2C bus
-#define I2C_BUS_SW 128
+#include <i2c_hal.h> // hardware function declaration
 
 /**
  * Initializes the I2C bus
  */
-void i2cInit(uint8_t busId);
+static inline void i2cInit(uint8_t busId) {
+    if (busId == I2C_BUS_SW) {
+        i2cSoftInit();
+    } else {
+        i2cHwInit(busId);
+    }
+}
 
 /**
  * Turn on the I2C bus
  */
-void i2cOn(uint8_t busId);
+static inline void i2cOn(uint8_t busId) {
+    if (busId != I2C_BUS_SW) i2cHwOn(busId);
+}
 
 /**
  * Turn off the I2C bus
  */
-void i2cOff(uint8_t busId);
+static inline void i2cOff(uint8_t busId) {
+    if (busId != I2C_BUS_SW) i2cHwOff(busId);
+}
+
+/**
+ * Writes a string to I2C and checks acknowledge
+ * @param   addr        address of the slave receiver (7 bits!)
+ * @param   buf         the buffer containing the string
+ * @param   len         buffer length in bytes
+ * @return  0           on success, error code otherwise
+ */
+static inline i2cError_t i2cWrite(uint8_t busId, uint8_t addr,
+                                  const void *buf, uint8_t len)
+{
+    if (busId == I2C_BUS_SW) return i2cSoftWrite(addr, buf, len);
+    return i2cWrite(busId, addr, buf, len);
+}
+
+/**
+ * Reads a message into buffer from I2C - requests it from a slave
+ * @param   addr        address of the slave transmitter (7 bits!)
+ * @param   buf         the buffer to store the message
+ * @param   len         buffer length in bytes
+ * @return  received byte count
+ */
+static inline uint8_t i2cRead(uint8_t busId, uint8_t addr,
+                              void *buf, uint8_t len)
+{
+    if (busId == I2C_BUS_SW) return i2cSoftRead(addr, buf, len);
+    return i2cRead(busId, addr, buf, len);
+}
 
 /**
  * Writes a byte to I2C and checks acknowledge
@@ -82,40 +94,24 @@ void i2cOff(uint8_t busId);
  * @param   txByte  byte to transmit
  * @return          0 on success, error code otherwise
  */
-#define i2cWriteByte(busId, addr, txByte)  \
-    i2cWrite(busId, addr, &(txByte), 1)
+static inline i2cError_t i2cWriteByte(uint8_t busId, uint8_t addr, uint8_t txByte)
+{
+    if (busId == I2C_BUS_SW) return i2cSoftWriteByte(txByte);
+    return i2cWrite(busId, addr, &txByte, 1);
+}
 
-/*
- * Writes a string to I2C and checks acknowledge
- * @param   addr        address of the slave receiver (7 bits!)
- * @param   buf         the buffer containing the string
- * @param   len         buffer length in bytes
- * @return  0           on success, error code otherwise
- */
-i2cError_t i2cWrite(uint8_t busId, uint8_t addr,
-                    const void *buf, uint8_t len);
-
-/*
- * Reads a message into buffer from I2C - requests it from a slave
- * @param   addr        address of the slave transmitter (7 bits!)
- * @param   buf         the buffer to store the message
- * @param   len         buffer length in bytes
- * @return  received byte count
- */
-uint8_t i2cRead(uint8_t busId, uint8_t addr,
-                void *buf, uint8_t len);
-
-/*
+/**
  * Reads a byte from I2C - requests it from a slave
  * @param   addr        address of the slave transmitter (7 bits!)
  * @param   rxByte      buffer, where the received data will be stored
  * @return  received byte count (1 on success, 0 on error)
  */
-static inline uint8_t i2cReadByte(uint8_t busId, uint8_t slaveAddr) {
+static inline uint8_t i2cReadByte(uint8_t busId, uint8_t slaveAddr)
+{
+    if (busId == I2C_BUS_SW) return i2cSoftReadByte(I2C_ACK);
     uint8_t byte = 0;
     i2cRead(busId, slaveAddr, &byte, 1);
     return byte;
 }
-
 
 #endif

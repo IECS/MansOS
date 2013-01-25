@@ -24,6 +24,10 @@
 #ifndef MANSOS_MAC_H
 #define MANSOS_MAC_H
 
+/// \file
+/// MAC protocol public API
+///
+
 #include "address.h"
 #include <radio.h>
 

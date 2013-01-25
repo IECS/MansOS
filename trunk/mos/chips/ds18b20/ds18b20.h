@@ -28,7 +28,7 @@
 #ifndef DS18B20_H
 #define DS18B20_H
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 //
 // Available conversion resolutions

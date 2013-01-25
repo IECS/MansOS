@@ -50,7 +50,6 @@ include $(MAKEFILE_GCC)
 
 #===== Sources =====
 
-PSOURCES-$(USE_I2C) += $(MOS)/arch/avr/i2c_hal.c
 PSOURCES-$(USE_ADDRESSING) += $(MOS)/arch/avr/comm_hal.c
 PSOURCES-$(USE_WATCHDOG) += $(MOS)/arch/avr/watchdog.c
 

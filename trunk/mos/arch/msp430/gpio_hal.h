@@ -28,7 +28,7 @@
 #ifndef _MSP430_PORTS_H_
 #define _MSP430_PORTS_H_
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 //===========================================================
 //  Macros

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,7 +24,7 @@
 #ifndef MANSOS_FATFS_STRUCTURES_H
 #define MANSOS_FATFS_STRUCTURES_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 // File-system sector and cluster types
 typedef uint16_t cluster_t;

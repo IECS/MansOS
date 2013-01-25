@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include <fs.h>
-#include <kernel/stdtypes.h>
+#include <defines.h>
 
 #include "common.h"
 #include "init.h"

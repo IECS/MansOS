@@ -23,7 +23,7 @@
 
 #include "ds2401.h"
 #include <delay.h>
-#include <kernel/defines.h>
+#include <defines.h>
 #include <lib/codec/crc.h>
 #include <string.h>
 #include "platform.h"

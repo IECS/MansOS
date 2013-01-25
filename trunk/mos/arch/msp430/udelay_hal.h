@@ -24,8 +24,9 @@
 #ifndef UDELAY_HAL_H
 #define UDELAY_HAL_H
 
-#include <kernel/stdtypes.h>
-#include <kernel/defines.h>
+#include <defines.h>
+
+// TODO: support higher freq MCUs better (at least up to 16 MHz!)
 
 #ifdef __IAR_SYSTEMS_ICC__
 
@@ -87,9 +88,8 @@ static inline void clock_delay(uint16_t n)
 }
 
 //
-// Delay for specified amount of milliseconds.
-// The function is not very precise!
-// If precise delay is required, use timers.
+// Delay for approximate amount of milliseconds.
+// The function is not very precise! If precise delays are required, use timers.
 //
 static inline void mdelay(uint16_t ms) {
     while (ms > 64) {

@@ -21,7 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 #include <platform.h> // For chip version and voltage override
 

@@ -29,7 +29,7 @@
 #ifndef MANSOS_ACTIVEMSG_H
 #define MANSOS_ACTIVEMSG_H
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 typedef struct CC2420Header_s {
   uint8_t length;

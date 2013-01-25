@@ -23,7 +23,7 @@
 
 #include "stdmansos.h"
 #include <lib/byteorder.h>
-#include <lib/assert.h>
+#include <assert.h>
 #include <sdcard/sdcard.h>
 #include <fatfs/structures.h>
 
@@ -134,27 +134,27 @@ int fatFsFormat(void)
     // put "mansos" as the formatter string
     memcpy(fbs->oemDescription, "mansos\0\0", 8);
     // put constants
-    le16write(fbs->bytesPerSector, BLOCK_SIZE);
+    le16Write(fbs->bytesPerSector, BLOCK_SIZE);
     fbs->sectorsPerCluster = SECTORS_PER_CLUSTER;
-    le16write(fbs->numReservedSectors, 64);
+    le16Write(fbs->numReservedSectors, 64);
     fbs->numFATs = FAT_COUNT;
-    le16write(fbs->numRootEntries, ROOT_DIR_ENTRY_COUNT);
+    le16Write(fbs->numRootEntries, ROOT_DIR_ENTRY_COUNT);
     if (partitionSizeInBlocks < 0x10000) {
-        le16write(fbs->totalSectors16, partitionSizeInBlocks);
+        le16Write(fbs->totalSectors16, partitionSizeInBlocks);
     } else {
-        le16write(fbs->totalSectors16, 0); // set to zero and use totalSectors32 instead
+        le16Write(fbs->totalSectors16, 0); // set to zero and use totalSectors32 instead
     }
     fbs->mediaDescriptor = 0xf8;
-    le16write(fbs->sectorsPerFAT16, BLOCKS_PER_FAT);
-    // le16write(fbs->sectorsPerTrack, 0x3e); // XXX
-    // le16write(fbs->numHeads, 0x3e);        // XXX
-    le16write(fbs->sectorsPerTrack, 0x0);
-    le16write(fbs->numHeads, 0x0);
-    le32write(fbs->numHiddenBlocks, 0ul);
-    le32write(fbs->totalSectors32, partitionSizeInBlocks);
-    le16write(fbs->physicalDriveNumber, 0);
+    le16Write(fbs->sectorsPerFAT16, BLOCKS_PER_FAT);
+    // le16Write(fbs->sectorsPerTrack, 0x3e); // XXX
+    // le16Write(fbs->numHeads, 0x3e);        // XXX
+    le16Write(fbs->sectorsPerTrack, 0x0);
+    le16Write(fbs->numHeads, 0x0);
+    le32Write(fbs->numHiddenBlocks, 0ul);
+    le32Write(fbs->totalSectors32, partitionSizeInBlocks);
+    le16Write(fbs->physicalDriveNumber, 0);
     fbs->bootRecordSignature = 0x29; // valid serial number, volume label and FS type
-    le32write(fbs->volumeSerialNumber, ((uint32_t)randomNumber() << 16) + randomNumber());
+    le32Write(fbs->volumeSerialNumber, ((uint32_t)randomNumber() << 16) + randomNumber());
     memcpy(fbs->volumeLabel, "         ", 11);
     memcpy(fbs->fileSystemIdentifier, "FAT16   ", 8);
     fbs->bootSectorSig0 = 0x55;

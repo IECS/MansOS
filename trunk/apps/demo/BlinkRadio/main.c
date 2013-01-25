@@ -49,6 +49,10 @@
 // variable that determines whether last receving was ok
 uint8_t rxOk;
 
+static inline void busyWait(uint32_t waitCycles) {
+    while (waitCycles) --waitCycles;
+}
+
 void rcvRadio(void)
 {
     static uint8_t buffer[RADIO_MAX_PACKET];

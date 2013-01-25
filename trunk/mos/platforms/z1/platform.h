@@ -35,6 +35,7 @@
 #include "cc2420_pins.h"
 #include "sht_pins.h"
 #include "adxl_config.h"
+#include "platform_accel.h"
 
 // define missing symbols: P1SEL2 and P5SEL2
 #ifdef __IAR_SYSTEMS_ICC__

@@ -28,7 +28,7 @@
 #ifndef _MSP430_INT_H_
 #define _MSP430_INT_H_
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 #ifdef __GNUC__
 

@@ -24,6 +24,10 @@
 #ifndef MANSOS_ROUTING_H
 #define MANSOS_ROUTING_H
 
+/// \file
+/// Routing protocol public API
+///
+
 #include "address.h"
 
 //===========================================================

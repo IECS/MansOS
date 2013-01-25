@@ -25,7 +25,7 @@
 #define MANSOS_ADS8638_H
 
 #include "adc_dac_pins.h"
-#include <kernel/defines.h>
+#include <defines.h>
 
 #define ADS8638_REG_MANUAL         0x04
 #define ADS8638_REG_AUTO           0x05

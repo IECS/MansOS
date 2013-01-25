@@ -24,17 +24,30 @@
 #ifndef MANSOS_SERIAL_NUMBER_H
 #define MANSOS_SERIAL_NUMBER_H
 
-//
-// Unuique serial number chip driver
-//
+/// \file
+/// Unique serial number chip API
+///
 
-//
-// List all supported serial number chips here (before including snum_hal.h)
-//
-
+///
+/// List all supported serial number chips here
+///
 #define SNUM_DS2411 1
 #define SNUM_DS2401 2
 
-#include "snum_hal.h"
+//! Read the hardware serial number
+extern inline void serialNumberRead(uint8_t *buffer);
+//! Compare 'serialNumber' with the local hardware serial number
+extern inline bool serialNumberMatches(const uint8_t *serialNumber);
+
+// Initialize the chip
+extern inline void serialNumberInit(void);
+
+// implementation
+#include <arch/snum_hal.h>
+
+#ifndef SERIAL_NUMBER_SIZE
+//! The size of the serial number in bytes
+#define SERIAL_NUMBER_SIZE 8
+#endif
 
 #endif

@@ -24,6 +24,10 @@
 #ifndef MANSOS_SOCKET_H
 #define MANSOS_SOCKET_H
 
+/// \file
+/// Socket public API
+///
+
 #include "mac.h"
 #include <lib/list.h>
 
@@ -58,34 +62,41 @@ void socketsInit(void);
 
 // -------------------- User API
 
+//! Open a socket
 int8_t socketOpen(Socket_t *, SocketRecvFunction cb);
 
+//! Close a socket
 int8_t socketClose(Socket_t *);
 
+//! Bind a socket to a specific port
 static inline void socketBind(Socket_t *s, NetPort_t port)
 {
     s->port = port;
 }
 
+//! Set destination address of a specific socket
 static inline void socketSetDstAddress(Socket_t *s, MosShortAddr addr)
 {
     s->dstAddress = addr;
 }
 
+//! Send data via socket
 int8_t socketSend(Socket_t *s, const void *data, uint16_t len);
 
+//! Send data via socket, extended version
 static inline int8_t socketSendEx(Socket_t *s, const void *data, uint16_t len, MosShortAddr addr)
 {
     socketSetDstAddress(s, addr);
     return socketSend(s, data, len);
 }
 
-//
-// Send a pakcet, using the MansOS network stack.
-// If 'address' is zero, the packet is sent to root;
-// If 'address' is a broadcast address, the packet is broadcasted to all motes in single-hop neighborhood;
-// Otherwise the packet is sent to the unicast address specified.
-//
+///
+/// Send a packet using the MansOS network stack without opening a socket.
+///
+/// If 'address' is zero, the packet is sent to root;
+/// If 'address' is a broadcast address, the packet is broadcasted to all motes in single-hop neighborhood;
+/// Otherwise the packet is sent to the unicast address specified.
+///
 int8_t sendPacket(MosShortAddr address, NetPort_t port, const void *data, uint16_t len);
 
 #endif

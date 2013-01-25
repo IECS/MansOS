@@ -24,20 +24,20 @@
 //----------------------------------------------------------
 // MansOS Kernel main source file
 //----------------------------------------------------------
-#include "stdmansos.h"
+#include <stdmansos.h>
 #include <eeprom.h>
 #include <watchdog.h>
 #include <random.h>
 #include <smp/smp.h>
 #include <wmp/wmp.h>
-#include <lib/assert.h>
+#include <assert.h>
 #if USE_EXT_FLASH
 #include <extflash.h>
 #endif
 #if USE_FLASH
 #include "boot.h"
 #endif
-#include "alarms_system.h"
+#include "alarms_internal.h"
 #include <net/networking.h>
 #include <net/seal_networking.h>
 #include <beeper.h>

@@ -24,7 +24,7 @@
 #ifndef EXT_FLASH_HAL_H
 #define EXT_FLASH_HAL_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 #define EXT_FLASH_SECTOR_SIZE   0x10000 // 64k
 #define EXT_FLASH_SECTOR_COUNT  32      // Simulate 2MB

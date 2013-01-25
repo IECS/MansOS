@@ -35,7 +35,7 @@
 //	Encode a stream of bytes bufIn to a HDLC frame bufOut.
 //	Returns a pointer to the next byte after the last encoded
 //-------------------------------------------------------------------
-int frameEncode(int length, uint8_t* bufIn, uint8_t* bufOut)
+uint8_t *frameEncode(int length, uint8_t* bufIn, uint8_t* bufOut)
 {
   int i;
   uint8_t byteIn;
@@ -68,7 +68,7 @@ int frameEncode(int length, uint8_t* bufIn, uint8_t* bufOut)
 //	Returns a pointer to the next byte after the last encoded
 //      Returns NULL if frame aborted.
 //-------------------------------------------------------------------
-int frameDecode(int length, uint8_t* bufIn, uint8_t* bufOut)
+uint8_t *frameDecode(int length, uint8_t* bufIn, uint8_t* bufOut)
 {
   int i;
   uint8_t byteIn;

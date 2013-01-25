@@ -22,11 +22,10 @@
  */
 
 #include "threads.h"
-#include <kernel/alarms_system.h>
+#include <kernel/alarms_internal.h>
 #include <kernel/threads/radio.h>
 #include <net/radio_packet_buffer.h>
 #include <net/mac.h>
-#include <kernel/stdmansos.h>
 
 ProcessFlags_t processFlags;
 
@@ -36,13 +35,8 @@ ProcessFlags_t processFlags;
 void systemMain(void)
 {
     for (;;) {
-        // PRINT("in kernel main...\n");
-        // toggleGreenLed();
-
-        // PRINTF("ap = %d\n", (int) processFlags.bits.alarmsProcess);
-        // PRINTF("rp = %d\n", (int) processFlags.bits.radioProcess);
-
-        // it works better when radio processing is first (TODO: order should be irrelevant!)
+        // Process all outstanding system tasks.
+        // Put radio processing first to get smaller packet processing delays!
 #if USE_RADIO
         if (processFlags.bits.radioProcess) {
             processFlags.bits.radioProcess = false;
@@ -73,10 +67,8 @@ void systemMain(void)
                 }
             }
         }
-        // PRINTF("jiffiesToSleep=%u\n", jiffiesToSleep);
-
-        // PRINTF("kernel main, sleepTime = %u\n", jiffiesToSleep);
-        // PRINTF("  nextAlarm=%lu, jiffies=%lu\n", getNextAlarmTime(), getJiffies());
+        
+        // find the next thread to run
         schedule();
     }
 }

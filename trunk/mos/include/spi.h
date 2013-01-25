@@ -24,16 +24,17 @@
 #ifndef MANSOS_SPI_H
 #define MANSOS_SPI_H
 
-//==============================================================================
-// SPI bus protocol, master mode only.
-// Automatically chooses to use hardware or software SPI, depending on busId
-// The actual implementation is in HPL.
-// HAL layer provides macros and pin assignments
-//==============================================================================
+/// \file
+/// SPI bus protocol, master mode only
+///
+/// Automatically chooses to use hardware or software SPI, depending on busId
+/// The actual implementation is in HPL.
+/// HAL layer provides macros and pin assignments
+///
 
 #include <stdtypes.h>
 
-// constant used to specify software-SPI bus
+//! The constant used to specify software-SPI bus
 #define SPI_BUS_SW 128
 
 #include <hil/spi_hw.h>

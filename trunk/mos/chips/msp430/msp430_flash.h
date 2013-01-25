@@ -24,16 +24,12 @@
 #ifndef MANSOS_MSP430_FLASH_H
 #define MANSOS_MSP430_FLASH_H
 
-#include <stdint.h>
-#include <string.h>
-
 //
 // MSP430 internal flash memory (ROM) driver.
 //
 
+#include <defines.h>
 #include "flash.h" // platform-specific constants
-
-typedef uint16_t FlashAddress_t;
 
 //
 // Erase flash segments

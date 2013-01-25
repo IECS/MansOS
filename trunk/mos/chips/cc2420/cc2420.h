@@ -24,7 +24,7 @@
 #ifndef MANSOS_CC2420_H
 #define MANSOS_CC2420_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 //
 // Configuration constants

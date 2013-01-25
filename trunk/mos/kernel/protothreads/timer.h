@@ -83,7 +83,7 @@
 // !!! #include "kernel/protothreads/sys/clock.h"
 
 // compatibility layer (adapter) !!!
-#include <kernel/defines.h>
+#include <defines.h>
 typedef ticks_t clock_time_t;
 #define clock_time() getJiffies()
 

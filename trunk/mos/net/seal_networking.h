@@ -21,21 +21,27 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_SEAL_COMM_H
-#define MANSOS_SEAL_COMM_H
+#ifndef MANSOS_SEAL_NETWORKING_H
+#define MANSOS_SEAL_NETWORKING_H
+
+/// \file
+/// SEAL networking public API
+///
 
 #include <radio.h>
 
+//! The magic code at start of all SEAL data packets
 #ifndef SEAL_MAGIC
 #define SEAL_MAGIC    0x5EA1 // "SEAl"
 #endif
 
+//! The data port used for SEAL packets
 #ifndef SEAL_DATA_PORT
 #define SEAL_DATA_PORT 123
 #endif
 
 //
-// Some default field codes (also in file seal/components.py).
+// Some default field codes (also defined in file seal/components.py).
 // All codes belong pseudo sensors. Real sensor codes follow,
 // but they are platform (and application?) specific,
 // and cannot be declared here.
@@ -76,66 +82,66 @@ typedef void (*SingleValueCallbackFunction)(uint16_t code, int32_t value);
 // Register a listener to multiple sensors (determined by typemask).
 // Multiple listeners are possible (determined by different callbacks!)
 //
-bool sealCommPacketRegisterInterest(uint32_t typemask,
-                                    MultiValueCallbackFunction callback,
-                                    int32_t *buffer);
+bool sealNetPacketRegisterInterest(uint32_t typemask,
+                                   MultiValueCallbackFunction callback,
+                                   int32_t *buffer);
 
 //
 // Register a listener to specific sensor (determined by sensor code).
 // Multiple listeners are possible (determined by different callbacks!)
 //
-bool sealCommRegisterInterest(uint16_t code,
-                              SingleValueCallbackFunction callback);
+bool sealNetRegisterInterest(uint16_t code,
+                             SingleValueCallbackFunction callback);
 
 //
 // Unregister a listener
 //
-bool sealCommPacketUnregisterInterest(uint32_t typemask,
-                                      MultiValueCallbackFunction callback);
+bool sealNetPacketUnregisterInterest(uint32_t typemask,
+                                     MultiValueCallbackFunction callback);
 
 //
 // Unregister a listener to a single event
 //
-bool sealCommUnregisterInterest(uint16_t code,
-                                SingleValueCallbackFunction callback);
+bool sealNetUnregisterInterest(uint16_t code,
+                               SingleValueCallbackFunction callback);
 
 //
 // Start building a SEAL packet
 //
-void sealCommPacketStart(SealPacket_t *buffer);
+void sealNetPacketStart(SealPacket_t *buffer);
 
 //
 // Add a value to SEAL packet
 //
-void sealCommPacketAddField(uint16_t code, int32_t value);
+void sealNetPacketAddField(uint16_t code, int32_t value);
 
 //
 // End building & send a SEAL packet
 //
-void sealCommPacketFinish(void);
+void sealNetPacketFinish(void);
 
 //
 // Shortcut function: send a SEAL packet with specific sensor ID
 //
-void sealCommSendValue(uint16_t code, int32_t value);
+void sealNetSendValue(uint16_t code, int32_t value);
 
 //
 // Shortcut function: send a SEAL packet with command
 //
-static inline void sealCommSendCommand(uint16_t command)
+static inline void sealNetSendCommand(uint16_t command)
 {
-    sealCommSendValue(PACKET_FIELD_ID_COMMAND, command);
+    sealNetSendValue(PACKET_FIELD_ID_COMMAND, command);
 }
 
 //
 // Read last received sensor value (identified by code only)
 //
-int32_t sealCommReadValue(uint16_t code);
+int32_t sealNetReadValue(uint16_t code);
 
 // ----------------------------------
 // System & private API
 
-void sealCommInit(void);
+void sealNetInit(void);
 
 typedef struct SealCommListener_s {
     uint32_t typeMask;

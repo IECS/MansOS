@@ -24,7 +24,7 @@
 #ifndef MANSOS_STDEV_H
 #define MANSOS_STDEV_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 #include "average.h"
 #include "algo.h"
 

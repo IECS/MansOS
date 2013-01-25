@@ -21,8 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 #include "leds.h"
 #include <print.h>

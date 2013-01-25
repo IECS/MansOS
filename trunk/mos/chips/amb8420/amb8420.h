@@ -24,7 +24,7 @@
 #ifndef MANSOS_AMB8420_H
 #define MANSOS_AMB8420_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 #include <hil/busywait.h>
 
 #define AMB8420_MAX_PACKET_LEN        128

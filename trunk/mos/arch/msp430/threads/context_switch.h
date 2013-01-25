@@ -24,7 +24,7 @@
 #ifndef MANSOS_CONTEXT_SWITCH_H
 #define MANSOS_CONTEXT_SWITCH_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 //
 // Assembly routines required to perform a context switch on the MSP430 architecture.

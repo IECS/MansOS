@@ -100,8 +100,9 @@ owwriteb(unsigned byte)
             OUTP_1();           /* Releases the bus */
             udelay(tD);
         }
-        if (i == 0)
+        if (i == 0) {
             return;
+        }
         i--;
         byte >>= 1;
     } while (1);
@@ -120,8 +121,9 @@ owreadb(void)
         if (INP())
             result |= 0x80;     /* LSbit first */
         udelay(tF);
-        if (i == 0)
+        if (i == 0) {
             return result;
+        }
         i--;
         result >>= 1;
     } while (1);
@@ -138,13 +140,13 @@ static bool owReadROM(uint8_t buf[ONEWIRE_ROM_SIZE])
     ATOMIC_START(h);
     owwriteb(ONEWIRE_READ_ROM);
     /* We receive 8 bytes in the reverse order, LSbyte first. */
-    for (i = 7; i >= 0; i--) {
+    for (i = ONEWIRE_ROM_SIZE - 1; i >= 0; i--) {
         buf[i] = owreadb();
     }
     ATOMIC_END(h);
 
     acc = 0;
-    for (i = 7; i >= 1; i--) {
+    for (i = ONEWIRE_ROM_SIZE - 1; i >= 1; i--) {
         acc = crc8Add(acc, buf[i]);
     }
     return acc == buf[0];

@@ -20,14 +20,16 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * msp430_adc10.h -- ADC10 functionality on MSP430x2xx family
  */
 
 #ifndef _MSP430_ADC10_H_
 #define _MSP430_ADC10_H_
 
-#include <kernel/defines.h>
+//
+// msp430_adc10.h -- ADC10 functionality on MSP430x2xx family
+//
+
+#include <defines.h>
 
 #define ADC_CHANNEL_COUNT   16
 
@@ -89,7 +91,7 @@ static inline uint16_t hplAdcGetVal(void)
 }
 
 // ADC channel count
-static inline unsigned adcGetChannelCount(void)
+static inline unsigned hplAdcGetChannelCount(void)
 {
     return ADC_CHANNEL_COUNT;
 }

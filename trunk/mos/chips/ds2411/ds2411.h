@@ -24,7 +24,7 @@
 #ifndef MANSOS_DS2411_H
 #define MANSOS_DS2411_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 //
 // Dallas Semiconductor DS2411 Silicon Serial Number

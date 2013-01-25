@@ -24,48 +24,28 @@
 #ifndef MANSOS_INTERNAL_FLASH_H
 #define MANSOS_INTERNAL_FLASH_H
 
-//
-// Available functions are described below
-//
+/// \file
+/// Internal flash driver
+///
+
+#include <arch_datatypes.h>
+
+//! Erase flash segments
+extern inline void intFlashErase(FlashAddress_t address, uint16_t dataLength);
+
+//! Write data in flash
+extern inline void intFlashWrite(FlashAddress_t address, const void *data,
+                                 uint16_t dataLength);
+
+//! Write block data in flash (aligned to block size, dataLength must be multiple of block size)
+extern inline void intFlashWriteBlock(FlashAddress_t address, const void *data,
+                                      uint16_t dataLength);
+
+//! Read data from flash
+extern inline void intFlashRead(FlashAddress_t address, void *buffer,
+                                uint16_t bufferLength);
 
 // The real interface is defined in this file
 #include "intflash_hal.h"
-
-// Erase flash segments
-// void intFlashErase(FlashAddress_t address, uint16_t dataLength);
-
-// Write data in flash
-// void intFlashWrite(FlashAddress_t address, const void *data, uint16_t dataLength);
-
-// Write block data in flash (aligned to block size, dataLength must be multiple of block size)
-// void intFlashWriteBlock(FlashAddress_t address, const void *data, uint16_t dataLength);
-
-// Read data from flash
-// void intFlashRead(FlashAddress_t address, void *buffer, uint16_t bufferLength);
-
-#ifndef INT_FLASH_SEGMENT_SIZE
-// Define default values for these
-
-#warning Internal flash constants not defined for this platform!
-
-// Total size of flash memory
-#define INT_FLASH_SIZE            0
-
-// Size of minimal flash unit that can be erased at once
-#define INT_FLASH_SEGMENT_SIZE    0
-
-// Size of maximal flash unit that can be written at once
-#define INT_FLASH_BLOCK_SIZE      0
-
-// Start address of code memory
-#define INT_FLASH_START           0x0
-
-// Start address of "information memory"
-#define INT_FLASH_INFOMEM_START   0x0
-
-// Unsigned type large enough for holding flash address range
-typedef uint16_t FlashAddress_t;
-
-#endif
 
 #endif

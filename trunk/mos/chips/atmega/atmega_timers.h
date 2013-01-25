@@ -24,12 +24,12 @@
 #ifndef _ATMEGA_TIMERS_H_
 #define _ATMEGA_TIMERS_H_
 
+#include <defines.h>
 #include <avr/wdt.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 #include <avr/power.h>
-#include <kernel/defines.h>
 
 #define atmegaWatchdogStop() wdt_disable()
 
@@ -38,7 +38,10 @@
 #define SLEEP_CLOCK_DIVIDER 1024
 
 // TODO: test this
+#define ACLK_SPEED          (CPU_HZ / JIFFY_CLOCK_DIVIDER)
 #define SLEEP_CLOCK_SPEED   (CPU_HZ / SLEEP_CLOCK_DIVIDER)
+
+#define PLATFORM_HAS_TIMERB 1
 
 enum {
     JIFFY_TIMER_MS = 1000 / TIMER_INTERRUPT_HZ,
@@ -55,6 +58,9 @@ enum {
     // clock cycles in every sleep ms: significant digits and decimal part
     SLEEP_CYCLES = (CPU_HZ / 1000 / SLEEP_CLOCK_DIVIDER),
     SLEEP_CYCLES_DEC = (CPU_HZ / SLEEP_CLOCK_DIVIDER) % 1000,
+
+    ALARM_CYCLES = (ACLK_SPEED / 1000 / JIFFY_CLOCK_DIVIDER),
+    ALARM_CYCLES_DEC = (ACLK_SPEED / JIFFY_CLOCK_DIVIDER) % 1000,
 
     TICKS_IN_MS = CPU_HZ / 1000 / JIFFY_CLOCK_DIVIDER,
 };
@@ -149,7 +155,7 @@ enum {
 #define ALARM_TIMER_WRAPAROUND() false
 #define ALARM_TIMER_RESET_WRAPAROUND()
 
-#define NEXT_ALARM_TIMER(value) OCR0A
+#define NEXT_ALARM_TIMER() OCR0A
 #define SET_NEXT_ALARM_TIMER(value) OCR0A += value
 
 // this expands to ALARM_TIMER_READ

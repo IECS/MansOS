@@ -24,9 +24,11 @@
 #ifndef MANSOS_CRC_H
 #define MANSOS_CRC_H
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 uint16_t crc16(const uint8_t *data, uint16_t len);
+
+uint8_t crc8(const uint8_t *data, uint16_t len);
 
 /* CITT CRC16 polynomial ^16 + ^12 + ^5 + 1 */
 /*-----------------------------------------------------------*/
@@ -41,7 +43,7 @@ static inline uint16_t crc16Add(uint16_t acc, uint8_t byte) {
 
 
 /* Polynomial ^8 + ^5 + ^4 + 1 */
-static inline uint16_t crc8Add(uint16_t acc, uint8_t byte)
+static inline uint8_t crc8Add(uint8_t acc, uint8_t byte)
 {
     int i;
     acc ^= byte;

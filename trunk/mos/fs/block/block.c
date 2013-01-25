@@ -31,8 +31,7 @@
 #include <fs/prefix.h>
 #include <fs/common.h>
 #include <fs/types.h>
-#include <kernel/defines.h>
-#include <kernel/stdtypes.h>
+#include <defines.h>
 #include <assert.h>
 #include <lib/codec/crc.h>
 

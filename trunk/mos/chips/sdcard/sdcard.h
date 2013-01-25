@@ -24,7 +24,7 @@
 #ifndef MANSOS_SDCARD_H
 #define MANSOS_SDCARD_H
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 // minimal unit that can be erased
 #define SDCARD_SECTOR_SIZE    512

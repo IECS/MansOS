@@ -25,7 +25,7 @@
 #include <extflash.h>
 #include <utils.h>
 //#include <sdcard/sdcard.h>
-#include <lib/assert.h>
+#include <assert.h>
 
 #define DATA_SIZE 10
 
@@ -63,6 +63,6 @@ void appMain(void)
     sdcardFlush();
 #endif
     PRINTF("all done\n");
-    blink(3, 2000);
+    ledBlink(3, 2000);
     ASSERT(false);
 }

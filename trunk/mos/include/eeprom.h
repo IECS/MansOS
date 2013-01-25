@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -20,20 +20,34 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- * eeprom.h -- access to non-volatile configuration memory
- */
 
 #ifndef MANSOS_EEPROM_H
 #define MANSOS_EEPROM_H
 
-#include <stddef.h>
-#include <stdint.h>
+/// \file
+/// eeprom.h -- access to non-volatile configuration memory.
+///
+/// On MSP430 the "info segments" of the internal flash are used for this purpose.
+/// The amount of available EEPROM memory is a little less than half of info flash size
+/// due to the buffering algorithm used.
+/// EEPROM address range for this user API is [0, EEPROM_SIZE-1] on all platforms.
+///
 
+#include <stdtypes.h>
+
+//! Initialize EEPROM
+extern inline void eepromInit(void);
+//! Read from EEPROM
+void eepromRead(uint16_t addr, void *buf, size_t len);
+//! Write to EEPROM
+void eepromWrite(uint16_t addr, const void *buf, size_t len);
+
+// implementation
 #include <eeprom_hal.h> /* Will define EEPROM_SIZE */
 
-void eepromInit(void);
-void eepromRead(uint16_t addr, void *buf, size_t len);
-void eepromWrite(uint16_t addr, const void *buf, size_t len);
+#ifndef EEPROM_SIZE
+//! Platform-specific EEPROM size in bytes
+#define EEPROM_SIZE 0
+#endif
 
 #endif

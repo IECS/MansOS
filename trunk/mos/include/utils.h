@@ -24,10 +24,14 @@
 #ifndef MANSOS_UTILS_H
 #define MANSOS_UTILS_H
 
+/// \file
+/// High-level utility functions
+///
+
 #include <delay.h>
 #include <leds.h>
 
-static inline void blink(uint16_t count, uint16_t interval)
+static inline void ledBlink(uint16_t count, uint16_t interval)
 {
 #if USE_LEDS
     uint16_t i;

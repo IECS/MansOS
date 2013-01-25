@@ -44,7 +44,7 @@ TEST_TARGETS = \
 	PDRTest					\
 	RadioSendTest				\
 	RadioTest				\
-	SdCardTest				\
+	SdCardBlockTest				\
 	SerialPipe				\
 	SharingTest				\
 	SleepTest				\
@@ -99,7 +99,6 @@ ADVANCED_TARGETS = \
 	IMU					\
 	LPL					\
 	Sarauj					\
-	SensorToLcd				\
 
 SEAL_TARGETS = \
 	Blink					\

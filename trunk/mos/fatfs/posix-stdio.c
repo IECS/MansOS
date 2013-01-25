@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,6 @@
 #include "posix-stdio.h"
 #include <errors.h>
 #include <lib/dprint.h>
-#include <kernel/defines.h>
 
 #ifndef MAX_OPEN_FILES
 #define MAX_OPEN_FILES 2

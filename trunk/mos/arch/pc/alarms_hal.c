@@ -23,7 +23,7 @@
 
 #include <unistd.h>
 #include <timing.h>
-#include <kernel/alarms_system.h>
+#include <kernel/alarms_internal.h>
 #include <sys/time.h>
 
 //----------------------------------------------------------

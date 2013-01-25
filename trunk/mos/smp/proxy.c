@@ -53,7 +53,6 @@
 #include <serial.h>
 #include <delay.h>
 #include <random.h>
-#include <lib/unaligned.h>
 #include <lib/codec/crc.h>
 #include <print.h>
 #include <leds.h>
@@ -66,7 +65,7 @@ MacDriver_t *mac;
 // buffer used by mac protocol
 static uint8_t macBuffer[400];
 #else
-#include <net/addr.h>
+#include <net/address.h>
 #include <radio.h>
 #endif
 
@@ -129,7 +128,7 @@ void smpProxyRecvSerial(uint8_t *data, uint16_t length) {
         return;
     }
 
-    uint16_t address = getU16Network(data);
+    uint16_t address = be16Read(data);
 
     bool recvLocally = false;
     bool forward = false;
@@ -152,7 +151,7 @@ void smpProxyRecvSerial(uint8_t *data, uint16_t length) {
         macSend(&bcastAddr, data, length);
 #else
         uint8_t header[2];
-        putU16Network(header, crc16(data, length));
+        le16Write(header, crc16(data, length));
         radioSendHeader(header, sizeof(header), data, length);
         // PRINTF("radioSendHeader %d bytes\n", length + 2);
 #endif
@@ -184,7 +183,7 @@ void smpProxySendSmp(uint8_t *data, uint16_t length) {
         radioOn();
 
         uint8_t header[2];
-        putU16Network(header, crc16(data, length));
+        le16Write(header, crc16(data, length));
         radioSendHeader(header, sizeof(header), data, length);
     }
 
@@ -249,7 +248,7 @@ void radioReceive(void) {
     uint8_t *p = buffer + 2;
     length -= 2;
 
-    uint16_t crc = getU16Network(buffer);
+    uint16_t crc = be16Read(buffer);
     if (crc != crc16(p, length)) {
         PRINTF("radioRecv: wrong CRC!");
         return;
@@ -264,7 +263,7 @@ void radioReceive(void) {
         serialSendData(SMP_SERIAL_ID, p, length);
     } else {
         // receive it locally
-        uint16_t address = getU16Network(p);
+        uint16_t address = be16Read(p);
         if (address != 0 && address != 0xffff
                 && address != localAddress) {
             PRINTF("radioRecv: not for me!");

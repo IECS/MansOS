@@ -85,7 +85,7 @@ void appMain(void)
 
     // wait for NMEA command buffers to become ready
     while (1) {
-        busyWait(100000);
+        mdelay(1000);
         CHECK_CMD(GGA);
         CHECK_CMD(GSA);
         CHECK_CMD(RMC);

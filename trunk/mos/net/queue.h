@@ -31,7 +31,6 @@
 typedef struct QueuedPacket_s {
     STAILQ_ENTRY(QueuedPacket_s) chain;
     uint8_t sendTries; // how many times already tried to send
-    uint8_t __reserved; // XXX
     uint32_t ackTime;  // await ack until this time
     Buffer_t buffer;
 } QueuedPacket_t;

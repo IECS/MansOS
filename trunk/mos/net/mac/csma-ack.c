@@ -34,7 +34,7 @@
 #include <lib/assert.h>
 #include <net/radio_packet_buffer.h>
 #include <timing.h>
-#include <net/net-stats.h>
+#include <net/net_stats.h>
 
 #define TEST_FILTERS 1
 
@@ -98,7 +98,7 @@ static int8_t sendCsmaMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
 
     if (!sendTimerRunning) {
         sendTimerRunning = true;
-        alarmSchedule(&sendTimer, jiffies2ms(MAC_PROTOCOL_ACK_TIME));
+        alarmSchedule(&sendTimer, MAC_PROTOCOL_ACK_TIME);
     }
     return length;
 }
@@ -142,7 +142,7 @@ static void sendTimerCb(void *x) {
     }
 
     sendTimerRunning = true;
-    alarmSchedule(&sendTimer, jiffies2ms(nextTimerTime));
+    alarmSchedule(&sendTimer, nextTimerTime);
 }
 
 #if TEST_FILTERS

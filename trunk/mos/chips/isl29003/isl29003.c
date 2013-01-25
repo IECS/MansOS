@@ -26,7 +26,11 @@
 
 #define ISL_I2C_ID I2C_BUS_SW
 
-/* ISL29003 soft I2C support */
+//
+// Initially, define functions for ISL29003 soft I2C support.
+// The chip expects slightly variation from
+// the default MSP430 HW and MansOS SW implementations.
+//
 
 //------------------------------------------------------------------------------
 // Writes a byte to I2C and checks acknowledge
@@ -37,7 +41,7 @@ i2cError_t IslI2cWriteByte(uint8_t txByte)
     uint8_t mask; 
     i2cError_t err=0;
   
-    for (mask=0x80; mask>0; mask>>=1)   //shift bit for masking (8 times)
+    for (mask = 0x80; mask > 0; mask >>= 1)   //shift bit for masking (8 times)
     { 
         if ((mask & txByte) == 0) {
             ISL_I2C_SDA_LO();               //write a bit to SDA-Line
@@ -45,21 +49,21 @@ i2cError_t IslI2cWriteByte(uint8_t txByte)
         else {
             ISL_I2C_SDA_HI();
         }
-        wait_1us;
+        udelay(1);
         I2C_SCL_HI();
-        wait_5us;
+        udelay(5);
         I2C_SCL_LO();
-        wait_1us;
+        udelay(1);
     }
     I2C_SDA_IN();                       //release SDA-line
     I2C_SCL_HI();                       //clk #9 for ack
-    wait_5us;
+    udelay(5);
     if (I2C_SDA_GET() != 0) {
         err = I2C_ACK_ERROR;            //check ack from i2c slave
     }
     I2C_SCL_LO();
-    wait_5us;
-    //wait_20us;                        //delay to see the package on scope
+    udelay(5);
+    //udelay(20);                       //delay to see the package on scope
     I2C_SDA_OUT();
     return err;                         //return error code
 }
@@ -82,26 +86,27 @@ uint8_t IslI2cReadByte(i2cAck_t ack)
             rxByte = (rxByte | mask);   //read bit
         }
         I2C_SCL_LO();
-        wait_1us;                       //data hold time
+        udelay(1);                       //data hold time
     }
     if (ack) {
         ISL_I2C_SDA_LO();                   //send acknowledge if necessary
     } else {
         ISL_I2C_SDA_HI();
     } 
-    wait_1us;      
+    udelay(1);      
     I2C_SCL_HI();                       //clk #9 for ack
-    wait_5us;      
+    udelay(5);      
     I2C_SCL_LO();
     I2C_SDA_OUT();                      //unrelease SDA-line
-    wait_5us;
+    udelay(5);
     //wait_us(20);                      //delay to see the package on scope
     return rxByte;                      //return error code
 }
 /* End of ISL29003 soft I2C support */
 
 // Enable ISL29003
-bool islOn(){
+bool islOn(void)
+{
     uint8_t val;
     // Get current register value
     if (readIslRegister(ISL_COMMAND_REGISTER, &val)) {
@@ -118,7 +123,8 @@ bool islOn(){
 } 
 
 // Disable ISL29003
-bool islOff(){
+bool islOff(void)
+{
     uint8_t val;
     // Get current register value
     if (readIslRegister(ISL_COMMAND_REGISTER, &val)) {
@@ -134,7 +140,8 @@ bool islOff(){
 } 
 
 // Put ISL29003 to normal mode
-bool islWake(){
+bool islWake(void)
+{
     uint8_t val;
     // Get current register value
     if (readIslRegister(ISL_COMMAND_REGISTER, &val)){
@@ -150,7 +157,8 @@ bool islWake(){
 } 
 
 // Put ISL29003 to sleep mode
-bool islSleep(){
+bool islSleep(void)
+{
     uint8_t val;
     // Get current register value
     if (readIslRegister(ISL_COMMAND_REGISTER, &val)) {
@@ -167,7 +175,8 @@ bool islSleep(){
 }
 
 //Check if ISL29003 is ON
-bool isIslOn(){
+bool isIslOn(void)
+{
     uint8_t val;
     // Get current register value
     if (readIslRegister(ISL_COMMAND_REGISTER, &val)) {
@@ -177,7 +186,8 @@ bool isIslOn(){
 }
 
 //Check if ISL29003 is awake
-bool isIslWake(){
+bool isIslWake(void)
+{
     uint8_t val;
     // Get current register value
     if (readIslRegister(ISL_COMMAND_REGISTER, &val)) {
@@ -187,7 +197,8 @@ bool isIslWake(){
 }
 
 // Initialize ISL29003, configure and turn it off
-bool islInit(void) {
+bool islInit(void)
+{
     // init SDA and SCK pins (defined in config file)
     i2cInit(ISL_I2C_ID);
     // Clear registers, so no previos problems occur
@@ -208,7 +219,8 @@ bool islInit(void) {
 }
 
 // Write ISL29003 register
-bool writeIslRegister(uint8_t reg, uint8_t val){
+bool writeIslRegister(uint8_t reg, uint8_t val)
+{
     bool err = false;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
@@ -222,7 +234,8 @@ bool writeIslRegister(uint8_t reg, uint8_t val){
 }
 
 // Read ISL29003 register
-bool readIslRegister(uint8_t reg, uint8_t *val){
+bool readIslRegister(uint8_t reg, uint8_t *val)
+{
     bool err = false;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
@@ -242,10 +255,11 @@ bool readIslRegister(uint8_t reg, uint8_t *val){
 }
 
 // Configure ISL29003
-bool configureIsl(IslConfigure_t newConf){
+bool configureIsl(IslConfigure_t newConf)
+{
     uint8_t val;
     // Get current register value
-    if (readIslRegister(ISL_COMMAND_REGISTER, &val)){
+    if (readIslRegister(ISL_COMMAND_REGISTER, &val)) {
         return false;    // fail!
     }
     // Append mode
@@ -305,7 +319,8 @@ bool islInterupt(bool clearIfHave){
 }
 
 // Clear ISL29003 interupt bit
-bool clearIslInterupt(){
+bool clearIslInterupt(void)
+{
     bool err = false;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
@@ -318,16 +333,17 @@ bool clearIslInterupt(){
 }
 
 // Read ISL29003 sensor data
-bool islRead(uint16_t *data, bool checkInterupt){
+bool islRead(uint16_t *data, bool checkInterupt)
+{
     uint8_t val;
     /* Check ISL29003 current state. */
     bool on = isIslOn();
     bool awake = isIslWake();
     /* Enable device if necessary. */
-    if (!on){
+    if (!on) {
         islOn();
     }
-    if (!awake){
+    if (!awake) {
         islWake();
     }
     if (checkInterupt){
@@ -337,9 +353,9 @@ bool islRead(uint16_t *data, bool checkInterupt){
     if (readIslRegister(0x05, &val)) {
         return false;    //fail!
     }
-    *data = val<<8;
+    *data = val << 8;
     /* Reads register 4 - LSB*/
-    if(readIslRegister(0x04, &val)) {
+    if (readIslRegister(0x04, &val)) {
         return false;    //fail!
     }
     *data+=val;

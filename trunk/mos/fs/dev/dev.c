@@ -29,7 +29,7 @@
 #include <fs/common.h>
 #include <fs/prefix.h>
 #include <fs/types.h>
-#include <kernel/defines.h>
+#include <defines.h>
 
 #include "dev.h"
 #include "devices.h"
