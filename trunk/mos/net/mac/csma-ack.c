@@ -26,12 +26,11 @@
 #include <radio.h>
 #include <errors.h>
 #include <alarms.h>
-#include <lib/unaligned.h>
 #include <lib/byteorder.h>
 #include <lib/buffer.h>
 #include <print.h>
 #include <random.h>
-#include <lib/assert.h>
+#include <assert.h>
 #include <net/radio_packet_buffer.h>
 #include <timing.h>
 #include <net/net_stats.h>

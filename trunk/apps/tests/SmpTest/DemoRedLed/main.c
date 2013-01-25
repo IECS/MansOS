@@ -22,7 +22,7 @@
  */
 
 #include "stdmansos.h"
-#include <net/addr.h>
+#include <net/address.h>
 
 void appMain(void)
 {

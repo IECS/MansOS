@@ -58,6 +58,7 @@
 #include <leds.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <lib/byteorder.h>
 
 #if USE_MAC
 #include <net/mac.h>

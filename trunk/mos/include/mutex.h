@@ -30,7 +30,7 @@
 
 #if USE_THREADS && !DISABLE_LOCKING
 
-#include "threads.h"
+#include <kernel/threads/threads.h>
 
 //! MansOS mutex structure
 typedef struct Mutex_s {

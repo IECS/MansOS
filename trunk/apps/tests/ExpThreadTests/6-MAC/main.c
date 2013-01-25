@@ -23,7 +23,7 @@
 
 #include "stdmansos.h"
 #include <net/mac.h>
-#include <net/net-stats.h>
+#include <net/net_stats.h>
 
 uint8_t sendBuffer[100] = "X hello world";
 

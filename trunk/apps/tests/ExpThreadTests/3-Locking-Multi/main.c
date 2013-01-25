@@ -1,5 +1,5 @@
 #include "stdmansos.h"
-#include <kernel/threads/mutex.h>
+#include <mutex.h>
 
 Mutex_t testMutex;
 volatile uint8_t controlFlag;
