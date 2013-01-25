@@ -30,11 +30,13 @@
 
 #include <defines.h>
 
-//! Print a message describing the failure, then panic
+//! Print a message describing the failure, then panic()
 void assertionFailed(const char * restrict msg, const char * restrict file,
                      int line) NORETURN;
 
-//! Panic right away
+/// Panic right away.
+///
+/// The function disables interrupts, enters MCU active mode, and blinks all leds constantly.
 void panic(void) NORETURN;
 
 //! Assert the 'expression' to be true. panic() on failure.

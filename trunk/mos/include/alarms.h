@@ -31,17 +31,18 @@
 #include <defines.h>
 #include <lib/list.h>
 
-//! callback function signature
+//! Timer callback function signature
 typedef void (*AlarmCallback)(void *);
 
+//! MansOS alarm (software timer) structure.
 typedef struct Alarm_s {
-    // list interface
+    //! list interface
     SLIST_ENTRY(Alarm_s) chain;
-    // callback function pointer
+    //! callback function pointer
     AlarmCallback callback;
-    // parameter passed to callback function
+    //! parameter passed to the callback function
     void *data;
-    // time when the alarm should be fired
+    //! time when the alarm should be fired (absolute value)
     uint32_t jiffies;
 } Alarm_t;
 
@@ -58,14 +59,19 @@ static inline void alarmInit(Alarm_t *alarm, AlarmCallback cb, void *param)
     alarm->jiffies = 0;
 }
 
-//! Schedule an alarm timer
-void alarmSchedule(Alarm_t *, uint32_t milliseconds);
+///
+/// Schedule an alarm timer
+/// @param milliseconds  the milliseconds after which the timer will fire (relative value)
+///
+/// If the alarm is already scheduled, the function removes it first.
+///
+void alarmSchedule(Alarm_t *alarm, uint32_t milliseconds);
 
 //! Remove an alarm timer
-void alarmRemove(Alarm_t *);
+void alarmRemove(Alarm_t *alarm);
 
 ///
-/// Get the millisecond when the alarm will fire
+/// Get the milliseconds (absolute value) when the alarm will fire
 ///
 /// Valid only if the alarm is active (i.e. scheduled)
 ///

@@ -40,8 +40,8 @@
 
 // local variables
 
-static SealCommListener_t listeners[MAX_SEAL_LISTENERS];
-static SealCommListener_t *listenerBeingProcessed;
+static SealNetListener_t listeners[MAX_SEAL_LISTENERS];
+static SealNetListener_t *listenerBeingProcessed;
 
 static SealPacket_t *packetInProgress;
 uint8_t packetInProgressNumFields;
@@ -56,8 +56,8 @@ static void sealRecv(uint8_t *data, uint16_t length);
 
 #define for_all_listeners(op)                                           \
     do {                                                                \
-        const SealCommListener_t *end = listeners + MAX_SEAL_LISTENERS; \
-        SealCommListener_t *l = listeners;                              \
+        const SealNetListener_t *end = listeners + MAX_SEAL_LISTENERS; \
+        SealNetListener_t *l = listeners;                              \
         for (; l != end; ++l) { op; }                                   \
     } while (0)
 
@@ -89,7 +89,7 @@ void sealNetInit(void)
 #endif
 }
 
-static inline bool isSingleValued(SealCommListener_t *l)
+static inline bool isSingleValued(SealNetListener_t *l)
 {
     uint32_t bit;
     uint_t cnt = 0;
@@ -102,7 +102,7 @@ static inline bool isSingleValued(SealCommListener_t *l)
     return true;
 }
 
-static void receivePacketData(SealCommListener_t *l, uint32_t typeMask, const uint8_t *data)
+static void receivePacketData(SealNetListener_t *l, uint32_t typeMask, const uint8_t *data)
 {
     uint16_t code = ffs(l->typeMask) - 1; // XXX: warning on msp430
     bool isSingleValued = !(l->typeMask & ~(1 << code));

@@ -47,8 +47,8 @@ bool sdStreamWriteRecord(void *data, uint16_t length, bool crc);
 ///
 bool sdStreamReadRecord(void *data, uint16_t length, bool crc);
 
-#ifndef SDCARD_RESERVED
 //! Number of bytes reserved (unused by the stream module) at the start of SD card
+#ifndef SDCARD_RESERVED
 #define SDCARD_RESERVED  (256 * 1024ul) // 256kb
 #endif
 

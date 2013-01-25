@@ -68,7 +68,7 @@
 #define COUNT_PARMS(...) \
     COUNT_PARMS2(__VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
 
-//! Determine the length of an array
+//! Determine the length of an array at compile-time
 #define ARRAYLEN(a) (sizeof(a) / sizeof(*(a)))
 
 
@@ -119,7 +119,7 @@ typedef uint32_t ticks_t;
 #error CPU_MHZ must be defined!
 #endif
 
-#if !defined PLATFORM_PC || defined USE_FATFS
+#if defined MCU_MSP430 || defined USE_FATFS
 #define MANSOS_STDIO 1
 #else
 #define MANSOS_STDIO 0

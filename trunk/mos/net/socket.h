@@ -37,17 +37,20 @@
 
 typedef uint8_t NetPort_t;
 
-struct Socket_s;
 typedef void (*SocketRecvFunction)(struct Socket_s *, uint8_t *data, uint16_t len);
 
+//! MansOS socket structure
 typedef struct Socket_s {
+    //! Link to the next socket
     SLIST_ENTRY(Socket_s) chain;
-    NetPort_t port;       // this is used both as destination and source port; can be MOS_PORT_ANY
+    //! Port, used both as destination and source; can be MOS_PORT_ANY
+    NetPort_t port;
+    //! Destionation address
     MosShortAddr dstAddress;
-    SocketRecvFunction recvCb; // asynchronous receive callback
-    // recv metainfo
+    //! Asynchronous receive callback
+    SocketRecvFunction recvCb;
+    //! Information about the received packet
     MacInfo_t *recvMacInfo;
-    // TODO: add bufferized input
 } Socket_t;
 
 //----------------------------------------------------------

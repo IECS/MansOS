@@ -31,4 +31,19 @@
 #define intFlashWriteBlock(address, buffer, length)
 #define intFlashRead(address, buffer, length)
 
+// Total size of flash memory
+#define INT_FLASH_SIZE            0
+
+// Size of minimal flash unit that can be erased at once
+#define INT_FLASH_SEGMENT_SIZE    0
+
+// Size of maximal flash unit that can be written at once
+#define INT_FLASH_BLOCK_SIZE      0
+
+// Start address of code memory
+#define INT_FLASH_START           0x0
+
+// Start address of "information memory"
+#define INT_FLASH_INFOMEM_START   0x0
+
 #endif

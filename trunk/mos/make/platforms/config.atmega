@@ -2,3 +2,6 @@
 USE_RADIO ?= n
 USE_HUMIDITY ?= n
 
+# no SD card too
+USE_SDCARD=n
+USE_SDCARD_STREAM=n

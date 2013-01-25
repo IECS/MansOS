@@ -35,18 +35,18 @@
 
 #include <stdtypes.h>
 
-//! Initialize EEPROM
-extern inline void eepromInit(void);
 //! Read from EEPROM
 void eepromRead(uint16_t addr, void *buf, size_t len);
 //! Write to EEPROM
 void eepromWrite(uint16_t addr, const void *buf, size_t len);
 
+extern inline void eepromInit(void);
+
 // implementation
 #include <eeprom_hal.h> /* Will define EEPROM_SIZE */
 
-#ifndef EEPROM_SIZE
 //! Platform-specific EEPROM size in bytes
+#ifndef EEPROM_SIZE
 #define EEPROM_SIZE 0
 #endif
 

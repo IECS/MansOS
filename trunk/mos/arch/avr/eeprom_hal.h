@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,11 +21,22 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _EEPROM_HAL_H_
-#define _EEPROM_HAL_H_
+#ifndef _EEPROM_AVR_H_
+#define _EEPROM_AVR_H_
+
+#include <stdtypes.h>
+
+// TODO: define eeprom for this platfrom (use pgm_ macros)
 
 #define EEPROM_SIZE  0
 
 static inline void eepromInit(void) { }
+
+extern inline void eepromRead(uint16_t addr, void *buf, size_t len) {
+    memset(buf, 0, len);
+}
+
+extern inline void eepromWrite(uint16_t addr, const void *buf, size_t len) {}
+
 
 #endif

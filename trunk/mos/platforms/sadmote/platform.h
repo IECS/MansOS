@@ -34,6 +34,12 @@
 #include "at25df_pins.h"
 #include "sht_pins.h"
 
+#ifdef USE_ISL29003
+#include <isl29003/isl29003.h>
+#endif
+#ifdef USE_ADS1115
+#include <ads1115/ads1115.h>
+#endif
 
 //===========================================================
 // Functions

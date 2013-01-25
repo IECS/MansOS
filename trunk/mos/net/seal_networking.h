@@ -59,9 +59,7 @@
 #define ADDRESS_TYPE_MASK   (1 << PACKET_FIELD_ID_ADDRESS)
 #define ISSENT_TYPE_MASK    (1 << PACKET_FIELD_ID_IS_SENT)
 
-//
-// Each packet must have this header; data fields (if any) follow it.
-//
+//! Each SEAL packet must have this header; data fields (if any) follow it.
 struct SealHeader_s {
     uint16_t magic;
     uint16_t crc;
@@ -69,6 +67,7 @@ struct SealHeader_s {
 } PACKED;
 typedef struct SealHeader_s SealHeader_t;
 
+//! SEAL data packet
 struct SealPacket_s {
     SealHeader_t header;
     int32_t fields[1];
@@ -143,7 +142,8 @@ int32_t sealNetReadValue(uint16_t code);
 
 void sealNetInit(void);
 
-typedef struct SealCommListener_s {
+//! SEAL networking packet subscriber
+typedef struct SealNetListener_s {
     uint32_t typeMask;
     union {
         SingleValueCallbackFunction sv;
@@ -155,8 +155,9 @@ typedef struct SealCommListener_s {
         // in place (room for one...)
         int32_t lastValue;
     } u;
-} SealCommListener_t;
+} SealNetListener_t;
 
+//! The maximal number of SEAL data packet subscribers
 #ifndef MAX_SEAL_LISTENERS
 #define MAX_SEAL_LISTENERS 32
 #endif

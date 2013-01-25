@@ -64,24 +64,7 @@ static inline int fgetc(FILE *fp)
 /// a newline.  If a newline is read, it is stored into the buffer.
 /// A terminating null byte ('\0') is stored after the last character in the buffer.
 ///
-static inline char *fgets(char *restrict s, int size, FILE *restrict fp)
-{
-    uint16_t i;
-    if (size == 0) return s;
-    for (i = 0; i < size - 1; ++i) {
-        uint8_t b;
-        fread(&b, 1, 1, fp);
-        if (b == EOF) {
-            if (i == 0) return NULL;
-            break;
-        }
-        s[i] = b;
-        if (b == '\n') break;
-    }
-    i++;
-    s[i] = '\0';
-    return s;
-}
+char *fgets(char *restrict s, int size, FILE *restrict fp);
 
 //! Write to the file
 size_t fwrite(const void *restrict ptr, size_t size,

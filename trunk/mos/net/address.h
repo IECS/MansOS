@@ -99,6 +99,14 @@ enum {
 typedef uint16_t MosShortAddr;
 typedef uint8_t MosLongAddr[MOS_LONG_ADDR_SIZE];
 
+///
+/// MansOS network address 
+///
+/// By default, the address size is 2 bytes.
+/// If SUPPORT_LONG_ADDR is defined as true, then 8-byte addresses are supported.
+/// In that case a type field is also included in the address to distinguish
+/// between 2-byte (MosShortAddr) addresses and 8-byte (MosLongAddr) addresses.
+///
 typedef struct MosAddr_s {
 #if SUPPORT_LONG_ADDR
     uint8_t type;
@@ -118,8 +126,16 @@ typedef struct MosAddr_s {
 // Variables
 //----------------------------------------------------------
 
-// This is the local short address (unspecified by default).
-// NB: local long address = the serial number
+///
+/// This is the local short address
+///
+/// The address is automatically generated at the first bootup time and stored
+/// into flash info segment. The address can be manually changed (by rewriting the variable),
+/// but in the event of change the user shoukd also store the modified address
+/// into flash memory manually.
+///
+/// Note: the 64-bit serial number is reused as the local long address!
+///
 extern MosShortAddr localAddress;
 
 //----------------------------------------------------------

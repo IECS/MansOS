@@ -34,9 +34,9 @@
 // Data types and constants
 //===========================================================
 
-///
-/// List all supported radio chips here (before including radio_hal.h)
-///
+//
+// List all supported radio chips here (before including radio_hal.h)
+//
 #define RADIO_CHIP_CC2420    1
 #define RADIO_CHIP_MRF24J40  2
 #define RADIO_CHIP_CC1101    3
@@ -49,9 +49,9 @@ typedef void (*RadioRecvFunction)(void);
 // Procedures
 //===========================================================
 
-///
-/// Initialize the radio
-///
+//
+// Initialize the radio
+//
 extern inline void radioInit(void);
 
 
@@ -185,10 +185,12 @@ extern inline bool radioIsChannelClear(void);
 #define RADIO_TX_POWER_MAX      0
 #endif
 
+//! The default radio channel number (PHY-specific)
 #ifndef RADIO_CHANNEL
 #define RADIO_CHANNEL 26
 #endif
 
+//! The default radio transmission power (in chip-specific units)x
 #ifndef RADIO_TX_POWER
 #define RADIO_TX_POWER 31
 #endif

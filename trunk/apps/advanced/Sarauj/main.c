@@ -127,20 +127,20 @@ uint8_t i2cSetReg(uint8_t addr, uint8_t regAddr, uint8_t regVal) {
     uint8_t buf[2];
     buf[0] = regAddr;
     buf[1] = regVal;
-    return i2cWrite(addr, buf, 2);
+    return i2cWrite(0, addr, buf, 2);
 }
 
 uint8_t i2cGetReg(uint8_t addr, uint8_t regAddr) {
     uint8_t buf = regAddr;
-    buf = i2cWrite(addr, &buf, 1);
+    buf = i2cWrite(0, addr, &buf, 1);
     if (buf != 0) return buf;
 
-    return i2cRead(addr, &buf, 1) == 1 ? buf : 0;
+    return i2cRead(0, addr, &buf, 1) == 1 ? buf : 0;
 }
 
 void initI2CStuff() {
     // 2-wire
-    i2cOn();
+    i2cOn(0);
     pinAsData(CALENDAR_RESET_PORT, CALENDAR_RESET_PIN);
     pinAsOutput(CALENDAR_RESET_PORT, CALENDAR_RESET_PIN);
     pinClear(CALENDAR_RESET_PORT, CALENDAR_RESET_PIN);

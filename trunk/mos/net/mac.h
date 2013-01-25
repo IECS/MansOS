@@ -46,53 +46,82 @@
 #define MI_FLAG_ACK_REQUESTED       0x4
 #define MI_FLAG_IS_ACK              0x8
 
+//! MAC protocol header structure (source and destination addresses, ports, etc.)
 typedef struct MacInfo_s {
+    //! The address of the originator of the packet
     MosAddr originalSrc;
+    //! The address of the destination of the packet
     MosAddr originalDst;
+    //! The address of the immediate previous hop of the packet
     MosAddr immedSrc; 
+    //! The address of the immediate next hop of the packet
     MosAddr immedDst;
+    //! Source port (set at originator)
     uint8_t srcPort;
+    //! Destination port (set at originator, refers to final destinatination)
     uint8_t dstPort;
+    //! Sequence number
     uint8_t seqnum;
+    //! The path cost of the packed
     uint8_t cost;
+    //! The hop limit of the packet. The packet is dropped when hoplimit becomes zero.
     uint8_t hoplimit;
+    //! Flags
     uint8_t flags;
+    //! Pointer to the buffer where this structure is stored in a size-optimized way
     uint8_t *macHeader;
+    //! Length of the packed buxffer
     uint16_t macHeaderLen;
+    //! Time in miliseconds (absolute value) when this packet should be sent out
     uint32_t timeWhenSend;
 } MacInfo_t; 
 
+//! Check whether a MAC buffer describes a locally originated packet
 #define IS_LOCAL(mi) (mi->flags & MI_FLAG_LOCALLY_ORIGINATED)
 
-// return immed dst, if set, and original dst otherwise
+//! Returns immediate destination if set, and original destination otherwise
 #define getNexthop(mi) \
     (mi->immedDst.shortAddr ? : mi->originalDst.shortAddr)
 
 typedef void (*RecvFunction)(MacInfo_t *, uint8_t *data, uint16_t len);
 
+
+//! A MansOS MAC (media access control) protocol
 typedef struct MacProtocol_s {
-    uint8_t name; // code
-
-    RecvFunction recvCb;
-
+    //! The code of the MAC procotol
+    uint8_t name;
+    
+    //! Initialization function (protocol-specific)
     void (*init)(RecvFunction);
 
+    //! Initialization function (protocol-specific)
     int8_t (*send)(MacInfo_t *, const uint8_t *data, uint16_t length);
 
+    //! Receive function callback (protocol-specific)
+    RecvFunction recvCb;
+
+    //! Polling function  (protocol-specific)
     void (*poll)(void);
 
+    //! Known address check (protocol-specific)
     bool (*isKnownDstAddress)(MosAddr *dst);
 
-    // internal
+    // Internal - build the packed binary header using MacInfo_t as a source
     bool (*buildHeader)(MacInfo_t *, uint8_t **header /* out */, uint16_t *headerLength /* out */);
 } MacProtocol_t;
 
+///
+/// The globally active MAC protocol
+///
+/// Only one MAC protocol can be used by application, and it is selected at compile time.
+///
 extern MacProtocol_t macProtocol;
 
 //===========================================================
 // Procedures
 //===========================================================
 
+//! Send a packet
 int8_t macSend(MosAddr *dst, const uint8_t *data, uint16_t length);
 int8_t macSendEx(MacInfo_t *mi, const uint8_t *data, uint16_t length);
 
@@ -112,31 +141,37 @@ void invertDirection(MacInfo_t *);
 void fillLocalAddress(MosAddr *result);
 bool isLocalAddress(MosAddr *addr);
 
+//! The size of MAC protocol receive/send buffer
 #ifndef MAC_PROTOCOL_BUFFER_SIZE
 #define MAC_PROTOCOL_BUFFER_SIZE RADIO_MAX_PACKET
 #endif
 
+//! The time (milliseconds) to wait for acknowledgement from the receiver (in case software ACKs are used)
 #ifndef MAC_PROTOCOL_ACK_TIME
 #define MAC_PROTOCOL_ACK_TIME 200 // milliseconds
 #endif
 
-#ifndef MAC_PROTOCOL_MAX_TRIES
-#define MAC_PROTOCOL_MAX_TRIES 3
+//! The number of attemps a single packet is send to a unicast destination
+#ifndef MAC_PROTOCOL_MAX_ATTEMPTS
+#define MAC_PROTOCOL_MAX_ATTEMPTS 3
 #endif
 
-// subsequent retries are sent with exponential backoff
+//! Milliseconds to back off between sending attempts. Exponential multiplier is used for subsequent retries
 #ifndef MAC_PROTOCOL_RETRY_TIMEOUT
-#define MAC_PROTOCOL_RETRY_TIMEOUT 100 // milliseconds
+#define MAC_PROTOCOL_RETRY_TIMEOUT 100 // 
 #endif
 
+//! The initial back off betwwen sending a packet
 #ifndef MAC_PROTOCOL_MAX_INITIAL_BACKOFF
 #define MAC_PROTOCOL_MAX_INITIAL_BACKOFF 30
 #endif
 
+//! The size of the unsent packet queue
 #ifndef MAC_PROTOCOL_QUEUE_SIZE
 #define MAC_PROTOCOL_QUEUE_SIZE  3
 #endif
 
+//! The delay (in milliseconds) for MAC-layer packet forwarding
 #ifndef MAC_FORWARDING_DELAY
 #define MAC_FORWARDING_DELAY 1
 #endif

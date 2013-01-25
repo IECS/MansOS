@@ -143,7 +143,7 @@ i2cError_t i2cSoftWrite(uint8_t addr,
                         const void *buf, uint8_t len)
 {
     i2cSoftStart();
-    i2cError_t err = i2cSoftWriteByte((addr << 1) | I2C_CMD_WRITE);
+    i2cError_t err = i2cSoftWriteByte((addr << 1) | I2C_WRITE_FLAG);
     if (err != I2C_OK) return err;
     uint8_t *b = (uint8_t *) buf;
     while (len--) {
@@ -166,7 +166,7 @@ uint8_t i2cSoftRead(uint8_t addr,
                     void *buf, uint8_t len)
 {
     i2cSoftStart();
-    i2cError_t err = i2cSoftWriteByte((addr << 1) | I2C_CMD_READ);
+    i2cError_t err = i2cSoftWriteByte((addr << 1) | I2C_READ_FLAG);
     if (err != I2C_OK) return err;
     uint8_t *b = (uint8_t *) buf;
     while (len--) {

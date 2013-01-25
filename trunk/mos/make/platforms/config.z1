@@ -11,3 +11,8 @@ USE_ADXL345 ?= y
 # I2C is mandatory
 USE_I2C = y
 endif
+
+
+# no SD card for Z1
+USE_SDCARD=n
+USE_SDCARD_STREAM=n

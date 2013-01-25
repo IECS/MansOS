@@ -81,7 +81,7 @@ uint8_t IslI2cReadByte(i2cAck_t ack)
     for (mask=0x80; mask>0; mask>>=1)   //shift bit for masking 
     { 
         I2C_SCL_HI();                   //start clock on SCL-line
-        wait_4us;
+        udelay(4);
         if (I2C_SDA_GET() != 0) {
             rxByte = (rxByte | mask);   //read bit
         }
@@ -224,11 +224,11 @@ bool writeIslRegister(uint8_t reg, uint8_t val)
     bool err = false;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
-    i2cStart();
+    i2cSoftStart();
     err |= IslI2cWriteByte((ISL_ADDRESS << 1) | I2C_WRITE_FLAG);
     err |= IslI2cWriteByte(reg);
     err |= IslI2cWriteByte(val);
-    i2cStop();
+    i2cSoftStop();
     ATOMIC_END(intHandle);
     return err;
 }
@@ -239,17 +239,17 @@ bool readIslRegister(uint8_t reg, uint8_t *val)
     bool err = false;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
-    i2cStart();
+    i2cSoftStart();
     err |= IslI2cWriteByte((ISL_ADDRESS << 1) | I2C_WRITE_FLAG);
     err |= IslI2cWriteByte(reg);
-    i2cStop();
-    i2cStart();
+    i2cSoftStop();
+    i2cSoftStart();
     err |= IslI2cWriteByte((ISL_ADDRESS << 1) | I2C_READ_FLAG); 
     *val = IslI2cReadByte(I2C_ACK);
     ISL_I2C_SDA_LO();
     I2C_SCL_LO();
     udelay(4);
-    i2cStop();
+    i2cSoftStop();
     ATOMIC_END(intHandle);
     return err;
 }
@@ -324,10 +324,10 @@ bool clearIslInterupt(void)
     bool err = false;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
-    i2cStart();
+    i2cSoftStart();
     err |= IslI2cWriteByte((ISL_ADDRESS << 1) | I2C_WRITE_FLAG);
     err |= IslI2cWriteByte(ISL_CLEAR_INTERUPT_REGISTER);
-    i2cStop();
+    i2cSoftStop();
     ATOMIC_END(intHandle);
     return err;
 }

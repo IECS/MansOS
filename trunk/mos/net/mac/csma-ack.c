@@ -111,7 +111,7 @@ static void sendTimerCb(void *x) {
 
     // remove expired packets
     p = queueHead();
-    while (p && p->sendTries == MAC_PROTOCOL_MAX_TRIES) {
+    while (p && p->sendTries == MAC_PROTOCOL_MAX_ATTEMPTS) {
         queuePop();
         p = queueHead();
         INC_NETSTAT(NETSTAT_PACKETS_DROPPED_TX, EMPTY_ADDR);

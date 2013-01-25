@@ -26,7 +26,6 @@
 //  and prints to serial.
 //-------------------------------------------
 #include "stdmansos.h"
-#include <hil/i2c_soft.h>
 #include <isl29003/isl29003.h>
 
 IslConfigure_t conf = {

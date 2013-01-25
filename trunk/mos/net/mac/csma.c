@@ -120,7 +120,7 @@ static void sendTimerCb(void *x) {
         return;
     }
 
-    if (sendTries > MAC_PROTOCOL_MAX_TRIES) {
+    if (sendTries > MAC_PROTOCOL_MAX_ATTEMPTS) {
         // tx failed
         // XXX: return error code to user...
         INC_NETSTAT(NETSTAT_PACKETS_DROPPED_TX, EMPTY_ADDR);

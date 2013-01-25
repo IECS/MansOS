@@ -28,40 +28,40 @@
 
 uint16_t adsActiveConfig;
 
-// Write ADS1114 register
+// Write ADS111x register
 bool writeAdsRegister(uint8_t reg, uint16_t val)
 {
     uint8_t err = false;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
-    i2cStart();
+    i2cSoftStart();
     err |= i2cSoftWriteByte((ADS_ADDRESS << 1) | I2C_WRITE_FLAG);
     err |= i2cSoftWriteByte(reg);
     err |= i2cSoftWriteByte(val >> 8);
     err |= i2cSoftWriteByte(val & 0xff);
-    i2cStop();
+    i2cSoftStop();
     ATOMIC_END(intHandle);
     //PRINTF("wrote: %#x%x\n",val >> 8,val & 0xff);
     return err == 0;
 }
 
-// Read ADS1114 register
+// Read ADS111x register
 bool readAdsRegister(uint8_t reg, uint16_t *val)
 {
     uint8_t err = false;
     *val = 0;
     Handle_t intHandle;
     ATOMIC_START(intHandle);
-    i2cStart();
+    i2cSoftStart();
     err |= i2cSoftWriteByte((ADS_ADDRESS << 1) | I2C_WRITE_FLAG);
     err |= i2cSoftWriteByte(reg);
-    i2cStop();
-    i2cStart();
+    i2cSoftStop();
+    i2cSoftStart();
     err |= i2cSoftWriteByte((ADS_ADDRESS << 1) | I2C_READ_FLAG);
     uint8_t hi = i2cSoftReadByte(I2C_ACK);
     uint8_t lo = i2cSoftReadByte(I2C_NO_ACK);
     *val = (hi << 8) | lo;
-    i2cStop();
+    i2cSoftStop();
     ATOMIC_END(intHandle);
     //PRINTF("recieved: %#x%x\n",hi,lo);
     return err == 0;
