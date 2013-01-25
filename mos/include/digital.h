@@ -120,13 +120,13 @@
 ///
 #define pinClearIntFlag( po, pi ) PIN_CLEAR_INT_FLAG( po, pi )
 
-//! Put the pin in data output mode and write a binary value on it
+//! Put a pin in data output mode and write a binary value on it
 #define digitalWrite(po, pi, val)  do {                \
         pinAsOutput(po, pi);                           \
         pinWrite(po, pi, val);                         \
     } while (0)
 
-//! Put the pin in data input mode and read a binary value from it
+//! Put a pin in data input mode and read a binary value from it
 #define digitalRead(po, pi) ({                  \
             pinAsInput(po, pi);                 \
             pinRead(po, pi)                     \

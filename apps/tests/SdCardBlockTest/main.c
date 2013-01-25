@@ -24,7 +24,7 @@
 #include "stdmansos.h"
 #include <extflash.h>
 #include <utils.h>
-//#include <sdcard/sdcard.h>
+#include <sdcard/sdcard.h>
 #include <assert.h>
 
 #define DATA_SIZE 10

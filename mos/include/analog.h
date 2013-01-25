@@ -30,6 +30,7 @@
 
 #include "adc.h"
 
+//! Read analog input value
 static inline uint16_t analogRead(uint16_t channel) {
     return adcRead(channel);
 }

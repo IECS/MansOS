@@ -21,6 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <defines.h>
+#include <print.h>
 #include "net_stats.h"
 
 inline uint16_t getIdFromAddress(MosShortAddr addr){

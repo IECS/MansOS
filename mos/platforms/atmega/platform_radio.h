@@ -30,7 +30,7 @@ static inline void radioInit(void) {
     if (amb8420Init) amb8420Init();
 }
 
-static inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
+extern inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
                                      const void *data, uint16_t dataLength) {
     return amb8420Send(header, headerLength, data, dataLength);
 }

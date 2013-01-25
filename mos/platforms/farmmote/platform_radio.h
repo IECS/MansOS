@@ -43,7 +43,7 @@ static inline void radioReinit(void)
     cc1101InitSpi();
 }
 
-static inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
+extern inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
                                      const void *data,   uint16_t dataLength)
 {
     return cc1101Send(header, headerLength, data, dataLength);

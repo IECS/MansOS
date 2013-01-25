@@ -27,7 +27,7 @@
 #include <assert.h>
 #include <lib/algo.h>
 #include <arch_mem.h>
-#include <kernel/threads/mutex.h>
+#include <mutex.h>
 
 #define BUFFER_SIZE      130
 

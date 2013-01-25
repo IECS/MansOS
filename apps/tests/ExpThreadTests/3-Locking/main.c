@@ -1,5 +1,5 @@
 #include "stdmansos.h"
-#include <kernel/threads/mutex.h>
+#include <mutex.h>
 
 Alarm_t alarm;
 #define ALARM_INTERVAL 600
