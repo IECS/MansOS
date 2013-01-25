@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,12 +24,19 @@
 #ifndef MANSOS_DYNAMIC_MEMORY_H
 #define MANSOS_DYNAMIC_MEMORY_H
 
-#include <kernel/stdtypes.h>
+/// \file
+/// Dynamic memory managment routines. Use with care!
+///
 
-void memoryInit(void *region, uint16_t size);
+#include <stdtypes.h>
 
+//! Allocate 'size' bytes of memory
 void *memoryAlloc(uint16_t size);
 
+//! Free a block of memory
 void memoryFree(void *block);
+
+// platform-specific initalizatio
+void memoryInit(void *region, uint16_t size);
 
 #endif

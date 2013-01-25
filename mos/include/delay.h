@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,20 +24,31 @@
 #ifndef MANSOS_DELAY_H
 #define MANSOS_DELAY_H
 
-//
-// This file provides interface for small software delays
-//
+/// \file
+/// Interface for small software delays (without entering low-power mode!)
+///
 
-#include <kernel/stdtypes.h>
-#include <udelay_hal.h>
+#include <stdtypes.h>
 
-//
-// Handy for code ported from IAR
-//
-#ifdef __GNUC__
+///
+/// Delay for a number of microseconds.
+/// Is suitable even for very small delays (1-6 us),
+/// because they are handled as series of NOPs.
+///
+extern inline void udelay(uint16_t microseconds);
 
-#ifndef __IAR_SYSTEMS_ICC__
+///
+// Delay for approximate amount of milliseconds.
+/// The function is not very precise! If precise delays are required, use timers.
+///
+extern inline void mdelay(uint16_t miliseconds);
 
+
+#if defined __GNUC__ && !defined __IAR_SYSTEMS_ICC__
+
+///
+/// Define __delay_cycles() macro as well, to keep compatibility with IAR code
+///
 #define __delay_cycles(x) do {          \
     if (__builtin_constant_p(x) && x <= 15) {  \
         switch (x) {                    \
@@ -81,21 +92,16 @@
 #else
 
 #ifndef __delay_cycles
+///
+/// Define __delay_cycles() macro as well, to keep compatibility with IAR code
+///
 #define __delay_cycles(x) udelay((x) / CPU_MHZ)
 #endif
 
-#endif // __GNUC__
-#endif // __IAR_SYSTEMS_ICC__
+#endif // __GNUC__ but not __IAR_SYSTEMS_ICC__ defined
 
-//
-// legacy interface
-//
-#if PLATFORM_PC
-#define busyWait(cycles) udelay(cycles)
-#else
-static inline void busyWait(uint32_t waitCycles) {
-    while (waitCycles) --waitCycles;
-}
-#endif
+
+// implementation
+#include <udelay_hal.h>
 
 #endif

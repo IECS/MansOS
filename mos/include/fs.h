@@ -24,19 +24,14 @@
 #ifndef MANSOS_FS_H
 #define MANSOS_FS_H
 
-/*
- * fs.h -- user-level file system interface
- */
+/// \file
+/// fs.h -- user-level MansOS flash file system interface
+///
 
-#include <stdbool.h>
-#include <stdint.h>
-
-#include <kernel/defines.h>
-#include <kernel/stdtypes.h>
-
+#include <defines.h>
 #include <fs/types.h>
 
-/*
+/**
  * Get information about a file.
  *
  * path   File path
@@ -46,7 +41,7 @@
  */
 bool fsStat(const char * restrict path, struct fsStat * restrict buf);
 
-/*
+/**
  * Open a file for reading or appending.
  *
  * path   File path
@@ -56,7 +51,7 @@ bool fsStat(const char * restrict path, struct fsStat * restrict buf);
  */
 int8_t fsOpen(const char *path, fsMode_t mode);
 
-/*
+/**
  * Read up to @count bytes from file.
  *
  * fd     File handle
@@ -67,7 +62,7 @@ int8_t fsOpen(const char *path, fsMode_t mode);
  */
 ssize_t fsRead(int8_t fd, void *buf, size_t count);
 
-/*
+/**
  * Get current read position in a file.
  *
  * fd     File handle
@@ -76,7 +71,7 @@ ssize_t fsRead(int8_t fd, void *buf, size_t count);
  */
 fsOff_t fsTell(int8_t fd);
 
-/*
+/**
  * Set current read position in a file. File must be open for reading.
  *
  * fd     File handle
@@ -84,7 +79,7 @@ fsOff_t fsTell(int8_t fd);
  */
 void fsSeek(int8_t fd, fsOff_t pos);
 
-/*
+/**
  * Write up to @count bytes to file.
  *
  * fd     File handle
@@ -95,7 +90,7 @@ void fsSeek(int8_t fd, fsOff_t pos);
  */
 ssize_t fsWrite(int8_t fd, const void *buf, size_t count);
 
-/*
+/**
  * Write any pending data to the storage device. File must be open for writing.
  *
  * fd     File handle
@@ -104,7 +99,7 @@ ssize_t fsWrite(int8_t fd, const void *buf, size_t count);
  */
 bool fsFlush(int8_t fd);
 
-/*
+/**
  * Flush pending data and deallocate @fd.
  *
  * fd     File handle
@@ -113,7 +108,7 @@ bool fsFlush(int8_t fd);
  */
 bool fsClose(int8_t fd);
 
-/*
+/**
  * Remove a file.
  *
  * path   File path
@@ -122,7 +117,7 @@ bool fsClose(int8_t fd);
  */
 bool fsRemove(const char *path);
 
-/*
+/**
  * Rename a file.
  *
  * old    Current file name
@@ -132,11 +127,11 @@ bool fsRemove(const char *path);
  */
 bool fsRename(const char *old, const char *new);
 
-/*
+/**
  * Query last error.
  *
  * Returns: error number.
  */
 fsError_t fsLastError(void);
 
-#endif /* _FS_H_ */
+#endif

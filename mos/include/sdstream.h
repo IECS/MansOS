@@ -24,35 +24,35 @@
 #ifndef MANSOS_SDSTREAM_H
 #define MANSOS_SDSTREAM_H
 
-//
-// SD card stream module interface.
-// Similar to flash stream, but simpler, as data can be rewritten.
-//
+/// \file
+/// SD card stream module interface.
+///
+/// Similar to flash stream, but simpler, as data can be rewritten without erasing.
+///
 
-#include <kernel/defines.h>
+#include <defines.h>
 
-//
-// Initialize
-//
-static inline void sdStreamInit(void) {}
-
-//
-// Reset the stream back to start
-//
+///
+/// Reset the stream back to start
+///
 void sdStreamReset(void);
 
-//
-// Write a record
-//
+///
+/// Write a record
+///
 bool sdStreamWriteRecord(void *data, uint16_t length, bool crc);
 
-//
-// Read a record
-//
+///
+/// Read a record
+///
 bool sdStreamReadRecord(void *data, uint16_t length, bool crc);
 
 #ifndef SDCARD_RESERVED
+//! Number of bytes reserved (unused by the stream module) at the start of SD card
 #define SDCARD_RESERVED  (256 * 1024ul) // 256kb
 #endif
+
+// Initialize
+static inline void sdStreamInit(void) {}
 
 #endif

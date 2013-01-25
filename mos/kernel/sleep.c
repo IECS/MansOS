@@ -26,7 +26,7 @@
 #include "threads/threads.h"
 #endif
 #include <lib/energy.h>
-#include <timing.h>
+#include "sleep_internal.h"
 #include <print.h>
 
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
@@ -48,7 +48,7 @@ SLEEP_TIMER_INTERRUPT()
         //
         // Fix jiffies for greater good/precision!
         //
-        uint16_t milliseconds = sleepCyclesToMs(-timeWentToSleep);
+        uint16_t milliseconds = sleepTimerTicksToMs(-timeWentToSleep);
         jiffies += milliseconds;
         millisecondsInSleepMode += milliseconds;
         // Now we know we have slept for exactly 16000 milliseconds;
@@ -79,7 +79,7 @@ static inline void sleepTimerSet(uint16_t ms)
     uint16_t tbr = SLEEP_TIMER_READ_STOPPED();
     timeWentToSleep = tbr;
 
-    SLEEP_TIMER_SET(tbr + msToSleepCycles(ms));
+    SLEEP_TIMER_SET(tbr + msToSleepTimerTicks(ms));
 }
 
 void doMsleep(uint16_t milliseconds)
@@ -106,7 +106,7 @@ void doMsleep(uint16_t milliseconds)
 
         // after wakeup: determine for how long we actually slept
         // (unexpected wakeups are possible because of interrupts)
-        milliseconds = sleepCyclesToMs(SLEEP_TIMER_READ() - timeWentToSleep);
+        milliseconds = sleepTimerTicksToMs(SLEEP_TIMER_READ() - timeWentToSleep);
         // adjust jiffies accordingly
         jiffies += milliseconds;
         millisecondsInSleepMode += milliseconds;

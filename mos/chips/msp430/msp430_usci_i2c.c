@@ -37,7 +37,7 @@
 // Initialization
 //
 
-void i2cInit(uint8_t busId)
+void i2cHwInit(uint8_t busId)
 {
     // I2C mode: master, 7-bit addressing, 100 kbaud
 #define I2C_MODE (UCMST | UCMODE_3 | UCSYNC)
@@ -65,9 +65,6 @@ void i2cInit(uint8_t busId)
     }
 }
 
-void i2cOn(uint8_t busId) { }
-void i2cOff(uint8_t busId) { }
-
 // sending I2C stop condition
 #define I2C_SEND_STOP(letterid) \
     UC##letterid##CTL1 |= UCTXSTP;            \
@@ -80,8 +77,8 @@ void i2cOff(uint8_t busId) { }
  * @param   len         buffer length in bytes
  * @return  0           on success, error code otherwise
  */
-i2cError_t i2cWrite(uint8_t busId, uint8_t addr,
-                    const void *buf, uint8_t len)
+i2cError_t i2cHwWrite(uint8_t busId, uint8_t addr,
+                      const void *buf, uint8_t len)
 {
     size_t i;
     int    ret = I2C_OK;
@@ -148,8 +145,8 @@ end:
  * @param   len         buffer length in bytes
  * @return  received byte count
  */
-uint8_t i2cRead(uint8_t busId, uint8_t addr,
-                void *buf, uint8_t len)
+uint8_t i2cHwRead(uint8_t busId, uint8_t addr,
+                  void *buf, uint8_t len)
 {
     size_t i;
 

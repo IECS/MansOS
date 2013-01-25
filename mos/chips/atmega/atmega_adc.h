@@ -24,7 +24,7 @@
 #ifndef _ATMEGA_ADC_H_
 #define _ATMEGA_ADC_H_
 
-#include <kernel/defines.h>
+#include <defines.h>
 #include <avr/io.h>
 #include <avr/power.h>
 #include <avr/interrupt.h>
@@ -50,7 +50,7 @@
 #define hplAdcGetVal() (ADCL | (ADCH << 8))
 
 // use 6 ADC channels
-#define adcGetChannelCount() (6)
+#define hplAdcGetChannelCount() (6)
 
 // channel held in four smallest bits
 #define hplAdcSetChannel(ch) ADMUX = (ADMUX & 0xf0) | ch;

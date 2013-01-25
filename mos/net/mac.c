@@ -22,13 +22,12 @@
  */
 
 #include "mac.h"
-#include <lib/assert.h>
-#include <lib/unaligned.h>
+#include <assert.h>
 #include <lib/byteorder.h>
 #include <print.h>
 #include <stdlib.h>
 #include <errors.h>
-#include <kernel/threads/mutex.h>
+#include <mutex.h>
 
 static Mutex_t macMutex;
 
@@ -91,7 +90,7 @@ bool defaultBuildHeader(MacInfo_t *mi, uint8_t **header /* out */,
 #if SUPPORT_LONG_ADDR
     if (mi->originalSrc.type == MOS_ADDR_TYPE_SHORT) {
         *fcf1 += FCF_SRC_ADDR_SHORT;
-        putU16(p, htons(mi->originalSrc.shortAddr));
+        le16Write(p, htons(mi->originalSrc.shortAddr));
         p += MOS_SHORT_ADDR_SIZE;
     } else {
         *fcf1 += FCF_SRC_ADDR_LONG;
@@ -100,7 +99,7 @@ bool defaultBuildHeader(MacInfo_t *mi, uint8_t **header /* out */,
     }
     if (mi->originalDst.type == MOS_ADDR_TYPE_SHORT) {
         *fcf1 += FCF_DST_ADDR_SHORT;
-        putU16(p, htons(mi->originalDst.shortAddr));
+        le16Write(p, htons(mi->originalDst.shortAddr));
         p += MOS_SHORT_ADDR_SIZE;
     } else {
         if (mi->originalSrc.type != MOS_ADDR_TYPE_SHORT) return false;
@@ -113,21 +112,21 @@ bool defaultBuildHeader(MacInfo_t *mi, uint8_t **header /* out */,
 #else
     // src
     *fcf1 += FCF_SRC_ADDR_SHORT;
-    putU16(p, htons(mi->originalSrc.shortAddr));
+    le16Write(p, htons(mi->originalSrc.shortAddr));
     p += MOS_SHORT_ADDR_SIZE;
     // dst
     *fcf1 += FCF_DST_ADDR_SHORT;
-    putU16(p, htons(mi->originalDst.shortAddr));
+    le16Write(p, htons(mi->originalDst.shortAddr));
     p += MOS_SHORT_ADDR_SIZE;
 #endif // !SUPPORT_LONG_ADDR
     if (mi->immedSrc.shortAddr) {
         *fcf1 |= FCF_IMMED_SRC;
-        putU16(p, htons(mi->immedSrc.shortAddr));
+        le16Write(p, htons(mi->immedSrc.shortAddr));
         p += MOS_SHORT_ADDR_SIZE;
     }
     if (mi->immedDst.shortAddr) {
         *fcf1 |= FCF_IMMED_DST;
-        putU16(p, htons(mi->immedDst.shortAddr));
+        le16Write(p, htons(mi->immedDst.shortAddr));
         p += MOS_SHORT_ADDR_SIZE;
     }
     if (mi->seqnum) {
@@ -220,7 +219,7 @@ uint8_t *defaultParseHeader(uint8_t *data, uint16_t length, MacInfo_t *mi /* out
 #if SUPPORT_LONG_ADDR
         mi->originalSrc.type = MOS_ADDR_TYPE_SHORT;
 #endif
-        mi->originalSrc.shortAddr = ntohs(getU16(p));
+        mi->originalSrc.shortAddr = be16Read(p);
         p += MOS_SHORT_ADDR_SIZE;
         break;
 #if SUPPORT_LONG_ADDR
@@ -239,7 +238,7 @@ uint8_t *defaultParseHeader(uint8_t *data, uint16_t length, MacInfo_t *mi /* out
 #if SUPPORT_LONG_ADDR
         mi->originalDst.type = MOS_ADDR_TYPE_SHORT;
 #endif
-        mi->originalDst.shortAddr = ntohs(getU16(p));
+        mi->originalDst.shortAddr = be16Read(p);
         p += MOS_SHORT_ADDR_SIZE;
         break;
 #if SUPPORT_LONG_ADDR
@@ -252,11 +251,11 @@ uint8_t *defaultParseHeader(uint8_t *data, uint16_t length, MacInfo_t *mi /* out
     }
 
     if (fcf1 & FCF_IMMED_SRC) {
-        mi->immedSrc.shortAddr = ntohs(getU16(p));
+        mi->immedSrc.shortAddr = be16Read(p);
         p += MOS_SHORT_ADDR_SIZE;
     }
     if (fcf1 & FCF_IMMED_DST) {
-        mi->immedDst.shortAddr = ntohs(getU16(p));
+        mi->immedDst.shortAddr = be16Read(p);
         p += MOS_SHORT_ADDR_SIZE;
     }
     if (fcf1 & FCF_SEQNUM) {

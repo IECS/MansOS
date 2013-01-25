@@ -31,7 +31,7 @@
 #include <alarms.h>
 #include <timing.h>
 #include <print.h>
-#include <net/net-stats.h>
+#include <net/net_stats.h>
 
 static Socket_t roSocket;
 static Alarm_t roOriginateTimer;

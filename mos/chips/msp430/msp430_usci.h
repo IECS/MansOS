@@ -35,9 +35,7 @@
 #ifndef _MSP430_USCI_H_
 #define _MSP430_USCI_H_
 
-#include <kernel/defines.h>
-
-// TODO: clean up this file
+#include <defines.h>
 
 #define USCI_A0_RXTX_PORT 3
 #define USCI_A0_TX_PIN    4

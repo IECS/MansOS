@@ -24,7 +24,7 @@
 #ifndef _SEM_HAL_H_
 #define _SEM_HAL_H_
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 #ifndef __APPLE__
 

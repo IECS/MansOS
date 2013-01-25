@@ -24,8 +24,7 @@
 #ifndef MANSOS_NMEA_TYPES_H
 #define MANSOS_NMEA_TYPES_H
 
-#include <kernel/stdtypes.h>
-#include <kernel/defines.h>
+#include <defines.h>
 
 enum {
     // constant used to specify south latitude or west longitude (see examples)

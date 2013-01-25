@@ -34,7 +34,7 @@
 #include <fcntl.h>
 
 #include <eeprom.h>
-#include <lib/assert.h>
+#include <assert.h>
 #include <print.h>
 
 #define FILENAME "eeprom"

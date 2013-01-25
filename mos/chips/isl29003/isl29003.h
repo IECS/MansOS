@@ -71,7 +71,7 @@
 //              2 - 8
 //              3 - 16 (default)
 //             >3 - ignore
-typedef struct IslConfigure_s{
+typedef struct IslConfigure_s {
     enum{
         USE_DIODE1 = 0,
         USE_DIODE2 = 1,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,17 +21,18 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// Posix-compatible error codes
-//
-
 #ifndef MANSOS_ERRNO_H
 #define MANSOS_ERRNO_H
 
-#include <kernel/stdtypes.h>
+/// \file
+/// POSIX-compatible error codes
+///
+
+#include <stdtypes.h>
 
 #ifdef PLATFORM_PC
 
+// use error code definitions from standard headers
 #include <errno.h>
 #include <string.h>
 
@@ -134,14 +135,17 @@
 //===========================================================
 // Procedures
 //===========================================================
+
+//! Get ASCII string description of a specific error
 char *strerror(int_t errno);
 
 //===========================================================
 // Variables
 //===========================================================
 
+//! The number of the last error, set by library functions
 extern int_t errno;
 
-#endif // PLATFORM_PC
+#endif // not PLATFORM_PC
 
 #endif

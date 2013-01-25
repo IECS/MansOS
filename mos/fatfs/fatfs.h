@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +30,6 @@
 
 #include "structures.h"
 #include "posix-file.h"
-#include <kernel/defines.h>
 
 // Memory card sector size
 #define SDCARD_SECTOR_SIZE 512

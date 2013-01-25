@@ -21,7 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <kernel/alarms_system.h>
+#include <kernel/alarms_internal.h>
 #include <platform.h>
 #include <timing.h>
 
@@ -56,7 +56,8 @@ ALARM_TIMER_INTERRUPT0()
     // If TAR still > TACCR0 at this point, we are in trouble:
     // the interrupt will not be generated until the next wraparound (2 seconds).
     // So avoid it at all costs.
-    while (!timeAfter16(NEXT_ALARM_TIMER(), ALARM_TIMER_READ_STOPPED())) {
+    uint16_t tar = ALARM_TIMER_READ_STOPPED() + 1;
+    while (!timeAfter16(NEXT_ALARM_TIMER(), tar)) {
         jiffies += JIFFY_TIMER_MS;
         SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
     }
@@ -71,11 +72,11 @@ ALARM_TIMER_INTERRUPT1()
         // When ACLK ticks are converted to milliseconds, rounding error is introduced.
         // When TIMER_INTERRUPT_HZ = 1000, there are 32 ACLK ticks per millisecond;
         // when TIMER_INTERRUPT_HZ = 100, there are 32.7 ACLK ticks per millisecond.
-        // The clock errors are (65536 / 32) - 2000 = 48 milliseconds
+        // The clock errors are (65536 / 32) - 2000 = 48 milliseconds exactly
         // and 4.159 or approximately 4 milliseconds respectively.
         // We improve the precision by applying the fix once per every wraparound.
         //
-        jiffies += IMPRECISION_PER_WRAPAROUND;
+        jiffies += CORRECTION_PER_WRAPAROUND;
 
         ALARM_TIMER_RESET_WRAPAROUND();
     }

@@ -24,11 +24,30 @@
 #ifndef MANSOS_PRINT_H
 #define MANSOS_PRINT_H
 
+/// \file
+/// String output API
+///
+
+#include <defines.h>
+
+///
+/// Print a message to the selected medium (serial port by default).
+/// When used with just one argument, is as effiecient as simple serialSendString()
+///
+extern inline void PRINTF(char *format, ...) PRINTF_LIKE;
+
+//! Send a formatted message to serial port
+void serialPrint(const char* str);
+//! Send a formatted message to radio
+void radioPrint(const char* str);
+
+void debugHexdump(void *data, unsigned len);
+
 #include <lib/dprint.h>
 
-// functions / macros:
-// PRINT
-// PRINTF
-// void debugHexdump(void *data, unsigned len);
+#ifndef PRINTF_SERIAL_ID
+//! Plaform-specific ID of the serial port on which to send printed output
+#define PRINTF_SERIAL_ID -1
+#endif
 
 #endif

@@ -24,7 +24,7 @@
 #ifndef MANSOS_FILTER_H
 #define MANSOS_FILTER_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 enum Comparators {
     NOT_EQUAL,

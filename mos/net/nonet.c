@@ -31,5 +31,5 @@
 MosShortAddr localAddress;
 
 void networkingInit(void) {
-    networkingArchInit();
+    networkingInitArch();
 }

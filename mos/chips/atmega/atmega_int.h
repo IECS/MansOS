@@ -28,7 +28,7 @@
 #ifndef _ATMEGA_INT_H_
 #define _ATMEGA_INT_H_
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 #define ENABLE_INTS() sei()
 #define DISABLE_INTS() cli()

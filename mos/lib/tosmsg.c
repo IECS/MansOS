@@ -22,7 +22,6 @@
  */
 
 #include "byteorder.h"
-#include "unaligned.h"
 #include "tosmsg.h"
 #include <string.h>
 
@@ -40,7 +39,7 @@ uint16_t tosSerialMsgEnc(void *dataBuf, uint16_t dataSize,
     if (n > 0) {
         TosSerialMsg_t *msg = (TosSerialMsg_t *) resultBuf;
         msg->zero = 0;
-        putU16Network(&msg->dstAddr, dstAddr);
+        be16Write(&msg->dstAddr, dstAddr);
         msg->srcAddr[0] = 0;
         msg->srcAddr[1] = 0;
         msg->msgLen = n;

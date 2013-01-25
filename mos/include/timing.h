@@ -24,81 +24,115 @@
 #ifndef MANSOS_TIMING_H
 #define MANSOS_TIMING_H
 
+/// \file
+/// Time accounting API
+///
+
 #include <platform.h>
 
+///
+/// MansOS "timer ticks".
+///
+/// This value is in platform-independent milliseconds.
+/// It can be either 32-bit or 64-bit number, depending on configuration settings.
+///
+/// Note: in some contexts the value is not valid!
+/// For example, in interrupt handler running after the system was put
+/// in a low-power mode the 'jiffies' will correspond to the time *before* the system
+/// went to sleep.
+///
+/// Note: the value is not extremely precise!
+/// In long-term MansOS keeps jiffies syncronized with the high-accuracy HW clock crystal,
+/// but relative error up to 48 milliseconds may be present.
+/// If higher precision is needed (e.g. for TDMA protocol), use HW timer ticks directly!
+///
 extern volatile ticks_t jiffies;
 
-static inline ticks_t getJiffies(void) INLINE;
+///
+/// Get ticks elapsed since system start.
+///
+/// The return value can be 32-bit or 64-bit number, depending on configuration settings.
+///
 static inline ticks_t getJiffies(void)
 {
     return jiffies;
 }
 
-static inline ticks_t jiffies2ms(ticks_t jiffies) INLINE;
-static inline ticks_t jiffies2ms(ticks_t jiffies)
-{
+///
+/// Get milliseconds elapsed since system start as 32-bit value
+///
+static inline uint32_t getTimeMs(void) {
+    return (uint32_t) jiffies;
+}
+
+///
+/// Get milliseconds elapsed since system start as 64-bit value
+///
+static inline uint64_t getTimeMs64(void) {
     return jiffies;
 }
 
-static inline ticks_t ms2jiffies(ticks_t ms) INLINE;
-static inline ticks_t ms2jiffies(ticks_t ms)
-{
-    return ms;
-}
-
-//
-// Get milliseconds elapsed since system start
-//
-static inline uint32_t getTimeMs(void) {
-    return (uint32_t) jiffies2ms(jiffies);
-}
-
-static inline uint64_t getTimeMs64(void) {
-    return jiffies2ms(jiffies);
-}
-
-
-//
-// Get seconds elapsed since system start
-// 32-bit value is OK: ~136 year system lifetime sounds long enough ;)
-//
+///
+/// Get seconds elapsed since system start. Only 32-bit version is provided,
+/// because 0xffffffff seconds correspond to approximately 136 years.
+///
 static inline uint32_t getTimeSec(void) {
-    return jiffies2ms(jiffies) / 1000;
+    return jiffies / 1000ul;
 }
 
-//
-// Internal use: convert from milliseconds to sleep clock ticks
-//
-static inline uint16_t msToSleepCycles(uint16_t ms)
+///
+/// Convert from alarm (jiffy) timer ticks to milliseconds
+/// Note: on msp430 a conversion error is introduced due to rounding!
+///
+static inline uint16_t alarmTimerTicksToMs(uint16_t ticks)
+{
+    return ticks * 1000ul / (ACLK_SPEED / JIFFY_CLOCK_DIVIDER);
+}
+
+///
+/// Convert from milliseconds to alarm (jiffy) timer ticks
+/// Note: on msp430 a conversion error is introduced due to rouding!
+///
+static inline uint16_t msToAlarmTimerTicks(uint16_t ms)
+{
+    return ms * ALARM_CYCLES
+        + (uint16_t) ((uint32_t) ms * ALARM_CYCLES_DEC / 1000ul);
+}
+
+///
+/// Convert from sleep timer ticks to milliseconds
+///
+/// Note: on msp430 a conversion error is introduced due to rounding!
+///
+static inline uint16_t sleepTimerTicksToMs(uint16_t ticks)
+{
+    return ticks * 1000ul / (SLEEP_CLOCK_SPEED / SLEEP_CLOCK_DIVIDER);
+}
+
+///
+/// Convert from milliseconds to sleep timer ticks
+///
+/// Note: on msp430 a conversion error is introduced due to rouding!
+///
+static inline uint16_t msToSleepTimerTicks(uint16_t ms)
 {
     return ms * SLEEP_CYCLES
-        + (uint16_t) ((uint32_t) ms * (uint32_t) SLEEP_CYCLES_DEC / 1000ul);
+        + (uint16_t) ((uint32_t) ms * SLEEP_CYCLES_DEC / 1000ul);
 }
-
-//
-// Internal use: convert from sleep clock ticks to milliseconds
-//
-static inline uint16_t sleepCyclesToMs(uint16_t ocr)
-{
-    return ocr * 1000ul / (SLEEP_CLOCK_SPEED / SLEEP_CLOCK_DIVIDER);
-}
-
-
-//
-// Internal use only: this functions does the actual sleeping
-//
-void doMsleep(uint16_t milliseconds);
-
 
 //
 // Synchronized time functions: return time that is synchronized
-// (fixed) root clock from the time synchronization protocol.
+// (fixed) root clock using the time synchronization protocol.
 //
 #if !USE_ROLE_BASE_STATION && USE_NET
 
+//! Time difference with network root node's clock in milliseconds
 extern int64_t rootClockDeltaMs;
+//! Get the network-wide synchronized time in milliseconds as 32-bit value
 #define getSyncTimeMs()   ((uint32_t)(getTimeMs() + rootClockDeltaMs))
+//! Get the network-wide synchronized time in milliseconds as 64-bit value
 #define getSyncTimeMs64() (getTimeMs() + rootClockDeltaMs)
+//! Get the network-wide synchronized time in seconds as 32-bit value
 #define getSyncTimeSec()  ((uint32_t)(getTimeSec() + rootClockDeltaMs / 1000))
 
 #else

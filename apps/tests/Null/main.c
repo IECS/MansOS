@@ -25,7 +25,7 @@
 //      Null application.
 //-------------------------------------------
 
-#include "mansos.h"
+#include "stdmansos.h"
 
 //-------------------------------------------
 //      Entry point for the application

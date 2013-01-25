@@ -24,7 +24,7 @@
 #ifndef MANSOS_MRF24J40_H
 #define MANSOS_MRF24J40_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 //
 // Configuration constants

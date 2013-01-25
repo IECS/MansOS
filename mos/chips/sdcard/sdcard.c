@@ -30,7 +30,7 @@
 #include <utils.h>
 #include <serial.h>
 #include <hil/busywait.h>
-#include <lib/assert.h>
+#include <assert.h>
 #include <kernel/threads/threads.h>
 #include <string.h>
 

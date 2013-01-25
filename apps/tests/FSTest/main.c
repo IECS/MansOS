@@ -34,9 +34,8 @@
 #include <fs.h>
 #include <leds.h>
 #include <sleep.h>
-#include <kernel/mansos.h>
-#include <kernel/stdtypes.h>
-#include <lib/assert.h>
+#include <defines.h>
+#include <assert.h>
 #include <print.h>
 
 /* Internal header, not for users */

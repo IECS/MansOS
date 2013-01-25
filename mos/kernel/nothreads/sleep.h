@@ -21,13 +21,15 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <kernel/alarms_system.h>
+#include <kernel/alarms_internal.h>
+#include <kernel/sleep_internal.h>
 #include <timing.h>
 
-#include <lib/dprint.h>
+#include <print.h>
 
 //
-// Put current thread to sleep for a specific time
+// Put the system to sleep for a specific time;
+// version for event-based kernel.
 //
 static inline void msleep(uint16_t ms)
 {
@@ -43,10 +45,14 @@ static inline void msleep(uint16_t ms)
         if (msToSleep <= 0) break;
 
         // calculate time to sleep: minumum of 'ms' and time to next alarm
+        Handle_t handle;
+        ATOMIC_START(handle);
         Alarm_t *first = SLIST_FIRST(&alarmListHead);
         if (first && timeAfter32(sleepEnd, first->jiffies)) {
-            // PRINTF("alarms, dont sleep to end!\n");
             msToSleep = first->jiffies - now;
+            // PRINTF("alarms, dont sleep to end!, msToSleep=%u\n", msToSleep);
+            // do the alarm processing with enabled interrupts - it can take long!
+            ATOMIC_END(handle);
             // make sure no outstanding alarms are present
             if (msToSleep <= 0) {
                 // PRINTF("process and restart\n");
@@ -57,6 +63,7 @@ static inline void msleep(uint16_t ms)
             }
             allTimeSpent = false;
         } else {
+            ATOMIC_END(handle);
             // PRINTF("sleep to end\n");
             allTimeSpent = true;
         }

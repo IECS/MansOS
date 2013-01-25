@@ -28,7 +28,7 @@
 
 #include <stdint.h>
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 /* Functions that a device file has to implement */
 struct fsDevOperations {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,7 +24,6 @@
 #ifndef MANSOS_POSIX_FILE_H
 #define MANSOS_POSIX_FILE_H
 
-#include <kernel/defines.h>
 #include "structures.h"
 
 // End-of-file character
@@ -44,15 +43,15 @@
 //
 struct FILE_s {
     // file descriptor, -1 if not opened
-    int16_t fd;
-    // file size in bytes
-    uint32_t fileSize;
-    // firts cluster of the file
+    int8_t fd;
+    // first cluster of the file
     cluster_t firstCluster;
     // current cluster (on disk)
     cluster_t currentCluster;
     // directory entry index
     uint16_t directoryEntry;
+    // file size in bytes
+    uint32_t fileSize;
     // read/write position
     uint32_t position;
     // O_RDONLY, O_WRONLY etc.

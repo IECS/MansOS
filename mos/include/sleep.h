@@ -24,19 +24,12 @@
 #ifndef MANSOS_SLEEP_H
 #define MANSOS_SLEEP_H
 
-/*
- * Routines for putting the system in low power mode
- */
+/// \file
+/// Routines for putting the system in low power mode
+///
 
-#include <kernel/defines.h>
+#include <defines.h>
 #include <platform.h>
-
-#ifdef USE_THREADS
-// use thread specific sleep instead.
-#include <threads/threads.h>
-#else
-#include <nothreads/sleep.h>
-#endif
 
 #ifdef PLATFORM_PC
 // sleep already defined on PC platform
@@ -44,14 +37,26 @@
 # define msleep(ms) usleep((ms) * 1000)
 #else
 
-//
-// Milliseconds sleep
-//
-void msleep(uint16_t milliseconds);
+///
+/// Milliseconds sleep
+///
+extern inline void msleep(uint16_t milliseconds);
 
-//
-// Sleep for n seconds. The signature is compatible with POSIX sleep().
-//
+///
+/// Give control to another thread. Equivalent to msleep(0)
+///
+extern inline void yield(void);
+
+// Implementation
+#ifdef USE_THREADS
+#include <threads/threads.h>
+#else
+#include <nothreads/sleep.h>
+#endif
+
+///
+/// Sleep for n seconds. The signature is compatible with POSIX sleep()
+///
 static inline uint16_t sleep(uint16_t seconds)
 {
     // 
@@ -65,7 +70,8 @@ static inline uint16_t sleep(uint16_t seconds)
     }
     msleep(seconds * 1000);
 
-    return 0; // keep this function compatible with sleep() on PC
+    //  return 0 on success to keep this function POSIX-compatible
+    return 0;
 }
 
 #endif // !PLATFORM_PC

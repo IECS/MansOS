@@ -28,6 +28,7 @@
 #define _ARCH_DATATYPES_H_
 
 #include <limits.h>
+#include <stdtypes.h>
 
 #ifndef uint_t
 typedef uint16_t uint_t;
@@ -48,6 +49,9 @@ typedef uint16_t Handle_t;
 
 // physical address type
 typedef uint16_t MemoryAddress_t;
+
+// Unsigned type large enough for holding flash address range
+typedef uint16_t FlashAddress_t;
 
 // the default size of print buffer
 #ifndef PRINT_BUFFER_SIZE

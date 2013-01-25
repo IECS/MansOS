@@ -24,9 +24,16 @@
 #ifndef MANSOS_HASH_H
 #define MANSOS_HASH_H
 
-#include <kernel/stdtypes.h>
+// - This file is part of the public MansOS API -
+
+/// \file
+/// Hash function API. Uses Jenkin's hash internally
+///
+
+#include <stdtypes.h>
 #include <stddef.h> // size_t
 
+//! Return 32-but hash code of binary data array
 uint32_t hash(const void *key, size_t length, uint32_t initval);
 
 #endif

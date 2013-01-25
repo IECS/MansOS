@@ -24,7 +24,7 @@
 #ifndef MANSOS_AT25DF_H
 #define MANSOS_AT25DF_H
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 // minimal unit that can be erased
 #define AT25DF_SECTOR_SIZE    (4 * 1024)  // sector size is 64kb, but 4kb blocks can be erased

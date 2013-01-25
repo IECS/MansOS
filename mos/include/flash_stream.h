@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2012-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,36 +21,32 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_FSTREAM_LIGHT_H
-#define MANSOS_FSTREAM_LIGHT_H
+#ifndef MANSOS_FLASH_STREAM_H
+#define MANSOS_FLASH_STREAM_H
 
-//
-// Ext flash card stream module interface.
-//
+/// \file
+/// External flash stream module interface.
+///
 
-#include <kernel/defines.h>
+#include <defines.h>
 
-//
-// Initialize
-//
-static inline void flashStreamInit(void) {}
-
-//
-// Reset the stream back to start
-//
+///
+/// Reset the stream back to start
+///
 void flashStreamReset(void);
 
-//
-// Write a record
-//
+///
+/// Write a record
+///
 bool flashStreamWriteRecord(void *data, uint16_t length, bool crc);
 
-//
-// Read a record
-//
+///
+/// Read a record
+///
 bool flashStreamReadRecord(void *data, uint16_t length, bool crc);
 
 #ifndef EXT_FLASH_RESERVED
+//! Number of bytes reserved (unused by the stream module) at the start of external flash memory
 #define EXT_FLASH_RESERVED  (256 * 1024ul) // 256kb
 #endif
 

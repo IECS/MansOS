@@ -24,7 +24,7 @@
 #ifndef MANSOS_RBUFFER_H
 #define MANSOS_RBUFFER_H
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 typedef struct RingBuffer_s {
     uint8_t *data;

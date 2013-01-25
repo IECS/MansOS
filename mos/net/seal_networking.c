@@ -75,7 +75,7 @@ static void sealRecvRaw(void)
 }
 #endif
 
-void sealCommInit(void)
+void sealNetInit(void)
 {
 #if USE_NET
     // use sockets
@@ -169,7 +169,7 @@ static void sealRecv(uint8_t *data, uint16_t length)
     PRINTF("$\n");
 }
 
-bool sealCommPacketRegisterInterest(uint32_t typeMask,
+bool sealNetPacketRegisterInterest(uint32_t typeMask,
                                     MultiValueCallbackFunction callback,
                                     int32_t *buffer)
 {
@@ -180,11 +180,11 @@ bool sealCommPacketRegisterInterest(uint32_t typeMask,
                 l->u.buffer = buffer;
                 return true;
             });
-    DPRINTF("sealCommRegisterInterest: all full!\n");
+    DPRINTF("sealNetRegisterInterest: all full!\n");
     return false;
 }
 
-bool sealCommRegisterInterest(uint16_t code,
+bool sealNetRegisterInterest(uint16_t code,
                               SingleValueCallbackFunction callback)
 {
     for_all_listeners(
@@ -194,11 +194,11 @@ bool sealCommRegisterInterest(uint16_t code,
                 l->u.buffer = NULL;
                 return true;
             });
-    DPRINTF("sealCommRegisterInterest: all full!\n");
+    DPRINTF("sealNetRegisterInterest: all full!\n");
     return false;
 }
 
-bool sealCommPacketUnregisterInterest(uint32_t typeMask,
+bool sealNetPacketUnregisterInterest(uint32_t typeMask,
                                       MultiValueCallbackFunction callback)
 {
     for_all_listeners(
@@ -206,11 +206,11 @@ bool sealCommPacketUnregisterInterest(uint32_t typeMask,
                 l->callback.sv = NULL;
                 return true;
             });
-    DPRINTF("sealCommUnregisterInterest: not found!\n");
+    DPRINTF("sealNetUnregisterInterest: not found!\n");
     return false;
 }
 
-bool sealCommUnregisterInterest(uint16_t code,
+bool sealNetUnregisterInterest(uint16_t code,
                                 SingleValueCallbackFunction callback)
 {
     uint32_t typeMask = 1 << code;
@@ -219,11 +219,11 @@ bool sealCommUnregisterInterest(uint16_t code,
                 l->callback.sv = NULL;
                 return true;
             });
-    DPRINTF("sealCommUnregisterInterest: not found!\n");
+    DPRINTF("sealNetUnregisterInterest: not found!\n");
     return false;
 }
 
-void sealCommPacketStart(SealPacket_t *buffer)
+void sealNetPacketStart(SealPacket_t *buffer)
 {
     packetInProgress = buffer;
     packetInProgress->header.magic = SEAL_MAGIC;
@@ -231,7 +231,7 @@ void sealCommPacketStart(SealPacket_t *buffer)
     packetInProgressNumFields = 0;
 }
 
-void sealCommPacketAddField(uint16_t code, int32_t value)
+void sealNetPacketAddField(uint16_t code, int32_t value)
 {
     ASSERT(packetInProgress);
     ASSERT(code < 31); // XXX TODO: add support for larger codes
@@ -241,7 +241,7 @@ void sealCommPacketAddField(uint16_t code, int32_t value)
     packetInProgressNumFields++;
 }
 
-void sealCommPacketFinish(void)
+void sealNetPacketFinish(void)
 {
     ASSERT(packetInProgress);
     uint16_t length = 8 + packetInProgressNumFields * 4;
@@ -255,15 +255,15 @@ void sealCommPacketFinish(void)
 #endif
 }
 
-void sealCommSendValue(uint16_t code, int32_t value)
+void sealNetSendValue(uint16_t code, int32_t value)
 {
     SealPacket_t packet;
-    sealCommPacketStart(&packet);
-    sealCommPacketAddField(code, value);
-    sealCommPacketFinish();
+    sealNetPacketStart(&packet);
+    sealNetPacketAddField(code, value);
+    sealNetPacketFinish();
 }
 
-int32_t sealCommReadValue(uint16_t code) 
+int32_t sealNetReadValue(uint16_t code) 
 {
     ASSERT(listenerBeingProcessed);
     ASSERT(listenerBeingProcessed->typeMask & (1 << code));

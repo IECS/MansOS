@@ -35,12 +35,12 @@
 #define MANSOS_DPRINT_H
 
 #include <serial.h>
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
-//
-// Uncomment this (or better, define it in "config" file!) to send print output to radio.
-//
-//#define DPRINT_TO_RADIO 1
+#ifndef DPRINT_TO_RADIO
+// Define this to 1 to send print output to radio.
+#define DPRINT_TO_RADIO 0
+#endif
 
 #if USE_PRINT
 
@@ -49,7 +49,7 @@
     _print_buf = _print_buf_local;
 
 
-# ifdef DPRINT_TO_RADIO
+# if DPRINT_TO_RADIO
 //
 // Print to radio
 //
@@ -95,6 +95,16 @@
 #define TPRINTF(format, ...) debugPrintf(PRINT_FUNCTION, "[%u] " format, getTimeMs(), ##__VA_ARGS__)
 #else
 #define TPRINTF(...) PRINTF(__VA_ARGS__)
+#endif
+
+
+//
+// DEBUG_PRINTF: print only when DEBUG=y
+//
+#if DEBUG
+#define DEBUG_PRINTF(...) PRINTF(__VA_ARGS__)
+#else
+#define DEBUG_PRINTF(...) PRINTF(__VA_ARGS__)
 #endif
 
 //

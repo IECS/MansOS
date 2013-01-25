@@ -25,10 +25,10 @@
 /// MansOS network addressing
 ///
 
-#ifndef MANSOS_ADDR_H
-#define MANSOS_ADDR_H
+#ifndef MANSOS_ADDRESS_H
+#define MANSOS_ADDRESS_H
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 // MAC Frame format:
 // +-----+----------------------+---------+

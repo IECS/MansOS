@@ -28,7 +28,7 @@
 #ifndef MANSOS_TOSMSG_H
 #define MANSOS_TOSMSG_H
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 // max bytes which can be encapsulated in one TinyOS message
 enum { MAX_TOS_MSG_PAYLOAD = 28 };

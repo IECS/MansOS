@@ -24,7 +24,11 @@
 #ifndef MANSOS_LEDS_H
 #define MANSOS_LEDS_H
 
-#include <kernel/defines.h>
+/// \file
+/// LED (light-emitting diode) control API
+///
+
+#include <defines.h>
 #include "digital.h"
 #include <lib/energy.h>
 
@@ -38,17 +42,20 @@
 // -----------------------------------------------------
 void ledsInit(void);               // Init All leds (kernel uses this)
 
-void ledsSet(uint_t led_bitmask);  // Set LEDs from a bitmask
-uint_t ledsGet(void);              // Which leds are on? Returns a bitmask
-
+//! Set LEDs from a bitmask
+void ledsSet(uint_t led_bitmask);
+//! Which LEDs are on? Returns a bitmask
+uint_t ledsGet(void);
+//! Turn LEDs on using a bitmask
 #define ledsOn(led_bitmask)     ledsSet(  (led_bitmask) | ledsGet() )
+//! Turn LEDs off using a bitmask
 #define ledsOff(led_bitmask)    ledsSet( ~(led_bitmask) & ledsGet() )
+//! Toggle LEDs using a bitmask
 #define ledsToggle(led_bitmask) ledsSet(  (led_bitmask) ^ ledsGet() )
 
-
-//
-// Energy consumption measurements; default energy profiles
-//
+///
+/// Energy consumption measurements; default energy profiles
+///
 #define redLed_ENERGY_PROFILE    ENERGY_CONSUMER_LED_RED
 #define yellowLed_ENERGY_PROFILE ENERGY_CONSUMER_LED_RED
 #define greenLed_ENERGY_PROFILE  ENERGY_CONSUMER_LED_GREEN
@@ -70,15 +77,15 @@ uint_t ledsGet(void);              // Which leds are on? Returns a bitmask
 // LED definition (uses platform dependant ledslist.h)
 //=========================================================
 
-//----------------------------------------------------------
-// LED_DEFINE defines the functions for each individual led.
-// "name" must be the same as used in the leds_t enum declaration.
-// "port" and "pin" determine where the led is attached to the MCU.
-// "valOn" specifies whether to set pin to 1 or 0 to turn the LED on.
-// Note: the defines use double indirection here so that the 
-// parameters that are macros get evaluated.
-//----------------------------------------------------------
-
+///----------------------------------------------------------
+/// LED_DEFINE defines the functions for each individual LED.
+///
+/// "name" must be the same as used in the leds_t enum declaration.
+/// "port" and "pin" determine where the led is attached to the MCU.
+/// "valOn" specifies whether to set pin to 1 or 0 to turn the LED on.
+/// Note: the defines use double indirection here so that the 
+/// parameters that are macros get evaluated.
+///----------------------------------------------------------
 #ifndef LED_DEFINE
 #define LED_DEFINE( name, port, pin, valOn )  LED_DEFINE2( name, port, pin, valOn )
 #define LED_DEFINE2( name, port, pin, valOn )                            \
@@ -98,8 +105,7 @@ uint_t ledsGet(void);              // Which leds are on? Returns a bitmask
     
 #endif  // LED_DEFINE
 
-// LED_ALIAS is used to provide aliases to the original led names 
-
+//! LED_ALIAS is used to provide aliases to the original led names 
 #ifndef LED_ALIAS
 #define LED_ALIAS( alias, name ) LED_ALIAS2( alias, name )
 #define LED_ALIAS2( alias, name )                                       \
@@ -130,10 +136,10 @@ uint_t ledsGet(void);              // Which leds are on? Returns a bitmask
 #endif // LED_UNIMPLEMENTED     
 
 
-//----------------------------------------------------------
-// Declare all LEDs.
-// Prerequisite: ledslist.h file with the LED names.
-//----------------------------------------------------------
+///----------------------------------------------------------
+/// Declare all LEDs.
+/// Prerequisite: ledslist.h file with the LED names.
+///----------------------------------------------------------
 typedef enum {
 #  define DOIT(_led) _led##_num, 
 #  include "ledslist.h"
@@ -145,13 +151,13 @@ typedef enum {
 } leds_t;
 
 
-// Implementation of pin-attached LEDs, defined in ledslist.h
+//! Implementation of pin-attached LEDs, defined in ledslist.h
 //----------------------------------------------------------
 #define  LEDS_DEFINE
 #include "ledslist.h"
 
 
-// Count all the LEDs to LEDS_COUNT
+//! Count all the LEDs to LEDS_COUNT
 typedef enum { 
    LEDS_COUNT = 0
 #  define DOIT(_led)  +1
@@ -159,7 +165,7 @@ typedef enum {
 } leds_count_t;  // Terminating the LEDS_COUNT construction
 
 
-// Compute a mask for all the LEDs to LEDS_ALL_MASK
+//! Compute a mask for all the LEDs to LEDS_ALL_MASK
 typedef enum { 
    LEDS_ALL_MASK = 0
 #  define DOIT(_led)  | _led##_mask
@@ -167,11 +173,12 @@ typedef enum {
 } leds_all_t;    // Terminating the LEDS_ALL_MASK construction
 
 
-//----------------------------------------------------------
-// The default LED "led" support. 
-// If LED_DEFAULT is not defined in ledslist.h  - (no leds are present),
-// then ignore the led* calls.
-//----------------------------------------------------------
+///----------------------------------------------------------
+/// The default LED "led" support. 
+///
+/// If LED_DEFAULT is not defined in ledslist.h  - (no leds are present),
+/// then ignore the led* calls.
+///----------------------------------------------------------
 #ifdef LED_DEFAULT
 LED_ALIAS(led, LED_DEFAULT)
 #else // LED_DEFAULT
@@ -187,7 +194,7 @@ LED_ALIAS(led, LED_DEFAULT)
 
 
 //===============================================================
-// Compilation support for some default leds
+//! Compilation support for some default leds
 #ifndef RED_LED_DEFINED
 #define redLed_mask 0
 #define redLedMask()  0
@@ -229,7 +236,7 @@ LED_ALIAS(led, LED_DEFAULT)
 #endif
 
 //===============================================================
-// This should be moved to the PC platform.h
+//! PC-platform specific "ignore LEDs" functionality
 #if PLATFORM_PC
    void suppressLedOutput(bool yes);
 #else

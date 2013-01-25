@@ -25,8 +25,8 @@
 #include <string.h>
 #include <serial_number.h>
 #include <extflash.h>
-#include <lib/codec/crc.h>
-#include <lib/assert.h>
+#include <codec.h>
+#include <assert.h>
 #include "../common.h"
 
 // #define EXT_FLASH_RESERVED  (256 * 1024ul) // 256kb

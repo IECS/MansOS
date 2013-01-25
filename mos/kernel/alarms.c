@@ -24,7 +24,7 @@
 #if USE_THREADS
 #include "threads/threads.h"
 #endif
-#include "alarms_system.h"
+#include "alarms_internal.h"
 #include <timing.h>
 #include <print.h>
 
@@ -72,7 +72,7 @@ void alarmsProcess(void)
 void alarmSchedule(Alarm_t *alarm, uint32_t milliseconds)
 {
     // PRINTF("alarmSchedule %p, ms=%lu\n", alarm, milliseconds);
-    alarm->jiffies = (uint32_t)getJiffies() + ms2jiffies(milliseconds);
+    alarm->jiffies = (uint32_t)getJiffies() + milliseconds;
 
     // locking is required, because both kernel and user threads can be using this function
     Handle_t h;

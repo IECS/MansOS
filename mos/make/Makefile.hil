@@ -65,7 +65,7 @@ PSOURCES-$(USE_FILTER) += $(MOS)/lib/processing/filter.c
 PSOURCES-$(USE_CACHE) += $(MOS)/lib/processing/cache.c
 
 PSOURCES-$(USE_NET) += $(NET)/socket.c
-PSOURCES-$(USE_NET) += $(NET)/comm.c
+PSOURCES-$(USE_NET) += $(NET)/networking.c
 PSOURCES-$(USE_NET) += $(NET)/mac.c
 
 PSOURCES-$(USE_THREADS) += $(MOS)/kernel/threads/main.c
@@ -77,7 +77,7 @@ ifeq ($(USE_THREADS),y)
 
 PSOURCES += $(MOS)/kernel/sleep.c
 PSOURCES-$(USE_RADIO) += $(MOS)/kernel/threads/radio.c
-PSOURCES-$(USE_NET_STATS) += $(NET)/net-stats.c
+PSOURCES-$(USE_NET_STATS) += $(NET)/net_stats.c
 
 ifeq ($(CONST_MAC_PROTOCOL),MAC_PROTOCOL_NULL)
 PSOURCES-$(USE_NET) += $(NET)/mac/null.c

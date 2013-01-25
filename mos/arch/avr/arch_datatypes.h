@@ -28,6 +28,8 @@
 #ifndef _ARCH_DATATYPES_H_
 #define _ARCH_DATATYPES_H_
 
+#include <stdtypes.h>
+
 #ifndef uint_t
 typedef uint8_t uint_t;
 #endif
@@ -47,5 +49,8 @@ typedef uint8_t Handle_t;
 
 // physical address type
 typedef uint16_t MemoryAddress_t;
+
+// Unsigned type large enough for holding flash address range
+typedef uint16_t FlashAddress_t;
 
 #endif

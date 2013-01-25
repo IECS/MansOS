@@ -24,10 +24,7 @@
 #ifndef MANSOS_HIL_ATOMIC
 #define MANSOS_HIL_ATOMIC
 
-#include <kernel/defines.h>
-#include <platform.h>
-
-extern volatile ticks_t jiffies;
+#include <timing.h>
 
 //
 // More heavyweight versions of ATOMIC_START/ATOMIC_END macros
@@ -43,7 +40,7 @@ extern volatile ticks_t jiffies;
     if (h != 0) {                                                     \
         const uint16_t _time_diff = ALARM_TIMER_READ() - _start_time; \
         if (_time_diff > PLATFORM_ALARM_TIMER_PERIOD) {               \
-            jiffies += TIMER_TICKS_TO_MS(                             \
+            jiffies += alarmTimerTicksToMs(                           \
                     _time_diff - PLATFORM_ALARM_TIMER_PERIOD);        \
         }                                                             \
     }                                                                 \

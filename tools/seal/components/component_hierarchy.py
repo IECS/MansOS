@@ -274,7 +274,7 @@ class SquareWaveSensor(WaveSensor):
         wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
         low = self.getParameterValue("low", useCaseParameters)
         high = self.getParameterValue("high", useCaseParameters)
-        return "(getJiffies() % {0} < ({0} / 2)) ? {1} : {2}".format(wavePeriod, low, high)
+        return "(getTimeMs() % {0} < ({0} / 2)) ? {1} : {2}".format(wavePeriod, low, high)
 
 #
 # Predefined waveform sensor:
@@ -293,7 +293,7 @@ class TriangleWaveSensor(WaveSensor):
         wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
         low = self.getParameterValue("low", useCaseParameters)
         high = self.getParameterValue("high", useCaseParameters)
-        return "triangleWaveValue({}, {}, {})".format(wavePeriod, low, high)
+        return "signalTriangleWave({}, {}, {})".format(wavePeriod, low, high)
 
 #
 # Predefined waveform sensor:
@@ -312,7 +312,7 @@ class SawtoothWaveSensor(WaveSensor):
         wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
         low = self.getParameterValue("low", useCaseParameters)
         high = self.getParameterValue("high", useCaseParameters)
-        return "sawtoothWaveValue({}, {}, {})".format(wavePeriod, low, high)
+        return "signalSawtoothWave({}, {}, {})".format(wavePeriod, low, high)
 
 #
 # Predefined waveform sensor: sine wave
@@ -327,7 +327,7 @@ class SineWaveSensor(WaveSensor):
         wavePeriod = self.getParameterValue("waveperiod", useCaseParameters)
         low = self.getParameterValue("low", useCaseParameters)
         high = self.getParameterValue("high", useCaseParameters)
-        return "sineWaveValue({}, {}, {})".format(wavePeriod, low, high)
+        return "signalSineWave({}, {}, {})".format(wavePeriod, low, high)
 
 class LightSensor(SealSensor):
     def __init__(self):
@@ -356,7 +356,6 @@ class HumiditySensor(SealSensor):
         self.offFunction.value = "humidityOff()"
         self.errorFunction = SealAdvancedParameter("humidityIsError()")
         self.extraConfig.value = "USE_HUMIDITY=y"
-        self.extraIncludes.value = "#include <sensors.h>"
 
 # the following for are not implemented
 class TemperatureSensor(SealSensor):

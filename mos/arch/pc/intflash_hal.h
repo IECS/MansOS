@@ -46,8 +46,5 @@
 // Start address of "information memory"
 #define INT_FLASH_INFOMEM_START   0x0
 
-// Unsigned type large enough for holding flash address range
-typedef uint16_t FlashAddress_t;
-
 
 #endif

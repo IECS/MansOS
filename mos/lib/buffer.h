@@ -25,7 +25,7 @@
 #define MANSOS_BUFFER_H
 
 #include <string.h> // memcpy
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 typedef struct Buffer_s {
     uint8_t *data;

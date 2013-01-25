@@ -29,7 +29,7 @@
 //------------------------------------------------------
 
 #include <digital.h>
-#include <kernel/defines.h>
+#include <defines.h>
 #include "humidity_hal.h"
 
 // -----------------------

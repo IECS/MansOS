@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,29 +21,28 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Beeper API, for platforms where one is available
- */
-
 #ifndef MANSOS_BEEPER_H
 #define MANSOS_BEEPER_H
 
+/// \file
+/// Beeper API for platforms where one is available
+///
+
+#include <stdtypes.h>
+
+//! Toggle beeper (produces single tick)
+extern inline void beeperToggle();
+
+//! Beep for specific amount of time
+extern inline void beeperBeep(uint16_t ms);
+
+//! Beep for specific amount of time in a specific frequencyw
+extern inline void beeperBeepEx(uint16_t ms, uint16_t freq);
+
+// init beeper
+extern inline void beeperInit(void);
+
+// implementation
 #include "beeper_hal.h"
-
-//===========================================================
-// Data types and constants
-//===========================================================
-
-
-//===========================================================
-// Procedures
-//===========================================================
-
-// -- Functions are defined in platform-specific part:
-// void beeperInit();      // init beeper
-// void beeperToggle();    // toggle beeper (produces single tick)
-// void beeperBeep(uint16_t ms);  // beep for specific amount of time
-// void beeperBeepEx(uint16_t ms, uint16_t freq);
-        // beep for specific amount of time in a specific frequency
 
 #endif

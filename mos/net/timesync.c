@@ -76,9 +76,18 @@ static void timesyncUsartReceive(uint8_t byte) {
     }
 }
 
-void timesyncInit(void) {
+void timesyncOn(void) {
     serialEnableRX(PRINTF_SERIAL_ID);
     serialSetReceiveHandle(PRINTF_SERIAL_ID, timesyncUsartReceive);
+}
+
+void timesyncOff(void) {
+    serialDisableRX(PRINTF_SERIAL_ID);
+}
+
+void timesyncInit(void) {
+    // turn it on by default
+    timesyncOn();
 }
 
 #endif

@@ -24,7 +24,7 @@
 #ifndef MSP430_USART_SPI_H
 #define MSP430_USART_SPI_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 //
 // SPI bus configuration for the MSP430 x1xx

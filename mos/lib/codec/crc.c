@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,6 +28,17 @@ uint16_t crc16(const uint8_t *data, uint16_t len) {
 
     for (i = 0; i < len; ++i) {
         crc = crc16Add(crc, *data++);
+    }
+
+    return crc;
+}
+
+uint8_t crc8(const uint8_t *data, uint16_t len) {
+    uint16_t i;
+    uint8_t crc = 0;
+
+    for (i = 0; i < len; ++i) {
+        crc = crc8Add(crc, *data++);
     }
 
     return crc;

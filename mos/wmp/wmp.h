@@ -24,7 +24,11 @@
 #ifndef MANSOS_WMP_H
 #define MANSOS_WMP_H
 
-#include <kernel/defines.h>
+/// \file
+/// MansOS file management protocol public API
+///
+
+#include <defines.h>
 #include <alarms.h>
 
 enum WmpSensorType_e {

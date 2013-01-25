@@ -27,7 +27,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <kernel/stdtypes.h>
+#include <defines.h>
 
 #include "dev.h"
 #include "null.h"

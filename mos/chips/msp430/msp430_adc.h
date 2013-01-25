@@ -24,7 +24,11 @@
 #ifndef _MSP430_ADC_H_
 #define _MSP430_ADC_H_
 
-#include <kernel/defines.h>
+//
+// 12-bit ADC on MSP430 architecture
+//
+
+#include <defines.h>
 #include <digital.h>
 
 //===========================================================
@@ -134,7 +138,7 @@
 // why not use MEM2 as buffer area?
 #define hplAdcGetVal() (ADC12MEM2)
 
-#define adcGetChannelCount() (16)
+#define hplAdcGetChannelCount() (16)
 
 // channel held in four smallest bits
 #define hplAdcSetChannel(ch) ADC12MCTL2 = (ADC12MCTL2 & 0xf0) | (ch)

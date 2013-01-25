@@ -21,16 +21,20 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// Generic algorithms
-//
+// -- This file is part of the public MansOS API --
+
+/// \file
+/// Generic algorithms
+///
 
 #ifndef MANSOS_ALGO_H
 #define MANSOS_ALGO_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
-// swap two values
+///
+/// swap two values
+///
 #define swap(p1, p2) \
     do {                                         \
         typeof(p1) t = p2;                       \
@@ -38,48 +42,50 @@
         p1 = t;                                  \
     } while (0)
 
-// get minimum of two values
+///
+/// get minimum of two values
+///
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
-// get maximum of two values
+///
+/// get maximum of two values
+///
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
-// // rounding macros. 'to' must be a power of 2
-// #define ROUND_DOWN(x, to) (((x) / (to)) * (to))
-// #define ROUND_UP(x, to)  ((((x) + ((to) - 1) / (to)) * (to))
-
-// // check whether 'x' is multiple of 'to', which must be a power of 2
-// #define IS_ALIGNED(x, to) ((x) & ((to) - 1) == 0)
-
-// calculate logarithm in base 2
-//static inline uint8_t log2(uint32_t
+///
+/// calculate logarithm of x in base 2
+///
 #define log2(x) \
     ({  typeof(x) x1 = (x) >> 1; uint8_t log = 0; while (x1) { x1 >>= 1; log++; } log; })
 
 
 
-// Calculate square root, rounded down.
+///
+/// Calculate square root, rounded down.
+///
 uint16_t intSqrt(uint32_t);
 
 
-//
-// Calculate approximate triangle wave value at given point of time
-//
-uint16_t triangleWaveValue(uint16_t period, uint16_t low, uint16_t high);
+///
+/// Calculate approximate triangle wave value at given point of time
+///
+uint16_t signalTriangleWave(uint16_t period, uint16_t low, uint16_t high);
 
-//
-// Calculate approximate sawtooth wave value at given point of time
-//
-uint16_t sawtoothWaveValue(uint16_t period, uint16_t low, uint16_t high);
+///
+/// Calculate approximate sawtooth wave value at given point of time
+///
+uint16_t signalSawtoothWave(uint16_t period, uint16_t low, uint16_t high);
 
-//
-// Calculate approximate sine wave value at given point of time
-//
-uint16_t sineWaveValue(uint16_t period, uint16_t low, uint16_t high);
+///
+/// Calculate approximate sine wave value at given point of time
+/// TODO: not finished!
+///
+uint16_t signalSineWave(uint16_t period, uint16_t low, uint16_t high);
 
-//
-// Map a specific value from input range to output range
-//
+///
+/// Map a specific value from input range to output range.
+/// Idea taken from Arduino.
+///
 static inline int32_t map(int32_t value,
                           int32_t inputLow, int32_t inputHigh,
                           int32_t outputLow, int32_t outputHigh)
@@ -88,6 +94,5 @@ static inline int32_t map(int32_t value,
     const int32_t amplitudeOut = outputHigh - outputLow;
     return (value - inputLow) * amplitudeOut / amplitudeIn + outputLow;
 }
-
 
 #endif

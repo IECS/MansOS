@@ -23,10 +23,10 @@
 
 #include "queue.h"
 #include <arch_mem.h>
-#include <lib/assert.h>
+#include <assert.h>
 #include <print.h>
 #include <errors.h>
-#include <kernel/threads/mutex.h>
+#include <mutex.h>
 
 #define DYNAMIC_ALLOCATION      0
 

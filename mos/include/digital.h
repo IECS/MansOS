@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,8 +24,8 @@
 #ifndef MANSOS_DIGITAL_H
 #define MANSOS_DIGITAL_H
 
-/*
-  General, platform independant I/O interface.
+/** \file
+  \brief General, platform independent I/O interface.
 
   Two versions are present: macros in all caps defined in HPL,
   and macros implemented here that are allowing macro defined symbols
@@ -63,42 +63,75 @@
 
  */
 
+#include <gpio_hal.h>
+
+//! Set a digital pin to 1
 #define pinSet( po, pi ) PIN_SET( po, pi )
-#define pinSetMask( po, pi ) PIN_SET_MASK( po, pi )
+//! Set a digital pin using the pin's bitmask
+#define pinSetMask( po, mask ) PIN_SET_MASK( po, mask )
+//! Clear a digital pin to 0
 #define pinClear( po, pi ) PIN_CLEAR( po, pi )
-#define pinClearMask( po, pi ) PIN_CLEAR_MASK( po, pi )
+//! Clear a digital pin using the pin's bitmask
+#define pinClearMask( po, mask ) PIN_CLEAR_MASK( po, mask )
+//! Toggle (change the value of) a digital
 #define pinToggle( po, pi ) PIN_TOGGLE( po, pi )
-#define pinToggleMask( po, pi ) PIN_TOGGLE_MASK( po, pi )
+//! Toggle a digital pin using the pin's bitmask
+#define pinToggleMask( po, mask ) PIN_TOGGLE_MASK( po, mask )
+//! Read the value of a digital pin. Returns either 1 or 0
 #define pinRead( po, pi ) PIN_READ( po, pi )
+//! Set a digital pin to a specific value (0 or 1). Interprets 'val' as a boolean
 #define pinWrite( po, pi, val ) PIN_WRITE( po, pi, val )
 
+//! Configure the pin in data output mode (writing possible)
 #define pinAsOutput( po, pi ) PIN_AS_OUTPUT( po, pi )
+//! Configure the pin in data input mode (reading possible)
 #define pinAsInput( po, pi ) PIN_AS_INPUT( po, pi )
+//! Configure the pin in data (the default) mode. Reading/writing possible
 #define pinAsData( po, pi ) PIN_AS_DATA( po, pi )
+//! Configure the pin in function mode. The function depends on the MCU and the pin.
 #define pinAsFunction( po, pi ) PIN_AS_FUNCTION( po, pi )
 
+//! Configure the whole port in output mode
 #define portAsOutput( po ) PORT_AS_OUTPUT( po )
+//! Configure the whole port in input mode
 #define portAsInput( po ) PORT_AS_INPUT( po )
+//! Read the whole port at once
 #define portRead( po ) PORT_READ( po )
+//! Write the whole port at once
 #define portWrite( po, val ) PORT_WRITE( po, val )
 
 // Interrupts
+//! Enable interrupt on a digital pin
 #define pinEnableInt( po, pi ) PIN_ENABLE_INT( po, pi )
+//! Disable interrupt on a digital pin
 #define pinDisableInt( po, pi ) PIN_DISABLE_INT( po, pi )
+//! Configure interrupt in rising edge mode
 #define pinIntRising( po, pi ) PIN_INT_RISING( po, pi )
+//! Configure interrupt in falling edge mode
 #define pinIntFalling( po, pi ) PIN_INT_FALLING( po, pi )
+//! Check if interrupt is configured in rising edge mode on the pin
 #define pinIsIntRising( po, pi ) PIN_IS_INT_RISING( po, pi )
+//! Check if interrupt flag is set on a pin
 #define pinReadIntFlag( po, pi ) PIN_READ_INT_FLAG( po, pi )
+///
+/// Clear the interrupt flag on a pin
+///
+/// Note: until the flag is cleared, no further interrupts can be recieved on the pin.
+///
 #define pinClearIntFlag( po, pi ) PIN_CLEAR_INT_FLAG( po, pi )
 
-#define digitalWrite(po, pi, value) do {        \
-        pinAsOutput(po, pi);                    \
-        pinWrite(po, pi, value);                \
+//! Put the pin in data output mode and write a binary value on it
+#define digitalWrite(po, pi, val)  do {                \
+        pinAsOutput(po, pi);                           \
+        pinWrite(po, pi, val);                         \
     } while (0)
+
+//! Put the pin in data input mode and read a binary value from it
 #define digitalRead(po, pi) ({                  \
             pinAsInput(po, pi);                 \
             pinRead(po, pi)                     \
     })
+
 
 // include the platform-specific header
 #include "gpio_hal.h"

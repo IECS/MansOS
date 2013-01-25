@@ -24,7 +24,7 @@
 #ifndef MANSOS_M25P80_H
 #define MANSOS_M25P80_H
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 //
 // Numonyx Forte Serial Flash Memory M25P80

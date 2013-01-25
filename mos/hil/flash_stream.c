@@ -29,8 +29,8 @@
 #include <dynamic_memory.h>
 #include <extflash.h>
 #include <platform.h>
-#include <lib/assert.h>
-#include <lib/codec/crc.h>
+#include <assert.h>
+#include <codec.h>
 #include <print.h>
 
 #if DEBUG

@@ -50,8 +50,7 @@
 #ifndef UDELAY_HAL_H
 #define UDELAY_HAL_H
 
-#include <kernel/stdtypes.h>
-#include <kernel/defines.h>
+#include <defines.h>
 
 
 /* Delay for the given number of microseconds.  Assumes a 8 or 16 MHz clock. */

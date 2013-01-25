@@ -351,7 +351,7 @@ endif
             outputFile.write("{\n")
             outputFile.write("    uint16_t i;\n")
             outputFile.write("    for (i = 0; i < 31; ++i) {\n")
-            outputFile.write("        sealCommRegisterInterest(i, valueRxCallback);\n")
+            outputFile.write("        sealNetRegisterInterest(i, valueRxCallback);\n")
             outputFile.write("    }\n")
             outputFile.write("}\n")
 

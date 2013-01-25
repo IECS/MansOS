@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,32 +21,43 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// External flash driver
-//
-
 #ifndef MANSOS_EXTFLASH_H
 #define MANSOS_EXTFLASH_H
 
-//
-// List all supported external flash models here (before including extflash_hal.h)
-//
+/// \file
+/// External flash chip driver
+///
+
+///
+/// List all supported external flash models here (before including extflash_hal.h)
+///
 #define FLASH_CHIP_M25P80  1
 #define FLASH_CHIP_AT25DF  2
 #define FLASH_CHIP_SDCARD  3 // not really a flash chip, but...
 
+
+//! Enter low power mode
+void extFlashSleep();
+//! Wake up from low power mode
+void extFlashWake();
+//! Read len bytes from flash starting at address addr into buf
+void extFlashRead(uint32_t addr, uint8_t *buf, uint16_t len);
+//! Write len bytes from buf to flash starting at address addr
+void extFlashWrite(uint32_t addr, uint8_t *buf, uint16_t len);
+//! Erase the whole flash memory
+void extFlashBulkErase();
+///
+/// Erase one sector at address
+///
+/// Address is not the sector number, rather an address inside the sector
+///
+void extFlashEraseSector(uint32_t address);
+
+// init flash (including SPI bus). for kernel only
+extern inline void extFlashInit(void); 
+
 #include "extflash_hal.h"
 
-//===========================================================
-// Data types and constants
-//===========================================================
-
-
-//===========================================================
-// Procedures
-//===========================================================
-
-// these functions/macros are defined in platform-specific part
 
 #ifndef EXT_FLASH_SECTOR_SIZE
 #warning External flash constants not defined for this platform!
@@ -55,20 +66,9 @@
 #define EXT_FLASH_PAGE_SIZE     0
 #endif
 
+//! The size of the extrernal flash memory in bytes
 #define EXT_FLASH_SIZE \
     ((unsigned long)EXT_FLASH_SECTOR_SIZE * EXT_FLASH_SECTOR_COUNT)
-
-// void extFlashInit(); // init flash (including SPI bus); for kernel only
-// void extFlashSleep(); // enter low power mode
-// void extFlashWake(); // wake up from low power mode
-    // read len bytes from flash starting at address addr into buf
-// void extFlashRead(uint32_t addr, uint8_t *buf, uint16_t len);
-    // write len bytes from buf to flash starting at address addr
-// void extFlashWrite(uint32_t addr, uint8_t *buf, uint16_t len);
-// void extFlashBulkErase();  // erase whole flash memory
-    // erase one sector at addr. Addr is not the sector number, rather an
-    // address inside the sector
-// void extFlashEraseSector(uint32_t addr);
 
 
 #endif

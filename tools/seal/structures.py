@@ -276,7 +276,7 @@ class ConditionCollection(object):
 
     def generateAppMainCodeForCondition(self, condition, outputFile):
         for code in condition.dependentOnRemoteSensors:
-            outputFile.write("    sealCommRegisterInterest({}, condition{}Callback);\n".format(
+            outputFile.write("    sealNetRegisterInterest({}, condition{}Callback);\n".format(
                     code, condition.id))
 
         for component in condition.dependentOnPackets:
@@ -285,7 +285,7 @@ class ConditionCollection(object):
             for f in component.remoteFields:
                 outputFile.write("\n            | {}_TYPE_MASK".format(f.upper()))
             outputFile.write(";\n")
-            outputFile.write("        sealCommPacketRegisterInterest(typeMask, condition{}Callback, (int32_t *)&{}PacketBuffer);\n".format(
+            outputFile.write("        sealNetPacketRegisterInterest(typeMask, condition{}Callback, (int32_t *)&{}PacketBuffer);\n".format(
                     condition.id, component.name))
             outputFile.write("    }\n")
 

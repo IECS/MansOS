@@ -28,8 +28,7 @@
 
 #include <stdbool.h>
 
-#include <kernel/defines.h>
-#include <kernel/stdtypes.h>
+#include <defines.h>
 
 #include "types.h"
 

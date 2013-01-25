@@ -27,7 +27,6 @@
 #include <extflash.h>
 #include <string.h>
 #include <kernel/threads/radio.h>
-#include <stdio.h>
 
 #define TEST_ID 01
 

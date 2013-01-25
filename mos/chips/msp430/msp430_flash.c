@@ -27,8 +27,7 @@
 #define MSP430_FLASH_DEBUG 0
 
 #if MSP430_FLASH_DEBUG
-#include <lib/assert.h>
-#include <kernel/defines.h>
+#include <assert.h>
 #endif
 
 //

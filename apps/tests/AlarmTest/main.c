@@ -32,13 +32,10 @@ void onTimer1(void *x)
 
     PRINTF("onTimer1\n");
     redLedToggle();
-//    if (++counter == 3) {
-//        PRINTF("reregister alarm\n");
-//        removeAlarm(&timer2);
-//        // when removing an alarm, nextMs is cleared, restore it
-//        timer2.nextMsec = timer2.msecs = 200;
-//        alarmRegister(&timer2);
-//    }
+    if (++counter == 3) {
+        PRINTF("reschedule alarm\n");
+        alarmSchedule(&timer2, 200);
+    }
     alarmSchedule(&timer1, 700);
 }
 
@@ -55,4 +52,8 @@ void appMain(void)
 
     alarmInit(&timer2, onTimer2, NULL);
     alarmSchedule(&timer2, 1000);
+
+    for (;;) {
+        msleep(2000);
+    }
 }

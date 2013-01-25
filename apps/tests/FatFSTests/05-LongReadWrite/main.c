@@ -22,7 +22,7 @@
  */
 
 #include "stdmansos.h"
-#include <lib/assert.h>
+#include <assert.h>
 
 // test read/write in two blocks
 #define NUM_TESTS 41

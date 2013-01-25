@@ -21,14 +21,14 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// PC simulates ADC, reading values from file
-//
-
 #ifndef _ADC_HAL_H_
 #define _ADC_HAL_H_
 
-#include <kernel/defines.h>
+//
+// PC simulates ADC by reading values from file
+//
+
+#include <defines.h>
 
 // emulated ADC channels - the same as on TMote Sky
 #define ADC_LIGHT_PHOTOSYNTHETIC 4
@@ -39,7 +39,7 @@
 void hplAdcInit();
 
 #define PC_ADC_CHANNEL_COUNT 16
-#define adcGetChannelCount() (PC_ADC_CHANNEL_COUNT)
+#define hplAdcGetChannelCount() (PC_ADC_CHANNEL_COUNT)
 uint16_t hplAdcGetVal();
 void hplAdcSetChannel(uint8_t ch);
 

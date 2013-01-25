@@ -1,9 +1,0 @@
-#
-# Application specific config file
-#
-
-PLATFORM_ONLY=msp430
-
-USE_RADIO = y
-USE_LEDS = y
-USE_SD_CARD = y

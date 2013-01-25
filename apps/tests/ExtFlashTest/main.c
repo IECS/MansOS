@@ -29,7 +29,7 @@
 #include "extflash.h"
 #include <string.h>
 #include <utils.h>
-#include <lib/assert.h>
+#include <assert.h>
 
 // Write <BYTE_COUNT> bytes to external flash memory, starting at
 // address <START_ADDR>. Write 8-bit counter, starting at value <START_BYTE>
@@ -162,5 +162,5 @@ void appMain(void)
 #endif
 
     redLedOff();
-    blink(1000, 100);
+    ledBlink(1000, 100);
 }

@@ -24,7 +24,7 @@
 #ifndef MANSOS_SERIAL_SOFT_H
 #define MANSOS_SERIAL_SOFT_H
 
-#include <kernel/stdtypes.h>
+#include <stdtypes.h>
 
 static inline void serialEnableTX(uint8_t id) {
 }

@@ -24,7 +24,7 @@
 #ifndef MANSOS_DS2401_H
 #define MANSOS_DS2401_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 #define SERIAL_NUMBER_SIZE    8
 

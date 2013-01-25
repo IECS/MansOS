@@ -26,7 +26,7 @@
 
 #include <stdlib.h> /* For abort() */
 
-#include <kernel/defines.h>
+#include <defines.h>
 #include <lib/dprint.h>
 #include <leds.h>
 

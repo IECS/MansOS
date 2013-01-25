@@ -21,7 +21,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "mansos.h"
 #include "boot.h"
 
 // if reprogramming code is included, make sure bootloader is present

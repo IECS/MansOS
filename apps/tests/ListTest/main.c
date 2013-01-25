@@ -24,7 +24,7 @@
 #include <stdmansos.h>
 #include <lib/list.h>
 #include <lib/buffer.h>
-#include <lib/assert.h>
+#include <assert.h>
 #include <lib/algo.h>
 #include <arch_mem.h>
 #include <kernel/threads/mutex.h>

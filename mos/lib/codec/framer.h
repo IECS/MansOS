@@ -23,8 +23,8 @@
 
 //-------------------------------------------------------------------
 //      Framer.
-//	Used to frame packets, e.g for transmission over a serial port
-//	Based on HDLC protocol (High-level Data Link Control)
+// Used to frame packets, e.g for transmission over a serial port
+// Based on HDLC protocol (High-level Data Link Control)
 //      The ABORT flag is optional due to faster and smaller code. 
 //-------------------------------------------------------------------
 
@@ -40,19 +40,19 @@
 
 
 //-------------------------------------------------------------------
-//	Encode a stream of 'length' bytes bufIn to a HDLC frame bufOut.
-//	Returns a pointer to the next byte after the last encoded
+// Encode a stream of 'length' bytes bufIn to a HDLC frame bufOut.
+// Returns a pointer to the next byte after the last encoded
 //-------------------------------------------------------------------
-int frameEncode(int length, uint8_t* bufIn, uint8_t* bufOut);
+uint8_t *frameEncode(int length, uint8_t* bufIn, uint8_t* bufOut);
 
 //-------------------------------------------------------------------
-//	Decode a HDLC frame bufIn to a stream of bytes bufOut.
+// Decode a HDLC frame bufIn to a stream of bytes bufOut.
 //      At most 'length' bytes are decoded.
-//	The bufOut may coincide with bufIn since the result is never longer. 
+// The bufOut may coincide with bufIn since the result is never longer. 
 //      Quits once the frame flag encountered at the end of frame.
-//	Returns a pointer to the next byte after the last encoded
+// Returns a pointer to the next byte after the last encoded
 //      Returns NULL if frame aborted.
 //-------------------------------------------------------------------
-int frameDecode(int length, uint8_t* bufIn, uint8_t* bufOut);
+uint8_t *frameDecode(int length, uint8_t* bufIn, uint8_t* bufOut);
 
-#endif  // MANSOS_FRAMER_H
+#endif

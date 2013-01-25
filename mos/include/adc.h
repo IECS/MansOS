@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,38 +24,52 @@
 #ifndef MANSOS_ADC_H
 #define MANSOS_ADC_H
 
-#include <kernel/defines.h>
+/// \file
+/// Analog-digital convereter (ADC) API
+///
+
 #include <platform.h>
 
 // ADC channels which SHOULD be defined for each platform.
 // When a particular channel is not present on a platform,
 // -1 MUST be used for corresponding constant. These constants can be
 // also specified in application's config file
+
 #ifndef ADC_LIGHT_TOTAL
+//! Platform-specific ADC channel index for TSR light sensor
 #define ADC_LIGHT_TOTAL -1
 #endif
 #ifndef ADC_LIGHT_PHOTOSYNTHETIC
+//! Platform-specific ADC channel index for PAR light sensor
 #define ADC_LIGHT_PHOTOSYNTHETIC -1
 #endif
 #ifndef ADC_INTERNAL_VOLTAGE
+//! Platform-specific ADC channel index for internal voltage sensor
 #define ADC_INTERNAL_VOLTAGE -1
 #endif
 #ifndef ADC_INTERNAL_TEMPERATURE
+//! Platform-specific ADC channel index for internal temperature sensor
 #define ADC_INTERNAL_TEMPERATURE -1
 #endif
 
-#define ADC_LIGHT ADC_LIGHT_TOTAL
+/// Platform-specific ADC channel index for generic light sensor (same as PAR light on TelosB)
+#define ADC_LIGHT ADC_LIGHT_PHOTOSYNTHETIC
 
-// User-level ADC functions
+//! Turn ADC on
 void adcOn(void);
+//! Turn ADC off
 void adcOff(void);
-uint16_t adcRead(uint8_t ch);
-void adcSetChannel(uint8_t ch);
+//! Read a specific ADC channel
+uint16_t adcRead(uint8_t channel);
+//! Set a specifc ADC channel as the currently active
+void adcSetChannel(uint8_t channel);
+//! Read the currently active ADC channel (must be selected with adcSetChannel()!)
 uint16_t adcReadFast(void);
-// channel count defined in platform-specific part
-// uint_t adcGetChannelCount();
+//! Get the number of the largest available ADC channel
+static inline uint_t adcGetChannelCount(void) {
+    return hplAdcGetChannelCount();
+}
 
 void adcInit(void) WEAK_SYMBOL; // for kernel only
-
 
 #endif

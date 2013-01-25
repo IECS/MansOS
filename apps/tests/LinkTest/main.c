@@ -31,7 +31,7 @@
 #include <serial_number.h>
 #include <net/socket.h>
 #include <net/routing.h>
-#include <net/net-stats.h>
+#include <net/net_stats.h>
 
 //-----------------
 // constants

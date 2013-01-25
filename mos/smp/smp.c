@@ -23,10 +23,9 @@
 
 #include "smp.h"
 #include <serial.h>
-#include <kernel/mansos.h>
 #include <print.h>
 #include <string.h>
-#include <net/addr.h>
+#include <net/address.h>
 
 void smpRecv(uint8_t *data, uint16_t recvLen) {
     bool set = false;

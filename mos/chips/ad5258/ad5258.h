@@ -24,14 +24,10 @@
 #ifndef MANSOS_AD5258_H
 #define MANSOS_AD5258_H
 
-#include <kernel/defines.h>
+#include <defines.h>
 
 // I2C address when both address pins are zero
 #define AD5258_ADDRESS    0x18
-
-// traditional for I2C access; combined with the slave address
-#define AD5258_WRITE_FLAG  0x0
-#define AD5258_READ_FLAG   0x1
 
 //
 // AD5258 configuration commands

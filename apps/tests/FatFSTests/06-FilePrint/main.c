@@ -22,7 +22,7 @@
  */
 
 #include "stdmansos.h"
-#include <lib/assert.h>
+#include <assert.h>
 
 #define STRBUF_SIZE 50
 char strBuf[STRBUF_SIZE];
