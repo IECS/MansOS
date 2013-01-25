@@ -21,8 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef RADIO_ATMEGA_HAL_H
-#define RADIO_ATMEGA_HAL_H
+#ifndef RADIO_HAL_H
+#define RADIO_HAL_H
 
 // let the platform define the chip it uses
 #include <platform.h>

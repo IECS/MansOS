@@ -591,12 +591,12 @@ void cc2420SetTxPower(uint8_t power)
     setreg(CC2420_TXCTRL, reg);
 }
 
-int8_t cc2420GetLastRSSI()
+int8_t cc2420GetLastRSSI(void)
 {
     return cc2420_last_rssi;
 }
 
-uint8_t cc2420GetLastLQI()
+uint8_t cc2420GetLastLQI(void)
 {
     return cc2420_last_lqi;
 }
