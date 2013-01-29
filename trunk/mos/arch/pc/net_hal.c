@@ -68,6 +68,13 @@ unsigned mosOutBufOffset = 0;
 
 sem_t alarmMutex;
 
+
+extern RadioRecvFunction pcRadioCallback;
+extern unsigned char pcRadioBuf[MAX_PACKET_SIZE];
+extern uint16_t pcRadioBufLen;
+extern bool pcRadioIsOn;
+extern int mosSendSock;
+
 //----------------------------------------------------------
 // internal functions
 //----------------------------------------------------------
@@ -132,8 +139,8 @@ void *intHandler(void *dummy) {
                     return NULL;
                 }
                 pcRadioBufLen = l;
-                if (pcRadioOn && radioCallback) {
-                    radioCallback();
+                if (pcRadioIsOn && pcRadioCallback) {
+                    pcRadioCallback();
                 }
             }
             if (pollFd[1].revents & POLLIN) {
