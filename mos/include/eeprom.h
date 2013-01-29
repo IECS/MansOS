@@ -30,7 +30,8 @@
 /// On MSP430 the "info segments" of the internal flash are used for this purpose.
 /// The amount of available EEPROM memory is a little less than half of info flash size
 /// due to the buffering algorithm used.
-/// EEPROM address range for this user API is [0, EEPROM_SIZE-1] on all platforms.
+///
+/// EEPROM address range for this user API is [0 .. EEPROM_SIZE-1] on all platforms.
 ///
 
 #include <stdtypes.h>
@@ -45,7 +46,7 @@ extern inline void eepromInit(void);
 // implementation
 #include <eeprom_hal.h> /* Will define EEPROM_SIZE */
 
-//! Platform-specific EEPROM size in bytes
+//! Platform-specific EEPROM size in bytes. Either 127 or 63 bytes on most MSP430 devices
 #ifndef EEPROM_SIZE
 #define EEPROM_SIZE 0
 #endif

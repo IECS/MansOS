@@ -34,14 +34,14 @@
 void assertionFailed(const char * restrict msg, const char * restrict file,
                      int line) NORETURN;
 
-/// Panic right away.
+/// Panic right away
 ///
-/// The function disables interrupts, enters MCU active mode, and blinks all leds constantly.
+/// The function disables interrupts, enters MCU active mode, and blinks all LEDs constantly.
 void panic(void) NORETURN;
 
-//! Assert the 'expression' to be true. panic() on failure.
+//! Assert the 'expression' to be true. panic() on failure
 extern inline void ASSERT(bool expression);
-//! A safer ASSERT version that works even if the stack pointer is corrupted
+//! Advanced version of ASSERT macro that works even when the stack pointer is corrupted
 extern inline void ASSERT_NOSTACK(bool expression);
 
 // include the implementation of ASSERT macros

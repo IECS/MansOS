@@ -30,7 +30,7 @@
 /// The implementation is adopted from Mantis OS.
 ///
 /// Note: on small-memory & long-lifetime HW static allocation is almost always better.
-/// Avoid using dynamic memory whener possible!
+/// Avoid using dynamic memory whenever possible!
 ///
 
 #include <stdtypes.h>
@@ -41,7 +41,7 @@ void *memoryAlloc(uint16_t size);
 //! Free a block of memory
 void memoryFree(void *block);
 
-// platform-specific initalizatio
+// platform-specific initalization
 void memoryInit(void *region, uint16_t size);
 
 #endif

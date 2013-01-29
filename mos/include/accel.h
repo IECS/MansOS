@@ -28,22 +28,20 @@
 /// Accelerometer sensor reading
 ///
 
-//
-// List all supported accel chips here
-//
+// -- List all supported accel chips here --
+//! ADXL345 chip (available on Zolertia Z1 mote)
 #define ACCEL_CHIP_ADXL345  1
+// --
 
 // include platform-specific interface
 #include <platform.h>
-
-// these functions are accessible (defined in platform-specific part):
 
 //! Turn on the accelerometer sensor
 extern inline void accelOn(void);
 //! Turn off the accelerometer sensor
 extern inline void accelOff(void);
 //! Read acceleration on X axis
-extern inline uint16_t accelReadX(void);
+static inline uint16_t accelReadX(void);
 //! Read acceleration on Y axis
 extern inline uint16_t accelReadY(void);
 //! Read acceleration on Z axis

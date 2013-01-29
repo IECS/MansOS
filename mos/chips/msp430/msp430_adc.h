@@ -133,6 +133,8 @@
     /* turn off adc core */             \
     ADC12CTL0 &= ~ADC12ON
 
+#define hplAdcIsOn()  (ADC12CTL0 & ADC12ON)
+
 #define ADC_INT_HEADER() interrupt (ADC_VECTOR) adcInt()
 
 // why not use MEM2 as buffer area?
@@ -142,6 +144,8 @@
 
 // channel held in four smallest bits
 #define hplAdcSetChannel(ch) ADC12MCTL2 = (ADC12MCTL2 & 0xf0) | (ch)
+
+#define hplAdcGetChannel(ch) (ADC12MCTL2 & 0xf)
 
 // enable/disable interrupt for mem area 2
 #define hplAdcEnableInterrupt() ADC12IE |= (1 << 2)

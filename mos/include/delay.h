@@ -31,24 +31,27 @@
 #include <stdtypes.h>
 
 ///
-/// Delay for a number of microseconds.
-/// Is suitable even for very small delays (1-6 us),
+/// Delay for approximate number of microseconds.
+///
+/// udelay() is suitable even for very small delays (1-6 us),
 /// because they are handled as series of NOPs.
 ///
 extern inline void udelay(uint16_t microseconds);
 
 ///
 /// Delay for approximate number of milliseconds.
+///
 /// The function is not very precise! If precise delays are required, use timers.
 ///
 extern inline void mdelay(uint16_t miliseconds);
 
-
-#if defined __GNUC__ && !defined __IAR_SYSTEMS_ICC__
+#if defined __GNUC__
+# if !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 6) // < MSPGCC 4.6
 
 ///
 /// Define __delay_cycles() macro as well, to keep compatibility with IAR code
 ///
+#ifndef __delay_cycles
 #define __delay_cycles(x) do {          \
     if (__builtin_constant_p(x) && x <= 15) {  \
         switch (x) {                    \
@@ -88,13 +91,15 @@ extern inline void mdelay(uint16_t miliseconds);
    else {                               \
        udelay((x) / CPU_MHZ);           \
    } }  while (0)
+#endif
 
-#else
+#endif
+#elif !defined __IAR_SYSTEMS_ICC__
 
-#ifndef __delay_cycles
 ///
 /// Define __delay_cycles() macro as well, to keep compatibility with IAR code
 ///
+#ifndef __delay_cycles
 #define __delay_cycles(x) udelay((x) / CPU_MHZ)
 #endif
 

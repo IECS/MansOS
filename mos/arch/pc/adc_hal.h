@@ -42,9 +42,11 @@ void hplAdcInit();
 #define hplAdcGetChannelCount() (PC_ADC_CHANNEL_COUNT)
 uint16_t hplAdcGetVal();
 void hplAdcSetChannel(uint8_t ch);
+uint8_t hplAdcGetChannel(void);
 
 #define hplAdcOn()
 #define hplAdcOff()
+#define hplAdcIsOn() true
 #define ADC_INT_HEADER() void noAdcInt()
 #define hplAdcEnableInterrupt()
 #define hplAdcDisableInterrupt()

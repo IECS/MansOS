@@ -31,7 +31,7 @@
   and macros implemented here that are allowing macro defined symbols
   as parameters for the ports and pins as readable names.
 
-  Usually, the following macros are supported as defined in arch layer:
+  Usually, the following macros are supported as defined in the arch layer:
 
     - PORT_AS_OUTPUT( portnum )
     - PORT_AS_INPUT( portnum )
@@ -50,7 +50,7 @@
     - PIN_TOGGLE( portnum, pinnum )
 
   The following macros relate to GPIO interrupt handling
-  and may not be supported by all the platforms
+  and may not be supported by all the platforms:
 
     - PIN_ENABLE_INT( portnum, pinnum )
     - PIN_DISABLE_INT( portnum, pinnum )
@@ -65,21 +65,21 @@
 
 #include <gpio_hal.h>
 
-//! Set a digital pin to 1
+//! Set a digital output pin to 1
 #define pinSet( po, pi ) PIN_SET( po, pi )
-//! Set a digital pin using the pin's bitmask
+//! Set a digital output pin using the pin's bitmask
 #define pinSetMask( po, mask ) PIN_SET_MASK( po, mask )
-//! Clear a digital pin to 0
+//! Clear a digital output pin to 0
 #define pinClear( po, pi ) PIN_CLEAR( po, pi )
-//! Clear a digital pin using the pin's bitmask
+//! Clear a digital output pin using the pin's bitmask
 #define pinClearMask( po, mask ) PIN_CLEAR_MASK( po, mask )
-//! Toggle (change the value of) a digital
+//! Toggle (change the value of) a digital output pin
 #define pinToggle( po, pi ) PIN_TOGGLE( po, pi )
-//! Toggle a digital pin using the pin's bitmask
+//! Toggle a digital output pin using the pin's bitmask
 #define pinToggleMask( po, mask ) PIN_TOGGLE_MASK( po, mask )
-//! Read the value of a digital pin. Returns either 1 or 0
+//! Read the value of a digital input pin. Returns either 1 or 0
 #define pinRead( po, pi ) PIN_READ( po, pi )
-//! Set a digital pin to a specific value (0 or 1). Interprets 'val' as a boolean
+//! Set a digital pin output to a specific value (0 or 1). Interprets 'val' as a boolean
 #define pinWrite( po, pi, val ) PIN_WRITE( po, pi, val )
 
 //! Configure the pin in data output mode (writing possible)

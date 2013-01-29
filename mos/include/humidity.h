@@ -39,7 +39,7 @@ extern inline uint16_t humidityRead(void);
 //! Check if reading the humidity sensor would fail
 extern inline bool humidityIsError(void);
 
-//! Humidity sensors also provide temperature reading
+//! Humidity sensors also provide temperature measurements
 extern inline uint16_t temperatureRead(void);
 
 

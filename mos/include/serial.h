@@ -98,13 +98,14 @@ uint_t serialSetReceiveHandle(uint8_t id, SerialCallback_t cb);
  * @param cb - callback function: void myCallback(uint8_t bytes). Here the
  *             bytes parameter contains not the last byte received but
  *             total received byte count (i.e., bytes stored in the buffer)!
+ * @param buf - the buffer where to store the packet
  * @param len - size of the buffer in bytes. Callback is called when len
  *              bytes are received (or when '\\n' is received).
  *              When len is zero, no packet size is checked, only on newline
  *              reception the callback is called.
  */
 uint_t serialSetPacketReceiveHandle(uint8_t id, SerialCallback_t cb,
-        void *buffer, uint16_t len);
+        void *buf, uint16_t len);
 
 ///
 /// Possible functions of a hardware serial module.
@@ -112,18 +113,23 @@ uint_t serialSetPacketReceiveHandle(uint8_t id, SerialCallback_t cb,
 /// for a single module (although run-time reconfiguration is possible)
 ///
 enum {
+    //! serial interface is unused 
     SERIAL_FUNCTION_UNUSED,
-    SERIAL_FUNCTION_PRINT,   // used for debug output
-    SERIAL_FUNCTION_RADIO,   // used as radio chip's interface
-    SERIAL_FUNCTION_FLASH,   // used as flash chip's interface
-    SERIAL_FUNCTION_SDCARD,  // used as sdcard interface
+    //! used for printing (e.g. debug output)
+    SERIAL_FUNCTION_PRINT,
+    //! used as radio chip's interface (possibly in SPI mode)
+    SERIAL_FUNCTION_RADIO,
+    //! used as flash chip's interface (in SPI mode)
+    SERIAL_FUNCTION_FLASH,
+    //! used as SD card's interface (in SPI mode)
+    SERIAL_FUNCTION_SDCARD,
 };
 
-//! Serial port information
+//! Serial interface information
 struct Serial_s {
-    //! Is the port actively used at the moment?
+    //! Is the interface actively used at the moment?
     uint8_t busy : 1;
-    //! To what function is the port used/configured for?
+    //! What function is the interface used/configured for?
     uint8_t function : 3;
 } PACKED;
 typedef struct Serial_s Serial_t;

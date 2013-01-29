@@ -59,14 +59,14 @@
 #define ISR(vec, name) interrupt(vec ## _VECTOR) name(void)
 #endif
 #define XXISR(port, func) ISR(PORT ## port, func)
-//! Use XISR instead of ISR if symbolic names are wanted
+//! Use XISR instead of ISR in case name of the port is a #define
 #define XISR(port, func)  XXISR(port, func)
 
-//! Assembler code
+//! Put inline assembler code in the program
 #define ASM_VOLATILE(x) __asm__ __volatile__(x)
-//! Function in .data segment (i.e. in RAM)
+//! Put a function in .data segment (i.e. in RAM)
 #define RAMFUNC __attribute__ ((section (".data")))
-//! Data in .text segment (i.e. in the flash memory). For constant data only.
+//! Put data in .text segment (i.e. in the flash memory). For constant data only.
 #define TEXTDATA __attribute__ ((section (".text")))
 
 //! Memory barrier for the compiler
@@ -77,11 +77,12 @@
 #define INLINE __attribute__((always_inline))
 //! This function does not return
 #define NORETURN __attribute__((noreturn))
-//! This structure is packed (i.e. aligned to 1 byte)
+//! This structure is packed (i.e. aligned to 1 byte, i.e. unaligned)
 #define PACKED __attribute__((packed))
 #define NO_EPILOGUE // nothing
 #undef NAKED
 #ifndef PLATFORM_PC
+//! A "naked" function has no prologue or epilogue
 #define NAKED __attribute__((naked))
 #else
 #define NAKED
@@ -89,7 +90,7 @@
 
 #define PRINTF_LIKE __attribute__ ((format (printf, 1, 2)))
 
-/// A WEAK_SYMBOL is used for function that might not be resolved by the linker.
+/// WEAK_SYMBOL attribute tells that the function might be left unresolved by the linker.
 ///
 /// Before callling such a fucntion f, always check if it for NULL, e.g.: if (f != NULL) f()
 #ifdef __APPLE__

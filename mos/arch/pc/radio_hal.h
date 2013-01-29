@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
+ * Copyright (c) 2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,28 +21,25 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_BEEPER_H
-#define MANSOS_BEEPER_H
+#ifndef PC_RADIO_HAL_H
+#define PC_RADIO_HAL_H
 
-/// \file
-/// Beeper API for platforms where one is available
-///
+#include <defines.h>
 
-#include <stdtypes.h>
-
-//! Toggle beeper (produces a single audible tick)
-extern inline void beeperToggle();
-
-//! Beep for specific amount of time. Uses busy looping
-extern inline void beeperBeep(uint16_t ms);
-
-//! Beep for specific amount of time in a specific frequency. Uses busy looping
-extern inline void beeperBeepEx(uint16_t ms, uint16_t freq);
-
-// initialize beeper
-extern inline void beeperInit(void);
-
-// implementation
-#include "beeper_hal.h"
+void pcRadioInit(void);
+void pcRadioReinit(void);
+int8_t pcRadioSendHeader(const void *header, uint16_t headerLength,
+                         const void *data, uint16_t dataLength);
+int16_t pcRadioRecv(void *buffer, uint16_t buffLen);
+void pcRadioDiscard(void);
+RadioRecvFunction pcRadioSetReceiveHandle(RadioRecvFunction functionHandle);
+void pcRadioOn(void);
+void pcRadioOff(void);
+int pcRadioGetRSSI(void);
+int8_t pcRadioGetLastRSSI(void);
+uint8_t pcRadioGetLastLQI(void);
+void pcRadioSetChannel(int channel);
+void pcRadioSetTxPower(uint8_t power);
+bool pcRadioIsChannelClear(void);
 
 #endif

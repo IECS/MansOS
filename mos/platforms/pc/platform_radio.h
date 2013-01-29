@@ -25,6 +25,7 @@
 #define PLATFORM_RADIO_H
 
 #include <defines.h>
+#include <radio_hal.h>
 
 //===========================================================
 // Data types and constants
@@ -36,16 +37,68 @@ enum {
 
 typedef uint16_t PcRadioPackSize_t;
 
-extern RadioRecvFunction radioCallback;
-extern int mosSendSock;
-
-// data received from cloud stored here
-extern unsigned char pcRadioBuf[MAX_PACKET_SIZE];
-extern uint16_t pcRadioBufLen; // bytes stored in pcRadioBuffer
-extern uint8_t pcRadioOn;
-
 #define RADIO_MAX_PACKET     0xffff
 #define RADIO_TX_POWER_MIN        0
 #define RADIO_TX_POWER_MAX        0
+
+// ----------------------------------------------
+
+static inline void radioInit(void) {
+    pcRadioInit();
+}
+
+static inline void radioReinit(void) {
+
+}
+
+static inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
+                                     const void *data, uint16_t dataLength) {
+    return pcRadioSendHeader(header, headerLength, data, dataLength);
+}
+
+static inline int16_t radioRecv(void *buffer, uint16_t bufferLength) {
+    return pcRadioRecv(buffer, bufferLength);
+}
+
+static inline void radioDiscard(void) {
+    pcRadioDiscard();
+}
+
+static inline RadioRecvFunction radioSetReceiveHandle(
+        RadioRecvFunction functionHandle) {
+    return pcRadioSetReceiveHandle(functionHandle);
+}
+
+static inline void radioOn(void) {
+    pcRadioOn();
+}
+
+static inline void radioOff(void) {
+    pcRadioOff();
+}
+
+static inline int radioGetRSSI(void) {
+    return pcRadioGetRSSI();
+}
+
+static inline int8_t radioGetLastRSSI(void) {
+    return pcRadioGetLastRSSI();
+}
+
+static inline uint8_t radioGetLastLQI(void) {
+    return pcRadioGetLastLQI();
+}
+
+static inline void radioSetChannel(int channel) {
+    pcRadioSetChannel(channel);
+}
+
+static inline void radioSetTxPower(uint8_t power) {
+    pcRadioSetTxPower(power);
+}
+
+static inline bool radioIsChannelClear(void) {
+    return pcRadioIsChannelClear();
+}
 
 #endif

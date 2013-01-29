@@ -79,18 +79,22 @@
 //! Is 'a' is after 'b'? 64-bit version.
 #define timeAfter64(a, b) ((int64_t) ((b) - (a)) < 0)
 
+//! ticks_t is a configuration-dependent type, either a 32-bit or 64-bit number
 #ifdef USE_LONG_LIFETIME
-//! Define jiffies type as 64-bit number
 typedef uint64_t ticks_t;
+#else
+typedef uint32_t ticks_t;
+#endif // USE_LONG_LIFETIME
+
+//! Is 'a' is after 'b' (configration-dependent version, either 32-bit or 64-bit comparison)
+#ifdef USE_LONG_LIFETIME
 #define timeAfter(a, b) timeAfter64(a, b)
 #else
-//! Define jiffies type as 32-bit number (correct for up to 40 days)
-typedef uint32_t ticks_t;
 #define timeAfter(a, b) timeAfter32(a, b)
-#endif
+#endif // USE_LONG_LIFETIME
 
 
-// Alignment check and ops: work for powers of 2
+// These alignment ops work for powers of 2 only
 
 //! Check if 16-bit addr is aligned to align, which must be a power of 2
 #define IS_ALIGNED(addr, align) (!((uint16_t)(addr) & (align - 1)))
@@ -103,14 +107,14 @@ typedef uint32_t ticks_t;
 //! Align 32-bit addr up to align, which must be a power of 2
 #define ALIGN_UP_U32(addr, align) (((uint32_t)(addr) + (align - 1)) & ~(align - 1))
 
-//! Get the most significant byte (MSB) of a 2-byte word
+//! Get the Most Significant Byte of a 2-byte word
 #define MSB(a) ((a & 0xFF00) >> 8)
-//! Get the least significant byte (LSB) of a 2-byte word
+//! Get the Least Significant Byte of a 2-byte word
 #define LSB(a) ((a & 0xFF))
 
 
-#ifndef SERIAL_BAUDRATE
 //! Serial port default baudrate
+#ifndef SERIAL_BAUDRATE
 #define SERIAL_BAUDRATE 38400
 #endif
 
@@ -119,6 +123,7 @@ typedef uint32_t ticks_t;
 #error CPU_MHZ must be defined!
 #endif
 
+//! If MANSOS_STDIO is defined, system's stdio.h header is not included/used
 #if defined MCU_MSP430 || defined USE_FATFS
 #define MANSOS_STDIO 1
 #else
@@ -129,17 +134,18 @@ typedef uint32_t ticks_t;
 //! Atmel has straight decimal MHz
 #define CPU_HZ (CPU_MHZ * 1000000ul)
 #else
-//! msp430-based devices usually have binary MHz
+//! msp430-based devices usually have oscillators with binary frequency
 #define CPU_HZ (CPU_MHZ * 1024ul * 1024)
 #endif
 
+//! Timer frequency, times per second. 100 Hz is also a supported value
 #ifndef TIMER_INTERRUPT_HZ
-//! timer frequency, times per second. 100 Hz is also a supported value
 #define TIMER_INTERRUPT_HZ  1000
 #endif
 
-//! timer A feeds from from ACLK (32'768 Hz)
-#define TIMER_SECOND ACLK_SPEED 
+//! Second in timer A ticks. On MSP430 this is equal to 32768 Hz
+#define TIMER_SECOND ACLK_SPEED
+//! Approximately one tenth part of a second in Timer A ticks
 #define TIMER_100_MS (ACLK_SPEED / 10 + 1)
 
 #if MCU_MSP430
@@ -157,9 +163,7 @@ typedef uint32_t ticks_t;
 # define CORRECTION_PER_WRAPAROUND   0
 #endif
 
-///
-/// This idiom should be used for reading active timers
-///
+//! This idiom should be used for reading active timers
 #define ACTIVE_TIMER_READ(name, timer)             \
 static inline uint16_t name ## _TIMER_READ(void)   \
 {                                                  \

@@ -52,13 +52,13 @@ typedef void (*RadioRecvFunction)(void);
 //
 // Initialize the radio
 //
-extern inline void radioInit(void);
+static inline void radioInit(void);
 
 
 ///
 /// (Re)initialize radio communications (serial/SPI) interface
 ///
-extern inline void radioReinit(void);
+static inline void radioReinit(void);
 
 ///
 /// Send two data buffers to radio.
@@ -66,7 +66,7 @@ extern inline void radioReinit(void);
 /// Either of the pointers is allowed to be NULL (except both at once)
 /// in case the respective length parameters are 0
 ///
-extern inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
+static inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
                                      const void *data, uint16_t dataLength);
 
 ///
@@ -88,12 +88,12 @@ static inline int8_t radioSendByte(uint8_t data) {
 ///
 /// Should be called on after the radio driver has signalled the availability of a received packet
 ///
-extern inline int16_t radioRecv(void *buffer, uint16_t bufferLength);
+static inline int16_t radioRecv(void *buffer, uint16_t bufferLength);
 
 ///
 /// Similar as radioRecv(), but does not keep the result, just clears the receive buffer
 ///
-extern inline void radioDiscard(void);
+static inline void radioDiscard(void);
 
 ///
 /// Set a new radio callback function.
@@ -102,75 +102,78 @@ extern inline void radioDiscard(void);
 /// In general, the callback function should call either radioRecv() to read the packet.
 /// Returns: old callback function, if any
 ///
-extern inline RadioRecvFunction radioSetReceiveHandle(RadioRecvFunction functionHandle);
+static inline RadioRecvFunction radioSetReceiveHandle(RadioRecvFunction functionHandle);
 
 ///
 /// Turn radio listening on
 ///
 /// Note: listening is not required to be turned on to send data!
 ///
-extern inline void radioOn(void);
+static inline void radioOn(void);
 
 ///
 /// Turn radio listening off
 ///
-extern inline void radioOff(void);
+static inline void radioOff(void);
 
 ///
 /// Get RSSI (Received Signal Strength Indication) of the last received packet
 ///
-extern inline int8_t radioGetLastRSSI(void);
+static inline int8_t radioGetLastRSSI(void);
 
 ///
 /// Get LQI (Link Quality Indication) of the last received packet
 ///
-extern inline uint8_t radioGetLastLQI(void);
+static inline uint8_t radioGetLastLQI(void);
 
 ///
 /// Measure the current RSSI on the air
 ///
-extern inline int radioGetRSSI(void);
+static inline int radioGetRSSI(void);
 
 ///
 /// Radio channel control
 ///
-/// The exact behaviour of these functions is platform- and chip-dependent.
+/// The exact behaviour of this function is platform- and chip-dependent.
+///
 /// For IEEE 802.15.4 compatible radios (such as the CC2420)
 /// there are 16 channels available in the 2.4 GHz band
 /// in 5 MHz steps, numbered 11 through 26.
 /// They have 2MHz channel bandwidth, and channel separation of 5 MHz.
-/// Center frequency Fc in MHz is calculated as:
-///    Fc = 2405 + 5 * (k – 11),
+/// Center frequency Fc in MHz is calculated as:\n
+///    Fc = 2405 + 5 * (k – 11),                \n
 /// where k is channel number.
+///
 /// For example, channel 11 is 2405 MHz, channel 20: 2450 MHz, channel 26: 2480 MHz.
 ///
-extern inline void radioSetChannel(int channel);
+static inline void radioSetChannel(int channel);
 
 ///
 /// Transmit power control
 ///
-/// The exact behaviour of these functions is platform- and chip-dependent.
+/// The exact behaviour of this function is platform- and chip-dependent.
+///
 /// For CC2420, a value in range [0 .. 31] is expected,
 /// where 0 corresponds to the minimal transmit power and 31 - to the maximum
-/// The default value is 31.
-/// Possible values (only use the values below!)
-///   31      0 dBm    (1 mW)
-///   27     -1 dBm    (0.8 mW)
-///   23     -3 dBm    (0.5 mW)
-///   19     -5 dBm    (0.3 mW)
-///   15     -7 dBm    (0.2 mW)
-///   11    -10 dBm    (0.1 mW)
-///    7    -15 dBm    (0.03 mW)
-///    3    -25 dBm    (0.003 mW)
 ///
-extern inline void radioSetTxPower(uint8_t power);
+/// On CC2420, the default value is 31. Possible other values:
+/// -   31      0 dBm    (1 mW)
+/// -   27     -1 dBm    (0.8 mW)
+/// -   23     -3 dBm    (0.5 mW)
+/// -   19     -5 dBm    (0.3 mW)
+/// -   15     -7 dBm    (0.2 mW)
+/// -   11    -10 dBm    (0.1 mW)
+/// -    7    -15 dBm    (0.03 mW)
+/// -    3    -25 dBm    (0.003 mW)
+///
+static inline void radioSetTxPower(uint8_t power);
 
 ///
 /// Returns true if CCA detects that transmission medium is free
 ///
-/// Always returns true if the chip does not havbe support for hardware CCA
+/// Always returns true if the chip doesn't have hardware CCA support
 ///
-extern inline bool radioIsChannelClear(void);
+static inline bool radioIsChannelClear(void);
 
 
 //
@@ -178,6 +181,7 @@ extern inline bool radioIsChannelClear(void);
 //
 #include <arch/radio_hal.h>
 
+//! The maximum packet size the HW layer can transmit/receive
 #ifndef RADIO_MAX_PACKET
 #warning Radio constants not defined for this platform!
 #define RADIO_MAX_PACKET        0
@@ -185,12 +189,12 @@ extern inline bool radioIsChannelClear(void);
 #define RADIO_TX_POWER_MAX      0
 #endif
 
-//! The default radio channel number (PHY-specific)
+//! The default radio channel number (HW-specific)
 #ifndef RADIO_CHANNEL
 #define RADIO_CHANNEL 26
 #endif
 
-//! The default radio transmission power (in chip-specific units)x
+//! The default radio transmission power (in chip-specific units)
 #ifndef RADIO_TX_POWER
 #define RADIO_TX_POWER 31
 #endif

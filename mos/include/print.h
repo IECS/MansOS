@@ -31,7 +31,8 @@
 #include <defines.h>
 
 ///
-/// Print a message to the selected medium (serial port by default).
+/// Print a message to the selected medium (serial port by default)
+///
 /// When used with just one argument, is as effiecient as simple serialSendString()
 ///
 extern inline void PRINTF(char *format, ...) PRINTF_LIKE;
@@ -41,12 +42,13 @@ void serialPrint(const char* str);
 //! Send a formatted message to radio
 void radioPrint(const char* str);
 
+//! Dump a buffer a stream of hex bytes in ASCII
 void debugHexdump(void *data, unsigned len);
 
 #include <lib/dprint.h>
 
+//! Plaform-specific ID of the serial port for PRINTF output
 #ifndef PRINTF_SERIAL_ID
-//! Plaform-specific ID of the serial port on which to send printed output
 #define PRINTF_SERIAL_ID -1
 #endif
 
