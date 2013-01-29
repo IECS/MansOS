@@ -30,6 +30,36 @@
 
 #include <platform.h>
 
+//! Turn ADC on
+static inline void adcOn(void) {
+    hplAdcOn();
+}
+//! Turn ADC off
+static inline void adcOff(void) {
+    hplAdcOff();
+}
+//! Read a specific ADC channel
+uint16_t adcRead(uint8_t channel);
+//! Set a specifc ADC channel as the currently active
+void adcSetChannel(uint8_t channel);
+//! Read the currently active ADC channel (must be selected with adcSetChannel()!)
+static inline uint16_t adcReadFast(void)
+{
+    // ask the HW for the value
+    hplAdcStartConversion();
+    // poll while its ready
+    while (hplAdcIsBusy());
+    // return the result
+    return hplAdcGetVal();
+}
+//! Get the number of total ADC channels
+static inline uint_t adcGetChannelCount(void) {
+    return hplAdcGetChannelCount();
+}
+
+void adcInit(void) WEAK_SYMBOL; // for kernel only
+
+
 // ADC channels which SHOULD be defined for each platform.
 // When a particular channel is not present on a platform,
 // -1 MUST be used for corresponding constant. These constants can be
@@ -55,21 +85,5 @@
 //! Platform-specific ADC channel index for generic light sensor (same as PAR light on TelosB)
 #define ADC_LIGHT ADC_LIGHT_PHOTOSYNTHETIC
 
-//! Turn ADC on
-void adcOn(void);
-//! Turn ADC off
-void adcOff(void);
-//! Read a specific ADC channel
-uint16_t adcRead(uint8_t channel);
-//! Set a specifc ADC channel as the currently active
-void adcSetChannel(uint8_t channel);
-//! Read the currently active ADC channel (must be selected with adcSetChannel()!)
-uint16_t adcReadFast(void);
-//! Get the number of the largest available ADC channel
-static inline uint_t adcGetChannelCount(void) {
-    return hplAdcGetChannelCount();
-}
-
-void adcInit(void) WEAK_SYMBOL; // for kernel only
 
 #endif

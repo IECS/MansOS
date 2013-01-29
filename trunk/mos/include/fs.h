@@ -34,103 +34,103 @@
 /**
  * Get information about a file.
  *
- * path   File path
- * buf    User-supplied buffer
+ * @param path   File path
+ * @param buf    User-supplied buffer
  *
- * Returns: true on success or false on error.
+ * @return: true on success or false on error.
  */
 bool fsStat(const char * restrict path, struct fsStat * restrict buf);
 
 /**
  * Open a file for reading or appending.
  *
- * path   File path
- * mode   Open mode: FS_READ or FS_APPEND
+ * @param path   File path
+ * @param mode   Open mode: FS_READ or FS_APPEND
  *
- * Returns: file handle on success or -1 on error.
+ * @return: file handle on success or -1 on error.
  */
 int8_t fsOpen(const char *path, fsMode_t mode);
 
 /**
- * Read up to @count bytes from file.
+ * Read up to count bytes from file.
  *
- * fd     File handle
- * buf    User-supplied buffer
- * count  Buffer size
+ * @param fd     File handle
+ * @param buf    User-supplied buffer
+ * @param count  Buffer size
  *
- * Returns: number of bytes read, 0 on EOF or -1 on error.
+ * @return: number of bytes read, 0 on EOF or -1 on error.
  */
 ssize_t fsRead(int8_t fd, void *buf, size_t count);
 
 /**
  * Get current read position in a file.
  *
- * fd     File handle
+ * @param fd     File handle
  *
- * Returns: file offset in bytes.
+ * @return: file offset in bytes.
  */
 fsOff_t fsTell(int8_t fd);
 
 /**
  * Set current read position in a file. File must be open for reading.
  *
- * fd     File handle
- * pos    Position to seek to
+ * @param fd     File handle
+ * @param pos    Position to seek to
  */
 void fsSeek(int8_t fd, fsOff_t pos);
 
 /**
- * Write up to @count bytes to file.
+ * Write up to count bytes to file.
  *
- * fd     File handle
- * buf    User data
- * count  Buffer size
+ * @param fd     File handle
+ * @param buf    User data
+ * @param count  Buffer size
  *
- * Returns: number of bytes written or -1 on error.
+ * @return: number of bytes written or -1 on error.
  */
 ssize_t fsWrite(int8_t fd, const void *buf, size_t count);
 
 /**
  * Write any pending data to the storage device. File must be open for writing.
  *
- * fd     File handle
+ * @param fd     File handle
  *
- * Returns: true on success or false on error.
+ * @return: true on success or false on error.
  */
 bool fsFlush(int8_t fd);
 
 /**
- * Flush pending data and deallocate @fd.
+ * Flush pending data and deallocate fd.
  *
- * fd     File handle
+ * @param fd     File handle
  *
- * Returns: true on success or false on error.
+ * @return: true on success or false on error.
  */
 bool fsClose(int8_t fd);
 
 /**
  * Remove a file.
  *
- * path   File path
+ * @param path   File path
  *
- * Returns: true on success or false on error.
+ * @return: true on success or false on error.
  */
 bool fsRemove(const char *path);
 
 /**
  * Rename a file.
  *
- * old    Current file name
- * new    New file name
+ * @param old    Current file name
+ * @param new    New file name
  *
- * Returns: true on success or false on error.
+ * @return: true on success or false on error.
  */
 bool fsRename(const char *old, const char *new);
 
 /**
  * Query last error.
  *
- * Returns: error number.
+ * @return: error number.
  */
 fsError_t fsLastError(void);
 

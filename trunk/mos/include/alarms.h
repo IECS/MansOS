@@ -50,7 +50,11 @@ typedef struct Alarm_s {
 // User API functions
 // -----------------------------------------------
 
-//! Initialize an alarm timer
+///
+/// Initialize an alarm timer
+/// @param cb     Callback function called when the alarm fires
+/// @param param  A user-defined parameter passed to the callback function
+///
 static inline void alarmInit(Alarm_t *alarm, AlarmCallback cb, void *param)
 {
     SLIST_NEXT(alarm, chain) = NULL;
@@ -61,17 +65,19 @@ static inline void alarmInit(Alarm_t *alarm, AlarmCallback cb, void *param)
 
 ///
 /// Schedule an alarm timer
-/// @param milliseconds  the milliseconds after which the timer will fire (relative value)
+/// @param milliseconds  The milliseconds after which the timer will fire (relative value)
 ///
 /// If the alarm is already scheduled, the function removes it first.
 ///
 void alarmSchedule(Alarm_t *alarm, uint32_t milliseconds);
 
-//! Remove an alarm timer
+///
+/// Remove an alarm timer
+///
 void alarmRemove(Alarm_t *alarm);
 
 ///
-/// Get the milliseconds (absolute value) when the alarm will fire
+/// Get the milliseconds (relative value) after which the alarm will fire
 ///
 /// Valid only if the alarm is active (i.e. scheduled)
 ///

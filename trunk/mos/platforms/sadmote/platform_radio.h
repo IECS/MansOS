@@ -34,7 +34,7 @@ static inline void radioReinit(void) {
     // TODO
 }
 
-extern inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
+static inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
                                      const void *data, uint16_t dataLength) {
     return mrf24j40Send(header, headerLength, data, dataLength);
 }

@@ -31,15 +31,15 @@
 #include <platform.h>
 
 ///
-/// MansOS "timer ticks".
+/// MansOS "timer ticks"
 ///
 /// This value is in platform-independent milliseconds.
 /// It can be either 32-bit or 64-bit number, depending on configuration settings.
+/// Specify USE_LONG_LIFETIME=y to use 64-bit jiffies (less efficient code!)
 ///
 /// Note: in some contexts the value is not valid!
-/// For example, in interrupt handler running after the system was put
-/// in a low-power mode the 'jiffies' will correspond to the time *before* the system
-/// went to sleep.
+/// For example, in interrupt handler running while the system is in a low-power mode,
+/// 'jiffies' will correspond to the time *before* the system went to sleep.
 ///
 /// Note: the value is not extremely precise!
 /// In long-term MansOS keeps jiffies syncronized with the high-accuracy HW clock crystal,
@@ -52,6 +52,7 @@ extern volatile ticks_t jiffies;
 /// Get ticks elapsed since system start.
 ///
 /// The return value can be 32-bit or 64-bit number, depending on configuration settings.
+/// Specify USE_LONG_LIFETIME=y to use 64-bit jiffies (less efficient code!)
 ///
 static inline ticks_t getJiffies(void)
 {
@@ -68,6 +69,8 @@ static inline uint32_t getTimeMs(void) {
 ///
 /// Get milliseconds elapsed since system start as 64-bit value
 ///
+/// Same as getTimeMs() unless USE_LONG_LIFETIME=y is used.
+///
 static inline uint64_t getTimeMs64(void) {
     return jiffies;
 }
@@ -82,6 +85,7 @@ static inline uint32_t getTimeSec(void) {
 
 ///
 /// Convert from alarm (jiffy) timer ticks to milliseconds
+///
 /// Note: on msp430 a conversion error is introduced due to rounding!
 ///
 static inline uint16_t alarmTimerTicksToMs(uint16_t ticks)
@@ -91,6 +95,7 @@ static inline uint16_t alarmTimerTicksToMs(uint16_t ticks)
 
 ///
 /// Convert from milliseconds to alarm (jiffy) timer ticks
+///
 /// Note: on msp430 a conversion error is introduced due to rouding!
 ///
 static inline uint16_t msToAlarmTimerTicks(uint16_t ms)

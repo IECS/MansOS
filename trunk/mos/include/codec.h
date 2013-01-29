@@ -30,10 +30,10 @@
 
 #include <defines.h>
 
-//! Calculate 16-bit checksum using CITT polynomial ^16 + ^12 + ^5 + 1
+//! Calculate 16-bit checksum of data using ^16 + ^12 + ^5 + 1 CITT polynomial
 uint16_t crc16(const uint8_t *data, uint16_t len);
 
-//! Calculate 8-bit checksum using polynomial ^8 + ^5 + ^4 + 1
+//! Calculate 8-bit checksum of data using ^8 + ^5 + ^4 + 1 polynomial
 uint8_t crc8(const uint8_t *data, uint16_t len);
 
 ///
@@ -56,11 +56,11 @@ uint8_t *frameDecode(int length, uint8_t* bufIn, uint8_t* bufOut);
 //! Encode a nibble (half of a byte) in twice longer hamming code
 static inline uint8_t hammingEncode(uint8_t nibble);
 
-//! Decode Hamming-encoded byte
-/// @return false on failure
+/// Decode Hamming-encoded byte
+/// @return false on failure, tru on success
 static inline bool hammingDecode(uint8_t byte, uint8_t *result);
 
-//! Decode Hamming-encoded buffer in place
+/// Decode Hamming-encoded buffer in place
 /// @return the length of the decoded buffer
 static inline uint16_t hammingDecodeInplace(uint8_t *data, uint16_t length);
 

@@ -136,7 +136,7 @@
 // Procedures
 //===========================================================
 
-//! Get ASCII string description of a specific error
+//! Get ASCII-string description of a specific error
 char *strerror(int_t errno);
 
 //===========================================================

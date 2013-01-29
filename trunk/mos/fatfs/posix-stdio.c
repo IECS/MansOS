@@ -176,7 +176,7 @@ char *fgets(char *restrict s, int size, FILE *restrict fp)
     uint16_t i;
     if (size == 0) return s;
     for (i = 0; i < size - 1; ++i) {
-        uint8_t b;
+        uint8_t b = 0;
         fread(&b, 1, 1, fp);
         if (b == EOF) {
             if (i == 0) return NULL;

@@ -26,8 +26,6 @@
 
 #include <defines.h>
 
-// TODO: support higher freq MCUs better (at least up to 16 MHz!)
-
 #ifdef __IAR_SYSTEMS_ICC__
 
 #include "intrinsics.h"
@@ -43,12 +41,6 @@
 // #define STR_HELPER(x) #x
 // #define STR(x) STR_HELPER(x)
 // #pragma message "Selected MCU frequency in MHZ is = " STR(CPU_MHZ)
-
-#if CPU_MHZ >= 4
-#define CPU_MHZ_ADJUSTED 4
-#else
-#define CPU_MHZ_ADJUSTED CPU_MHZ
-#endif
 
 //
 // This function takes ~4 CPU cycles for CPU_MHZ <= 4,
@@ -87,6 +79,12 @@ static inline void clock_delay(uint16_t n)
             : [n] "+r"(n));
 }
 
+#if CPU_MHZ >= 4
+#define CPU_MHZ_DIVIDER 1
+#else
+#define CPU_MHZ_DIVIDER (4 / CPU_MHZ)
+#endif
+
 //
 // Delay for approximate amount of milliseconds.
 // The function is not very precise! If precise delays are required, use timers.
@@ -94,19 +92,23 @@ static inline void clock_delay(uint16_t n)
 static inline void mdelay(uint16_t ms) {
     while (ms > 64) {
         ms -= 64;
-        clock_delay(64000 / (4 / CPU_MHZ_ADJUSTED));
+        clock_delay(64000 / CPU_MHZ_DIVIDER);
     }
-    clock_delay(ms * 1000 / (4 / CPU_MHZ_ADJUSTED));
+    clock_delay(ms * 1000 / CPU_MHZ_DIVIDER);
 }
 
-#if CPU_MHZ_ADJUSTED == 4
-#define NOP_FOR_1US() {nop(); nop(); nop(); nop();}
-#elif CPU_MHZ_ADJUSTED == 2
-#define NOP_FOR_1US() {nop(); nop();}
-#elif CPU_MHZ_ADJUSTED == 1
-#define NOP_FOR_1US() nop()
+#if CPU_MHZ == 1
+#define NOP_FOR_1US() __delay_cycles(1)
+#elif CPU_MHZ == 2
+#define NOP_FOR_1US() __delay_cycles(2)
+#elif CPU_MHZ == 4
+#define NOP_FOR_1US() __delay_cycles(4)
+#elif CPU_MHZ == 8
+#define NOP_FOR_1US() __delay_cycles(8)
+#elif CPU_MHZ == 16
+#define NOP_FOR_1US() __delay_cycles(16)
 #else
-#error
+#error Only 1, 2, 4, 8 and 16 MHz clock rates supported! (for now)
 #endif
 
 //
@@ -131,7 +133,7 @@ static inline void udelay(uint16_t us) {
             return;
         }
     }
-    clock_delay((uint32_t) us / (4 / CPU_MHZ_ADJUSTED));
+    clock_delay((uint32_t) us / CPU_MHZ_DIVIDER);
 }
 
 #endif // GCC

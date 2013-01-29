@@ -60,7 +60,6 @@ static uint8_t currChannel = 0;
 // reads number from CSV file, updates isNewLine (true, when new line started)
 static uint16_t readNum(int fd, bool *isNewLine, bool *isEOF);
 
-
 void hplAdcInit() {
     memset(values, 0, sizeof(values));
     memset(valueCount, 0, sizeof(valueCount));
@@ -137,4 +136,8 @@ uint16_t hplAdcGetVal() {
 
 void hplAdcSetChannel(uint8_t ch) {
     currChannel = ch;
+}
+
+uint8_t hplAdcGetChannel(void) {
+    return currChannel;
 }

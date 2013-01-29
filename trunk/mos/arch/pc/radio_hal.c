@@ -30,10 +30,10 @@
 #include <radio.h>
 #include <print.h>
 
-RadioRecvFunction radioCallback = 0;
+RadioRecvFunction pcRadioCallback;
 unsigned char pcRadioBuf[MAX_PACKET_SIZE];
 uint16_t pcRadioBufLen;
-uint8_t pcRadioOn = 0;
+bool pcRadioIsOn = false;
 pthread_mutex_t pcRadioSendMutex;
 bool pcRadioInitialized;
 
@@ -42,18 +42,18 @@ bool pcRadioInitialized;
 // can be enabled witout enabling USE_NET.
 int mosSendSock = -1;
 
-void radioInit(void) {
+void pcRadioInit(void) {
     if (pcRadioInitialized) return;
     pcRadioInitialized = true;
-    pcRadioOn = 0;
+    pcRadioIsOn = 0;
     pthread_mutex_init(&pcRadioSendMutex, NULL);
 }
 
-void radioReinit(void) {
+void pcRadioReinit(void) {
     // do nothing
 }
 
-int8_t radioSendHeader(const void *header, uint16_t headerLength,
+int8_t pcRadioSendHeader(const void *header, uint16_t headerLength,
                        const void *data, uint16_t dataLength) {
     // first byte(s) in the packet is packet size
     union {
@@ -89,15 +89,15 @@ int8_t radioSendHeader(const void *header, uint16_t headerLength,
     return 0;
 }
 
-int16_t radioRecv(void *buffer, uint16_t buffLen) {
-    if (!pcRadioOn) {
-        PRINTF("radioRecv: radio is off\n");
+int16_t pcRadioRecv(void *buffer, uint16_t buffLen) {
+    if (!pcRadioIsOn) {
+        PRINTF("radioRecv: pcRadio is off\n");
         return 0;
     }
 
     if (pcRadioBufLen <= sizeof(PcRadioPackSize_t)) return 0;
 
-    // copy min(bufLen, redBytes) from radio buffer to dst buffer
+    // copy min(bufLen, redBytes) from pcRadio buffer to dst buffer
     uint16_t len = pcRadioBufLen - sizeof(PcRadioPackSize_t);
     if (len > buffLen) len = buffLen;
     memcpy(buffer, pcRadioBuf + sizeof(PcRadioPackSize_t), len);
@@ -105,45 +105,45 @@ int16_t radioRecv(void *buffer, uint16_t buffLen) {
     return len;
 }
 
-void radioDiscard(void) {
+void pcRadioDiscard(void) {
 }
 
-RadioRecvFunction radioSetReceiveHandle(RadioRecvFunction functionHandle) {
-    RadioRecvFunction old = radioCallback;
-    radioCallback = functionHandle;
+RadioRecvFunction pcRadioSetReceiveHandle(RadioRecvFunction functionHandle) {
+    RadioRecvFunction old = pcRadioCallback;
+    pcRadioCallback = functionHandle;
     return old;
 }
 
-void radioOn(void) {
+void pcRadioOn(void) {
 //    TPRINTF("radioOn\n");
-    pcRadioOn = 1;
+    pcRadioIsOn = 1;
 }
 
-void radioOff(void) {
+void pcRadioOff(void) {
 //    TPRINTF("radioOff\n");
-    pcRadioOn = 0;
+    pcRadioIsOn = 0;
 }
 
-int radioGetRSSI(void) {
+int pcRadioGetRSSI(void) {
     return 0;
 }
 
-int8_t radioGetLastRSSI(void) {
+int8_t pcRadioGetLastRSSI(void) {
     return 0;
 }
 
-uint8_t radioGetLastLQI(void) {
+uint8_t pcRadioGetLastLQI(void) {
     return 0;
 }
 
-void radioSetChannel(int channel) {
+void pcRadioSetChannel(int channel) {
     return;
 }
 
-void radioSetTxPower(uint8_t power) {
+void pcRadioSetTxPower(uint8_t power) {
     return;
 }
 
-bool radioIsChannelClear(void) {
+bool pcRadioIsChannelClear(void) {
     return true;
 }

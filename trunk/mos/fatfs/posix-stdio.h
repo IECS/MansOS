@@ -36,17 +36,19 @@
 
 #include "posix-file.h"
 
-//! Open a file
+//! Open file
 FILE *fopen(const char *restrict filename,
             const char *restrict modes);
 
-//! Close a file
+//! Close file
 int fclose(FILE *fp);
 
-//! Read from the file
+//! Read from file
 size_t fread(void *restrict ptr, size_t size,
              size_t n, FILE *restrict fp);
 
+///
+/// Read a single character from file
 ///
 /// fgetc() reads the next character from stream and returns it as an unsigned
 /// char cast to an int, or EOF on end of file or error.
@@ -58,6 +60,8 @@ static inline int fgetc(FILE *fp)
     return (int) b;
 }
 
+//
+/// Read a single string from file
 ///
 /// fgets()  reads  in  at  most  one  less than size characters from stream and
 /// stores them into the buffer pointed to by s.  Reading stops after an EOF  or
@@ -66,18 +70,18 @@ static inline int fgetc(FILE *fp)
 ///
 char *fgets(char *restrict s, int size, FILE *restrict fp);
 
-//! Write to the file
+//! Write to file
 size_t fwrite(const void *restrict ptr, size_t size,
               size_t n, FILE *restrict fp);
 
-//! Put a character in the file
+//! Put a character to file
 static inline int fputc(int c, FILE *fp)
 {
     uint8_t b = (uint8_t) c;
     return fwrite(&b, 1, 1, fp) == 1 ? b : EOF;
 }
 
-//! Put a string to the file
+//! Put a string to file
 static inline int fputs(const char *restrict s, FILE *restrict fp)
 {
     uint16_t length = strlen(s);

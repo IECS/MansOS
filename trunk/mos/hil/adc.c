@@ -21,40 +21,18 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdbool.h>
-#include "adc.h"
-#include "digital.h"
-
-//----------------------------------------------------------
-// types
-//----------------------------------------------------------
-
-//----------------------------------------------------------
-// internal variables
-//----------------------------------------------------------
-static bool adcIsOn;
-static uint8_t adcChannel;
-static uint16_t adcVal;
+#include <adc.h>
+#include <digital.h>
 
 #define enableAdcPin(port, pin) \
     pinAsFunction(port, pin);   \
     pinAsInput(port, pin);
 
-void adcOn(void) {
-    hplAdcOn();
-    adcIsOn = true;
-}
-
-void adcOff(void) {
-    hplAdcOff();
-    adcIsOn = false;
-}
 
 void adcInit(void)
 {
     hplAdcInit();
     hplAdcOff();
-    adcChannel = 1;
 
     // XXX: needed for lynx board to work without specific initialization
 #if 0
@@ -76,46 +54,40 @@ void adcInit(void)
 
 void adcSetChannel(uint8_t ch)
 {
-    hplAdcOff();
+    bool wasOn = hplAdcIsOn();
+    if (wasOn) hplAdcOff();
     hplAdcSetChannel(ch);
-    adcChannel = ch;
-    hplAdcOn();
+    if (wasOn) hplAdcOn();
 }
-
 
 uint16_t adcRead(uint8_t ch)
 {
     uint16_t retval;
+    bool wasOn = hplAdcIsOn();
 
-    //turn on if necessary
-    if (!adcIsOn) {
+    // set the right channel
+    if (hplAdcGetChannel() != ch) {
+        if (wasOn) hplAdcOff();
+        hplAdcSetChannel(ch);
+        if (wasOn) hplAdcOn();
+    }
+
+    // turn it on
+    if (!wasOn) {
         hplAdcOn();
     }
 
-    if (ch != adcChannel) {
-        adcSetChannel(ch);
-    }
-
-    // hplAdcEnableInterrupt();
+    // ask the HW for the value
     hplAdcStartConversion();
+    // poll while its ready
+    while (hplAdcIsBusy()) {}
+    // read the value
+    retval = hplAdcGetVal();
 
-    if (hplAdcIntsUsed()) {
-        // TODO - use callbacks
-        while (hplAdcIsBusy()) {}
-        retval = adcVal;
-    } else {
-        while (hplAdcIsBusy()) {}
-        retval = hplAdcGetVal();
+    // reset back to original state
+    if (!wasOn) {
+        hplAdcOff();
     }
 
     return retval;
-}
-
-uint16_t adcReadFast(void)
-{
-    hplAdcStartConversion();
-
-    while (hplAdcIsBusy());
-
-    return hplAdcGetVal();
 }

@@ -28,12 +28,13 @@
 /// Software controlled I2C
 ///
 /// Prior to use you must define SDA and SCL pins using your specific values 
-///  #define SDA_PORT 1
-///  #define SDA_PIN  1
-///  #define SCL_PORT 1
-///  #define SCL_PIN  2
+/// - #define SDA_PORT 1
+/// - #define SDA_PIN  1
+/// - #define SCL_PORT 1
+/// - #define SCL_PIN  2
 ///
 /// Note: enable the pullup resistors, or ensure the hardware has them.
+///
 /// Note: timing may have to be adjusted for a different microcontroller
 ///
 
@@ -60,13 +61,15 @@
 #define I2C_SDA_SET(b) pinWrite(SDA_PORT, SDA_PIN, b)
 
 
-//------------------------------------------------------------------------------
-// Writes a start condition on I2C-bus
-//        ___
-// SDA:      |_____
-//        _____
-// SCL :       |___
-//------------------------------------------------------------------------------
+///
+/// Writes a start condition on I2C-bus
+/// <pre>
+///        ___
+/// SDA:      |_____
+///        _____
+/// SCL :       |___
+/// </pre>
+///
 #define i2cSoftStart() \
     I2C_SDA_HI();      \
     I2C_SCL_HI();      \
@@ -79,10 +82,12 @@
 
 ///
 /// Writes a stop condition on I2C-bus
+/// <pre>
 ///             ____
 /// SDA:   ____|
 ///           ______
 /// SCL :  __|
+/// </pre>
 ///
 #define i2cSoftStop()  \
     I2C_SDA_LO();      \
@@ -94,14 +99,13 @@
 
 ///
 /// Writes a byte to I2C and checks acknowledge
-/// returns 0 on success
+/// @return 0 on success
 ///
 i2cError_t i2cSoftWriteByte(uint8_t txByte);
 
 ///
 /// Reads a byte from I2C
-/// Returns the byte received
-/// note: timing (delay) may have to be changed for different microcontroller
+/// @return the byte received
 ///
 uint8_t i2cSoftReadByte(i2cAck_t ack);
 

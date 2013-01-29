@@ -33,25 +33,28 @@
 //
 // List all supported external flash models here (before including extflash_hal.h)
 //
+//! M25P80 chip, e.g. on TelosB
 #define FLASH_CHIP_M25P80  1
+//! AT25DF chip, e.g. on SADmote
 #define FLASH_CHIP_AT25DF  2
-#define FLASH_CHIP_SDCARD  3 // not really a flash chip, but...
+//! SD card. Not a flash chip, but can be used to emulate one
+#define FLASH_CHIP_SDCARD  3
 
 
 //! Enter low power mode
 void extFlashSleep(void);
 //! Wake up from low power mode
 void extFlashWake(void);
-//! Read len bytes from flash starting at address addr into buf
+//! Read 'len' bytes from flash starting at address 'addr' into 'buf'
 void extFlashRead(uint32_t addr, uint8_t *buf, uint16_t len);
-//! Write len bytes from buf to flash starting at address addr
+//! Write 'len' bytes from 'buf' to flash starting at address 'addr'
 void extFlashWrite(uint32_t addr, const uint8_t *buf, uint16_t len);
 //! Erase the whole flash memory
 void extFlashBulkErase(void);
 ///
-/// Erase one sector at address
+/// Erase one sector at the address specified
 ///
-/// Address is not the sector number, rather an address inside the sector
+/// Address is not the number of the sector, but rather any address inside the sector
 ///
 void extFlashEraseSector(uint32_t address);
 
@@ -70,7 +73,7 @@ extern inline void extFlashInit(void);
 
 //! The size of the extrernal flash memory in bytes
 #define EXT_FLASH_SIZE \
-    ((unsigned long)EXT_FLASH_SECTOR_SIZE * EXT_FLASH_SECTOR_COUNT)
+    ((uint32_t)EXT_FLASH_SECTOR_SIZE * EXT_FLASH_SECTOR_COUNT)
 
 
 #endif

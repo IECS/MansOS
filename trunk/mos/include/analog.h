@@ -25,7 +25,7 @@
 #define MANSOS_ANALOG_H
 
 /// \file
-/// Platform-independent interaface for analog read and write functions
+/// Platform-independent interface for analog read and write functions
 ///
 
 #include "adc.h"

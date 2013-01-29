@@ -84,6 +84,11 @@ static inline void hplAdcOff(void)
     ADC10CTL0 &= ~REFON;
 }
 
+static inline bool hplAdcIsOn(void)
+{
+    return ADC10CTL0 & ADC10ON;
+}
+
 // Get converted value
 static inline uint16_t hplAdcGetVal(void)
 {
@@ -101,6 +106,12 @@ static inline void hplAdcSetChannel(unsigned ch)
 {
     // The channel number is stored in four MSBs of ADC10CTL1
     ADC10CTL1 = (ADC10CTL1 & 0x0FFFU) | (ch << 12);
+}
+
+static inline uint8_t hplAdcGetChannel(void)
+{
+    // The channel number is stored in four MSBs of ADC10CTL1
+    return (ADC10CTL1 & 0x0FFFU) >> 12;
 }
 
 // Enable ADC interrupts

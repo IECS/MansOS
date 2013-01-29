@@ -26,7 +26,7 @@
 
 #include <stdtypes.h>
 
-//! software-I2C bus ID
+//! Software-I2C bus ID
 #define I2C_BUS_SW 128
 
 //! I2C acknowledge
@@ -39,7 +39,7 @@ typedef enum {
 typedef enum {
   I2C_OK = 0,
   I2C_ACK_ERROR = 1,
-  I2C_OTHER = 2
+  I2C_OTHER = 2,
 } i2cError_t;
 
 //! I2C write op flag, specified in first byte after I2C address information

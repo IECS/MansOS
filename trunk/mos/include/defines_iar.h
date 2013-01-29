@@ -29,7 +29,6 @@
 ///
 
 #include <msp430.h>
-#include <io430.h>
 #include <intrinsics.h>
 
 #ifndef BV

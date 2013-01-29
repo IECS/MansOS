@@ -40,6 +40,7 @@
 #define hplAdcInit() atmegaInitAdc()
 #define hplAdcOn() ADCSRA |= (1 << ADEN)
 #define hplAdcOff() ADCSRA &= ~(1 << ADEN)
+#define hplAdcIsOn() (ADCSRA & (1 << ADEN))
 
 #define hplAdcUseSupplyRef()
 
@@ -53,17 +54,18 @@
 #define hplAdcGetChannelCount() (6)
 
 // channel held in four smallest bits
-#define hplAdcSetChannel(ch) ADMUX = (ADMUX & 0xf0) | ch;
+#define hplAdcSetChannel(ch) ADMUX = (ADMUX & 0xf0) | ch
+#define hplAdcGetChannel() (ADMUX & 0xf)
 
 // enable/disable interrupt
 #define hplAdcEnableInterrupt() ADCSRA |= (1 << ADIE)
-#define hplAdcDisableInterrupt() ADCSRA &= ~(1 << ADIE);
+#define hplAdcDisableInterrupt() ADCSRA &= ~(1 << ADIE)
 #define hplAdcIntsUsed() (ADCSRA & (1 << ADIE))
 #define hplAdcIsBusy() (ADCSRA & (1 << ADSC))
 
 #define hplAdcNotifyValueReady()
 
-#define hplAdcStartConversion() ADCSRA |= (1 << ADSC);
+#define hplAdcStartConversion() ADCSRA |= (1 << ADSC)
 
 // turn off Power Reduction ADC
 // use internal 1.1V voltage reference
@@ -71,6 +73,6 @@
 #define atmegaInitAdc() \
     power_adc_enable(); \
     ADMUX = (1 << REFS0) | (1 << REFS1); \
-    ADCSRA = (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+    ADCSRA = (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0)
 
 #endif  // !_ATMEGA_ADC_H_
