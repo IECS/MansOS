@@ -34,7 +34,9 @@
 //----------------------------------------------------------
 // constants
 //----------------------------------------------------------
+
 enum {
+    //! Used for listening sockets to listen to all ports
     MOS_PORT_ANY = 0
 };
 
@@ -42,20 +44,23 @@ enum {
 // Functions
 //----------------------------------------------------------
 
-///
-/// Calls networkingInitArch() and other functions; two version are defined in comm.c and nonet.c
-///
+//
+// Calls networkingInitArch() and other functions; two version are defined in comm.c and nonet.c
+//
 void networkingInit(void);
 
-///
-/// Architecture-specific initalization. Defined in HAL
-///
+//
+// Architecture-specific initalization. Defined in HAL
+//
 void networkingInitArch(void);
 
-//
-// This function is "narrow point" of the communications stack:
-// almost all packets, incoming and outgoing, are passed thorugh it.
-//
+///
+/// This function is the "center of the hourglass" in MansOS networking stack:
+/// almost all packets, incoming and outgoing, are passed through it.
+/// @param macInfo   the MAC info describing the header of a packet
+/// @param data      the data portion of the packet
+/// @param len       the lenght of packet's data portion
+///
 void networkingForwardData(MacInfo_t *macInfo, uint8_t *data, uint16_t len);
 
 #endif

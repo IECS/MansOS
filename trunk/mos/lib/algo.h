@@ -32,9 +32,8 @@
 
 #include <defines.h>
 
-///
-/// swap two values
-///
+
+//! Swap two values
 #define swap(p1, p2) \
     do {                                         \
         typeof(p1) t = p2;                       \
@@ -42,44 +41,32 @@
         p1 = t;                                  \
     } while (0)
 
-///
-/// get minimum of two values
-///
+
+//! Get minimum of two values
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
-///
-/// get maximum of two values
-///
+//! Get maximum of two values
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
-///
-/// calculate logarithm of x in base 2
-///
+
+//! Calculate logarithm of x in base 2
 #define log2(x) \
     ({  typeof(x) x1 = (x) >> 1; uint8_t log = 0; while (x1) { x1 >>= 1; log++; } log; })
 
 
 
-///
-/// Calculate square root, rounded down.
-///
+//! Calculate square root without using floating point operations, rounded down.
 uint16_t intSqrt(uint32_t);
 
 
-///
-/// Calculate approximate triangle wave value at given point of time
-///
+//! Calculate approximate triangle wave value at given point of time
 uint16_t signalTriangleWave(uint16_t period, uint16_t low, uint16_t high);
 
-///
-/// Calculate approximate sawtooth wave value at given point of time
-///
+//! Calculate approximate sawtooth wave value at given point of time
 uint16_t signalSawtoothWave(uint16_t period, uint16_t low, uint16_t high);
 
-///
-/// Calculate approximate sine wave value at given point of time
+//! Calculate approximate sine wave value at given point of time
 /// TODO: not finished!
-///
 uint16_t signalSineWave(uint16_t period, uint16_t low, uint16_t high);
 
 ///

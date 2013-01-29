@@ -43,6 +43,8 @@
 #define RADIO_CHIP_AMB8420   4
 #define RADIO_CHIP_SOFTWARE  5 // simulated radio on x86
 
+
+//! The receive function defined by the user should look like this
 typedef void (*RadioRecvFunction)(void);
 
 //===========================================================
@@ -99,8 +101,10 @@ static inline void radioDiscard(void);
 /// Set a new radio callback function.
 ///
 /// The callback function is called when a packet becomes available.
-/// In general, the callback function should call either radioRecv() to read the packet.
-/// Returns: old callback function, if any
+///
+/// In general, the callback function should call either radioRecv() to read the packet,
+/// or radioDiscard() to ignore it.
+/// @return  old callback function, if any
 ///
 static inline RadioRecvFunction radioSetReceiveHandle(RadioRecvFunction functionHandle);
 
@@ -140,8 +144,10 @@ static inline int radioGetRSSI(void);
 /// there are 16 channels available in the 2.4 GHz band
 /// in 5 MHz steps, numbered 11 through 26.
 /// They have 2MHz channel bandwidth, and channel separation of 5 MHz.
-/// Center frequency Fc in MHz is calculated as:\n
-///    Fc = 2405 + 5 * (k – 11),                \n
+///
+/// Center frequency Fc in MHz is calculated as:<pre>
+///    Fc = 2405 + 5 * (k – 11),
+/// </pre>
 /// where k is channel number.
 ///
 /// For example, channel 11 is 2405 MHz, channel 20: 2450 MHz, channel 26: 2480 MHz.
@@ -156,16 +162,16 @@ static inline void radioSetChannel(int channel);
 /// For CC2420, a value in range [0 .. 31] is expected,
 /// where 0 corresponds to the minimal transmit power and 31 - to the maximum
 ///
-/// On CC2420, the default value is 31. Possible other values:
-/// -   31      0 dBm    (1 mW)
-/// -   27     -1 dBm    (0.8 mW)
-/// -   23     -3 dBm    (0.5 mW)
-/// -   19     -5 dBm    (0.3 mW)
-/// -   15     -7 dBm    (0.2 mW)
-/// -   11    -10 dBm    (0.1 mW)
-/// -    7    -15 dBm    (0.03 mW)
-/// -    3    -25 dBm    (0.003 mW)
-///
+/// On CC2420, the default value is 31. Possible other values:<pre>
+///   31      0 dBm    (1 mW)
+///   27     -1 dBm    (0.8 mW)
+///   23     -3 dBm    (0.5 mW)
+///   19     -5 dBm    (0.3 mW)
+///   15     -7 dBm    (0.2 mW)
+///   11    -10 dBm    (0.1 mW)
+///    7    -15 dBm    (0.03 mW)
+///    3    -25 dBm    (0.003 mW)
+/// </pre>
 static inline void radioSetTxPower(uint8_t power);
 
 ///
@@ -177,11 +183,11 @@ static inline bool radioIsChannelClear(void);
 
 
 //
-// Include the HAL file, where radio functions and macros are defined
+// Include the HAL file where radio functions and macros are defined
 //
 #include <arch/radio_hal.h>
 
-//! The maximum packet size the HW layer can transmit/receive
+//! Chip-specific maximum packet size the HW layer can transmit/receive
 #ifndef RADIO_MAX_PACKET
 #warning Radio constants not defined for this platform!
 #define RADIO_MAX_PACKET        0
@@ -189,12 +195,12 @@ static inline bool radioIsChannelClear(void);
 #define RADIO_TX_POWER_MAX      0
 #endif
 
-//! The default radio channel number (HW-specific)
+//! Chip-specific default radio channel number
 #ifndef RADIO_CHANNEL
 #define RADIO_CHANNEL 26
 #endif
 
-//! The default radio transmission power (in chip-specific units)
+//! Chip-specific default radio transmission power (in chip-specific units)
 #ifndef RADIO_TX_POWER
 #define RADIO_TX_POWER 31
 #endif

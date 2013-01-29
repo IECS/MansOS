@@ -28,13 +28,16 @@
 /// The implementation of base station/router time synchronization
 ///
 /// Relies on periodic messages of the router that contain UNIX timestamp.
-/// Does not provide time synchronization in the network - routing protocol does that!
+/// Does not provide time synchronization in the network,
+/// as it is the responsibility of a routing protocol.
 ///
 
 void timesyncInit(void);
 
+//! Turn on time synchronizaion. Seizes a UART interface.
 void timesyncOn(void);
 
+//! Releases the UART interface
 void timesyncOff(void);
 
 #endif

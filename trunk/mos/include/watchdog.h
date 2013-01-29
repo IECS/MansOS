@@ -33,7 +33,7 @@
 //===========================================================
 
 ///
-/// Stop the watchdog. Defined as a macro in HAL
+/// Stop the watchdog timer
 ///
 extern inline void watchdogStop(void);
 
@@ -46,7 +46,8 @@ extern inline void watchdogStop(void);
 void watchdogReboot(void);
 
 ///
-/// Similar to watchdogReboot(), but does not attempt any config changes before rebooting
+/// Similar to watchdogReboot(), but does not attempt to change
+/// any configuration before rebooting
 ///
 extern inline void watchdogRebootSimple(void);
 

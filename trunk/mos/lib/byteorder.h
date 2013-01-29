@@ -27,7 +27,7 @@
 // -- This file is part of the public MansOS API --
 
 /// \file
-/// API for unaligned memory access and big/little endian data conversion
+/// API for unaligned memory access and little endian / big endian data conversion
 ///
 
 #include <string.h> // memcpy

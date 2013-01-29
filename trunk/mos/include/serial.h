@@ -25,7 +25,7 @@
 #define MANSOS_SERIAL_H
 
 /// \file
-/// Serial port (RS232) interface
+/// Serial interface (RS232) API
 ///
 
 #include <platform.h>
@@ -34,7 +34,7 @@
 // Macros
 //===========================================================
 
-//! The number of serial ports available on the platform
+//! Platform-specifig: the number of serial ports available
 #ifndef SERIAL_COUNT
 #define SERIAL_COUNT 0
 #endif
@@ -43,7 +43,7 @@
 //===========================================================
 // Data types and constants
 //===========================================================
-//! callback for Serial RX interrupt
+//! Callback for serial RX interrupt
 typedef void (* SerialCallback_t)(uint8_t);
 
 //===========================================================
@@ -51,66 +51,82 @@ typedef void (* SerialCallback_t)(uint8_t);
 //===========================================================
 
 ///
-/// Initalize serial port with specific speed
+/// Initalize serial interface with specific speed
 ///
-/// 'conf' value is not used at the moment.
+/// @param id     serial interface ID
+/// @param speed  serial interface baudrate.
+///     The values supported are platform-specific.
+///     On 1-series msp430 the following rates are supported:
+///     2400, 4800, 9600 (the default), 38400, and 115200 bps
+/// @param conf   advanced configuarion, unused at the moment.
 ///
 uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf);
 
-//! Enable transmission on a specific serial port
+//! Enable transmission on a specific serial interface
 void serialEnableTX(uint8_t id);
-//! Disable transmission on a specific serial port
+//! Disable transmission on a specific serial interface
 void serialDisableTX(uint8_t id);
-//! Enable reception on a specific serial port
+//! Enable reception on a specific serial interface
 void serialEnableRX(uint8_t id);
-//! Disable reception on a specific serial port
+//! Disable reception on a specific serial interface
 void serialDisableRX(uint8_t id);
 
-//! Send a single byte to a specific serial port
+//! Send a single byte to a specific serial interface
 void serialSendByte(uint8_t id, uint8_t data);
-//! Send binary data to a specific serial port
+
+//! Send binary data to a specific serial interface
 void serialSendData(uint8_t id, const uint8_t *data, uint16_t len);
+
 ///
-/// Send ASCII string to a specific serial port.
+/// Send ASCII string to a specific serial interface
 ///
 /// Note: a single '\\n' symbol is converted to '\\r\\n'!
 ///
 void serialSendString(uint8_t id, const char *string);
 
-/**
- * Set callback function for per-byte data receive. The callback is called
- * on every received packet
- * @param id - ID of the UART used (See MCU datasheet to get IDs)
- * @param cb - callback function: void myCallback(uint8_t byte)
- */
+///
+/// Set callback function for per-byte data receive.
+///
+/// The callback is called on every received byte
+///
+/// Note: enables serial RX automatically if 'cb' is non-NULL.
+/// @param id - ID of the UART used (See MCU datasheet to get IDs)
+/// @param cb - callback function: void myCallback(uint8_t byte)
+////
 uint_t serialSetReceiveHandle(uint8_t id, SerialCallback_t cb);
 
-/**
- * Set callback for per-packet data receive. Stores the received bytes in
- * the buffer and the callback is called when either a newline is received
- * ('\\n', binary value 10) or at most len bytes are received. The newline is
- * also stored in the buffer.
- * Also enables Serial RX automatically.
- * After the callback, buffer is reset and reception restarts.
- * Warning: Can use only one Serial at a time (single buffer, single handler)!
- *
- * @param id - ID of the UART used (See MCU datasheet to get IDs)
- * @param cb - callback function: void myCallback(uint8_t bytes). Here the
- *             bytes parameter contains not the last byte received but
- *             total received byte count (i.e., bytes stored in the buffer)!
- * @param buf - the buffer where to store the packet
- * @param len - size of the buffer in bytes. Callback is called when len
- *              bytes are received (or when '\\n' is received).
- *              When len is zero, no packet size is checked, only on newline
- *              reception the callback is called.
- */
+///
+/// Set callback for per-packet data receive.
+///
+/// Stores the received bytes in  the buffer and the callback is called when:
+///  - either a newline is received ('\\n', binary value 10),
+///  - or at most len bytes are received.
+/// The newline is also stored in the buffer.
+///
+/// After the callback returns buffer is reset and reception restarts.
+///
+/// Note: enables serial RX automatically if 'cb' is non-NULL.
+///
+/// Warning: Can use only one Serial at a time (single buffer, single handler)!
+///
+/// @param id - ID of the UART used (See MCU datasheet to get IDs)
+/// @param cb - callback function: void myCallback(uint8_t bytes). Here the
+///             bytes parameter contains not the last byte received but
+///             total received byte count (i.e., bytes stored in the buffer)!
+/// @param buf - the buffer where to store the packet
+/// @param len - size of the buffer in bytes. Callback is called when len
+///              bytes are received (or when '\\n' is received).
+///              When len is zero, no packet size is checked, only on newline
+///              reception the callback is called.
+///
 uint_t serialSetPacketReceiveHandle(uint8_t id, SerialCallback_t cb,
-        void *buf, uint16_t len);
+                                    void *buf, uint16_t len);
 
 ///
-/// Possible functions of a hardware serial module.
+/// The functions of a hardware serial module.
+///
 /// Only one of these functions can be active at a given time
-/// for a single module (although run-time reconfiguration is possible)
+/// for a single module (although run-time reconfiguration is possible!)
 ///
 enum {
     //! serial interface is unused 
@@ -134,7 +150,7 @@ struct Serial_s {
 } PACKED;
 typedef struct Serial_s Serial_t;
 
-//! Run-time serial port configuration
+//! Run-time serial interface configuration
 extern volatile Serial_t serial[SERIAL_COUNT];
 
 //===========================================================

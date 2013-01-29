@@ -121,7 +121,7 @@ static void roStopListeningTimerCb(void *x)
     seenRoutingInThisFrame = false;
 }
 
-void initRouting(void)
+void routingInit(void)
 {
     socketOpen(&roSocket, routingReceive);
     socketBind(&roSocket, ROUTING_PROTOCOL_PORT);

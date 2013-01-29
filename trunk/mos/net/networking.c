@@ -62,7 +62,7 @@ void networkingInit(void)
     networkingInitArch();
     macProtocol.init(networkingForwardData);
     socketsInit();
-    initRouting();
+    routingInit();
 }
 
 void fillLocalAddress(MosAddr *result)

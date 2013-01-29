@@ -25,9 +25,10 @@
 #define MANSOS_SDSTREAM_H
 
 /// \file
-/// SD card stream module interface.
+/// SD card stream module interface (i.e. raw access without file system)
 ///
-/// Similar to flash stream, but simpler, as data can be rewritten without erasing.
+/// Similar to flash stream, but simpler, as data can be rewritten
+/// without erasing whole sectors.
 ///
 
 #include <defines.h>
@@ -39,15 +40,21 @@ void sdStreamReset(void);
 
 ///
 /// Write a record
+/// @param crc  if true, then 16-bit CRC is automatically calculated and stored
+/// @return     true on success, false on failure
 ///
 bool sdStreamWriteRecord(void *data, uint16_t length, bool crc);
 
 ///
 /// Read a record
+/// @param crc  if true, then 16-bit CRC is calculated and checked
+/// @return     true on success, false on failure (including bad crc)
 ///
 bool sdStreamReadRecord(void *data, uint16_t length, bool crc);
 
-//! Number of bytes reserved (unused by the stream module) at the start of SD card
+///
+/// Number of reserved bytes (left unused by the stream module)
+/// at the start of SD card
 #ifndef SDCARD_RESERVED
 #define SDCARD_RESERVED  (256 * 1024ul) // 256kb
 #endif

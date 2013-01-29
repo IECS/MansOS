@@ -33,7 +33,7 @@
 #include <stdtypes.h>
 #include <stddef.h> // size_t
 
-//! Return 32-but hash code of binary data array
+//! Return 32-bit hash code of binary data array
 uint32_t hash(const void *key, size_t length, uint32_t initval);
 
 #endif

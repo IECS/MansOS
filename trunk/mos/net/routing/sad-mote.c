@@ -119,7 +119,7 @@ static uint32_t calcListenStartTime(void)
     return t - TIMESLOT_IMPRECISION;
 }
 
-void initRouting(void)
+void routingInit(void)
 {
     socketOpen(&roSocket, routingReceive);
     socketBind(&roSocket, ROUTING_PROTOCOL_PORT);
