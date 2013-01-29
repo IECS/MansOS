@@ -27,6 +27,9 @@
 /// \file
 /// Time accounting API
 ///
+/// If USE_LONG_LIFETIME=n (the default), most of 64-bit functions
+/// return the same value as their 32-but counterparts.
+///
 
 #include <platform.h>
 
@@ -76,7 +79,9 @@ static inline uint64_t getTimeMs64(void) {
 }
 
 ///
-/// Get seconds elapsed since system start. Only 32-bit version is provided,
+/// Get seconds elapsed since system start
+///
+/// Only 32-bit version is provided,
 /// because 0xffffffff seconds correspond to approximately 136 years.
 ///
 static inline uint32_t getTimeSec(void) {
@@ -84,7 +89,7 @@ static inline uint32_t getTimeSec(void) {
 }
 
 ///
-/// Convert from alarm (jiffy) timer ticks to milliseconds
+/// Convert alarm (jiffy) timer ticks to milliseconds
 ///
 /// Note: on msp430 a conversion error is introduced due to rounding!
 ///
@@ -94,7 +99,7 @@ static inline uint16_t alarmTimerTicksToMs(uint16_t ticks)
 }
 
 ///
-/// Convert from milliseconds to alarm (jiffy) timer ticks
+/// Convert milliseconds to alarm (jiffy) timer ticks
 ///
 /// Note: on msp430 a conversion error is introduced due to rouding!
 ///
@@ -105,7 +110,7 @@ static inline uint16_t msToAlarmTimerTicks(uint16_t ms)
 }
 
 ///
-/// Convert from sleep timer ticks to milliseconds
+/// Convert sleep timer ticks to milliseconds
 ///
 /// Note: on msp430 a conversion error is introduced due to rounding!
 ///
@@ -115,7 +120,7 @@ static inline uint16_t sleepTimerTicksToMs(uint16_t ticks)
 }
 
 ///
-/// Convert from milliseconds to sleep timer ticks
+/// Convert milliseconds to sleep timer ticks
 ///
 /// Note: on msp430 a conversion error is introduced due to rouding!
 ///
@@ -127,7 +132,7 @@ static inline uint16_t msToSleepTimerTicks(uint16_t ms)
 
 //
 // Synchronized time functions: return time that is synchronized
-// (fixed) root clock using the time synchronization protocol.
+// with network root's clock using routing/timesync protocol.
 //
 #if !USE_ROLE_BASE_STATION && USE_NET
 

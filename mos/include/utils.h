@@ -31,6 +31,9 @@
 #include <delay.h>
 #include <leds.h>
 
+//! Blink the default LED
+/// @param  count      number of LED on/off cycles
+/// @param  interval   milliseconds between a single toggle
 static inline void ledBlink(uint16_t count, uint16_t interval)
 {
 #if USE_LEDS

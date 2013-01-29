@@ -27,7 +27,8 @@
 /// \file
 /// SPI bus protocol, master mode only
 ///
-/// Automatically chooses to use hardware or software SPI, depending on busId
+/// Automatically chooses to use hardware or software SPI, depending on busId.
+///
 /// The actual implementation is in chips layer.
 /// Arch/platform layer provides macros and pin assignments
 ///
@@ -90,7 +91,7 @@ uint8_t spiExchByte(uint8_t busId, uint8_t b);
 /// received from the slave in full-duplex mode
 /// Does not change any Slave-Select pin!
 ///
-/// Calls 2x spiExchByte
+/// Calls spiExchByte two times.
 ///
 /// @param   busId   SPI bus ID
 /// @param   w       word to transmit

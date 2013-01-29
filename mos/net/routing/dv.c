@@ -68,7 +68,7 @@ static inline bool isRoutingInfoValid(void)
     return timeAfter32(lastRootMessageTime + ROUTING_INFO_VALID_TIME, (uint32_t)getJiffies());
 }
 
-void initRouting(void)
+void routingInit(void)
 {
     socketOpen(&roSocket, routingReceive);
     socketBind(&roSocket, ROUTING_PROTOCOL_PORT);

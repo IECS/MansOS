@@ -122,7 +122,7 @@ static uint32_t calcNextForwardTime(uint8_t moteToProcess)
     return t;
 }
 
-void initRouting(void)
+void routingInit(void)
 {
     socketOpen(&roSocket, routingReceive);
     socketBind(&roSocket, ROUTING_PROTOCOL_PORT);

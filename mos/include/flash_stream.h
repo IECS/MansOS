@@ -25,7 +25,7 @@
 #define MANSOS_FLASH_STREAM_H
 
 /// \file
-/// External flash stream module interface.
+/// External flash stream module interface (i.e. raw access without file system)
 ///
 
 #include <defines.h>
@@ -37,15 +37,20 @@ void flashStreamReset(void);
 
 ///
 /// Write a record
+/// @param crc  if true, then 16-bit CRC is automatically calculated and stored
+/// @return     true on success, false on failure
 ///
 bool flashStreamWriteRecord(void *data, uint16_t length, bool crc);
 
 ///
 /// Read a record
+/// @return     true on success, false on failure (including bad crc)
 ///
 bool flashStreamReadRecord(void *data, uint16_t length, bool crc);
 
-//! Number of bytes reserved (unused by the stream module) at the start of external flash memory
+///
+/// Number of reserved bytes (left unused by the stream module)
+/// at the start of external flash memory
 #ifndef EXT_FLASH_RESERVED
 #define EXT_FLASH_RESERVED  (256 * 1024ul) // 256kb
 #endif

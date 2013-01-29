@@ -45,7 +45,7 @@ uint32_t lastRootClockMilliseconds;
 
 // -----------------------------------------------
 
-void initRouting(void) {
+void routingInit(void) {
     socketOpen(&roSocket, routingReceive);
     socketBind(&roSocket, ROUTING_PROTOCOL_PORT);
     socketSetDstAddress(&roSocket, MOS_ADDR_BROADCAST);

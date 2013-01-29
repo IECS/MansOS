@@ -77,9 +77,10 @@
 
 
 ///
-/// Main application entry point (prototype).
+/// Main application entry point (prototype)
+///
 /// Every MansOS application is required to define this,
-/// unless configuration option USE_KERNEL_MAIN=n is set.
+/// unless configuration option USE_KERNEL_MAIN=n is set
 ///
 void appMain(void);
 

@@ -37,6 +37,7 @@
 
 typedef uint8_t NetPort_t;
 
+struct Socket_s;
 typedef void (*SocketRecvFunction)(struct Socket_s *, uint8_t *data, uint16_t len);
 
 //! MansOS socket structure

@@ -43,7 +43,7 @@
 extern inline void msleep(uint16_t milliseconds);
 
 ///
-/// Give control to another thread. Equivalent to msleep(0)
+/// Allow another thread to execute. Equivalent to msleep(0)
 ///
 extern inline void yield(void);
 

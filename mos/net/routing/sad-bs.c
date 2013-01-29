@@ -49,7 +49,7 @@ static uint16_t downstreamAddress = MOS_ADDR_BROADCAST;
 
 // -----------------------------------------------
 
-void initRouting(void) {
+void routingInit(void) {
     socketOpen(&roSocket, routingReceive);
     socketBind(&roSocket, ROUTING_PROTOCOL_PORT);
     socketSetDstAddress(&roSocket, MOS_ADDR_BROADCAST);

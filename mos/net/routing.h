@@ -56,9 +56,13 @@ enum {
 
 //! Routing packet sender role
 enum {
+    //! The sender is a base station
     SENDER_BS,
+    //! The sender forwards data between BS and motes / collectors
     SENDER_FORWARDER,
+    //! The sender collects data from motes and passes to a forwarder
     SENDER_COLLECTOR,
+    //! The sender is a non-forwarding mote (data source)
     SENDER_MOTE,
 };
 
@@ -142,7 +146,7 @@ extern MosShortAddr rootAddress;
 
 //===========================================================
 
-void initRouting(void);
+void routingInit(void);
 
 /// Route a packet
 /// @param info  The header of the packet

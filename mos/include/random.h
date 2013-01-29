@@ -42,11 +42,11 @@
 // Procedures
 //===========================================================
 
-///
-/// Initialize the random number generator
-///
-/// Random or unique bits from hardware, if available.
-///
+//
+// Initialize the random number generator
+//
+// Uses random or unique bits from hardware, if available.
+//
 void randomInit(void);
 
 ///
@@ -60,7 +60,7 @@ void randomSeed(uint16_t seed);
 uint16_t randomNumber(void);
 
 ///
-/// Get a random integer between 0 and 'limit'
+/// Get a random integer between 0 and 'limit' - 1
 /// @param limit    Upper bound
 ///
 static inline uint16_t randomNumberBounded(uint16_t limit)
@@ -70,7 +70,7 @@ static inline uint16_t randomNumberBounded(uint16_t limit)
 }
 
 ///
-/// Get a random integer in a specific range ['low' .. 'high']
+/// Get a random integer in a specific range ['low' .. 'high' - 1]
 ///
 /// @param low    Lower bound
 /// @param high   Upper bound

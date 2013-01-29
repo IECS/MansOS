@@ -25,7 +25,7 @@
 #define MANSOS_MAC_H
 
 /// \file
-/// MAC protocol public API
+/// MAC protocol API. Normally, the user apps should used sockets instead of this.
 ///
 
 #include "address.h"
@@ -35,10 +35,33 @@
 // Data types and constants
 //===========================================================
 
-// MAC protocols supported
+// -- All MAC protocols supported --
+
+/// No MAC protocol or network addressing is used.
+/// All packets are passed to radio directly
 #define MAC_PROTOCOL_NULL 1
+
+/// Carrier-Sense Multiple Access (CSMA) MAC protocol.
+///
+/// Binary MAC header information is added to packets before sending them out;
+/// the information generall includes source and destination addresses, ports, etc.
+/// CCA is used before sending out packets.
+/// On reception, only packets with immediate destination address equal to
+/// the local address or the broadcast address are passed to upper layers.
+/// Uses packet queue to store unsent packets.
 #define MAC_PROTOCOL_CSMA 2
+
+/// Carrier-Sense Multiple Access (CSMA) with ACKnowledgements.
+///
+/// Expectes software-generated ACKs from the receiber and resends packets on failure.
+/// Uses packet queue to store unsent packets.
 #define MAC_PROTOCOL_CSMA_ACK 3
+
+/// The MAC protocol used in SAD project.
+///
+/// Based on TDMA adapted for low-precision timing.
+/// The protocol is AMB8420 radio module specific!
+/// Uses internal buffer to store one unsent packet.
 #define MAC_PROTOCOL_SAD 4
 
 #define MI_FLAG_LOCALLY_ORIGINATED  0x1
@@ -122,7 +145,14 @@ extern MacProtocol_t macProtocol;
 //===========================================================
 
 //! Send a packet
+/// @param dst    destination address
+/// @param data   packet data (excluding header)
+/// @param length packet data length
 int8_t macSend(MosAddr *dst, const uint8_t *data, uint16_t length);
+//! Send a packet, expanded version
+/// @param mi     MAC info with source, destination addresses & ports etc.
+/// @param data   packet data (excluding header)
+/// @param length packet data length
 int8_t macSendEx(MacInfo_t *mi, const uint8_t *data, uint16_t length);
 
 // default MAC header creation from MacInfo
@@ -135,6 +165,7 @@ bool defaultIsKnownDstAddress(MosAddr *);
 
 uint8_t getMacHeaderSeqnum(uint8_t *data);
 
+// exchange source <-> destination info in place
 void invertDirection(MacInfo_t *);
 
 // internal

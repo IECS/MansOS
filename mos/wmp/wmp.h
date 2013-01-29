@@ -25,12 +25,13 @@
 #define MANSOS_WMP_H
 
 /// \file
-/// MansOS file management protocol public API
+/// MansOS Web Management Protocol (WMP) public API
 ///
 
 #include <defines.h>
 #include <alarms.h>
 
+//! All WMP-accessible sensors must be listed here
 enum WmpSensorType_e {
      WMP_SENSOR_LIGHT = 1,
      WMP_SENSOR_HUMIDITY,
@@ -46,6 +47,7 @@ enum WmpSensorType_e {
 } PACKED;
 typedef enum WmpSensorType_e WmpSensorType_t;
 
+//! All WMP-confiurable system outputs must be listed here
 enum WmpOutputType_e {
      WMP_OUTPUT_SERIAL = 1,
      WMP_OUTPUT_SDCARD,
@@ -53,30 +55,48 @@ enum WmpOutputType_e {
 } PACKED;
 typedef enum WmpOutputType_e WmpOutputType_t;
 
+//! These commands are handled on mote-side of the protocol
 enum WmpCommandType_e {
-    WMP_CMD_SET_LED = 1,  // set LED state
-    WMP_CMD_GET_LED,      // get LED state
-    WMP_CMD_SET_SENSOR,   // set sensor reading period
-    WMP_CMD_GET_SENSOR,   // get sensor reading period
-    WMP_CMD_SET_OUTPUT,   // enable/disable output to e.g. serial, file etc
-    WMP_CMD_GET_OUTPUT,   // get output status (enabled/disabled)
-    WMP_CMD_SET_ADDR,     // set local network address
-    WMP_CMD_GET_ADDR,     // get local network address
-    WMP_CMD_SET_FILENAME, // set file name (to use for data logging)
-    WMP_CMD_GET_FILENAME, // get file name (used for data logging)
-    WMP_CMD_GET_FILELIST, // get list of all files on FAT filesystem
-    WMP_CMD_GET_FILE,     // get contents of a file
-    WMP_CMD_SET_DAC,      // set DAC channel value
-    WMP_CMD_GET_DAC,      // get DAC channel value
+    //! set LED state
+    WMP_CMD_SET_LED = 1,
+    //! get LED state
+    WMP_CMD_GET_LED,
+    //! set sensor reading period
+    WMP_CMD_SET_SENSOR,
+    //! get sensor reading period
+    WMP_CMD_GET_SENSOR,
+    //! enable/disable output (e.g. to serial, file etc.)
+    WMP_CMD_SET_OUTPUT,
+    //! get output status (enabled/disabled)
+    WMP_CMD_GET_OUTPUT,
+    //! set local network address
+    WMP_CMD_SET_ADDR,
+    //! get local network address
+    WMP_CMD_GET_ADDR,
+    //! set file name (to use for data logging)
+    WMP_CMD_SET_FILENAME,
+    //! get file name (used for data logging)
+    WMP_CMD_GET_FILENAME,
+    //! get list of all files on FAT filesystem
+    WMP_CMD_GET_FILELIST,
+    //! get contents of a file
+    WMP_CMD_GET_FILE,
+    //! set DAC channel value
+    WMP_CMD_SET_DAC,
+    //! get DAC channel value
+    WMP_CMD_GET_DAC,
 } PACKED;
 typedef enum WmpCommandType_e WmpCommandType_t;
 
-// this bit is set in replies to commands
+//! This bit is set in replies to commands
 #define WMP_CMD_REPLY_FLAG  0x80
 
+//! WMP return code: success
 #define WMP_SUCCESS 0x0
+//! WMP return code: error occured
 #define WMP_ERROR   0xFF
 
+//! Start character of all WMP binary packets
 #define WMP_START_CHARACTER   '$'
 
 // initialization (setups serial receiver)
