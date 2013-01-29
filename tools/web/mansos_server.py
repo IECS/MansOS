@@ -98,7 +98,7 @@ def openAllSerial():
     graphData.reset()
     if isListening: return
     isListening = True
-    listenThread = threading.Thread(target=listenSerial)
+    listenThread = threading.Thread(target = listenSerial)
     listenThread.start()
     for m in motes.getMotes():
         m.tryToOpenSerial(False)
@@ -248,7 +248,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             text += ' Platform: <select name="sel_' + name + '" ' + disabled + ' title="Select the mote\'s platform: determines the list of sensors the mote has. Also has effect on code compilation and uploading">\n'
             for platform in supportedPlatforms:
                 selected = ' selected="selected"' if platform == m.platform else ''
-                text += '  <option value="' + platform+ '"' + selected + '>' + platform + '</option>\n'
+                text += '  <option value="' + platform + '"' + selected + '>' + platform + '</option>\n'
             text += ' </select>\n'
             text += '</div>\n'
 
@@ -365,7 +365,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         if moteIndex is None or moteIndex >= len(motes.getMotes()):
             self.serveError("Config page requested, but mote not specified!")
             return
-        
+
         platform = None
         dropdownName = "sel_mote" + str(moteIndex)
         if dropdownName in qs:
@@ -382,7 +382,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
         configInstance.setMote(motes.getMote(moteIndex), platform)
 
-        (errmsg,ok) = configInstance.updateConfigValues(qs)
+        (errmsg, ok) = configInstance.updateConfigValues(qs)
         if not ok:
             self.serveError(errmsg)
             return
@@ -397,11 +397,11 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
         if filesRequired:
             if "filename" in qs:
-                (text,ok) = configInstance.getFileContentsHTML(qs)
+                (text, ok) = configInstance.getFileContentsHTML(qs)
             else:
-                (text,ok) = configInstance.getFileListHTML(moteIndex)
+                (text, ok) = configInstance.getFileListHTML(moteIndex)
         else:
-            (text,ok) = configInstance.getConfigHTML()
+            (text, ok) = configInstance.getConfigHTML()
         if not ok:
             self.serveError(text)
             return
@@ -561,6 +561,14 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.writeChunk(f.read())
         self.writeFinalChunk()
 
+    # Dummy, have to respond somehow, so javascript knows we are here
+    def serveSync(self):
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+        self.writeChunk("Hello!")
+        self.writeFinalChunk()
+
     def serveGraphsData(self, qs):
         global lastJsonData
 
@@ -627,6 +635,11 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.serveSealFrame(qs)
         elif o.path[:13] == "/seal-blockly":
             self.serveFile(os.path.join(sealBlocklyPath, o.path[1:]))
+        elif o.path == "/sync":
+            self.serveSync()
+        elif o.path == "/code":
+            print (qs) # qs['src'] contains code
+            self.serveSync()
         elif o.path[-4:] == ".css":
             self.serveFile(htmlDirectory + o.path)
         else:
@@ -787,7 +800,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     # Overrides BaseServer function to get better control over interrupts
-    def serve_forever(self, poll_interval=0.5):
+    def serve_forever(self, poll_interval = 0.5):
         """Handle one request at a time until shutdown.
 
         Polls for shutdown every poll_interval seconds. Ignores
