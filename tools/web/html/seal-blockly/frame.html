@@ -1,0 +1,97 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Blockly Demo: Code</title>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+  
+  <script type="text/javascript" src="blockly_compressed.js"></script>
+  
+  <script type="text/javascript" src="generators/seal.js"></script>
+  
+  <script type="text/javascript" src="language/en/_messages.js"></script>
+  
+  <script type="text/javascript" src="language/seal/statements.js"></script>
+  <script type="text/javascript" src="language/seal/parameters.js"></script>
+  <script type="text/javascript" src="language/seal/control.js"></script>
+  <script type="text/javascript" src="language/common/logic.js"></script>
+  <script type="text/javascript" src="language/seal/values.js"></script>
+  
+  <script type="text/javascript" src="generators/seal/statements.js"></script>
+  <script type="text/javascript" src="generators/seal/parameters.js"></script>
+  <script type="text/javascript" src="generators/seal/control.js"></script>
+  <script type="text/javascript" src="generators/seal/logic.js"></script>
+  <script type="text/javascript" src="generators/seal/values.js"></script>
+
+  <style>
+    html, body {
+      background-color: #fff;
+      margin: 0;
+      padding:0;
+      overflow: hidden;
+    }
+    .blocklySvg {
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+  <script>
+    function init() {
+      Blockly.inject(document.body, {path: ''});
+
+      if (window.parent.init) {
+        // Let the top-level application know that Blockly is ready.
+        window.parent.init(Blockly);
+      } else {
+        // Attempt to diagnose the problem.
+        var msg = 'Error: Unable to communicate between frames.\n\n';
+        if (window.parent == window) {
+          msg += 'Try loading index.html instead of frame.html';
+        } else if (window.location.protocol == 'file:') {
+          msg += 'This may be due to a security restriction preventing\n' +
+              'access when using the file:// protocol.\n' +
+              'http://code.google.com/p/chromium/issues/detail?id=47416';
+        }
+        alert(msg);
+      }
+    }
+
+// Communication magic!!
+
+var successful = 1;
+
+function doSync(){
+    // This check is needed becaue of alert, it stops background processes from 
+    // firing, so sync can fail to be sent in time and python terminates...
+    if (successful == 0){
+        alert("Connection lost\n Please restart application.");
+        return 0;
+    }
+    successful = 0;
+    sync = setTimeout("doSync()",5000);
+    
+    $.ajax({
+        url: '/sync',
+        success: function(data){
+            successful = 1;
+        }
+    });
+}
+
+sync = setTimeout("doSync()",5000);
+
+
+function uploadSealCode() {
+    var code = Blockly.Generator.workspaceToCode('Seal');
+
+    $.ajax({
+        type: "GET", // change to POST if needed
+        url: '/code',
+        data: {'src' : code}
+    });
+}
+
+  </script>
+</head>
+<body onload="init()">
+</body>
+</html>
