@@ -122,8 +122,8 @@ enum {
 #endif
 
 //
-// Timer A is active only in the MCU=active mode, while
-// timer B is active only in the MCU=sleeping mode.
+// Timer A is active only while MCU is in the active mode, while
+// timer B is active only while MCU is in any of low power modes.
 //
 // Timer A counts continuously 0..0xffff and generates interrupt each CCR0.
 // Timer B counts continuously 0..0xffff and generates interrupt each CCR1.
@@ -167,9 +167,9 @@ enum {
 // Stop watchdog timer
 #define msp430WatchdogStop() WDTCTL = WDTPW + WDTHOLD
 
-///
-/// Alarm timer
-///
+// ---------------------------------------------------
+// Alarm timer
+// ---------------------------------------------------
 #define ALARM_TIMER_INIT()  msp430InitTimerA()
 #define ALARM_TIMER_START() msp430StartTimerA()
 #define ALARM_TIMER_STOP()  msp430StopTimerA()
@@ -182,9 +182,9 @@ enum {
 // this expands to ALARM_TIMER_READ
 ACTIVE_TIMER_READ(ALARM, TAR)
 
-///
-/// Sleep timer
-///
+// ---------------------------------------------------
+// Sleep timer
+// ---------------------------------------------------
 #ifdef PLATFORM_HAS_TIMERB
 
 #define SLEEP_TIMER_INIT()  msp430InitTimerB()

@@ -97,21 +97,23 @@ uint_t ledsGet(void);
 ///
 #ifndef LED_DEFINE
 #define LED_DEFINE( name, port, pin, valOn )  LED_DEFINE2( name, port, pin, valOn )
-#define LED_DEFINE2( name, port, pin, valOn )                            \
-    static inline uint_t name##Mask()    { return ((uint_t)(name##_mask)); } \
-    static inline uint_t name##Get()     { return (pinRead(port, pin) ^ (1-valOn)); } \
-    static inline void name##Set( val )  {                              \
-        energyConsumerSet(name##_ENERGY_PROFILE, val);                  \
-        pinWrite( port, pin, ((1-valOn) ^ val) ); }                     \
-    static inline void name##On()        { name##Set(1); }              \
-    static inline void name##Off()       { name##Set(0); }              \
-    static inline void name##Toggle()    {                              \
-        energyConsumerSet(name##_ENERGY_PROFILE, 1 ^ name##Get());      \
-        pinToggle( port, pin ); }                                       \
-    static inline void name##Init()      { pinAsOutput( port, pin ); name##Off(); } \
-
-// TODO: should differentiate between LED energy consumption!
-    
+#define LED_DEFINE2( name, port, pin, valOn )                                             \
+    static inline uint_t name##Mask(void)    { return ((uint_t)(name##_mask)); }          \
+    static inline uint_t name##Get(void)     { return (pinRead(port, pin) ^ (1-valOn)); } \
+    static inline void name##Set(uint8_t val) INLINE;                                     \
+    static inline void name##Set(uint8_t val) {                                           \
+        energyConsumerSet(name##_ENERGY_PROFILE, val);                                    \
+        pinWrite( port, pin, ((1-valOn) ^ val) ); }                                       \
+    static inline void name##On(void)  INLINE;                                            \
+    static inline void name##On(void)        { name##Set(1); }                            \
+    static inline void name##Off(void) INLINE;                                            \
+    static inline void name##Off(void)       { name##Set(0); }                            \
+    static inline void name##Toggle(void) INLINE;                                         \
+    static inline void name##Toggle(void)    {                                            \
+        energyConsumerSet(name##_ENERGY_PROFILE, 1 ^ name##Get());                        \
+        pinToggle( port, pin ); }                                                         \
+    static inline void name##Init(void)      { pinAsOutput( port, pin ); name##Off(); }   \
+   
 #endif  // LED_DEFINE
 
 //! LED_ALIAS is used to provide aliases to the original led names 
@@ -119,13 +121,13 @@ uint_t ledsGet(void);
 #define LED_ALIAS( alias, name ) LED_ALIAS2( alias, name )
 #define LED_ALIAS2( alias, name )                                       \
     enum { alias##_mask = name##_mask };                                \
-    static inline uint_t alias##Mask()   { return name##Mask(); }       \
-    static inline uint_t alias##Get()    { return name##Get(); }        \
-    static inline void alias##Set( val ) { name##Set( val ); }          \
-    static inline void alias##On()       { name##On(); }                \
-    static inline void alias##Off()      { name##Off(); }               \
-    static inline void alias##Toggle()   { name##Toggle(); }            \
-    static inline void alias##Init()     { name##Init(); }              \
+    static inline uint_t alias##Mask(void)   { return name##Mask(); }   \
+    static inline uint_t alias##Get(void)    { return name##Get(); }    \
+    static inline void alias##Set(uint8_t val) { name##Set( val ); }    \
+    static inline void alias##On(void)       { name##On(); }            \
+    static inline void alias##Off(void)      { name##Off(); }           \
+    static inline void alias##Toggle(void)   { name##Toggle(); }        \
+    static inline void alias##Init(void)     { name##Init(); }          \
 
 #endif // LED_ALIAS     
 
@@ -134,13 +136,13 @@ uint_t ledsGet(void);
 #define LED_UNIMPLEMENTED(name) LED_UNIMPLEMENTED2(name)
 #define LED_UNIMPLEMENTED2(name)                                        \
     enum { name##_mask = 0 };                                           \
-    static inline uint_t name##Mask()   { return 0; }                   \
-    static inline uint_t name##Get()    { return 0; }                   \
-    static inline void name##Set( val ) { }                             \
-    static inline void name##On()       { }                             \
-    static inline void name##Off()      { }                             \
-    static inline void name##Toggle()   { }                             \
-    static inline void name##Init()     {  }                            \
+    static inline uint_t name##Mask(void)   { return 0; }               \
+    static inline uint_t name##Get(void)    { return 0; }               \
+    static inline void name##Set(uint8_t val) { }                       \
+    static inline void name##On(void)       { }                         \
+    static inline void name##Off(void)      { }                         \
+    static inline void name##Toggle(void)   { }                         \
+    static inline void name##Init(void)     {  }                        \
 
 #endif // LED_UNIMPLEMENTED     
 

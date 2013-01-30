@@ -31,86 +31,80 @@
 
 #include "msp430_usci.h"
 
+// --------------------------------------------------
+
 SerialCallback_t serialRecvCb[SERIAL_COUNT];
 
 volatile Serial_t serial[SERIAL_COUNT];
 
+// --------------------------------------------------
+
 //
-// Initialization
+// Default setting is: 8 data bits, 1 stop bit, no parity bit, LSB first
 //
-uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
-{
-    //
-    // Default setting is: 8 data bits, 1 stop bit, no parity bit, LSB first
-    //
 #define UART_MODE 0
 
-    (void)conf;
+void msp430UsciSerialInit0(uint32_t speed)
+{
+    pinAsFunction(USCI_A0_RXTX_PORT, USCI_A0_TX_PIN);
+    pinAsFunction(USCI_A0_RXTX_PORT, USCI_A0_RX_PIN);
 
-    // XXX: ugly!
-    if (id == 0) {
-        pinAsFunction(USCI_A0_RXTX_PORT, USCI_A0_TX_PIN);
-        pinAsFunction(USCI_A0_RXTX_PORT, USCI_A0_RX_PIN);
-
-        UCA0CTL1  = UCSWRST;   // Hold the module in reset state
-        UCA0CTL1 |= UCSSEL_2;  // SMCLK clock source
-        if (0 /* speed <= CPU_HZ / 16 */) { // FIXME
-            // Use oversampling mode
-            UCA0BR0  = (CPU_HZ / (speed * 16)) & 0xFF;
-            UCA0BR1  = (CPU_HZ / (speed * 16)) >> 8;
-            UCA0MCTL = UCOS16 | ((CPU_HZ / speed) & 0xF) << 4;
-        }
-        else {        // Use normal mode with fractional clock divider
-            UCA0BR0  = (CPU_HZ / speed) & 0xFF;
-            UCA0BR1  = (CPU_HZ / speed) >> 8;
-            UCA0MCTL = ((CPU_HZ * 8 / speed) & 0x7) << 1;
-        }
-        UCA0CTL0 = UART_MODE;
-        UC0IE |= UCA0RXIE;     // Enable receive interrupt
-        UCA0CTL1 &= ~UCSWRST;  // Release hold
+    UCA0CTL1  = UCSWRST;   // Hold the module in reset state
+    UCA0CTL1 |= UCSSEL_2;  // SMCLK clock source
+    if (0 /* speed <= CPU_HZ / 16 */) { // FIXME
+        // Use oversampling mode
+        UCA0BR0  = (CPU_HZ / (speed * 16)) & 0xFF;
+        UCA0BR1  = (CPU_HZ / (speed * 16)) >> 8;
+        UCA0MCTL = UCOS16 | ((CPU_HZ / speed) & 0xF) << 4;
     }
-    else {
-#ifdef UCA1CTL1_
-        pinAsFunction(USCI_A1_RXTX_PORT, USCI_A1_TX_PIN);
-        pinAsFunction(USCI_A1_RXTX_PORT, USCI_A1_RX_PIN);
-
-        UCA1CTL1  = UCSWRST;   // Hold the module in reset state
-        UCA1CTL1 |= UCSSEL_2;  // SMCLK clock source
-        if (0 /* speed <= CPU_HZ / 16 */) { // FIXME
-            // Use oversampling mode
-            UCA1BR0  = (CPU_HZ / (speed * 16)) & 0xFF;
-            UCA1BR1  = (CPU_HZ / (speed * 16)) >> 8;
-            UCA1MCTL = UCOS16 | ((CPU_HZ / speed) & 0xF) << 4;
-        }
-        else {
-            // Use normal mode with fractional clock divider
-            UCA1BR0  = (CPU_HZ / speed) & 0xFF;
-            UCA1BR1  = (CPU_HZ / speed) >> 8;
-            UCA1MCTL = ((CPU_HZ * 8 / speed) & 0x7) << 1;
-        }
-        UCA1CTL0 = UART_MODE;
-        UC1IE |= UCA1RXIE;     // Enable receive interrupt
-        UCA1CTL1 &= ~UCSWRST;  // Release hold
-#endif
+    else {        // Use normal mode with fractional clock divider
+        UCA0BR0  = (CPU_HZ / speed) & 0xFF;
+        UCA0BR1  = (CPU_HZ / speed) >> 8;
+        UCA0MCTL = ((CPU_HZ * 8 / speed) & 0x7) << 1;
     }
-
-    return 0;
+    UCA0CTL0 = UART_MODE;
+    UC0IE |= UCA0RXIE;     // Enable receive interrupt
+    UCA0CTL1 &= ~UCSWRST;  // Release hold
 }
 
+// For serial 1 on plaftforms where one is present
+#if SERIAL_COUNT > 1
+void msp430UsciSerialInit1(uint32_t speed)
+{
+    pinAsFunction(USCI_A1_RXTX_PORT, USCI_A1_TX_PIN);
+    pinAsFunction(USCI_A1_RXTX_PORT, USCI_A1_RX_PIN);
+
+    UCA1CTL1  = UCSWRST;   // Hold the module in reset state
+    UCA1CTL1 |= UCSSEL_2;  // SMCLK clock source
+    if (0 /* speed <= CPU_HZ / 16 */) { // FIXME
+        // Use oversampling mode
+        UCA1BR0  = (CPU_HZ / (speed * 16)) & 0xFF;
+        UCA1BR1  = (CPU_HZ / (speed * 16)) >> 8;
+        UCA1MCTL = UCOS16 | ((CPU_HZ / speed) & 0xF) << 4;
+    }
+    else {
+        // Use normal mode with fractional clock divider
+        UCA1BR0  = (CPU_HZ / speed) & 0xFF;
+        UCA1BR1  = (CPU_HZ / speed) >> 8;
+        UCA1MCTL = ((CPU_HZ * 8 / speed) & 0x7) << 1;
+    }
+    UCA1CTL0 = UART_MODE;
+    UC1IE |= UCA1RXIE;     // Enable receive interrupt
+    UCA1CTL1 &= ~UCSWRST;  // Release hold
+}
+#endif // SERIAL_COUNT > 1
 
 //
-// Send/receive functions
+// Send a byte to serial port
 //
-
 void serialSendByte(uint8_t id, uint8_t data)
 {
     if (id == 0) {
         while (!(UC0IFG & UCA0TXIFG));
         // Send data
         UCA0TXBUF = data;
-    }
-    else {
-#ifdef UCA1CTL1_
+    } else {
+#if SERIAL_COUNT > 1
         while (!(UC1IFG & UCA1TXIFG));
         // Send data
         UCA1TXBUF = data;
@@ -119,7 +113,6 @@ void serialSendByte(uint8_t id, uint8_t data)
 }
 
 // UART mode receive handler
-
 ISR(USCIAB0RX, USCI0InterruptHandler)
 {
     bool error = UCA0STAT & UCRXERR;
@@ -135,8 +128,7 @@ ISR(USCIAB0RX, USCI0InterruptHandler)
     }
 }
 
-#ifdef UCA1CTL1_
-
+#if SERIAL_COUNT > 1
 ISR(USCIAB1RX, USCI1InterruptHandler)
 {
     //
@@ -163,5 +155,4 @@ ISR(USCIAB1RX, USCI1InterruptHandler)
         serialRecvCb[1](data);
     }
 }
-
-#endif // UCA1CTL1_
+#endif // SERIAL_COUNT > 1

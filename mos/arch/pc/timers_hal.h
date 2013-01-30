@@ -42,7 +42,6 @@
 #define SLEEP_TIMER_EXPIRED() (1)
 #define SLEEP_TIMER_READ() 0
 
-#define PLATFORM_CAN_SLEEP() (1)
 #define ENTER_SLEEP_MODE()
 #define EXIT_SLEEP_MODE()
 
