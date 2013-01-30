@@ -40,7 +40,7 @@ motes = MoteCollection()
 
 htmlDirectory = "html"
 
-sealBlocklyPath = "../../.."
+sealBlocklyPath = "html"
 
 # TODO: this variable should set for each user
 hasWriteAccess = True
@@ -556,7 +556,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        path = os.path.join(sealBlocklyPath, "seal-blockly/blockly/demos/seal/index.html")
+        path = os.path.join(sealBlocklyPath, "seal-blockly/index.html")
         with open(path) as f:
             self.writeChunk(f.read())
         self.writeFinalChunk()
