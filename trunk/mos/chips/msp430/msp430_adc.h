@@ -135,6 +135,9 @@
 
 #define hplAdcIsOn()  (ADC12CTL0 & ADC12ON)
 
+// we always use ACLK
+#define hplAdcUsesSMCLK()  false
+
 #define ADC_INT_HEADER() interrupt (ADC_VECTOR) adcInt()
 
 // why not use MEM2 as buffer area?

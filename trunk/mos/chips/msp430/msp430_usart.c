@@ -49,207 +49,164 @@ SerialCallback_t serialRecvCb[SERIAL_COUNT];
 
 volatile Serial_t serial[SERIAL_COUNT];
 
-#define NOT_IMPLEMENTED -ENOSYS
-
 //===========================================================
 // Procedures
 //===========================================================
 
-//-----------------------------------------------------------
-//-----------------------------------------------------------
-
-// pointers to usartx registers:
-static volatile uint8_t * const UxCTL[SERIAL_COUNT] = { &(U0CTL), &(U1CTL) };
-static volatile uint8_t * const UxTCTL[SERIAL_COUNT] = { &(U0TCTL), &(U1TCTL) };
-static volatile uint8_t * const UxMCTL[SERIAL_COUNT] = { &(U0MCTL), &(U1MCTL) };
-static volatile uint8_t * const UxBR0[SERIAL_COUNT] = { &(U0BR0), &(U1BR0) };
-static volatile uint8_t * const UxBR1[SERIAL_COUNT] = { &(U0BR1), &(U1BR1) };
-
-static inline void serialInitPins(uint8_t id) {
-    // Setting port directions & selections for RX/TX
-    // cannot use params in macros
-    if (id == 0) {
-        // serial0
-        pinAsOutput(UTXD0_PORT, UTXD0_PIN);
-        pinAsInput(URXD0_PORT, URXD0_PIN);
-        pinClear(UTXD0_PORT, UTXD0_PIN);
-        pinAsFunction(UTXD0_PORT, UTXD0_PIN);
-        pinAsFunction(URXD0_PORT, URXD0_PIN);
-    } else if (id == 1) {
-        // serial 1
-        pinAsOutput(UTXD1_PORT, UTXD1_PIN);
-        pinAsInput(URXD1_PORT, URXD1_PIN);
-        pinClear(UTXD1_PORT, UTXD1_PIN);
-        pinAsFunction(UTXD1_PORT, UTXD1_PIN);
-        pinAsFunction(URXD1_PORT, URXD1_PIN);
-    }
+// Setting port directions & selections for RX/TX
+static void serialInitPins0(void) {
+    // serial0
+    pinAsOutput(UTXD0_PORT, UTXD0_PIN);
+    pinAsInput(URXD0_PORT, URXD0_PIN);
+    pinClear(UTXD0_PORT, UTXD0_PIN);
+    pinAsFunction(UTXD0_PORT, UTXD0_PIN);
+    pinAsFunction(URXD0_PORT, URXD0_PIN);
 }
 
-static inline void serialInitSpeed(uint8_t id, uint32_t speed) {
-    uint8_t clock;
-    uint8_t frequency;
-    uint8_t correction;
+static void serialInitPins1(void) {
+    // serial 1
+    pinAsOutput(UTXD1_PORT, UTXD1_PIN);
+    pinAsInput(URXD1_PORT, URXD1_PIN);
+    pinClear(UTXD1_PORT, UTXD1_PIN);
+    pinAsFunction(UTXD1_PORT, UTXD1_PIN);
+    pinAsFunction(URXD1_PORT, URXD1_PIN);
+}
 
+static void serialInitSpeed(uint32_t speed,
+                            volatile uint8_t *restrict clock,
+                            volatile uint8_t *restrict frequency,
+                            volatile uint8_t *restrict correction) {
+    
     // The values were calculated using baudrate calculator:
     // http://mspgcc.sourceforge.net/baudrate.html
     // basically: BR0 ~= CLOCK_FREQUENCY / BAUDRATE, and MCTL is correction value
-    switch(speed) {
+    switch (speed) {
 
     // Added by Girts 2012-05-18 (User's guide page 265)
     case 2400:
-        clock = SSEL_ACLK; // use ACLK
-        frequency = 0xd;
-        correction = 0x6b;
+        *clock |= SSEL_ACLK; // use ACLK
+        *frequency = 0xd;
+        *correction = 0x6b;
         break; 
 
     case 4800:
-        clock = SSEL_ACLK; // use ACLK
-        frequency = 0x6;
-        correction = 0x77;
+        *clock |= SSEL_ACLK; // use ACLK
+        *frequency = 0x6;
+        *correction = 0x77;
         break;
 
     default:
         // TODO: Tell somehow, that no valid speed is selected/found,
         // but use 9600 for now
     case 9600:
-        clock = SSEL_ACLK; // use ACLK, assuming 32khz
+        *clock |= SSEL_ACLK; // use ACLK, assuming 32khz
 #if ACLK_SPEED == 32768
         // assume 32'768 Hz crystal
-        frequency = 0x3;
-        correction = 0x29;
+        *frequency = 0x3;
+        *correction = 0x29;
 #else
         // assume 32'000 Hz crystal
-        frequency = 0x3;
-        correction = 0x4C;
+        *frequency = 0x3;
+        *correction = 0x4C;
 #endif
         break;
 
     case 38400:
-        clock = SSEL_SMCLK;    // use SMCLK
+        *clock |= SSEL_SMCLK;    // use SMCLK
         switch (CPU_MHZ) {
         case 1:
-            frequency = 0x1B;
-            correction = 0x94;
+            *frequency = 0x1B;
+            *correction = 0x94;
             break;
         case 2:
-            frequency = 0x36;
-            correction = 0xB5;
+            *frequency = 0x36;
+            *correction = 0xB5;
             break;
         case 4:
         default:
-            frequency = 0x6D;
-            correction = 0x44;
+            *frequency = 0x6D;
+            *correction = 0x44;
             break;
         }
         break;
     case 115200:
-        clock = SSEL_SMCLK;    // use SMCLK
+        *clock |= SSEL_SMCLK;    // use SMCLK
         switch (CPU_MHZ) {
         case 1:
-            frequency = 0x09;
-            correction = 0x10;
+            *frequency = 0x09;
+            *correction = 0x10;
             break;
         case 2:
-            frequency = 0x12;
-            correction = 0x64;
+            *frequency = 0x12;
+            *correction = 0x64;
             break;
         case 4:
         default:
-            frequency = 0x24;
-            correction = 0x29;
+            *frequency = 0x24;
+            *correction = 0x29;
             break;
         }
         break;
     }
-
-    *UxTCTL[id] |= clock;
-    *UxBR0[id] = frequency;
-    *UxBR1[id] = 0x00;
-    *UxMCTL[id] = correction;
 }
 
-// Init serial1
-uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
+// Init serial
+void  msp430UsartSerialInit0(uint32_t speed)
 {
-    // serialx not supported, x >= SERIAL_COUNT
-    if (id >= SERIAL_COUNT) return -ENOSYS;
-
-    serialInitPins(id);
+    serialInitPins0();
 
     // Set SWRST - Software reset must be set when configuring
-    *UxCTL[id] = SWRST;
+    U0CTL = SWRST;
 
     //Initialize all serial registers
     //  UxCTL, serial Control Register
-    *UxCTL[id] |= CHAR;  // 8-bit char, UART-mode
+    U0CTL |= CHAR;  // 8-bit char, UART-mode
 
     //  UxTCTL, serial Transmit Control Register
     //  SSELx Bits Source select. These bits select the BRCLK source clock.
     //  Clear all bits for initial setup
-    *UxTCTL[id] &= ~(SSEL_0 | SSEL_1 | SSEL_2 | SSEL_3);
+    U0TCTL &= ~(SSEL_0 | SSEL_1 | SSEL_2 | SSEL_3);
 
-    serialInitSpeed(id, speed);
+    serialInitSpeed(speed, &(U0TCTL), &(U0BR0), &(U0MCTL));
+    U0BR1 = 0x00; // zero on all supported speeds
 
     // Enable serial module via the MEx SFRs (URXEx and/or UTXEx)
     // and disable interrupts
-    if (id == 0) {
-        IE1 &= ~(UTXIE0 | URXIE0);
-        U0ME &= ~USPIE0;
-        U0ME |= UTXE0 | URXE0;
-    } else {
-        IE2 &= ~(UTXIE1 | URXIE1);
-        U1ME &= ~USPIE1;
-        U1ME |= UTXE1 | URXE1;
-    }
+    IE1 &= ~(UTXIE0 | URXIE0);
+    U0ME &= ~USPIE0;
+    U0ME |= UTXE0 | URXE0;
 
     //Clear SWRST via software - Release software reset
-    *UxCTL[id] &= ~(SWRST);
-
-    return 0;
+    U0CTL &= ~(SWRST);
 }
 
+void msp430UsartSerialInit1(uint32_t speed)
+{
+    serialInitPins1();
 
-//-----------------------------------------------------------
-//-----------------------------------------------------------
+    // Set SWRST - Software reset must be set when configuring
+    U1CTL = SWRST;
 
-uint_t msp430SerialInitSPI(uint8_t id, uint_t spiBusMode) {
-    // serialx not supported, x >= SERIAL_COUNT
-    if (id >= SERIAL_COUNT) return -ENOSYS;
+    //Initialize all serial registers
+    //  UxCTL, serial Control Register
+    U1CTL |= CHAR;  // 8-bit char, UART-mode
 
-    // TODO - implement slave mode
+    //  UxTCTL, serial Transmit Control Register
+    //  SSELx Bits Source select. These bits select the BRCLK source clock.
+    //  Clear all bits for initial setup
+    U1TCTL &= ~(SSEL_0 | SSEL_1 | SSEL_2 | SSEL_3);
 
-    *UxCTL[id] = SWRST; // reset must be hold while configuring
-    *UxCTL[id] |= CHAR | SYNC | MST; /* 8-bit transfer, SPI mode, master */
-    // CKPH = 1 actually corresponds to CPHA = 0
-    // (MSP430 User's guide, Figure 14-9)
-    *UxTCTL[id] = CKPH | SSEL1 | STC; /* Data on Rising Edge, SMCLK, 3-wire. */
+    serialInitSpeed(speed, &(U1TCTL), &(U1BR0), &(U1MCTL));
+    U1BR1 = 0x00; // zero on all supported speeds
 
-    // SPI CLK = SMCLK / 2
-    *UxBR0[id]  = 0x02;  /* SPICLK set baud. */
-    *UxBR1[id]  = 0;     /* Dont need baud rate control register 2 - clear it */
-    *UxMCTL[id] = 0;     /* Dont need modulation control. */
+    // Enable serial module via the MEx SFRs (URXEx and/or UTXEx)
+    // and disable interrupts
+    IE2 &= ~(UTXIE1 | URXIE1);
+    U1ME &= ~USPIE1;
+    U1ME |= UTXE1 | URXE1;
 
-    /* Select Peripheral functionality */
-    pinAsFunction(HW_SCK_PORT, HW_SCK_PIN);
-    pinAsFunction(HW_MOSI_PORT, HW_MOSI_PIN);
-    pinAsFunction(HW_MISO_PORT, HW_MISO_PIN);
-
-    /* Configure as outputs(SIMO,CLK). */
-    pinAsOutput(HW_SCK_PORT, HW_SCK_PIN);
-    pinAsOutput(HW_MOSI_PORT, HW_MOSI_PIN);
-    pinAsInput(HW_MISO_PORT, HW_MISO_PIN);
-
-    /* Enable SPI module & UART module (DO NOT REMOVE!) */
-    if (id == 0) {
-        IE1 &= ~(UTXIE0 | URXIE0);      // interrupt disabled
-        U0ME |= USPIE0 | UTXE0 | URXE0;
-    } else {
-        IE2 &= ~(UTXIE1 | URXIE1);      // interrupt disabled
-        U1ME |= USPIE1 | UTXE1 | URXE1;
-    }
-    *UxCTL[id] &= ~SWRST;                  /* Remove RESET flag */
-
-    return 0;
+    //Clear SWRST via software - Release software reset
+    U1CTL &= ~(SWRST);
 }
 
 
@@ -257,7 +214,7 @@ uint_t msp430SerialInitSPI(uint8_t id, uint_t spiBusMode) {
 //-----------------------------------------------------------
 
 uint_t msp430SerialInitI2C(uint8_t id) {
-    // // I2C available on serial0 only
+    // I2C available on USART0 only
     if (id != 0) return -ENOSYS;
 
     U0CTL = SWRST; // reset must be hold while configuring
@@ -301,6 +258,7 @@ ISR(UART0RX, UART0InterruptHandler)
 
     if (serialRecvCb[0]) serialRecvCb[0](x);
 
+    // in case radio chip uses UART0 and threads are used (e.g. on SM3)...
 #if RADIO_ON_UART0 && USE_THREADS
     // wake up the kernel thread in case radio packet is received
     if (processFlags.value) {

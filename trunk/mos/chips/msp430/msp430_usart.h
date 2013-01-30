@@ -26,8 +26,6 @@
 
 #include "msp430_usart_spi.h"
 
-#ifndef USE_SOFT_SERIAL
-
 //===========================================================
 // Data types and constants
 //===========================================================
@@ -39,17 +37,7 @@
 #define URXD0_PORT 3
 #define UTXD1_PORT 3
 #define URXD1_PORT 3
-#define HW_SCK_PORT   3
-#define HW_SCL_PORT   3
-#define HW_SDA_PORT   3
-#define HW_MOSI_PORT  3
-#define HW_MISO_PORT  3
 
-#define HW_MOSI_PIN   1
-#define HW_SDA_PIN    1
-#define HW_MISO_PIN   2
-#define HW_SCK_PIN    3
-#define HW_SCL_PIN    3
 #define UTXD0_PIN  4
 #define URXD0_PIN  5
 #define UTXD1_PIN  6
@@ -120,10 +108,27 @@ static inline void serialDisableRX(uint8_t id) {
     }
 }
 
+static inline bool serialUsesSMCLK(void ) {
+    if ((U0ME & (URXE0 | UTXE0)) && (U0TCTL & SSEL_SMCLK)) return true;
+    if ((U1ME & (URXE1 | UTXE1)) && (U1TCTL & SSEL_SMCLK)) return true;
+    return false;
+}
+
 
 // Not on all platforms SPI and I2C is part of USART
 uint_t msp430SerialInitI2C(uint8_t id);
 
-#endif
+//
+// Initialize the serial port
+//
+static inline uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf) {
+    extern void msp430UsartSerialInit0(uint32_t speed);
+    extern void msp430UsartSerialInit1(uint32_t speed);
+
+    if (id == 0) msp430UsartSerialInit0(speed);
+    else msp430UsartSerialInit1(speed);
+    return 0;
+}
+
 
 #endif

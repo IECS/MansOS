@@ -28,6 +28,7 @@
 #include <lib/energy.h>
 #include "sleep_internal.h"
 #include <print.h>
+#include <leds.h>
 
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 
@@ -40,7 +41,7 @@ volatile uint16_t timeWentToSleep;
 volatile uint16_t millisecondsInSleepMode;
 
 //
-// sleep timer interrupt for the case when threads are not used
+// sleep timer interrupt handler
 //
 SLEEP_TIMER_INTERRUPT()
 {

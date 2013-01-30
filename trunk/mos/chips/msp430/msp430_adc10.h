@@ -89,6 +89,11 @@ static inline bool hplAdcIsOn(void)
     return ADC10CTL0 & ADC10ON;
 }
 
+static inline bool hplAdcUsesSMCLK(void)
+{
+    return false;
+}
+
 // Get converted value
 static inline uint16_t hplAdcGetVal(void)
 {

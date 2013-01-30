@@ -21,21 +21,26 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// msp430 clocks
-//
-
 #ifndef _MSP430_CLOCK_H_
 #define _MSP430_CLOCK_H_
 
+#include <stdtypes.h>
+
+// The value returned depends on the system's runtime configuration
+// LPM3 is used on MSP430 by default, unles SMCLK is needed by a some component
+#define SLEEP_MODE_BITS() \
+    ((PWM_USES_SMCLK() || SERIAL_USES_SMCLK() || ADC_USES_SMCLK())  \
+    ? LPM1_bits \
+    : LPM3_bits)
+
+#define PWM_USES_SMCLK()    false  // PWM is not implemented yet
+#define SERIAL_USES_SMCLK() serialUsesSMCLK()
+#define ADC_USES_SMCLK()    hplAdcUsesSMCLK()
+
 // set low power mode bits in the SR to sleep, and make sure interrupts are enabled as well
-#define ENTER_SLEEP_MODE() _BIS_SR(((LPM3_bits) | GIE))
+#define ENTER_SLEEP_MODE() _BIS_SR((SLEEP_MODE_BITS() | GIE))
 // Warning: this commands works *only* in interrupt handlers!
 #define EXIT_SLEEP_MODE() LPM3_EXIT
-
-#define PLATFORM_CAN_SLEEP() (1)
-// TODO: return 0, when platform cannot go into sleep mode (for example,
-//     UART/SPI transmission is in progress
 
 //===========================================================
 // Procedures

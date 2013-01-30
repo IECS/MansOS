@@ -26,7 +26,7 @@
 
 /// \file
 /// Platform independent defines and constants.
-/// Also includes platform dependent defines.
+/// Also includes platform-dependent defines.
 ///
 
 #include "stdtypes.h"
@@ -47,15 +47,27 @@
 #error Unsupported compiler
 #endif
 
-//! Compile time assert. Useful for type size checking and similar checks
-#define COMPILE_TIME_ASSERT(e, name)                 \
-    struct CTA_##name { char name[(e) - 1]; }
+// -----------------------------------------------------
 
+//! Enable interrupts (architecture-specific macro)
+extern inline void ENABLE_INTS(void);
 
-//
-// Build a single uint16_t from 2 bytes
+//! Disable interrupts (architecture-specific macro)
+extern inline void DISABLE_INTS(void);
+
+//! Start atomic (no interrupts) code section
+/// @param handle    used to store the current interrupt state
+extern inline void ATOMIC_START(Handle_t handle);
+
+//! End atomic (no interrupts) code section
+/// @param handle    value of the previous interrupt state to restores
+extern inline void ATOMIC_END(Handle_t handle);
+
+// -----------------------------------------------------
+
+//! Build a single uint16_t from 2 bytes
 #define MAKE_U16(a, b)         ((uint16_t) (((a) << 8) | (b)))
-// Build a single uint32_t from 4 bytes. Handy for creating IP addresses
+//! Build a single uint32_t from 4 bytes. Handy for creating IP addresses
 #define MAKE_U32(a, b, c, d)   (((uint32_t) (a) << 24) | ((uint32_t) (b) << 16ul) | ((c) << 8) | (d))
 
 //! MIN of two values
@@ -64,13 +76,18 @@
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 
 //! Determine the number of parameters passed to a macro 
-#define COUNT_PARMS2(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _, ...) _
 #define COUNT_PARMS(...) \
     COUNT_PARMS2(__VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+#define COUNT_PARMS2(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _, ...) _
 
 //! Determine the length of an array at compile-time
 #define ARRAYLEN(a) (sizeof(a) / sizeof(*(a)))
 
+//! Compile time assert. Useful for type size checking and similar checks
+#define COMPILE_TIME_ASSERT(e, name)                 \
+    struct CTA_##name { char name[(e) - 1]; }
+
+// -----------------------------------------------------
 
 //! Is 'a' is after 'b'? Use for comparing time values. Handles overflow correctly.
 #define timeAfter16(a, b) ((int16_t) ((b) - (a)) < 0)
@@ -93,7 +110,7 @@ typedef uint32_t ticks_t;
 #define timeAfter(a, b) timeAfter32(a, b)
 #endif // USE_LONG_LIFETIME
 
-
+// -----------------------------------------------------
 // These alignment ops work for powers of 2 only
 
 //! Check if 16-bit addr is aligned to align, which must be a power of 2
@@ -112,6 +129,7 @@ typedef uint32_t ticks_t;
 //! Get the Least Significant Byte of a 2-byte word
 #define LSB(a) ((a & 0xFF))
 
+// -----------------------------------------------------
 
 //! Serial port default baudrate
 #ifndef SERIAL_BAUDRATE

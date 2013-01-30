@@ -29,14 +29,7 @@
 #include <digital.h>
 #include "msp430_usci.h"
 
-
-//
-// Initialization
-//
-
-int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
-{
-    // SPI mode: master, MSB first, 8-bit, 3-pin
+// SPI mode: master, MSB first, 8-bit, 3-pin
 #define SPI_MODE  (UCCKPH | UCMSB | UCMST | UCMODE_0 | UCSYNC)
 #define SPI_SPEED (CPU_HZ / 2)
 //#define SPI_SPEED 100000ul
@@ -47,6 +40,7 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
     pinAsFunction(USCI_##letterid##_CLK_PORT, USCI_##letterid##_CLK_PIN);   \
     pinAsOutput(USCI_##letterid##_RXTX_PORT, USCI_##letterid##_SIMO_PIN);   \
     pinAsOutput(USCI_##letterid##_CLK_PORT, USCI_##letterid##_CLK_PIN)
+
 #define SETUP_USCI(id, letterid)                                                     \
     UC##letterid##CTL1 = UCSWRST;             /* Hold the module in reset state */   \
     UC##letterid##CTL1 |= UCSSEL_2;           /* SMCLK clock source */               \
@@ -56,27 +50,36 @@ int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
     UC##id##IE &= ~UC##letterid##RXIE;        /* Disable receive interrupt */        \
     UC##letterid##CTL1 &= ~UCSWRST            /* Release hold */
 
-    if (busId == 0) {
-        SETUP_SPI_PINS(A0);
-        SETUP_USCI(0, A0);
-    }
-    else if (busId == 1) {
-        SETUP_SPI_PINS(B0);
-        SETUP_USCI(0, B0);
-    }
-#ifdef UCA1CTL1_
-    else if (busId == 2) {
-        SETUP_SPI_PINS(A1);
-        SETUP_USCI(1, A1);
-    }
-    else if (busId == 3) {
-        SETUP_SPI_PINS(B1);
-        SETUP_USCI(1, B1);
-    }
-#endif
+//
+// Initialization
+//
 
-    return 0;
+void msp430UsciSPIInit0(void)
+{
+    SETUP_SPI_PINS(A0);
+    SETUP_USCI(0, A0);
 }
+
+void msp430UsciSPIInit1(void)
+{
+    SETUP_SPI_PINS(B0);
+    SETUP_USCI(0, B0);
+}
+
+#if SERIAL_COUNT > 1
+void msp430UsciSPIInit2(void)
+{
+    SETUP_SPI_PINS(A1);
+    SETUP_USCI(1, A1);
+}
+
+void msp430UsciSPIInit3(void)
+{
+    SETUP_SPI_PINS(B1);
+    SETUP_USCI(1, B1);
+}
+
+#endif // SERIAL_COUNT > 1
 
 // Data transmission
 uint8_t hw_spiExchByte(uint8_t busId, uint8_t b)

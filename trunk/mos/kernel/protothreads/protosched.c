@@ -25,6 +25,7 @@
 #define PSPRINTF(...) do {} while (0)
 #endif
 
+#define PLATFORM_CAN_SLEEP() true  // XXX
 
 static void
 print_processes(struct process * const processes[])
@@ -37,7 +38,6 @@ print_processes(struct process * const processes[])
   }
   PSPRINTF("\n");
 }
-
 
 void startProtoSched() {
     process_init();

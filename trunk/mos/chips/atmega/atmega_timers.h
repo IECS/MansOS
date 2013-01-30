@@ -181,10 +181,6 @@ ACTIVE_TIMER_READ(SLEEP, TCNT1)
 
 // TODO: enable/disable all pull-ups?
 
-#define PLATFORM_CAN_SLEEP() (1)
-// TODO: return 0, when platform cannot go into sleep mode (for example,
-//     UART/SPI transmission is in progress
-
 // no action needed to exit idle/sleep mode
 #define EXIT_SLEEP_MODE()
 

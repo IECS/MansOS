@@ -30,7 +30,17 @@
 // SPI bus configuration for the MSP430 x1xx
 //
 
-uint_t msp430SerialInitSPI(uint8_t id, uint_t spiBusMode);
+#define HW_SCK_PORT   3
+#define HW_SCL_PORT   3
+#define HW_SDA_PORT   3
+#define HW_MOSI_PORT  3
+#define HW_MISO_PORT  3
+
+#define HW_MOSI_PIN   1
+#define HW_SDA_PIN    1
+#define HW_MISO_PIN   2
+#define HW_SCK_PIN    3
+#define HW_SCL_PIN    3
 
 /**
  * Initializes SPI bus in either master or slave mode
@@ -41,7 +51,12 @@ uint_t msp430SerialInitSPI(uint8_t id, uint_t spiBusMode);
  * @return  0       on success, -1 on error
  */
 static inline int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode) {
-    return msp430SerialInitSPI(busId, spiBusMode);
+    extern void msp430SerialInitSPI0(uint_t spiBusMode);
+    extern void msp430SerialInitSPI1(uint_t spiBusMode);
+
+    if (busId == 0) msp430SerialInitSPI0(spiBusMode);
+    else msp430SerialInitSPI1(spiBusMode);
+    return 0;
 }
 
 /**
