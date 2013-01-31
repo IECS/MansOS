@@ -60,3 +60,5 @@ ifeq (yes,$(OPTIMIZE_SIZE_EXTRA))
 	CFLAGS += -fdata-sections -ffunction-sections
 	LDFLAGS += -Wl,--gc-sections
 endif
+
+CFLAGS += -Wno-unused-but-set-variable
