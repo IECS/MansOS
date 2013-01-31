@@ -29,6 +29,9 @@
 #include "msp430_timers.h"
 #include "msp430_int.h"
 
+// This code doesn't work properly without optimization
+#pragma GCC optimize("Os")
+
 //===========================================================
 // Data types and constants
 //===========================================================
