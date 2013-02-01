@@ -53,7 +53,7 @@ $(warning $(W_IGNOREDTARGETS))
 endif
 
 # 'clean' target does not require a platform specified, but all other targets do
-ifeq ("", "$(filter clean cleanall $(PLATFORMS:%=clean%) $(TARGET), $(GOALS))")
+ifeq ("", "$(filter clean cleanall $(PLATFORMS:%=clean%) motelist $(TARGET), $(GOALS))")
   # Target not specified; try to use saved target
   -include $(PROJDIR)/build/Makefile.target
   ifeq ("", "$(TARGET)")
