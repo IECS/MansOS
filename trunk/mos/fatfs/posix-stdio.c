@@ -30,20 +30,6 @@
 #include <errors.h>
 #include <lib/dprint.h>
 
-#ifndef MAX_OPEN_FILES
-#define MAX_OPEN_FILES 2
-#endif
-
-static FILE openFiles[MAX_OPEN_FILES];
-
-void posixStdioInit(void)
-{
-    int i;
-    for (i = 0; i < MAX_OPEN_FILES; ++i) {
-        openFiles[i].fd = -1;
-    }
-}
-
 // flush a file
 int fflush(FILE *fp)
 {
@@ -54,21 +40,14 @@ int fflush(FILE *fp)
 }
 
 // open a file
-FILE *fopen(const char *restrict filename,
-            const char *restrict modes)
+FILE *fopenEx(const char *restrict filename,
+              const char *restrict modes,
+              FILE *restrict result)
 {
 #if USE_FATFS && USE_SDCARD
-    int i;
-    for (i = 0; i < MAX_OPEN_FILES; ++i) {
-        if (openFiles[i].fd == -1) break;
-    }
-    if (i == MAX_OPEN_FILES) {
-        // file limit reached
-        errno = ENFILE;
-        return NULL;
-    }
+    // user must provide his own buffer for the file
+    if (!result || result->isOpened) return NULL;
 
-    FILE *result = &openFiles[i];
     result->flags = 0;
     while (*modes) {
         switch (*modes) {
@@ -126,7 +105,7 @@ FILE *fopen(const char *restrict filename,
         result->fileSize = de->fileSize;
     }
     // PRINTF("file opened, size=%lu\n", result->fileSize);
-    result->fd = 1; // XXX
+    result->isOpened = true;
 
     // TODO: truncate if needed
 
@@ -144,9 +123,9 @@ int fclose(FILE *fp)
     fatFsFileClose(fp);
 #endif
 
-    fp->fd = -1;
+    fp->isOpened = false;
 
-    return -1;
+    return 0;
 }
 
 // read from a file

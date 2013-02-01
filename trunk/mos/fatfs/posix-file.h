@@ -42,8 +42,8 @@
 // File structure. It has a lot of file system-specific information!
 //
 struct FILE_s {
-    // file descriptor, -1 if not opened
-    int8_t fd;
+    // is the file opened?
+    bool isOpened;
     // first cluster of the file
     cluster_t firstCluster;
     // current cluster (on disk)

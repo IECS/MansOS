@@ -33,7 +33,6 @@ PROTOTHR  = $(MOS)/kernel/protothreads
 
 #===== Sources =====
 
-PSOURCES += $(MOS)/hil/mem.c
 PSOURCES += $(MOS)/hil/errors.c
 PSOURCES-$(USE_SPI) += $(MOS)/hil/spi.c
 PSOURCES-$(USE_SERIAL) += $(MOS)/hil/serial.c
@@ -41,6 +40,7 @@ PSOURCES-$(USE_ADC) += $(MOS)/hil/adc.c
 PSOURCES-$(USE_LEDS) += $(MOS)/hil/leds.c
 PSOURCES-$(USE_SOFT_I2C) += $(MOS)/hil/i2c_soft.c
 PSOURCES-$(USE_SOFT_SPI) += $(MOS)/hil/spi_soft.c
+PSOURCES-$(USE_DYNAMIC_MEMORY) += $(MOS)/hil/mem.c
 
 PSOURCES += $(MOS)/kernel/kernelmain.c
 PSOURCES-$(USE_ALARMS) += $(MOS)/kernel/alarms.c

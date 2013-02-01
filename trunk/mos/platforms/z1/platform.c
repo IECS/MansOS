@@ -25,7 +25,6 @@
 //      Platform code
 //----------------------------------------------------------
 #include "platform.h"
-#include <serial_number.h>
 #include "user_button.h"
 
 //----------------------------------------------------------

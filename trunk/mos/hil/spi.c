@@ -31,51 +31,6 @@
 #include <spi.h>
 #include <digital.h>
 
-#ifdef USE_SOFT_SPI
-#include <hil/spi_soft.h>
-
-/**
- * Initializes SPI bus in either master or slave mode
- * Does not change any Slave-Select pins!
- * Calls sw_spiInit or hw_spiBusInit (depending on busId), which are
- * defined in HPL!
- *
- * @param   busId   SPI bus ID
- * @param   mode    SPI bus mode: either maste ror slave
- * @return  0       on success, -1 on error
- */
-int8_t spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode) {
-    if (busId != SPI_BUS_SW) {
-        return hw_spiBusInit(busId, spiBusMode);
-    } else {
-        sw_spiInit(spiBusMode);
-        return 0;
-    }
-}
-
-/**
- * Exchange byte with a slave: write a byte to SPI and returns response,
- * received from the slave in full-duplex mode
- * Does not change any Slave-Select pin!
- *
- * Calls sw_spiExchByte or hw_spiExchByte (depending on busId), which are
- * defined in HPL!
- *
- * @param   busId   SPI bus ID
- * @param   b       byte to transmit
- * @return          byte received from the slave
- */
-uint8_t spiExchByte(uint8_t busId, uint8_t b) {
-    uint8_t r;
-    if (busId != SPI_BUS_SW) {
-        r =  hw_spiExchByte(busId, b);
-    } else {
-        r = sw_spiExchByte(b);
-    }
-    return r;
-}
-#endif // USE_SOFT SPI
-
 /*
  * Writes a string to SPI
  * @param   busId     SPI bus ID
@@ -101,26 +56,6 @@ void spiRead(uint8_t busId, void *buf_, uint16_t len) {
     uint8_t *end = buf + len;
     while (buf < end) *buf++ = spiReadByte(busId);
 }
-
-/**
- * Exchange a 16-bit word with a slave: write 2 bytes to SPI and return response,
- * received from the slave in full-duplex mode
- * Does not change any Slave-Select pin!
- *
- * Calls 2x spiExchByte
- *
- * @param   busId   SPI bus ID
- * @param   w       word to transmit
- * @return          word received from the slave
- */
-uint16_t spiExchWord(uint8_t busId, uint16_t w) {
-    uint16_t rxWord;
-    rxWord = spiExchByte(busId, w >> 8);
-    rxWord <<= 8;
-    rxWord |= spiExchByte(busId, w & 0xff);
-    return rxWord;
-}
-
 
 /*
  * Reads a message, discards it (without storing anywhere)

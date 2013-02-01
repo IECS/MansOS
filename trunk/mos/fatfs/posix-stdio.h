@@ -36,9 +36,12 @@
 
 #include "posix-file.h"
 
-//! Open file
-FILE *fopen(const char *restrict filename,
-            const char *restrict modes);
+/// Open a file, using user-provided storage-space for the FILE structure
+///
+/// We do not provide fopen() because it requires pre-allocated FILE structure array.
+FILE *fopenEx(const char *restrict filename,
+              const char *restrict modes,
+              FILE *restrict result);
 
 //! Close file
 int fclose(FILE *fp);
@@ -124,7 +127,7 @@ int remove(const char *filename);
 
 
 // Initialization routine (internal use only!)
-void posixStdioInit(void);
+static inline void posixStdioInit(void) {}
 
 
 #endif

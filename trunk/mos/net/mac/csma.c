@@ -53,6 +53,8 @@ MacProtocol_t macProtocol = {
 static Alarm_t sendTimer;
 static uint8_t sendTries;
 
+static QueuedPacket_t queuedPackets[MAC_PROTOCOL_QUEUE_SIZE];
+
 // -----------------------------------------------
 
 static void initCsmaMac(RecvFunction recvCb) {
@@ -75,7 +77,7 @@ static int8_t sendCsmaMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
 #if MAC_FORWARDING_DELAY
     if (!IS_LOCAL(mi)) {
         // add random backoff for forwarded packets
-        ret = queueAddPacket(mi, data, length, true, NULL);
+        ret = queueAddPacket(mi, data, length, &queuedPackets[0]);
         if (ret) return ret;
         alarmSchedule(&sendTimer, randomNumberBounded(MAC_PROTOCOL_MAX_INITIAL_BACKOFF));
         // do NOT increase send tries, because we are not trying to send!
@@ -89,7 +91,7 @@ static int8_t sendCsmaMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     }
     PRINTF("*************** channel NOT free\n");
 
-    ret = queueAddPacket(mi, data, length, true, NULL);
+    ret = queueAddPacket(mi, data, length, &queuedPackets[0]);
     if (ret) return ret;
 
     alarmSchedule(&sendTimer, MAC_PROTOCOL_RETRY_TIMEOUT);
@@ -112,9 +114,9 @@ static void sendTimerCb(void *x) {
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
     // XXX: not the best way, need to get address more simply
     MacInfo_t mi;
-    defaultParseHeader(p->buffer.data, p->buffer.length, &mi);
+    defaultParseHeader(p->data, p->dataLength, &mi);
     INC_NETSTAT(NETSTAT_PACKETS_RTX, mi.originalSrc.shortAddr);
-    if (radioSend(p->buffer.data, p->buffer.length) == 0) {
+    if (radioSend(p->data, p->dataLength) == 0) {
         queuePop();
         sendTries = 0;
         return;

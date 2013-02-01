@@ -44,6 +44,8 @@
 static void wmpSendReply(void);
 static uint8_t wmpCrc(void);
 
+static FILE wmpFileBuffer;
+
 // -------------------------------------------------------
 
 struct SerialPacket_s {
@@ -515,7 +517,7 @@ static void processFilenameSet(void)
     }
 
     if (wmpOutputFileName[0]) {
-        outputFile = fopen(wmpOutputFileName, "a");
+        outputFile = fopenEx(wmpOutputFileName, "a", &wmpFileBuffer);
         if (!outputFile) goto error;
     }
 
@@ -551,7 +553,8 @@ static void processFilelistGet(void)
 static void processFileGet(void)
 {
     sp.arguments[sp.argLen] = '\0';
-    FILE *f = fopen((char *) sp.arguments, "r");
+    static FILE tmpBuffer;
+    FILE *f = fopenEx((char *) sp.arguments, "r", &tmpBuffer);
     sp.argLen = 1;
     sp.arguments[0] = WMP_ERROR;
     if (f) {
@@ -717,7 +720,7 @@ void wmpInit(void)
         }
         eepromRead(WMP_EEPROM_FILE_BASE, &wmpOutputFileName, 12);
         if (wmpOutputFileName[0]) {
-            outputFile = fopen(wmpOutputFileName, "a");
+            outputFile = fopenEx(wmpOutputFileName, "a", &wmpFileBuffer);
         }
     } else {
         eepromWrite(WMP_EEPROM_OUTPUT_BASE + WMP_OUTPUT_SERIAL, &wmpSerialOutputEnabled, 1);
