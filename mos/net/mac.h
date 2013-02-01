@@ -199,7 +199,7 @@ bool isLocalAddress(MosAddr *addr);
 
 //! The size of the unsent packet queue
 #ifndef MAC_PROTOCOL_QUEUE_SIZE
-#define MAC_PROTOCOL_QUEUE_SIZE  3
+#define MAC_PROTOCOL_QUEUE_SIZE  1
 #endif
 
 //! The delay (in milliseconds) for MAC-layer packet forwarding

@@ -37,7 +37,7 @@
  * @param path   File path
  * @param buf    User-supplied buffer
  *
- * @return: true on success or false on error.
+ * @return true on success or false on error.
  */
 bool fsStat(const char * restrict path, struct fsStat * restrict buf);
 
@@ -47,7 +47,7 @@ bool fsStat(const char * restrict path, struct fsStat * restrict buf);
  * @param path   File path
  * @param mode   Open mode: FS_READ or FS_APPEND
  *
- * @return: file handle on success or -1 on error.
+ * @return file handle on success or -1 on error.
  */
 int8_t fsOpen(const char *path, fsMode_t mode);
 
@@ -58,7 +58,7 @@ int8_t fsOpen(const char *path, fsMode_t mode);
  * @param buf    User-supplied buffer
  * @param count  Buffer size
  *
- * @return: number of bytes read, 0 on EOF or -1 on error.
+ * @return number of bytes read, 0 on EOF or -1 on error.
  */
 ssize_t fsRead(int8_t fd, void *buf, size_t count);
 
@@ -67,7 +67,7 @@ ssize_t fsRead(int8_t fd, void *buf, size_t count);
  *
  * @param fd     File handle
  *
- * @return: file offset in bytes.
+ * @return file offset in bytes.
  */
 fsOff_t fsTell(int8_t fd);
 
@@ -86,7 +86,7 @@ void fsSeek(int8_t fd, fsOff_t pos);
  * @param buf    User data
  * @param count  Buffer size
  *
- * @return: number of bytes written or -1 on error.
+ * @return number of bytes written or -1 on error.
  */
 ssize_t fsWrite(int8_t fd, const void *buf, size_t count);
 
@@ -95,7 +95,7 @@ ssize_t fsWrite(int8_t fd, const void *buf, size_t count);
  *
  * @param fd     File handle
  *
- * @return: true on success or false on error.
+ * @return true on success or false on error.
  */
 bool fsFlush(int8_t fd);
 
@@ -104,7 +104,7 @@ bool fsFlush(int8_t fd);
  *
  * @param fd     File handle
  *
- * @return: true on success or false on error.
+ * @return true on success or false on error.
  */
 bool fsClose(int8_t fd);
 
@@ -113,7 +113,7 @@ bool fsClose(int8_t fd);
  *
  * @param path   File path
  *
- * @return: true on success or false on error.
+ * @return true on success or false on error.
  */
 bool fsRemove(const char *path);
 
@@ -123,14 +123,14 @@ bool fsRemove(const char *path);
  * @param old    Current file name
  * @param new    New file name
  *
- * @return: true on success or false on error.
+ * @return true on success or false on error.
  */
 bool fsRename(const char *old, const char *new);
 
 /**
  * Query last error.
  *
- * @return: error number.
+ * @return error number.
  */
 fsError_t fsLastError(void);
 

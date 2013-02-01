@@ -34,11 +34,11 @@
 ///
 
 #include <stdtypes.h>
+#include <errors.h>
+#include <hil/spi_hw.h>
 
 //! The constant used to specify software-SPI bus
 #define SPI_BUS_SW 128
-
-#include <hil/spi_hw.h>
 
 ///
 /// Initializes SPI bus in either master or slave mode
@@ -50,11 +50,17 @@
 /// @param   mode    SPI bus mode: either master or slave
 /// @return  0       on success, -1 on error
 ///
+static inline int8_t spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
+{
+    if (busId != SPI_BUS_SW) {
+        return hw_spiBusInit(busId, spiBusMode);
+    }
 #if USE_SOFT_SPI
-int8_t spiBusInit(uint8_t busId, SpiBusMode_t mode);
-#else
-#define spiBusInit(busId, mode) hw_spiBusInit(busId, mode)
+    sw_spiInit(spiBusMode);
+    return 0;
 #endif
+    return -ENOSYS; // not implemented
+}
 
 ///
 /// Enable a SPI device - set SS pin LOW
@@ -80,11 +86,16 @@ int8_t spiBusInit(uint8_t busId, SpiBusMode_t mode);
 /// @param   b       byte to transmit
 /// @return          byte received from the slave
 ///
-#ifdef USE_SOFT_SPI
-uint8_t spiExchByte(uint8_t busId, uint8_t b);
-#else
-#define spiExchByte(busId, b) hw_spiExchByte(busId, b)
+static inline uint8_t spiExchByte(uint8_t busId, uint8_t b)
+{
+    if (busId != SPI_BUS_SW) {
+        return hw_spiExchByte(busId, b);
+    }
+#if USE_SOFT_SPI
+    return sw_spiExchByte(b);
 #endif
+    return -ENOSYS; // not implemented
+}
 
 ///
 /// Exchange a 16-bit word with a slave: write 2 bytes to SPI and return response,
@@ -97,7 +108,13 @@ uint8_t spiExchByte(uint8_t busId, uint8_t b);
 /// @param   w       word to transmit
 /// @return          word received from the slave
 ////
-uint16_t spiExchWord(uint8_t busId, uint16_t w);
+static inline uint16_t spiExchWord(uint8_t busId, uint16_t w) {
+    uint16_t rxWord;
+    rxWord = spiExchByte(busId, w >> 8);
+    rxWord <<= 8;
+    rxWord |= spiExchByte(busId, w & 0xff);
+    return rxWord;
+}
 
 ///
 /// Just a wrapper around spiExchByte()

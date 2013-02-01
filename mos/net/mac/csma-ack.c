@@ -26,14 +26,12 @@
 #include <radio.h>
 #include <errors.h>
 #include <alarms.h>
-#include <lib/byteorder.h>
-#include <lib/buffer.h>
 #include <print.h>
 #include <random.h>
 #include <assert.h>
 #include <net/radio_packet_buffer.h>
-#include <timing.h>
 #include <net/net_stats.h>
+#include <timing.h>
 
 #define TEST_FILTERS 1
 
@@ -43,6 +41,8 @@ static void pollCsmaMac(void);
 static void sendTimerCb(void *);
 static bool ackMacBuildHeader(MacInfo_t *mi, uint8_t **header /* out */,
                               uint16_t *headerLength /* out */);
+
+static QueuedPacket_t queuedPackets[MAC_PROTOCOL_QUEUE_SIZE];
 
 MacProtocol_t macProtocol = {
     .name = MAC_PROTOCOL_CSMA_ACK,
@@ -86,8 +86,8 @@ static int8_t sendCsmaMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     }
     // PRINTF("send a packet with ACK expected\n");
     radioSendHeader(mi->macHeader, mi->macHeaderLen, data, length);
-    QueuedPacket_t *p = NULL;
-    ret = queueAddPacket(mi, data, length, true, &p);
+    QueuedPacket_t *p = &queuedPackets[0];
+    ret = queueAddPacket(mi, data, length, p);
     if (ret) return ret;
 
     //PRINTF("%lu: packet added!\n", getTimeMs());
@@ -132,11 +132,11 @@ static void sendTimerCb(void *x) {
 
         p->sendTries++;
         PRINTF("%lu: ************** retry to send (try %u)\n", now, p->sendTries);
-        radioSend(p->buffer.data, p->buffer.length);
+        radioSend(p->data, p->dataLength);
         INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
         // XXX: not the best way, need to get address more simply
         MacInfo_t mi;
-        defaultParseHeader(p->buffer.data, p->buffer.length, &mi);
+        defaultParseHeader(p->data, p->dataLength, &mi);
         INC_NETSTAT(NETSTAT_PACKETS_RTX, mi.originalSrc.shortAddr);
     }
 
@@ -191,7 +191,7 @@ static void sendAck(MacInfo_t *mi)
 static bool matchPacketBySeqnum(QueuedPacket_t *p, void *userData)
 {
     uint8_t seqnum = (uint8_t) (uint16_t) userData;
-    uint8_t packetSeqnum = getMacHeaderSeqnum(p->buffer.data);
+    uint8_t packetSeqnum = getMacHeaderSeqnum(p->data);
     return seqnum == packetSeqnum;
 }
 
@@ -209,11 +209,8 @@ static void pollCsmaMac(void)
             if (mi.flags & MI_FLAG_IS_ACK) {
                 //PRINTF("got ack to a packet with seqnum %u\n", mi.seqnum);
                 INC_NETSTAT(NETSTAT_PACKETS_ACK_RX, mi.originalSrc.shortAddr);
-                QueuedPacket_t *p = queueRemovePacket(
+                queueRemovePacket(
                         matchPacketBySeqnum, (void *) (uint16_t) mi.seqnum);
-                if (p) {
-                    queueFreePacket(p);
-                }
             }
             else if (macProtocol.recvCb && filterPass(&mi)) {
                 //INC_NETSTAT(NETSTAT_PACKETS_RECV, mi.originalSrc.shortAddr);  // done @dv.c

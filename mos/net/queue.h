@@ -26,39 +26,41 @@
 
 #include "mac.h"
 #include <lib/list.h>
-#include <lib/buffer.h>
 
 typedef struct QueuedPacket_s {
     STAILQ_ENTRY(QueuedPacket_s) chain;
+    bool isUsed;
     uint8_t sendTries; // how many times already tried to send
-    uint32_t ackTime;  // await ack until this time
-    Buffer_t buffer;
+    uint32_t ackTime;  // await ACK until this time
+    uint8_t data[MAC_PROTOCOL_BUFFER_SIZE];
+    uint16_t dataLength;
 } QueuedPacket_t;
-
-void queueInit(void);
-
-// TODO: inline most of these!
-
-//  add new packet to userQueue tail. returns error code. locks mutex.
-int8_t queueAddPacket(MacInfo_t *, const uint8_t *data, uint16_t length,
-        bool replace, QueuedPacket_t **result);
-// frees the userQueue head packet. locks mutex. 
-void queuePop(void);
-// mutex is not locked
-QueuedPacket_t *queueHead(void);
-
-typedef void (*QpacketProcessFn)(QueuedPacket_t *);
-typedef bool (*QpacketMatchFn)(QueuedPacket_t *, void *userData);
-
-// work queue processing. mutex is not locked.
-void queueForEachPacket(QpacketProcessFn);
-QueuedPacket_t *queueGetPacket(QpacketMatchFn, void *userData);
-QueuedPacket_t *queueRemovePacket(QpacketMatchFn, void *userData);
-//void queueRemovePacketByPtr(QueuedPacket_t *);
-
-void queueFreePacket(QueuedPacket_t *);
 
 typedef STAILQ_HEAD(head, QueuedPacket_s) PacketQueue_t;
 extern PacketQueue_t packetQueue;
+
+// ---------------------------------------------
+
+void queueInit(void);
+
+//  add new packet to userQueue tail. returns error code. locks mutex.
+int8_t queueAddPacket(MacInfo_t *, const uint8_t *data, uint16_t length,
+                      QueuedPacket_t *result);
+// frees the userQueue head packet. locks mutex. 
+void queuePop(void);
+// mutex is not locked
+static inline QueuedPacket_t *queueHead(void) {
+    return STAILQ_FIRST(&packetQueue);
+}
+
+// work queue processing. mutex is not locked.
+typedef void (*QpacketProcessFn)(QueuedPacket_t *);
+typedef bool (*QpacketMatchFn)(QueuedPacket_t *, void *userData);
+
+void queueForEachPacket(QpacketProcessFn);
+QueuedPacket_t *queueGetPacket(QpacketMatchFn, void *userData);
+QueuedPacket_t *queueRemovePacket(QpacketMatchFn, void *userData);
+
+void queueFreePacket(QueuedPacket_t *);
 
 #endif

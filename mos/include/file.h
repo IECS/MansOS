@@ -34,8 +34,9 @@
 //! Write to a file
 static inline bool writeToFile(const char *fileName, const void *data, uint16_t length)
 {
+    static FILE buffer;
     bool result = false;
-    FILE *f = fopen(fileName);
+    FILE *f = fopenEx(fileName, "r", &buffer);
     if (f) {
         if (fwrite(data, 1, length, f) == length) {
             result = true;

@@ -83,4 +83,4 @@ uint8_t hw_spiExchByte(uint8_t busId, uint8_t b);
  */
 void hw_spiWaitRX(uint8_t busId);
 
-#endif  // MANSOS_SPI_HW_H
+#endif

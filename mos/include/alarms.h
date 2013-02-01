@@ -52,8 +52,8 @@ typedef struct Alarm_s {
 
 ///
 /// Initialize an alarm timer
-/// @param cb     Callback function called when the alarm fires
-/// @param param  A user-defined parameter passed to the callback function
+/// @param cb     callback function called when the alarm fires
+/// @param param  user-defined parameter passed to the callback function
 ///
 static inline void alarmInit(Alarm_t *alarm, AlarmCallback cb, void *param)
 {
@@ -65,7 +65,7 @@ static inline void alarmInit(Alarm_t *alarm, AlarmCallback cb, void *param)
 
 ///
 /// Schedule an alarm timer
-/// @param milliseconds  The milliseconds after which the timer will fire (relative value)
+/// @param milliseconds    milliseconds after which the timer will fire (relative value)
 ///
 /// If the alarm is already scheduled, the function removes it first.
 ///
@@ -79,7 +79,7 @@ void alarmRemove(Alarm_t *alarm);
 ///
 /// Get the milliseconds (relative value) after which the alarm will fire
 ///
-/// Valid only if the alarm is active (i.e. scheduled)
+/// Valid only when the alarm is active (i.e. scheduled)
 ///
 uint32_t getAlarmTime(Alarm_t *);
 

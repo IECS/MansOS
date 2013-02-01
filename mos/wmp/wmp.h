@@ -47,7 +47,7 @@ enum WmpSensorType_e {
 } PACKED;
 typedef enum WmpSensorType_e WmpSensorType_t;
 
-//! All WMP-confiurable system outputs must be listed here
+//! All WMP-configurable system outputs must be listed here
 enum WmpOutputType_e {
      WMP_OUTPUT_SERIAL = 1,
      WMP_OUTPUT_SDCARD,
