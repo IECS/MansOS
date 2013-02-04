@@ -35,7 +35,7 @@ class SQ100LightSensor(SealSensor):
 USE_ADS1115=y
 CONST_ADS_INT_PORT=2
 CONST_ADS_INT_PIN=0""")
-        self.extraIncludes = SealParameter("#include <hil/light.h>")
+        self.extraIncludes = SealParameter("#include <light.h>")
 
 sq100Light = SQ100LightSensor()
 
