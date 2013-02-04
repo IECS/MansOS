@@ -540,7 +540,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.handleGenericQS(qs)
         # no bodystart: the file has a frameset
-        self.serveHeader("blockly", includeBodyStart = False)
+        #self.serveHeader("blockly", includeBodyStart = False)
+        self.serveHeader("blockly")
         self.serveBody("blockly")
         self.writeFinalChunk()
 
