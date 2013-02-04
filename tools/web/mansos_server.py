@@ -539,19 +539,9 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.sendDefaultHeaders()
         self.end_headers()
         self.handleGenericQS(qs)
-        # no bodystart: the file has a frameset
-        #self.serveHeader("blockly", includeBodyStart = False)
         self.serveHeader("blockly")
         self.serveBody("blockly")
-        self.writeFinalChunk()
-
-    def serveBlocklyHeader(self, qs):
-        self.send_response(200)
-        self.sendDefaultHeaders()
-        self.end_headers()
-        self.serveHeader("blockly-header")
-        self.writeChunk("</html>")
-        self.writeFinalChunk()
+        self.serveFooter()
 
     def serveSealFrame(self, qs):
         self.send_response(200)
