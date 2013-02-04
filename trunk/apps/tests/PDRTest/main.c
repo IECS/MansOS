@@ -55,6 +55,7 @@
 char strBuf[STRBUF_SIZE];
 #if WRITE_TO_FILE
 FILE *outFile;
+FILE outFileBuffer;
 #endif
 
 #define PERCENT (100 / PACKETS_IN_TEST)
@@ -114,7 +115,7 @@ void extFlashPrepare(void)
 void appMain(void)
 {
 #if WRITE_TO_FILE
-    outFile = fopen("data.txt", "a");
+    outFile = fopenEx("data.txt", "a", &outFileBuffer);
 #endif
 
 #if PLATFORM_SM3

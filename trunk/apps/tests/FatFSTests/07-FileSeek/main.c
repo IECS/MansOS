@@ -30,9 +30,10 @@
 
 void appMain(void)
 {
-    FILE *f = fopen("hello.txt", "w");
+    static FILE fileBuffer;
+    FILE *f = fopenEx("hello.txt", "w", &fileBuffer);
     ASSERT(f);
-    ASSERT(f->fd != -1);
+    ASSERT(f->isOpened);
 
     char buffer[DATA_LEN] = "0123456789abcdef";
     char readBuffer[DATA_LEN];
@@ -51,9 +52,9 @@ void appMain(void)
     // close and reopen the file for reading
     fclose(f);
     memset(f, 0, sizeof(*f));
-    f = fopen("hello.txt", "r");
+    f = fopenEx("hello.txt", "r", &fileBuffer);
     ASSERT(f);
-    ASSERT(f->fd != -1);
+    ASSERT(f->isOpened);
 
     fseek(f, 1001 * DATA_LEN, SEEK_SET);
     len = fread(readBuffer, 1, DATA_LEN, f);
@@ -61,7 +62,7 @@ void appMain(void)
     ASSERT(!memcmp(readBuffer, buffer, DATA_LEN));
 
     fclose(f);
-    ASSERT(f->fd == -1);
+    ASSERT(!f->isOpened);
 
     PRINTF("done!\n");
 }

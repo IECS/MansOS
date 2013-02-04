@@ -417,6 +417,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.serveMotes("Graph", qs, False)
 
         if "action" in qs:
+#            if not hasWriteAccess:
+#                
             if qs["action"][0] == "Start":
                 if not motes.anySelected():
                     self.serveError("No motes selected!")
@@ -620,8 +622,6 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.serveListenData(qs)
         elif o.path == "/blockly":
             self.serveBlockly(qs)
-        elif o.path == "/blockly-header":
-            self.serveBlocklyHeader(qs)
         elif o.path == "/seal-frame":
             self.serveSealFrame(qs)
         elif o.path[:13] == "/seal-blockly":

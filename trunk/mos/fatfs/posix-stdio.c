@@ -128,28 +128,6 @@ int fclose(FILE *fp)
     return 0;
 }
 
-// read from a file
-size_t fread(void *restrict ptr, size_t size,
-             size_t n, FILE *restrict fp)
-{
-#if USE_FATFS && USE_SDCARD
-    return fatFsRead(fp, ptr, size * n);
-#else
-    return 0;
-#endif
-}
-
-// write to a file
-size_t fwrite(const void *restrict ptr, size_t size,
-              size_t n, FILE *restrict fp)
-{
-#if USE_FATFS && USE_SDCARD
-    return fatFsWrite(fp, ptr, size * n);
-#else
-    return 0;
-#endif
-}
-
 char *fgets(char *restrict s, int size, FILE *restrict fp)
 {
     uint16_t i;

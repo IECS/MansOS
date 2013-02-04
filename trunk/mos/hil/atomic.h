@@ -40,7 +40,7 @@
     if (h != 0) {                                                     \
         const uint16_t _time_diff = ALARM_TIMER_READ() - _start_time; \
         if (_time_diff > PLATFORM_ALARM_TIMER_PERIOD) {               \
-            jiffies += alarmTimerTicksToMs(                           \
+            jiffies += convertAlarmTimerToMs(                         \
                     _time_diff - PLATFORM_ALARM_TIMER_PERIOD);        \
         }                                                             \
     }                                                                 \

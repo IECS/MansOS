@@ -26,11 +26,12 @@
 
 void appMain(void)
 {
-    FILE *f = fopen("hello.txt", "r");
+    static FILE fileBuffer;
+    FILE *f = fopenEx("hello.txt", "r", &fileBuffer);
     ASSERT(f);
-    ASSERT(f->fd != -1);
+    ASSERT(f->isOpened);
     fclose(f);
-    ASSERT(f->fd == -1);
+    ASSERT(!f->isOpened);
 
     PRINTF("done!\n");
 }
