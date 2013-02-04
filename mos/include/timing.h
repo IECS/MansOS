@@ -93,7 +93,7 @@ static inline uint32_t getTimeSec(void) {
 ///
 /// Note: on msp430 a conversion error is introduced due to rounding!
 ///
-static inline uint16_t alarmTimerTicksToMs(uint16_t ticks)
+static inline uint16_t convertAlarmTimerToMs(uint16_t ticks)
 {
     return ticks * 1000ul / (ACLK_SPEED / JIFFY_CLOCK_DIVIDER);
 }
@@ -103,7 +103,7 @@ static inline uint16_t alarmTimerTicksToMs(uint16_t ticks)
 ///
 /// Note: on msp430 a conversion error is introduced due to rouding!
 ///
-static inline uint16_t msToAlarmTimerTicks(uint16_t ms)
+static inline uint16_t convertMsToAlarmTimer(uint16_t ms)
 {
     return ms * ALARM_CYCLES
         + (uint16_t) ((uint32_t) ms * ALARM_CYCLES_DEC / 1000ul);
@@ -114,7 +114,7 @@ static inline uint16_t msToAlarmTimerTicks(uint16_t ms)
 ///
 /// Note: on msp430 a conversion error is introduced due to rounding!
 ///
-static inline uint16_t sleepTimerTicksToMs(uint16_t ticks)
+static inline uint16_t convertSleepTimerToMs(uint16_t ticks)
 {
     return ticks * 1000ul / (SLEEP_CLOCK_SPEED / SLEEP_CLOCK_DIVIDER);
 }
@@ -124,7 +124,7 @@ static inline uint16_t sleepTimerTicksToMs(uint16_t ticks)
 ///
 /// Note: on msp430 a conversion error is introduced due to rouding!
 ///
-static inline uint16_t msToSleepTimerTicks(uint16_t ms)
+static inline uint16_t convertMsToSleepTimer(uint16_t ms)
 {
     return ms * SLEEP_CYCLES
         + (uint16_t) ((uint32_t) ms * SLEEP_CYCLES_DEC / 1000ul);

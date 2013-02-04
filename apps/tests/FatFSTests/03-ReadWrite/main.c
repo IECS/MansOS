@@ -26,9 +26,10 @@
 
 void appMain(void)
 {
-    FILE *f = fopen("hello.txt", "r+");
+    static FILE fileBuffer;
+    FILE *f = fopenEx("hello.txt", "r+", &fileBuffer);
     ASSERT(f);
-    ASSERT(f->fd != -1);
+    ASSERT(f->isOpened);
 
     char buffer[12] = {0};
     fgets(buffer, sizeof(buffer), f);
@@ -41,7 +42,7 @@ void appMain(void)
     fwrite(buffer, 1, sizeof(buffer) - 1, f);
 
     fclose(f);
-    ASSERT(f->fd == -1);
+    ASSERT(!f->isOpened);
 
     PRINTF("done!\n");
 }

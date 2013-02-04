@@ -35,6 +35,9 @@
 ///
 
 #include "posix-file.h"
+#if USE_FATFS && USE_SDCARD
+#include "fatfs.h"
+#endif
 
 /// Open a file, using user-provided storage-space for the FILE structure
 ///
@@ -46,9 +49,16 @@ FILE *fopenEx(const char *restrict filename,
 //! Close file
 int fclose(FILE *fp);
 
-//! Read from file
-size_t fread(void *restrict ptr, size_t size,
-             size_t n, FILE *restrict fp);
+//! Read from a file
+static inline size_t fread(void *restrict ptr, size_t size,
+                           size_t n, FILE *restrict fp)
+{
+#if USE_FATFS && USE_SDCARD
+    return fatFsRead(fp, ptr, size * n);
+#else
+    return 0;
+#endif
+}
 
 ///
 /// Read a single character from file
@@ -73,9 +83,15 @@ static inline int fgetc(FILE *fp)
 ///
 char *fgets(char *restrict s, int size, FILE *restrict fp);
 
-//! Write to file
-size_t fwrite(const void *restrict ptr, size_t size,
-              size_t n, FILE *restrict fp);
+//! Write to a file
+static inline size_t fwrite(const void *restrict ptr, size_t size,
+                            size_t n, FILE *restrict fp) {
+#if USE_FATFS && USE_SDCARD
+    return fatFsWrite(fp, ptr, size * n);
+#else
+    return 0;
+#endif
+}
 
 //! Put a character to file
 static inline int fputc(int c, FILE *fp)

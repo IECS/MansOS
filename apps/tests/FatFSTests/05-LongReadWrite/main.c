@@ -42,9 +42,10 @@ void appMain(void)
 {
     uint16_t i;
     char buffer[DATA_LEN] = "0123456789abcdef";
-    FILE *f = fopen("hello.txt", "w+");
+    static FILE fileBuffer;
+    FILE *f = fopenEx("hello.txt", "w+", &fileBuffer);
     ASSERT(f);
-    ASSERT(f->fd != -1);
+    ASSERT(f->isOpened);
 
     redLedOn();
 
@@ -54,8 +55,6 @@ void appMain(void)
         ASSERT(len == DATA_LEN);
     }
 
-    fclose(f);
-    ASSERT(f->fd == -1);
     rewind(f);
 
 #if TEST_READ
@@ -66,6 +65,9 @@ void appMain(void)
         ASSERT(!memcmp(readBuffer, buffer, DATA_LEN));
     }
 #endif
+
+    fclose(f);
+    ASSERT(!f->isOpened);
 
     redLedOff();
 

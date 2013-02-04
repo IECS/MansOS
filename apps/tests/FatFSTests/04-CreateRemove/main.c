@@ -28,25 +28,26 @@
 
 void appMain(void)
 {
-    FILE *f = fopen(FILE_NAME, "w");
+    static FILE fileBuffer;
+    FILE *f = fopenEx(FILE_NAME, "w", &fileBuffer);
     ASSERT(f);
-    ASSERT(f->fd != -1);
+    ASSERT(f->isOpened);
     fclose(f);
-    ASSERT(f->fd == -1);
+    ASSERT(!f->isOpened);
 
-    f = fopen(FILE_NAME, "r");
+    f = fopenEx(FILE_NAME, "r", &fileBuffer);
     ASSERT(f);
     fclose(f);
 
-    f = fopen(FILE_NAME, "a");
+    f = fopenEx(FILE_NAME, "a", &fileBuffer);
     fwrite("hello " FILE_NAME, 1, 18, f);
     fclose(f);
 
     remove(FILE_NAME);
-    f = fopen(FILE_NAME, "r");
+    f = fopenEx(FILE_NAME, "r", &fileBuffer);
     ASSERT(!f);
 
-    f = fopen("hello.txt", "w");
+    f = fopenEx("hello.txt", "w", &fileBuffer);
     fwrite("hello world", 1, 11, f);
     fclose(f);
 

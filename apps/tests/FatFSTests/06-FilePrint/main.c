@@ -27,12 +27,13 @@
 #define STRBUF_SIZE 50
 char strBuf[STRBUF_SIZE];
 FILE *outFile;
+FILE fileBuffer;
 
 void appMain(void)
 {
-    outFile = fopen("data.txt", "a");
+    outFile = fopenEx("data.txt", "a", &fileBuffer);
     ASSERT(outFile);
-    ASSERT(outFile->fd != -1);
+    ASSERT(outFile->isOpened);
 
     uint16_t prevTestPacketsRx = 83;
     uint16_t prevTestNumber = 0;
