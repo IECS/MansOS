@@ -46,7 +46,7 @@ extern inline void udelay(uint16_t microseconds);
 extern inline void mdelay(uint16_t miliseconds);
 
 #if defined __GNUC__
-# if !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 6) // < MSPGCC 4.6
+# if !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 5) // < MSPGCC 4.5
 
 ///
 /// Define __delay_cycles() macro as well, to keep compatibility with IAR code
