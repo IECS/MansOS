@@ -24,31 +24,60 @@
 #include "stdmansos.h"
 #include <kernel/stack.h>
 
-void f(int parameter) __attribute__((noinline));
-void g(void) __attribute__((noinline));
-void h(void) __attribute__((noinline));
+void f(int parameter);
+void g(void);
+void h(void);
+
+static int staticVariable;
+
+void onAlarm(void *x) {}
 
 // main function
 void appMain(void)
 {
-    int localVariable = 1;
+    Alarm_t alarm;
+
+    int localVariable;
+    ASSERT(isStackAddress(&localVariable));
     f(localVariable);
+
+    alarmInit(&alarm, onAlarm, NULL);
+    alarmSchedule(&alarm, 1000);
+
+    PRINTF("done!\n");
+
+    for (;;);
 }
 
 void f(int parameter)
 {
     int anotherLocalVariable;
+    PRINTF("f=%p\n", &anotherLocalVariable);
+
     g();
+
+    static int functionStaticVariable;
+    ASSERT(isStackAddress(&parameter));
+    ASSERT(isStackAddress(&anotherLocalVariable));
+
+    ASSERT(!isStackAddress(&staticVariable));
+    ASSERT(!isStackAddress(&functionStaticVariable));
+    ASSERT(!isStackAddress(f));
+    ASSERT(!isStackAddress(appMain));
 }
 
 void g(void)
 {
     int anotherLocalVariable2;
+    PRINTF("g=%p\n", &anotherLocalVariable2);
     h();
+
+// uncomment this to create recursion!
+//    f(1);
 }
 
 void h(void)
 {
     int anotherLocalVariable3;
-    asm("nop");
+    PRINTF("h=%p\n", &anotherLocalVariable3);
 }
