@@ -22,7 +22,7 @@
  */
 
 #include "stdmansos.h"
-#include <kernel/threads/threads.h>
+#include <kernel/stack.h>
 
 Alarm_t alarm;
 

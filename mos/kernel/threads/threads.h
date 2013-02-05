@@ -25,9 +25,7 @@
 #define MANSOS_THREADS_H
 
 #include <defines.h>
-#include "timing.h"
-#include <assert.h>
-#include <platform.h>
+
 
 #ifndef NUM_USER_THREADS
 #define NUM_USER_THREADS 1
@@ -103,32 +101,6 @@ typedef union {
 } ProcessFlags_t;
 
 // ----------------------------------------------------------------
-// Macros
-// ----------------------------------------------------------------
-
-// something like this default value is used by compilers (GCC and IAR)
-#define KERNEL_STACK_BOTTOM  ((MemoryAddress_t)0x3800)
-
-#define STACK_ADDR_LOW()                                                \
-    (currentThread->index == KERNEL_THREAD_INDEX ?                      \
-            KERNEL_STACK_BOTTOM :                                       \
-            (MemoryAddress_t)threadStackBuffer + (currentThread->index * THREAD_STACK_SIZE))
-
-#if USE_THREADS
-#define STACK_GUARD() do {                                         \
-        /* declare a stack pointer variable */                     \
-        MemoryAddress_t currentSp;                                 \
-        /* read the current stack pointer into the variable */     \
-        GET_SP(currentSp);                                         \
-        /* compare the current stack pointer with stack bottom */  \
-        /* and abort in case of overflow */                        \
-        ASSERT_NOSTACK(currentSp >= STACK_ADDR_LOW());             \
-    } while (0)
-#else
-#define STACK_GUARD()
-#endif
-
-// ----------------------------------------------------------------
 // Global variables
 // ----------------------------------------------------------------
 
@@ -141,6 +113,7 @@ extern Thread_t *currentThread;
 
 // exported to global context only for debugging
 extern uint8_t threadStackBuffer[];
+
 
 // ----------------------------------------------------------------
 // System-only API
@@ -179,12 +152,6 @@ void systemMain(void) NORETURN;
 void checkThreadLockups(void);
 #endif
 
-static inline void setSeenRunning(Thread_t *t) {
-#if SAVE_THREAD_LAST_RUN_TIME
-    t->lastSeenRunning = getJiffies();
-#endif
-}
-
 static inline uint32_t getLastSeenRunning(Thread_t *t) {
 #if SAVE_THREAD_LAST_RUN_TIME
     return t->lastSeenRunning;
@@ -204,23 +171,9 @@ static inline void setPriority(Thread_t *t, uint8_t priority) {
 // ----------------------------------------------------------------
 
 //
-// Put current thread to sleep for a specific time
-//
-static inline void msleep(uint16_t ms)
-{
-    while (ms > PLATFORM_MAX_SLEEP_MS) {
-        jiffiesToSleep = PLATFORM_MAX_SLEEP_MS;
-        ms -= PLATFORM_MAX_SLEEP_MS;
-        schedule();
-    }
-    jiffiesToSleep = ms;
-    schedule();
-}
-
-//
 // Switch to a different thread, if any is ready
 //
-static inline void yield()
+static inline void yield(void)
 {
     jiffiesToSleep = 0;
     schedule();

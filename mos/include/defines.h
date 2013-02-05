@@ -63,6 +63,21 @@ extern inline void ATOMIC_START(Handle_t handle);
 /// @param handle    value of the previous interrupt state to restores
 extern inline void ATOMIC_END(Handle_t handle);
 
+#define ATOMIC_READ(variable) ({                \
+        Handle_t handle;                        \
+        ATOMIC_START(handle);                   \
+        typeof(variable) tmp = variable;        \
+        ATOMIC_END(handle);                     \
+        tmp;                                    \
+    })
+
+#define ATOMIC_WRITE(variable, value) {         \
+        Handle_t handle;                        \
+        ATOMIC_START(handle);                   \
+        variable = value;                       \
+        ATOMIC_END(handle);                     \
+    }
+
 // -----------------------------------------------------
 
 //! Build a single uint16_t from 2 bytes

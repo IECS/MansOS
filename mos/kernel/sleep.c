@@ -85,8 +85,6 @@ static inline void sleepTimerSet(uint16_t ms)
 
 void doMsleep(uint16_t milliseconds)
 {
-    // It is pointless to sleep for zero time;
-    // but do not mess with the scheduler and allow this.
     if (milliseconds) {
         // PRINTF("doMsleep, ms=%u\n", milliseconds);
 
@@ -122,6 +120,9 @@ void doMsleep(uint16_t milliseconds)
 
         // sleep timer should not automatically restart
         SLEEP_TIMER_STOP();
+    } else {
+        // Zero sleep time requested. Allow, because this way
+        // scheduler code becomes simpler, but don't even try going to sleep.
     }
 
 #if USE_THREADS

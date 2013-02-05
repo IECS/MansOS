@@ -30,9 +30,6 @@
 
 #include <defines.h>
 #include <platform.h>
-#ifdef USE_THREADS
-# include <kernel/threads/threads.h>
-#endif
 
 /* Ensure we have a valid stack pointer to call functions */
 #ifdef USE_THREADS
@@ -51,6 +48,9 @@
 void assertionFailed(const char * restrict msg, const char * restrict file,
                      int line) NORETURN;
 
+void printWarning(const char * restrict msg, const char * restrict file,
+                  int line);
+
 /* Panic right away */
 void panic(void) NORETURN;
 
@@ -58,8 +58,10 @@ void panic(void) NORETURN;
  * latter. */
 #ifdef USE_PRINT
 #  define ASSERT_FAILED(e, file, line) assertionFailed(e, file, line)
+#  define ISSUE_WARNING(e, file, line) printWarning(e, file, line)
 #else
 #  define ASSERT_FAILED(e, file, line) panic()
+#  define ISSUE_WARNING(e, file, line)
 #endif
 
 #ifdef USE_ASSERT
@@ -69,9 +71,11 @@ void panic(void) NORETURN;
                                 RESET_SP();                            \
                                 ASSERT_FAILED(#e, __FILE__, __LINE__); \
                             } while (0)
+#  define WARN_ON(e) ((e) ? ISSUE_WARNING(#e, __FILE__, __LINE__) : (void)0)
 #else
 #  define ASSERT(e)         ((void)0)
 #  define ASSERT_NOSTACK(e) ((void)0)
+#  define WARN_ON(e)        ((void)0)
 #endif
 
 #endif

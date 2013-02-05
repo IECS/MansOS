@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,59 +21,34 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_SLEEP_H
-#define MANSOS_SLEEP_H
+#include "stdmansos.h"
+#include <kernel/stack.h>
 
-/// \file
-/// Routines for putting the system in low power mode
-///
+void f(int parameter) __attribute__((noinline));
+void g(void) __attribute__((noinline));
+void h(void) __attribute__((noinline));
 
-#include <defines.h>
-#include <platform.h>
-
-#ifdef PLATFORM_PC
-// sleep already defined on PC platform
-# include <unistd.h>
-# define msleep(ms) usleep((ms) * 1000)
-#else
-
-///
-/// Milliseconds sleep
-///
-void msleep(uint16_t milliseconds);
-
-///
-/// Allow another thread to execute. Equivalent to msleep(0)
-///
-extern inline void yield(void);
-
-// Implementation
-#ifdef USE_THREADS
-#include <threads/threads.h>
-#else
-#define yield() // nothing
-#endif
-
-///
-/// Sleep for n seconds. The signature is compatible with POSIX sleep()
-///
-static inline uint16_t sleep(uint16_t seconds)
+// main function
+void appMain(void)
 {
-    // 
-    // Maximal supported sleeping time is 15984 msec.
-    // XXX: we do not account for the time that was spent
-    // in the loop and in function calls.
-    // 
-    while (seconds > PLATFORM_MAX_SLEEP_SECONDS) {
-        seconds -= PLATFORM_MAX_SLEEP_SECONDS;
-        msleep(PLATFORM_MAX_SLEEP_MS);
-    }
-    msleep(seconds * 1000);
-
-    //  return 0 on success to keep this function POSIX-compatible
-    return 0;
+    int localVariable = 1;
+    f(localVariable);
 }
 
-#endif // !PLATFORM_PC
+void f(int parameter)
+{
+    int anotherLocalVariable;
+    g();
+}
 
-#endif
+void g(void)
+{
+    int anotherLocalVariable2;
+    h();
+}
+
+void h(void)
+{
+    int anotherLocalVariable3;
+    asm("nop");
+}

@@ -31,7 +31,7 @@
 #include <serial.h>
 #include <hil/busywait.h>
 #include <assert.h>
-#include <kernel/threads/threads.h>
+#include <kernel/stack.h>
 #include <string.h>
 
 #if DEBUG

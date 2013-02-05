@@ -26,6 +26,7 @@
 #include <string.h>
 #include <print.h>
 #include <mutex.h>
+#include <kernel/stack.h>
 
 static SLIST_HEAD(head, Socket_s) socketList;
 static Mutex_t socketListMutex;
@@ -38,32 +39,37 @@ void socketsInit(void)
     SLIST_INIT(&socketList);
 }
 
-int8_t socketOpen(Socket_t *s, SocketRecvFunction cb)
+int8_t socketOpen(Socket_t *socket, SocketRecvFunction cb)
 {
-    s->recvCb = cb;
-    s->dstAddress = MOS_ADDR_ROOT;
-    s->port = MOS_PORT_ANY;
-    s->recvMacInfo = NULL;
+    // we want to avoid inserting local variables in the global alarm list
+    // (but this warning, not an error, because the user function may never return)
+    WARN_ON(isStackAddress(socket));
+
+    socket->recvCb = cb;
+    socket->dstAddress = MOS_ADDR_ROOT;
+    socket->port = MOS_PORT_ANY;
+    socket->recvMacInfo = NULL;
     lock();
-    SLIST_INSERT_HEAD(&socketList, s, chain);
+    SLIST_INSERT_HEAD(&socketList, socket, chain);
     unlock();
     return 0; // XXX
 }
 
-int8_t socketClose(Socket_t *s)
+int8_t socketClose(Socket_t *socket)
 {
     lock();
-    SLIST_REMOVE_SAFE(&socketList, s, Socket_s, chain);
+    SLIST_REMOVE_SAFE(&socketList, socket, Socket_s, chain);
     unlock();
     return 0; // XXX
 }
 
-int8_t socketSend(Socket_t *s, const void *data, uint16_t len)
+int8_t socketSend(Socket_t *socket, const void *data, uint16_t len)
 {
-    return sendPacket(s->dstAddress, s->port, data, len);
+    return sendPacket(socket->dstAddress, socket->port, data, len);
 }
 
-void socketInputData(MacInfo_t *macInfo, void *data, uint16_t len) {
+void socketInputData(MacInfo_t *macInfo, void *data, uint16_t len)
+{
     Socket_t *s;
     Socket_t *catchall;
     Socket_t *t;
@@ -104,7 +110,8 @@ void socketInputData(MacInfo_t *macInfo, void *data, uint16_t len) {
 }
 
 int8_t sendPacket(MosShortAddr addr, NetPort_t port,
-                  const void *buf, uint16_t bufLen) {
+                  const void *buffer, uint16_t bufferLength)
+{
     static MacInfo_t mi;
     memset(&mi, 0, sizeof(mi));
     fillLocalAddress(&mi.originalSrc);
@@ -112,7 +119,7 @@ int8_t sendPacket(MosShortAddr addr, NetPort_t port,
     mi.dstPort = port;
     mi.flags |= MI_FLAG_LOCALLY_ORIGINATED;
 
-    networkingForwardData(&mi, (uint8_t *) buf, bufLen);
+    networkingForwardData(&mi, (uint8_t *) buffer, bufferLength);
 
     return 0;
 }

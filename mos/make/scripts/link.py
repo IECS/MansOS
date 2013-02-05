@@ -187,6 +187,8 @@ else:
     used_objects = find_needed_objects(app_objects, system_objects)
 
 arglist = [cc, " ".join(used_objects), '-o', target, flags]
+#arglist.append('-Wl,-T,linkerscript')
+#arglist.append('-Wl,--verbose')
 
 #print ('arglist:', arglist)
 #print (" ".join(arglist))

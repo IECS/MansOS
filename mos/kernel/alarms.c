@@ -27,6 +27,7 @@
 #include "alarms_internal.h"
 #include <timing.h>
 #include <print.h>
+#include <stack.h>
 
 // the global list with all alarms
 AlarmList_t alarmListHead;
@@ -71,6 +72,10 @@ void alarmsProcess(void)
 
 void alarmSchedule(Alarm_t *alarm, uint32_t milliseconds)
 {
+    // we want to avoid inserting local variables in the global alarm list
+    // (but this warning, not an error, because the user function may never return)
+    WARN_ON(isStackAddress(alarm));
+
     // PRINTF("alarmSchedule %p, ms=%lu\n", alarm, milliseconds);
     alarm->jiffies = (uint32_t)getJiffies() + milliseconds;
 

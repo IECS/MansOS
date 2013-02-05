@@ -28,6 +28,7 @@
 
 #include <digital.h>
 #include <serial.h>
+#include <kernel/stack.h>
 
 #include "msp430_usci.h"
 
@@ -99,6 +100,8 @@ void msp430UsciSerialInit1(uint32_t speed)
 //
 void serialSendByte(uint8_t id, uint8_t data)
 {
+    STACK_GUARD();
+
     if (id == 0) {
         while (!(UC0IFG & UCA0TXIFG));
         // Send data
