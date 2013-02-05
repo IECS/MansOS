@@ -205,9 +205,9 @@ static inline void initSystem(void)
     INIT_PRINTF("init WMP...\n");
     wmpInit();
 #endif
-#ifdef USE_SEAL_COMM
-    INIT_PRINTF("init SEAL communications...\n");
-    sealCommInit();
+#ifdef USE_SEAL_NET
+    INIT_PRINTF("init SEAL networking...\n");
+    sealNetInit();
 #endif
 
     INIT_PRINTF("starting the application...\n");

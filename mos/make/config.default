@@ -114,7 +114,7 @@ USE_FLASH ?= n
 #USE_PRINT_RADIO ?= y
 #USE_PRINT_BUFFER_SIZE ?= 128
 
-USE_SEAL_COMM ?= n
+USE_SEAL_NET ?= n
 
 USE_BEEPER ?= n
 
@@ -126,7 +126,7 @@ ifeq ($(USE_NET),y)
     USE_RANDOM ?= y
     USE_THREADS ?= y
 endif
-ifeq ($(USE_SEAL_COMM),y)
+ifeq ($(USE_SEAL_NET),y)
     USE_ADDRESSING ?= y
 endif
 

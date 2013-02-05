@@ -3260,7 +3260,7 @@ class ComponentRegister(object):
                     name, self.architecture))
             return None
         o = self.addComponent(name, base.specification)
-        componentRegister.additionalConfig.add("seal_comm")
+        componentRegister.additionalConfig.add("seal_net")
         return o
 
     def addNetworkComponent(self, name, fields, conditions, branchNumber):
@@ -3268,7 +3268,7 @@ class ComponentRegister(object):
             self.userError("Network component '{0}' duplicated, ignoring\n".format(name))
             return
         # print "addNetworkComponent, name=", name, " fields=", fields
-        componentRegister.additionalConfig.add("seal_comm")
+        componentRegister.additionalConfig.add("seal_net")
         id = len(self.networkComponents)
         nc = NetworkComponent(name, fields, id)
         self.networkComponents[name] = nc

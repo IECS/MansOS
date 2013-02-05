@@ -45,7 +45,7 @@ void serialReceive(uint8_t byte) {
         buffer[numBytesReceived] = 0;
         PRINTF("%s", buffer);
         if (!hadCr) serialSendByte(PRINTF_SERIAL_ID, '\r');
-	if (byte != '\n') serialSendByte(PRINTF_SERIAL_ID, '\n');
+        if (byte != '\n') serialSendByte(PRINTF_SERIAL_ID, '\n');
         numBytesReceived = 0; // reset counter
         hadCr = false;
         PRINTF(PROMPT);

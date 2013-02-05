@@ -21,38 +21,31 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+//-------------------------------------------
+// Blink - demo application that blinks a single LED with one second interval
+//-------------------------------------------
+
 #include "stdmansos.h"
 
-#define PACKET_SIZE 30
+#define PERIOD 1000 // milliseconds
 
+uint32_t nextPeriod;
 Alarm_t alarm;
 
-void onAlarm(void *p) {
-    redLedToggle();
-    alarmSchedule(&alarm, 1000);
+void onAlarm(void *x) {
+   redLedToggle();
+   nextPeriod += PERIOD;
+   alarmSchedule(&alarm, nextPeriod - getJiffies());
 }
 
-//-------------------------------------------
-//      Entry point for the application
-//-------------------------------------------
 void appMain(void)
 {
-    uint16_t i;
-    uint8_t sendBuffer[RADIO_MAX_PACKET];
-
-    for (i = 0; i < RADIO_MAX_PACKET; ++i) {
-        sendBuffer[i] = i;
-    }
-
     alarmInit(&alarm, onAlarm, NULL);
-    alarmSchedule(&alarm, 1000);
+    redLedToggle();
+    nextPeriod = PERIOD;
+    alarmSchedule(&alarm, PERIOD - getJiffies());
 
-    i = 0;
     for (;;) {
-        ++i;
-        radioSend(sendBuffer, PACKET_SIZE);
-        PRINTF("meh.. %d\n", i);
-        mdelay(100);
+        sleep(10);
     }
 }
-

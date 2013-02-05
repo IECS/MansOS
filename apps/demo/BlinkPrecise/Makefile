@@ -31,11 +31,10 @@
 # --------------------------------------------------------------------
 
 # Sources are all project source files, excluding MansOS files
-#SOURCES = blast.c
 SOURCES = main.c
 
-# Module is the name of the main module buit by this makefile
-APPMOD = RadioTest
+# Module is the name of the main module built by this makefile
+APPMOD = Blink
 
 # --------------------------------------------------------------------
 # Set the key variables
