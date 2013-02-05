@@ -21,6 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+// Serial number chip test
+
 #include "stdmansos.h"
 #include "dprint.h"
 #include <serial_number.h>

@@ -198,4 +198,8 @@ ACTIVE_TIMER_READ(SLEEP, TCNT1)
 #define SLEEP_TIMER_INTERRUPT() SIGNAL(TIMER1_COMPA_vect)
 
 
+// no DCO recalibration
+#define hplInitClocks() 
+
+
 #endif

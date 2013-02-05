@@ -28,11 +28,11 @@
 
 #define REPROGRAMMING_DATA_CHUNK_SIZE 64u // bytes
 
-//typedef enum ReprogrammingAddress {
-//    RA_DST_LOCAL = 0x00,         // for local use only
-//    RA_DST_EVERYONE = 0xff,      // for all nodes in the network
-//    // an network address otherwise
-//} ReprogrammingAddress_t;
+typedef enum ReprogrammingAddress_s {
+    RA_DST_LOCAL = 0x00,         // for local use only
+    RA_DST_EVERYONE = 0xff,      // for all nodes in the network
+    // an network address otherwise
+} ReprogrammingAddress_t;
 
 typedef void __attribute__((noreturn)) (*ApplicationStartExec)();
 

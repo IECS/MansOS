@@ -188,3 +188,5 @@ PSOURCES-$(USE_SEAL_NET) += $(MOS)/net/seal_networking.c
 PSOURCES-$(USE_TIMESYNC) += $(MOS)/net/timesync.c
 
 PSOURCES-$(USE_ENERGY_STATS) += $(MOS)/lib/energy.c
+
+PSOURCES-$(USE_DCO_RECALIBRATION) += $(MOS)/hil/dco.c

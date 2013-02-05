@@ -28,7 +28,6 @@
 #include <timing.h>
 #include <assert.h>
 #include <print.h>
-#include <sleep.h>
 #include <string.h>
 
 uint8_t threadStackBuffer[THREAD_STACK_SIZE * NUM_USER_THREADS];

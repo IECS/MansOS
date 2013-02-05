@@ -30,6 +30,11 @@
 
 MosShortAddr localAddress;
 
+#ifdef USE_THREADS
+// required by threads/radio.c
+RadioPacketBuffer_t *radioPacketBuffer;
+#endif
+
 void networkingInit(void) {
     networkingInitArch();
 }
