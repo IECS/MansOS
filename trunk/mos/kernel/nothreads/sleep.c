@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,7 +31,7 @@
 // Put the system to sleep for a specific time;
 // version for event-based kernel.
 //
-static inline void msleep(uint16_t ms)
+void msleep(uint16_t ms)
 {
     const uint32_t sleepEnd = (uint32_t) getJiffies() + ms;
     // PRINTF("msleep %u, end=%lu\n", ms, sleepEnd);

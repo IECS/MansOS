@@ -111,10 +111,13 @@ upload-tilib:
 	$(MSPDEBUG) tilib -d /dev/ttyACM0 "prog $(OUTDIR)/$(EXECUTABLE)"
 
 memdump: build
-	$(MEMDUMP) $(OUTDIR)/$(APPMOD).elf msp430
+	$(_QUIET) $(MEMDUMP) $(OUTDIR)/$(APPMOD).elf msp430
+
+stackdump: build
+	$(_QUIET) $(STACKDUMP) $(OUTDIR)/$(APPMOD).elf msp430
 
 mspsim: build
 	$(JAVA) -jar $(MSPSIM) -platform=sky $(OUTDIR)/$(APPMOD).elf
 
 size: build
-	msp430-size $(OUTDIR)/$(APPMOD).elf
+	$(_QUIET) msp430-size $(OUTDIR)/$(APPMOD).elf

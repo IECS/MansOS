@@ -61,3 +61,9 @@ void assertionFailed(const char * restrict msg, const char * restrict file,
 
     panic();
 }
+
+void printWarning(const char * restrict msg, const char * restrict file,
+                  int line)
+{
+    ASSERT_PRINT("WARNING:\r\n%s:%d: %s\r\n", file, line, msg);
+}

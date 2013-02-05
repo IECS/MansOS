@@ -22,6 +22,7 @@
  */
 
 #include "threads.h"
+#include <timing.h>
 #include <kernel/alarms_internal.h>
 #include <kernel/threads/radio.h>
 #include <net/radio_packet_buffer.h>

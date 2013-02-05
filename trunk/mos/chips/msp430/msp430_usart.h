@@ -25,6 +25,7 @@
 #define MSP430_USART_H
 
 #include "msp430_usart_spi.h"
+#include <kernel/stack.h>
 
 //===========================================================
 // Data types and constants
@@ -67,6 +68,8 @@ static inline bool serialIsI2C(uint8_t id) {
 
 static inline void serialSendByte(uint8_t id, uint8_t data)
 {
+    STACK_GUARD();
+
     if (id == 0) {
         U0TXBUF = data;
         while ((U0TCTL & TXEPT) == 0);  // Is byte sent ?

@@ -44,6 +44,9 @@ extern inline void ASSERT(bool expression);
 //! Advanced version of ASSERT macro that works even when the stack pointer is corrupted
 extern inline void ASSERT_NOSTACK(bool expression);
 
+//! Warn if the 'expression' IS true
+extern inline void WARN_ON(bool expression);
+
 // include the implementation of ASSERT macros
 #include <lib/assert_internal.h>
 

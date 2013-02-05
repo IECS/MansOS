@@ -59,14 +59,14 @@ extern volatile ticks_t jiffies;
 ///
 static inline ticks_t getJiffies(void)
 {
-    return jiffies;
+    return ATOMIC_READ(jiffies);
 }
 
 ///
 /// Get milliseconds elapsed since system start as 32-bit value
 ///
 static inline uint32_t getTimeMs(void) {
-    return (uint32_t) jiffies;
+    return (uint32_t) getJiffies();
 }
 
 ///
@@ -75,7 +75,7 @@ static inline uint32_t getTimeMs(void) {
 /// Same as getTimeMs() unless USE_LONG_LIFETIME=y is used.
 ///
 static inline uint64_t getTimeMs64(void) {
-    return jiffies;
+    return getJiffies();
 }
 
 ///
@@ -85,7 +85,7 @@ static inline uint64_t getTimeMs64(void) {
 /// because 0xffffffff seconds correspond to approximately 136 years.
 ///
 static inline uint32_t getTimeSec(void) {
-    return jiffies / 1000ul;
+    return getJiffies() / 1000ul;
 }
 
 ///

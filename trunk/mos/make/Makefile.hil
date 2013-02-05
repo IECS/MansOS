@@ -129,8 +129,9 @@ endif
 
 else #! USE_THREADS
 
-PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/nothreads/timing.c
 PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/sleep.c
+PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/nothreads/timing.c
+PSOURCES-$(USE_HARDWARE_TIMERS) += $(MOS)/kernel/nothreads/sleep.c
 
 
 ifeq ($(USE_PROTOTHREADS),y)

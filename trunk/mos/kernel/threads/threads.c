@@ -25,6 +25,7 @@
 #include <sleep_internal.h>
 #include "threads.h"
 #include <threads/context_switch.h> // arch-specific file
+#include <timing.h>
 #include <assert.h>
 #include <print.h>
 #include <sleep.h>
@@ -43,6 +44,12 @@ uint16_t jiffiesToSleep;
 #endif
 
 // ------------------------------------------------------
+
+static inline void setSeenRunning(Thread_t *t) {
+#if SAVE_THREAD_LAST_RUN_TIME
+    t->lastSeenRunning = getJiffies();
+#endif
+}
 
 #ifdef DEBUG_THREADS
 void checkThreadLockups(void)
@@ -292,4 +299,18 @@ NO_EPILOGUE void schedule(void)
     setSeenRunning(currentThread);
     RESTORE_ALL_REGISTERS();
     ASM_VOLATILE("ret");
+}
+
+//
+// Put current thread to sleep for a specific time
+//
+void msleep(uint16_t ms)
+{
+    while (ms > PLATFORM_MAX_SLEEP_MS) {
+        jiffiesToSleep = PLATFORM_MAX_SLEEP_MS;
+        ms -= PLATFORM_MAX_SLEEP_MS;
+        schedule();
+    }
+    jiffiesToSleep = ms;
+    schedule();
 }

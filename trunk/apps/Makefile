@@ -43,7 +43,6 @@ TEST_TARGETS = \
 	Null					\
 	PDRTest					\
 	RadioSendTest				\
-	RadioTest				\
 	SdCardBlockTest				\
 	SerialPipe				\
 	SharingTest				\
@@ -52,10 +51,11 @@ TEST_TARGETS = \
 	TimingTest				\
 	TinyOSEncapsuleTest			\
 	TMP102Test				\
-	UARTRecvPacketTest			\
-	UARTTest				\
+	SerialRecvPacketTest			\
+	SerialRecvTest				\
 	SmpTest/DemoBlueLed			\
 	SmpTest/DemoRedLed			\
+	StackTest		            	\
 	UserButtonTest				\
 	ExpThreadTests/0-Lockup			\
 	ExpThreadTests/0-Overflow-User		\

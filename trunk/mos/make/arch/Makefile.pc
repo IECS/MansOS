@@ -77,7 +77,10 @@ run:
 platform-upload: run 
 
 memdump: build
-	$(MEMDUMP) $(OUTDIR)/$(EXECUTABLE) pc
+	$(_QUIET) $(MEMDUMP) $(OUTDIR)/$(EXECUTABLE) pc
+
+stackdump: build
+	$(_QUIET) $(STACKDUMP) $(OUTDIR)/$(EXECUTABLE) pc
 
 size: build
-	size $(OUTDIR)/$(EXECUTABLE)
+	$(_QUIET) size $(OUTDIR)/$(EXECUTABLE)
