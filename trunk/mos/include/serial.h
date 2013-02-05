@@ -51,7 +51,7 @@ typedef void (* SerialCallback_t)(uint8_t);
 //===========================================================
 
 ///
-/// Initalize serial interface with specific speed
+/// Initialize serial interface with specific speed
 ///
 /// @param id     serial interface ID
 /// @param speed  serial interface baudrate.
