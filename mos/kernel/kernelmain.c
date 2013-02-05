@@ -191,6 +191,11 @@ static inline void initSystem(void)
     INIT_PRINTF("init reprogramming...\n");
     bootParamsInit();
 #endif
+#ifdef USE_DCO_RECALIBRATION
+    extern void dcoRecalibrationInit(void);
+    INIT_PRINTF("init DCO recalibration...\n");
+    dcoRecalibrationInit();
+#endif
 #ifdef USE_FS
     INIT_PRINTF("init file system...\n");
     fsInit();

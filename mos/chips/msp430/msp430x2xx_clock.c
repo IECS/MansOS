@@ -89,7 +89,7 @@ static void msp430CalibrateDCO(void)
     DCOCTL = calib & 0xff;
 }
 
-static void msp430InitClocks(void)
+void msp430InitClocks(void)
 {
 #if USE_HARDWARE_TIMERS
     // reset timers

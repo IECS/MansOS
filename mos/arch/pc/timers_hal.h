@@ -72,4 +72,7 @@ enum {
 #define SLEEP_CLOCK_SPEED   1
 #define SLEEP_CLOCK_DIVIDER 1
 
+// no DCO recalibration
+#define hplInitClocks() 
+
 #endif

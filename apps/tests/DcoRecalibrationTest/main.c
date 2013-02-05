@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,38 +21,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MSP430_CLOCK_H_
-#define _MSP430_CLOCK_H_
+#include "stdmansos.h"
 
-#include <stdtypes.h>
-
-// The value returned depends on the system's runtime configuration
-// LPM3 is used on MSP430 by default, unles SMCLK is needed by a some component
-#define SLEEP_MODE_BITS() \
-    ((PWM_USES_SMCLK() || SERIAL_USES_SMCLK() || ADC_USES_SMCLK())  \
-    ? LPM1_bits \
-    : LPM3_bits)
-
-#define PWM_USES_SMCLK()    false  // PWM is not implemented yet
-#define SERIAL_USES_SMCLK() serialUsesSMCLK()
-#define ADC_USES_SMCLK()    hplAdcUsesSMCLK()
-
-// set low power mode bits in the SR to sleep, and make sure interrupts are enabled as well
-#define ENTER_SLEEP_MODE() _BIS_SR((SLEEP_MODE_BITS() | GIE))
-// Warning: this commands works *only* in interrupt handlers!
-#define EXIT_SLEEP_MODE() LPM3_EXIT
-
-//===========================================================
-// Procedures
-//===========================================================
-
-void msp430Init(void);
-
-void msp430InitClocks(void);
-
-#define hplInitClocks() msp430InitClocks()
-
-//===========================================================
-//===========================================================
-
-#endif
+void appMain(void)
+{
+    for (;;) {
+        sleep(10);
+    }
+}

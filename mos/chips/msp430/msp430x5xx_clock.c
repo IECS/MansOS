@@ -75,7 +75,7 @@ static void msp430CalibrateDCO(void) {
     } while (SFRIFG1 & OFIFG);                  // Test oscillator fault flag
 }
 
-static void msp430InitClocks(void)
+void msp430InitClocks(void)
 {
 #if USE_HARDWARE_TIMERS
     // reset timers

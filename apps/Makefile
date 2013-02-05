@@ -32,6 +32,7 @@ TEST_TARGETS = \
 	AssertTest				\
 	BeeperTest				\
 	BlinkTest				\
+	DcoRecalibrationTest	\
 	ExtFlashTest				\
 	FSTest					\
 	GPSParseTest				\
