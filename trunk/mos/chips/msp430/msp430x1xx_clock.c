@@ -140,9 +140,3 @@ void msp430InitClocks(void)
     msp430InitTimerB();
 #endif
 }
-
-void msp430Init(void)
-{
-    msp430InitPins();
-    msp430InitClocks();
-}

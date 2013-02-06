@@ -164,7 +164,7 @@ PSOURCES-$(USE_SMP) += $(MOS)/smp/command.c
 PSOURCES-$(USE_WMP) += $(MOS)/wmp/wmp.c
 
 ifneq ($(USE_NET),y)
-PSOURCES-$(USE_ADDRESSING) += $(MOS)/net/nonet.c
+PSOURCES += $(MOS)/net/nonet.c
 endif
 
 PSOURCES-$(USE_FLASH_STREAM) += $(MOS)/hil/flash_stream.c

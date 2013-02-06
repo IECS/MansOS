@@ -326,7 +326,7 @@ saveplatform:
 	$(_QUIET) @echo "saving Makefile.target"
 	$(_QUIET) @echo >$(BUILDDIR)/Makefile.target "TARGET = $(TARGET)"
 
-build: objDirs $(OUTDIR)/$(EXECUTABLE)
+build: objDirs $(OUTDIR)/$(EXECUTABLE) stackdump
 
 #
 # "config" file is required for building. An empty file is created it doesn't exist

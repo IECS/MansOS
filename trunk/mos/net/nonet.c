@@ -27,14 +27,19 @@
 //
 
 #include "networking.h"
-
-MosShortAddr localAddress;
+#include "radio_packet_buffer.h"
 
 #ifdef USE_THREADS
 // required by threads/radio.c
 RadioPacketBuffer_t *radioPacketBuffer;
 #endif
 
+#if USE_ADDRESSING
+
+MosShortAddr localAddress;
+
 void networkingInit(void) {
     networkingInitArch();
 }
+
+#endif

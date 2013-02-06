@@ -79,8 +79,8 @@ platform-upload: run
 memdump: build
 	$(_QUIET) $(MEMDUMP) $(OUTDIR)/$(EXECUTABLE) pc
 
-stackdump: build
-	$(_QUIET) $(STACKDUMP) $(OUTDIR)/$(EXECUTABLE) pc
+stackdump:
+	@echo
 
 size: build
 	$(_QUIET) size $(OUTDIR)/$(EXECUTABLE)

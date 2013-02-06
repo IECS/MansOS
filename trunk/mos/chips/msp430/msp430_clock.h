@@ -25,6 +25,7 @@
 #define _MSP430_CLOCK_H_
 
 #include <stdtypes.h>
+#include "msp430_int.h"
 
 // The value returned depends on the system's runtime configuration
 // LPM3 is used on MSP430 by default, unles SMCLK is needed by a some component
@@ -46,11 +47,14 @@
 // Procedures
 //===========================================================
 
-void msp430Init(void);
-
 void msp430InitClocks(void);
 
 #define hplInitClocks() msp430InitClocks()
+
+static inline void msp430Init(void) {
+    msp430InitPins();
+    msp430InitClocks();
+}
 
 //===========================================================
 //===========================================================
