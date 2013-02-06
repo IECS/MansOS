@@ -55,7 +55,13 @@
 //
 #  define PRINT_INIT(len) PRINT_INIT_DEFAULT(len)
 #  define PRINT_FUNCTION radioPrint
-#  define PRINTF(...) debugPrintf(PRINT_FUNCTION, __VA_ARGS__)
+#  define PRINTF(...)                             \
+    if (COUNT_PARMS(__VA_ARGS__) == 1) {          \
+        radioPrintV(__VA_ARGS__);                 \
+    } else {                                      \
+        debugPrintf(radioPrint, __VA_ARGS__);     \
+    }
+
 # else
 //
 // Print to serial port
@@ -77,19 +83,22 @@
 
 extern char *_print_buf;
 
+// Print text and return 8-bit crc of the result string
+#define PRINTF_CRC(...)                           \
+    debugPrintfCrc(PRINT_FUNCTION, __VA_ARGS__)   \
+// Print text with newline
+#define PRINTLN(x) PRINT_FUNCTION(x "\n")
+
 #else // USE_PRINT not defined
 
 # define PRINT_INIT(len)
 # define PRINTF(...)
+# define PRINTF_CRC(...) 0
+# define PRINTLN(x)
 
-#define _print_buf 0
+#define _print_buf NULL
 
 #endif // USE_PRINT
-
-//
-// Print text with newline
-//
-#define PRINTLN(x) PRINT_FUNCTION(x "\n")
 
 //
 // TPRINTF: print text with timestamp
@@ -141,5 +150,10 @@ void printInit(void) WEAK_SYMBOL;
         debugPrintfFormat(__VA_ARGS__);       \
         outputFunction(_print_buf);           \
     }
+
+#define debugPrintfCrc(outputFunction, ...) ({         \
+        debugPrintf(outputFunction, __VA_ARGS__);      \
+        _print_buf ? crc8((uint8_t *) _print_buf, strlen(_print_buf)) : 0; \
+    })
 
 #endif

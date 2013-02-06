@@ -82,4 +82,16 @@ static inline int32_t map(int32_t value,
     return (value - inputLow) * amplitudeOut / amplitudeIn + outputLow;
 }
 
+//! Convert half-a-byte (so called "nibble") to a hexadecimal character
+static inline char toHex(uint8_t nibble) {
+    switch (nibble) {
+    case 0 .. 9:
+        return '0' + nibble;
+    case 10 .. 15:
+    default:
+        return 'a' + nibble - 10;
+    }
+}
+
+
 #endif

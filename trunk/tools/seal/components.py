@@ -51,6 +51,11 @@ def generateSerialFunctions(intSizes, outputFile):
         outputFile.write("{\n")
         outputFile.write('    PRINTF("%s=%{}\\n", name, value);\n'.format(formatSpecifier))
         outputFile.write("}\n")
+        outputFile.write("static inline void serialPrintCrc_{0}(const char *name, {0} value)\n".format(dataType))
+        outputFile.write("{\n")
+        outputFile.write('    uint8_t crc = PRINTF_CRC("%s=%{}", name, value);\n'.format(formatSpecifier))
+        outputFile.write('    PRINTF(",%02x\\n", crc);\n')
+        outputFile.write("}\n")
 
 
 def getUseCaseParameterValue(parameter, parameters):
@@ -2307,17 +2312,19 @@ class OutputUseCase(object):
             # done
             return
 
+        crc = "Crc" if self.getParameterValue("crc") else ""
+
         outputFile.write("static inline void {}PacketPrint(void)\n".format(self.getNameCC()))
         outputFile.write("{\n")
         outputFile.write("    PRINTF(\"======================\\n\");\n")
         for f in self.packetFields:
             if f.count == 1:
-                outputFile.write("    serialPrint_{0}(\"{1}\", serialPacket.{2});\n".format(
-                        f.dataType, toTitleCase(f.sensorName), f.sensorName))
+                outputFile.write("    serialPrint{3}_{0}(\"{1}\", serialPacket.{2});\n".format(
+                        f.dataType, toTitleCase(f.sensorName), f.sensorName, crc))
             else:
                 for i in range(f.count):
-                    outputFile.write("    serialPrint_{0}(\"{1}[{3}]\", serialPacket.{2}[{3}]);\n".format(
-                            f.dataType, toTitleCase(f.sensorName), f.sensorName, i))
+                    outputFile.write("    serialPrint{3}_{0}(\"{1}[{3}]\", serialPacket.{2}[{3}]);\n".format(
+                            f.dataType, toTitleCase(f.sensorName), f.sensorName, i, crc))
         outputFile.write("}\n\n")
 
 
@@ -2388,8 +2395,9 @@ class OutputUseCase(object):
         if not found: return
 
         if not self.isAggregate:
-            outputFile.write('        {0}Print_{1}("{2}", {2}Value);\n'.format(
-                    self.getNameCC(), f.dataType, toCamelCase(sensorName)))
+            crc = "Crc" if self.getParameterValue("crc") else ""
+            outputFile.write('        {0}Print{3}_{1}("{2}", {2}Value);\n'.format(
+                    self.getNameCC(), f.dataType, toCamelCase(sensorName), crc))
             return
 
         if f.count == 1:
