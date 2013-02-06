@@ -139,6 +139,11 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 hasWriteAccess = True
             else:
                 hasWriteAccess = False
+        if "action" in qs:
+            if not hasWriteAccess:
+                self.serveError("You do not have write access!")
+                return False
+        return True
 
     def serveHeader(self, name, isGeneric = True, includeBodyStart = True, replaceValues = None):
         self.headerIsServed = True
@@ -308,7 +313,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        self.handleGenericQS(qs)
+        if not self.handleGenericQS(qs):
+            return
         self.serveHeader("default")
         self.serveBody("default")
         self.serveFooter()
@@ -317,7 +323,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        self.handleGenericQS(qs)
+        if not self.handleGenericQS(qs):
+            return
         self.serveHeader("motes")
         self.serveMoteMotes(qs)
         self.serveFooter()
@@ -412,13 +419,12 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        self.handleGenericQS(qs)
+        if not self.handleGenericQS(qs):
+            return
         self.serveHeader("graph")
         self.serveMotes("Graph", qs, False)
 
         if "action" in qs:
-#            if not hasWriteAccess:
-#                
             if qs["action"][0] == "Start":
                 if not motes.anySelected():
                     self.serveError("No motes selected!")
@@ -438,7 +444,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        self.handleGenericQS(qs)
+        if not self.handleGenericQS(qs):
+            return
         self.serveHeader("listen")
         self.serveMotes("Listen", qs, False)
 
@@ -493,7 +500,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        self.handleGenericQS(qs)
+        if not self.handleGenericQS(qs):
+            return
         self.serveHeader("upload")
         self.serveMotes("Upload", qs, True)
         isSealCode = settingsInstance.getCfgValueAsInt("isSealCode")
@@ -540,7 +548,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        self.handleGenericQS(qs)
+        if not self.handleGenericQS(qs):
+            return
         self.serveHeader("blockly")
         self.serveBody("blockly")
         self.serveFooter()
@@ -559,7 +568,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        self.writeChunk("Hello!")
+        if hasWriteAccess:
+            self.writeChunk("writeAccess=True")
         self.writeFinalChunk()
 
     def serveGraphsData(self, qs):
@@ -629,12 +639,84 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         elif o.path == "/sync":
             self.serveSync()
         elif o.path == "/code":
-            print (qs) # qs['src'] contains code
+            # qs['src'] contains SEAL-Blockly code
+            code = qs.get('src')[0] if "src" in qs else ""
+            config = qs.get('config')[0] if "config" in qs else ""
+            self.compileAndUpload(code, config, None, True)
             self.serveSync()
         elif o.path[-4:] == ".css":
             self.serveFile(htmlDirectory + o.path)
         else:
             self.serve404Error(o.path, qs)
+
+    def compileAndUpload(self, code, config, fileContents, isSEAL):
+        global lastUploadCode
+        global lastUploadConfig
+        global lastUploadFile
+
+        print "code=", code
+
+        retcode = 0
+        if not os.path.exists("build"):
+            os.mkdir("build")
+        # TODO FIXME: should do this in a new thread!
+        isInSubprocess = True
+        os.chdir("build")
+
+        if fileContents:
+            lastUploadFile = form["file"].filename
+
+            filename = "tmp-file.ihex"
+            with open(filename, "w") as outFile:
+                outFile.write(fileContents)
+                outFile.close()
+
+            closeAllSerial()
+            for m in motes.getMotes():
+                r = m.tryToUpload(self, filename)
+                if r != 0: retcode = r
+
+        elif code:
+            lastUploadCode = code
+
+            filename = "main."
+            filename += "sl" if isSEAL else "c"
+            with open(filename, "w") as outFile:
+                outFile.write(code)
+                outFile.close()
+
+            with open("config", "w") as outFile:
+                if config is None:
+                    config = ""
+                outFile.write(config)
+                outFile.close()
+
+            with open("Makefile", "w") as outFile:
+                if isSEAL:
+                    outFile.write("SEAL_SOURCES = main.sl\n")
+                else:
+                    outFile.write("SOURCES = main.c\n")
+                outFile.write("APPMOD = App\n")
+                outFile.write("PROJDIR = $(CURDIR)\n")
+                outFile.write("ifndef MOSROOT\n")
+                mansosPath = settingsInstance.getCfgValue("pathToMansOS")
+                if not os.path.isabs(mansosPath):
+                    # one level up - because we are in build directory
+                    mansosPath = os.path.join(mansosPath, "..")
+                outFile.write("  MOSROOT = " + mansosPath + "\n")
+                outFile.write("endif\n")
+                outFile.write("include ${MOSROOT}/mos/make/Makefile\n")
+                outFile.close()
+
+            closeAllSerial()
+            for m in motes.getMotes():
+                r = m.tryToCompileAndUpload(self, filename)
+                if r != 0 and m.port:
+                    retcode = r
+
+        os.chdir("..")
+        isInSubprocess = False
+        return retcode
 
     def do_POST(self):
         global lastUploadCode
@@ -663,12 +745,11 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
         file_data = None
 
+        isSEAL = False
         if "compile" in form:
             if "language" in form:
-                lastUploadWasSEAL = form["language"].value.strip() == "SEAL"
-            else:
-                lastUploadWasSEAL = False
-            settingsInstance.setCfgValue("isSealCode", lastUploadWasSEAL)
+                isSEAL = form["language"].value.strip() == "SEAL"
+            settingsInstance.setCfgValue("isSealCode", isSEAL)
 
         if "slow" in form:
             slow = form["slow"].value == "on"
@@ -709,75 +790,21 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
         # remember which motes were selected and which not
         motes.storeSelected()
-        # check if any motes are selected upload is provided
+        # check if any motes are selected
         if not motes.anySelected():
             self.serveHeader("upload")
             self.serveError("No motes selected!")
             return
 
-        retcode = 0
-        if not os.path.exists("build"):
-            os.mkdir("build")
-        # TODO FIXME: should do this in a new thread!
-        isInSubprocess = True
-        os.chdir("build")
+        config = ""
+        if "config" in form.keys():
+            lastUploadConfig = form["config"].value
+            config = lastUploadConfig
+            outFile.write(lastUploadConfig)
+        if slow:
+            config += "\nSLOW_UPLOAD=y\n"
 
-        if fileContents:
-            lastUploadFile = form["file"].filename
-
-            filename = "tmp-file.ihex"
-            with open(filename, "w") as outFile:
-                outFile.write(fileContents)
-                outFile.close()
-
-            closeAllSerial()
-            for m in motes.getMotes():
-                r = m.tryToUpload(self, filename)
-                if r != 0: retcode = r
-
-        elif code:
-            lastUploadCode = code
-
-            filename = "main."
-            filename += "sl" if lastUploadWasSEAL else "c"
-            with open(filename, "w") as outFile:
-                outFile.write(code)
-                outFile.close()
-
-            with open("config", "w") as outFile:
-                if "config" in form.keys():
-                    lastUploadConfig = form["config"].value
-                    outFile.write(lastUploadConfig)
-                if slow:
-                    outFile.write("\n")
-                    outFile.write("SLOW_UPLOAD=y\n")
-                outFile.close()
-
-            with open("Makefile", "w") as outFile:
-                if lastUploadWasSEAL:
-                    outFile.write("SEAL_SOURCES = main.sl\n")
-                else:
-                    outFile.write("SOURCES = main.c\n")
-                outFile.write("APPMOD = App\n")
-                outFile.write("PROJDIR = $(CURDIR)\n")
-                outFile.write("ifndef MOSROOT\n")
-                mansosPath = settingsInstance.getCfgValue("pathToMansOS")
-                if not os.path.isabs(mansosPath):
-                    # one level up - because we are in build directory
-                    mansosPath = os.path.join(mansosPath, "..")
-                outFile.write("  MOSROOT = " + mansosPath + "\n")
-                outFile.write("endif\n")
-                outFile.write("include ${MOSROOT}/mos/make/Makefile\n")
-                outFile.close()
-
-            closeAllSerial()
-            for m in motes.getMotes():
-                r = m.tryToCompileAndUpload(self, filename)
-                if r != 0 and m.port:
-                    retcode = r
-
-        os.chdir("..")
-        isInSubprocess = False
+        retcode = self.compileAndUpload(code, config, fileContents, isSEAL)
 
         self.serveHeader("upload")
         self.serveMotes("Upload", {}, True)
