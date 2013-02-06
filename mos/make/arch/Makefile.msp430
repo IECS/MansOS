@@ -113,8 +113,8 @@ upload-tilib:
 memdump: build
 	$(_QUIET) $(MEMDUMP) $(OUTDIR)/$(APPMOD).elf msp430
 
-stackdump: build
-	$(_QUIET) $(STACKDUMP) $(OUTDIR)/$(APPMOD).elf msp430
+stackdump:
+	$(_QUIET) $(STACKDUMP) $(OUTDIR)/$(APPMOD).elf msp430 $(VERBOSE)
 
 mspsim: build
 	$(JAVA) -jar $(MSPSIM) -platform=sky $(OUTDIR)/$(APPMOD).elf

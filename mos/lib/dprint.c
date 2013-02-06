@@ -27,25 +27,24 @@
 
 extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 
-static char *_print_buf;
+//static
+char *_print_buf;
 
 void printInitReal(void)
 {
     PRINT_INIT(PRINT_BUFFER_SIZE);
 }
 
-void debugPrintf(PrintFunction_t outputFunction, const char* str, ...)
+void debugPrintfFormat(const char* str, ...)
 {
     va_list args;
-
-    if (!_print_buf) return;
-
     va_start(args, str);
+
 #if USE_PUTCHAR
+    // XXX: this breaks static stack analysis: putchar is used as function pointer in libc
     vprintf(str, args);
 #else
     vsnprintf(_print_buf, PRINT_BUFFER_SIZE, str, args);
-    outputFunction(_print_buf);
 #endif
 }
 

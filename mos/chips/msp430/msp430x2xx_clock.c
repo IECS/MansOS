@@ -30,6 +30,9 @@
 #include "msp430_int.h"
 #include <delay.h>
 
+// This code doesn't work properly without optimization
+#pragma GCC optimize("Os")
+
 // DCO calibration approach is borrowed from TOS1.x
 enum
 {
@@ -105,10 +108,4 @@ void msp430InitClocks(void)
     msp430InitTimerA();
     msp430InitTimerB();
 #endif
-}
-
-void msp430Init(void)
-{
-    msp430InitPins();
-    msp430InitClocks();
 }

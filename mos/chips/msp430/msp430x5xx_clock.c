@@ -29,6 +29,9 @@
 // WARNING: this code is not tested yet!
 //
 
+// This code doesn't work properly without optimization
+#pragma GCC optimize("Os")
+
 #include "msp430_clock.h"
 #include "msp430_timers.h"
 #include "msp430_int.h"
@@ -91,10 +94,4 @@ void msp430InitClocks(void)
     msp430InitTimerA();
     msp430InitTimerB();
 #endif
-}
-
-void msp430Init(void)
-{
-    msp430InitPins();
-    msp430InitClocks();
 }

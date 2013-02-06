@@ -48,14 +48,17 @@ void appMain(void)
 {
     GET_SP(spInMain);
 
-    // this uses 62 bytes
+    // this uses 62 bytes on GCC 4.5.3
     //PRINTF("hello world\r\n");
 
-    // this uses 70 bytes (62 + 2 + 2 + 4)
-    PRINTF("hello %s! running mansos version %d, uptime is %lu seconds\r\n",
+    // 
+    // This uses:
+    //    70 bytes (62 + 2 + 2 + 4) on GCC 4.5.3 (GNU GCC patched mspgcc-20110716))
+    //    110 bytes on GCC version 4.6.3 20120301 
+    PRINTF("Hello %s! Running MansOS build %s, uptime is %lu seconds\r\n",
             "world",
-            MANSOS_VERSION,
-            getUptime()); // 70 baiti stekaa... (versija gcc version 4.5.3 (GNU GCC patched mspgcc-20110716))
+            __DATE__,
+            getTimeSec());
 
     PRINTF("stack pointer in main: %#x\r\n", spInMain);
     PRINTF("stack pointer in putchar: %#x\r\n", spInPutchar);

@@ -24,7 +24,7 @@
 
 import sys, subprocess, string, re, os
 
-verbose = False
+#########################################
 
 class Regexp:
     def __init__(self, pattern):
@@ -85,11 +85,18 @@ class Function:
         worstStackUsage = selfStackUsage
         
         for (usage, callee) in self.trace:
+            if callee and self.name in noRecursionFunctions:
+                # do not try to do deeper
+                continue
             usage = -usage   # stack "grows" to the bottom (lower addresses)
             selfStackUsage += usage
             if selfStackUsage > worstStackUsage:
                 worstStackUsage = selfStackUsage
             if callee:
+                if callee not in functions:
+                    # warning was already printed
+                    selfStackUsage -= usage
+                    continue
                 calleeFun = functions[callee]
                 childStackUsage = selfStackUsage + calleeFun.runTrace()
                 if childStackUsage > worstStackUsage:
@@ -99,21 +106,20 @@ class Function:
 
         if verbose:
             prettyName = self.name.ljust(24)
-            print("Function " + prettyName + " at " + hex(self.address) + ":\tworst case stack usage is " \
+            print("Function " + prettyName + " at " + hex(self.address) + ":\tworst-case stack usage is " \
                       + str(worstStackUsage) + " bytes")
         self.calculatedStackUsage = worstStackUsage
         return worstStackUsage
 
 #########################################
 
-if len(sys.argv) != 3:
-    print('Usage: ' + sys.argv[0] + ' <target> <arch>')
+if len(sys.argv) < 3:
+    print('Usage: ' + sys.argv[0] + ' <target> <arch> [<verbose>]')
     sys.exit(1)
 
 target = sys.argv[1]
 arch = sys.argv[2]
-
-#callGraph = set(['main'])
+verbose = len(sys.argv) > 3
 
 # find compiler and objdump executables
 if arch == 'pc':
@@ -126,15 +132,70 @@ else:
     print("Error: unknown arhitecture!")
     sys.exit(1)
 
-functionStart = Regexp(r'([0-9a-fA-F]+)\s<([a-zA-Z_][a-zA-Z_0-9]*)>:')
+interruptFunctions = ["alarmTimerInterrupt0", "alarmTimerInterrupt1", "sleepTimerInterrupt",
+                      "userButtonInterrupt", "USCI0InterruptHandler", "USCI1InterruptHandler",
+                      "UART0InterruptHandler", "UART1InterruptHandler", "USCIAInterruptHandler",
+                      "mrf24Interrupt", "cc1011Interrupt", "cc2420Interrupt", "apds_interrupt",
+                      "i2c_tx_interrupt"]
+
+# TODO: make sure that interrupt handlers never use callbacks when in threaded execution!
+functionsWithAllowedCallbacks = interruptFunctions + [
+    "alarmsProcess", # executed in kernel-thread context only where stack is (relatively) unlimited
+    # libc functions:
+    "print_field", "vuprintf",
+    # thread functions
+    "threadWrapper"
+    ]
+
+threadInternalFunctions = [
+    "startThreads", "threadCreate", "schedule",
+    "serialSendByte" # because of STACK_GUARD
+]
+
+noRecursionFunctions = [
+    "schedule",
+    "serialSendByte" # because of STACK_GUARD
+]
+
+functionStart = Regexp(r'([0-9a-fA-F]+)\s<([a-zA-Z_][a-zA-Z_0-9\.]*)>:')
 callInstr     = Regexp(r'.*call\s+#(0x[0-9a-fA-F]+)')
+ptrCallInstr  = Regexp(r'.*call\s+([^\s]+)\s')
 pushPopInstr  = Regexp(r'.*((push)|(pop))\s+(r[0-9][0-9]?)')
 arithmInstr   = Regexp(r'.*((add)|(sub))\s+#(-?[0-9]+),\s+r1\s')
 shortArithmInstr   = Regexp(r'.*((inc)|(dec)|(incd)|(decd))\s+r1\s')
 explicitStackManipulation  = Regexp(r'.*\s+r1\s|,')
 
+
 functions = {}
 functionsByName = {}
+
+haveThreads = False
+stackPerThread = 512
+
+def analyzeObjFile():
+    global haveThreads
+    global stackPerThread
+
+    symbols = os.popen(objdump + " -t " + target).readlines()
+    bssSymbol = Regexp(r'([0-9a-f]{8}).+\.bss\s+([0-9a-f]{8})\s+([^\s]+)')
+    threadSize = 0
+    threadStackSize = 0
+    for line in symbols:
+        if bssSymbol.match(line):
+            address = bssSymbol.group(1)
+            size = int(bssSymbol.group(2), 16)
+            name = bssSymbol.group(3)
+            # print name  + " at " + address + " is " + hex(size)            
+            if name == "threadStackBuffer":
+                threadStackSize = size
+            elif name == "threads":
+                threadSize = size
+
+    if threadSize and threadStackSize:
+        haveThreads = True
+        # 12 is the lower bound on single threads size
+        numThreads = threadSize / 12 - 1 # do not include kernel's thread
+        stackPerThread = threadStackSize / numThreads
 
 def buildTrace():
     ignoreFunctions = ["__ctors_end"]
@@ -167,6 +228,11 @@ def buildTrace():
             #print "call: ", callInstr.group(1)
             callee = int(callInstr.group(1), 16)
             currentFunction.addOp("call", 0, callee)
+        elif ptrCallInstr.match(line):
+            if currentFunction.name in functionsWithAllowedCallbacks:
+                continue
+            print("Warning! Unhandled call-by-pointer at function " + currentFunction.name)
+            print("Stack usage analysis results may be incorrect.")
         elif pushPopInstr.match(line):
             #print "push/pop:", line.strip()
             #print pushPopInstr.group(1)
@@ -181,8 +247,13 @@ def buildTrace():
             #print shortArithmInstr.group(1)
             currentFunction.addOp(shortArithmInstr.group(1))
         elif explicitStackManipulation.match(line):
-            if verbose:
-                print "Some other stack instr (TODO):", line
+            if currentFunction.name == "__init_stack" \
+                    or currentFunction.name in threadInternalFunctions:
+                continue
+            print("Warning! Unhandled stack-related instruction encountered at function " \
+                      + currentFunction.name)
+            print("Stack usage analysis results may be incorrect. The instruction was:")
+            print(line)
 
     # save the old current function
     if currentFunction:
@@ -191,24 +262,60 @@ def buildTrace():
 
 def detectLoops(backtrace):
     last = backtrace[-1]
-    neighbours = functions[last].callees
+    if last not in functions:
+        print "unknown function {:#x}".format(last)
+        return
+    nonrecursiveCallees = []
     for callee in functions[last].callees:
         if callee in backtrace:
+            if functions[last].name in noRecursionFunctions:
+                # print "skip " + functions[last].name
+                continue
             print("Recursion detected, aborting stack checks! Stack backtrace:")
             for f in backtrace:
                 print("    " + hex(f) + ":    " + functions[f].name + "()")
             print("Recursive call to function " + functions[callee].name + "()!")
-            sys.exit(1)
+            sys.exit(0)
+        nonrecursiveCallees.append(callee)
         detectLoops(backtrace + [callee])
+    functions[last].callees = nonrecursiveCallees
 
 def simulateWorstCaseStackUsage():
     if "main" not in functionsByName:
-        print "Aborting: main() function not defined?!"
+        print("Aborting: main() function not defined?!")
         return
-    wsu = functionsByName["main"].runTrace()
-    print("Worst case stack usage in " + target + " is " + str(wsu) + " bytes\n")
+
+    if haveThreads:
+        wsu = functionsByName["appMain"].runTrace()
+        # TODO: other user threads
+        # TODO: also include system thread?
+        wsu += 2 # compensate for a single call overhead (in threadWrapper)
+    else:
+        wsu = functionsByName["main"].runTrace()
+    
+    worstInterruptUsage = 0
+    for interruptFunction in interruptFunctions:
+        if interruptFunction in functionsByName:
+            usage = functionsByName[interruptFunction].runTrace()
+            if usage > worstInterruptUsage:
+                worstInterruptUsage = usage
+    wsu += worstInterruptUsage
+
+    maybeUserThreads = " in user threads" if haveThreads else ""
+    print("Estimated worst-case stack usage" + maybeUserThreads \
+              + ": " + str(wsu) + " bytes (incl. " \
+              + str(worstInterruptUsage) + " bytes in interrupts)")
+
+    if stackPerThread < wsu:
+        print("Error: thread stack space is insufficient: " + str(stackPerThread) + " bytes allocated, " \
+            + str(wsu) + " bytes required\n")
+        sys.exit(1)
+    print("")
+    
 
 def main():
+    if verbose: print("")
+    analyzeObjFile()
     buildTrace()
     detectLoops([functionsByName["main"].address])
     simulateWorstCaseStackUsage()

@@ -66,19 +66,23 @@
      serialEnableTX(PRINTF_SERIAL_ID);                          \
      serial[PRINTF_SERIAL_ID].function = SERIAL_FUNCTION_PRINT
 #  define PRINT_FUNCTION serialPrint
-#  define PRINTF(...) {                           \
+#  define PRINTF(...)                             \
     if (COUNT_PARMS(__VA_ARGS__) == 1) {          \
         serialPrintV(__VA_ARGS__);                \
     } else {                                      \
         debugPrintf(serialPrint, __VA_ARGS__);    \
-    } }
+    }
 
 # endif // DPRINT_TO_RADIO
+
+extern char *_print_buf;
 
 #else // USE_PRINT not defined
 
 # define PRINT_INIT(len)
 # define PRINTF(...)
+
+#define _print_buf 0
 
 #endif // USE_PRINT
 
@@ -125,11 +129,17 @@ static inline void radioPrintV(const char* str, ...) {
     radioPrint(str);
 }
 
-typedef void (* PrintFunction_t)(const char* str);
+typedef void (*PrintFunction_t)(const char* str);
 
-void debugPrintf(PrintFunction_t outputFunction, const char* str, ...);
+void debugPrintfFormat(const char* str, ...);
 void debugHexdump(void *data, unsigned len);
 
 void printInit(void) WEAK_SYMBOL;
+
+#define debugPrintf(outputFunction, ...)      \
+    if (_print_buf) {                         \
+        debugPrintfFormat(__VA_ARGS__);       \
+        outputFunction(_print_buf);           \
+    }
 
 #endif

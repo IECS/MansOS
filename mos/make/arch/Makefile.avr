@@ -87,3 +87,6 @@ memdump : build
 
 size: build
 	$(_QUIET) avr-size $(OUTDIR)/$(APPMOD).elf
+
+stackdump:
+	@echo
