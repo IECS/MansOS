@@ -107,7 +107,9 @@ class FunctionTree(object):
         if isinstance(self.function, SealValue):
             return None
         const = self.function.getRawValue()
-        if isinstance(const, int) or isinstance(const, float):
+        if isinstance(const, int) \
+                or isinstance(const, long) \
+                or isinstance(const, float):
             return const
         return None
 
@@ -332,7 +334,7 @@ class Value(object):
         return self # already lower()'ed
 
     def getRawValue(self):
-        if not isinstance(self.value, int):
+        if not (isinstance(self.value, int) or isinstance(self.value, long)):
             return self.value
         return suffixTransform(self.value, self.suffix)
 

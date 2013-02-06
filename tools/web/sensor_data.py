@@ -5,7 +5,25 @@
 import time, os
 from settings import *
 
-class GraphData(object):
+# Polynomial ^8 + ^5 + ^4 + 1
+def crc8Add(acc, byte):
+    acc ^= byte
+    for i in range(8):
+        if acc & 1:
+            acc = (acc >> 1) ^ 0x8c
+        else:
+            acc >>= 1
+    return acc
+
+def crc8(s):
+    acc = 0
+    for c in s:
+        acc = crc8Add(acc, ord(c))
+    return acc
+
+###############################################
+
+class SensorData(object):
     def __init__(self):
         self.columns = []
         self.data = []
@@ -53,6 +71,7 @@ class GraphData(object):
                 f.close()
 
     def addNewData(self, string):
+        string = string.rstrip()
         eqSignPos = string.find('=')
         if eqSignPos == -1: return
 
@@ -70,6 +89,18 @@ class GraphData(object):
         self.seenInThisPacket.add(dataName)
 
         valueString = string[eqSignPos + 1:].strip()
+
+        if valueString.find(",") == len(valueString) - 3:
+            # checksum detected
+            calcCrc = crc8(string[:-3])
+            recvCrc = int(valueString[-2:], 16) 
+            if calcCrc != recvCrc:
+                print("Received bad checksum:\n" + string)
+                return
+
+            # remove the crc bytes from the value string
+            valueString = valueString[:-3]
+
         try:
             # try to parse the vakue as int (in any base)
             value = int(valueString, 0)
@@ -125,4 +156,4 @@ class GraphData(object):
         return len(self.columns) != 0
 
 
-graphData = GraphData()
+sensorData = SensorData()

@@ -9,7 +9,7 @@ import threading, time, serial, select, socket, cgi, subprocess, struct, signal
 import json
 from settings import *
 from mote import *
-from graph_data import *
+from sensor_data import *
 from config import *
 
 def isPython3():
@@ -68,13 +68,13 @@ def listenSerial():
                     newString = m.buffer[:pos].strip()
                     # print "got", newString
                     listenTxt.append(newString)
-                    graphData.addNewData(newString)
+                    sensorData.addNewData(newString)
                 m.buffer = m.buffer[pos + 1:]
 
         # use only last 30 lines of all motes
         listenTxt = listenTxt[-30:]
-        # use only last 40 graph readings
-        graphData.resize(40)
+        # use only last 40 readings for graphing
+        sensorData.resize(40)
         # pause for a bit
         time.sleep(0.01)
 
@@ -95,7 +95,7 @@ def openAllSerial():
     global isListening
     global listenTxt
     listenTxt = []
-    graphData.reset()
+    sensorData.reset()
     if isListening: return
     isListening = True
     listenThread = threading.Thread(target = listenSerial)
@@ -586,8 +586,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.writeFinalChunk()
             return
 
-        if graphData.hasData():
-            jsonData = json.JSONEncoder().encode(graphData.getData())
+        if sensorData.hasData():
+            jsonData = json.JSONEncoder().encode(sensorData.getData())
         else:
             jsonData = ""
 

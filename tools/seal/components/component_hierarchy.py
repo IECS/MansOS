@@ -174,7 +174,10 @@ class CounterSensor(SealSensor):
             return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
         start = self.getParameterValue("start", useCaseParameters)
         max = self.getParameterValue("max", useCaseParameters)
-        suffix = "u" if isinstance(max, int) and max >= 0x80000000 else ""
+        if isinstance(max, int) or isinstance(max, long):
+            suffix = "ul" if max >= 0x80000000 else "l"
+        else:
+            suffix = ""
         # use GCC statement-as-expression extension
         return "({" + "static uint32_t counter = {}; counter = (counter + 1) % {}{};".format(
             start, max, suffix) + "})"
@@ -196,7 +199,8 @@ class RandomSensor(SealSensor):
             return SealSensor.calculateParameterValue(self, parameter, useCaseParameters)
         min = self.getParameterValue("min", useCaseParameters)
         max = self.getParameterValue("max", useCaseParameters)
-        if isinstance(min, int) and isinstance(max, int):
+        if (isinstance(min, int) or isinstance(min, long)) \
+                and (isinstance(max, int) or isinstance(max, long)):
             modulo = max - min + 1
             if modulo == 0x10000:
                 return self.useFunction.value

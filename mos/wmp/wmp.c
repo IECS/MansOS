@@ -240,10 +240,19 @@ void wmpReadSensor(void *sensor_)
 {
     WmpSensor_t *sensor = (WmpSensor_t *) sensor_;
     static char buffer[32];
+    uint16_t stringLength;
 
     sensor->lastReadValue = sensor->func();
-    snprintf(buffer, sizeof(buffer), "%s=%ld\n", sensor->name, sensor->lastReadValue);
-
+    stringLength = snprintf(buffer, sizeof(buffer), "%s=%ld,xx\n",
+            sensor->name, sensor->lastReadValue);
+    if (sizeof(buffer) <= stringLength) {
+        stringLength = sizeof(buffer) - 1;
+    }
+    // replace x'es with crc
+    uint8_t crc = crc8(buffer, stringLength - 2);
+    buffer[stringLength - 2] = toHex(crc >> 4);
+    buffer[stringLength - 1] = toHex(crc & 0xf);
+    
     DPRINTF("File enabled=%s, output=%p\n", wmpFileOutputEnabled ? "yes" : "no", outputFile);
 
     // handle serial output
@@ -631,7 +640,8 @@ static void wmpProcessCommand(void)
     }
 }
 
-static void wmpSerialReceive(uint8_t x) {
+static void wmpSerialReceive(uint8_t x)
+{
 //    DPRINTF("got %x\n", (uint16_t) x);
     enum State {
         READ_START_CHARACTER,
