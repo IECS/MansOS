@@ -26,11 +26,12 @@ class Settings(object):
             self.dataDirectory = "data"
             self.mansosDirectory = "../.."
             self.sealBlocklyDirectory = "seal-blockly"
+            self.createDaemon = "False"
 
     cfg = ConfigValues()
 
     configurationFileName = "server.cfg"
-    
+
     def load(self):
         self.comments = {}
         tmpComment = ""
@@ -106,7 +107,7 @@ class Settings(object):
 
     def getCfgValueAsBool(self, name, default = False):
         try:
-            result = bool(self.cfg.__getattribute__(name))
+            result = self.cfg.__getattribute__(name).lower() in ["true", "yes", "y"]
         except:
             result = default
         return result
@@ -125,8 +126,7 @@ try:
 except Exception as e:
     print("Failed to load configuration:")
     print(e)
-
-
+    pass
 
 def isascii(c, printable = True):
     if 0x00 <= ord(c) <= 0x7f:
