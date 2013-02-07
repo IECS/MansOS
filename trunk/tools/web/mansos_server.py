@@ -40,8 +40,6 @@ motes = MoteCollection()
 htmlDirectory = "html"
 sealBlocklyPath = "seal-blockly"
 
-# TODO: this variable should set for each user
-#hasWriteAccess = False
 # --------------------------------------------
 class Session():
     def __init__(self,sma):
@@ -608,12 +606,6 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.sendDefaultHeaders()
         self.end_headers()
 
-        if not hasWriteAccess:
-            self.serveError("You are not in write access mode!")
-            return
-
-        #self.handleGenericQS(qs)
-
         if "platform_set" in qs:
             i = 0
             for m in motes.getMotes():
@@ -832,11 +824,11 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.writeFinalChunk()
 
     # Dummy, have to respond somehow, so javascript knows we are here
-    def serveSync(self):
+    def serveSync(self, qs):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        if hasWriteAccess:
+        if self.haveAccess(qs):
             self.writeChunk("writeAccess=True")
         self.writeFinalChunk()
 
@@ -907,15 +899,15 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         elif o.path == "/seal-frame":
             self.serveSealFrame(qs)
         elif o.path[:13] == "/seal-blockly":
-            self.serveFile(os.path.join(sealBlocklyPath, o.path[13:]))
+            self.serveFile(os.path.join(sealBlocklyPath, o.path[14:]))
         elif o.path == "/sync":
-            self.serveSync()
+            self.serveSync(qs)
         elif o.path == "/code":
             # qs['src'] contains SEAL-Blockly code
             code = qs.get('src')[0] if "src" in qs else ""
             config = qs.get('config')[0] if "config" in qs else ""
             self.compileAndUpload(code, config, None, True)
-            self.serveSync()
+            self.serveSync(qs)
         elif o.path[-4:] == ".css":
             self.serveFile(htmlDirectory + o.path)
         elif o.path[-4:] == ".png" or o.path[-4:] == ".jpg" or o.path[-4:] == ".gif" or o.path[-4:] == ".tif":
@@ -998,10 +990,6 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         global lastUploadFile
         global isInSubprocess
         self.headerIsServed = False
-
-        if not hasWriteAccess:
-            self.serveError("You are not in write access mode!")
-            return
 
         # Parse the form data posted
         form = cgi.FieldStorage(
