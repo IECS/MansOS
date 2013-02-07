@@ -11,6 +11,7 @@ from settings import *
 from mote import *
 from sensor_data import *
 from config import *
+from daemon import *
 
 def isPython3():
     return sys.version_info[0] >= 3
@@ -1134,6 +1135,9 @@ def initalizeConfig():
 
 def main():
     try:
+        if settingsInstance.getCfgValueAsBool("createDaemon"):
+            # detach from the tty and go to background
+            createDaemon()
         initalizeConfig()
         port = settingsInstance.getCfgValueAsInt("port", HTTP_SERVER_PORT)
         server = ThreadingHTTPServer(('', port), HttpServerHandler)
