@@ -285,7 +285,10 @@ class Config(object):
 
         if "filename" in qs:
             newFilename = qs["filename"][0]
-            if isValidFatFilename(newFilename):
+            if len(newFilename) and newFilename.find(".") == -1:
+                # add default extension
+                newFilename += ".csv"
+            if len(newFilename) == 0 or isValidFatFilename(newFilename):
                 self.filenameOnMote = newFilename
             else:
                 return ("The filename specified is not a valid FAT file name!", False)

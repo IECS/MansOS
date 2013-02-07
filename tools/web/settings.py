@@ -13,10 +13,6 @@ class Settings(object):
         def __init__(self):
             self.port = str(HTTP_SERVER_PORT)
             self.baudrate = str(SERIAL_BAUDRATE)
-            self.platform = "telosb"
-            self.htmlDirectory = "html"
-            self.dataDirectory = "data"
-            self.pathToMansOS = "../.."
             self.motes = []
             self.selectedMotes = []
             self.motePlatforms = [] # in format <port>:<platform>, e.g. /dev/ttyUSB0:telosb
@@ -26,7 +22,10 @@ class Settings(object):
             self.saveProcessedData = "False"
             self.saveMultipleFiles = "False"
             self.slowUpload = "False"
-            self.sealBlocklyPath = "../../.."
+            self.htmlDirectory = "html"
+            self.dataDirectory = "data"
+            self.mansosDirectory = "../.."
+            self.sealBlocklyDirectory = "seal-blockly"
 
     cfg = ConfigValues()
 

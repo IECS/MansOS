@@ -24,7 +24,6 @@ else:
     from SocketServer import *
     from urlparse import *
 
-listenTxt = []
 isListening = False
 listenThread = None
 
@@ -39,8 +38,7 @@ uploadResult = ""
 motes = MoteCollection()
 
 htmlDirectory = "html"
-
-sealBlocklyPath = "html"
+sealBlocklyPath = "seal-blockly"
 
 # TODO: this variable should set for each user
 hasWriteAccess = True
@@ -48,7 +46,6 @@ hasWriteAccess = True
 # --------------------------------------------
 
 def listenSerial():
-    global listenTxt
     while isListening:
         for m in motes.getMotes():
 
@@ -67,14 +64,10 @@ def listenSerial():
                 if pos != 0:
                     newString = m.buffer[:pos].strip()
                     # print "got", newString
-                    listenTxt.append(newString)
-                    sensorData.addNewData(newString)
+                    moteData.addNewData(newString, m.port.portstr)
                 m.buffer = m.buffer[pos + 1:]
 
-        # use only last 30 lines of all motes
-        listenTxt = listenTxt[-30:]
-        # use only last 40 readings for graphing
-        sensorData.resize(40)
+        moteData.fixSizes()
         # pause for a bit
         time.sleep(0.01)
 
@@ -93,9 +86,7 @@ def closeAllSerial():
 def openAllSerial():
     global listenThread
     global isListening
-    global listenTxt
-    listenTxt = []
-    sensorData.reset()
+    moteData.reset()
     if isListening: return
     isListening = True
     listenThread = threading.Thread(target = listenSerial)
@@ -105,7 +96,7 @@ def openAllSerial():
 
 
 def getMansOSVersion():
-    path = settingsInstance.getCfgValue("pathToMansOS")
+    path = settingsInstance.getCfgValue("mansosDirectory")
     result = ""
     try:
         with open(os.path.join(path, "doc/VERSION")) as versionFile:
@@ -422,7 +413,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         if not self.handleGenericQS(qs):
             return
         self.serveHeader("graph")
-        self.serveMotes("Graph", qs, False)
+        self.serveMotes("Listen", qs, False)
 
         if "action" in qs:
             if qs["action"][0] == "Start":
@@ -462,13 +453,15 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 closeAllSerial()
 
         txt = ""
-        for line in listenTxt:
+        for line in moteData.listenTxt:
             txt += line + "<br/>"
 
         action = "Stop" if isListening else "Start"
 
         if "dataFile" in qs:
             dataFilename = qs["dataFile"][0]
+            if len(dataFilename) and dataFilename.find(".") == -1:
+                dataFilename += ".csv"
         else:
             dataFilename = settingsInstance.getCfgValue("saveToFilename")
 
@@ -558,7 +551,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        path = os.path.join(sealBlocklyPath, "seal-blockly/index.html")
+        path = os.path.join(sealBlocklyPath, "index.html")
         with open(path) as f:
             self.writeChunk(f.read())
         self.writeFinalChunk()
@@ -586,10 +579,12 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.writeFinalChunk()
             return
 
-        if sensorData.hasData():
-            jsonData = json.JSONEncoder().encode(sensorData.getData())
-        else:
-            jsonData = ""
+# FIXME:
+#        if sensorData.hasData():
+#            jsonData = json.JSONEncoder().encode(sensorData.getData())
+#        else:
+#            jsonData = ""
+        jsonData = ""
 
         lastJsonData = jsonData
         self.writeChunk(jsonData)
@@ -600,7 +595,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.sendDefaultHeaders()
         self.end_headers()
         text = ""
-        for line in listenTxt:
+        for line in moteData.listenTxt:
             text += line + "<br/>"
         if text:
             self.writeChunk(text)
@@ -635,7 +630,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         elif o.path == "/seal-frame":
             self.serveSealFrame(qs)
         elif o.path[:13] == "/seal-blockly":
-            self.serveFile(os.path.join(sealBlocklyPath, o.path[1:]))
+            self.serveFile(os.path.join(sealBlocklyPath, o.path[13:]))
         elif o.path == "/sync":
             self.serveSync()
         elif o.path == "/code":
@@ -699,7 +694,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 outFile.write("APPMOD = App\n")
                 outFile.write("PROJDIR = $(CURDIR)\n")
                 outFile.write("ifndef MOSROOT\n")
-                mansosPath = settingsInstance.getCfgValue("pathToMansOS")
+                mansosPath = settingsInstance.getCfgValue("mansosDirectory")
                 if not os.path.isabs(mansosPath):
                     # one level up - because we are in build directory
                     mansosPath = os.path.join(mansosPath, "..")
@@ -843,16 +838,20 @@ class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
 
 # --------------------------------------------
 
-def main():
+def initalizeConfig():
     global htmlDirectory
     global sealBlocklyPath
+
+    htmlDirectory = os.path.abspath(settingsInstance.getCfgValue("htmlDirectory"))
+    dataDirectory = os.path.abspath(settingsInstance.getCfgValue("dataDirectory"))
+    if not os.path.exists(dataDirectory):
+        os.makedirs(dataDirectory)
+    sealBlocklyPath = os.path.abspath(settingsInstance.getCfgValue("sealBlocklyDirectory"))
+
+def main():
     try:
+        initalizeConfig()
         port = settingsInstance.getCfgValueAsInt("port", HTTP_SERVER_PORT)
-        htmlDirectory = os.path.abspath(settingsInstance.getCfgValue("htmlDirectory"))
-        dataDirectory = os.path.abspath(settingsInstance.getCfgValue("dataDirectory"))
-        if not os.path.exists(dataDirectory):
-            os.makedirs(dataDirectory)
-        sealBlocklyPath = os.path.abspath(settingsInstance.getCfgValue("sealBlocklyPath"))
         server = ThreadingHTTPServer(('', port), HttpServerHandler)
         motes.addAll()
         time.sleep(1)
