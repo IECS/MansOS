@@ -24,12 +24,16 @@ def crc8(s):
 ###############################################
 
 class SensorData(object):
-    def __init__(self):
+    def __init__(self, motename):
         self.columns = []
         self.data = []
         self.tempData = []
         self.seenInThisPacket = set()
         self.firstPacket = True
+        self.dirname = os.path.join(settingsInstance.cfg.dataDirectory,
+                                    os.path.basename(motename))
+        if not os.path.exists(self.dirname):
+            os.makedirs(self.dirname)
 
     def finishPacket(self):
         self.seenInThisPacket = set()
@@ -61,9 +65,9 @@ class SensorData(object):
         if settingsInstance.cfg.saveToFilename \
                 and settingsInstance.cfg.saveProcessedData \
                 and not settingsInstance.cfg.saveMultipleFiles:
-            # filename is determined by config only
-            filename = settingsInstance.cfg.dataDirectory + "/" \
-                + settingsInstance.cfg.saveToFilename + ".csv"
+            # filename is determined by config and mote name only
+            filename = os.path.join(self.dirname,
+                                    settingsInstance.cfg.saveToFilename + ".csv")
             with open(filename, "a") as f:
                 if self.firstPacket:
                     f.write(str(self.getColumns()))
@@ -90,7 +94,7 @@ class SensorData(object):
 
         valueString = string[eqSignPos + 1:].strip()
 
-        if valueString.find(",") == len(valueString) - 3:
+        if len(valueString) > 3 and valueString.find(",") == len(valueString) - 3:
             # checksum detected
             calcCrc = crc8(string[:-3])
             recvCrc = int(valueString[-2:], 16) 
@@ -123,10 +127,9 @@ class SensorData(object):
             if len(dataName) > 64:
                 return
 
-            # filename is determind by config + sensor name
-            filename = settingsInstance.cfg.dataDirectory + "/" \
-                + settingsInstance.cfg.saveToFilename + "_" + dataName
-
+            # filename is determind by config + mote name + sensor name
+            filename = os.path.join(self.dirname,
+                                    dataName + ".csv")
             with open(filename, "a") as f:
                 if os.path.getsize(filename) == 0:
                     f.write(dataName + ",serverTimestamp\n")
@@ -155,5 +158,33 @@ class SensorData(object):
     def hasData(self):
         return len(self.columns) != 0
 
+#############################################
 
-sensorData = SensorData()
+class MoteData(object):
+    def __init__(self):
+        # unformatted data
+        self.listenTxt = []
+        # parsed and formatted data
+        self.data = {}
+
+    def reset(self):
+        self.listenTxt = []
+        self.data = {}
+
+    def addNewData(self, newString, motename):
+        self.listenTxt.append(newString)
+        
+        # TODO: if the new string contains address of a data, use it instead of mote's name!
+        
+        if motename not in self.data:
+            self.data[motename] = SensorData(motename)
+        self.data[motename].addNewData(newString)
+
+    def fixSizes(self):
+        # use only last 30 lines of all motes
+        self.listenTxt = self.listenTxt[-30:]
+        # use only last 40 readings for graphing
+        for sensorData in self.data.itervalues():
+            sensorData.resize(40)
+
+moteData = MoteData()

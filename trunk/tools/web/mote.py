@@ -2,7 +2,7 @@
 # MansOS web server - mote handler class
 #
 
-import serial, subprocess, sys, time
+import serial, subprocess, sys, time, os
 #from serial.tools import list_ports
 from settings import *
 
@@ -40,6 +40,9 @@ class Mote(object):
         self.isStatic = False
         self.buffer = ""
         self.platform = "telosb"
+        dirname = os.path.join(settingsInstance.cfg.dataDirectory, portName)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
 
     def openSerial(self):
         if not self.isSelected: return
@@ -79,11 +82,12 @@ class Mote(object):
               while self.port.inWaiting():
                 c = self.port.read(1)
 
-                # save to file if required
+                # save to file if required (raw data)
                 if settingsInstance.cfg.saveToFilename \
                         and not settingsInstance.cfg.saveProcessedData:
-                    filename = settingsInstance.cfg.dataDirectory + "/" \
-                        + settingsInstance.cfg.saveToFilename
+                    filename = os.path.join(settingsInstance.cfg.dataDirectory,
+                                            self.portName,
+                                            settingsInstance.cfg.saveToFilename)
                     with open(filename, "a") as f:
                         f.write(c)
                         f.close()
@@ -116,7 +120,7 @@ class Mote(object):
             bsl = "mos/make/scripts/bsl.py"
             platformArgs = ["--invert-reset", "--invert-test"]
 
-        bsl = os.path.join(settingsInstance.getCfgValue("pathToMansOS"), bsl)
+        bsl = os.path.join(settingsInstance.getCfgValue("mansosDirectory"), bsl)
         arglist = ["python", bsl, "-c", self.port.portstr, "-r", "-e", "-I", "-p", filename]
         argist.extend(platformArgs)
         if settingsInstance.getCfgValueAsInt("slowUpload"):

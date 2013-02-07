@@ -38,12 +38,14 @@ def launchBrowser():
                 serverPort = DEFAULT_PORT
 
     # open the web browser (Firefox in Linux, user's preferred on Windows)
-    url = "http://localhost:" + str(serverPort)
     if os.name == "posix":
         # will return default system's browser if Firefox is not installed
         controller = webbrowser.get('Firefox')
     else:
         controller = webbrowser.get('windows-default')
+
+    url = "http://localhost"
+    if serverPort != 80: url += ":" + str(serverPort)
     controller.open_new_tab(url)
 
 
@@ -63,7 +65,7 @@ def isProcessRunningPosix(names):
 
 
 def isProcessRunningWindows(names):
-    # Finding process info on Windows (including WinXP Home)
+    # Finding process info on Windows (all versions, including e.g. WinXP Home)
     # is too complicated without Python extension packages :(
     return False
 
