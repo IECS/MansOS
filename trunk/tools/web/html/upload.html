@@ -7,6 +7,7 @@
   <label for="config">Enter configuration options (one per line):</label><br/>
   <textarea id="config" name="config" cols="80" rows="4"  title="Enter the configuration options your would normally put in application's config file" %DISABLED%>%UPLOAD_CONFIG%</textarea><br/>
 
+  <input type="hidden" name="sma" class="Msma37" value="0">
   <input type="submit" name="compile" value="Compile and upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/>
 
   <input type="checkbox" name="slow" title="Add delays to the upload script. Useful if serial protocol is tunneled over IP" %SLOW_CHECKED% %DISABLED%>Use SLOW switch when uploading<br/><br/>
