@@ -36,6 +36,11 @@
 MemoryAddress_t spInMain;
 MemoryAddress_t spInPutchar;
 
+MemoryAddress_t spInF;
+MemoryAddress_t spInInterrupt;
+
+void f(void) __attribute__((noinline));
+
 int putchar(int c) {
     if (!spInPutchar) {
         GET_SP(spInPutchar);
@@ -46,6 +51,7 @@ int putchar(int c) {
 
 void appMain(void)
 {
+    f();
     GET_SP(spInMain);
 
     // this uses 62 bytes on GCC 4.5.3
@@ -63,4 +69,20 @@ void appMain(void)
     PRINTF("stack pointer in main: %#x\r\n", spInMain);
     PRINTF("stack pointer in putchar: %#x\r\n", spInPutchar);
     PRINTF("difference: %d\r\n", spInMain - spInPutchar);
+
+    PRINTF("stack pointer in f: %#x\r\n", spInF);
+    PRINTF("stack pointer in interrupt handler: %#x\r\n", spInInterrupt);
+    PRINTF("difference: %d\r\n", spInF - spInInterrupt);
+}
+
+void f(void)
+{
+    mdelay(1000);
+    ALARM_TIMER_STOP();
+    GET_SP(spInF);
+}
+
+ALARM_TIMER_INTERRUPT0()
+{
+    GET_SP(spInInterrupt);
 }
