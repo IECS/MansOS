@@ -231,7 +231,7 @@ def buildTrace():
         elif ptrCallInstr.match(line):
             if currentFunction.name in functionsWithAllowedCallbacks:
                 continue
-            print("Warning! Unhandled call-by-pointer at function " + currentFunction.name)
+            print("Warning! Unhandled call-by-pointer in function " + currentFunction.name)
             print("Stack usage analysis results may be incorrect.")
         elif pushPopInstr.match(line):
             #print "push/pop:", line.strip()
@@ -250,7 +250,7 @@ def buildTrace():
             if currentFunction.name == "__init_stack" \
                     or currentFunction.name in threadInternalFunctions:
                 continue
-            print("Warning! Unhandled stack-related instruction encountered at function " \
+            print("Warning! Unhandled stack-related instruction in function " \
                       + currentFunction.name)
             print("Stack usage analysis results may be incorrect. The instruction was:")
             print(line)
@@ -281,25 +281,27 @@ def detectLoops(backtrace):
     functions[last].callees = nonrecursiveCallees
 
 def simulateWorstCaseStackUsage():
-    if "main" not in functionsByName:
-        print("Aborting: main() function not defined?!")
-        return
-
     if haveThreads:
         wsu = functionsByName["appMain"].runTrace()
-        # TODO: other user threads
-        # TODO: also include system thread?
+        # TODO: other user threads (find by: call and args to threadCreate())
+        # TODO: also include kernel thread?
         wsu += 2 # compensate for a single call overhead (in threadWrapper)
     else:
         wsu = functionsByName["main"].runTrace()
     
     worstInterruptUsage = 0
+    hasInts = False
     for interruptFunction in interruptFunctions:
         if interruptFunction in functionsByName:
+            hasInts = True
             usage = functionsByName[interruptFunction].runTrace()
             if usage > worstInterruptUsage:
                 worstInterruptUsage = usage
-    wsu += worstInterruptUsage
+    if hasInts:
+        # interrupt call overhead is 4, because not only return address, but also
+        # status register is pushed onto stack!
+        wsu += 4
+        wsu += worstInterruptUsage
 
     maybeUserThreads = " in user threads" if haveThreads else ""
     print("Estimated worst-case stack usage" + maybeUserThreads \
@@ -317,6 +319,9 @@ def main():
     if verbose: print("")
     analyzeObjFile()
     buildTrace()
+    if "main" not in functionsByName:
+        print("Aborting: main() function not defined?!")
+        return
     detectLoops([functionsByName["main"].address])
     simulateWorstCaseStackUsage()
 

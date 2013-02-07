@@ -36,7 +36,8 @@
 #define KERNEL_THREAD_INDEX (NUM_THREADS - 1)
 
 #if PLATFORM_FARMMOTE
-#define THREAD_STACK_SIZE 142
+ // minimal sufficient for threads + printf when compiled on gcc 4.6
+#define THREAD_STACK_SIZE 160
 #elif PLATFORM_ARDUINO
 #define THREAD_STACK_SIZE 256
 #else

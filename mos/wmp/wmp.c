@@ -25,6 +25,7 @@
 #include "stdmansos.h"
 #include <lib/byteorder.h>
 #include <lib/algo.h>
+#include <codec.h>
 #include <assert.h>
 #include <fatfs/fatfs.h>
 #include <stdio.h>
@@ -243,13 +244,13 @@ void wmpReadSensor(void *sensor_)
     uint16_t stringLength;
 
     sensor->lastReadValue = sensor->func();
-    stringLength = snprintf(buffer, sizeof(buffer), "%s=%ld,xx\n",
+    stringLength = snprintf(buffer, sizeof(buffer), "%s=%ld,xx",
             sensor->name, sensor->lastReadValue);
     if (sizeof(buffer) <= stringLength) {
         stringLength = sizeof(buffer) - 1;
     }
     // replace x'es with crc
-    uint8_t crc = crc8(buffer, stringLength - 2);
+    uint8_t crc = crc8((uint8_t *) buffer, stringLength - 3);
     buffer[stringLength - 2] = toHex(crc >> 4);
     buffer[stringLength - 1] = toHex(crc & 0xf);
     
@@ -258,6 +259,7 @@ void wmpReadSensor(void *sensor_)
     // handle serial output
     if (wmpSerialOutputEnabled) {
         serialSendString(PRINTF_SERIAL_ID, buffer);
+        serialSendByte(PRINTF_SERIAL_ID, '\n');
     }
     // handle output to SD card
     if (wmpSdCardOutputEnabled) {
