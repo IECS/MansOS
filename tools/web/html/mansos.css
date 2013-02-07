@@ -1,9 +1,12 @@
 body {
     font-size:12px;
-    background-color:#eeeef6;
-    font-family:sans;
-    line-height:120%;
+    font-family:sans, Verdana;
+    /*line-height:120%;*/
     margin:0px 20px;
+    background-color:#175186;
+}
+a{
+	text-decoration: none;
 }
 div.motes1 {
     margin-bottom:12px;
@@ -17,6 +20,7 @@ div.mote {
 }
 div.contents {
     margin-top:60px;
+	min-height:400px;
     border-bottom:thin dashed;
 }
 div.subcontents {
@@ -24,17 +28,23 @@ div.subcontents {
 }
 div.topmenu {
     float:left;
-    word-spacing:12px;
+    word-spacing:3px;
     font-size:100%;
     padding-top:10px;
     padding-bottom:10px;
     white-space:nowrap;
     text-align:left;
-    border-top:thin dashed;
-    border-bottom:thin dashed;
+    *border-top:thin dashed;
+    *border-bottom:thin dashed;
     margin-bottom:12px;
     width:100%;
-    min-width:600px;
+    min-width:700px;
+	background-color:#175186;
+	background-image:url('celi2.png');
+	background-size:contain;
+	background-repeat:repeat-x;
+	-moz-border-radius: 7px;
+	border-radius: 7px;
 }
 div.form {
     margin-bottom:12px;
@@ -53,6 +63,84 @@ div.error2 {
     font-size:120%;
     text-align:center
 }
+.topmenu a{
+	font-weight:bold;
+	color:#ffffff;
+	text-decoration: none;
+	background-image:url('chips.png');
+	background-size:contain;
+	background-repeat:repeat-x;
+	font-size:145%;
+	padding:5px;
+	padding-top:8px;
+	padding-bottom:8px;
+	margin-left:5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+}
+.topmenu a:first-child{
+	margin-left:15px;
+}
+.topmenu a:hover{
+	background-color:rgba(25,200,214,0.3);
+	color:rgb(255,255,0);
+}
+.box{
+	float:left;
+	color:#000;
+	text-align:center;
+}
+div.box{
+	padding:10px;
+	margin:5px;
+	width:29%;
+	background-color:#ffffff;
+	border-radius:12px;
+	border-style:solid;
+	border-width:1px;
+	border-color:#175186;
+}
+div.box:hover{
+	border-width: 3px;
+	padding:8px
+}
+.box h3{
+	margin:0;
+	margin-bottom:5px;
+}
+.box p{
+	margin:0;
+	margin-top:5px;
+}
+.box img{
+	max-width:100%;
+	max-height:200px;	
+	border-radius:8px;
+}
+.box .pic{
+	height:200px;
+	*background-color:#000;
+}
+#logo{
+	height:70px;
+}
+#cont{
+	width:80%;
+	min-width:820px;
+	margin:auto;
+	margin-top:15px;
+	margin-bottom:15px;
+	padding: 20px;
+    background-color:#eeeef6;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+}
+#seal-frame{
+	width:96%;
+	height:600px;
+	margin-left:2%;
+	border-radius:10px;
+}
 #chart_div {
     border:thin;
 }
@@ -65,4 +153,12 @@ div.error2 {
     padding-left:12px;
     border:2px;
     border-style:dashed;
+}
+.clearfix:after {
+	visibility: hidden;
+	display: block;
+	font-size: 0;
+	content: " ";
+	clear: both;
+	height: 0;
 }

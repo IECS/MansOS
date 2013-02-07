@@ -1,16 +1,36 @@
-</head>
-<body>
-<div class="title">MansOS Web Interface %PAGETITLE%</div>
+<div id="cont">
+	<div id="header">
+		<div class="title"><h2>MansOS Web Interface %PAGETITLE%</h2></div>
+	</div>
+	<div class="topmenu">
+		<!--
+		<span style="float:left;">
+			<a class="module" href="motes">Motes</a>
+			<a class="module" href="config%MOTEID_CONFIG%">Configuration</a>
+			<a class="module" href="config%MOTEID_FILES%">Files</a>
+		</span>
+		-->
+			<form action="motes" style="float:left;">
+				<input type="hidden" name="sma" class="Msma37" value="0">
+				<input type="submit" value="Motes">
+			</form>
+			<form action="config%MOTEID_CONFIG%" style="float:left;">
+				<input type="hidden" name="sma" class="Msma37" value="0">
+				<input type="submit" value="Configuration">
+			</form>
+			<form action="config%MOTEID_FILES%" style="float:left;">
+				<input type="hidden" name="sma" class="Msma37" value="0">
+				<input type="submit" value="Files">
+			</form>
+			<!-- Tiesibas ir lietotajam
+		<form action="%THISPAGE%">
+			<span style="float:right;">
+				<input type="submit" name="accessType" %DISABLED% value="%ACCESSACTION% write access"/>
+				<input type="hidden" name="sma" class="Msma37" value="0">
+				<input type="hidden" name="sid" class="Msid37" value="0">
+			</span>
+		</form>
+			-->
+	</div>
 
-<div class="topmenu">
-<span style="float:left;">
-<a class="module" href="motes">Motes</a>
-<a class="module" href="config%MOTEID_CONFIG%">Configuration</a>
-<a class="module" href="config%MOTEID_FILES%">Files</a>
-</span>
-<form action="%THISPAGE%">
-<span style="float:right;"><input type="submit" name="accessType" value="%ACCESSACTION% write access"/></span>
-</form>
-</div>
-
-<div class="contents">
+	<div class="contents">

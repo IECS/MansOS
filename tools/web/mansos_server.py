@@ -4,7 +4,7 @@
 # MansOS web server - main file
 #
 
-import os, sys, platform
+import os, sys, platform, datetime, cookielib, random
 import threading, time, serial, select, socket, cgi, subprocess, struct, signal
 import json
 from settings import *
@@ -41,10 +41,197 @@ htmlDirectory = "html"
 sealBlocklyPath = "seal-blockly"
 
 # TODO: this variable should set for each user
-hasWriteAccess = True
-
+#hasWriteAccess = False
 # --------------------------------------------
+class Session():
+    def __init__(self,sma):
+        self._sma=sma
+        self._end=datetime.datetime.now() + datetime.timedelta(minutes=1)
+    def add_sid(self,sid,user):
+        self._sid=sid
+        self._user=user
+    def get_all_data(self):
+        temp = {}
+        temp["sma"] = self._sma
+        temp["end"] = self._end
+        try:
+            temp["sid"] = self._sid
+        except:
+            pass
+        try:
+            temp["user"] = self._user
+        except:
+            pass
+        return temp
+    def del_sid(self):
+        try:
+            del self._sid
+            del self._user
+        except:
+            pass
 
+class Sessions():
+    def __init__(self):
+        self._sessionList = []
+    def is_session(self,sma):
+        i=0
+        while self._sessionList.__len__() > i:
+            if self._sessionList[i]._sma == sma:
+                return True
+            i +=1
+        return False
+    def add_session(self,sma):
+        self.delete_old()
+        self._sessionList.append(Session(sma))
+    def get_session(self,sma):
+        i=0
+        while self._sessionList.__len__() > i:
+            if self._sessionList[i]._sma == sma:
+                return self._sessionList[i]
+            i +=1
+        #print("Nav tada sesijas")
+        return False
+    def delete_old(self):
+        i=0
+        while self._sessionList.__len__() > i:
+            if self._sessionList[i]._end < datetime.datetime.now():
+                self._sessionList.pop(i)
+            else:
+                i+=1
+    def set_sma(self,osma,nsma):
+        temp = self.get_session(osma)
+        if temp:
+            if nsma[-1:] == "1":
+                temp._end=datetime.datetime.now() + datetime.timedelta(minutes=15)
+            else:
+                temp._end=datetime.datetime.now() + datetime.timedelta(minutes=1)
+            temp._sma=nsma
+            return True
+        else:
+            nsma=nsma[:-1]+"0"
+            self.add_session(nsma)
+            return False
+    def add_sid(self,sma,sid,user):
+        i=0
+        while self._sessionList.__len__() > i:
+            if self._sessionList[i]._sma == sma:
+                self._sessionList[i].add_sid(sid,user)
+                return
+            i+=1
+    def get_sid(self,sma):
+        pass
+    def del_sid(self,sma):
+        i=0
+        while self._sessionList.__len__() > i:
+            if self._sessionList[i]._sma == sma:
+                self._sessionList[i].del_sid()
+                return
+            i+=1
+    def get_sessions(self):
+        temp = {}
+        i=0
+        while self._sessionList.__len__() > i:
+            temp[i] = self._sessionList[i].get_all_data()
+            i+=1
+        return temp
+        
+# --------------------------------------------
+class User():
+    def __init__(self, userAttributes, data):
+        self._attributes = {}
+        i=0
+        while data.__len__() > i:
+            self._attributes[userAttributes[i]] = data[i]
+            i+=1
+    def set_attributes(self, key, value):
+        self._attributes[key] = value
+    def get_data(self, key):
+        return self._attributes.get(key, None)
+    def get_all_data(self):
+        return self._attributes
+    
+class Users():
+    def __init__(self, userAttr):
+        self._userAttributes = userAttr
+        self._userList = []
+    def is_attribute(self, attrName):
+        i=0
+        while self._userAttributes.__len__() > i:
+            if self._userAttributes[i] == attrName:
+                return True
+            i +=1
+        return False
+    def get_user(self, key, value):
+        if not self.is_attribute(key):
+            #print("Nav tada pazime")
+            return False
+        i=0
+        while self._userList.__len__() > i:
+            if self._userList[i].get_data(key) == value:
+                return self._userList[i].get_all_data()
+            i +=1
+        #print("Nav tada persona")
+        return False
+    def add_user(self, userData):
+        # vajadziga parbaude vai nav jau tads vards
+        self._userList.append(User(self._userAttributes, userData))
+        return True
+    def get_users(self):
+        temp = {}
+        i=0
+        while self._userList.__len__() > i:
+            temp[i] = self._userList[i].get_all_data()
+            i+=1
+        return temp
+    def add_attribute(self, attrName, defaultVal):
+        if self.is_attribute(attrName):
+            return False
+        self._userAttributes.append(attrName)
+        i=0
+        while self._userList.__len__() > i:
+            self._userList[i].set_attributes(attrName, defaultVal)
+            i+=1
+        return True
+    def set_attribute(self, user, attrName, value):
+        if not self.is_attribute(attrName):
+            return False
+        tuser = self.get_user("name", user)
+        if type(tuser) == dict:
+            tuser[attrName] = value
+            return True
+        return False
+    def make_copy(self):
+        tstr = "/" + userFile + str(datetime.datetime.now())[:22]
+        tstr = tstr.replace(' ','_')
+        tstr = tstr.replace(':','-')
+        tstr = tstr.replace('.dat','')
+        tstr += ".dat"
+        #os.rename(userDirectory + "/test.dat",userDirectory + tstr)
+        os.rename(userDirectory + "/" + userFile,userDirectory+ "/archives" + tstr)
+    def write_in_file(self):
+        self.make_copy()
+        #f = open(userDirectory + "/test.dat","w")
+        f = open(userDirectory + "/" + userFile,"w")
+        tstr = ""
+        i=0
+        while self._userAttributes.__len__() > i:
+            tstr += self._userAttributes[i] + " "
+            i+=1
+        tstr +="\n"
+        f.write(tstr)
+        i=0
+        while self._userList.__len__() > i:
+            j=0
+            tstr = ""
+            while self._userAttributes.__len__() > j:
+                tstr += str(self._userList[i].get_data(self._userAttributes[j])) + " "
+                j += 1
+            tstr +="\n"
+            f.write(tstr)
+            i += 1
+        f.close()
+
+# -------------------------------------
 def listenSerial():
     while isListening:
         for m in motes.getMotes():
@@ -122,21 +309,56 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.wfile.write("0\r\n")
         self.wfile.write("\r\n")
 
-    def handleGenericQS(self, qs):
-        global hasWriteAccess
-        if "accessType" in qs:
-            val = qs["accessType"][0]
-            if val[:3].lower() == "get":
-                hasWriteAccess = True
+    def serveSession(self, qs):
+        with open(htmlDirectory + "/session.html", "r") as f:
+            contents = f.read()
+            tsma=str(random.randint(100000, 999999))
+            if "sma" in qs:
+                tsma=tsma+qs["sma"][0][-1:]
+                if "log" in qs:
+                    if qs["log"] == "in":
+                        tsid=str(random.randint(1000000000, 9999999999))
+                        tsma=tsma[:-1]+"1"
+                        allSessions.add_sid(qs["sma"][0],tsid,allUsers.get_user("name", qs["user"][0]))
+                        contents = contents.replace("/*?LOGIN", "")
+                        contents = contents.replace("%SID%", tsid)
+                    elif qs["log"] == "out":
+                        tsma=tsma[:-1]+"0"
+                        contents = contents.replace("/*?DEL", "")
+                        allSessions.del_sid(qs["sma"][0])
+                if not allSessions.set_sma(qs["sma"][0],tsma):
+                    tsma= tsma[:-1]+"0"
+                    contents = contents.replace("/*?DEL", "")
+                    allSessions.del_sid(qs["sma"][0])
             else:
-                hasWriteAccess = False
-        if "action" in qs:
-            if not hasWriteAccess:
-                self.serveError("You do not have write access!")
+                tsma=tsma+"0"
+                allSessions.add_session(tsma)
+                contents = contents.replace("/*?DEL", "")
+                #delsid
+            #nolasa vai nav Msma37
+            #ja nav izveido jaunu
+            #ja ir nomaina sma
+            # Msma37
+            contents = contents.replace("%RAND%", tsma)
+            if not "sma" in qs:
+                qs["sma"] = []
+                qs["sma"].append(tsma)
+            else:
+                qs["sma"][0] = tsma
+            print("allSessions = ")
+            print(allSessions.get_sessions())
+            self.writeChunk(contents)
+            
+    def haveAccess(self, qs):
+        if "sma" in qs and "1" in qs["sma"][0][-1:]:
+            try:
+                if allSessions.get_session(qs["sma"][0])._user["hasWriteAccess"] == "True":
+                    return True
+            except:
                 return False
-        return True
-
-    def serveHeader(self, name, isGeneric = True, includeBodyStart = True, replaceValues = None):
+        return False
+    
+    def serveHeader(self, name, qs, isGeneric = True, includeBodyStart = True, replaceValues = None):
         self.headerIsServed = True
         if name == "default":
             pagetitle = ""
@@ -156,10 +378,19 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 self.writeChunk(contents)
         except:
             pass
-
+            
         if includeBodyStart:
+            
+            try:
+                if not "no" in qs:
+                     self.serveSession(qs)
+            except Exception as e:
+                print("Error Session not served!:")
+                print(e)
+                self.writeChunk('</head>\n<body>')
+                
             suffix = "generic" if isGeneric else "mote"
-
+            
             with open(htmlDirectory + "/bodystart-" + suffix + ".html", "r") as f:
                 contents = f.read()
                 if replaceValues:
@@ -167,17 +398,29 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                         contents = contents.replace("%" + v + "%", replaceValues[v])
                 # page title
                 contents = contents.replace("%PAGETITLE%", pagetitle)
-                action = "Release" if hasWriteAccess else "Get"
+                ###action = "Release" if hasWriteAccess else "Get"
+                disabled = "" if self.haveAccess(qs) else 'disabled="disabled" '                '''
+                if self.haveAccess(qs):
+                    action = "Release" if hasWriteAccess else "Get"
+                else:
+                    action = "Get"
                 # read / write access
                 contents = contents.replace("%ACCESSACTION%", action)
+                '''
+                contents = contents.replace("%DISABLED%", disabled)
+                # login/logout
+                log = "Logout" if "sma" in qs and "1" in qs["sma"][0][-1:] else "Login"
+                contents = contents.replace("%LOG%", log)
                 # this page (for form)
                 contents = contents.replace("%THISPAGE%", name)
                 self.writeChunk(contents)
 
-
-    def serveBody(self, name, replaceValues = None):
-        disabled = "" if hasWriteAccess else 'disabled="disabled" '
-
+    def serveBody(self, name, qs = {'sma': ['0000000'],}, replaceValues = None):
+        ###disabled = "" if hasWriteAccess else 'disabled="disabled" '
+        if self.haveAccess(qs):
+            disabled = ""# if hasWriteAccess else 'disabled="disabled" '
+        else:
+            disabled = 'disabled="disabled" '
         with open(htmlDirectory + "/" + name + ".html", "r") as f:
             contents = f.read()
             if replaceValues:
@@ -195,7 +438,10 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             text += '<form action="' + toCamelCase(action) + '">'
         self.writeChunk(text)
 
-        disabled = "" if hasWriteAccess else 'disabled="disabled" '
+        if self.haveAccess(qs):
+            disabled = "" #if hasWriteAccess else 'disabled="disabled" '
+        else:
+            disabled = 'disabled="disabled" '
 
         c = ""
         i = 0
@@ -233,12 +479,16 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         text = '<form action="config"><div class="motes2">\n'
         text += 'Directly attached motes:<br/>\n'
 
-        disabled = "" if hasWriteAccess else 'disabled="disabled" '
+        if self.haveAccess(qs):
+            disabled = "" #if hasWriteAccess else 'disabled="disabled" '
+        else:
+            disabled = 'disabled="disabled" '
 
         i = 0
         for m in motes.getMotes():
             name = "mote" + str(i)
             text += '<div class="mote"><strong>Mote: </strong>' + m.portName
+            text += ' <input type="hidden" name="sma" class="Msma37" value="0"> '
             text += ' <input type="submit" name="' + name + '_cfg" title="Get/set mote\'s configuration (e.g. sensor reading periods)" value="Configuration..." ' + disabled + '/>\n'
             text += ' <input type="submit" name="' + name + '_files" title="View files on mote\'s filesystem" value="Files..." ' + disabled + '/>\n'
             text += ' Platform: <select name="sel_' + name + '" ' + disabled + ' title="Select the mote\'s platform: determines the list of sensors the mote has. Also has effect on code compilation and uploading">\n'
@@ -271,10 +521,14 @@ class HttpServerHandler(BaseHTTPRequestHandler):
     def serveFile(self, filename):
         mimetype = 'text/html'
         if filename[-4:] == '.css': mimetype = 'text/css'
-        elif filename[-4:] == '.js': mimetype = 'application/javascript'
+        elif filename[-3:] == '.js': mimetype = 'application/javascript'
+        elif filename[-4:] == '.png': mimetype = 'image/png'
+        elif filename[-4:] == '.gif': mimetype = 'image/gif'
+        elif filename[-4:] == '.jpg': mimetype = 'image/jpg'
+        elif filename[-4:] == '.tif': mimetype = 'image/tif'
 
         try:
-            with open(filename, "r") as f:
+            with open(filename, "rb") as f:
                 contents = f.read()
                 self.send_response(200)
                 self.send_header('Content-Type', mimetype)
@@ -283,20 +537,24 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 self.wfile.write(contents)
                 f.close()
         except:
-            print("problem with file " + filename)
+            print("problem with file " + filename + "\n")
             self.serve404Error(filename, {})
+    def getCookie(self):
+        for k, v in os.environ.items():
+            print (k, "=", v)
 
     def serve404Error(self, path, qs):
         self.send_response(404)
         self.sendDefaultHeaders()
         self.end_headers()
-        self.serveHeader("404")
+        qs["no"] = "no"
+        self.serveHeader("404", qs)
         self.writeChunk("<strong>Path " + path + " not found on the server</strong>\n")
         self.serveFooter()
 
     def serveError(self, message):
         if not self.headerIsServed:
-            self.serveHeader("error")
+            self.serveHeader("error",{})
         self.writeChunk("\n<strong>Error: " + message + "</strong></div>\n")
         self.serveFooter()
 
@@ -304,19 +562,44 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        if not self.handleGenericQS(qs):
+        self.serveHeader("default", qs)
+        self.serveBody("default", qs)
+        self.serveFooter()
+
+    def serveLogin(self, qs):
+        #self.getCookie()
+        #print(qs)
+        qs["log"] = ""
+        changes = {}
+        changes["FAIL"] = 'hidden'
+        if "sma" in qs and "1" in qs["sma"][0][-1:]:
+            qs["log"] = "out"
+            self.serveDefault(qs)
             return
-        self.serveHeader("default")
-        self.serveBody("default")
+        elif "password" in qs and "user" in qs:
+            tuser=allUsers.get_user("name", qs["user"][0])
+            if tuser and tuser["password"] == qs["password"][0]:
+                qs["log"] = "in"
+                print(qs["user"][0])
+                print("had loged in")
+                self.serveDefault(qs)
+                return
+            else:
+                changes["FAIL"]=""
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+        #if "accessType" in qs:
+            #self.handleGenericQS(qs)
+        self.serveHeader("login", qs)
+        self.serveBody("login", qs, changes)
         self.serveFooter()
 
     def serveMoteSelect(self, qs):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        if not self.handleGenericQS(qs):
-            return
-        self.serveHeader("motes")
+        self.serveHeader("motes", qs)
         self.serveMoteMotes(qs)
         self.serveFooter()
 
@@ -329,7 +612,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.serveError("You are not in write access mode!")
             return
 
-        self.handleGenericQS(qs)
+        #self.handleGenericQS(qs)
 
         if "platform_set" in qs:
             i = 0
@@ -341,7 +624,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             motes.storeSelected()
 
             text = '<strong>Mote platforms updated!</strong></div>\n'
-            self.serveHeader("config", isGeneric = True)
+            self.serveHeader("config", qs, isGeneric = True)
             self.writeChunk(text)
             self.serveFooter()
             return
@@ -374,7 +657,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             return
 
         moteidQS = "?sel_mote" + str(moteIndex) + "=" + platform + "&" + "mote" + str(moteIndex)
-        self.serveHeader("config", isGeneric = False,
+        self.serveHeader("config", qs, isGeneric = False,
                          replaceValues = {"MOTEID_CONFIG" : moteidQS + "_cfg=1",
                           "MOTEID_FILES" : moteidQS + "_files=1"})
 
@@ -410,9 +693,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        if not self.handleGenericQS(qs):
-            return
-        self.serveHeader("graph")
+        self.serveHeader("graph", qs)
         self.serveMotes("Listen", qs, False)
 
         if "action" in qs:
@@ -428,16 +709,14 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 closeAllSerial()
 
         action = "Stop" if isListening else "Start"
-        self.serveBody("graph", {"MOTE_ACTION": action})
+        self.serveBody("graph", qs, {"MOTE_ACTION": action})
         self.serveFooter()
 
     def serveListen(self, qs):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        if not self.handleGenericQS(qs):
-            return
-        self.serveHeader("listen")
+        self.serveHeader("listen", qs)
         self.serveMotes("Listen", qs, False)
 
         if "action" in qs:
@@ -480,7 +759,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         settingsInstance.setCfgValue("saveMultipleFiles", bool(saveMultipleFiles))
         settingsInstance.save()
 
-        self.serveBody("listen",
+        self.serveBody("listen", qs,
                        {"LISTEN_TXT" : txt,
                         "MOTE_ACTION": action,
                         "DATA_FILENAME" : dataFilename,
@@ -493,13 +772,11 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        if not self.handleGenericQS(qs):
-            return
-        self.serveHeader("upload")
+        self.serveHeader("upload", qs)
         self.serveMotes("Upload", qs, True)
         isSealCode = settingsInstance.getCfgValueAsInt("isSealCode")
         isSlow = settingsInstance.getCfgValueAsInt("slowUpload")
-        self.serveBody("upload",
+        self.serveBody("upload", qs,
                        {"CCODE_CHECKED": 'checked="checked"' if not isSealCode else "",
                         "SEALCODE_CHECKED" : 'checked="checked"' if isSealCode else "",
                         "UPLOAD_CODE" : lastUploadCode,
@@ -521,7 +798,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.sendDefaultHeaders()
             self.end_headers()
-            self.serveHeader("upload")
+            self.serveHeader("upload", qs)
             self.writeChunk("Upload result:<br/><pre>\n")
             while isInSubprocess or uploadResult:
                 if uploadResult:
@@ -541,10 +818,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        if not self.handleGenericQS(qs):
-            return
-        self.serveHeader("blockly")
-        self.serveBody("blockly")
+        self.serveHeader("blockly", qs)
+        self.serveBody("blockly", qs)
         self.serveFooter()
 
     def serveSealFrame(self, qs):
@@ -619,6 +894,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.serveGraphsData(qs)
         elif o.path == "/upload":
             self.serveUpload(qs)
+        elif o.path == "/login":
+            self.serveLogin(qs)
         elif o.path == "/upload-result":
             self.serveUploadResult(qs)
         elif o.path == "/listen":
@@ -641,6 +918,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.serveSync()
         elif o.path[-4:] == ".css":
             self.serveFile(htmlDirectory + o.path)
+        elif o.path[-4:] == ".png" or o.path[-4:] == ".jpg" or o.path[-4:] == ".gif" or o.path[-4:] == ".tif":
+            self.serveFile(htmlDirectory + "/img/" + o.path)
         else:
             self.serve404Error(o.path, qs)
 
@@ -718,7 +997,6 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         global lastUploadConfig
         global lastUploadFile
         global isInSubprocess
-
         self.headerIsServed = False
 
         if not hasWriteAccess:
@@ -765,7 +1043,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
         # check if what to upload is provided
         if not fileContents and not code:
-            self.serveHeader("upload")
+            self.serveHeader("upload", {})
             self.serveError("Neither filename nor code specified!")
             return
 
@@ -787,7 +1065,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         motes.storeSelected()
         # check if any motes are selected
         if not motes.anySelected():
-            self.serveHeader("upload")
+            self.serveHeader("upload", {})
             self.serveError("No motes selected!")
             return
 
@@ -801,7 +1079,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
         retcode = self.compileAndUpload(code, config, fileContents, isSEAL)
 
-        self.serveHeader("upload")
+        self.serveHeader("upload", qs)
         self.serveMotes("Upload", {}, True)
         if retcode == 0:
             self.writeChunk("<strong>Upload done!</strong></div>")
@@ -840,13 +1118,38 @@ class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
 
 def initalizeConfig():
     global htmlDirectory
+    global dataDirectory
     global sealBlocklyPath
+    global allUsers
+    global allSessions
+    global userFile
+    global userDirectory
+
+    allSessions = Sessions()
 
     htmlDirectory = os.path.abspath(settingsInstance.getCfgValue("htmlDirectory"))
     dataDirectory = os.path.abspath(settingsInstance.getCfgValue("dataDirectory"))
     if not os.path.exists(dataDirectory):
         os.makedirs(dataDirectory)
     sealBlocklyPath = os.path.abspath(settingsInstance.getCfgValue("sealBlocklyDirectory"))
+
+    userDirectory = "user" # Jaliek konfiga
+    if not os.path.exists(userDirectory):
+        os.makedirs(userDirectory)
+    userFile = "user.dat" # Jaieliek konfiga
+    if not os.path.exists(userDirectory + "/" + userFile):
+        uf = open(userDirectory + "/" + userFile,"w")
+        uf.write("name password email theme hasWriteAccess\n") #ari vajadzetu no konfiguracijas
+        uf.write("admin admin none 0 True\n")
+    uf = open(userDirectory + "/" + userFile,"r")
+    i = False
+    for line in uf:
+         if not i:
+             i = True
+             allUsers = Users(line.split())
+         else:
+             allUsers.add_user(line.split())
+    uf.close()
 
 def main():
     try:

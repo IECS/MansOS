@@ -1,0 +1,52 @@
+</head>
+<body>
+<script>
+function getCookie(c_name)
+{
+var i,x,y,ARRcookies=document.cookie.split(";");
+for (i=0;i<ARRcookies.length;i++)
+  {
+  x=ARRcookies[i].substr(0,ARRcookies[i].indexOf("="));
+  y=ARRcookies[i].substr(ARRcookies[i].indexOf("=")+1);
+  x=x.replace(/^\s+|\s+$/g,"");
+  if (x==c_name)
+    {
+    return unescape(y);
+    }
+  }
+}
+window.onload=function (){
+SetSma();
+SetSid();
+}
+function SetSma(){
+    var elems = document.getElementsByTagName('input'), i;
+	var sma=getCookie("Msma37");
+	if (sma == undefined) sma="";
+    for (i in elems) {
+        if((' ' + elems[i].className + ' ').indexOf(' Msma37 ')
+                > -1) {
+            elems[i].value = sma;
+        }
+    }
+}
+function SetSid(){
+    var elems = document.getElementsByTagName('input'), i;
+	var sid=getCookie("Msid37");
+	if (sid == undefined) sid="";
+	for (i in elems) {
+		if((' ' + elems[i].className + ' ').indexOf(' Msid37 ')
+				> -1) {
+			elems[i].value = sid;
+		}
+	}
+}
+	/*?DEL
+		document.cookie = 'Msid37=0; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/'
+	/*DEL?*/
+	//alert(getCookie("Msma37"))
+	document.cookie = 'Msma37=%RAND%; expires=Session; path=/'
+	/*?LOGIN
+		document.cookie = 'Msid37=%SID%; expires=Session; path=/'
+	/*LOGIN?*/
+</script>

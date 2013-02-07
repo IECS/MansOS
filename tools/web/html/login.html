@@ -1,0 +1,29 @@
+<p><strong>Login:</strong></p>
+<script>
+function IsAll()
+{
+	var e=""
+	var elems = document.getElementsByTagName('input'), i;
+	for (i in elems) {
+		if((' ' + elems[i].className + ' ').indexOf(' must ') > -1)
+		{
+			if(elems[i].value == "") e=e+"Enter "+ elems[i].name+ "!\n";
+		}
+	}
+	if(e != "")
+	{
+		alert(e);
+		return false;
+	}
+	return true;
+}
+</script>
+<span %FAIL%>
+	<h4 style="color:red;">You have made mistake!</h4>
+</span>
+<form name="login" action="login" onsubmit="return IsAll()" >
+	<p>User name: <input type="Text" class="must" name="user"></p>
+	<p>Password: <input type="password" class="must" name="password"></p>
+	<input type="hidden" class="Msma37" name="sma" id="loginsma">
+	<input type="submit" value="Login">
+</form>
