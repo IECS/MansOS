@@ -310,18 +310,18 @@ class HttpServerHandler(BaseHTTPRequestHandler):
     def serveSession(self, qs):
         with open(htmlDirectory + "/session.html", "r") as f:
             contents = f.read()
-            tsma=str(random.randint(100000, 999999))
+            tsma = str(random.randint(100000, 999999))
             if "sma" in qs:
-                tsma=tsma+qs["sma"][0][-1:]
+                tsma = tsma + qs["sma"][0][-1:]
                 if "log" in qs:
                     if qs["log"] == "in":
-                        tsid=str(random.randint(1000000000, 9999999999))
-                        tsma=tsma[:-1]+"1"
-                        allSessions.add_sid(qs["sma"][0],tsid,allUsers.get_user("name", qs["user"][0]))
+                        tsid = str(random.randint(1000000000, 9999999999))
+                        tsma = tsma[:-1]+"1"
+                        allSessions.add_sid(qs["sma"][0], tsid, allUsers.get_user("name", qs["user"][0]))
                         contents = contents.replace("/*?LOGIN", "")
                         contents = contents.replace("%SID%", tsid)
                     elif qs["log"] == "out":
-                        tsma=tsma[:-1]+"0"
+                        tsma = tsma[:-1]+"0"
                         contents = contents.replace("/*?DEL", "")
                         allSessions.del_sid(qs["sma"][0])
                 if not allSessions.set_sma(qs["sma"][0],tsma):
@@ -329,7 +329,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                     contents = contents.replace("/*?DEL", "")
                     allSessions.del_sid(qs["sma"][0])
             else:
-                tsma=tsma+"0"
+                tsma = tsma + "0"
                 allSessions.add_session(tsma)
                 contents = contents.replace("/*?DEL", "")
                 #delsid
@@ -343,8 +343,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 qs["sma"].append(tsma)
             else:
                 qs["sma"][0] = tsma
-            print("allSessions = ")
-            print(allSessions.get_sessions())
+            #print("allSessions = ")
+            #print(allSessions.get_sessions())
             self.writeChunk(contents)
             
     def haveAccess(self, qs):
@@ -376,9 +376,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 self.writeChunk(contents)
         except:
             pass
-            
+
         if includeBodyStart:
-            
             try:
                 if not "no" in qs:
                      self.serveSession(qs)
@@ -397,14 +396,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 # page title
                 contents = contents.replace("%PAGETITLE%", pagetitle)
                 ###action = "Release" if hasWriteAccess else "Get"
-                disabled = "" if self.haveAccess(qs) else 'disabled="disabled" '                '''
-                if self.haveAccess(qs):
-                    action = "Release" if hasWriteAccess else "Get"
-                else:
-                    action = "Get"
-                # read / write access
-                contents = contents.replace("%ACCESSACTION%", action)
-                '''
+                disabled = "" if self.haveAccess(qs) else 'disabled="disabled" '
                 contents = contents.replace("%DISABLED%", disabled)
                 # login/logout
                 log = "Logout" if "sma" in qs and "1" in qs["sma"][0][-1:] else "Login"
@@ -424,16 +416,17 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             if replaceValues:
                 for v in replaceValues:
                     contents = contents.replace("%" + v + "%", replaceValues[v])
-            contents = contents.replace("%DISABLED%", disabled)
+            contents = contents.replace("%DISABLED%", disabled).\
+                                replace("%SMA%", qs["sma"][0])
             self.writeChunk(contents)
 
 
-    def serveMotes(self, action, qs, isPost):
+    def serveMotes(self, action, namedAction, qs, isPost):
         text = ''
         if isPost:
-            text += '<form method="post" enctype="multipart/form-data" action="' + toCamelCase(action) + '">'
+            text += '<form method="post" enctype="multipart/form-data" action="' + action + '">'
         else:
-            text += '<form action="' + toCamelCase(action) + '">'
+            text += '<form action="' + action + '">'
         self.writeChunk(text)
 
         if self.haveAccess(qs):
@@ -456,7 +449,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             c += '<div class="mote"><strong>Mote: </strong>' + m.portName
             c += ' (<strong>Platform: </strong>' + m.platform + ') '
             c += ' <input type="checkbox" title="Select the mote" name="' + name + '"'
-            c += checked + ' ' + disabled + '/>' + action + '</div>\n'
+            c += checked + ' ' + disabled + '/>' + namedAction + '</div>\n'
             i += 1
 
         # remember which motes were selected and which were not
@@ -487,9 +480,12 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             name = "mote" + str(i)
             text += '<div class="mote"><strong>Mote: </strong>' + m.portName
             text += ' <input type="hidden" name="sma" class="Msma37" value="0"> '
-            text += ' <input type="submit" name="' + name + '_cfg" title="Get/set mote\'s configuration (e.g. sensor reading periods)" value="Configuration..." ' + disabled + '/>\n'
-            text += ' <input type="submit" name="' + name + '_files" title="View files on mote\'s filesystem" value="Files..." ' + disabled + '/>\n'
-            text += ' Platform: <select name="sel_' + name + '" ' + disabled + ' title="Select the mote\'s platform: determines the list of sensors the mote has. Also has effect on code compilation and uploading">\n'
+            text += ' <input type="submit" name="' + name \
+                + '_cfg" title="Get/set mote\'s configuration (e.g. sensor reading periods)" value="Configuration..." ' + disabled + '/>\n'
+            text += ' <input type="submit" name="' + name \
+                + '_files" title="View files on mote\'s filesystem" value="Files..." ' + disabled + '/>\n'
+            text += ' Platform: <select name="sel_' + name \
+                + '" ' + disabled + ' title="Select the mote\'s platform: determines the list of sensors the mote has. Also has effect on code compilation and uploading">\n'
             for platform in supportedPlatforms:
                 selected = ' selected="selected"' if platform == m.platform else ''
                 text += '  <option value="' + platform + '"' + selected + '>' + platform + '</option>\n'
@@ -587,8 +583,6 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        #if "accessType" in qs:
-            #self.handleGenericQS(qs)
         self.serveHeader("login", qs)
         self.serveBody("login", qs, changes)
         self.serveFooter()
@@ -686,7 +680,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.sendDefaultHeaders()
         self.end_headers()
         self.serveHeader("graph", qs)
-        self.serveMotes("Listen", qs, False)
+        self.serveMotes("graph", "Listen", qs, False)
 
         if "action" in qs:
             if qs["action"][0] == "Start":
@@ -709,7 +703,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.sendDefaultHeaders()
         self.end_headers()
         self.serveHeader("listen", qs)
-        self.serveMotes("Listen", qs, False)
+        self.serveMotes("listen", "Listen", qs, False)
 
         if "action" in qs:
             if qs["action"][0] == "Start":
@@ -765,7 +759,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.sendDefaultHeaders()
         self.end_headers()
         self.serveHeader("upload", qs)
-        self.serveMotes("Upload", qs, True)
+        self.serveMotes("upload", "Upload", qs, True)
         isSealCode = settingsInstance.getCfgValueAsInt("isSealCode")
         isSlow = settingsInstance.getCfgValueAsInt("slowUpload")
         self.serveBody("upload", qs,
@@ -791,6 +785,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.sendDefaultHeaders()
             self.end_headers()
             self.serveHeader("upload", qs)
+            self.writeChunk('<button type="button" onclick="window.open(\'\', \'_self\', \'\'); window.close();">OK</button><br/>')
             self.writeChunk("Upload result:<br/><pre>\n")
             while isInSubprocess or uploadResult:
                 if uploadResult:
@@ -799,7 +794,6 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 else:
                     time.sleep(0.001)
             self.writeChunk("</pre>\n")
-            self.writeChunk('<button type="button" onclick="window.open(\'\', \'_self\', \'\'); window.close();">OK</button>')
             self.serveFooter()
         except:
             raise
@@ -839,19 +833,18 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.sendDefaultHeaders()
         self.end_headers()
 
-        self.end_headers()
-
-        if lastJsonData and not isListening:
+        # if not listening at the moment,
+        # but were listening previosly, send the previous data
+        if not isListening and lastJsonData :
             self.writeChunk(lastJsonData)
             self.writeFinalChunk()
             return
 
-# FIXME:
-#        if sensorData.hasData():
-#            jsonData = json.JSONEncoder().encode(sensorData.getData())
-#        else:
-#            jsonData = ""
-        jsonData = ""
+        # get the data to display in graphs
+        if moteData.hasData():
+            jsonData = json.JSONEncoder().encode(moteData.getData())
+        else:
+            jsonData = ""
 
         lastJsonData = jsonData
         self.writeChunk(jsonData)
@@ -1068,7 +1061,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         retcode = self.compileAndUpload(code, config, fileContents, isSEAL)
 
         self.serveHeader("upload", qs)
-        self.serveMotes("Upload", {}, True)
+        self.serveMotes("upload", "Upload", {}, True)
         if retcode == 0:
             self.writeChunk("<strong>Upload done!</strong></div>")
         else:

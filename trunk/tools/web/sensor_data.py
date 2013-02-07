@@ -41,22 +41,28 @@ class SensorData(object):
             return
 
         if len(self.columns) == 0:
+            self.columns.append("serverTimestampUnix")
             self.columns.append("serverTimestamp")
             for (n,v) in self.tempData:
-                if n.lower() != "serverTimestamp":
+                if n.lower() != "servertimestamp" \
+                        and n.lower() != "servertimestampunix":
                     self.columns.append(n)
         else:
             self.firstPacket = False
 
-        if len(self.tempData) + 1 != len(self.columns):
+        if len(self.tempData) + 2 != len(self.columns):
             self.tempData = []
             return
 
         tmpRow = []
-        timestamp = time.strftime("%d %b %Y %H:%M:%S", time.localtime())
-        tmpRow.append(timestamp)
+        # unix timestamp
+        tmpRow.append(str(int(round(time.time()))))
+        # formatted time
+        formattedTime = time.strftime("%d %b %Y %H:%M:%S", time.localtime())
+        tmpRow.append(formattedTime)
         for (n,v) in self.tempData:
-            if n.lower() != "serverTimestamp":
+            if n.lower() != "servertimestamp" \
+                    and n.lower() != "servertimestampunix":
                 tmpRow.append(v)
         self.data.append(tmpRow)
         self.tempData = []
@@ -94,17 +100,6 @@ class SensorData(object):
 
         valueString = string[eqSignPos + 1:].strip()
 
-        if len(valueString) > 3 and valueString.find(",") == len(valueString) - 3:
-            # checksum detected
-            calcCrc = crc8(string[:-3])
-            recvCrc = int(valueString[-2:], 16) 
-            if calcCrc != recvCrc:
-                print("Received bad checksum:\n" + string)
-                return
-
-            # remove the crc bytes from the value string
-            valueString = valueString[:-3]
-
         try:
             # try to parse the vakue as int (in any base)
             value = int(valueString, 0)
@@ -113,7 +108,7 @@ class SensorData(object):
                 # try to parse the value as float
                 value = float(valueString)
             except:
-                print("Sensor " + dataName + " value is in unknown format: " + value + "\n")
+                print("Sensor " + dataName + " value is in unknown format: " + valueString + "\n")
                 value = 0
 
         self.tempData.append((dataName, value))
@@ -127,13 +122,15 @@ class SensorData(object):
             if len(dataName) > 64:
                 return
 
-            # filename is determind by config + mote name + sensor name
+            # filename is determined by config + mote name + sensor name
             filename = os.path.join(self.dirname,
                                     dataName + ".csv")
             with open(filename, "a") as f:
                 if os.path.getsize(filename) == 0:
-                    f.write(dataName + ",serverTimestamp\n")
-                f.write("{}, {}\n".format(value, time.strftime("%d %b %Y %H:%M:%S", time.localtime())))
+                    f.write("serverTimestampUnix,serverTimestamp," + dataName + "\n")
+                f.write("{}, {}, {}\n".format(int(round(time.time())),
+                    time.strftime("%d %b %Y %H:%M:%S", time.localtime()),
+                    value))
                 f.close()
 
 
@@ -149,11 +146,14 @@ class SensorData(object):
         return self.columns
 
     def getRows(self):
-        return self.data
+        result = []
+        for d in self.data:
+            result.append(d[1:])
+        return result
 
-    # return all sensor readings 
+    # return all sensor readings, except unix timestamp
     def getData(self):
-        return [self.getColumns()] + self.getRows()
+        return [self.getColumns()[1:]] + self.getRows()
 
     def hasData(self):
         return len(self.columns) != 0
@@ -174,17 +174,54 @@ class MoteData(object):
     def addNewData(self, newString, motename):
         self.listenTxt.append(newString)
         
-        # TODO: if the new string contains address of a data, use it instead of mote's name!
-        
+        # if the new string contains address of a data, use it instead of mote's name!
+        columnPos = newString.find(":")
+        eqPos = newString.find("=")
+        # if the string has both ":" and "=", and "=" is before ":"
+        if columnPos != -1 and columnPos < eqPos:
+            address = newString.split(":")[0]
+            if address:
+                # use the address instead!
+                motename = address
+                newString = newString[columnPos + 1:]
+
+        # if the new string contains checksum, check it.
+        if len(newString) > 3 and newString.find(",") == len(newString) - 3:
+            # checksum detected
+            calcCrc = crc8(newString[:-3])
+            recvCrc = int(newString[-2:], 16) 
+            if calcCrc != recvCrc:
+                print("Received bad checksum:\n" + newString)
+                print "calc=", calcCrc
+                print "recv=", recvCrc
+                return
+
+            # remove the crc bytes from the value string
+            newString = newString[:-3]
+
         if motename not in self.data:
             self.data[motename] = SensorData(motename)
         self.data[motename].addNewData(newString)
 
     def fixSizes(self):
-        # use only last 30 lines of all motes
-        self.listenTxt = self.listenTxt[-30:]
+        # use only last 27 lines of all motes - fits in screen ("listen_div")
+        self.listenTxt = self.listenTxt[-27:]
         # use only last 40 readings for graphing
         for sensorData in self.data.itervalues():
             sensorData.resize(40)
+
+    def hasData(self):
+        for sensorData in self.data.itervalues():
+            if sensorData.hasData():
+                return True
+        return False
+
+    # return all readings from the first sensor mote
+    # TODO: allow the user to select which sensor to return!
+    def getData(self):
+        for sensorData in self.data.itervalues():
+            if sensorData.hasData():
+                return sensorData.getData()
+        return []
 
 moteData = MoteData()
