@@ -143,17 +143,10 @@ def createDaemon():
       except OSError:	# ERROR, fd wasn't open to begin with (ignored)
          pass
 
-   # Redirect the standard I/O file descriptors to the specified file.  Since
-   # the daemon has no controlling terminal, most daemons redirect stdin,
-   # stdout, and stderr to /dev/null.  This is done to prevent side-effects
-   # from reads and writes to the standard I/O file descriptors.
+   # Redirect standard output (1) and standard error (2) file descriptors
+   # to logfile
 
-   # This call to open is guaranteed to return the lowest file descriptor,
-   # which will be 0 (stdin), since it was closed above.
    os.open(REDIRECT_TO, os.O_RDWR)	# standard input (0)
 
-   # Duplicate standard input to standard output and standard error.
-   os.dup2(0, 1)			# standard output (1)
-   os.dup2(0, 2)			# standard error (2)
-
-   return(0)
+   os.open(LOGFILE, os.O_WRONLY | os.O_CREAT) # stdout
+   os.open(LOGFILE, os.O_WRONLY | os.O_CREAT) # stderr
