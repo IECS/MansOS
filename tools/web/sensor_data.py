@@ -192,8 +192,6 @@ class MoteData(object):
             recvCrc = int(newString[-2:], 16) 
             if calcCrc != recvCrc:
                 print("Received bad checksum:\n" + newString)
-                print "calc=", calcCrc
-                print "recv=", recvCrc
                 return
 
             # remove the crc bytes from the value string

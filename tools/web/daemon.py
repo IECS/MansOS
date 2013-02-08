@@ -8,6 +8,10 @@ def createDaemon():
    """Detach a process from the controlling terminal and run it in the
    background as a daemon.
    """
+
+   if os.name == "posix":
+       return
+
    UMASK = 0
    WORKDIR = "/"
    MAXFD = 1024
