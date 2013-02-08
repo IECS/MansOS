@@ -9,7 +9,7 @@ def createDaemon():
    background as a daemon.
    """
 
-   if os.name == "posix":
+   if os.name != "posix":
        return
 
    UMASK = 0
