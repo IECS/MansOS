@@ -107,7 +107,7 @@ class Settings(object):
 
     def getCfgValueAsBool(self, name, default = False):
         try:
-            result = self.cfg.__getattribute__(name).lower() in ["true", "yes", "y"]
+            result = self.cfg.__getattribute__(name).lower() in ["true", "yes", "y", "1"]
         except:
             result = default
         return result

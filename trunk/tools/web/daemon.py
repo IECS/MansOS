@@ -1,5 +1,11 @@
 import os
 
+LOGFILE = "log.log"
+
+def log(msg):
+   with open(LOGFILE, "a") as f:
+      f.write(msg)
+
 # 
 # createDaemon() function
 # Copyright (C) 2005 Chad J. Schroeder
@@ -82,7 +88,7 @@ def createDaemon():
          # Since the current working directory may be a mounted filesystem, we
          # avoid the issue of not being able to unmount the filesystem at
          # shutdown time by changing it to the root directory.
-         os.chdir(WORKDIR)
+         # -- os.chdir(WORKDIR)   # removed by Atis
          # We probably don't want the file mode creation mask inherited from
          # the parent, so we give the child complete control over permissions.
          os.umask(UMASK)
