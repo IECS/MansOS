@@ -76,8 +76,8 @@ class SensorData(object):
                                     settingsInstance.cfg.saveToFilename + ".csv")
             with open(filename, "a") as f:
                 if self.firstPacket:
-                    f.write(str(self.getColumns()))
-                f.write(str(tmpRow))
+                    f.write("\t".join(self.getColumns()))
+                f.write("\t".join(tmpRow))
                 f.close()
 
     def addNewData(self, string):
@@ -127,8 +127,8 @@ class SensorData(object):
                                     dataName + ".csv")
             with open(filename, "a") as f:
                 if os.path.getsize(filename) == 0:
-                    f.write("serverTimestampUnix,serverTimestamp," + dataName + "\n")
-                f.write("{}, {}, {}\n".format(int(round(time.time())),
+                    f.write("serverTimestampUnix\tserverTimestamp\t" + dataName + "\n")
+                f.write("{}\t{}\t{}\n".format(int(round(time.time())),
                     time.strftime("%d %b %Y %H:%M:%S", time.localtime()),
                     value))
                 f.close()
