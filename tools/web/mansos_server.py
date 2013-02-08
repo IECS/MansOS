@@ -512,6 +512,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_header('Transfer-Encoding', 'chunked')
         # disable caching
         self.send_header('Cache-Control', 'no-store');
+        self.send_header('Connection', 'close');
 
     def serveFile(self, filename):
         mimetype = 'text/html'
@@ -904,7 +905,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.serveSync(qs)
         elif o.path[-4:] == ".css":
             self.serveFile(htmlDirectory + o.path)
-        elif o.path[-4:] == ".png" or o.path[-4:] == ".jpg" or o.path[-4:] == ".gif" or o.path[-4:] == ".tif":
+        elif o.path[-4:] in [".png", ".jpg", ".gif", ".tif"]:
             self.serveFile(htmlDirectory + "/img/" + o.path)
         else:
             self.serve404Error(o.path, qs)
@@ -1055,13 +1056,12 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         if "config" in form.keys():
             lastUploadConfig = form["config"].value
             config = lastUploadConfig
-            outFile.write(lastUploadConfig)
         if slow:
             config += "\nSLOW_UPLOAD=y\n"
 
         retcode = self.compileAndUpload(code, config, fileContents, isSEAL)
 
-        self.serveHeader("upload", qs)
+        self.serveHeader("upload", {})
         self.serveMotes("upload", "Upload", {}, True)
         if retcode == 0:
             self.writeChunk("<strong>Upload done!</strong></div>")
