@@ -300,7 +300,7 @@ def simulateWorstCaseStackUsage():
     if hasInts:
         # interrupt call overhead is 4, because not only return address, but also
         # status register is pushed onto stack!
-        wsu += 4
+        worstInterruptUsage += 4
         wsu += worstInterruptUsage
 
     maybeUserThreads = " in user threads" if haveThreads else ""

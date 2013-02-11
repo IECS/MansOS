@@ -82,5 +82,8 @@ memdump: build
 stackdump:
 	@echo
 
+stackdump-build:
+	@echo
+
 size: build
 	$(_QUIET) size $(OUTDIR)/$(EXECUTABLE)
