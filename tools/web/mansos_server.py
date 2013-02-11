@@ -834,7 +834,11 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.end_headers()
         path = os.path.join(sealBlocklyPath, "index.html")
         with open(path) as f:
-            self.writeChunk(f.read())
+            contents = f.read()
+            #disabled = 'disabled="disabled"' if not self.haveAccess(qs) else ""
+            disabled = ""
+            contents = contents.replace("%DISABLED%", disabled)
+            self.writeChunk(contents)
         self.writeFinalChunk()
 
     # Dummy, have to respond somehow, so javascript knows we are here
