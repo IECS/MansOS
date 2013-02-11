@@ -17,8 +17,6 @@ def importsOk():
 
     try:
         import serial #@UnusedImport
-        if float(serial.VERSION) < float('2.6'):
-            serialModuleOK = False
     except ImportError:
         serialModuleOK = False
 
@@ -100,10 +98,7 @@ try:
             exit(1)
 
         print ("Launching MansOS IDE...")
-        args = "IDE.pyw"
-        if len(argv) > 1:
-            args += " " + argv[1]
-        os.execl(executable, executable, args)
+        os.execl(executable, executable, * ['IDE.pyw'])
     except Exception as e:
         print ("Oops! something went wrong!")
         print (e)

@@ -30,6 +30,8 @@ class EditStatement(wx.Panel):
     def __init__(self, parent, API):
         super(EditStatement, self).__init__(parent, style = wx.NO_BORDER)
         self.API = API
+        # Just a shorter name
+        self.tr = self.API.translater.translate
 
         self.mode = UNKNOWN
         # New mode flag
@@ -174,7 +176,7 @@ class EditStatement(wx.Panel):
     def generateFirstTier(self, value):
         if self.type is None:
             # Generate and place both 1st tier objects
-            actuatorText = wx.StaticText(self, label = localize("Edit actuator") + ":")
+            actuatorText = wx.StaticText(self, label = self.tr("Edit actuator") + ":")
             self.data.Add(actuatorText, pos = (0, 0))
 
             self.type = wx.ComboBox(self, choices = self.API.getKeywords(),
@@ -201,7 +203,7 @@ class EditStatement(wx.Panel):
             if choices is None:
                 choices = list()
             # Generate and place both 2nd tier objects
-            objText = wx.StaticText(self, label = localize("Edit object") + ":")
+            objText = wx.StaticText(self, label = self.tr("Edit object") + ":")
             self.data.Add(objText, pos = (1, 0))
 
             self.name = wx.ComboBox(self, choices = choices, size = (150, 25),
@@ -249,7 +251,7 @@ class EditStatement(wx.Panel):
                 # This is advanced parameter, don't display it
                 if parameter[2] == True:
                     continue
-                text = wx.StaticText(self, label = localize(parameter[0]) + ":")
+                text = wx.StaticText(self, label = self.tr(parameter[0]) + ":")
 
                 # Get real parameter associated with current name
                 value = self.API.getParamByName(realParams, parameter[0])[1]
@@ -454,7 +456,7 @@ class EditStatement(wx.Panel):
     def generateFirstLine(self, text, value):
         # Generate text and combobox
         if self.textBox is None:
-            self.text = wx.StaticText(self, label = localize(text) + ":")
+            self.text = wx.StaticText(self, label = self.tr(text) + ":")
             self.textBox = wx.TextCtrl(self, name = "first", size = (100, 100),
                             style = wx.TE_PROCESS_TAB | wx.TE_PROCESS_ENTER | wx.TE_MULTILINE | wx.TE_AUTO_SCROLL)
             self.textBox.Bind(wx.EVT_CHAR, self.processKeyUp)

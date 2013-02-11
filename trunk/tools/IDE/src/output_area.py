@@ -57,14 +57,13 @@ class OutputArea(wx.Panel):
         if forceSwitching:
             if self.forceCall == None:
                 self.switch()
-                #self.forceCall = wx.CallLater(1500, self.switch)
+                self.forceCall = wx.CallLater(1500, self.switch)
             else:
                 if self.forceCall.HasRun():
                     self.switch()
                 self.forceCall.Restart()
 
     def switch(self):
-        self.lastText = self.outputArea.GetValue()
         if self == self.API.infoArea:
             self.API.frame.auiManager.ShowPane(self, True)
         else:

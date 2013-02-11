@@ -38,9 +38,11 @@ class TabManager(aui.AuiNotebook):
 
         self.API = API
         self.API.tabManager = self
+        # Just a shorter name
+        self.tr = self.API.tr
         # Need to set because next statement uses it
         self.nextPageNr = 1
-        self.AddPage(EditorManager(self, self.API), localize("Untitled"))
+        self.AddPage(EditorManager(self, self.API), self.tr("Untitled"))
 
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.onPageChanged)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.doPopupClose)
@@ -69,20 +71,20 @@ class TabManager(aui.AuiNotebook):
         self.SetSelection(event.GetSelection(), True)
 
         self._rmenu = wx.Menu()
-        self.openConfig = self._rmenu.Append(wx.ID_ANY, '&' + localize("Open config file") +
-                                       '', localize("Open config file"))
-        self.openMakefile = self._rmenu.Append(wx.ID_ANY, '&' + localize("Open makefile") +
-                                       '', localize("Open makefile"))
-        self.doClean = self._rmenu.Append(wx.ID_ANY, '&' + localize("Clean target") +
-                                       '', localize("Clean target"))
-        self.popupReload = self._rmenu.Append(wx.ID_REPLACE, '&' + localize("Reload") +
-                                       '\tCtrl+R', localize("Reload"))
-        self.popupSave = self._rmenu.Append(wx.ID_SAVE, '&' + localize('Save') +
-                                     '\tCtrl+S', localize("Save"))
-        self.popupSaveAs = self._rmenu.Append(wx.ID_SAVEAS, '&' + localize("Save as") +
-                                       '\tCtrl+A', localize("Save as"))
-        self.popupClose = self._rmenu.Append(wx.ID_CLOSE, '&' + localize('Close') +
-                                      '\tCtrl+W', localize("Close"))
+        self.openConfig = self._rmenu.Append(wx.ID_ANY, '&' + self.tr("Open config file") +
+                                       '', self.tr("Open config file"))
+        self.openMakefile = self._rmenu.Append(wx.ID_ANY, '&' + self.tr("Open makefile") +
+                                       '', self.tr("Open makefile"))
+        self.doClean = self._rmenu.Append(wx.ID_ANY, '&' + self.tr("Clean target") +
+                                       '', self.tr("Clean target"))
+        self.popupReload = self._rmenu.Append(wx.ID_REPLACE, '&' + self.tr("Reload") +
+                                       '\tCtrl+R', self.tr("Reload"))
+        self.popupSave = self._rmenu.Append(wx.ID_SAVE, '&' + self.tr('Save') +
+                                     '\tCtrl+S', self.tr("Save"))
+        self.popupSaveAs = self._rmenu.Append(wx.ID_SAVEAS, '&' + self.tr("Save as") +
+                                       '\tCtrl+A', self.tr("Save as"))
+        self.popupClose = self._rmenu.Append(wx.ID_CLOSE, '&' + self.tr('Close') +
+                                      '\tCtrl+W', self.tr("Close"))
         self.Bind(wx.EVT_MENU, self.doPopupConfig, self.openConfig)
         self.Bind(wx.EVT_MENU, self.doPopupMakefile, self.openMakefile)
         self.Bind(wx.EVT_MENU, self.doPopupReload, self.popupReload)
@@ -132,10 +134,10 @@ class TabManager(aui.AuiNotebook):
             self.getPageObject().save()
         else:
             save = wx.FileDialog(self,
-                localize("Save") + " \"" +
+                self.tr("Save") + " \"" +
                     str(self.GetPageText(self.GetSelection())) + '"',
-                wildcard = 'Seal ' + localize('files') + ' (*.sl)|*.sl|' +
-                    localize('All files') + '|*',
+                wildcard = 'Seal ' + self.tr('files') + ' (*.sl)|*.sl|' +
+                    self.tr('All files') + '|*',
                 style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
                 defaultFile = self.getPageObject().fileName)
             if save.ShowModal() == wx.ID_OK:
@@ -150,10 +152,10 @@ class TabManager(aui.AuiNotebook):
 
     def doPopupSaveAs(self, event):
         save = wx.FileDialog(self,
-            localize("Save as") + " \"" +
+            self.tr("Save as") + " \"" +
             str(self.GetPageText(self.GetSelection())) + '"',
-            wildcard = 'Seal ' + localize('files') + ' (*.sl)|*.sl|' +
-                    localize('All files') + '|*',
+            wildcard = 'Seal ' + self.tr('files') + ' (*.sl)|*.sl|' +
+                    self.tr('All files') + '|*',
             style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
             defaultFile = self.getPageObject().fileName)
         if save.ShowModal() == wx.ID_OK:
@@ -199,17 +201,8 @@ class TabManager(aui.AuiNotebook):
     def addPage(self, newFile = ''):
         if newFile == '':
             self.AddPage(EditorManager(self, self.API),
-                localize("Untitled") + ' ' + str(self.nextPageNr) + '.sl')
+                self.tr("Untitled") + ' ' + str(self.nextPageNr) + '.sl')
         else:
-            for x in self.API.editors:
-                try:
-                    if x.filePath == newFile:
-                        for y in range(self.GetPageCount()):
-                            if x == self.GetPage(y):
-                                self.SetSelection(y, True)
-                                return
-                except:
-                    pass
             self.AddPage(EditorManager(self, self.API), newFile)
         self.nextPageNr += 1
         self.SetSelection(self.GetPageCount() - 1)
@@ -229,10 +222,10 @@ class TabManager(aui.AuiNotebook):
         if self.getPageObject().saveState == False:
             # Initiate DialogBox
             dialog = wx.MessageDialog(self,
-                localize('Save changes to') + ' "' +
+                self.tr('Save changes to') + ' "' +
                     self.getPageObject().fileName + '" ' +
-                    localize('before close it?'),
-                localize('Unsaved file') + ' "' +
+                    self.tr('before close it?'),
+                self.tr('Unsaved file') + ' "' +
                     self.getPageObject().fileName + '"',
                 wx.YES_NO | wx.CANCEL | wx.ICON_EXCLAMATION)
 

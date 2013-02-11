@@ -47,6 +47,8 @@ class Frame(wx.Frame):
         self.exitCalled = False
         self.blocklyToolVisible = False
 
+        # Just a shorter name
+        self.tr = self.API.tr
         self.toolbar = None
         self.menubar = None
         self.examples = dict()
@@ -98,45 +100,45 @@ class Frame(wx.Frame):
             self.toolbar.ClearTools()
 
         # Note that all icons must be 32x32, so they look good :)
-        self.toolbar.AddLabelTool(wx.ID_NEW, localize('New'),
+        self.toolbar.AddLabelTool(wx.ID_NEW, self.tr('New'),
                                 wx.Bitmap(self.path + '/src/Icons/new.png'),
-                                shortHelp = localize('New'))
+                                shortHelp = self.tr('New'))
         self.toolbar.AddSeparator()
-        self.toolbar.AddLabelTool(wx.ID_OPEN, localize('Open'),
+        self.toolbar.AddLabelTool(wx.ID_OPEN, self.tr('Open'),
                                 wx.Bitmap(self.path + '/src/Icons/open.png'),
-                                shortHelp = localize('Open'))
-        self.toolbar.AddLabelTool(wx.ID_SAVE, localize('Save'),
+                                shortHelp = self.tr('Open'))
+        self.toolbar.AddLabelTool(wx.ID_SAVE, self.tr('Save'),
                                 wx.Bitmap(self.path + '/src/Icons/save.png'),
-                                shortHelp = localize('Save'))
+                                shortHelp = self.tr('Save'))
         self.toolbar.AddSeparator()
-        addStatementTool = self.toolbar.AddLabelTool(wx.ID_ADD, localize('Add statement'),
+        addStatementTool = self.toolbar.AddLabelTool(wx.ID_ADD, self.tr('Add statement'),
                                 wx.Bitmap(self.path + '/src/Icons/add_statement.png'),
-                                shortHelp = localize('Add statement'))
+                                shortHelp = self.tr('Add statement'))
         # Used ID_APPLY for identification, hope nothing else uses it
-        addConditionTool = self.toolbar.AddLabelTool(wx.ID_APPLY, localize('Add condition'),
+        addConditionTool = self.toolbar.AddLabelTool(wx.ID_APPLY, self.tr('Add condition'),
                                 wx.Bitmap(self.path + '/src/Icons/add_condition.png'),
-                                shortHelp = localize('Add condition'))
+                                shortHelp = self.tr('Add condition'))
         #self.toolbar.AddSeparator()
-        #addBlocklyTool = self.toolbar.AddLabelTool(wx.ID_MORE, localize('Open Seal-Blockly editor'),
+        #addBlocklyTool = self.toolbar.AddLabelTool(wx.ID_MORE, self.tr('Open Seal-Blockly editor'),
         #                        wx.Bitmap(self.path + '/src/Icons/Seal_blockly.png'),
-        #                        shortHelp = localize('Open Seal-Blockly editor'))
+        #                        shortHelp = self.tr('Open Seal-Blockly editor'))
         self.toolbar.AddSeparator()
-        compileTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW, localize('Compile'),
+        compileTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW, self.tr('Compile'),
                                 wx.Bitmap(self.path + '/src/Icons/compile.png'),
-                                shortHelp = localize('Compile'))
-        uplTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW_GOTO, localize('Upload'),
+                                shortHelp = self.tr('Compile'))
+        uplTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW_GOTO, self.tr('Upload'),
                                 wx.Bitmap(self.path + '/src/Icons/upload.png'),
-                                shortHelp = localize('Upload'))
-        outputTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW_ZOOM, localize('Configure upload and compile'),
+                                shortHelp = self.tr('Upload'))
+        outputTool = self.toolbar.AddLabelTool(wx.ID_PREVIEW_ZOOM, self.tr('Configure upload and compile'),
                                 wx.Bitmap(self.path + '/src/Icons/read.png'),
-                                shortHelp = localize('Configure upload and compile'))
-        listenTool = self.toolbar.AddCheckLabelTool(wx.ID_HOME, localize('Listen node\'s output'),
+                                shortHelp = self.tr('Configure upload and compile'))
+        listenTool = self.toolbar.AddCheckLabelTool(wx.ID_HOME, self.tr('Listen node\'s output'),
                                 wx.Bitmap(self.path + '/src/Icons/listen.png'),
-                                shortHelp = localize('Listen node\'s output'))
+                                shortHelp = self.tr('Listen node\'s output'))
         self.toolbar.AddSeparator()
-        self.toolbar.AddLabelTool(wx.ID_EXIT, localize('Exit'),
+        self.toolbar.AddLabelTool(wx.ID_EXIT, self.tr('Exit'),
                                 wx.Bitmap(self.path + '/src/Icons/exit.png'),
-                                shortHelp = localize('Exit'))
+                                shortHelp = self.tr('Exit'))
         self.toolbar.Realize()
 
         # Second bind to toolbar, but only items with ID_ANY, because all
@@ -176,21 +178,21 @@ class Frame(wx.Frame):
 
     def generateMenu(self):
         fileMenu = wx.Menu()
-        new = fileMenu.Append(wx.ID_NEW, '&' + localize('New') + '\tCtrl+N',
-                              localize('Create empty document'))
-        open_ = fileMenu.Append(wx.ID_OPEN, '&' + localize('Open') + '\tCtrl+O',
-                              localize('Open document'))
-        save = fileMenu.Append(wx.ID_SAVE, '&' + localize('Save') + '\tCtrl+S',
-                              localize('Save document'))
-        saveAs = fileMenu.Append(wx.ID_SAVEAS, '&' + localize('Save as') + '\t',
-                              localize('Save document as'))
-        upload = fileMenu.Append(wx.ID_ANY, '&' + localize('Upload') + '\tCtrl+U',
-                              localize('Open upload window'))
+        new = fileMenu.Append(wx.ID_NEW, '&' + self.tr('New') + '\tCtrl+N',
+                              self.tr('Create empty document'))
+        open_ = fileMenu.Append(wx.ID_OPEN, '&' + self.tr('Open') + '\tCtrl+O',
+                              self.tr('Open document'))
+        save = fileMenu.Append(wx.ID_SAVE, '&' + self.tr('Save') + '\tCtrl+S',
+                              self.tr('Save document'))
+        saveAs = fileMenu.Append(wx.ID_SAVEAS, '&' + self.tr('Save as') + '\t',
+                              self.tr('Save document as'))
+        upload = fileMenu.Append(wx.ID_ANY, '&' + self.tr('Upload') + '\tCtrl+U',
+                              self.tr('Open upload window'))
         recent = wx.Menu()
-        fileMenu.AppendMenu(wx.ID_ANY, '&' + localize('Recently used files'),
-                               recent, localize('Recently used files'))
-        close = fileMenu.Append(wx.ID_EXIT, '&' + localize('Exit') + '\tCtrl+Q',
-                              localize('Exit application'))
+        fileMenu.AppendMenu(wx.ID_ANY, '&' + self.tr('Recently used files'),
+                               recent, self.tr('Recently used files'))
+        close = fileMenu.Append(wx.ID_EXIT, '&' + self.tr('Exit') + '\tCtrl+Q',
+                              self.tr('Exit application'))
 
         self.fileHistory = wx.FileHistory(int(self.API.getSetting('recentlyOpenedMaxCount')))
         self.fileHistory.Load(self.API.config)
@@ -206,36 +208,36 @@ class Frame(wx.Frame):
         optionMenu = wx.Menu()
         language = wx.Menu()
         self.langs = []
-        for i in Translater.translations.keys():
+        for i in self.API.translater.translations.keys():
             self.langs.append(language.Append(wx.ID_ANY,
-                    Translater.translations[i]['langName'], i, kind = wx.ITEM_RADIO))
+                    self.API.translater.translations[i]['langName'], i, kind = wx.ITEM_RADIO))
             if i == self.API.getSetting("activeLanguage"):
                 language.Check(self.langs[-1].GetId(), True)
             self.Bind(wx.EVT_MENU, self.changeLanguage, self.langs[-1])
 
-        optionMenu.AppendMenu(wx.ID_ANY, localize('Change language'), language)
+        optionMenu.AppendMenu(wx.ID_ANY, self.tr('Change language'), language)
 
-        output = optionMenu.Append(wx.ID_ANY, '&' + localize('Configure upload and compile') + '\tCtrl+R',
-                              localize('Open read output window'))
+        output = optionMenu.Append(wx.ID_ANY, '&' + self.tr('Configure upload and compile') + '\tCtrl+R',
+                              self.tr('Open read output window'))
         windowMenu = wx.Menu()
         addMenu = wx.Menu()
         showMenu = wx.Menu()
-        windowMenu.AppendMenu(wx.ID_ANY, localize('Add window'), addMenu)
-        windowMenu.AppendMenu(wx.ID_ANY, localize('Show window'), showMenu)
-        listen = addMenu.Append(wx.ID_ANY, '&' + localize('Add listen window'),
-                              localize('Add listen window'))
-        self.blocklyCheck = showMenu.AppendCheckItem(wx.ID_ANY, '&' + localize('Show blockly window'),
-                              localize('Show blockly window'))
-        self.editCheck = showMenu.AppendCheckItem(wx.ID_ANY, '&' + localize('Show edit window'),
-                              localize('Show edit window'))
+        windowMenu.AppendMenu(wx.ID_ANY, self.tr('Add window'), addMenu)
+        windowMenu.AppendMenu(wx.ID_ANY, self.tr('Show window'), showMenu)
+        listen = addMenu.Append(wx.ID_ANY, '&' + self.tr('Add listen window'),
+                              self.tr('Add listen window'))
+        self.blocklyCheck = showMenu.AppendCheckItem(wx.ID_ANY, '&' + self.tr('Show blockly window'),
+                              self.tr('Show blockly window'))
+        self.editCheck = showMenu.AppendCheckItem(wx.ID_ANY, '&' + self.tr('Show edit window'),
+                              self.tr('Show edit window'))
 
         helpMenu = wx.Menu()
-        sealHelp = helpMenu.Append(wx.ID_ANY, '&' + localize('Seal documentation'),
-                              localize('About'))
-        mansosHelp = helpMenu.Append(wx.ID_ANY, '&' + localize('MansOS documentation'),
-                              localize('About'))
-        about = helpMenu.Append(wx.ID_ABOUT, '&' + localize('About') + '\tCtrl+H',
-                              localize('About'))
+        sealHelp = helpMenu.Append(wx.ID_ANY, '&' + self.tr('Seal documentation'),
+                              self.tr('About'))
+        mansosHelp = helpMenu.Append(wx.ID_ANY, '&' + self.tr('MansOS documentation'),
+                              self.tr('About'))
+        about = helpMenu.Append(wx.ID_ABOUT, '&' + self.tr('About') + '\tCtrl+H',
+                              self.tr('About'))
         # Check if we need to update existing menubar(for translate)
         if self.menubar == None:
             self.menubar = wx.MenuBar()
@@ -243,11 +245,11 @@ class Frame(wx.Frame):
             for i in range(0, self.menubar.GetMenuCount()):
                 self.menubar.Remove(0)
 
-        self.menubar.Append(fileMenu, '&' + localize('File'))
-        self.menubar.Append(exampleMenu, '&' + localize('Examples'))
-        self.menubar.Append(optionMenu, '&' + localize('Options'))
-        self.menubar.Append(windowMenu, '&' + localize('Windows'))
-        self.menubar.Append(helpMenu, '&' + localize('Help'))
+        self.menubar.Append(fileMenu, '&' + self.tr('File'))
+        self.menubar.Append(exampleMenu, '&' + self.tr('Examples'))
+        self.menubar.Append(optionMenu, '&' + self.tr('Options'))
+        self.menubar.Append(windowMenu, '&' + self.tr('Windows'))
+        self.menubar.Append(helpMenu, '&' + self.tr('Help'))
         self.SetMenuBar(self.menubar)
 
         # First bind to menu
@@ -302,7 +304,7 @@ class Frame(wx.Frame):
     def OnOutput(self, event):
         if self.API.tabManager.doPopupSave(None) == True:
 
-            dialog = wx.Dialog(self, wx.ID_ANY, localize('Configure upload and compile'),
+            dialog = wx.Dialog(self, wx.ID_ANY, self.tr('Configure upload and compile'),
                 style = wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 
             UploadModule(dialog, self.API)
@@ -330,9 +332,9 @@ class Frame(wx.Frame):
 
     def OnOpen(self, event):
         open_ = wx.FileDialog(self,
-            localize("Open new document"),
-            wildcard = 'Seal or MansOS ' + localize('files') + ' (*.sl, *.c, *.h)|*.sl;*.c;*.h;config|' +
-                    localize('All files') + '(.*)|*',
+            self.tr("Open new document"),
+            wildcard = 'Seal or MansOS ' + self.tr('files') + ' (*.sl, *.c, *.h)|*.sl;*.c;*.h;config|' +
+                    self.tr('All files') + '(.*)|*',
             style = wx.FD_OPEN | wx.FD_MULTIPLE)
         if open_.ShowModal() == wx.ID_OK:
             for x in open_.GetPaths():
@@ -448,11 +450,10 @@ IDE developed by: Janis Judvaitis, (c) 2011-2012, janis.judvaitis@gmail.com
         # Result is that window stays with maximized height and width, 
         # but is not maximized.
         # TODO: FIX: cache all sizes when resizing and not in maximized mode.
-        if not self.IsMaximized():
-            self.API.setSetting("Width", self.GetSize()[0])
-            self.API.setSetting("Height", self.GetSize()[1])
-            self.API.setSetting("LocX", self.GetScreenPositionTuple()[0])
-            self.API.setSetting("LocY", self.GetScreenPositionTuple()[1])
+        self.API.setSetting("Width", self.GetSize()[0])
+        self.API.setSetting("Height", self.GetSize()[1])
+        self.API.setSetting("LocX", self.GetScreenPositionTuple()[0])
+        self.API.setSetting("LocY", self.GetScreenPositionTuple()[1])
         self.API.setSetting("Maximized", self.IsMaximized())
 
     def loadPositioning(self):
