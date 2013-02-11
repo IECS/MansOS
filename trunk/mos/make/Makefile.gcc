@@ -62,3 +62,10 @@ ifeq (yes,$(OPTIMIZE_SIZE_EXTRA))
 endif
 
 CFLAGS += -Wno-unused-but-set-variable
+
+ifeq (4,$(GCC_VERSION))
+ifneq ("", "$(filter $(GCC_SUBVERSION), 6 7)")
+NEW_GCC ?= 1
+endif
+endif
+NEW_GCC ?= 0
