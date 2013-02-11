@@ -6,10 +6,11 @@ import serial, subprocess, sys, time, os
 #from serial.tools import list_ports
 from settings import *
 
-def runSubprocess1(args, server):
+def runSubprocess1(args, serve):
     retcode = -1
     try:
-        proc = subprocess.Popen(args, stderr = subprocess.STDOUT, stdout = subprocess.PIPE, shell = False)
+        proc = subprocess.Popen(args, stderr = subprocess.STDOUT, stdout = subprocess.PIPE,
+                                shell = False)
         while proc.poll() is None:
             line = proc.stdout.readline()
             if line:
@@ -126,6 +127,7 @@ class Mote(object):
         if settingsInstance.getCfgValueAsInt("slowUpload"):
             arglist.append("--slow")
 
+        os.environ['BSLPORT'] = self.portName
         retcode = runSubprocess1(arglist, server)
 
         return retcode
@@ -134,6 +136,7 @@ class Mote(object):
         self.tryToOpenSerial(False)
         if not self.port: return 1
 
+        os.environ['BSLPORT'] = self.portName
         arglist = ["make", self.platform, "upload"]
         retcode = runSubprocess1(arglist, server)
 
