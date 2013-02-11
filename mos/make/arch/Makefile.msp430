@@ -114,6 +114,9 @@ memdump: build
 	$(_QUIET) $(MEMDUMP) $(OUTDIR)/$(APPMOD).elf msp430
 
 stackdump:
+	$(_QUIET) $(STACKDUMP) $(OUTDIR)/$(APPMOD).elf msp430 -v
+
+stackdump-build:
 	$(_QUIET) $(STACKDUMP) $(OUTDIR)/$(APPMOD).elf msp430 $(VERBOSE)
 
 mspsim: build

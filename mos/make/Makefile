@@ -256,7 +256,8 @@ OBJS = $(APP_OBJS) $(POBJS)
 OBJDIRS = $(dir $(OBJS))
 
 # ===== Targets =====
-.PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs motelist serial sensorlist clean cleanall
+.PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs motelist serial sensorlist \
+	stackdump stackdump-build clean cleanall
 
 all: build
 
@@ -326,7 +327,7 @@ saveplatform:
 	$(_QUIET) @echo "saving Makefile.target"
 	$(_QUIET) @echo >$(BUILDDIR)/Makefile.target "TARGET = $(TARGET)"
 
-build: objDirs $(OUTDIR)/$(EXECUTABLE) stackdump
+build: objDirs $(OUTDIR)/$(EXECUTABLE) stackdump-build
 
 #
 # "config" file is required for building. An empty file is created it doesn't exist
