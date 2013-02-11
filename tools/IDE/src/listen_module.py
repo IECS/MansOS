@@ -24,17 +24,17 @@
 
 import wx
 
-from src.output_area import OutputArea
-from src.helperFunctions import listenSerialPort
-from src.myThread import MyThread
-from src.Motelist import Motelist, Mote
-from src.globals import localize
+from output_area import OutputArea
+from helperFunctions import listenSerialPort
+from myThread import MyThread
 
 class ListenModule(wx.Panel):
     def __init__(self, parent, API):
         super(ListenModule, self).__init__(parent)
+            #title = title, size = (500, 400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.API = API
-
+        # Just a shorter name
+        self.tr = self.API.translater.translate
         self.haveMote = False
         self.listening = False
         self.args = {
@@ -42,39 +42,37 @@ class ListenModule(wx.Panel):
              'baudrate': 38400
          }
 
-        Motelist.addUpdateCallback(self.updateMotelist)
+        self.API.motelistCallbacks.append(self.updateMotelist)
 
         self.SetBackgroundColour("white")
         self.main = wx.BoxSizer(wx.VERTICAL)
         self.listenControls = wx.BoxSizer(wx.HORIZONTAL)
 
         self.ports = wx.ComboBox(self, choices = [], size = (300, -1))
-        self.clear = wx.Button(self, label = localize("Start listening"))
-        self.refresh = wx.Button(self, label = localize("Refresh"))
+        self.clear = wx.Button(self, label = self.tr("Start listening"))
+        self.refresh = wx.Button(self, label = self.tr("Refresh"))
 
         # Init outputArea for output
         self.outputArea = OutputArea(self, self.API, 1)
         self.updateStatus = self.outputArea.printLine
         self.clearOutputArea = self.outputArea.clear
 
-        self.listenControls.Add(self.ports, 1, wx.EXPAND | wx.ALL)
-        self.listenControls.Add(self.refresh, 0, wx.EXPAND | wx.ALL)
-        self.listenControls.Add(self.clear, 0, wx.EXPAND | wx.ALL)
+        self.listenControls.Add(self.ports)
+        self.listenControls.Add(self.refresh)
+        self.listenControls.Add(self.clear)
 
         self.main.Add(self.listenControls, 0,
-                      wx.EXPAND | wx.wx.TOP | wx.LEFT | wx.RIGHT, 5);
-        self.main.Add(self.outputArea, 1, wx.EXPAND | wx.ALL, 0);
+                      wx.EXPAND | wx.wx.TOP | wx.LEFT | wx.RIGHT, 10);
+        self.main.Add(self.outputArea, 1, wx.EXPAND | wx.ALL, 5);
 
         self.Bind(wx.EVT_BUTTON, self.doClear, self.clear)
         self.Bind(wx.EVT_BUTTON, self.getMotelist, self.refresh)
         self.Bind(wx.EVT_COMBOBOX, self.changeTarget, self.ports)
         self.Bind(wx.EVT_TEXT, self.changeTarget, self.ports)
 
-        self.SetSizerAndFit(self.main)
+        self.SetSizer(self.main)
         self.main.Fit(self)
-        self.SetAutoLayout(1)
         self.Show()
-        Motelist.update()
 
     def doClear(self, event = None):
         self.API.stopThread("Serial port listener")
@@ -83,7 +81,7 @@ class ListenModule(wx.Panel):
         if type(event) is str:
             if self.listening:
                 self.listening = False
-                self.clear.SetLabel(localize('Start listening'))
+                self.clear.SetLabel(self.tr('Start listening'))
                 self.updateStatus("\nListening stopped.\n", False)
             return
         if self.ports.GetValue() == "No devices found":
@@ -91,10 +89,10 @@ class ListenModule(wx.Panel):
 
         self.listening = not self.listening
         if self.listening:
-            self.clear.SetLabel(localize('Stop listening'))
+            self.clear.SetLabel(self.tr('Stop listening'))
             self.updateStatus("\nListening started.\n", False)
         else:
-            self.clear.SetLabel(localize('Start listening'))
+            self.clear.SetLabel(self.tr('Start listening'))
             self.updateStatus("\nListening stopped.\n", False)
         # Redraw button if size have changed
         self.clear.SetSize(self.clear.GetEffectiveMinSize())
@@ -116,31 +114,30 @@ class ListenModule(wx.Panel):
         self.API.supressTabSwitching = True
         self.updateStatus("Populating motelist ... ", False)
         self.ports.Clear()
-        self.ports.Append(localize("Searching devices") + "...", 0)
+        self.ports.Append(self.tr("Searching devices") + "...", 0)
         self.ports.Disable()
-        Motelist.update()
+        self.API.populateMotelist()
 
     def updateMotelist(self):
         self.ports.Clear()
+        motelist = self.API.motelist
         if not self.ports.IsEnabled():
             self.updateStatus("Done!\n")
-        for x in Motelist.motes:
-            self.ports.Append(x.getNiceName(), x)
-        self.haveMote = True
-
-        self.ports.SetValue(Motelist.getActiveMote().getNiceName())
-        if Motelist.getActiveMote().port != None:
-            self.args['serialPort'] = Motelist.getActiveMote().port
+        if len(motelist) > 0:
+            for x in motelist:
+                if len(x) > 2:
+                    self.ports.Append(x[1] + " - " + x[2])
+            self.haveMote = True
+            self.ports.SetValue(self.tr("Use default device"))
+            if len(motelist[0]) > 1:
+                self.args['serialPort'] = motelist[0][1].strip().strip("\x00")
             self.ports.Enable()
         else:
+            self.ports.SetValue(self.tr("No devices found"))
             self.haveMote = False
-            self.ports.Disable()
 
     def changeTarget(self, event):
         # Stop listening
         if self.listening:
             self.doClear(None)
-        if type(event.GetClientData()) is Mote:
-            self.args['serialPort'] = event.GetClientData().port
-        else:
-            self.args['serialPort'] = event.GetString()
+        self.args['serialPort'] = event.GetEventObject().GetValue().split(" ")[0].strip().strip("\x00")

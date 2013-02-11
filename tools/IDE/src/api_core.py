@@ -30,11 +30,12 @@ from serial import Serial, PARITY_NONE, SerialException
 
 from frame import Frame
 from seal_syntax import SealSyntax
+from translater import Translater
 from output_area import OutputArea
 from tab_manager import TabManager
 from listen_module import ListenModule
 from editor_manager import EditorManager
-from Motelist import Motelist
+from get_motelist import GetMotelist
 from do_compile import DoCompile
 from do_upload import DoUpload
 from edit_statement import EditStatement
@@ -45,63 +46,22 @@ from globals import * #@UnusedWildImport
 from seal import seal_parser #@UnresolvedImport
 
 class ApiCore:
-    loaded = False
-    config = wx.Config("MansOS-IDE", style = wx.CONFIG_USE_LOCAL_FILE)
-
-    path = os.getcwd()
-    # All variables placed here will be saved to configuration file and 
-    # reloaded next run time. See setSetting() and getSetting()
-    # Note: settings in file are with higher priority.
-    __settings = {
-               "activeLanguage" : "LV",
-               "platform" : "telosb",
-               "blocklyLocation": "../../../seal-blockly/blockly/demos/seal/index.html",
-               "blocklyPort" : '8090',
-               "blocklyHost" : "localhost",
-               "recentlyOpenedMaxCount" : 10
-           }
-
-    # All functions here will be called upon exit
-    onExit = list()
-
-    # All defined platforms
-    platforms = None
-
-    platformOnly = None
-    excludedPlatforms = list()
-
-    activePlatform = 0
-
-    # Flag indicates that next thread's output shouldn't trigger 
-    # force switching to info area tab.
-    supressTabSwitching = False
-
-    targets = [None]
-    targetType = "USB"
-
-    activeThreads = {}
-
-
-    # this is path from /mansos/tools/IDE
-    pathToMansos = ""
-
-    # Try to get system default font
-    #font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
-    #self.fontName = font.GetFaceName()
-    #if self.fontName != "":
-    #    print "Using system default font: {}".format(self.fontName)
-    #else:
-    fontName = "Courier New"
-    #    print "Can't find system default font, defaulting to {}".\
-    #                format(self.fontName)
-
-    listenModules = list()
-
-    editors = list()
-
-    icon = os.path.normpath('../../doc/mansos-32x32.ico')
-
     def __init__(self, argv):
+        self.loaded = False
+        self.config = wx.Config("MansOS-IDE", style = wx.CONFIG_USE_LOCAL_FILE)
+
+        self.path = os.getcwd()
+        # All variables placed here will be saved to configuration file and 
+        # reloaded next run time. See setSetting() and getSetting()
+        # Note: settings in file are with higher priority.
+        self.__settings = {
+                   "activeLanguage" : "LV",
+                   "platform" : "telosb",
+                   "blocklyLocation": "../../../seal-blockly/blockly/demos/seal/index.html",
+                   "blocklyPort" : '8090',
+                   "blocklyHost" : "localhost",
+                   "recentlyOpenedMaxCount" : 10
+               }
         # Read settings from file
         if os.path.exists(SETTING_FILE) and os.path.isfile(SETTING_FILE):
             f = open(SETTING_FILE, 'r')
@@ -122,8 +82,30 @@ class ApiCore:
                     self.__settings[key] = value
             f.close()
 
+        # All functions here will be called upon exit
+        self.onExit = [self.saveSettings]
+
+        # All defined platforms
+        self.platforms = self.getPlatformsFromMakefile()
+
+        self.platformOnly = None
+        self.excludedPlatforms = list()
+
+        self.activePlatform = self.platforms.index("telosb")
+
+        self.motelist = []
+        self.motelistCallbacks = []
+
+        # Flag indicates that next thread's output shouldn't trigger 
+        # force switching to info area tab.
+        self.supressTabSwitching = False
+
+        self.targets = [None]
+        self.targetType = "USB"
+
+        self.activeThreads = {}
+
         self.onExit.append(self.killAllThreads)
-        self.onExit.append(self.saveSettings)
 
         if LOG_TO_FILE:
             path = os.getcwd()
@@ -132,9 +114,25 @@ class ApiCore:
             os.chdir(path)
             self.onExit.append(self.logFile.close)
 
-        ApiCore.platforms = self.getPlatformsFromMakefile()
-        ApiCore.activePlatform = ApiCore.platforms.index("telosb")
-        ApiCore.pathToMansos = os.path.join(ApiCore.path, "../..")
+        # this is path from /mansos/tools/IDE
+        self.pathToMansos = os.path.join(self.path, "../..")
+
+        # Try to get system default font
+        #font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+        #self.fontName = font.GetFaceName()
+        #if self.fontName != "":
+        #    print "Using system default font: {}".format(self.fontName)
+        #else:
+        self.fontName = "Courier New"
+        #    print "Can't find system default font, defaulting to {}".\
+        #                format(self.fontName)
+
+        self.listenModules = list()
+
+        self.editors = list()
+
+        icon = os.path.normpath('../../doc/mansos-32x32.ico')
+
 ### Module initializations
 
 # Visual objects here can be used in forms only after they have been re-parented 
@@ -144,6 +142,10 @@ class ApiCore:
 
         # Defines seal syntax
         self.sealSyntax = SealSyntax(self)
+
+        # Init translation module
+        self.translater = Translater(self)
+        self.tr = self.translater.translate
 
         # Init output_tools
         #self.outputTools = OutputTools(self.emptyFrame, self)
@@ -177,6 +179,7 @@ class ApiCore:
 
         #self.outputTools.addTools()
 
+        self.motelistClass = GetMotelist(self.pathToMansos, self)
         self.compiler = DoCompile(self)
         self.uploader = DoUpload(self)
 
@@ -188,14 +191,15 @@ class ApiCore:
 # should go through here, but this ain't perfect world :(
 
         self.getKeywords = self.sealSyntax.getKeywords
-
+        self.tr = self.translater.translate
+        #self.printInfo = self.dummyPrint
         self.printOutput = self.dummyPrint
 
 # Check if icon can be found
-        if os.path.exists(ApiCore.icon):
-            self.frame.SetIcon(wx.Icon(ApiCore.icon, wx.BITMAP_TYPE_ICO, 32, 32))
+        if os.path.exists(icon):
+            self.frame.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_ICO, 32, 32))
         else:
-            self.logMsg(LOG_WARNING, "Icon not found in '{}'!".format(ApiCore.icon))
+            self.logMsg(LOG_WARNING, "Icon not found in '{}'!".format(icon))
 
 # Check that everything is OK
         assert len(self.emptyFrame.GetChildren()) == 0, \
@@ -205,7 +209,7 @@ class ApiCore:
         self.syncModuleCheckboxes()
 
 # Initialize upload targets
-        self.uploadTargets = ([], localize('the default device'))
+        self.uploadTargets = ([], self.tr('the default device'))
 
 # Load last used tabs
         self.tabManager.loadRememberedTabs()
@@ -215,12 +219,11 @@ class ApiCore:
 
         self.loaded = True
         self.frame.checkToggleState()
+# Populate motelist
+        self.populateMotelist()
 
-        Motelist()
-
-    @staticmethod
-    def getPlatformsFromMakefile():
-        makefile = os.path.join(ApiCore.path, "../../mos/make/Makefile.options")
+    def getPlatformsFromMakefile(self):
+        makefile = os.path.join(self.path, "../../mos/make/Makefile.options")
         if os.path.exists(makefile) and os.path.isfile(makefile):
             f = open(makefile, "r")
             for line in f.readlines():
@@ -322,6 +325,10 @@ class ApiCore:
             if self.activeThreads[x]:
                 self.activeThreads[x].process.terminate()
 
+    def populateMotelist(self, event = None):
+        self.printInfo("Populating motelist ... ", False, not self.supressTabSwitching)
+        self.motelistClass.getMotelist()
+
     def doCompile(self, event = None):
         self.printInfo("Starting to compile ... \n", False)
         self.compiler.doCompile()
@@ -374,6 +381,20 @@ class ApiCore:
         else:
             self.infoArea.printLine("Wrong format recieved {}\n".format(type(event.data)))
 
+    def motelistChangeCallback(self):
+        # Read motelist from config file
+        if os.path.exists(".motelist") and os.path.isfile(".motelist"):
+            f = open(".motelist", 'r')
+            lines = f.readlines()
+            for x in lines:
+                if x != '':
+                    if x.find("->") != -1:
+                        name, port = x.strip().split("->")
+                        self.motelist.append(["User defined", port, name])
+        # Call callbacks!
+        for x in self.motelistCallbacks:
+            x()
+
     def changePlatform(self, event):
         if event is not None:
             platform = event.GetEventObject().GetValue()
@@ -383,7 +404,7 @@ class ApiCore:
             self.activePlatform = self.platforms.index(platform)
         else:
             self.activePlatform = self.platforms.index("telosb")
-        self.printInfo(localize("Changed platform to") + " " + self.getActivePlatform() + "\n")
+        self.printInfo(self.tr("Changed platform to") + " " + self.getActivePlatform() + "\n")
 
     def getActivePlatform(self):
         if self.platformOnly == None:

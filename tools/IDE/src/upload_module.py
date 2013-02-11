@@ -24,37 +24,36 @@
 
 import wx
 
-from src.Motelist import Motelist
-from src.globals import localize
+from newMote import NewMote
 
 class UploadModule(wx.Panel):
-    # Hols id of selected targets
-    targets = list()
-
     def __init__(self, parent, API):
         super(UploadModule, self).__init__(parent = parent)
 
         self.API = API
         self.editorManager = self.API.tabManager.GetCurrentPage()
         self.filename = self.editorManager.fileName
-        Motelist.addUpdateCallback(self.updateMotelist)
-
+        self.API.motelistCallbacks.append(self.updateMotelist)
+        # Just a shorter name
+        self.tr = self.API.translater.translate
         self.tmpDir = self.API.path + '/temp/'
         self.haveMote = False
         self.platform = "telosb"
         self.moteOrder = list()
         # this is path from /mansos/tools/IDE
         self.pathToMansos = self.API.path + "/../.."
+        self.motes = []
 
         self.main = wx.BoxSizer(wx.VERTICAL)
         self.controls = wx.GridBagSizer(10, 10)
 
         #self.source = wx.ComboBox(self, choices = ["USB", "Shell"])
         #self.source.SetValue("USB")
-        self.upload = wx.Button(self, label = localize("Upload"))
+        self.upload = wx.Button(self, label = self.tr("Upload"))
         self.platforms = wx.ComboBox(self, choices = self.API.getPlatforms())
-        self.refresh = wx.Button(self, label = localize("Refresh"))
-        self.compile = wx.Button(self, label = localize("Compile"))
+        self.refresh = wx.Button(self, label = self.tr("Refresh"))
+        self.compile = wx.Button(self, label = self.tr("Compile"))
+        self.newMote = wx.Button(self, label = self.tr("Add mote"))
         self.platforms.SetValue(self.API.getActivePlatform())
         if self.API.platformOnly != None:
             self.platforms.Enable(False)
@@ -64,6 +63,8 @@ class UploadModule(wx.Panel):
         self.controls.Add(self.upload, (0, 2), span = (2, 2),
                           flag = wx.EXPAND | wx.ALL)
 
+        #self.controls.Add(self.source, (1, 1), flag = wx.EXPAND | wx.ALL)
+        self.controls.Add(self.newMote, (1, 1), flag = wx.EXPAND | wx.ALL)
         self.controls.Add(self.refresh, (1, 0), flag = wx.EXPAND | wx.ALL)
 
         self.list = wx.CheckListBox(self, wx.ID_ANY, style = wx.MULTIPLE)
@@ -74,6 +75,8 @@ class UploadModule(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.API.doCompile, self.compile)
         self.Bind(wx.EVT_BUTTON, self.API.doUpload, self.upload)
         self.Bind(wx.EVT_BUTTON, self.populateMotelist, self.refresh)
+        #self.Bind(wx.EVT_COMBOBOX, self.populateMotelist, self.source)
+        self.Bind(wx.EVT_BUTTON, self.openNewMoteDialog, self.newMote)
         self.Bind(wx.EVT_COMBOBOX, self.API.changePlatform, self.platforms)
         self.Bind(wx.EVT_CHECKLISTBOX, self.modifyTargets, self.list)
 
@@ -81,26 +84,39 @@ class UploadModule(wx.Panel):
         self.SetAutoLayout(1)
         self.Show()
 
-        self.populateMotelist()
+        self.updateMotelist()
 
     def __del__(self):
-        Motelist.removeUpdateCallback(self.updateMotelist)
+        self.API.motelistCallbacks.remove(self.updateMotelist)
 
     def populateMotelist(self, event = None):
         self.list.Clear()
-        self.list.Insert(localize("Searching devices") + "...", 0)
+        self.list.Insert(self.tr("Searching devices") + "...", 0)
         self.list.Disable()
-        Motelist.update()
+        self.API.populateMotelist()
 
     def updateMotelist(self):
+        motelist = self.API.motelist
         self.list.Clear()
 
-        if len(Motelist.motes) == 0:
-            self.list.Insert(localize("No devices found!"), 0)
+        if len(motelist) == 0:
+            self.list.Insert(self.tr("No devices found!"), 0)
         else:
-            for x in Motelist.motes:
-                self.list.Append(x.getNiceName())
+            for i in range(len(motelist)):
+                if len(motelist[i]) > 2:
+                    self.list.Insert(motelist[i][0] + "(" + motelist[i][2] +
+                                 ") @ " + motelist[i][1], i)
+                else:
+                    self.API.printInfo("Wrong motelist format:", str(motelist[0]))
             self.list.Enable()
 
     def modifyTargets(self, event):
-        UploadModule.targets = list(self.list.GetChecked())
+        self.API.targets = list(self.list.GetChecked())
+
+    def openNewMoteDialog(self, event):
+        dialog = NewMote(self, self.API)
+        dialog.ShowModal()
+        dialog.Destroy()
+        self.updateMotelist()
+
+
