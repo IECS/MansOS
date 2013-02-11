@@ -117,7 +117,9 @@ stackdump:
 	$(_QUIET) $(STACKDUMP) $(OUTDIR)/$(APPMOD).elf msp430 -v
 
 stackdump-build:
+ifeq (1,$(NEW_GCC))
 	$(_QUIET) $(STACKDUMP) $(OUTDIR)/$(APPMOD).elf msp430 $(VERBOSE)
+endif
 
 mspsim: build
 	$(JAVA) -jar $(MSPSIM) -platform=sky $(OUTDIR)/$(APPMOD).elf

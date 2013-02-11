@@ -161,7 +161,7 @@ functionStart = Regexp(r'([0-9a-fA-F]+)\s<([a-zA-Z_][a-zA-Z_0-9\.]*)>:')
 callInstr     = Regexp(r'.*call\s+#(0x[0-9a-fA-F]+)')
 ptrCallInstr  = Regexp(r'.*call\s+([^\s]+)\s')
 pushPopInstr  = Regexp(r'.*((push)|(pop))\s+(r[0-9][0-9]?)')
-arithmInstr   = Regexp(r'.*((add)|(sub))\s+#(-?[0-9]+),\s+r1\s')
+arithmInstr   = Regexp(r'.*((add)|(add.b)|(addc.b)|(sub)|(sub.c)|(subc.b))\s+#(-?[0-9]+),\s+r1\s')
 shortArithmInstr   = Regexp(r'.*((inc)|(dec)|(incd)|(decd))\s+r1\s')
 explicitStackManipulation  = Regexp(r'.*\s+r1\s|,')
 
@@ -241,7 +241,8 @@ def buildTrace():
             #print "add/sub: ", line.strip()
             #print arithmInstr.group(1)
             #print arithmInstr.group(4)
-            currentFunction.addOp(arithmInstr.group(1), int(arithmInstr.group(4)))
+            instr = arithmInstr.group(1)[:3]            
+            currentFunction.addOp(instr, int(arithmInstr.group(8)))
         elif shortArithmInstr.match(line):
             #print "inc/dec: ", line.strip()
             #print shortArithmInstr.group(1)
