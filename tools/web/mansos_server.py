@@ -308,6 +308,14 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.wfile.write("0\r\n")
         self.wfile.write("\r\n")
 
+    # overrides base class function, because in some versions
+    # it tries to resolve dns and fails...
+    def log_message(self, format, *args):
+        sys.stderr.write("%s - - [%s] %s\n" %
+                         (self.client_address[0],
+                          self.log_date_time_string(),
+                          format%args))
+
     def serveSession(self, qs):
         with open(htmlDirectory + "/session.html", "r") as f:
             contents = f.read()
