@@ -6,7 +6,7 @@ import serial, subprocess, sys, time, os
 #from serial.tools import list_ports
 from settings import *
 
-def runSubprocess1(args, serve):
+def runSubprocess1(args, server):
     retcode = -1
     try:
         proc = subprocess.Popen(args, stderr = subprocess.STDOUT, stdout = subprocess.PIPE,
