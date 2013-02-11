@@ -232,7 +232,7 @@ function wopen(url, name, w, h)
               <button onclick="save()">Save XML</button>
               <button id="fakeload">Load XML</button>
               <input type="file" id="load" style="display: none;"/>
-              <button class="launch" onclick="document.getElementById('content_blocks').contentWindow.uploadSealCode(); wopen('upload-result', 'Upload result', 800, 600);";>Try Program</button>
+              <button class="launch" onclick="document.getElementById('content_blocks').contentWindow.uploadSealCode(); wopen('upload-result', 'Upload result', 800, 600);" %DISABLED% >Try Program</button>
             </td>
           </tr>
         </table>
@@ -240,7 +240,7 @@ function wopen(url, name, w, h)
     </tr>
     <tr>
       <td height="99%">
-        <iframe id="content_blocks" src="/seal-blockly/frame.html"></iframe>
+        <iframe id="content_blocks" src="/seal-blockly/frame.html?sma=%SMA%"></iframe>
         <pre id="content_seal"></pre>
         <div id="content_xml">
           <textarea id="textarea_xml"></textarea>
