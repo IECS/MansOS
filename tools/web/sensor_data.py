@@ -135,7 +135,7 @@ class SensorData(object):
 
 
     def resize(self, newMaxSize):
-        self.data = self.data[:newMaxSize]
+        self.data = self.data[-newMaxSize:]
 
     def reset(self):
         self.resize(0)
@@ -173,7 +173,7 @@ class MoteData(object):
 
     def addNewData(self, newString, motename):
         self.listenTxt.append(newString)
-        
+
         # if the new string contains address of a data, use it instead of mote's name!
         columnPos = newString.find(":")
         eqPos = newString.find("=")
