@@ -73,30 +73,34 @@ class Sessions():
     def __init__(self):
         self._sessionList = []
     def is_session(self,sma):
-        i=0
-        while self._sessionList.__len__() > i:
+        i=self._sessionList.__len__()-1
+        while -1 < i:
             if self._sessionList[i]._sma == sma:
                 return True
-            i +=1
+            i -=1
         return False
     def add_session(self,sma):
         self.delete_old()
+        if self._sessionList.__len__()>9999:
+            print("Session count : {}".format(self._sessionList.__len__()))
+            return
         self._sessionList.append(Session(sma))
+        print("Session count : {}".format(self._sessionList.__len__()))
+        return True
     def get_session(self,sma):
-        i=0
-        while self._sessionList.__len__() > i:
+        i=self._sessionList.__len__()-1
+        while -1 < i:
             if self._sessionList[i]._sma == sma:
                 return self._sessionList[i]
-            i +=1
+            i -=1
         #print("Nav tada sesijas")
         return False
     def delete_old(self):
-        i=0
-        while self._sessionList.__len__() > i:
+        i=self._sessionList.__len__()-1
+        while -1 < i:
             if self._sessionList[i]._end < datetime.datetime.now():
                 self._sessionList.pop(i)
-            else:
-                i+=1
+            i -=1
     def set_sma(self,osma,nsma):
         temp = self.get_session(osma)
         if temp:
@@ -111,27 +115,32 @@ class Sessions():
             self.add_session(nsma)
             return False
     def add_sid(self,sma,sid,user):
-        i=0
-        while self._sessionList.__len__() > i:
+        i=self._sessionList.__len__()-1
+        while -1 < i:
             if self._sessionList[i]._sma == sma:
                 self._sessionList[i].add_sid(sid,user)
                 return
-            i+=1
+            i -=1
     def get_sid(self,sma):
-        pass
+        i=self._sessionList.__len__()-1
+        while -1 < i:
+            if self._sessionList[i]._sma == sma:
+                return self._sessionList[i]._sid
+            i -=1
+        return False
     def del_sid(self,sma):
-        i=0
-        while self._sessionList.__len__() > i:
+        i=self._sessionList.__len__()-1
+        while -1 < i:
             if self._sessionList[i]._sma == sma:
                 self._sessionList[i].del_sid()
                 return
-            i+=1
+            i -=1
     def get_sessions(self):
         temp = {}
-        i=0
-        while self._sessionList.__len__() > i:
+        i=self._sessionList.__len__()-1
+        while -1 < i:
             temp[i] = self._sessionList[i].get_all_data()
-            i+=1
+            i -=1
         return temp
         
 # --------------------------------------------
@@ -318,8 +327,13 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
     def serveSession(self, qs):
         with open(htmlDirectory + "/session.html", "r") as f:
+            #nolasa vai nav Msma37
+            #ja nav izveido jaunu
+            #ja ir nomaina sma
+            #Ja ir piesledzies pievieno sid
+            #ja nav tad izdzes to
             contents = f.read()
-            tsma = str(random.randint(100000, 999999))
+            tsma = str(random.randint(1000000, 9999999))
             if "sma" in qs:
                 tsma = tsma + qs["sma"][0][-1:]
                 if "log" in qs:
@@ -336,16 +350,10 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 if not allSessions.set_sma(qs["sma"][0],tsma):
                     tsma= tsma[:-1]+"0"
                     contents = contents.replace("/*?DEL", "")
-                    allSessions.del_sid(qs["sma"][0])
             else:
                 tsma = tsma + "0"
                 allSessions.add_session(tsma)
                 contents = contents.replace("/*?DEL", "")
-                #delsid
-            #nolasa vai nav Msma37
-            #ja nav izveido jaunu
-            #ja ir nomaina sma
-            # Msma37
             contents = contents.replace("%RAND%", tsma)
             if not "sma" in qs:
                 qs["sma"] = []
@@ -410,6 +418,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 # login/logout
                 log = "Logout" if "sma" in qs and "1" in qs["sma"][0][-1:] else "Login"
                 contents = contents.replace("%LOG%", log)
+                try: contents = contents.replace("%SMA%", qs["sma"][0])
+                except:pass
                 # this page (for form)
                 contents = contents.replace("%THISPAGE%", name)
                 self.writeChunk(contents)
@@ -425,8 +435,9 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             if replaceValues:
                 for v in replaceValues:
                     contents = contents.replace("%" + v + "%", replaceValues[v])
-            contents = contents.replace("%DISABLED%", disabled).\
-                                replace("%SMA%", qs["sma"][0])
+            contents = contents.replace("%DISABLED%", disabled)
+            try: contents = contents.replace("%SMA%", qs["sma"][0])
+            except:pass
             self.writeChunk(contents)
 
 
@@ -559,7 +570,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
     def serveError(self, message):
         if not self.headerIsServed:
             self.serveHeader("error",{})
-        self.writeChunk("\n<strong>Error: " + message + "</strong></div>\n")
+        self.writeChunk("\n<strong>Error: " + message + "</strong>\n")
         self.serveFooter()
 
     def serveDefault(self, qs):
@@ -584,8 +595,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             tuser=allUsers.get_user("name", qs["user"][0])
             if tuser and tuser["password"] == qs["password"][0]:
                 qs["log"] = "in"
-                print(qs["user"][0])
-                print("had loged in")
+                print("{} had loged in".format(qs["user"][0]))
                 self.serveDefault(qs)
                 return
             else:
@@ -619,7 +629,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 i += 1
             motes.storeSelected()
 
-            text = '<strong>Mote platforms updated!</strong></div>\n'
+            text = '<strong>Mote platforms updated!</strong>\n'
             self.serveHeader("config", qs, isGeneric = True)
             self.writeChunk(text)
             self.serveFooter()
