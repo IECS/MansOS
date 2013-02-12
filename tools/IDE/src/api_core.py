@@ -30,7 +30,7 @@ from serial import Serial, PARITY_NONE, SerialException
 
 from frame import Frame
 from seal_syntax import SealSyntax
-from translater import Translater
+from Translater import Translater
 from output_area import OutputArea
 from tab_manager import TabManager
 from listen_module import ListenModule
