@@ -33,12 +33,14 @@ from blockly_handler import listen
 
 # TODO: rewrite this
 def xmlUnescapeMy(code):
+    code = code.replace("\nend", "\nend\n")
     result = ""
     for t in code.split():
         if len(t) == 3 and t[0] == '%':
             # parse hex symbol
             t = chr(int(t[1:3], 16))
-        if t[-1] == ';': t += '\n'
+        if t[-1] == ';' or t[-3:] == 'end': t += '\n'
+        elif t[-1] == ':': t += '\n  '
         else: t += ' '
         result += t
     return result
@@ -141,9 +143,9 @@ class Blockly(wx.Panel):
         if self.choice.GetValue() == 'upload':
             self.onUpload(code)
 
-    def onOpen(self, code):
+    def onOpen(self, code, name = ''):
         if self.tab == None:
-            self.API.tabManager.addPage()
+            self.API.tabManager.addPage(name)
             self.API.tabManager.GetCurrentPage().changeCode(code)
             self.API.tabManager.Layout()
             self.tab = self.API.tabManager.GetSelection()
@@ -158,13 +160,15 @@ class Blockly(wx.Panel):
 
     def onUpload(self, code):
         #self.onSave(code)
-        os.chdir(self.path)
+        os.chdir(self.API.path)
         f = open("blockly.sl", 'w')
         f.write(code)
 
-        self.API.tabManager.addPage("blockly.sl")
-        self.API.tabManager.Layout()
-        self.API.uploadCore.manageUpload()
+        self.onOpen(code, 'blockly.sl')
+        #self.API.tabManager.addPage("blockly.sl")
+        #self.API.tabManager.GetCurrentPage().changeCode(code, True)
+        #self.API.tabManager.Layout()
+        self.API.uploader.doUpload()
 
     def printLine(self, text, clear = False):
         if clear:
