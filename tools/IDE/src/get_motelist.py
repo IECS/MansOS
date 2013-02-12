@@ -81,7 +81,7 @@ class GetMotelist(object):
             print "No Linux or Win detected, assuming Mac, output = {}".format(system())
             target += ".apple"
         print target
-        thread = MyThread(doPopen, [target, "-c", "-l"], \
+        thread = MyThread(doPopen, [target, "-c"], \
                               self.parseMotelist, False, False, "Motelist")
         self.API.startThread(thread)
 
