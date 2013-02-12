@@ -18,11 +18,9 @@ function IsAll()
 	return true;
 }
 </script>
-<!--[if !IE]><!-->
-<span %FAIL%>
-	<h4 style="color:red;">You have made a mistake!</h4>
+<span>
+	<h4 style="color:red;">%FAIL%</h4>
 </span>
-<!--<![endif]-->
 <form name="login" action="login" onsubmit="return IsAll()" >
 	<p>User name: <input type="Text" class="must" name="user"></p>
 	<p>Password: <input type="password" class="must" name="password"></p>

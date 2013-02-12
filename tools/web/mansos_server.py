@@ -4,7 +4,7 @@
 # MansOS web server - main file
 #
 
-import os, sys, platform, datetime, cookielib, random
+import os, sys, platform, datetime, cookielib, random, Cookie
 import threading, time, serial, select, socket, cgi, subprocess, struct, signal
 import json
 from settings import *
@@ -49,25 +49,22 @@ class Session():
     def add_sid(self,sid,user):
         self._sid=sid
         self._user=user
+        print("{} had loged in".format(self._user["name"]))
     def get_all_data(self):
         temp = {}
         temp["sma"] = self._sma
         temp["end"] = self._end
-        try:
+        if hasattr(self, '_sid'):
             temp["sid"] = self._sid
-        except:
-            pass
-        try:
+        if hasattr(self, '_user'):
             temp["user"] = self._user
-        except:
-            pass
         return temp
     def del_sid(self):
-        try:
+        if hasattr(self, '_sid'):
             del self._sid
+        if hasattr(self, '_user'):
+            print("{} had loged out".format(self._user["name"]))
             del self._user
-        except:
-            pass
 
 class Sessions():
     def __init__(self):
@@ -99,12 +96,14 @@ class Sessions():
         i=self._sessionList.__len__()-1
         while -1 < i:
             if self._sessionList[i]._end < datetime.datetime.now():
+                if hasattr(self._sessionList[i], '_user'):
+                    print("{} session ended".format(self._sessionList[i]._user["name"]))
                 self._sessionList.pop(i)
             i -=1
     def set_sma(self,osma,nsma):
         temp = self.get_session(osma)
         if temp:
-            if nsma[-1:] == "1":
+            if nsma[-1:] != "0":
                 temp._end=datetime.datetime.now() + datetime.timedelta(minutes=15)
             else:
                 temp._end=datetime.datetime.now() + datetime.timedelta(minutes=1)
@@ -181,9 +180,16 @@ class Users():
         #print("Nav tada persona")
         return False
     def add_user(self, userData):
-        # vajadziga parbaude vai nav jau tads vards
-        self._userList.append(User(self._userAttributes, userData))
-        return True
+        i=self._userAttributes.__len__()-1
+        while i > -1:
+            if self._userAttributes[i] == "name":
+                break
+            i-=1
+        if not self.get_user("name",userData[i]):
+            self._userList.append(User(self._userAttributes, userData))
+            return True
+        print "Did not add user {}".format(userData[i])
+        return False
     def get_users(self):
         temp = {}
         i=0
@@ -214,11 +220,12 @@ class Users():
         tstr = tstr.replace(':','-')
         tstr = tstr.replace('.dat','')
         tstr += ".dat"
-        #os.rename(userDirectory + "/test.dat",userDirectory + tstr)
+        if not os.path.exists(userDirectory+"/archives"):
+            os.makedirs(userDirectory+"/archives")
         os.rename(userDirectory + "/" + userFile,userDirectory+ "/archives" + tstr)
+        return str(userDirectory+ "/archives" + tstr)
     def write_in_file(self):
-        self.make_copy()
-        #f = open(userDirectory + "/test.dat","w")
+        print( "User file old copy made in " +self.make_copy())
         f = open(userDirectory + "/" + userFile,"w")
         tstr = ""
         i=0
@@ -305,7 +312,6 @@ def getMansOSVersion():
 class HttpServerHandler(BaseHTTPRequestHandler):
     server_version = 'MansOS/' + getMansOSVersion() + ' Web Server'
     protocol_version = 'HTTP/1.1' # 'HTTP/1.0' is the default, but we want chunked encoding
-
     def writeChunk(self, buffer):
         if self.wfile == None: return
         if self.wfile._sock == None: return
@@ -324,8 +330,44 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                          (self.client_address[0],
                           self.log_date_time_string(),
                           format%args))
-
+        
+    def getCookie(self, cookieName):
+        tdict = {}
+        if "Cookie" in self.headers:
+            tlist = self.headers['Cookie'].split(";")
+            for i in tlist:
+                i = i.strip()
+                i = i.split("=")
+                tdict[i[0]] = i[1]
+            return tdict.get(cookieName, False)
+        return False
+        
+    def changeHeadersCookie(self, cookieName, value):
+        if "Cookie" in self.headers:
+            if cookieName in self.headers["Cookie"]:
+                tlist=self.headers["Cookie"].split(cookieName)
+                tlist[0]+=cookieName+"="
+                tlist[1]=value+tlist[1][tlist[1].find(";"):]
+                self.headers["Cookie"]=tlist[0]+tlist[1]
+            else:
+                self.headers["Cookie"]+="; "+cookieName+"="+value
+        else:
+            self.headers["Cookie"]=cookieName+"="+value
+        
     def serveSession(self, qs):
+        #nolasa vai nav Msma37
+        #ja nav izveido jaunu
+        #ja ir nomaina sma
+        #Ja ir piesledzies pievieno sid
+        #ja nav tad izdzes to
+        #print self.headers
+        csma=self.getCookie("Msma37")
+        if csma:
+            if not "sma" in qs:
+                qs["sma"] = []
+                qs["sma"].append(csma)
+            else:
+                qs["sma"][0] = csma
         with open(htmlDirectory + "/session.html", "r") as f:
             #nolasa vai nav Msma37
             #ja nav izveido jaunu
@@ -339,8 +381,13 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 if "log" in qs:
                     if qs["log"] == "in":
                         tsid = str(random.randint(1000000000, 9999999999))
-                        tsma = tsma[:-1]+"1"
-                        allSessions.add_sid(qs["sma"][0], tsid, allUsers.get_user("name", qs["user"][0]))
+                        tuser=allUsers.get_user("name", qs["user"][0])
+                        if "level" in tuser:
+                            tsma = tsma[:-1]+tuser["level"]
+                        else:
+                            tsma = tsma[:-1]+"1"
+                        allSessions.add_sid(qs["sma"][0], tsid, tuser)
+                        self.changeHeadersCookie("Msid37",tsid)
                         contents = contents.replace("/*?LOGIN", "")
                         contents = contents.replace("%SID%", tsid)
                     elif qs["log"] == "out":
@@ -355,6 +402,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 allSessions.add_session(tsma)
                 contents = contents.replace("/*?DEL", "")
             contents = contents.replace("%RAND%", tsma)
+            self.changeHeadersCookie("Msma37",tsma)
             if not "sma" in qs:
                 qs["sma"] = []
                 qs["sma"].append(tsma)
@@ -364,14 +412,32 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             #print(allSessions.get_sessions())
             self.writeChunk(contents)
             
-    def haveAccess(self, qs):
-        if "sma" in qs and "1" in qs["sma"][0][-1:]:
-            try:
-                if allSessions.get_session(qs["sma"][0])._user["hasWriteAccess"] == "True":
+    def getLevel(self, qs={}):
+        if "sma" in qs:
+            if qs["sma"][0][-1:].isdigit():
+                return int(qs["sma"][0][-1:])
+        csma=self.getCookie("Msma37")
+        if csma:
+            if csma[-1:].isdigit():
+                return int(csma[-1:])
+            return 0
+        else:
+            return 0
+        
+    def haveAccess(self, qs={}):
+        if "sma" in qs:
+            if qs["sma"][0][-1:] != "0":
+                tsu=allSessions.get_session(qs["sma"][0])._user
+                if tsu.get("hasWriteAccess",False) == "True":
                     return True
-            except:
-                return False
-        return False
+            return False
+        csma=self.getCookie("Msma37")
+        if csma:
+            if csma[-1:] != "0":
+                tsu=allSessions.get_session(csma)._user
+                if tsu.get("hasWriteAccess",False) == "True":
+                    return True
+            return False
     
     def serveHeader(self, name, qs, isGeneric = True, includeBodyStart = True, replaceValues = None):
         self.headerIsServed = True
@@ -416,10 +482,9 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 disabled = "" if self.haveAccess(qs) else 'disabled="disabled" '
                 contents = contents.replace("%DISABLED%", disabled)
                 # login/logout
-                log = "Logout" if "sma" in qs and "1" in qs["sma"][0][-1:] else "Login"
+                log = "Logout" if "sma" in qs and "0" != qs["sma"][0][-1:] else "Login"
                 contents = contents.replace("%LOG%", log)
-                try: contents = contents.replace("%SMA%", qs["sma"][0])
-                except:pass
+                if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
                 # this page (for form)
                 contents = contents.replace("%THISPAGE%", name)
                 self.writeChunk(contents)
@@ -436,8 +501,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 for v in replaceValues:
                     contents = contents.replace("%" + v + "%", replaceValues[v])
             contents = contents.replace("%DISABLED%", disabled)
-            try: contents = contents.replace("%SMA%", qs["sma"][0])
-            except:pass
+            if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
             self.writeChunk(contents)
 
 
@@ -554,9 +618,6 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         except:
             print("problem with file " + filename + "\n")
             self.serve404Error(filename, {})
-    def getCookie(self):
-        for k, v in os.environ.items():
-            print (k, "=", v)
 
     def serve404Error(self, path, qs):
         self.send_response(404)
@@ -582,12 +643,10 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.serveFooter()
 
     def serveLogin(self, qs):
-        #self.getCookie()
-        #print(qs)
         qs["log"] = ""
         changes = {}
-        changes["FAIL"] = 'hidden'
-        if "sma" in qs and "1" in qs["sma"][0][-1:]:
+        changes["FAIL"] = ''
+        if "sma" in qs and "0" != qs["sma"][0][-1:]:
             qs["log"] = "out"
             self.serveDefault(qs)
             return
@@ -595,11 +654,10 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             tuser=allUsers.get_user("name", qs["user"][0])
             if tuser and tuser["password"] == qs["password"][0]:
                 qs["log"] = "in"
-                print("{} had loged in".format(qs["user"][0]))
                 self.serveDefault(qs)
                 return
             else:
-                changes["FAIL"]=""
+                changes["FAIL"]="You have made a mistake!"
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -1119,32 +1177,32 @@ class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
             os.kill(os.getpid(), signal.SIGKILL)
 
 # --------------------------------------------
-
-def initalizeConfig():
-    global htmlDirectory
-    global dataDirectory
-    global sealBlocklyPath
+def makeDefaultUserFile():
+    if not os.path.exists(userDirectory):
+        os.makedirs(userDirectory)
+    if not os.path.exists(userDirectory + "/" + userFile):
+        uf = open(userDirectory + "/" + userFile,"w")
+        for at in settingsInstance.getCfgValue("userAttributes"):
+            uf.write(at+" ")
+        uf.write("\n")
+        for ad in settingsInstance.getCfgValue("adminValues"):
+            uf.write(ad+" ")
+        uf.write("\n")
+        uf.close()
+        return str(userDirectory + "/" + userFile)
+def initalizeUsers():
     global allUsers
     global allSessions
     global userFile
     global userDirectory
-
+    
     allSessions = Sessions()
-
-    htmlDirectory = os.path.abspath(settingsInstance.getCfgValue("htmlDirectory"))
-    dataDirectory = os.path.abspath(settingsInstance.getCfgValue("dataDirectory"))
-    if not os.path.exists(dataDirectory):
-        os.makedirs(dataDirectory)
-    sealBlocklyPath = os.path.abspath(settingsInstance.getCfgValue("sealBlocklyDirectory"))
-
-    userDirectory = "user" # Jaliek konfiga
-    if not os.path.exists(userDirectory):
-        os.makedirs(userDirectory)
-    userFile = "user.dat" # Jaieliek konfiga
+    
+    userDirectory = os.path.abspath(settingsInstance.getCfgValue("userDirectory"))
+    userFile = settingsInstance.getCfgValue("userFile")
     if not os.path.exists(userDirectory + "/" + userFile):
-        uf = open(userDirectory + "/" + userFile,"w")
-        uf.write("name password email theme hasWriteAccess\n") #ari vajadzetu no konfiguracijas
-        uf.write("admin admin none 0 True\n")
+        print("No user file. Python add default in "+makeDefaultUserFile())
+        
     uf = open(userDirectory + "/" + userFile,"r")
     i = False
     for line in uf:
@@ -1154,7 +1212,78 @@ def initalizeConfig():
          else:
              allUsers.add_user(line.split())
     uf.close()
+    
+    if not "name" in allUsers._userAttributes:
+        print ("User attribute \"name\" required! Python save old user file in "+allUsers.make_copy())
+        print ("New default file made in "+makeDefaultUserFile())
+        uf = open(userDirectory + "/" + userFile,"r")
+        i = False
+        for line in uf:
+             if not i:
+                 i = True
+                 allUsers = Users(line.split())
+             else:
+                 allUsers.add_user(line.split())
+        uf.close()
+    elif not allUsers.get_user("name", "admin"):
+        print ("No admin! Python save old user file in "+allUsers.make_copy())
+        print ("New default file made in "+makeDefaultUserFile())
+        uf = open(userDirectory + "/" + userFile,"r")
+        i = False
+        for line in uf:
+             if not i:
+                 i = True
+                 allUsers = Users(line.split())
+             else:
+                 allUsers.add_user(line.split())
+        uf.close()
+    elif not "password" in allUsers._userAttributes:
+        print ("User attribute \"password\" required!  Python save old user file in "+allUsers.make_copy())
+        print ("New default file made in "+makeDefaultUserFile())
+        uf = open(userDirectory + "/" + userFile,"r")
+        i = False
+        for line in uf:
+             if not i:
+                 i = True
+                 allUsers = Users(line.split())
+             else:
+                 allUsers.add_user(line.split())
+        uf.close()
 
+    if not allUsers.get_user("name", "admin") or not "name" in allUsers._userAttributes or not "password" in allUsers._userAttributes:
+        print("There is something wrong with user.cfg")
+    
+    ua=settingsInstance.getCfgValue("userAttributes")
+    na=set(ua)-set(allUsers._userAttributes)
+    if len(na) > 0:
+        dv=settingsInstance.getCfgValue("defaultValues")
+        av=settingsInstance.getCfgValue("adminValues")
+        i=ua.__len__()-1
+        while len(na) > 0:
+            n=na.pop()
+            print("New attribute for users: "+str(n))
+            z=i
+            while z > -1:
+                if n == ua[z]:
+                    allUsers.add_attribute(ua[z], dv[z])
+                    allUsers.set_attribute("admin", ua[z], av[z])
+                    break
+                z-=1
+        allUsers.write_in_file()
+    
+def initalizeConfig():
+    global htmlDirectory
+    global dataDirectory
+    global sealBlocklyPath
+
+    htmlDirectory = os.path.abspath(settingsInstance.getCfgValue("htmlDirectory"))
+    dataDirectory = os.path.abspath(settingsInstance.getCfgValue("dataDirectory"))
+    if not os.path.exists(dataDirectory):
+        os.makedirs(dataDirectory)
+    sealBlocklyPath = os.path.abspath(settingsInstance.getCfgValue("sealBlocklyDirectory"))
+    
+    initalizeUsers()
+        
 def main():
     try:
         if settingsInstance.getCfgValueAsBool("createDaemon"):
