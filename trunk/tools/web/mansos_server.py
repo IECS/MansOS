@@ -188,7 +188,7 @@ class Users():
         if not self.get_user("name",userData[i]):
             self._userList.append(User(self._userAttributes, userData))
             return True
-        print "Did not add user {}".format(userData[i])
+        print("Did not add user {}".format(userData[i]))
         return False
     def get_users(self):
         temp = {}
@@ -225,7 +225,7 @@ class Users():
         os.rename(userDirectory + "/" + userFile,userDirectory+ "/archives" + tstr)
         return str(userDirectory+ "/archives" + tstr)
     def write_in_file(self):
-        print( "User file old copy made in " +self.make_copy())
+        print("User file old copy made in " +self.make_copy())
         f = open(userDirectory + "/" + userFile,"w")
         tstr = ""
         i=0
@@ -995,8 +995,6 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         global lastUploadConfig
         global lastUploadFile
 
-        print "code=", code
-
         retcode = 0
         if not os.path.exists("build"):
             os.mkdir("build")
@@ -1173,8 +1171,9 @@ class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
         finally:
             self._BaseServer__shutdown_request = False
             self._BaseServer__is_shut_down.set()
-            # kill the process to make sure it exits
-            os.kill(os.getpid(), signal.SIGKILL)
+            if os.name == "posix":
+                # kill the process to make sure it exits
+                os.kill(os.getpid(), signal.SIGKILL)
 
 # --------------------------------------------
 def makeDefaultUserFile():
@@ -1214,8 +1213,8 @@ def initalizeUsers():
     uf.close()
     
     if not "name" in allUsers._userAttributes:
-        print ("User attribute \"name\" required! Python save old user file in "+allUsers.make_copy())
-        print ("New default file made in "+makeDefaultUserFile())
+        print("User attribute \"name\" required! Python save old user file in "+allUsers.make_copy())
+        print("New default file made in "+makeDefaultUserFile())
         uf = open(userDirectory + "/" + userFile,"r")
         i = False
         for line in uf:
@@ -1226,8 +1225,8 @@ def initalizeUsers():
                  allUsers.add_user(line.split())
         uf.close()
     elif not allUsers.get_user("name", "admin"):
-        print ("No admin! Python save old user file in "+allUsers.make_copy())
-        print ("New default file made in "+makeDefaultUserFile())
+        print("No admin! Python save old user file in "+allUsers.make_copy())
+        print("New default file made in "+makeDefaultUserFile())
         uf = open(userDirectory + "/" + userFile,"r")
         i = False
         for line in uf:
@@ -1238,8 +1237,8 @@ def initalizeUsers():
                  allUsers.add_user(line.split())
         uf.close()
     elif not "password" in allUsers._userAttributes:
-        print ("User attribute \"password\" required!  Python save old user file in "+allUsers.make_copy())
-        print ("New default file made in "+makeDefaultUserFile())
+        print("User attribute \"password\" required!  Python save old user file in "+allUsers.make_copy())
+        print("New default file made in "+makeDefaultUserFile())
         uf = open(userDirectory + "/" + userFile,"r")
         i = False
         for line in uf:
