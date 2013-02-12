@@ -11,6 +11,7 @@ SERIAL_BAUDRATE = 38400
 class Settings(object):
     class ConfigValues(object):
         def __init__(self):
+            #server.cfg
             self.port = str(HTTP_SERVER_PORT)
             self.baudrate = str(SERIAL_BAUDRATE)
             self.motes = []
@@ -27,51 +28,59 @@ class Settings(object):
             self.mansosDirectory = "../.."
             self.sealBlocklyDirectory = "seal-blockly"
             self.createDaemon = "False"
+            #user.cfg
+            self.userDirectory = "user"
+            self.userFile = "user.dat"
+            self.userAttributes = "name,password,level"
+            self.defaultValues = "Unknown,password,1"
+            self.adminValues = "admin,admin,9"
 
     cfg = ConfigValues()
 
     configurationFileName = "server.cfg"
+    userconfigurationFileName = "user.cfg"
 
     def load(self):
         self.comments = {}
         tmpComment = ""
 
-        with open(self.configurationFileName, 'r') as f:
-            line = 0
-            for x in f.readlines():
-                line += 1
-                x = x.strip()
-                if x == '' or x[0] == '#': # skip comments and empty lines
-                    tmpComment += x + '\r\n'
-                    continue
+        for files in [self.configurationFileName, self.userconfigurationFileName]:
+            with open(files, 'r') as f:
+                line = 0
+                for x in f.readlines():
+                    line += 1
+                    x = x.strip()
+                    if x == '' or x[0] == '#': # skip comments and empty lines
+                        tmpComment += x + '\r\n'
+                        continue
 
-                # extract key=value
-                kv = x.split("=")
-                if len(kv) != 2:
-                    print("Syntax error in configuration file line {}".format(line))
-                    continue
+                    # extract key=value
+                    kv = x.split("=")
+                    if len(kv) != 2:
+                        print("Syntax error in configuration file line {}".format(line))
+                        continue
 
-                key = kv[0]
-                if key not in self.cfg.__dict__:
-                    print("Unknown configuration key " + key)
-                    continue
+                    key = kv[0]
+                    if key not in self.cfg.__dict__:
+                        print("Unknown configuration key " + key)
+                        continue
+
+                    if tmpComment:
+                        self.comments[key] = tmpComment
+                        tmpComment = ""
+
+                    # extract value list
+                    vv = kv[1].strip('"').split(",")
+
+                    if len(vv) == 1:
+                        # single value
+                        self.cfg.__setattr__(key, vv[0])
+                    else:
+                        # value list
+                        self.cfg.__setattr__(key, vv)
 
                 if tmpComment:
-                    self.comments[key] = tmpComment
-                    tmpComment = ""
-
-                # extract value list
-                vv = kv[1].strip('"').split(",")
-
-                if len(vv) == 1:
-                    # single value
-                    self.cfg.__setattr__(key, vv[0])
-                else:
-                    # value list
-                    self.cfg.__setattr__(key, vv)
-
-            if tmpComment:
-                self.comments["__EOF"] = tmpComment
+                    self.comments["__EOF"] = tmpComment
 
     def save(self):
         with open(self.configurationFileName, 'w') as f:
