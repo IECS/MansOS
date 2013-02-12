@@ -264,7 +264,7 @@ def buildTrace():
 def detectLoops(backtrace):
     last = backtrace[-1]
     if last not in functions:
-        print "unknown function {:#x}".format(last)
+        print("unknown function {:#x}".format(last))
         return
     nonrecursiveCallees = []
     for callee in functions[last].callees:
