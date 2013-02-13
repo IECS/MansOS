@@ -425,6 +425,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             return 0
         
     def haveAccess(self, qs={}):
+      try:
         if "sma" in qs:
             if qs["sma"][0][-1:] != "0":
                 tsu=allSessions.get_session(qs["sma"][0])._user
@@ -438,7 +439,9 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 if tsu.get("hasWriteAccess",False) == "True":
                     return True
             return False
-    
+      except:
+        return False
+
     def serveHeader(self, name, qs, isGeneric = True, includeBodyStart = True, replaceValues = None):
         self.headerIsServed = True
         if name == "default":
@@ -981,7 +984,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             # qs['src'] contains SEAL-Blockly code
             code = qs.get('src')[0] if "src" in qs else ""
             config = qs.get('config')[0] if "config" in qs else ""
-            self.compileAndUpload(code, config, None, True)
+            if motes.anySelected():
+                self.compileAndUpload(code, config, None, True)
             self.serveSync(qs)
         elif o.path[-4:] == ".css":
             self.serveFile(htmlDirectory + o.path)
