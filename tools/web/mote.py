@@ -41,7 +41,10 @@ class Mote(object):
         self.isStatic = False
         self.buffer = ""
         self.platform = "telosb"
-        dirname = os.path.join(settingsInstance.cfg.dataDirectory, os.path.basename(portName))
+        baseDir = os.path.basename(portName)
+        if baseDir[:3].lower() == "com":
+            baseDir = "_" + baseDir
+        dirname = os.path.join(settingsInstance.cfg.dataDirectory, baseDir)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
 

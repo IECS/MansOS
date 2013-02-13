@@ -30,8 +30,11 @@ class SensorData(object):
         self.tempData = []
         self.seenInThisPacket = set()
         self.firstPacket = True
+        baseDir = os.path.basename(motename)
+        if baseDir[:3].lower() == "com":
+            baseDir = "_" + baseDir
         self.dirname = os.path.join(settingsInstance.cfg.dataDirectory,
-                                    os.path.basename(motename))
+                                    baseDir)
         if not os.path.exists(self.dirname):
             os.makedirs(self.dirname)
 
