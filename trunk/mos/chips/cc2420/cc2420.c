@@ -109,14 +109,6 @@ static uint8_t receive_on;
 /* Radio stuff in network byte order. */
 static uint16_t pan_id;
 
-#ifndef RADIO_CHANNEL
-#define RADIO_CHANNEL 26
-#endif
-
-#ifndef RADIO_TX_POWER
-#define RADIO_TX_POWER CC2420_TX_POWER_MAX
-#endif
-
 static int channel = RADIO_CHANNEL;
 
 static bool initialized;
