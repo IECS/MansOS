@@ -53,6 +53,9 @@
 #ifdef USE_SERIAL
 #include <serial.h>
 #endif
+#ifdef USE_EXT_FLASH
+#include <extflash.h>
+#endif
 #include <delay.h>
 #include <errors.h>
 #ifdef USE_PRINT
