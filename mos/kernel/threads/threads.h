@@ -35,6 +35,7 @@
 // it's the last one
 #define KERNEL_THREAD_INDEX (NUM_THREADS - 1)
 
+#ifndef THREAD_STACK_SIZE
 #if PLATFORM_FARMMOTE
  // minimal sufficient for threads + printf when compiled on gcc 4.6
 #define THREAD_STACK_SIZE 160
@@ -42,6 +43,7 @@
 #define THREAD_STACK_SIZE 256
 #else
 #define THREAD_STACK_SIZE 512
+#endif
 #endif
 
 #if DEBUG
