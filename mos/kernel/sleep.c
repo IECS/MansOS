@@ -37,8 +37,8 @@
 //
 #if PLATFORM_HAS_TIMERB
 
-volatile uint16_t timeWentToSleep;
-volatile uint16_t millisecondsInSleepMode;
+static volatile uint16_t timeWentToSleep;
+static volatile uint16_t millisecondsInSleepMode;
 
 //
 // sleep timer interrupt handler
