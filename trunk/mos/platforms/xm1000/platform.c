@@ -26,7 +26,8 @@
 //----------------------------------------------------------
 #include "platform.h"
 #include <serial_number.h>
-#include "user_button.h"
+#include <user_button.h>
+#include <extflash.h>
 
 //----------------------------------------------------------
 //      Init the platform as if on cold reset
@@ -39,6 +40,10 @@ void initPlatform(void)
 #endif
 #if USE_USER_BUTTON
     userButtonInit();
+#endif
+#if !USE_EXT_FLASH
+    // make sure the flash chip is in low power mode
+    m25p80_init_low_power();
 #endif
 }
 

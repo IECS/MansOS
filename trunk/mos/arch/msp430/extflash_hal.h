@@ -72,8 +72,8 @@
 #define EXT_FLASH_PAGE_SIZE     SDCARD_PAGE_SIZE
 
 #define extFlashInit() sdcardInit()
-#define extFlashSleep() sdcardSleep()
-#define extFlashWake() sdcardWake()
+#define extFlashSleep() // nothing
+#define extFlashWake()  // nothing
 #define extFlashRead(addr, buf, len) sdcardRead(addr, buf, len)
 #define extFlashWrite(addr, buf, len) sdcardWrite(addr, buf, len)
 #define extFlashBulkErase() sdcardBulkErase()
