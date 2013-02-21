@@ -44,10 +44,8 @@
 /// For example, in interrupt handler running while the system is in a low-power mode,
 /// 'jiffies' will correspond to the time *before* the system went to sleep.
 ///
-/// Note: the value is not extremely precise!
-/// In long-term MansOS keeps jiffies syncronized with the high-accuracy HW clock crystal,
-/// but relative error up to 48 milliseconds may be present.
-/// If higher precision is needed (e.g. for TDMA protocol), use HW timer ticks directly!
+/// Note: the value is not with the gratest short-term accuracy because of rounding errors.
+/// If the highest accuracy is needed (e.g. for TDMA protocol), use HW timer ticks directly!
 ///
 extern volatile ticks_t jiffies;
 
@@ -59,7 +57,11 @@ extern volatile ticks_t jiffies;
 ///
 static inline ticks_t getJiffies(void)
 {
-    return ATOMIC_READ(jiffies);
+    Handle_t handle;
+    ATOMIC_START(handle);
+    ticks_t result = jiffies;
+    ATOMIC_END(handle);
+    return result;
 }
 
 ///
