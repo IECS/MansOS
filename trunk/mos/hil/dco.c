@@ -39,9 +39,9 @@ static void onDcoAlarm(void *x)
     // PRINTF("before: %#03x\n", calib);
 
     Handle_t handle;
-    ATOMIC_START(&handle);
+    ATOMIC_START(handle);
     hplInitClocks();
-    ATOMIC_END(&handle);
+    ATOMIC_END(handle);
 
     // calib = DCOCTL;
     // calib |= (BCSCTL1 & 0x07) << 8;
