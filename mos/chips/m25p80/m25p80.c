@@ -25,9 +25,8 @@
 // Numonyx Forte Serial Flash Memory M25P80
 //
 
-#include "m25p80.h"
 #include <m25p80_pins.h>
-#include <digital.h>
+#include "m25p80.h"
 
 #define M25P80_DEBUG 0
 
@@ -36,106 +35,26 @@
 #include <lib/dprint.h>
 #endif
 
-// TODO - this should be moved to dev.h
-enum DEV_MODE_E {
-    DEV_MODE_OFF = 0,
-    // DEV_MODE_IDLE = 1,
-    DEV_MODE_ON = 2
-};
-
-// Instruction codes (8 bits)
-#define WREN  0x06
-#define WRDI  0x04
-#define RDSR  0x05
-#define WRSR  0x01
-#define READ  0x03
-#define FREAD 0x0B
-#define PP    0x02
-#define SE    0xD8
-#define BE    0xC7
-#define DP    0xB9
-#define RES   0xAB
-#define DUMMY 0xAA
-
-// Status Register Masks for the M25P80
-#define WIP  0x01
-#define WEL  0x02
-#define BP0  0x04
-#define BP1  0x08
-#define BP2  0x10
-#define SRWD 0x80
-
 // actual power mode;
-static uint_t m25p80_mode;
-
-// Shortcuts
-#define M25P80_WR_BYTE(b) \
-    spiWriteByte(M25P80_SPI_ID, b)
-#define M25P80_RD_BYTE() \
-    spiReadByte(M25P80_SPI_ID)
-#define M25P80_WR_MANY(buf, len) \
-    spiWrite(M25P80_SPI_ID, buf, len)
-#define M25P80_RD_MANY(buf, len) \
-    spiRead(M25P80_SPI_ID, buf, len)
-
-
-// Block while write in progress
-#define M25P80_WAIT_WHILE_WIP()        \
-    M25P80_SPI_ENABLE();               \
-    M25P80_WR_BYTE(RDSR);              \
-    do {                               \
-        uint8_t dummy;                 \
-        do {                           \
-            dummy = M25P80_RD_BYTE();  \
-        } while (dummy & WIP);         \
-    } while (0);                       \
-    M25P80_SPI_DISABLE();
-
-#define M25P80_INSTR(instr)      \
-    M25P80_SPI_ENABLE();         \
-    M25P80_WR_BYTE(instr);       \
-    M25P80_SPI_DISABLE();        \
-
-// Instruction executed before all modifying operations
-#define M25P80_WRITE_ENABLE()   \
-    M25P80_INSTR(WREN);
-
-// Send address, 24 bits, most significant bits first
-#define M25P80_TX_ADDR(addr) \
-    M25P80_WR_BYTE((uint8_t) ((addr >> 16) & 0xFF)); \
-    M25P80_WR_BYTE(((uint8_t) (addr >>  8) & 0xFF)); \
-    M25P80_WR_BYTE((uint8_t) (addr & 0xFF));
-
-// Enter low power mode */
-#define M25P80_DEEP_POWERDOWN()     \
-    M25P80_INSTR(DP);               \
-    m25p80_mode = DEV_MODE_OFF;
-
+static uint_t m25p80IsOn;
 
 void m25p80_sleep(void)
 {
     M25P80_WAIT_WHILE_WIP();
     M25P80_DEEP_POWERDOWN();
+    m25p80IsOn = false;
 }
 
 void m25p80_wake(void)
 {
-    if (m25p80_mode == DEV_MODE_OFF) {
+    if (!m25p80IsOn) {
         M25P80_INSTR(RES);
-        m25p80_mode = DEV_MODE_ON;
+        m25p80IsOn = true;
     }
 }
 
 void m25p80_init(void) {
-    spiBusInit(M25P80_SPI_ID, SPI_MODE_MASTER);
-
-    pinAsOutput(M25P80_HOLD_PORT, M25P80_HOLD_PIN);
-    pinAsOutput(M25P80_CS_PORT, M25P80_CS_PIN);
-    pinSet(M25P80_CS_PORT, M25P80_CS_PIN);
-    pinSet(M25P80_HOLD_PORT, M25P80_HOLD_PIN);
-
-    // initialize into low power mode
-    M25P80_DEEP_POWERDOWN();
+    m25p80_init_low_power();
 }
 
 static void m25p80_pageProgram(uint32_t addr, const uint8_t *buffer,

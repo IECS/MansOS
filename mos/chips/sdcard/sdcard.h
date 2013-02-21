@@ -45,10 +45,6 @@
 
 // initialize the card (I/O pins, SPI interface)
 bool sdcardInit(void);
-// Enter low power mode (SD card does this automatically)
-static inline void sdcardSleep(void) {}
-// Exit low power mode (SD card does this automatically)
-static inline void sdcardWake(void) {}
 // Erase the entire flash
 void sdcardBulkErase(void);
 // Erase on sector, containing address addr. Addr is not the number of sector,
