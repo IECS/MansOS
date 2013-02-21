@@ -81,21 +81,22 @@ ALARM_TIMER_INTERRUPT0()
 
 ALARM_TIMER_INTERRUPT1()
 {
-    if (ALARM_TIMER_WRAPAROUND()) {
+    if (CORRECTION_TIMER_EXPIRED()) {
+        if (NEXT_CORRECTION_TIMER() <= PLATFORM_ALARM_TIMER_PERIOD) {
+            wasWraparound = true;
+        }
+
         //
         // On MSP430 platforms binary ACLK oscillator usually is used.
         // It has constant rate 32768 Hz (the ACLK_SPEED define)
         // When ACLK ticks are converted to milliseconds, rounding error is introduced.
         // When TIMER_INTERRUPT_HZ = 1000, there are 32 ACLK ticks per millisecond;
-        // when TIMER_INTERRUPT_HZ = 100, there are 32.7 ACLK ticks per millisecond.
-        // The clock errors are (65536 / 32) - 2000 = 48 milliseconds exactly
-        // and 4.159 or approximately 4 milliseconds respectively.
-        // We improve the precision by applying the fix once per every wraparound.
+        // The clock error is (32768 / 32) - 1000 = 1024 - 1000 = 24 milliseconds.
+        // We improve the precision by applying a fix 24 times per second.
         //
-        jiffies += CORRECTION_PER_WRAPAROUND;
-
-        wasWraparound = true;
-
-        ALARM_TIMER_RESET_WRAPAROUND();
+        while (!timeAfter16(NEXT_CORRECTION_TIMER(), ALARM_TIMER_READ_STOPPED())) {
+            SET_NEXT_CORRECTION_TIMER(PLATFORM_TIME_CORRECTION_PERIOD);
+            jiffies--;
+        }
     }
 }

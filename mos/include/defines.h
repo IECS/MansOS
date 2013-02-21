@@ -166,21 +166,6 @@ typedef uint32_t ticks_t;
 //! Approximately one tenth part of a second in Timer A ticks
 #define TIMER_100_MS (ACLK_SPEED / 10 + 1)
 
-#if MCU_MSP430
-//! MSP430 has binary timer frequency that introduces rounding error in milliseconds
-# if TIMER_INTERRUPT_HZ == 100
-# define CORRECTION_PER_WRAPAROUND   -4
-# elif TIMER_INTERRUPT_HZ == 1000
-# define CORRECTION_PER_WRAPAROUND   -48
-# else
-# warning Strange alarm timer frequency!
-# define CORRECTION_PER_WRAPAROUND   0
-# endif
-#else
-//! Atmega has decimal timer Hz, correction is not needed
-# define CORRECTION_PER_WRAPAROUND   0
-#endif
-
 //! This idiom should be used for reading active timers
 #define ACTIVE_TIMER_READ(name, timer)             \
 static inline uint16_t name ## _TIMER_READ(void)   \

@@ -152,11 +152,14 @@ enum {
 #define SLEEP_TIMER_START() atmegaStartTimer1()
 #define SLEEP_TIMER_STOP() atmegaStopTimer1()
 #define ALARM_TIMER_READ_STOPPED() (TCNT0)
-#define ALARM_TIMER_WRAPAROUND() false
-#define ALARM_TIMER_RESET_WRAPAROUND()
 
 #define NEXT_ALARM_TIMER() OCR0A
 #define SET_NEXT_ALARM_TIMER(value) OCR0A += value
+
+#define CORRECTION_TIMER_EXPIRED() false
+#define NEXT_CORRECTION_TIMER() 0
+#define SET_NEXT_CORRECTION_TIMER(value)
+
 
 // this expands to ALARM_TIMER_READ
 ACTIVE_TIMER_READ(ALARM, TCNT0)

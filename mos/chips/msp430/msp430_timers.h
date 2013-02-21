@@ -86,7 +86,10 @@
 enum {
     JIFFY_TIMER_MS = 1000 / TIMER_INTERRUPT_HZ, // jiffy counter signals every 10 milliseconds
 
+    // timer interrupt takes place every millisecond
     PLATFORM_ALARM_TIMER_PERIOD = ACLK_SPEED / TIMER_INTERRUPT_HZ,
+    // time correction interrupt takes place with 24 Hz frequency (= 1024 - 1000)
+    PLATFORM_TIME_CORRECTION_PERIOD = ACLK_SPEED / 24,
 
     PLATFORM_MIN_SLEEP_MS = 1, // min sleep amount = 1ms
     PLATFORM_MAX_SLEEP_MS = 0xffff / (SLEEP_CLOCK_SPEED / 1000 / SLEEP_CLOCK_DIVIDER + 1),
@@ -125,10 +128,11 @@ enum {
 // Timer A is active only while MCU is in the active mode, while
 // timer B is active only while MCU is in any of low power modes.
 //
-// Timer A counts continuously 0..0xffff and generates interrupt each CCR0.
-// Timer B counts continuously 0..0xffff and generates interrupt each CCR1.
-// Interrupt is also generated on overflow (wraparound).
-// With ACLK_SPEED=32768, it happens each 2 and 16 seconds respectively.
+// Timer A counts continuously 0..0xffff and generates interrupt each millisecond.
+// 24Hz interrupt is also generated for time corrections.
+
+// Timer B counts continuously 0..0xffff and generates interrupt at end-of-sleep time.
+// Interrupt is also generated on timer wraparound (every 16 seconds).
 //
 // Interrupts are synchronously enabled/disabled for mspsim purposes:
 // otherwise mspsim generates interrupts even when the timer is not counting.
@@ -144,10 +148,11 @@ enum {
     TACTL = TACLR; \
     /* source: 32768Hz ACLK, DIV = 1, interrupt disabled */ \
     TACTL = TASSEL_ACLK | ID_DIV1;  \
-    /* enable CCR0 interrupt */ \
-    TACCTL0 = CCIE; \
-    /* we want the timer to work every single HZ */ \
-    TACCR0 = PLATFORM_ALARM_TIMER_PERIOD; \
+    /* set interrupt intervals */  \
+    TACCR0 = PLATFORM_ALARM_TIMER_PERIOD;  \
+    TACCR1 = PLATFORM_TIME_CORRECTION_PERIOD;  \
+    /* enable interrupts */ \
+    TACCTL0 = TACCTL1 = CCIE; \
 
 #define msp430InitTimerB() \
     /* TBCTL: */ \
@@ -162,7 +167,7 @@ enum {
     /* src = ACLK, DIV = 8, INT = disabled, 16bit */ \
     TBCTL = TBSSEL_ACLK | ID_DIV8 | CNTL_0;    \
     /* enable CCR1 interrupt */ \
-    TBCCTL1 = CCIE; \
+    TBCCTL1 = CCIE;             \
 
 // Stop watchdog timer
 #define msp430WatchdogStop() WDTCTL = WDTPW + WDTHOLD
@@ -173,11 +178,13 @@ enum {
 #define ALARM_TIMER_INIT()  msp430InitTimerA()
 #define ALARM_TIMER_START() msp430StartTimerA()
 #define ALARM_TIMER_STOP()  msp430StopTimerA()
-#define ALARM_TIMER_WRAPAROUND() (TACTL & TAIFG)
-#define ALARM_TIMER_RESET_WRAPAROUND() (TACTL &= ~TAIFG)
 #define ALARM_TIMER_READ_STOPPED() (TAR)
 #define NEXT_ALARM_TIMER() TACCR0
 #define SET_NEXT_ALARM_TIMER(value) TACCR0 += value
+
+#define CORRECTION_TIMER_EXPIRED() (TAIV == 2)
+#define NEXT_CORRECTION_TIMER() TACCR1
+#define SET_NEXT_CORRECTION_TIMER(value) TACCR1 += value
 
 // this expands to ALARM_TIMER_READ
 ACTIVE_TIMER_READ(ALARM, TAR)
