@@ -38,4 +38,8 @@ static inline void serialEnableRX(uint8_t id) {
 static inline void serialDisableRX(uint8_t id) {
 }
 
+static inline bool serialUsesSMCLK(void) {
+    return false;
+}
+
 #endif

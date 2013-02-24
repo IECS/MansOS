@@ -51,6 +51,8 @@
 #define U1IFG             IFG2
 #endif
 
+#if !USE_SOFT_SERIAL
+
 static inline bool serialIsUART(uint8_t id) {
     if (id == 0) return !(U0CTL & SYNC);
     else return !(U1CTL & SYNC);
@@ -132,6 +134,8 @@ static inline uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf) {
     else msp430UsartSerialInit1(speed);
     return 0;
 }
+
+#endif // !USE_SOFT_SERIAL
 
 
 #endif

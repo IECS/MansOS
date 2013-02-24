@@ -29,10 +29,19 @@
 ///
 
 #include <platform.h>
+#if USE_SOFT_SERIAL
+#include <serial_soft.h>
+#endif
 
 //===========================================================
 // Macros
 //===========================================================
+
+//! Serial port default baudrate
+#ifndef SERIAL_BAUDRATE
+#define SERIAL_BAUDRATE 38400
+#endif
+
 
 //! Platform-specifig: the number of serial ports available
 #ifndef SERIAL_COUNT

@@ -131,12 +131,6 @@ typedef uint32_t ticks_t;
 
 // -----------------------------------------------------
 
-//! Serial port default baudrate
-#ifndef SERIAL_BAUDRATE
-#define SERIAL_BAUDRATE 38400
-#endif
-
-
 #ifndef CPU_MHZ
 #error CPU_MHZ must be defined!
 #endif
