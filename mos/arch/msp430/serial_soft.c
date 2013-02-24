@@ -25,34 +25,32 @@
 #include <serial.h>
 #include <errors.h>
 #include <digital.h>
-
 #include <delay.h>
 
+#define SERIAL_BAUDRATE 9600
+
 //#define UART_BAUD    9600
-#if PLATFORM_LAUNCHPAD
-#define TIMERA_CLOCK 250000ul
-#define SERIAL_BITTIME (TIMERA_CLOCK / SERIAL_BAUDRATE)
-#else
-//#define SERIAL_BITTIME (ACLK_SPEED / SERIAL_BAUDRATE)
-#define TIMERA_CLOCK 500000ul
-#define SERIAL_BITTIME (TIMERA_CLOCK / SERIAL_BAUDRATE)
-#endif
+//#define TIMERA_CLOCK (CPU_HZ / 4) //250000ul
+#define TIMERA_CLOCK (CPU_HZ)
+#define UART_BITTIME (TIMERA_CLOCK / SERIAL_BAUDRATE)
+//#define UART_BITTIME (ACLK_SPEED / UART_BAUD)
 
 // #define UART_TXD    BIT1      // P1.1 (Timer_A.OUT0) used as UART TXD
 // #define 
 
-// launchpad
-//#define UART_PORT    1
-//#define UART_RX_PIN  1
-//#define UART_TX_PIN  2
-//#define UART_TXD     BIT1
-
-// telosb
-#define UART_PORT    1
-#define UART_TX_PIN  1
-#define UART_RX_PIN  2
-// #define UART_TX_PIN  2
+// #define UART_PORT    1
 // #define UART_RX_PIN  1
+// #define UART_TX_PIN  2
+
+// #define UART0_PORT    1
+// #define UART0_RX_PIN  1
+// #define UART0_TX_PIN  2
+
+#define UART1_PORT    1
+#define UART1_RX_PIN  1
+#define UART1_TX_PIN  2
+//#define UART1_TX_PIN  1
+
 //#define UART_TXD     BIT1
 
 // ---------------------------------------------
@@ -67,19 +65,10 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
     // if (id != 0) return -ENOSYS;
     // if (speed != 9600) return -ENOSYS;
 
-    U0ME &= ~UTXE0;
-    U1ME &= ~UTXE1;
-    U0ME &= ~URXE0;
-    U1ME &= ~URXE1;
-    IE1 &= ~URXIE0;
-    IE2 &= ~URXIE1;
-
-#if PLATFORM_LAUNCHPAD
     /* Initialize system clock: DCO=1MHz MCLK=/1, SMCLK=/1 */
-    BCSCTL1 = CALBC1_1MHZ;
-    DCOCTL = CALDCO_1MHZ;
-    BCSCTL2 = 0;
-#endif
+    // BCSCTL1 = CALBC1_1MHZ;
+    // DCOCTL = CALDCO_1MHZ;
+    // BCSCTL2 = 0;
 
     /* Configure IO pin(s) */
 //    pinAsFunction(UART_PORT, UART_RX_PIN);
@@ -88,71 +77,81 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
 //    pinAsFunction(UART_PORT, UART_TX_PIN);
 //    pinAsOutput(UART_PORT, UART_TX_PIN);
 
-    P1DIR |= 0x02;                            // P1.1 output
-    P1SEL |= 0x02;                            // P1.1 option select
+    // P1SEL |= UART_TXD; // assign TXD pin to Timer_A
+    // P1DIR |= UART_TXD; // set TxD as output
 
-//    P1SEL |= UART_TXD; // assign TXD pin to Timer_A
-//     P1DIR |= UART_TXD; // set TxD as output
+    // if (id == 0) {
+    //     pinAsFunction(UART0_PORT, UART0_TX_PIN);
+    //     pinAsOutput(UART0_PORT, UART0_TX_PIN);
+    // } else {
+    pinAsFunction(UART1_PORT, UART1_TX_PIN);
+    pinAsOutput(UART1_PORT, UART1_TX_PIN);
+    // }
 
-     /* Configure Timer_A */
-//#if PLATFORM_LAUNCHPAD
+    pinAsData(3, 6);
+    pinAsOutput(3, 6);
+
+    /* Configure Timer_A */
     TACTL = TACLR;
 //    TACTL = TASSEL_2 + MC_2 + ID_2;  // set TimerA clock SMCLK/4 (250 kHz)
-//    TACTL = TASSEL_2 + MC_1 + ID_2;  // set TimerA clock SMCLK/4 (250 kHz)
-    TACTL = TASSEL_2 + MC_2 + ID_3;  // set TimerA clock SMCLK/4 (500 kHz)
-//#endif
+    TACTL = TASSEL_2 + MC_2;
 
     /* Initialize UART */
-    TACCTL0 = OUT;      // TxD idle as '1'
+//    TACCTL0 = OUT;      // TxD idle as '1'
+    TACCTL1 = OUT;      // TxD idle as '1'
+    pinSet(3, 6);
 
     return 0;
 }
 
 void serialSendByte(uint8_t id, uint8_t data)
 {
-    // pinAsFunction(UART_PORT, UART_TX_PIN);
-    // pinAsOutput(UART_PORT, UART_TX_PIN);
-
-    // XXX
-    //  TACTL = TASSEL_2 + MC_2 + ID_3;  // set TimerA clock SMCLK/8 (500 KHz)
-
-    uint16_t txd = (uint16_t) data | 0x300;   // transmitter "shift register"
+    uint16_t txd = data | 0x300;   // transmitter "shift register"
 
     /* Start transmitter. This has to be done with interrupts disabled */
     DISABLE_INTS();
-    TACCTL0 = 0;                    // transmit start bit
-//    TAR = 0;
-    TACCR0 = TAR + SERIAL_BITTIME;    // set time till the first data bit
-//    TACCR0 = SERIAL_BITTIME;
-    ENABLE_INTS();
+    // TACCTL0 = 0;                    // transmit start bit
+    // TACCR0 = TAR + UART_BITTIME;    // set time till the first data bit
+    TACCTL1 = 0;                    // transmit start bit
+    pinClear(3, 6);
+    TACCR1 = TAR + UART_BITTIME;    // set time till the first data bit
+    //   ENABLE_INTS();
 
     while (txd) {
         if (txd & 1) {
             /* transmit "Mark" (1) using OUTMOD=1 (Set) */
-            TACCTL0 = OUTMOD_1;
+//            TACCTL0 = OUTMOD_1;
+            TACCTL1 = OUTMOD_1;
+//            pinSet(3, 6);
+            pinClear(3, 6);
         } else {
             /* transmit "Space" (0) using OUTMOD=5 (Reset) */
-            TACCTL0 = OUTMOD_5;
+//            TACCTL0 = OUTMOD_5;
+            TACCTL1 = OUTMOD_5;
+//            pinClear(3, 6);
+            pinSet(3, 6);
         }
 
         /* wait for TA compare event */
-        while (0 == (TACCTL0 & CCIFG));
-//        TACCTL0 &= ~CCIFG;
+//        while (0 == (TACCTL0 & CCIFG));
 
         /* set next bit time */
-        TACCR0 += SERIAL_BITTIME;
+//        TACCR0 += UART_BITTIME;
+
+        /* wait for TA compare event */
+        while (0 == (TACCTL1 & CCIFG));
+
+        TACCR1 += UART_BITTIME;
 
         txd >>= 1;
     }
 
     /* all bits sent out; set TxD idle to "Mark" */
-    TACCTL0 = OUT;
+//    TACCTL0 = OUT;
+    TACCTL1 = OUT;
+    pinSet(3, 6);
 
+//    udelay(100);
 
-    mdelay(10);
-
-    // TAR = 0;
-    // TACCR0 = PLATFORM_ALARM_TIMER_PERIOD;
-
-//    ENABLE_INTS();
+    ENABLE_INTS();
 }
