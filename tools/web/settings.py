@@ -31,14 +31,16 @@ class Settings(object):
             #user.cfg
             self.userDirectory = "user"
             self.userFile = "user.dat"
-            self.userAttributes = "name,password,level"
-            self.defaultValues = "Unknown,password,1"
-            self.adminValues = "admin,admin,9"
+            self.userAttributes = ["name","password","level"]
+            self.defaultValues = ["Unknown","5f4dcc3b5aa765d61d8327deb882cf99","1"]
+            self.adminValues = ["admin","21232f297a57a5a743894a0e4a801fc3","9"]
+            self.userWebAttributes = ["name","level"]
 
     cfg = ConfigValues()
 
     configurationFileName = "server.cfg"
     userconfigurationFileName = "user.cfg"
+    _inFile = {}
 
     def load(self):
         self.comments = {}
@@ -47,6 +49,7 @@ class Settings(object):
         for files in [self.configurationFileName, self.userconfigurationFileName]:
             with open(files, 'r') as f:
                 line = 0
+                self._inFile[files] = []
                 for x in f.readlines():
                     line += 1
                     x = x.strip()
@@ -57,7 +60,7 @@ class Settings(object):
                     # extract key=value
                     kv = x.split("=")
                     if len(kv) != 2:
-                        print("Syntax error in configuration file line {}".format(line))
+                        print("Syntax error in configuration file {} line {}".format(files,line))
                         continue
 
                     key = kv[0]
@@ -68,6 +71,7 @@ class Settings(object):
                     if tmpComment:
                         self.comments[key] = tmpComment
                         tmpComment = ""
+                    self._inFile[files].append(key)
 
                     # extract value list
                     vv = kv[1].strip('"').split(",")
@@ -83,26 +87,26 @@ class Settings(object):
                     self.comments["__EOF"] = tmpComment
 
     def save(self):
-        with open(self.configurationFileName, 'w') as f:
-            for key in self.cfg.__dict__:
-                if key[0] == '_': continue  # skip generic and special attributes
-                value = self.cfg.__dict__[key]
-                comment = self.comments.get(key, "")
+        for files in self._inFile.keys():
+            with open(files, 'w') as f:
+                for key in self._inFile[files]:
+                    value = self.cfg.__dict__[key]
+                    comment = self.comments.get(key, "")
+                    if comment:
+                        f.write(comment)
+                    f.write(key)
+                    f.write('=')
+                    if isinstance(value, list):
+                        # value list
+                        f.write(",".join(value))
+                    else:
+                        # single value
+                        f.write(value)
+                    f.write("\r\n")
+
+                comment = self.comments.get("__EOF", "")
                 if comment:
                     f.write(comment)
-                f.write(key)
-                f.write('=')
-                if isinstance(value, list):
-                    # value list
-                    f.write(",".join(value))
-                else:
-                    # single value
-                    f.write(value)
-                f.write("\r\n")
-
-            comment = self.comments.get("__EOF", "")
-            if comment:
-                f.write(comment)
 
     def getCfgValue(self, name):
         return self.cfg.__getattribute__(name)
