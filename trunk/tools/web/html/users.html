@@ -1,5 +1,23 @@
-<p><strong>Users pages:</strong></p>
+%INFO%
+%PSW%
 %TAB%
+<a href="/users?useradd=true"><button>Add user</button></a>
+<script>
+var rows = document.getElementById('usertable').getElementsByTagName('tr');
+var rowscount = rows.length;
+for(var i = 1; i < rowscount; i++){
+	rows[i].onclick = openPage;
+}
+function openPage(e){
+	var name = e.target;
+	while (name.nodeName != "TR")
+	{
+		name = name.parentNode;
+	}
+	window.location = "http://localhost:30000/users?edituser=" + toCode(name.firstChild.firstChild.innerHTML);
+}
+</script>
+<!--
 <br>
 <p>%CODE%</p>
 <form>
@@ -8,3 +26,4 @@
 	<input type="hidden" class="md5" id="coco" name="co">
 	<input type="submit" value="%SEE%">
 </form>
+-->

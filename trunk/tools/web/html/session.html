@@ -3,26 +3,30 @@
 </head>
 <body>
 <script>
+if (document.URL.indexOf("?") > -1 ) history.pushState(null, null, document.URL.slice(0,document.URL.indexOf("?")));
+/*?REDIR
+	history.pushState(null, null, "%TO%");
+/*REDIR?*/
 function getCookie(c_name)
 {
-var i,x,y,ARRcookies=document.cookie.split(";");
-for (i=0;i<ARRcookies.length;i++)
+var i, x, y, ARRcookies = document.cookie.split(";");
+for (i = 0; i < ARRcookies.length; i++)
   {
-  x=ARRcookies[i].substr(0,ARRcookies[i].indexOf("="));
-  y=ARRcookies[i].substr(ARRcookies[i].indexOf("=")+1);
-  x=x.replace(/^\s+|\s+$/g,"");
-  if (x==c_name)
+  x = ARRcookies[i].substr(0, ARRcookies[i].indexOf("="));
+  y = ARRcookies[i].substr(ARRcookies[i].indexOf("=")+1);
+  x = x.replace(/^\s+|\s+$/g,"");
+  if (x == c_name)
     {
     return unescape(y);
     }
   }
 }
 window.onload = function (){
-  SetSma();
-  SetSid();
-  Coded();
-  Md5();
-  autoRefresh();
+	SetSma();
+	SetSid();
+	Coded();
+	Md5();
+	autoRefresh();
 }
 var iFrequency = 5000; // expressed in miliseconds
 var myInterval = 0;
@@ -37,55 +41,55 @@ function reset()
 {
 	SetSma();
 	SetSid();
+	Md5();
 }
 function SetSma(){
     var elems = document.getElementsByTagName('input'), i;
-	var sma=getCookie("Msma37");
+	var sma = getCookie("Msma37");
 	if (sma == undefined) sma="";
     for (i in elems) {
-        if((' ' + elems[i].className + ' ').indexOf(' Msma37 ')
-                > -1) {
+        if((' ' + elems[i].className + ' ').indexOf(' Msma37 ') > -1) {
             elems[i].value = sma;
         }
     }
 }
 function SetSid(){
     var elems = document.getElementsByTagName('input'), i;
-	var sma=getCookie("Msma37");
+	var sma = getCookie("Msma37");
 	if (sma == undefined) return;
 	var sid=localStorage.getItem("Msid37");
 	if(sid == null) return;
-	sid=hex_md5(sid+sma);
-	document.cookie = 'Msid37='+sid+'; expires=Session; path=/'
+	sid=hex_md5(sid + sma);
+	document.cookie = 'Msid37=' + sid + '; expires=Session; path=/'
 	for (i in elems) {
-		if((' ' + elems[i].className + ' ').indexOf(' Msid37 ')
-				> -1) {
+		if((' ' + elems[i].className + ' ').indexOf(' Msid37 ') > -1) {
 			elems[i].value = sid;
 		}
 	}
 }
 function Coded(){
-	//alert(toCode("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
-	//alert(fromCode(toCode("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")));
     var elems = document.getElementsByTagName('span'), i;
 	for (i in elems) {
-		if((' ' + elems[i].className + ' ').indexOf(' coded ')
-				> -1) {
-			//alert("Z"+elems[i].innerHTML+"Z");
-			elems[i].innerHTML = fromCode(elems[i].innerHTML);
+		if((' ' + elems[i].className + ' ').indexOf(' coded ') > -1) {
+			elems[i].innerHTML = fromCode(elems[i].innerHTML, elems[i].id);
+		}
+	}
+	elems = document.getElementsByTagName('input');
+	for (i in elems) {
+		if((' ' + elems[i].className + ' ').indexOf(' coded ') > -1) {
+			elems[i].value = fromCode(elems[i].value, elems[i].id);
 		}
 	}
 }
 function Md5(){
     var elems = document.getElementsByTagName('input'), i;
-	var sma=getCookie("Msma37");
+	var sma = getCookie("Msma37");
 	if (sma == undefined) return;
-	var sid=localStorage.getItem("Msid37");
+	var sid = localStorage.getItem("Msid37");
 	if(sid == null) return;
 	for (i in elems) {
-		if((' ' + elems[i].className + ' ').indexOf(' md5 ')
-				> -1) {
-			elems[i].value = hex_md5(sid+sma+elems[i].id);
+		if((' ' + elems[i].className + ' ').indexOf(' md5 ') > -1) {
+			elems[i].value = hex_md5(sid + sma + elems[i].id);
 		}
 	}
 }
@@ -93,9 +97,10 @@ function Md5(){
 	/*?LOGIN
 		var cod = localStorage.getItem("Mcod37");
 		var sid = %SID%;
-		cod = parseInt(cod,16)
-		sid=sid+cod
-		localStorage.setItem("Msid37", sid)
+		cod = parseInt(cod,16);
+		sid = sid + cod;
+		sid = sid + "";
+		localStorage.setItem("Msid37", hex_md5(sid));
 	/*LOGIN?*/
 	/*?DEL
 		document.cookie = 'Msid37=0; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/'
