@@ -15,15 +15,44 @@ function IsAll()
 		alert(e);
 		return false;
 	}
+	md5();
 	return true;
 }
+function md5(){
+    var elem = document.getElementById('psw');
+	var sma=getCookie("Msma37");
+	var fi="0";
+	if (sma == undefined)
+	{
+		sma="";
+	}
+	else
+	{
+		fi=sma.substr(fi,2);
+	}
+	fi=parseInt(fi,10);
+	if(isNaN(fi)){fi=0;}
+	fi=fi%25;
+    if (elem != undefined)
+	{
+		elem.value = hex_md5(elem.value);
+		localStorage.setItem("Mcod37", elem.value.substr(fi,5));
+		elem.value = hex_md5(elem.value+sma);
+	}
+}
+ if (!localStorage){
+	alert("You have to use IE 8+,Firefox 3.5+, Chrome 4+, Opera 10.5+, Iphone 2+ or Android 2+ to be able to log in!")
+ }
+ if(!navigator.cookieEnabled){
+	alert("You have to enable cookies to be able to log in!")
+ }
 </script>
 <span>
 	<h4 style="color:red;">%FAIL%</h4>
 </span>
 <form name="login" action="login" onsubmit="return IsAll()" >
 	<p>User name: <input type="Text" class="must" name="user"></p>
-	<p>Password: <input type="password" class="must" name="password"></p>
-	<input type="hidden" class="Msma37" name="sma" id="loginsma">
+	<p>Password: <input type="password" id="psw" class="must" name="password"></p>
+	<input type="hidden" class="Msma37" name="sma" value="%SMA%">
 	<input type="submit" value="Login">
 </form>

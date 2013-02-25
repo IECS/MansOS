@@ -1,3 +1,5 @@
+	<script type="text/javascript" src="md5.js"></script>
+	<script type="text/javascript" src="code.js"></script>
 </head>
 <body>
 <script>
@@ -18,7 +20,23 @@ for (i=0;i<ARRcookies.length;i++)
 window.onload = function (){
   SetSma();
   SetSid();
+  Coded();
+  Md5();
   autoRefresh();
+}
+var iFrequency = 5000; // expressed in miliseconds
+var myInterval = 0;
+startLoop()
+reset()
+// STARTS and Resets the loop if any
+function startLoop() {
+    if(myInterval > 0) clearInterval(myInterval);  // stop
+    myInterval = setInterval( "reset()", iFrequency );  // run
+}
+function reset()
+{
+	SetSma();
+	SetSid();
 }
 function SetSma(){
     var elems = document.getElementsByTagName('input'), i;
@@ -33,8 +51,12 @@ function SetSma(){
 }
 function SetSid(){
     var elems = document.getElementsByTagName('input'), i;
-	var sid=getCookie("Msid37");
-	if (sid == undefined) sid="";
+	var sma=getCookie("Msma37");
+	if (sma == undefined) return;
+	var sid=localStorage.getItem("Msid37");
+	if(sid == null) return;
+	sid=hex_md5(sid+sma);
+	document.cookie = 'Msid37='+sid+'; expires=Session; path=/'
 	for (i in elems) {
 		if((' ' + elems[i].className + ' ').indexOf(' Msid37 ')
 				> -1) {
@@ -42,12 +64,46 @@ function SetSid(){
 		}
 	}
 }
-	/*?DEL
-		document.cookie = 'Msid37=0; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/'
-	/*DEL?*/
-	//alert(getCookie("Msma37"))
+function Coded(){
+	//alert(toCode("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+	//alert(fromCode(toCode("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")));
+    var elems = document.getElementsByTagName('span'), i;
+	for (i in elems) {
+		if((' ' + elems[i].className + ' ').indexOf(' coded ')
+				> -1) {
+			//alert("Z"+elems[i].innerHTML+"Z");
+			elems[i].innerHTML = fromCode(elems[i].innerHTML);
+		}
+	}
+}
+function Md5(){
+    var elems = document.getElementsByTagName('input'), i;
+	var sma=getCookie("Msma37");
+	if (sma == undefined) return;
+	var sid=localStorage.getItem("Msid37");
+	if(sid == null) return;
+	for (i in elems) {
+		if((' ' + elems[i].className + ' ').indexOf(' md5 ')
+				> -1) {
+			elems[i].value = hex_md5(sid+sma+elems[i].id);
+		}
+	}
+}
 	document.cookie = 'Msma37=%RAND%; expires=Session; path=/'
 	/*?LOGIN
-		document.cookie = 'Msid37=%SID%; expires=Session; path=/'
+		var cod = localStorage.getItem("Mcod37");
+		var sid = %SID%;
+		cod = parseInt(cod,16)
+		sid=sid+cod
+		localStorage.setItem("Msid37", sid)
 	/*LOGIN?*/
+	/*?DEL
+		document.cookie = 'Msid37=0; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/'
+		try{localStorage.removeItem("Msid37");}catch(err){}
+	/*DEL?*/
+	//alert(getCookie("Msma37") + "  get");
+	try{localStorage.removeItem("Mcod37");}catch(err){}
+	
+	//alert(toCode("Man garso: ezt 091"));
+	//alert(fromCode(toCode("Man garso: ezt 091")));
 </script>

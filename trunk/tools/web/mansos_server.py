@@ -4,7 +4,7 @@
 # MansOS web server - main file
 #
 
-import os, sys, platform, datetime, cookielib, random, Cookie
+import os, sys, platform, datetime, cookielib, random, md5
 import threading, time, serial, select, socket, cgi, subprocess, struct, signal
 import json
 from settings import *
@@ -40,12 +40,15 @@ motes = MoteCollection()
 
 htmlDirectory = "html"
 sealBlocklyPath = "seal-blockly"
+alphabet ="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,!?() '_-=+*/@$:%^#;~{}[]|" #nevar but simbols:"&<>"
 
 # --------------------------------------------
 class Session():
     def __init__(self,sma):
         self._sma=sma
+        self._oldsma="0"
         self._end=datetime.datetime.now() + datetime.timedelta(minutes=1)
+        self._ode=False
     def add_sid(self,sid,user):
         self._sid=sid
         self._user=user
@@ -65,6 +68,56 @@ class Session():
         if hasattr(self, '_user'):
             print("{} had loged out".format(self._user["name"]))
             del self._user
+    def to_code(self, text, span = True):
+        if not hasattr(self, '_sid'):
+            return False
+        sid=str(self._sid)
+        alen=len(alphabet)
+        tlen=len(text)
+        m = md5.new()
+        m.update(sid+self._sma)
+        kript = m.hexdigest()
+        ntext = ""
+        i=0
+        while tlen > i:
+            z=alphabet.find(text[i])
+            if z > -1:
+                z=z-int(kript[i%len(kript)]+kript[(i+1)%len(kript)],16)
+                z=z%alen
+                ntext+=alphabet[z]
+            else:
+                ntext+=text[i]
+            i+=1
+        if span:
+            ntext= "<span class='coded'>" + ntext + "</span>"
+        return ntext
+    def from_code(self, text):#code lieto ja teksts ir mainigs
+        if not hasattr(self, '_sid'):
+            return False
+        sid=str(self._sid)
+        alen=len(alphabet)
+        tlen=len(text)
+        m = md5.new()
+        m.update(sid+self._sma)
+        kript = m.hexdigest()
+        ntext = ""
+        i=0
+        while tlen > i:
+            z=alphabet.find(text[i])
+            if z > -1:
+                z=z+int(kript[i%len(kript)]+kript[(i+1)%len(kript)],16)
+                z=z%alen
+                ntext+=alphabet[z]
+            else:
+                ntext+=text[i]
+            i+=1
+        return ntext
+    def to_md5(self, text):#ma5 lietoja, ja teksts ir kostants
+        if not hasattr(self, '_sid'):
+            return False
+        m = md5.new()
+        m.update(str(self._sid)+self._oldsma+text)
+        return m.hexdigest()
 
 class Sessions():
     def __init__(self):
@@ -90,7 +143,6 @@ class Sessions():
             if self._sessionList[i]._sma == sma:
                 return self._sessionList[i]
             i -=1
-        #print("Nav tada sesijas")
         return False
     def delete_old(self):
         i=self._sessionList.__len__()-1
@@ -100,6 +152,15 @@ class Sessions():
                     print("{} session ended".format(self._sessionList[i]._user["name"]))
                 self._sessionList.pop(i)
             i -=1
+    def del_session(self,sma):
+        i=self._sessionList.__len__()-1
+        while -1 < i:
+            if self._sessionList[i]._sma == sma:
+                if hasattr(self._sessionList[i], '_user'):
+                    print("{} session ended".format(self._sessionList[i]._user["name"]))
+                self._sessionList.pop(i)
+            i -=1
+        
     def set_sma(self,osma,nsma):
         temp = self.get_session(osma)
         if temp:
@@ -107,6 +168,7 @@ class Sessions():
                 temp._end=datetime.datetime.now() + datetime.timedelta(minutes=15)
             else:
                 temp._end=datetime.datetime.now() + datetime.timedelta(minutes=1)
+            temp._oldsma=temp._sma
             temp._sma=nsma
             return True
         else:
@@ -153,7 +215,7 @@ class User():
     def set_attributes(self, key, value):
         self._attributes[key] = value
     def get_data(self, key):
-        return self._attributes.get(key, None)
+        return self._attributes.get(key, False)
     def get_all_data(self):
         return self._attributes
     
@@ -170,14 +232,12 @@ class Users():
         return False
     def get_user(self, key, value):
         if not self.is_attribute(key):
-            #print("Nav tada pazime")
             return False
         i=0
         while self._userList.__len__() > i:
             if self._userList[i].get_data(key) == value:
                 return self._userList[i].get_all_data()
             i +=1
-        #print("Nav tada persona")
         return False
     def add_user(self, userData):
         i=self._userAttributes.__len__()-1
@@ -214,6 +274,16 @@ class Users():
             tuser[attrName] = value
             return True
         return False
+    def check_psw(self):
+        i=0
+        while self._userList.__len__() > i:
+            p=self._userList[i].get_data("password")
+            if p.__len__() != 32:
+                return False
+            if not all(c in "0123456789abcdef" for c in p):
+                return False
+            i+=1
+        return True
     def make_copy(self):
         tstr = "/" + userFile + str(datetime.datetime.now())[:22]
         tstr = tstr.replace(' ','_')
@@ -338,7 +408,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             for i in tlist:
                 i = i.strip()
                 i = i.split("=")
-                tdict[i[0]] = i[1]
+                if len(i) == 2:
+                    tdict[i[0]] = i[1]
             return tdict.get(cookieName, False)
         return False
         
@@ -346,21 +417,28 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         if "Cookie" in self.headers:
             if cookieName in self.headers["Cookie"]:
                 tlist=self.headers["Cookie"].split(cookieName)
-                tlist[0]+=cookieName+"="
-                tlist[1]=value+tlist[1][tlist[1].find(";"):]
+                if value == "":
+                    tlist[1]=tlist[1][tlist[1].find(";"):]
+                else:
+                    tlist[0]+=cookieName+"="
+                    tlist[1]=value+tlist[1][tlist[1].find(";"):]
                 self.headers["Cookie"]=tlist[0]+tlist[1]
             else:
-                self.headers["Cookie"]+="; "+cookieName+"="+value
+                if value != "":
+                    self.headers["Cookie"]+="; "+cookieName+"="+value
         else:
-            self.headers["Cookie"]=cookieName+"="+value
-        
-    def serveSession(self, qs):
-        #nolasa vai nav Msma37
-        #ja nav izveido jaunu
-        #ja ir nomaina sma
-        #Ja ir piesledzies pievieno sid
-        #ja nav tad izdzes to
-        #print self.headers
+            if value != "":
+                self.headers["Cookie"]=cookieName+"="+value
+    def setSafe(self,state):
+        self.headers["Safe"]=state
+        return
+    def isSafe(self):
+        if "Safe" in self.headers:
+            if self.headers["Safe"] == "True":
+                return True
+        return False
+    
+    def setSession(self, qs):
         csma=self.getCookie("Msma37")
         if csma:
             if not "sma" in qs:
@@ -368,48 +446,94 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 qs["sma"].append(csma)
             else:
                 qs["sma"][0] = csma
-        with open(htmlDirectory + "/session.html", "r") as f:
-            #nolasa vai nav Msma37
-            #ja nav izveido jaunu
-            #ja ir nomaina sma
-            #Ja ir piesledzies pievieno sid
-            #ja nav tad izdzes to
-            contents = f.read()
-            tsma = str(random.randint(1000000, 9999999))
-            if "sma" in qs:
-                tsma = tsma + qs["sma"][0][-1:]
-                if "log" in qs:
-                    if qs["log"] == "in":
-                        tsid = str(random.randint(1000000000, 9999999999))
-                        tuser=allUsers.get_user("name", qs["user"][0])
-                        if "level" in tuser:
-                            tsma = tsma[:-1]+tuser["level"]
+        csid=self.getCookie("Msid37")
+        if csid:
+            if not "sid" in qs:
+                qs["sid"] = []
+                qs["sid"].append(csid)
+            else:
+                qs["sid"][0] = csid
+        tsma = str(random.randint(100000000, 999999999))
+        self.setSafe("False")
+        if "sma" in qs:
+            tsma = tsma + qs["sma"][0][-1:]
+            if "log" in qs:
+                if qs["log"] == "in":
+                    tsid = random.randint(100000000, 999999999)
+                    tuser=allUsers.get_user("name", qs["user"][0])
+                    if "level" in tuser:
+                        tsma = tsma[:-1]+tuser["level"]
+                    else:
+                        tsma = tsma[:-1]+"1"
+                    if qs["sma"][0][:2].isdigit():
+                        fi=int(qs["sma"][0][:2])
+                    else:
+                        fi=0
+                    fi=fi%25
+                    tcod=int(tuser["password"][fi:fi+5],16)
+                    qs["tsid"]=tsid-tcod
+                    allSessions.add_sid(qs["sma"][0], tsid, tuser)
+                    ms = md5.new()
+                    ms.update(str(tsid)+qs["sma"][0])
+                    tsid = ms.hexdigest()
+                    self.changeHeadersCookie("Msid37",tsid)
+                    if not "sid" in qs:
+                        qs["sid"] = []
+                        qs["sid"].append(str(tsid))
+                    else:
+                        qs["sid"][0] = str(tsid)
+                elif qs["log"] == "out":
+                    tsma = tsma[:-1]+"0"
+                    qs["del"]="yes"
+                    allSessions.del_sid(qs["sma"][0])
+                    if "sid" in qs:
+                        del qs["sid"]
+                    self.changeHeadersCookie("Msid37","")
+            if "sid" in qs:
+                tses=allSessions.get_session(qs["sma"][0])
+                if tses:
+                    if hasattr(tses, "_sid"):
+                        m = md5.new()
+                        m.update(str(tses._sid)+qs["sma"][0])
+                        if m.hexdigest() == qs["sid"][0]:
+                            self.setSafe("True")
                         else:
-                            tsma = tsma[:-1]+"1"
-                        allSessions.add_sid(qs["sma"][0], tsid, tuser)
-                        self.changeHeadersCookie("Msid37",tsid)
+                            self.setSafe("False")
+                            print("Possible security intrusions attempted!")
+                            allSessions.del_session(tses._sma)
+            if not allSessions.set_sma(qs["sma"][0],tsma):
+                tsma= tsma[:-1]+"0"
+                self.changeHeadersCookie("Msid37","")
+                if "sid" in qs:
+                     del qs["sid"]
+                self.setSafe("False")
+                qs["del"]="yes"
+        else:
+            tsma = tsma + "0"
+            allSessions.add_session(tsma)
+            qs["del"]="yes"
+        self.changeHeadersCookie("Msma37",tsma)
+        if not "sma" in qs:
+            qs["sma"] = []
+            qs["sma"].append(tsma)
+        else:
+            qs["sma"][0] = tsma
+        print("This session is safe {}".format(self.isSafe()))
+        #print("allSessions = ")
+        #print(allSessions.get_sessions()
+            
+    def serveSession(self, qs):
+        with open(htmlDirectory + "/session.html", "r") as f:
+            contents = f.read()
+            if "sma" in qs:
+                if "log" in qs:
+                    if qs["log"] == "in" and "tsid" in qs:
+                        contents = contents.replace("%SID%", str(qs["tsid"]))
                         contents = contents.replace("/*?LOGIN", "")
-                        contents = contents.replace("%SID%", tsid)
-                    elif qs["log"] == "out":
-                        tsma = tsma[:-1]+"0"
-                        contents = contents.replace("/*?DEL", "")
-                        allSessions.del_sid(qs["sma"][0])
-                if not allSessions.set_sma(qs["sma"][0],tsma):
-                    tsma= tsma[:-1]+"0"
+                contents = contents.replace("%RAND%", qs["sma"][0])
+            if "del" in qs:
+                if qs["del"] == "yes":
                     contents = contents.replace("/*?DEL", "")
-            else:
-                tsma = tsma + "0"
-                allSessions.add_session(tsma)
-                contents = contents.replace("/*?DEL", "")
-            contents = contents.replace("%RAND%", tsma)
-            self.changeHeadersCookie("Msma37",tsma)
-            if not "sma" in qs:
-                qs["sma"] = []
-                qs["sma"].append(tsma)
-            else:
-                qs["sma"][0] = tsma
-            #print("allSessions = ")
-            #print(allSessions.get_sessions())
             self.writeChunk(contents)
             
     def getLevel(self, qs={}):
@@ -428,16 +552,20 @@ class HttpServerHandler(BaseHTTPRequestHandler):
       try:
         if "sma" in qs:
             if qs["sma"][0][-1:] != "0":
-                tsu=allSessions.get_session(qs["sma"][0])._user
-                if tsu.get("hasWriteAccess",False) == "True":
-                    return True
+                tsu=allSessions.get_session(qs["sma"][0])
+                if tsu:
+                    tsu=tsu._user
+                    if tsu.get("hasWriteAccess",False) == "True":
+                        return True
             return False
         csma=self.getCookie("Msma37")
         if csma:
             if csma[-1:] != "0":
-                tsu=allSessions.get_session(csma)._user
-                if tsu.get("hasWriteAccess",False) == "True":
-                    return True
+                tsu=allSessions.get_session(csma)
+                if tsu:
+                    tsu=tsu._user
+                    if tsu.get("hasWriteAccess",False) == "True":
+                        return True
             return False
       except:
         return False
@@ -471,25 +599,44 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 print("Error Session not served!:")
                 print(e)
                 self.writeChunk('</head>\n<body>')
-                
-            suffix = "generic" if isGeneric else "mote"
-            
-            with open(htmlDirectory + "/bodystart-" + suffix + ".html", "r") as f:
+
+            with open(htmlDirectory + "/top-start.html", "r") as f:
                 contents = f.read()
                 if replaceValues:
                     for v in replaceValues:
                         contents = contents.replace("%" + v + "%", replaceValues[v])
                 # page title
                 contents = contents.replace("%PAGETITLE%", pagetitle)
-                ###action = "Release" if hasWriteAccess else "Get"
-                disabled = "" if self.haveAccess(qs) else 'disabled="disabled" '
-                contents = contents.replace("%DISABLED%", disabled)
-                # login/logout
-                log = "Logout" if "sma" in qs and "0" != qs["sma"][0][-1:] else "Login"
-                contents = contents.replace("%LOG%", log)
-                if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
                 # this page (for form)
                 contents = contents.replace("%THISPAGE%", name)
+                self.writeChunk(contents)
+            
+            suffix = "generic" if isGeneric else "mote"
+            with open(htmlDirectory + "/menu-" + suffix + ".html", "r") as f:
+                contents = f.read()
+                if replaceValues:
+                    for v in replaceValues:
+                        contents = contents.replace("%" + v + "%", replaceValues[v])
+                if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
+                self.writeChunk(contents)
+            if self.getLevel() > 8:
+                with open(htmlDirectory + "/menu-9.html", "r") as f:
+                    contents = f.read()
+                    if replaceValues:
+                        for v in replaceValues:
+                            contents = contents.replace("%" + v + "%", replaceValues[v])
+                    if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
+                    self.writeChunk(contents)
+
+            with open(htmlDirectory + "/top-end.html", "r") as f:
+                contents = f.read()
+                if replaceValues:
+                    for v in replaceValues:
+                        contents = contents.replace("%" + v + "%", replaceValues[v])
+                if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
+                # login/logout
+                log = "Logout" if self.getLevel() > 0 else "Login"
+                contents = contents.replace("%LOG%", log)
                 self.writeChunk(contents)
 
     def serveBody(self, name, qs = {'sma': ['0000000'],}, replaceValues = None):
@@ -623,6 +770,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.serve404Error(filename, {})
 
     def serve404Error(self, path, qs):
+        #self.setSession(qs)
         self.send_response(404)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -637,7 +785,9 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.writeChunk("\n<strong>Error: " + message + "</strong>\n")
         self.serveFooter()
 
-    def serveDefault(self, qs):
+    def serveDefault(self, qs, isSession= False):
+        if not isSession:
+            self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -645,7 +795,52 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.serveBody("default", qs)
         self.serveFooter()
 
+    def serveUsers(self, qs):
+        self.setSession(qs)
+        if not self.getLevel() > 8:
+            self.serveDefault(qs,True)
+            return
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+        self.serveHeader("users", qs)
+        changes = {}
+        tses = allSessions.get_session(qs["sma"][0])
+        if "co" in qs:
+            if qs["co"][0] == tses.to_md5("coco") and self.isSafe():
+                tses._ode = not tses._ode
+        if self.isSafe() and tses._ode:
+            changes["CODE"] = "Code: "+tses.to_code("Sis teksts ir loti KODETS!!! Mans pin ir 7301. (Kas tas ir?) :] {; epasts: alfa@beta.gamma #9 3*3+1=10")
+        else:
+            changes["CODE"] = ''
+        if self.isSafe():
+            #user tabula
+            tabCode = "<table class='table'><tr>"
+            webAttributes = settingsInstance.getCfgValue("userWebAttributes")
+            for atr in webAttributes:
+                tabCode += "<th>" + tses.to_code(atr) + "</th>"
+            tabCode += "</tr>"
+            for user in allUsers._userList:
+                tabCode += "<tr>"
+                for atr in webAttributes:
+                    tabCode += "<td>" + tses.to_code(user.get_data(atr)) + "</td>"
+                tabCode += "</tr>"
+            tabCode += "</table>"
+            changes["TAB"] = tabCode
+        else:
+            changes["TAB"] = ''
+        changes["SEE"] = 'See code' if changes["CODE"] == '' else 'Hide code'
+        self.serveBody("users", qs, changes)
+        self.serveFooter()
+
     def serveLogin(self, qs):
+        csma=self.getCookie("Msma37")
+        if csma:
+            if not "sma" in qs:
+                qs["sma"] = []
+                qs["sma"].append(csma)
+            else:
+                qs["sma"][0] = csma
         qs["log"] = ""
         changes = {}
         changes["FAIL"] = ''
@@ -653,14 +848,19 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             qs["log"] = "out"
             self.serveDefault(qs)
             return
+        elif not "sma" in qs and "password" in qs and "user" in qs:
+            changes["FAIL"]="Could not identify connection!"
         elif "password" in qs and "user" in qs:
             tuser=allUsers.get_user("name", qs["user"][0])
-            if tuser and tuser["password"] == qs["password"][0]:
-                qs["log"] = "in"
-                self.serveDefault(qs)
-                return
-            else:
-                changes["FAIL"]="You have made a mistake!"
+            if tuser:
+                m = md5.new()
+                m.update(tuser["password"]+qs["sma"][0])
+                if tuser and m.hexdigest() == qs["password"][0]:
+                    qs["log"] = "in"
+                    self.serveDefault(qs)
+                    return
+            changes["FAIL"]="You have made a mistake!"
+        self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -669,6 +869,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.serveFooter()
 
     def serveMoteSelect(self, qs):
+        self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -677,6 +878,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.serveFooter()
 
     def serveConfig(self, qs):
+        self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -757,6 +959,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.serveFooter()
 
     def serveGraphs(self, qs):
+        self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -780,6 +983,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.serveFooter()
 
     def serveListen(self, qs):
+        self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -836,6 +1040,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.serveFooter()
 
     def serveUpload(self, qs):
+        self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -862,12 +1067,14 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         global isInSubprocess
         isInSubprocess = True
         try:
+            self.setSession(qs)
             self.send_response(200)
             self.sendDefaultHeaders()
             self.end_headers()
             self.serveHeader("upload", qs)
             self.writeChunk('<button type="button" onclick="window.open(\'\', \'_self\', \'\'); window.close();">OK</button><br/>')
             self.writeChunk("Upload result:<br/><pre>\n")
+#??
             while isInSubprocess or uploadResult:
                 if uploadResult:
                     self.writeChunk(uploadResult)
@@ -882,6 +1089,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             uploadResult = ""
 
     def serveBlockly(self, qs):
+        self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -896,8 +1104,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         path = os.path.join(sealBlocklyPath, "index.html")
         with open(path) as f:
             contents = f.read()
-            #disabled = 'disabled="disabled"' if not self.haveAccess(qs) else ""
-            disabled = ""
+            disabled = 'disabled="disabled"' if not self.haveAccess() else ""
             contents = contents.replace("%DISABLED%", disabled)
             self.writeChunk(contents)
         self.writeFinalChunk()
@@ -966,6 +1173,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.serveUpload(qs)
         elif o.path == "/login":
             self.serveLogin(qs)
+        elif o.path == "/users":
+            self.serveUsers(qs)
         elif o.path == "/upload-result":
             self.serveUploadResult(qs)
         elif o.path == "/listen":
@@ -988,9 +1197,11 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 self.compileAndUpload(code, config, None, True)
             self.serveSync(qs)
         elif o.path[-4:] == ".css":
-            self.serveFile(htmlDirectory + o.path)
+            self.serveFile(htmlDirectory + "/css/" + o.path)
         elif o.path[-4:] in [".png", ".jpg", ".gif", ".tif"]:
             self.serveFile(htmlDirectory + "/img/" + o.path)
+        elif o.path[-3:] in [".js"]:
+            self.serveFile(htmlDirectory + "/js/" + o.path)
         else:
             self.serve404Error(o.path, qs)
 
@@ -1075,7 +1286,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             environ = {'REQUEST_METHOD':'POST',
                      'CONTENT_TYPE':self.headers['Content-Type'],
                      })
-
+        self.setSession(qs) #?
         self.send_response(200)
         self.send_header('Content-Type', 'text/html')
         self.send_header('Transfer-Encoding', 'chunked')
@@ -1241,7 +1452,19 @@ def initalizeUsers():
                  allUsers.add_user(line.split())
         uf.close()
     elif not "password" in allUsers._userAttributes:
-        print("User attribute \"password\" required!  Python save old user file in "+allUsers.make_copy())
+        print("User attribute \"password\" required! Python save old user file in "+allUsers.make_copy())
+        print("New default file made in "+makeDefaultUserFile())
+        uf = open(userDirectory + "/" + userFile,"r")
+        i = False
+        for line in uf:
+             if not i:
+                 i = True
+                 allUsers = Users(line.split())
+             else:
+                 allUsers.add_user(line.split())
+        uf.close()
+    elif not allUsers.check_psw():
+        print("Passwords do not match the md5 standard! Python save old user file in "+allUsers.make_copy())
         print("New default file made in "+makeDefaultUserFile())
         uf = open(userDirectory + "/" + userFile,"r")
         i = False
@@ -1253,7 +1476,8 @@ def initalizeUsers():
                  allUsers.add_user(line.split())
         uf.close()
 
-    if not allUsers.get_user("name", "admin") or not "name" in allUsers._userAttributes or not "password" in allUsers._userAttributes:
+
+    if not allUsers.get_user("name", "admin") or not "name" in allUsers._userAttributes or not "password" in allUsers._userAttributes or not allUsers.check_psw():
         print("There is something wrong with user.cfg")
     
     ua=settingsInstance.getCfgValue("userAttributes")
@@ -1278,7 +1502,7 @@ def initalizeConfig():
     global htmlDirectory
     global dataDirectory
     global sealBlocklyPath
-
+    
     htmlDirectory = os.path.abspath(settingsInstance.getCfgValue("htmlDirectory"))
     dataDirectory = os.path.abspath(settingsInstance.getCfgValue("dataDirectory"))
     if not os.path.exists(dataDirectory):
