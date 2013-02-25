@@ -1,0 +1,47 @@
+<script>
+function userSave(){
+	var sma = getCookie("Msma37");
+	if (sma == undefined){
+		alert("Could not finde cookie! Try to go to other page and back or try after 5 seconds!")
+		return false;
+	}
+	var sid = localStorage.getItem("Msid37");
+	if(sid == null){
+		alert("Could not finde cookie! Try to logout and in or try after 5 seconds!")
+		return false;
+	}
+	var poga = document.getElementById("randtextsave");
+	poga.value = hex_md5(sid + sma + poga.id);
+	codeInfo();
+	return true;
+}
+function userDelete(){
+	var sma = getCookie("Msma37");
+	if (sma == undefined){
+		alert("Could not finde cookie! Try to go to other page and back or try after 5 seconds!")
+		return false;
+	}
+	var sid = localStorage.getItem("Msid37");
+	if(sid == null){
+		alert("Could not finde cookie! Try to logout and in or try after 5 seconds!")
+		return false;
+	}
+	if(confirm('Are you sure you want to delete user?')){
+		var poga = document.getElementById("deleteuser");
+		poga.value = hex_md5(sid + sma + poga.id);
+		codeInfo();
+		return true;
+	}
+	return false;
+}
+function codeInfo(){
+    var elems = document.getElementsByTagName('input'), i;
+	for (i in elems) {
+		if((' ' + elems[i].className + ' ').indexOf(' tocode ') > -1) {
+			elems[i].value = toCode(elems[i].value);
+		}
+	}
+}
+</script>
+%FORM%
+<a href="/users"><button>Back</button></a>
