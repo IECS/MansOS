@@ -21,38 +21,49 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+// include MansOS standard API
 #include "stdmansos.h"
 
-Alarm_t timer1;
-Alarm_t timer2;
+// Declare out timer structures
+Alarm_t timer1, timer2;
 
+// Timer #1 callback function
 void onTimer1(void *x)
 {
     static uint8_t counter;
 
     PRINTF("onTimer1\n");
     redLedToggle();
+
+    // start (schedule) timer #1
+    alarmSchedule(&timer1, 700);
+
     if (++counter == 3) {
+        // In case the counter is 3, start (schedule) timer #2 too
         PRINTF("reschedule alarm\n");
         alarmSchedule(&timer2, 200);
     }
-    alarmSchedule(&timer1, 700);
 }
 
+// Timer #2 callback function
 void onTimer2(void *x)
 {
     PRINTF("onTimer2\n");
     blueLedToggle();
 }
 
+// Application entry point
 void appMain(void)
 {
+    // Initialize and start timer #1 (after 700 milliseconds)
     alarmInit(&timer1, onTimer1, NULL);
     alarmSchedule(&timer1, 700);
 
+    // Initialize and start timer #2  (after 1000 milliseconds)
     alarmInit(&timer2, onTimer2, NULL);
     alarmSchedule(&timer2, 1000);
 
+    // Enter infinite low-power loop
     for (;;) {
         msleep(2000);
     }
