@@ -33,6 +33,7 @@ function codeInfo(){
     var elems = document.getElementsByTagName('input'), i;
 	for (i in elems) {
 		if((' ' + elems[i].className + ' ').indexOf(' tocode ') > -1) {
+			elems[i].style.color = "white";
 			elems[i].value = toCode(elems[i].value);
 		}
 	}
@@ -44,6 +45,7 @@ function codeInfo(){
 	New user name:
 	<input class="tocode must" name="username">
 	</p>
-	<input type="submit" id="addnewuser" onclick="return userAdd()" name="useradd" value= "Add user">
+	<input type="hidden" id="addnewuser" name="useradd">
+	<input type="submit" onclick="return userAdd()" value= "Add user">
 	<a href="/users"><button>Back</button></a>
 </form>

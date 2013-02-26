@@ -151,6 +151,9 @@ h4.suc{
 h4.war{
 	color:orange;
 }
+.coded{
+	display:none;
+}
 #logo{
     height:70px;
     float:left;

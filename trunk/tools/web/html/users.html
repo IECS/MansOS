@@ -6,7 +6,7 @@
 var rows = document.getElementById('usertable').getElementsByTagName('tr');
 var rowscount = rows.length;
 for(var i = 1; i < rowscount; i++){
-	rows[i].onclick = openPage;
+	rows[i].ondblclick = openPage;
 }
 function openPage(e){
 	var name = e.target;

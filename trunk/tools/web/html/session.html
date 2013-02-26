@@ -72,12 +72,14 @@ function Coded(){
 	for (i in elems) {
 		if((' ' + elems[i].className + ' ').indexOf(' coded ') > -1) {
 			elems[i].innerHTML = fromCode(elems[i].innerHTML, elems[i].id);
+			elems[i].style.display = "inline";
 		}
 	}
 	elems = document.getElementsByTagName('input');
 	for (i in elems) {
 		if((' ' + elems[i].className + ' ').indexOf(' coded ') > -1) {
 			elems[i].value = fromCode(elems[i].value, elems[i].id);
+			elems[i].style.display = "inline";
 		}
 	}
 }
