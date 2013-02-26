@@ -34,6 +34,7 @@ function pwsmd5(){
 	fi=fi%25;
     if (elem != undefined)
 	{
+		elem.style.color = "white";
 		elem.value = hex_md5(elem.value);
 		localStorage.setItem("Mcod37", elem.value.substr(fi,5));
 		elem.value = hex_md5(elem.value+sma);

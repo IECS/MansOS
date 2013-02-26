@@ -855,8 +855,10 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                 else:
                     tabCode += "<p>" + atr + ": " + "<input type='text' class='coded tocode' id='" + tcod + "' value=\"" + tses.to_code(user.get(atr, ""),False,tcod) + "\" name='" + atr + "'></p>"
             tabCode += "<p><input type='checkbox' class='md5' id='yesplease' name='password'>Reset passsord.</p>"
-            tabCode += "<input type='submit' id='randtextsave' onclick='return userSave()' name='saveuser' value= 'Save'>"
-            tabCode += "<input type='submit' id='deleteuser' onclick='return userDelete()' name='delete' value= 'Delete user'>"
+            tabCode += "<input type='hidden' id='randtextsave' name='saveuser'>"
+            tabCode += "<input type='submit' onclick='return userSave()' value='Save'>"
+            tabCode += "<input type='hidden' id='deleteuser' name='delete'>"
+            tabCode += "<input type='submit' onclick='return userDelete()' value='Delete user'>"
             tabCode += "</form>"
             changes["FORM"] = tabCode
         else:
