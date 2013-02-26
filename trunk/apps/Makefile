@@ -44,6 +44,7 @@ TEST_TARGETS = \
 	Null					\
 	PDRTest					\
 	RadioSendTest				\
+	RadioRecvTest				\
 	SdCardBlockTest				\
 	SerialPipe				\
 	SharingTest				\
