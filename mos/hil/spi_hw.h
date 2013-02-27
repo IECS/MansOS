@@ -44,6 +44,11 @@
 int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode);
 
 /**
+ * Disables SPI on a specific bus
+ */
+void hw_spiBusDisable(uint8_t busId);
+
+/**
  * Turn on the SPI bus, provide bus ID (starting from 0)
  *
  * Defined in HPL

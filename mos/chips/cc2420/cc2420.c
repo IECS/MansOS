@@ -86,6 +86,9 @@ static void cc2420SetPanAddr(unsigned pan,
                              unsigned addr,
                              const uint8_t *ieee_addr);
 
+static void cc2420DisableSpi(void);
+static void cc2420Start(void);
+
 /*---------------------------------------------------------------------------*/
 
 #define RTIMER_SECOND 32768 // timer A feeds from from ACLK
@@ -149,6 +152,10 @@ static unsigned int status(void)
 static void on(void)
 {
     RPRINTF("turn CC2420 radio rx on\n");
+
+    CC2420_SET_VREG_ACTIVE();
+    cc2420InitSpi();
+
     CC2420_ENABLE_FIFOP_INT();
     strobe(CC2420_SRXON);
 
@@ -158,7 +165,7 @@ static void on(void)
     energyConsumerOn(ENERGY_CONSUMER_RADIO_RX);
 }
 
-static void off(void)
+static void off(bool disableSpi)
 {
     RPRINTF("turn CC2420 radio rx off\n");
     receive_on = 0;
@@ -173,6 +180,11 @@ static void off(void)
 
     if (!CC2420_FIFOP_IS_1) {
         flushrx();
+    }
+
+    if (disableSpi) {
+        CC2420_SET_VREG_INACTIVE();
+        cc2420DisableSpi();
     }
 }
 
@@ -194,6 +206,27 @@ void cc2420InitSpi(void)
     pinAsOutput(CC2420_CSN_PORT, CC2420_CSN_PIN);
     // Unselect radio
     CC2420_SPI_DISABLE();
+}
+
+static void cc2420DisableSpi(void)
+{
+    spiBusDisable(CC2420_SPI_ID);
+}
+
+static inline void cc2420StartVreg(void)
+{
+    CC2420_SET_VREG_ACTIVE();
+    ALARM_TIMER_WAIT_TICKS(20);
+    CC2420_SET_RESET_ACTIVE();
+    ALARM_TIMER_WAIT_TICKS(20);
+    CC2420_SET_RESET_INACTIVE();
+}
+
+static inline void cc2420StopVreg(void)
+{
+    CC2420_SET_RESET_ACTIVE();
+    CC2420_SET_VREG_INACTIVE();
+    CC2420_SET_RESET_INACTIVE();
 }
 
 void cc2420Init(void)
@@ -227,13 +260,17 @@ void cc2420Init(void)
     }
     ATOMIC_END(h);
 
-    // Turn on voltage regulator and reset
-    CC2420_SET_VREG_ACTIVE();
-    //clock_delay(250); OK
-    CC2420_SET_RESET_ACTIVE();
-    clock_delay(127);
-    CC2420_SET_RESET_INACTIVE();
-    //clock_delay(125); OK
+    cc2420Start();
+
+    cc2420StopVreg();
+    cc2420DisableSpi();
+}
+
+static void cc2420Start(void)
+{
+    uint16_t reg;
+
+    cc2420StartVreg();
 
     // Turn on the crystal oscillator
     strobe(CC2420_SXOSCON);
@@ -294,6 +331,11 @@ int_t cc2420Send(const void *header, uint16_t headerLen,
     Handle_t h;
     ATOMIC_START(h);
 
+    if (!receive_on)  {
+        cc2420InitSpi();
+        cc2420Start();
+    }
+
     /* Wait for any previous transmission to finish. */
     /*  while(status() & BV(CC2420_TX_ACTIVE));*/
 
@@ -353,7 +395,7 @@ int_t cc2420Send(const void *header, uint16_t headerLen,
             if (!receive_on) {
                 /* We need to explicitly turn off the radio,
                  * since STXON[CCA] -> TX_ACTIVE -> RX_ACTIVE */
-                off();
+                off(false);
             }
 
             result = 0; // success
@@ -367,6 +409,12 @@ int_t cc2420Send(const void *header, uint16_t headerLen,
     result = -EBUSY;
   end:
     // RPRINTF("cc2420: tx done, result=%d\n", result);
+
+    if (!receive_on)  {
+        //mdelay(100);
+        cc2420DisableSpi();
+        cc2420StopVreg();
+    }
     ATOMIC_END(h);
     return result;
 }
@@ -403,15 +451,6 @@ int_t cc2420Read(void *buf, uint16_t bufsize)
     }
 
     len -= AUX_LEN;
-
-#if XBEE_PRO_SUPPORT
-    // XXX: this code is needed to ignore Waspmote beacons!
-    if (len < 30) {
-        flushrx();
-        RPRINTF("len < min len, len=%u\n", len);
-        goto end;
-    }
-#endif
 
     if (len > bufsize) {
         flushrx();
@@ -477,7 +516,7 @@ void cc2420Discard(void)
 void cc2420Off(void)
 {
     if (receive_on) {
-        off();
+        off(true);
     }
 }
 

@@ -59,6 +59,14 @@ static inline int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode) {
     return 0;
 }
 
+static inline void hw_spiBusDisable(uint8_t busId) {
+    extern void msp430SerialDisableSPI0(void);
+    extern void msp430SerialDisableSPI1(void);
+
+    if (busId == 0) msp430SerialDisableSPI0();
+    else msp430SerialDisableSPI1();
+}
+
 /**
  * Turn on the SPI bus, provide bus ID (starting from 0)
  * On MSP430, USART TX/RX is used for SPI TX/RX

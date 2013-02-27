@@ -65,9 +65,6 @@ enum {
     TICKS_IN_MS = CPU_HZ / 1000 / JIFFY_CLOCK_DIVIDER,
 };
 
-// XXX: this is slow
-#define TIMER_TICKS_TO_MS(ticks) ((ticks) / TICKS_IN_MS)
-
 // bits for clock divider setup
 #define TIMER0_DIV_1 (1 << CS00)
 #define TIMER0_DIV_8 (1 << CS01)
@@ -152,6 +149,10 @@ enum {
 #define SLEEP_TIMER_START() atmegaStartTimer1()
 #define SLEEP_TIMER_STOP() atmegaStopTimer1()
 #define ALARM_TIMER_READ_STOPPED() (TCNT0)
+#define ALARM_TIMER_WAIT_TICKS(ticks) { \
+        uint16_t end = TCNT0 + ticks;   \
+        while (TCNT0 != end);           \
+    }
 
 #define NEXT_ALARM_TIMER() OCR0A
 #define SET_NEXT_ALARM_TIMER(value) OCR0A += value

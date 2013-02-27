@@ -174,8 +174,8 @@ void  msp430UsartSerialInit0(uint32_t speed)
     // Enable serial module via the MEx SFRs (URXEx and/or UTXEx)
     // and disable interrupts
     IE1 &= ~(UTXIE0 | URXIE0);
-    U0ME &= ~USPIE0;
-    U0ME |= UTXE0 | URXE0;
+    U0ME &= ~(USPIE0 | URXE0);
+    U0ME |= UTXE0;
 
     //Clear SWRST via software - Release software reset
     U0CTL &= ~(SWRST);
@@ -203,8 +203,8 @@ void msp430UsartSerialInit1(uint32_t speed)
     // Enable serial module via the MEx SFRs (URXEx and/or UTXEx)
     // and disable interrupts
     IE2 &= ~(UTXIE1 | URXIE1);
-    U1ME &= ~USPIE1;
-    U1ME |= UTXE1 | URXE1;
+    U1ME &= ~(USPIE1 | URXE1);
+    U1ME |= UTXE1;
 
     //Clear SWRST via software - Release software reset
     U1CTL &= ~(SWRST);
@@ -234,8 +234,8 @@ uint_t msp430SerialInitI2C(uint8_t id) {
     IE1 &= ~(UTXIE0 | URXIE0);      // interrupt disabled
 
     U0ME |= I2CEN;                   /* Enable I2C module */
-    U0ME |= UTXE0 | URXE0;            /* Enable UART module (DO NOT REMOVE!) */
-    U0CTL &= ~SWRST;                  /* Remove RESET flag */
+    U0ME |= UTXE0 | URXE0;           /* Enable UART module (DO NOT REMOVE!) */
+    U0CTL &= ~SWRST;                 /* Remove RESET flag */
 
     return 0;
 }

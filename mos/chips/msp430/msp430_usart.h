@@ -114,11 +114,12 @@ static inline void serialDisableRX(uint8_t id) {
 }
 
 static inline bool serialUsesSMCLK(void ) {
-    if ((U0ME & (URXE0 | UTXE0)) && (U0TCTL & SSEL_SMCLK)) return true;
-    if ((U1ME & (URXE1 | UTXE1)) && (U1TCTL & SSEL_SMCLK)) return true;
+    // return true ONLY if SMCL is used for reception - it is impossible
+    // to *transmit* anything while the MCU is sleeping
+    if ((U0ME & URXE0) && (U0TCTL & SSEL_SMCLK)) return true;
+    if ((U1ME & URXE1) && (U1TCTL & SSEL_SMCLK)) return true;
     return false;
 }
-
 
 // Not on all platforms SPI and I2C is part of USART
 uint_t msp430SerialInitI2C(uint8_t id);

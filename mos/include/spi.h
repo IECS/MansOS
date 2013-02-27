@@ -63,6 +63,16 @@ static inline int8_t spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
 }
 
 ///
+/// Disable a SPI bus (for example, to save energy)
+///
+static inline void spiBusDisable(uint8_t busId) 
+{
+    if (busId != SPI_BUS_SW) {
+        hw_spiBusDisable(busId);
+    }
+}
+
+///
 /// Enable a SPI device - set SS pin LOW
 ///
 #define spiSlaveEnable(sePort, sePin) \
