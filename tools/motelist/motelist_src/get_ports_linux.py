@@ -128,5 +128,5 @@ def hwinfo(device):
     return 'n/a'  # XXX directly remove these from the list?
 
 def comports():
-    devices = glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*')
+    devices = glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*')
     return [(d, describe(d), hwinfo(d)) for d in devices]
