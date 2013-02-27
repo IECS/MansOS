@@ -77,7 +77,7 @@ void alarmSchedule(Alarm_t *alarm, uint32_t milliseconds);
 void alarmRemove(Alarm_t *alarm);
 
 ///
-/// Get the milliseconds (relative value) after which the alarm will fire
+/// Get the milliseconds (relative value) after which the alarm is going to fire
 ///
 /// Valid only when the alarm is active (i.e. scheduled)
 ///

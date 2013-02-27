@@ -34,6 +34,13 @@
 // Data types and constants
 //===========================================================
 
+// - All supported routing protocols- 
+
+//! A simple distance vector (DV) routing protocol
+#define ROUTING_PROTOCOL_DV  1
+//! SAD routing protocol
+#define ROUTING_PROTOCOL_SAD 2
+
 //! Routing decision
 typedef enum {
     //! Discard the packet

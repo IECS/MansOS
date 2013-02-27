@@ -69,6 +69,13 @@ static void msp430SerialInitSpiPins(void)
     pinAsInput(HW_MISO_PORT, HW_MISO_PIN);
 }
 
+static void msp430SerialDisableSpiPins(void)
+{
+    pinAsData(HW_SCK_PORT, HW_SCK_PIN);
+    pinAsData(HW_MOSI_PORT, HW_MOSI_PIN);
+    pinAsData(HW_MISO_PORT, HW_MISO_PIN);
+}
+
 void msp430SerialInitSPI0(uint_t spiBusMode)
 {
     U0CTL = SWRST; // reset must be hold while configuring
@@ -87,7 +94,15 @@ void msp430SerialInitSPI0(uint_t spiBusMode)
     /* Enable SPI module & UART module (DO NOT REMOVE!) */
     IE1 &= ~(UTXIE0 | URXIE0);      // interrupt disabled
     U0ME |= USPIE0 | UTXE0 | URXE0;
+    U0ME |= USPIE0;
     U0CTL &= ~SWRST;                  /* Remove RESET flag */
+}
+
+void msp430SerialDisableSPI0(void) {
+    U0CTL |= SWRST;
+    msp430SerialDisableSpiPins();
+    U0ME &= ~USPIE0;
+    U0CTL &= ~SWRST;
 }
 
 void msp430SerialInitSPI1(uint_t spiBusMode)
@@ -108,4 +123,11 @@ void msp430SerialInitSPI1(uint_t spiBusMode)
     IE2 &= ~(UTXIE1 | URXIE1);      // interrupt disabled
     U1ME |= USPIE1 | UTXE1 | URXE1;
     U1CTL &= ~SWRST;                  /* Remove RESET flag */
+}
+
+void msp430SerialDisableSPI1(void) {
+    U1CTL |= SWRST;
+    msp430SerialDisableSpiPins();
+    U1ME &= ~USPIE1;
+    U1CTL &= ~SWRST;
 }

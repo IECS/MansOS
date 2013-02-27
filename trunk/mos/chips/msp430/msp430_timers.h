@@ -181,6 +181,10 @@ enum {
 #define ALARM_TIMER_READ_STOPPED() (TAR)
 #define NEXT_ALARM_TIMER() TACCR0
 #define SET_NEXT_ALARM_TIMER(value) TACCR0 += value
+#define ALARM_TIMER_WAIT_TICKS(ticks) { \
+        uint16_t end = TAR + ticks;     \
+        while (TAR != end);             \
+    }
 
 #define CORRECTION_TIMER_EXPIRED() (TAIV == 2)
 #define NEXT_CORRECTION_TIMER() TACCR1

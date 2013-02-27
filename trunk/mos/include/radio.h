@@ -66,7 +66,8 @@ static inline void radioReinit(void);
 /// Send two data buffers to radio.
 ///
 /// Either of the pointers is allowed to be NULL (except both at once)
-/// in case the respective length parameters are 0
+/// in case the respective length parameters are 0.
+/// @return zero on success, a negative number on error (a negated error code)
 ///
 static inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
                                      const void *data, uint16_t dataLength);
@@ -74,12 +75,16 @@ static inline int8_t radioSendHeader(const void *header, uint16_t headerLength,
 ///
 /// Convenience function for sending just one buffer to radio
 ///
+/// @return zero on success, a negative number on error (a negated error code)
+///
 static inline int8_t radioSend(const void *data, uint16_t dataLength) {
     return radioSendHeader(NULL, 0, data, dataLength);
 }
 
 ///
 /// Convenience function for sending one byte to radio
+///
+/// @return zero on success, a negative number on error (a negated error code)
 ///
 static inline int8_t radioSendByte(uint8_t data) {
     return radioSendHeader(NULL, 0, &data, 1);

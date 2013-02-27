@@ -64,7 +64,6 @@ void msp430UsciSerialInit0(uint32_t speed)
         UCA0MCTL = ((CPU_HZ * 8 / speed) & 0x7) << 1;
     }
     UCA0CTL0 = UART_MODE;
-    UC0IE |= UCA0RXIE;     // Enable receive interrupt
     UCA0CTL1 &= ~UCSWRST;  // Release hold
 }
 
@@ -90,7 +89,6 @@ void msp430UsciSerialInit1(uint32_t speed)
         UCA1MCTL = ((CPU_HZ * 8 / speed) & 0x7) << 1;
     }
     UCA1CTL0 = UART_MODE;
-    UC1IE |= UCA1RXIE;     // Enable receive interrupt
     UCA1CTL1 &= ~UCSWRST;  // Release hold
 }
 #endif // SERIAL_COUNT > 1

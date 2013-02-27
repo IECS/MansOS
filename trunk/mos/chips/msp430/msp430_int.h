@@ -207,24 +207,34 @@ static inline void msp430InitPins(void)
     P1OUT = 0;
 #endif
 #ifdef P2DIR
-    P2DIR = 0;
-    P2OUT = 0;
+//    P2DIR = 0;
+//    P2OUT = 0;
+    P2OUT = 0x30;
+    P2DIR = 0x7b;
 #endif
 #ifdef P3DIR
-    P3DIR = 0;
-    P3OUT = 0;
+//    P3DIR = 0;
+//    P3OUT = 0;
+    P3OUT = 0x00;
+    P3DIR = 0xf1;
 #endif
 #ifdef P4DIR
-    P4DIR = 0;
-    P4OUT = 0;
+//    P4DIR = 0;
+//    P4OUT = 0;
+    P4OUT = 0xdd;
+    P4DIR = 0xfd;
 #endif
 #ifdef P5DIR
-    P5DIR = 0;
-    P5OUT = 0;
+//    P5DIR = 0;
+//    P5OUT = 0;
+    P5OUT = 0xff;
+    P5DIR = 0xff;
 #endif
 #ifdef P6DIR
-    P6DIR = 0;
-    P6OUT = 0;
+//    P6DIR = 0;
+//    P6OUT = 0;
+    P6OUT = 0x00;
+    P6DIR = 0xff;
 #endif
 #ifdef P7DIR
     P7DIR = 0;
