@@ -35,7 +35,6 @@ from output_area import OutputArea
 from tab_manager import TabManager
 from listen_module import ListenModule
 from editor_manager import EditorManager
-from get_motelist import GetMotelist
 from do_compile import DoCompile
 from do_upload import DoUpload
 from edit_statement import EditStatement
@@ -44,6 +43,7 @@ from globals import * #@UnusedWildImport
 
 #from seal_parser import SealParser
 from seal import seal_parser #@UnresolvedImport
+from motelist import Motelist
 
 class ApiCore:
     def __init__(self, argv):
@@ -92,9 +92,6 @@ class ApiCore:
         self.excludedPlatforms = list()
 
         self.activePlatform = self.platforms.index("telosb")
-
-        self.motelist = []
-        self.motelistCallbacks = []
 
         # Flag indicates that next thread's output shouldn't trigger 
         # force switching to info area tab.
@@ -179,7 +176,6 @@ class ApiCore:
 
         #self.outputTools.addTools()
 
-        self.motelistClass = GetMotelist(self.pathToMansos, self)
         self.compiler = DoCompile(self)
         self.uploader = DoUpload(self)
 
@@ -219,8 +215,8 @@ class ApiCore:
 
         self.loaded = True
         self.frame.checkToggleState()
-# Populate motelist
-        self.populateMotelist()
+
+        Motelist.startPeriodicUpdate()
 
     def getPlatformsFromMakefile(self):
         makefile = os.path.join(self.path, "../../mos/make/Makefile.options")
@@ -325,10 +321,6 @@ class ApiCore:
             if self.activeThreads[x]:
                 self.activeThreads[x].process.terminate()
 
-    def populateMotelist(self, event = None):
-        self.printInfo("Populating motelist ... ", False, not self.supressTabSwitching)
-        self.motelistClass.getMotelist()
-
     def doCompile(self, event = None):
         self.printInfo("Starting to compile ... \n", False)
         self.compiler.doCompile()
@@ -337,7 +329,9 @@ class ApiCore:
         # Stop all listening
         for x in self.listenModules:
             x.doClear("")
+
         self.printInfo("Starting to upload ... \n", False)
+
         self.uploader.doUpload()
 
     def startThread(self, thread):

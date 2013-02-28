@@ -25,6 +25,7 @@
 import wx
 
 from newMote import NewMote
+from motelist import Motelist
 
 class UploadModule(wx.Panel):
     def __init__(self, parent, API):
@@ -33,7 +34,7 @@ class UploadModule(wx.Panel):
         self.API = API
         self.editorManager = self.API.tabManager.GetCurrentPage()
         self.filename = self.editorManager.fileName
-        self.API.motelistCallbacks.append(self.updateMotelist)
+        Motelist.addUpdateCallback(self.updateMotelist)
         # Just a shorter name
         self.tr = self.API.translater.translate
         self.tmpDir = self.API.path + '/temp/'
@@ -74,7 +75,7 @@ class UploadModule(wx.Panel):
 
         self.Bind(wx.EVT_BUTTON, self.API.doCompile, self.compile)
         self.Bind(wx.EVT_BUTTON, self.API.doUpload, self.upload)
-        self.Bind(wx.EVT_BUTTON, self.populateMotelist, self.refresh)
+        self.Bind(wx.EVT_BUTTON, self.updateMotelist, self.refresh)
         #self.Bind(wx.EVT_COMBOBOX, self.populateMotelist, self.source)
         self.Bind(wx.EVT_BUTTON, self.openNewMoteDialog, self.newMote)
         self.Bind(wx.EVT_COMBOBOX, self.API.changePlatform, self.platforms)
@@ -87,31 +88,35 @@ class UploadModule(wx.Panel):
         self.updateMotelist()
 
     def __del__(self):
-        self.API.motelistCallbacks.remove(self.updateMotelist)
+        Motelist.removeUpdateCallback(self.updateMotelist)
 
-    def populateMotelist(self, event = None):
-        self.list.Clear()
-        self.list.Insert(self.tr("Searching devices") + "...", 0)
-        self.list.Disable()
-        self.API.populateMotelist()
+    def updateMotelist(self, event = None):
+        old = self.list.GetCheckedStrings()
+        pos = 0
 
-    def updateMotelist(self):
-        motelist = self.API.motelist
         self.list.Clear()
 
-        if len(motelist) == 0:
+        for mote in Motelist.getMotelist(False):
+            self.list.Enable(True)
+            self.list.Insert(mote.getNiceName(), pos)
+
+            if mote.getNiceName() in old:
+                self.list.Check(pos)
+
+            pos += 1
+
+        if self.list.GetCount() == 0:
+            self.list.Enable(False)
             self.list.Insert(self.tr("No devices found!"), 0)
-        else:
-            for i in range(len(motelist)):
-                if len(motelist[i]) > 2:
-                    self.list.Insert(motelist[i][0] + "(" + motelist[i][2] +
-                                 ") @ " + motelist[i][1], i)
-                else:
-                    self.API.printInfo("Wrong motelist format:", str(motelist[0]))
-            self.list.Enable()
 
     def modifyTargets(self, event):
-        self.API.targets = list(self.list.GetChecked())
+        temp = list()
+
+        for target in self.list.GetCheckedStrings():
+            if target.count("(") != 0:
+                temp.append(target.split("(")[1].split(")")[0])
+
+        self.API.targets = temp
 
     def openNewMoteDialog(self, event):
         dialog = NewMote(self, self.API)

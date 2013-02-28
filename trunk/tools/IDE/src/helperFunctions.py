@@ -72,4 +72,6 @@ def listenSerialPort(pipe, args):
     except SerialException as msg:
         print "\nSerial exception:\n\t", msg
         pipe.send("\nError conecting to device '{}'!\n".format(args['serialPort']))
+    except IOError:
+        pass
 
