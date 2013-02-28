@@ -9,6 +9,7 @@ def importsOk():
     plyModuleOK = True      # Python Lex Yacc - for compilation
     sealParserOK = True     # SEAL parser
     mansOSOK = True         # MansOS
+    motelistOK = True       # Motelist
 
     try:
         import wx #@UnusedImport
@@ -38,7 +39,16 @@ def importsOk():
     except OSError:
         sealParserOK = False
 
+    try:
+        motelistPath = os.path.join(os.getcwd(), '..', '..', 'tools', "motelist")
+        path.append(motelistPath)
+
+        from motelist import Motelist #@UnusedImport
+    except:
+        motelistOK = False
+
     versionFile = os.path.join("../..", "doc/VERSION")
+
     if not os.path.exists(versionFile) or not os.path.isfile(versionFile):
         mansOSOK = False
     else:
@@ -47,7 +57,7 @@ def importsOk():
                                  f.readline().strip(), f.readline().strip()))
         f.close()
 
-    if not (wxModuleOK and serialModuleOK and plyModuleOK and sealParserOK and mansOSOK):
+    if not (wxModuleOK and serialModuleOK and plyModuleOK and sealParserOK and mansOSOK and motelistOK):
         if os.name == 'posix':
             installStr = "Make sure you have installed required modules. Run:\n\tsudo apt-get install"
         else:
@@ -70,9 +80,14 @@ def importsOk():
         if not sealParserOK:
             print ("\tSEAL parser not found!")
 
+        if not motelistOK:
+            print ("\Motelist not found!")
+
         if not mansOSOK:
             print ("\tMansOS not found!")
+
         print (installStr)
+
         return False
     return True
 

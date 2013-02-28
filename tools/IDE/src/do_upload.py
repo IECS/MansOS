@@ -58,7 +58,7 @@ class DoUpload():
                                        self.API.pathToMansos)
 
         platform = self.API.getActivePlatform()
-        if len(self.targets):
+        while len(self.targets):
             target = self.targets.pop()
             self.changeTarget(target)
             thread = MyThread(doPopen, ["make", platform, "upload"], \
@@ -109,8 +109,11 @@ class DoUpload():
     def changeTarget(self, newTarget = None):
         if newTarget == None:
             os.unsetenv("BSLPORT")
+            #newTarget = self.API.motelist[0][1]
+            #os.environ["BSLPORT"] = str(newTarget.strip().strip("\x00"))
         else:
-            newTarget = self.API.motelist[newTarget][1]
+            #newTarget = self.API.motelist[newTarget][1]
             # Windows puts "\x00" at port end and it is not allowed in 
             # environment variable
-            os.environ["BSLPORT"] = str(newTarget.strip().strip("\x00"))
+            #os.environ["BSLPORT"] = str(newTarget.strip().strip("\x00"))
+            os.environ["BSLPORT"] = newTarget

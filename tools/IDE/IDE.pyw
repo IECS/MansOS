@@ -30,10 +30,12 @@ import wx
 def main():
     # Go to real directory for imports to work
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
     # Append seal parser to PATH
     sealPath = os.path.join(os.getcwd(), '..', '..', 'tools')
     path.append(sealPath)
     path.append(os.path.join(sealPath, 'seal', 'components'))
+
     # Must import after PATH update!
     from src import api_core
 
