@@ -47,7 +47,7 @@ function SetSma(){
     var elems = document.getElementsByTagName('input'), i;
 	var sma = getCookie("Msma37");
 	if (sma == undefined) sma="";
-    for (i in elems) {
+    for (i = 0; i < elems.length; i++) {
         if((' ' + elems[i].className + ' ').indexOf(' Msma37 ') > -1) {
             elems[i].value = sma;
         }
@@ -61,7 +61,7 @@ function SetSid(){
 	if(sid == null) return;
 	sid=hex_md5(sid + sma);
 	document.cookie = 'Msid37=' + sid + '; expires=Session; path=/'
-	for (i in elems) {
+	for (i = 0; i < elems.length; i++) {
 		if((' ' + elems[i].className + ' ').indexOf(' Msid37 ') > -1) {
 			elems[i].value = sid;
 		}
@@ -69,14 +69,14 @@ function SetSid(){
 }
 function Coded(){
     var elems = document.getElementsByTagName('span'), i;
-	for (i in elems) {
+	for (i = 0; i < elems.length; i++) {
 		if((' ' + elems[i].className + ' ').indexOf(' coded ') > -1) {
 			elems[i].innerHTML = fromCode(elems[i].innerHTML, elems[i].id);
 			elems[i].style.display = "inline";
 		}
 	}
 	elems = document.getElementsByTagName('input');
-	for (i in elems) {
+	for (i = 0; i < elems.length; i++) {
 		if((' ' + elems[i].className + ' ').indexOf(' coded ') > -1) {
 			elems[i].value = fromCode(elems[i].value, elems[i].id);
 			elems[i].style.display = "inline";

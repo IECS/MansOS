@@ -32,9 +32,10 @@ class Settings(object):
             self.userDirectory = "user"
             self.userFile = "user.dat"
             self.userAttributes = ["name","password","level"]
-            self.defaultValues = ["Unknown","5f4dcc3b5aa765d61d8327deb882cf99","1"]
-            self.adminValues = ["admin","21232f297a57a5a743894a0e4a801fc3","9"]
-            self.userWebAttributes = ["name","level"]
+            self.defaultValues = ["Unknown","5f4dcc3b5aa765d61d8327deb882cf99","1"] #password "password"
+            self.adminValues = ["admin","21232f297a57a5a743894a0e4a801fc3","9"] #password "admin"
+            self.userWebAttributes = [] #user editable (password is built-in)
+            self.adminWebAttributes = ["level"] #admin editable (reset password is built-in and name is uneditable)
 
     cfg = ConfigValues()
 

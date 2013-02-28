@@ -2,11 +2,11 @@
 function userAdd(){
 	var err=""
 	var elems = document.getElementsByTagName('input'), i;
-	for (i in elems) {
+	for (i = 0; i < elems.length; i++) {
 		if((' ' + elems[i].className + ' ').indexOf(' must ') > -1)
 		{
 			if(elems[i].value == "") err = err + "Enter new user's name!\n";
-			else if(elems[i].value.length < 3 || elems[i].value.length > 10) err = err + "User name must be 3 to 10 character long!\n";
+			else if(elems[i].value.length < 3 || elems[i].value.length > 20) err = err + "User name must be 3 to 20 character long!\n";
 		}
 	}
 	if(err != "")
@@ -31,7 +31,7 @@ function userAdd(){
 }
 function codeInfo(){
     var elems = document.getElementsByTagName('input'), i;
-	for (i in elems) {
+	for (i = 0; i < elems.length; i++) {
 		if((' ' + elems[i].className + ' ').indexOf(' tocode ') > -1) {
 			elems[i].style.color = "white";
 			elems[i].value = toCode(elems[i].value);

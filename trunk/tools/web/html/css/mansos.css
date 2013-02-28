@@ -3,7 +3,6 @@ body {
     font-family:sans, Verdana;
     /*line-height:120%;*/
     margin:0px 20px;
-    background-color:#175186;
 }
 a {
     text-decoration: none;
@@ -38,12 +37,6 @@ div.topmenu {
     *border-bottom:thin dashed;
     margin-bottom:12px;
     width:100%;
-    background-color:#175186;
-    background-image:url('celi2.png');
-    background-size:contain;
-    background-repeat:repeat-x;
-    -moz-border-radius: 7px;
-    border-radius: 7px;
 }
 div.form {
     margin-bottom:12px;
@@ -62,26 +55,15 @@ div.error2 {
     font-size:120%;
     text-align:center
 }
+.topmenu {
+    border-style:solid;
+    border-width:1px;
+    border-color:#175186;
+    border-radius:6px;
+}
 .topmenu a{
     font-weight:bold;
-    color:#ffffff;
     text-decoration: none;
-    background-image:url('chips.png');
-    background-size:contain;
-    background-repeat:repeat-x;
-    font-size:145%;
-    padding:5px;
-    margin-left:5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px;
-}
-.topmenu a:first-child,
-.topmenu a.first{
-    margin-left:15px;
-}
-.topmenu a:hover{
-    *background-color:rgba(25,200,214,0.3);
-    color:rgb(255,255,0);
 }
 .box{
     float:left;
@@ -122,25 +104,12 @@ div.box:hover{
 }
 .table{
 	border:0;
-	background-color:#ffffff;
 	width:100%;
-    border-radius:8px;
 	text-align:center;
 	vertical-align:center;
-	padding:5px;
-	padding-left:20px;
-	padding-right:20px;
 }
 .table tr th{
 	height:20px;
-}
-.table tr td{
-	border-top:1px solid #eeeeee;
-}
-.table tr:hover td{
-	background-color:#175186;
-	color:#ffff00;
-    border-radius:5px;
 }
 h4.err{
 	color:red;
@@ -160,15 +129,7 @@ h4.war{
     margin:-20px -80px 15px 20px;
 }
 #cont{
-    width:80%;
-    min-width:890px;
     margin:auto;
-    margin-top:15px;
-    margin-bottom:15px;
-    padding: 20px;
-    background-color:#eeeef6;
-    -moz-border-radius: 10px;
-    border-radius: 10px;
 }
 #seal-frame{
     width:96%;
