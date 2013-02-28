@@ -36,7 +36,7 @@ function userDelete(){
 }
 function codeInfo(){
     var elems = document.getElementsByTagName('input'), i;
-	for (i in elems) {
+	for (i = 0; i < elems.length; i++) {
 		if((' ' + elems[i].className + ' ').indexOf(' tocode ') > -1) {
 			elems[i].style.color = "white";
 			elems[i].value = toCode(elems[i].value);

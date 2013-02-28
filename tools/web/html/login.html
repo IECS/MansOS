@@ -3,7 +3,7 @@ function IsAll()
 {
 	var err=""
 	var elems = document.getElementsByTagName('input'), i;
-	for (i in elems) {
+	for (i = 0; i < elems.length; i++) {
 		if((' ' + elems[i].className + ' ').indexOf(' must ') > -1)
 		{
 			if(elems[i].value == "") err=err+"Enter "+ elems[i].name+ "!\n";

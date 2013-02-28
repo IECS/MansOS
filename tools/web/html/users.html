@@ -14,16 +14,6 @@ function openPage(e){
 	{
 		name = name.parentNode;
 	}
-	window.location = "http://localhost:30000/users?edituser=" + toCode(name.firstChild.firstChild.innerHTML);
+	window.location = window.location + "?edituser=" + toCode(name.firstChild.firstChild.innerHTML);
 }
 </script>
-<!--
-<br>
-<p>%CODE%</p>
-<form>
-	<input type="hidden" class="Msma37" name="sma">
-	<input type="hidden" class="Msid37" name="sid">
-	<input type="hidden" class="md5" id="coco" name="co">
-	<input type="submit" value="%SEE%">
-</form>
--->

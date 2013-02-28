@@ -40,8 +40,9 @@ motes = MoteCollection()
 
 htmlDirectory = "html"
 sealBlocklyPath = "seal-blockly"
-alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,!?() '_-=+*/@$:%^#;~{}[]|`" #nevar but simbols:"&<>"
-lalphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`"
+alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,!?() '_-=+*/@$:%^#;~{}[]|`"
+#nevar but simbols:"&<>"
+lalphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ@_-.,`"
 tabuList = ["admin"]
 
 # --------------------------------------------
@@ -99,7 +100,7 @@ class Session():
         if span:
             ntext= "<span class='coded' id='" + cod + "'>" + ntext + "</span>"
         return ntext
-    def from_code(self, text): #code lieto ja teksts ir mainigs
+    def from_code(self, text): #code use to get coded information
         if not hasattr(self, '_sid'):
             return False
         sid = self._sid
@@ -121,7 +122,7 @@ class Session():
                 ntext += text[i]
             i += 1
         return ntext
-    def to_md5(self, text): #md5 lietoja, ja teksts ir nemainigs
+    def to_md5(self, text): #md5 use to check coded infromation
         if not hasattr(self, '_sid'):
             return False
         m = md5.new()
@@ -146,10 +147,17 @@ class Sessions():
         self._sessionList.append(Session(sma))
         print("Session count : {}".format(self._sessionList.__len__()))
         return True
-    def get_session(self,sma):
+    def get_session(self, sma):
         i=self._sessionList.__len__()-1
         while -1 < i:
             if self._sessionList[i]._sma == sma:
+                return self._sessionList[i]
+            i -=1
+        return False
+    def get_session_old(self, oldsma):
+        i=self._sessionList.__len__()-1
+        while -1 < i:
+            if self._sessionList[i]._oldsma == oldsma:
                 return self._sessionList[i]
             i -=1
         return False
@@ -484,7 +492,17 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         tsma = str(random.randint(100000000, 999999999))
         self.setSafe("False")
         if "sma" in qs:
-            tsma = tsma + qs["sma"][0][-1:]
+            tsma = tsma + "0"
+            tses=allSessions.get_session(qs["sma"][0])
+            if tses and hasattr(tses, "_user"):
+                if allUsers.get_user("name", tses._user["name"]):
+                    tses._user=allUsers.get_user("name", tses._user["name"])
+                    if "level" in tses._user:
+                        tsma = tsma[:-1]+tses._user["level"]
+                    else:
+                        tsma = tsma[:-1]+"1"
+                else:
+                    qs["log"] = "out"
             if "log" in qs:
                 if qs["log"] == "in":
                     tsid = random.randint(100000000, 999999999)
@@ -607,7 +625,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
       except:
         return False
 
-    def serveHeader(self, name, qs = {"no" : "no"}, isGeneric = True, includeBodyStart = True, replaceValues = None, urlTo = ""):
+    def serveHeader(self, name, qs = {"no": "no"}, isGeneric = True, includeBodyStart = True, replaceValues = None, urlTo = ""):
         self.headerIsServed = True
         if name == "default":
             pagetitle = ""
@@ -783,7 +801,17 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
     def serveFile(self, filename):
         mimetype = 'text/html'
-        if filename[-4:] == '.css': mimetype = 'text/css'
+        if filename[-4:] == '.css':
+            mimetype = 'text/css'
+            if filename[-9:] == 'theme.css':
+                filename = filename[:-4] + '1' + '.css'
+                theme = self.getCookie("Msma37")
+                if theme:
+                    theme = allSessions.get_session_old(theme)
+                    if theme and hasattr(theme, "_user") and "theme" in theme._user and theme._user["theme"] != "0":
+                        theme = filename[:-5] + theme._user["theme"] + '.css'
+                        if os.path.exists(theme):
+                            filename = theme
         elif filename[-3:] == '.js': mimetype = 'application/javascript'
         elif filename[-4:] == '.png': mimetype = 'image/png'
         elif filename[-4:] == '.gif': mimetype = 'image/gif'
@@ -835,8 +863,8 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
     def serveEditUsers(self, qs):
         tses = allSessions.get_session(qs["sma"][0])
-        webAttributes = settingsInstance.getCfgValue("userWebAttributes")
-        user = allUsers.get_user(webAttributes[0], tses.from_code(qs["edituser"][0]))
+        webAttributes = settingsInstance.getCfgValue("adminWebAttributes")
+        user = allUsers.get_user("name", tses.from_code(qs["edituser"][0]))
         if not user:
             del qs["edituser"]
             self.serveUsers(qs, True)
@@ -847,20 +875,25 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.serveHeader("Edit user", qs)
         changes = {}
         if self.isSafe():
-            tabCode = "<form>"
+            formCode = "<form>"
+            formCode += "<p> Name: <strong>" + tses.to_code(user.get("name", "")) + "</strong>"
+            tcod = str(random.randint(10000000, 99999999))
+            formCode += "<input type='hidden' class='coded tocode' id='" + tcod
+            formCode += "' value=\"" + tses.to_code(user.get("name", ""), False, tcod) + "\" name='name'></p>"
             for atr in webAttributes:
                 tcod = str(random.randint(10000000, 99999999))
-                if atr == "name":
-                    tabCode += "<p> Name: <strong>" + tses.to_code(user.get(atr, "")) + "</strong><input type='hidden' class='coded tocode' id='" + tcod + "' value=\"" + tses.to_code(user.get(atr, ""),False,tcod) + "\" name='name'></p>"
+                if atr in ["name", "password"]:
+                    continue
                 else:
-                    tabCode += "<p>" + atr + ": " + "<input type='text' class='coded tocode' id='" + tcod + "' value=\"" + tses.to_code(user.get(atr, ""),False,tcod) + "\" name='" + atr + "'></p>"
-            tabCode += "<p><input type='checkbox' class='md5' id='yesplease' name='password'>Reset passsord.</p>"
-            tabCode += "<input type='hidden' id='randtextsave' name='saveuser'>"
-            tabCode += "<input type='submit' onclick='return userSave()' value='Save'>"
-            tabCode += "<input type='hidden' id='deleteuser' name='delete'>"
-            tabCode += "<input type='submit' onclick='return userDelete()' value='Delete user'>"
-            tabCode += "</form>"
-            changes["FORM"] = tabCode
+                    formCode += "<p>" + atr + ": " + "<input type='text' class='coded tocode' id='" + tcod
+                    formCode += "' value=\"" + tses.to_code(user.get(atr, ""), False, tcod) + "\" name='" + atr + "'></p>"
+            formCode += "<p><input type='checkbox' class='md5' id='yesplease' name='password'>Reset passsord.</p>"
+            formCode += "<p><input type='hidden' id='randtextsave' name='saveuser'>"
+            formCode += "<input type='submit' onclick='return userSave()' value='Save'>"
+            formCode += "<input type='hidden' id='deleteuser' name='delete'>"
+            formCode += "<input type='submit' onclick='return userDelete()' value='Delete user'></p>"
+            formCode += "</form>"
+            changes["FORM"] = formCode
         else:
             changes["FORM"] = ''
 
@@ -884,7 +917,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.serveDefault(qs, True)
             return
         tses = allSessions.get_session(qs["sma"][0])
-        webAttributes = settingsInstance.getCfgValue("userWebAttributes")
+        webAttributes = settingsInstance.getCfgValue("adminWebAttributes")
         changes = {}
         changes["INFO"] = ''
         changes["PSW"] = ''
@@ -915,9 +948,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
                         for atr in webAttributes:
                             if not atr in qs:
                                 continue
-                            if atr == "name":
-                                continue
-                            if atr == "password": #should not be here
+                            if atr in ["name", "password"]:
                                 continue
                             if atr == "level" and username in tabuList:
                                 continue
@@ -984,12 +1015,18 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         if self.isSafe():
             #user tabula
             tabCode = "<table class='table' id='usertable'><tr>"
+            tabCode += "<th>" + tses.to_code("name") + "</th>"
             for atr in webAttributes:
+                if atr in ["name"]:
+                    continue
                 tabCode += "<th>" + tses.to_code(atr) + "</th>"
             tabCode += "</tr>"
             for user in allUsers._userList:
                 tabCode += "<tr>"
+                tabCode += "<td>" + tses.to_code(user.get_data("name")) + "</td>"
                 for atr in webAttributes:
+                    if atr in ["name"]:
+                        continue
                     tabCode += "<td>" + tses.to_code(user.get_data(atr)) + "</td>"
                 tabCode += "</tr>"
             tabCode += "</table>"
@@ -1007,10 +1044,57 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             self.serveDefault(qs, True)
             return
         changes = {}
+        webAttributes = settingsInstance.getCfgValue("userWebAttributes")
+        tses=allSessions.get_session(qs["sma"][0])
+        changes["INFO"] = ''
+        if "saveuser" in qs:
+                #save changes
+                if qs["saveuser"][0] == tses.to_md5("randtextsave") and self.isSafe():
+                    user = allUsers.get_user("name", tses._user["name"])
+                    if user:
+                        username = user["name"]
+                        for atr in webAttributes:
+                            if not atr in qs:
+                                continue
+                            if atr in ["name", "level"]:
+                                continue
+                            allUsers.set_attribute(username, atr, tses.from_code(qs[atr][0]))
+                        if "password" in qs and "pswcheck" in qs:
+                            
+                            if qs["pswcheck"][0] == tses.to_md5(tses.from_code(qs["password"][0])):
+                                allUsers.set_attribute(username, "password", tses.from_code(qs["password"][0]))
+                            else:
+                                print("Nesakrit!!")
+                        changes["INFO"] = "<h4 class='suc'> Saved changes! </h4>"
+                        #allUsers.write_in_file()
+                    else:
+                        changes["INFO"] = "<h4 class='err'> Could not save changes! </h4>"
+                else:
+                    changes["INFO"] = "<h4 class='err'> Wrong data for saving! </h4>"
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
         self.serveHeader("account", qs)
+        changes["FORM"] = ''
+        if self.isSafe():
+            if tses:
+                tuser=tses._user
+                formCode = "<form>"
+                for atr in webAttributes:
+                    tcod = str(random.randint(10000000, 99999999))
+                    if atr in ["name", "password"]:
+                        continue
+                    else:
+                        formCode += "<p>" + atr + ": " + "<input type='text' class='coded tocode' id='" + tcod
+                        formCode += "' value=\"" + tses.to_code(tuser.get(atr, ""), False, tcod) + "\" name='" + atr + "'></p>"
+                formCode += "<br><p>Password: <input autocomplete='off' type='password' class='tocode' id='psw1' name='password'></p>"
+                formCode += "<p><input type='hidden' id='pswcheck' name='pswcheck'>"
+                formCode += "Re password: <input autocomplete='off' type='password' class='tocode' id='psw2'></p>"
+                formCode += "<p><input type='hidden' class='md5' id='randtextsave' name='saveuser'>"
+                formCode += "<input type='submit' onclick='return userSave()' value='Save'></p>"
+                formCode += "</form>"
+                changes["FORM"] = formCode
+
         self.serveBody("account", qs, changes)
         self.serveFooter()
         
@@ -1589,6 +1673,7 @@ def makeDefaultUserFile():
         uf.write("\n")
         uf.close()
         return str(userDirectory + "/" + userFile)
+
 def initalizeUsers():
     global allUsers
     global allSessions

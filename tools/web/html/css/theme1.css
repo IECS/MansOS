@@ -1,0 +1,56 @@
+body {
+    background-color:#175186;
+}
+div.topmenu {
+    background-color:#175186;
+    background-image:url('celi2.png');
+    background-size:contain;
+    background-repeat:repeat-x;
+    -moz-border-radius: 7px;
+    border-radius: 7px;
+}
+.topmenu a{
+	border:0;
+	color:#ffffff;
+    background-image:url('chips.png');
+    background-size:contain;
+    background-repeat:repeat-x;
+    font-size:145%;
+    padding:5px;
+    margin-left:5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+.topmenu a:first-child,
+.topmenu a.first{
+    margin-left:15px;
+}
+.topmenu a:hover{
+    *background-color:rgba(25,200,214,0.3);
+    color:rgb(255,255,0);
+}
+.table{
+	background-color:#ffffff;
+    border-radius:8px;
+	padding:5px;
+	padding-left:20px;
+	padding-right:20px;
+}
+.table tr td{
+	border-top:1px solid #eeeeee;
+}
+.table tr:hover td{
+	background-color:#175186;
+	color:#ffff00;
+    border-radius:5px;
+}
+#cont{
+    width:80%;
+    min-width:890px;
+    margin-top:15px;
+    margin-bottom:15px;
+    padding: 20px;
+    background-color:#eeeef6;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+}
