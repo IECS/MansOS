@@ -16,7 +16,9 @@
 #include "dprint.h"
 #define RPRINTF(...) PRINTF(__VA_ARGS__)
 #else
-#define RPRINTF(...) do {} while (0)
+//#define RPRINTF(...) do {} while (0)
+// XXX: more stable operation if delays are added
+#define RPRINTF(...) mdelay(1)
 #endif
 
 static AMB8420RxHandle rxHandle;
@@ -277,7 +279,7 @@ void amb8420Off(void)
 
 int amb8420Read(void *buf, uint16_t bufsize)
 {
-    RPRINTF("amb8420Read\n");
+//    RPRINTF("amb8420Read\n");
     uint8_t *src = rxBuffer;
     int len = recvLength;
     switch (currentAddressMode) {
@@ -308,7 +310,7 @@ int amb8420Read(void *buf, uint16_t bufsize)
 int amb8420Send(const void *header_, uint16_t headerLen,
                 const void *data_, uint16_t dataLen)
 {
-    RPRINTF("amb8420Send, size=%u\n", headerLen + dataLen);
+//    RPRINTF("amb8420Send, size=%u\n", headerLen + dataLen);
 
     int result = -1;
 
