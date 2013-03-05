@@ -152,8 +152,6 @@ enum {
 
 //! Serial interface information
 struct Serial_s {
-    //! Is the interface configured?
-//    uint8_t configured : 1;
     //! Is the interface actively used at the moment?
     uint8_t busy : 1;
     //! What function is the interface used/configured for?
