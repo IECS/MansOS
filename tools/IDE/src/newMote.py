@@ -24,6 +24,8 @@
 
 import wx
 
+from motelist import Motelist
+
 class NewMote(wx.Dialog):
     def __init__(self, parent, API):
         super(NewMote, self).__init__(parent = parent, title = "Add new mote")
@@ -65,11 +67,21 @@ class NewMote(wx.Dialog):
         self.Close()
 
     def addNewMote(self, event):
-        if not self.API.checkPort(self.port.GetValue()):
+        if not Motelist.portExists(self.port.GetValue()):
             self.portError.SetLabel("No device found on this port!")
+
             self.SetSizerAndFit(self.main)
             self.SetAutoLayout(1)
+
             self.Show()
         else:
-            self.API.addUserMote(self.name.GetValue(), self.port.GetValue())
-            self.Close()
+            if Motelist.addMote(self.port.GetValue(), self.name.GetValue(), "User defined"):
+                self.API.updateUserMotes()
+                self.Close()
+            else:
+                self.portError.SetLabel("There already is device on that port in list!")
+
+                self.SetSizerAndFit(self.main)
+                self.SetAutoLayout(1)
+
+                self.Show()

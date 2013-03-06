@@ -217,6 +217,9 @@ class ApiCore:
         self.frame.checkToggleState()
 
         Motelist.startPeriodicUpdate()
+        self.onExit.append(Motelist.stopPeriodicUpdate)
+
+        self.loadUserMotes()
 
     def getPlatformsFromMakefile(self):
         makefile = os.path.join(self.path, "../../mos/make/Makefile.options")
@@ -375,20 +378,6 @@ class ApiCore:
         else:
             self.infoArea.printLine("Wrong format recieved {}\n".format(type(event.data)))
 
-    def motelistChangeCallback(self):
-        # Read motelist from config file
-        if os.path.exists(".motelist") and os.path.isfile(".motelist"):
-            f = open(".motelist", 'r')
-            lines = f.readlines()
-            for x in lines:
-                if x != '':
-                    if x.find("->") != -1:
-                        name, port = x.strip().split("->")
-                        self.motelist.append(["User defined", port, name])
-        # Call callbacks!
-        for x in self.motelistCallbacks:
-            x()
-
     def changePlatform(self, event):
         if event is not None:
             platform = event.GetEventObject().GetValue()
@@ -450,23 +439,26 @@ class ApiCore:
         else:
             self.frame.blocklyCheck.Check(False)
 
+    def loadUserMotes(self):
+        # Read motelist from config file
+        if os.path.exists(".motelist") and os.path.isfile(".motelist"):
+            f = open(".motelist", 'r')
 
-    def checkPort(self, port):
-        try:
-            ser = Serial(port, 38400, timeout = 0, parity = PARITY_NONE, rtscts = 1)
-            while True:
-                ser.write("")
-                ser.close()
-                return True
-        except SerialException as msg:
-            print msg
-            return False
+            lines = f.readlines()
 
-    def addUserMote(self, name, port):
-        self.motelist.append([ "User defined", str(port), str(name)])
+            for x in lines:
+                if x != '':
+                    if x.find("->") != -1:
+                        name, port = x.strip().split("->")
+                        Motelist.addMote(port, name, "User defined")
+
+    def saveUserMotes(self, name, port):
         os.chdir(self.path)
+
         f = open(".motelist", 'w')
-        for key in self.motelist:
-            if key[0] == "User defined":
-                f.write(str(key[2]) + "->" + str(key[1]) + '\n')
+
+        for mote in Motelist.getMotelist(False):
+            if mote.isUserMote():
+                f.write(str(mote.getName()) + "->" + str(mote.getPort()) + '\n')
+
         f.close()
