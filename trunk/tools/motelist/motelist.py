@@ -3,6 +3,7 @@ import os
 from threading import Lock, Thread
 from time import sleep
 from sys import argv
+from serial import Serial, SerialException, PARITY_NONE
 
 if os.name == 'posix':
     from motelist_src.get_ports_linux import comports  # @UnusedImport
@@ -36,7 +37,7 @@ class Mote(object):
             print ("Failed to initialize mote from " + str(mote))
 
     def getNiceName(self):
-        if os.name == 'nt':
+        if self.__name.find(self.__port) != -1:
             return self.__name
         else:
             return "{} ({})".format(self.__name, self.__port)
@@ -79,6 +80,9 @@ class Motelist(object):
 
     @staticmethod
     def initialize(updateCallbacks):
+        if updateCallbacks is None:
+            return
+
         if type(updateCallbacks) is list:
             Motelist.updateCallbacks = updateCallbacks
         else:
@@ -87,48 +91,82 @@ class Motelist(object):
     @staticmethod
     def addMote(port, name, reference):
         Motelist.lock.acquire();
-        Motelist.motes.append(Mote([port, name, reference], True))
+
+        portFound = not Motelist.portExists(port)
+
+        for mote in Motelist.motes:
+            if mote.getPort().lower() == port.lower():
+                portFound = True
+                break;
+
+        if not portFound:
+            Motelist.motes.append(Mote([port, name, reference], True))
+
         Motelist.lock.release();
+        if not portFound:
+            Motelist.__activateCallbacks(True)
+
+        return not portFound
 
     @staticmethod
     def recreateMoteList(iterator):
         Motelist.lock.acquire();
+
         newMotes = list()
+        haveNewMote = False
+
         for mote in iterator:
             # this filters out fake motes on linux, i hope!
             if mote[2] == "n/a":
                 continue
 
             newMote = Mote(mote)
+
             # Add if no such mote exists, point to it otherwise
             if newMote not in Motelist.motes:
                 newMotes.append(newMote)
+                haveNewMote = True
             else:
                 newMotes.append(Motelist.motes[Motelist.motes.index(newMote)])
+
         for mote in Motelist.motes:
             if mote.isUserMote():
                 newMotes.append(mote)
+
+        haveNewMote = haveNewMote or not len(Motelist.motes) == len(newMotes)
+
         Motelist.motes = newMotes
+
         Motelist.lock.release();
+
+        return haveNewMote
 
     @staticmethod
     def getMotelist(update):
         if update:
             Motelist.updateMotelist(False)
+
         Motelist.lock.acquire();
+
         # return a copy of connected list
         retVal = list(Motelist.motes)
+
         Motelist.lock.release();
+
         return retVal
 
     @staticmethod
     def getMoteByUserData(userData):
         Motelist.lock.acquire();
+
         result = list()
+
         for mote in Motelist.motes:
             if mote.getUserData() == userData:
                 result.append(mote)
+
         Motelist.lock.release();
+
         return result
 
     @staticmethod
@@ -145,18 +183,21 @@ class Motelist(object):
     @staticmethod
     def updateMotelist(infinite):
         Motelist.infinite = infinite
-        Motelist.__internalMotelistUpdate()
+        Motelist.__activateCallbacks()
+
         while Motelist.infinite:
             sleep(1)
-            Motelist.__internalMotelistUpdate()
+            Motelist.__activateCallbacks()
 
     @staticmethod
     def startPeriodicUpdate():
         # Call new Thread
         thread = Thread(target = Motelist.updateMotelist, args = (True,),
                         name = "Motelist thread")
+
         # Must have, if we don't plan on joining this thread
         thread.daemon = True
+
         thread.start()
 
     @staticmethod
@@ -164,17 +205,33 @@ class Motelist(object):
         Motelist.infinite = False
 
     @staticmethod
-    def __internalMotelistUpdate():
-        Motelist.recreateMoteList(comports())
+    def __activateCallbacks(force = False):
+        # If no new motes added, no need to call callbacks
+        if not Motelist.recreateMoteList(comports()) and not force:
+            return
 
         Motelist.lock.acquire();
+
         updateCallbackTempList = list(Motelist.updateCallbacks)
+
         Motelist.lock.release();
-        try:
-            for x in updateCallbackTempList:
+
+        for x in updateCallbackTempList:
+            try:
                 x()
-        except Exception as e:
-            print ("Exception while calling callback: ", e)
+            except Exception as e:
+                print ("Exception while calling callback: ", e)
+
+    @staticmethod
+    def portExists(port):
+        try:
+            ser = Serial(port, 38400, timeout = 0, parity = PARITY_NONE, rtscts = 1)
+            while True:
+                ser.write("")
+                ser.close()
+                return True
+        except SerialException as msg:
+            return False
 
     @staticmethod
     def printMotelist():
@@ -182,6 +239,7 @@ class Motelist(object):
 
         # Prepare table column width
         lengths = [len("Reference"), len("Port"), len("Name")]
+
         for mote in motelist:
             lengths[0] = max(lengths[0], len(mote.getReference()))
             lengths[1] = max(lengths[1], len(mote.getPort()))
@@ -189,23 +247,24 @@ class Motelist(object):
 
         # Print header
         print ("{}  {}  {}".format("Reference".ljust(lengths[0]),
-                                 "Port".ljust(lengths[1]),
-                                 "Name".ljust(lengths[2])))
+                                   "Port".ljust(lengths[1]),
+                                   "Name".ljust(lengths[2])))
 
         # Print seperator
         print ("{}  {}  {}".format("".ljust(lengths[0], "-"),
-                                 "".ljust(lengths[1], "-"),
-                                 "".ljust(lengths[2], "-")))
+                                   "".ljust(lengths[1], "-"),
+                                   "".ljust(lengths[2], "-")))
 
         # Print motelist
         for mote in motelist:
             print ("{}  {}  {}".format(mote.getReference().ljust(lengths[0]),
-                                     mote.getPort().ljust(lengths[1]),
-                                     mote.getName().ljust(lengths[2])))
+                                       mote.getPort().ljust(lengths[1]),
+                                       mote.getName().ljust(lengths[2])))
 
 if __name__ == '__main__':
     if len(argv) == 1:
         argv.append("")
+
     if argv[1] == "-c":
         for x in Motelist.getMotelist(True):
             print (x.getCSVData())

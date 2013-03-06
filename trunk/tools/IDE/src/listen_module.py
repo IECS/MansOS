@@ -32,7 +32,7 @@ from motelist import Motelist
 class ListenModule(wx.Panel):
     def __init__(self, parent, API):
         super(ListenModule, self).__init__(parent)
-            #title = title, size = (500, 400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+
         self.API = API
         # Just a shorter name
         self.tr = self.API.translater.translate
@@ -81,6 +81,7 @@ class ListenModule(wx.Panel):
 
     def doClear(self, event = None):
         self.API.stopThread("Serial port listener")
+
         # String is returned when callback triggers, so by that we always know
         # that we do not listen now
         if type(event) is str:
@@ -89,16 +90,19 @@ class ListenModule(wx.Panel):
                 self.clear.SetLabel(self.tr('Start listening'))
                 self.updateStatus("\nListening stopped.\n", False)
             return
+
         if self.ports.GetValue() == "No devices found":
             return;
 
         self.listening = not self.listening
+
         if self.listening:
             self.clear.SetLabel(self.tr('Stop listening'))
             self.updateStatus("\nListening started.\n", False)
         else:
             self.clear.SetLabel(self.tr('Start listening'))
             self.updateStatus("\nListening stopped.\n", False)
+
         # Redraw button if size have changed
         self.clear.SetSize(self.clear.GetEffectiveMinSize())
 
@@ -110,7 +114,8 @@ class ListenModule(wx.Panel):
 
         if self.listening:
             thread = MyThread(listenSerialPort, self.args, \
-                              self.doClear, False, True, "Serial port listener", self.updateStatus)
+                              self.doClear, False, True, \
+                              "Serial port listener", self.updateStatus)
             self.API.startThread(thread)
         else:
             self.API.stopThread("Serial port listener")
