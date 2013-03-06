@@ -383,10 +383,12 @@ class ApiCore:
             platform = event.GetEventObject().GetValue()
         else:
             platform = "telosb"
+
         if platform in self.platforms:
             self.activePlatform = self.platforms.index(platform)
         else:
             self.activePlatform = self.platforms.index("telosb")
+
         self.printInfo(self.tr("Changed platform to") + " " + self.getActivePlatform() + "\n")
 
     def getActivePlatform(self):
