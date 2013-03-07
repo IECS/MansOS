@@ -34,20 +34,6 @@
 #include <limits.h> // INT_MAX etc
 #include <string.h> // memcpy()
 
-//
-// Compiler specific function and data attributes
-//
-#if defined __GNUC__
-#include "defines_gcc.h"
-#elif defined __IAR_SYSTEMS_ICC__
-#include "defines_iar.h"
-#elif defined SDCC
-#include "defines_sdcc.h"
-#else
-#error Unsupported compiler
-#endif
-
-// -----------------------------------------------------
 
 //! Enable interrupts (architecture-specific macro)
 extern inline void ENABLE_INTS(void);
@@ -65,6 +51,21 @@ extern inline void ATOMIC_END(Handle_t handle);
 
 // -----------------------------------------------------
 
+//
+// Compiler specific function and data attributes
+//
+#if defined __GNUC__
+#include "defines_gcc.h"
+#elif defined __IAR_SYSTEMS_ICC__
+#include "defines_iar.h"
+#elif defined SDCC
+#include "defines_sdcc.h"
+#else
+#error Unsupported compiler
+#endif
+
+// -----------------------------------------------------
+
 //! Build a single uint16_t from 2 bytes
 #define MAKE_U16(a, b)         ((uint16_t) (((a) << 8) | (b)))
 //! Build a single uint32_t from 4 bytes. Handy for creating IP addresses
@@ -75,7 +76,7 @@ extern inline void ATOMIC_END(Handle_t handle);
 //! MAX of two values
 #define MAX(a, b) ((a) < (b) ? (b) : (a))
 
-//! Determine the number of parameters passed to a macro 
+//! Determine the number of parameters passed to a macro
 #define COUNT_PARMS(...) \
     COUNT_PARMS2(__VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
 #define COUNT_PARMS2(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _, ...) _
