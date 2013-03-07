@@ -13,6 +13,7 @@ enum { DATA_PORT  = 123 };
 // Base station's code
 // -------------------------------------
 
+// receiver callback function
 static void recvData(Socket_t *socket, uint8_t *data, uint16_t len)
 {
     PRINTF("got %d bytes from 0x%04x (0x%02x) \n",
@@ -22,6 +23,7 @@ static void recvData(Socket_t *socket, uint8_t *data, uint16_t len)
 
 void appMain(void)
 {
+    // open and bind a socket
     Socket_t socket;
     socketOpen(&socket, recvData);
     socketBind(&socket, DATA_PORT);
@@ -29,7 +31,7 @@ void appMain(void)
     for (;;) {
         PRINTF("%lu BS: in app main\n", getSyncTimeSec());
         redLedToggle();
-        mdelay(SLEEP_TIME_MS);
+        msleep(SLEEP_TIME_MS);
     }
 }
 
@@ -47,7 +49,7 @@ void appMain(void)
         PRINTF("%lu Collector: in app main\n", getSyncTimeSec());
 #endif
         redLedToggle();
-        mdelay(1000);
+        msleep(SLEEP_TIME_MS);
     }
 }
 
@@ -58,9 +60,7 @@ void appMain(void)
 
 void appMain(void)
 {
-//    radioSetTxPower(50); // 195 is default, according to doc
-//    radioSetTxPower(195);
-
+    // declare, open, and bind a socket
     Socket_t socket;
     socketOpen(&socket, NULL);
     socketBind(&socket, DATA_PORT);
@@ -68,17 +68,22 @@ void appMain(void)
 
     uint16_t counter = 0;
     for (;;) {
+        // send counter value
         PRINTF("%lu sending counter %i\n", getSyncTimeSec(), counter);
-        blueLedToggle();
-
         if (socketSend(&socket, &counter, sizeof(counter))) {
             PRINTF("socketSend failed\n");
         }
-        mdelay(30000);
+
+        // increase counter value
+        ++counter;
+
+        // wait for approximately 30 seconds
+        sleep(30);
+
+        // blink a LED
         redLedOn();
         mdelay(100);
         redLedOff();
-        ++counter;
     }
 }
 
