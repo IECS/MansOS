@@ -28,25 +28,26 @@ from motelist import Motelist
 
 class NewMote(wx.Dialog):
     def __init__(self, parent, API):
-        super(NewMote, self).__init__(parent = parent, title = "Add new mote")
-
         self.API = API
+        self.tr = self.API.tr
+        super(NewMote, self).__init__(parent = parent, title = self.tr("Add new mote"))
+
 
         self.main = wx.BoxSizer(wx.VERTICAL)
         self.controls = wx.GridBagSizer(10, 10)
-        self.newMote = wx.Button(self, label = "Add mote")
+        self.newMote = wx.Button(self, label = self.tr("Add mote"))
 
-        self.close = wx.Button(self, label = "Close")
+        self.close = wx.Button(self, label = self.tr("Close"))
 
         self.controls.Add(self.close, (2, 0), flag = wx.EXPAND | wx.ALL)
         self.controls.Add(self.newMote, (2, 1), flag = wx.EXPAND | wx.ALL)
 
-        nameText = wx.StaticText(self, label = "Mote name:")
+        nameText = wx.StaticText(self, label = self.tr("Mote name") + ":")
         self.controls.Add(nameText, (0, 0), flag = wx.EXPAND | wx.ALL)
         self.name = wx.TextCtrl(self)
         self.controls.Add(self.name, (0, 1), flag = wx.EXPAND | wx.ALL)
 
-        portText = wx.StaticText(self, label = "Mote port:")
+        portText = wx.StaticText(self, label = self.tr("Mote port") + ":")
         self.controls.Add(portText, (1, 0), flag = wx.EXPAND | wx.ALL)
         self.port = wx.TextCtrl(self)
         self.controls.Add(self.port, (1, 1), flag = wx.EXPAND | wx.ALL)
@@ -68,7 +69,7 @@ class NewMote(wx.Dialog):
 
     def addNewMote(self, event):
         if not Motelist.portExists(self.port.GetValue()):
-            self.portError.SetLabel("No device found on this port!")
+            self.portError.SetLabel(self.tr("No device found on this port") + "!")
 
             self.SetSizerAndFit(self.main)
             self.SetAutoLayout(1)
@@ -79,7 +80,7 @@ class NewMote(wx.Dialog):
                 self.API.updateUserMotes()
                 self.Close()
             else:
-                self.portError.SetLabel("There already is device on that port in list!")
+                self.portError.SetLabel(self.tr("There already is device on that port in list") + "!")
 
                 self.SetSizerAndFit(self.main)
                 self.SetAutoLayout(1)

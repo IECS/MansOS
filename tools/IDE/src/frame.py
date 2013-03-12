@@ -72,7 +72,7 @@ class Frame(wx.Frame):
         self.API.infoArea.Reparent(self)
 
         mainPane = (aui.AuiPaneInfo().CenterPane().Name("mainPane").
-                Caption("Editors").CaptionVisible(False).
+                Caption(self.tr("Editors")).CaptionVisible(False).
                 BestSize(wx.Size(600, 400)))
         self.auiManager.AddPane(self.API.tabManager, mainPane)
 
@@ -80,9 +80,9 @@ class Frame(wx.Frame):
                 BestSize(wx.Size(500, 150)).Bottom().
                 CloseButton(False).MaximizeButton(True).MinimizeButton(True))
 
-        self.auiManager.AddPane(self.API.infoArea, self.infoPane.Caption("Info").Name("infoPane"))
+        self.auiManager.AddPane(self.API.infoArea, self.infoPane.Caption(self.tr("Info")).Name("infoPane"))
 
-        self.layoutListenPane(self.API.listenModules[0], "Listen module 1", False)
+        self.layoutListenPane(self.API.listenModules[0], self.tr("Listen module") + " 1", False)
         self.layoutEditPane()
         self.layoutBlocklyPane()
 
@@ -521,7 +521,7 @@ IDE developed by: Janis Judvaitis, (c) 2011-2012, janis.judvaitis@gmail.com
     def layoutBlocklyPane(self):
         if not self.API.foundBlockly:
             return;
-        blocklyPane = (aui.AuiPaneInfo().Caption("Seal-Blockly handler").
+        blocklyPane = (aui.AuiPaneInfo().Caption(self.tr("Seal-Blockly handler")).
                 Name("blocklyPane").BestSize(wx.Size(500, 150)))
         self.auiManager.AddPane(self.API.blockly, blocklyPane,
                                 target = self.infoPane)
@@ -537,6 +537,6 @@ IDE developed by: Janis Judvaitis, (c) 2011-2012, janis.judvaitis@gmail.com
     def layoutEditPane(self):
         self.rightPane = (aui.AuiPaneInfo().Floatable(True).
                 Right().Name("editPane").MinimizeButton(True).
-                MaximizeButton(True).CloseButton(True).Caption("Visual edit").
+                MaximizeButton(True).CloseButton(True).Caption(self.tr("Visual edit")).
                 BestSize(wx.Size(320, 400)))
         self.auiManager.AddPane(self.API.editPanel, self.rightPane)
