@@ -2011,6 +2011,9 @@
       <data/>
     </settings>
   </configuration>
+  <mfc_discard>
+    <configuration>Debug</configuration>
+  </mfc_discard>
   <file>
     <name>$PROJ_DIR$\..\..\..\mos\hil\adc.c</name>
   </file>
