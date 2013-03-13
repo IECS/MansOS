@@ -28,14 +28,14 @@ from output_area import OutputArea
 from helperFunctions import listenSerialPort
 from myThread import MyThread
 from motelist import Motelist
+from Translater import localize
 
 class ListenModule(wx.Panel):
     def __init__(self, parent, API):
         super(ListenModule, self).__init__(parent)
 
         self.API = API
-        # Just a shorter name
-        self.tr = self.API.translater.translate
+
         self.haveMote = False
         self.listening = False
         self.args = {
@@ -50,8 +50,8 @@ class ListenModule(wx.Panel):
         self.listenControls = wx.BoxSizer(wx.HORIZONTAL)
 
         self.ports = wx.ComboBox(self, choices = [], size = (300, -1))
-        self.clear = wx.Button(self, label = self.tr("Start listening"))
-        self.refresh = wx.Button(self, label = self.tr("Refresh"))
+        self.clear = wx.Button(self, label = localize("Start listening"))
+        self.refresh = wx.Button(self, label = localize("Refresh"))
 
         self.ports.SetEditable(False)
 
@@ -87,7 +87,7 @@ class ListenModule(wx.Panel):
         if type(event) is str:
             if self.listening:
                 self.listening = False
-                self.clear.SetLabel(self.tr('Start listening'))
+                self.clear.SetLabel(localize('Start listening'))
                 self.updateStatus("\nListening stopped.\n", False)
             return
 
@@ -97,10 +97,10 @@ class ListenModule(wx.Panel):
         self.listening = not self.listening
 
         if self.listening:
-            self.clear.SetLabel(self.tr('Stop listening'))
+            self.clear.SetLabel(localize('Stop listening'))
             self.updateStatus("\nListening started.\n", False)
         else:
-            self.clear.SetLabel(self.tr('Start listening'))
+            self.clear.SetLabel(localize('Start listening'))
             self.updateStatus("\nListening stopped.\n", False)
 
         # Redraw button if size have changed
@@ -137,9 +137,9 @@ class ListenModule(wx.Panel):
 
         if self.ports.GetValue() == "":
             if self.haveMote:
-                self.ports.SetValue(self.tr("Use default device"))
+                self.ports.SetValue(localize("Use default device"))
             else:
-                self.ports.SetValue(self.tr("No devices found"))
+                self.ports.SetValue(localize("No devices found"))
 
     def changeTarget(self, event):
         # Stop listening

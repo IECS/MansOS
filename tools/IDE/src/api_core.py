@@ -30,7 +30,7 @@ from serial import Serial, PARITY_NONE, SerialException
 
 from frame import Frame
 from seal_syntax import SealSyntax
-from Translater import Translater
+from Translater import Translater, localize
 from output_area import OutputArea
 from tab_manager import TabManager
 from listen_module import ListenModule
@@ -141,8 +141,7 @@ class ApiCore:
         self.sealSyntax = SealSyntax(self)
 
         # Init translation module
-        self.translater = Translater(self)
-        self.tr = self.translater.translate
+        Translater(self)
 
         # Init output_tools
         #self.outputTools = OutputTools(self.emptyFrame, self)
@@ -159,6 +158,7 @@ class ApiCore:
         else:
             print "Warning: No SEAL-Blockly found!"
             self.foundBlockly = False
+
         # Init seal parser
         self.sealParser = seal_parser.SealParser("msp430", self.printInfo, False, True)
 
@@ -187,7 +187,7 @@ class ApiCore:
 # should go through here, but this ain't perfect world :(
 
         self.getKeywords = self.sealSyntax.getKeywords
-        self.tr = self.translater.translate
+
         #self.printInfo = self.dummyPrint
         self.printOutput = self.dummyPrint
 
@@ -205,7 +205,7 @@ class ApiCore:
         self.syncModuleCheckboxes()
 
 # Initialize upload targets
-        self.uploadTargets = ([], self.tr('the default device'))
+        self.uploadTargets = ([], localize('the default device'))
 
 # Load last used tabs
         self.tabManager.loadRememberedTabs()
