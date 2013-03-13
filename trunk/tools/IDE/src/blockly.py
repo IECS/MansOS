@@ -28,6 +28,7 @@ from multiprocessing import Pipe, Process
 from subprocess import Popen
 import time
 import webbrowser
+from Translater import localize
 
 from blockly_handler import listen
 
@@ -51,16 +52,16 @@ class Blockly(wx.Panel):
     def __init__(self, parent, API):
         wx.Panel.__init__(self, parent)
         self.API = API
-        self.tr = self.API.translater.translate
+
         self.active = False
         self.tab = None
 
-        label = wx.StaticText(self, label = self.tr("When code recieved") + ":")
+        label = wx.StaticText(self, label = localize("When code recieved") + ":")
         self.choice = wx.ComboBox(self, style = wx.CB_DROPDOWN | wx.CB_READONLY,
                             choices = ['open', 'save', 'upload'],
                             name = "action")
         self.choice.SetValue("open") #TODO: remember
-        self.start = wx.Button(self, label = self.tr("Start Seal-Blockly editor"))
+        self.start = wx.Button(self, label = localize("Start Seal-Blockly editor"))
         controls = wx.BoxSizer(wx.HORIZONTAL)
         controls.Add(label, 0, wx.EXPAND | wx.ALL)
         controls.Add(self.choice, 0, wx.EXPAND | wx.ALL)
@@ -84,10 +85,10 @@ class Blockly(wx.Panel):
     def toggleListen(self, event = None):
         self.active = not self.active
         if self.active:
-            self.start.SetLabel(self.tr("Stop Seal-Blockly editor"))
+            self.start.SetLabel(localize("Stop Seal-Blockly editor"))
             self.run()
         else:
-            self.start.SetLabel(self.tr("Start Seal-Blockly editor"))
+            self.start.SetLabel(localize("Start Seal-Blockly editor"))
 
     def run(self):
         filename = os.path.join(self.API.path, self.API.getSetting('blocklyLocation'))

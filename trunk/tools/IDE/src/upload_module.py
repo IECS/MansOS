@@ -26,6 +26,7 @@ import wx
 
 from newMote import NewMote
 from motelist import Motelist
+from Translater import localize
 
 class UploadModule(wx.Panel):
     def __init__(self, parent, API):
@@ -35,8 +36,7 @@ class UploadModule(wx.Panel):
         self.editorManager = self.API.tabManager.GetCurrentPage()
         self.filename = self.editorManager.fileName
         Motelist.addUpdateCallback(self.updateMotelist)
-        # Just a shorter name
-        self.tr = self.API.translater.translate
+
         self.tmpDir = self.API.path + '/temp/'
         self.haveMote = False
         self.platform = "telosb"
@@ -50,11 +50,11 @@ class UploadModule(wx.Panel):
 
         #self.source = wx.ComboBox(self, choices = ["USB", "Shell"])
         #self.source.SetValue("USB")
-        self.upload = wx.Button(self, label = self.tr("Upload"))
+        self.upload = wx.Button(self, label = localize("Upload"))
         self.platforms = wx.ComboBox(self, choices = self.API.getPlatforms())
-        self.refresh = wx.Button(self, label = self.tr("Refresh"))
-        self.compile = wx.Button(self, label = self.tr("Compile"))
-        self.newMote = wx.Button(self, label = self.tr("Add mote"))
+        self.refresh = wx.Button(self, label = localize("Refresh"))
+        self.compile = wx.Button(self, label = localize("Compile"))
+        self.newMote = wx.Button(self, label = localize("Add mote"))
         self.platforms.SetValue(self.API.getActivePlatform())
         if self.API.platformOnly != None:
             self.platforms.Enable(False)
@@ -107,7 +107,7 @@ class UploadModule(wx.Panel):
 
         if self.list.GetCount() == 0:
             self.list.Enable(False)
-            self.list.Insert(self.tr("No devices found!"), 0)
+            self.list.Insert(localize("No devices found!"), 0)
 
     def modifyTargets(self, event):
         temp = list()
