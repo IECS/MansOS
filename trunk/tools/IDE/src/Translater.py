@@ -148,7 +148,10 @@ class Translater:
             "There already is device on that port in list": u"Sensoru mezgls ar šādu portu jau atrodas sensoru mezglu sarakstā",
             "Mote name": u"Sensoru mezgla nosaukums",
             "Add new mote": u"Pievienot jaunu sensoru mezglu",
-            "Mote port": u"Sensoru mezgla ports"
+            "Mote port": u"Sensoru mezgla ports",
+            "When code recieved": u"Kad saņemta programma",
+            "Start Seal-Blockly editor": u"Sākt Seal-Blockly redaktoru",
+            "Seal-Blockly handler": u"Seal-blockly pārvaldnieks"
             }
         }
 
