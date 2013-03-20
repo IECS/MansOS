@@ -40,6 +40,7 @@ from do_upload import DoUpload
 from edit_statement import EditStatement
 from blockly import Blockly
 from globals import * #@UnusedWildImport
+from Settings import Settings
 
 #from seal_parser import SealParser
 from seal import seal_parser #@UnresolvedImport
@@ -51,39 +52,11 @@ class ApiCore:
         self.config = wx.Config("MansOS-IDE", style = wx.CONFIG_USE_LOCAL_FILE)
 
         self.path = os.getcwd()
-        # All variables placed here will be saved to configuration file and 
-        # reloaded next run time. See setSetting() and getSetting()
-        # Note: settings in file are with higher priority.
-        self.__settings = {
-                   "activeLanguage" : "LV",
-                   "platform" : "telosb",
-                   "blocklyLocation": "../../../seal-blockly/blockly/demos/seal/index.html",
-                   "blocklyPort" : '8090',
-                   "blocklyHost" : "localhost",
-                   "recentlyOpenedMaxCount" : 10
-               }
-        # Read settings from file
-        if os.path.exists(SETTING_FILE) and os.path.isfile(SETTING_FILE):
-            f = open(SETTING_FILE, 'r')
-            lines = f.readlines()
-            for x in lines:
-                if x != '':
-                    if x.find("->") != -1:
-                        if x[x.find("->") + 2:].find("->") == -1:
-                            key, value = x.strip().split("->")
-                        else:
-                            continue
-                    else:
-                        continue
-                    if key in self.__settings and str(value) != str(self.__settings[key]):
-                        # print because logging is not initialized yet :(
-                        print "Replacing setting '{0}' with '{1}'."\
-                            .format(self.__settings[key], value)
-                    self.__settings[key] = value
-            f.close()
 
         # All functions here will be called upon exit
-        self.onExit = [self.saveSettings]
+        self.onExit = [Settings.saveConfig]
+
+        Settings()
 
         # All defined platforms
         self.platforms = self.getPlatformsFromMakefile()
@@ -152,7 +125,7 @@ class ApiCore:
         self.clearInfoArea = self.infoArea.clear
 
         # Init blockly handler
-        if os.path.exists(os.path.join(self.path, self.getSetting('blocklyLocation'))):
+        if os.path.exists(os.path.join(self.path, Settings.get("blockly_location"))):
             self.blockly = Blockly(self.emptyFrame, self)
             self.foundBlockly = True
         else:
@@ -284,23 +257,6 @@ class ApiCore:
             if x not in self.excludedPlatforms:
                 retVal.append(x)
         return retVal
-
-    def getSetting(self, setting):
-        if setting in self.__settings:
-            return self.__settings[setting]
-        return ''
-
-    def setSetting(self, name, value):
-        self.__settings[name] = value
-        # Make sure, that settings are saved on unexpected exit
-        self.saveSettings()
-
-    def saveSettings(self):
-        os.chdir(self.path)
-        f = open(SETTING_FILE, 'w')
-        for key in self.__settings:
-            f.write(str(key) + "->" + str(self.__settings[key]) + '\n')
-        f.close()
 
     def logMsg(self, msgType, msgText):
         if msgType <= LOG:

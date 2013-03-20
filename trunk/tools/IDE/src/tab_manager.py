@@ -32,6 +32,7 @@ from globals import * #@UnusedWildImports
 from editor_manager import EditorManager
 from generate_makefile import GenerateMakefile
 from Translater import localize
+from src.Settings import Settings
 
 class TabManager(aui.AuiNotebook):
     def __init__(self, parent, API):
@@ -256,10 +257,10 @@ class TabManager(aui.AuiNotebook):
         for x in self.API.editors:
             if type(x) is EditorManager:
                 result += x.filePath + ";"
-        self.API.setSetting('openedTabs', result.strip(";"))
+        Settings.set('openedTabs', result.strip(";"))
 
     def loadRememberedTabs(self):
-        tabs = self.API.getSetting('openedTabs').split(';')
+        tabs = Settings.get('openedTabs').split(';')
 
         # Remove automatically created first page
         self.DeletePage(0)

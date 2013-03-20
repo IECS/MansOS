@@ -22,7 +22,8 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from globals import * #@UnusedWildImport
+from src.globals import * #@UnusedWildImport
+from src.Settings import Settings
 
 class Translater:
     @staticmethod
@@ -48,10 +49,29 @@ class Translater:
             "crc": "Add checksum",
             # APLICATION SPECIFIC PART
             # is usually written in English, so no need to translate
+            
+            ### Naturally specific part
+            "__ABOUT__": """
+MansOS
+
+Version: {}
+Release date: {}
+
+MansOS is an operating system for wireless sensor networks (WSN) and other resource-constrained embedded systems.
+
+The emphasis is on easy use and fast adoption time. Therefore, MansOS supports code written in C, and UNIX-like concepts such as sockets for communication. MansOS is also designed to be modular for easy portability to new platforms and architectures.
+
+Some of the supported target platforms are based on MSP430 and Atmega microcontrollers (Nordic MCU support is in development). Popular and supported platform names include Tmote Sky and other Telosb clones, Waspmote, Arduino, XM1000, Zolertia Z1.
+
+Should you have questions or suggestions about the support, please contact info@mansos.net 
+
+MansOS developed by: MansOS contributors, (c) 2008-2013, info@mansos.net
+IDE developed by: Janis Judvaitis, (c) 2011-2013, janis.judvaitis@gmail.com
+"""
             },
 
         "LV" :{
-            'langName': "Latviesu", # why 'š' creates fail???
+            'langName': u"Latviešu",
 
             # SEAL SPECIFIC PART
             "period": u"Periods",
@@ -69,6 +89,19 @@ class Translater:
             "crc": u"Kontrolsumma",
             "When": u"When",
             "Elsewhen": u"Elsewhen",
+            "times": u"Reizes",
+            "pattern": u"Paterns",
+            "on": u"Ieslēgt",
+            "off": u"Izslēgt",
+            "id": u"ID",
+            "duration": u"Ilgums",
+            "turnonoff": u"Ieslēgt/Izslēgt",
+            "out": u"Ārā",
+            "lazy": u"Slinks",
+            "cache": u"Ķešatmiņa",
+            "channnel": u"Kanāls",
+            "timestamp": u"Laika zīmogs",
+            "address": u"Adrese",
 
             # APLICATION SPECIFIC PART
             "File": u"Izvēlne",
@@ -86,6 +119,8 @@ class Translater:
             "Close": u"Aizvērt",
             "Edit": u"Labot",
             "files": u"datnes",
+            "or": u"vai",
+            "when": u"kad",
             "Compile": u"Kompilēt",
             "Refresh": u"Atsvaidzināt",
             "Exception": u"Izņēmumsituācija",
@@ -151,19 +186,47 @@ class Translater:
             "Mote port": u"Sensoru mezgla ports",
             "When code recieved": u"Kad saņemta programma",
             "Start Seal-Blockly editor": u"Sākt Seal-Blockly redaktoru",
-            "Seal-Blockly handler": u"Seal-blockly pārvaldnieks"
+            "Seal-Blockly handler": u"Seal-blockly pārvaldnieks",
+            "Choose function" :u"Izvēlieties funkciju",
+            "Find next parameter" : u"Atrast nākošo parametru",
+
+            ### Naturally specific part
+            "__ABOUT__": u"""
+MansOS
+
+Versija: {}
+Izlaišanas datums: {}
+
+MansOS ir operētājsistēma, kas paredzēta bezvadu sensoru tīkliem (BST) un citām resursu ierobežotām iegultām sistēmām.
+
+Uzsvars tiek likts uz vieglu lietojamību un mazu adoptēšanas laiku, tādēļ MansOS veidots C progrmmēšanas valodā izmantojot UNIX tipa konceptus, kā piemēram ligzdas priekš komunikācijas. MansOS ir projektēts ar mērķi būt modulāram, lai nodrošinātu vieglu pārnešanu uz jaunām platformām un arhitektūrām.
+
+Dažās no atbalstītajām mērķa platformām ir bāzētas uz MSP430 un Atmega mikrokontrolieriem(Nordic MCU atbalsts pašlaik ir izstrādes stadijā). Starp atbalstītajām platformām ir Tmote Sky un citi Telosb kloni, Waspmote, Arduino, XM1000, Zolertia Z1.
+
+Ja Jums ir kādi jautājumi vai ieteikumi, lūdzu kontaktējieties ar mums izmantojot info@mansos.net
+
+MansOS izstrādātāji: MansOS atbalstītaji, (c) 2008-2013, info@mansos.net
+IDE izstradātāji: Jānis Judvaitis, (c) 2011-2013, janis.judvaitis@gmail.com
+"""
             }
         }
 
     @staticmethod
     def translate(data, lang = ''):
-        if lang == '':
-            lang = Translater.parent.getSetting("activeLanguage")
-
         # This happens when no language is set
+        if lang == '':
+            lang = Settings.get("active_language")
+
+
         if lang != '':
-            if data in Translater.translations[lang]:
-                return Translater.translations[lang][data]
+            if type(data) is str or type(data) is unicode:
+                if data in Translater.translations[lang]:
+                    return Translater.translations[lang][data]
+            elif type(data) is list:
+                retVal = list()
+                for val in data:
+                    retVal.append(localize(str(val)))
+                return retVal
 
         # Don't log ENG, because it's not ment to be translated
         if lang != "ENG":

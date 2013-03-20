@@ -412,7 +412,7 @@ class EditStatement(wx.Panel):
         self.main.Add(self.condCreatorSizer, 1, wx.EXPAND | wx.ALL, 5)
         self.condCreador = None
         self.updateCondCreator(None)
-        nextEditable = wx.Button(self, label = "Find next parameter")
+        nextEditable = wx.Button(self, label = localize("Find next parameter"))
         self.Bind(wx.EVT_BUTTON, self.launchNextEditFinder, nextEditable)
         self.main.Add(nextEditable, 0, wx.EXPAND | wx.ALL, 5)
         self.textBox = None
@@ -473,7 +473,7 @@ class EditStatement(wx.Panel):
 
     def updateCondCreator(self, event):
         if self.condCreador is None:
-            condCreatorText = wx.StaticText(self, label = "Choose function:")
+            condCreatorText = wx.StaticText(self, label = localize("Choose function") + ":")
             self.condCreador = wx.ComboBox(self, choices = [""] + self.API.sealSyntax.getFunctionBodys(),
                                       style = wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SIMPLE,
                                       name = "CondCreator")
