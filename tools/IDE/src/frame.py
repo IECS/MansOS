@@ -30,11 +30,11 @@ from wx.lib.agw import aui
 from time import time
 from subprocess import Popen
 import webbrowser
-from Translater import localize
 
-from upload_module import UploadModule
-from globals import * #@UnusedWildImport
-from Translater import Translater
+from src.upload_module import UploadModule
+from src.globals import * #@UnusedWildImport
+from src.Translater import localize, Translater
+from src.Settings import Settings
 
 class Frame(wx.Frame):
     def __init__(self, parent, title, size, pos, API):
@@ -194,7 +194,7 @@ class Frame(wx.Frame):
         close = fileMenu.Append(wx.ID_EXIT, '&' + localize('Exit') + '\tCtrl+Q',
                               localize('Exit application'))
 
-        self.fileHistory = wx.FileHistory(int(self.API.getSetting('recentlyOpenedMaxCount')))
+        self.fileHistory = wx.FileHistory(int(Settings.get('recently_opened_count')))
         self.fileHistory.Load(self.API.config)
         self.fileHistory.UseMenu(recent)
         self.fileHistory.AddFilesToMenu()
@@ -211,7 +211,7 @@ class Frame(wx.Frame):
         for i in Translater.translations.keys():
             self.langs.append(language.Append(wx.ID_ANY,
                     Translater.translations[i]['langName'], i, kind = wx.ITEM_RADIO))
-            if i == self.API.getSetting("activeLanguage"):
+            if i == Settings.get("active_language"):
                 language.Check(self.langs[-1].GetId(), True)
             self.Bind(wx.EVT_MENU, self.changeLanguage, self.langs[-1])
 
@@ -333,8 +333,9 @@ class Frame(wx.Frame):
     def OnOpen(self, event):
         open_ = wx.FileDialog(self,
             localize("Open new document"),
-            wildcard = 'Seal or MansOS ' + localize('files') + ' (*.sl, *.c, *.h)|*.sl;*.c;*.h;config|' +
-                    localize('All files') + '(.*)|*',
+            wildcard = "SEAL {} MansOS {} (*.sl, *.c, *.h)|*.sl;*.c;*.h;config|{} (.*)|*".format(
+                                                            *localize(["or", "files", "All files"])),
+
             style = wx.FD_OPEN | wx.FD_MULTIPLE)
         if open_.ShowModal() == wx.ID_OK:
             for x in open_.GetPaths():
@@ -385,23 +386,7 @@ class Frame(wx.Frame):
             release = lines[0].strip()
         if len(lines) > 1:
             date = lines[1].strip()
-        text = """
-MansOS
-
-Version: {}
-Release date: {}
-
-MansOS is an operating system for wireless sensor networks (WSN) and other resource-constrained embedded systems.
-
-The emphasis is on easy use and fast adoption time. Therefore, MansOS supports code written in C, and UNIX-like concepts such as sockets for communication. MansOS is also designed to be modular for easy portability to new platforms and architectures.
-
-Some of the supported target platforms are based on MSP430 and Atmega microcontrollers (Nordic MCU support is in development). Popular and supported platform names include Tmote Sky and other Telosb clones, Waspmote, Arduino.
-
-Should you have questions or suggestions about the support, please contact info@mansos.net 
-
-MansOS developed by: MansOS contributors, (c) 2008-2012, info@mansos.net
-IDE developed by: Janis Judvaitis, (c) 2011-2012, janis.judvaitis@gmail.com
-""".format(release, date)
+        text = localize("__ABOUT__").format(release, date)
         wx.MessageBox(text, 'Info',
             wx.OK | wx.ICON_INFORMATION)
 
@@ -426,7 +411,7 @@ IDE developed by: Janis Judvaitis, (c) 2011-2012, janis.judvaitis@gmail.com
     def changeLanguage(self, event):
         for i in self.langs:
             if i.IsChecked() == True:
-                self.API.setSetting("activeLanguage", i.GetHelp())
+                Settings.set("active_language", i.GetHelp())
                 self.initUI()
 
     def disableAdders(self):
@@ -450,20 +435,20 @@ IDE developed by: Janis Judvaitis, (c) 2011-2012, janis.judvaitis@gmail.com
         # Result is that window stays with maximized height and width, 
         # but is not maximized.
         # TODO: FIX: cache all sizes when resizing and not in maximized mode.
-        self.API.setSetting("Width", self.GetSize()[0])
-        self.API.setSetting("Height", self.GetSize()[1])
-        self.API.setSetting("LocX", self.GetScreenPositionTuple()[0])
-        self.API.setSetting("LocY", self.GetScreenPositionTuple()[1])
-        self.API.setSetting("Maximized", self.IsMaximized())
+        Settings.set("Width", self.GetSize()[0])
+        Settings.set("Height", self.GetSize()[1])
+        Settings.set("LocX", self.GetScreenPositionTuple()[0])
+        Settings.set("LocY", self.GetScreenPositionTuple()[1])
+        Settings.set("Maximized", self.IsMaximized())
 
     def loadPositioning(self):
-        width = self.API.getSetting("Width")
+        width = Settings.get("Width")
         if width == '':
             width = 800
         else:
             width = int(width)
 
-        height = self.API.getSetting("Height")
+        height = Settings.get("Height")
         if height == '':
             height = 600
         else:
@@ -471,14 +456,14 @@ IDE developed by: Janis Judvaitis, (c) 2011-2012, janis.judvaitis@gmail.com
 
         self.SetSize((width, height))
 
-        locX = self.API.getSetting("LocX")
+        locX = Settings.get("LocX")
         if locX == '':
             # Center
             locX = (wx.GetDisplaySize()[0] - width) / 2
         else:
             locX = int(locX)
 
-        locY = self.API.getSetting("LocY")
+        locY = Settings.get("LocY")
         if locY == '':
             # Center
             locY = (wx.GetDisplaySize()[1] - height) / 2
@@ -487,7 +472,7 @@ IDE developed by: Janis Judvaitis, (c) 2011-2012, janis.judvaitis@gmail.com
 
         self.SetPosition((locX, locY))
 
-        maximized = self.API.getSetting("Maximized")
+        maximized = Settings.get("Maximized")
         if maximized == '':
             maximized = False
         else:
