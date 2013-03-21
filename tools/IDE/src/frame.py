@@ -223,7 +223,7 @@ class Frame(wx.Frame):
         addMenu = wx.Menu()
         showMenu = wx.Menu()
         windowMenu.AppendMenu(wx.ID_ANY, localize('Add window'), addMenu)
-        windowMenu.AppendMenu(wx.ID_ANY, localize('Show window'), showMenu)
+        #windowMenu.AppendMenu(wx.ID_ANY, localize('Show window'), showMenu)
         listen = addMenu.Append(wx.ID_ANY, '&' + localize('Add listen window'),
                               localize('Add listen window'))
         self.blocklyCheck = showMenu.AppendCheckItem(wx.ID_ANY, '&' + localize('Show blockly window'),

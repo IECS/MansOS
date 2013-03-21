@@ -31,6 +31,7 @@ import webbrowser
 from Translater import localize
 
 from blockly_handler import listen
+from src.Settings import Settings
 
 # TODO: rewrite this
 def xmlUnescapeMy(code):
@@ -91,9 +92,9 @@ class Blockly(wx.Panel):
             self.start.SetLabel(localize("Start Seal-Blockly editor"))
 
     def run(self):
-        filename = os.path.join(self.API.path, self.API.getSetting('blocklyLocation'))
-        host = self.API.getSetting('blocklyHost')
-        port = int(self.API.getSetting('blocklyPort'))
+        filename = os.path.join(self.API.path, Settings.get('blockly_location'))
+        host = Settings.get('blockly_host')
+        port = int(Settings.get('blockly_port'))
         con1, con2 = Pipe()
         p1 = Process(target = listen, args = (host, port, con2, True))
         p1.daemon = False

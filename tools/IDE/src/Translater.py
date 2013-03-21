@@ -186,6 +186,7 @@ IDE developed by: Janis Judvaitis, (c) 2011-2013, janis.judvaitis@gmail.com
             "Mote port": u"Sensoru mezgla ports",
             "When code recieved": u"Kad saņemta programma",
             "Start Seal-Blockly editor": u"Sākt Seal-Blockly redaktoru",
+            "Stop Seal-Blockly editor": u"Apturēt Seal-Blockly redaktoru",
             "Seal-Blockly handler": u"Seal-blockly pārvaldnieks",
             "Choose function" :u"Izvēlieties funkciju",
             "Find next parameter" : u"Atrast nākošo parametru",
@@ -230,8 +231,7 @@ IDE izstradātāji: Jānis Judvaitis, (c) 2011-2013, janis.judvaitis@gmail.com
 
         # Don't log ENG, because it's not ment to be translated
         if lang != "ENG":
-            Translater.parent.logMsg(LOG_WARNING, "No translation for " +
-                             "'" + lang + "': '" + data + "'")
+            Translater.parent.logMsg(LOG_WARNING, "No translation for '{}':'{}'".format(lang, data))
 
         return data
 
