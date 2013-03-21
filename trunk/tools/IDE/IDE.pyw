@@ -35,6 +35,7 @@ def main():
     sealPath = os.path.join(os.getcwd(), '..', '..', 'tools')
     path.append(sealPath)
     path.append(os.path.join(sealPath, 'seal', 'components'))
+
     motelistPath = os.path.join(os.getcwd(), '..', '..', 'tools', "motelist")
     path.append(motelistPath)
 

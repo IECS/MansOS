@@ -34,8 +34,7 @@ class SealSyntax():
             "True",
             "False",
             "isDayTime",
-            "time < 5s",
-            "Cat's eat apples"
+            "time < 5s"
             ]
 
         platform = "msp430" #self.API.getSetting("platform")
