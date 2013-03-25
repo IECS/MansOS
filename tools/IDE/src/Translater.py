@@ -190,6 +190,7 @@ IDE developed by: Janis Judvaitis, (c) 2011-2013, janis.judvaitis@gmail.com
             "Seal-Blockly handler": u"Seal-blockly pārvaldnieks",
             "Choose function" :u"Izvēlieties funkciju",
             "Find next parameter" : u"Atrast nākošo parametru",
+            "Clear": u"Notīrīt",
 
             ### Naturally specific part
             "__ABOUT__": u"""
