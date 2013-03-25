@@ -72,5 +72,5 @@ class OutputArea(wx.Panel):
         if page is not None:
             page.code.SetFocus()
 
-    def clear(self):
+    def clear(self, evt = None):
         self.outputArea.Clear()

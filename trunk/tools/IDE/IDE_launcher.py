@@ -96,6 +96,7 @@ def getUserInput(prompt):
         return input(prompt)
     else:
         return raw_input(prompt)
+
 try:
     if not version.startswith("2.7"):
         print ("You are using Python version {0}".format(version[:5]))

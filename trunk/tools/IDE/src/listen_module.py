@@ -52,6 +52,7 @@ class ListenModule(wx.Panel):
         self.ports = wx.ComboBox(self, choices = [], size = (300, -1))
         self.clear = wx.Button(self, label = localize("Start listening"))
         self.refresh = wx.Button(self, label = localize("Refresh"))
+        self.clearOutput = wx.Button(self, label = localize("Clear"))
 
         self.ports.SetEditable(False)
 
@@ -61,15 +62,17 @@ class ListenModule(wx.Panel):
         self.clearOutputArea = self.outputArea.clear
 
         self.listenControls.Add(self.ports)
-        self.listenControls.Add(self.refresh)
+        self.listenControls.Add(self.refresh)     
         self.listenControls.Add(self.clear)
+        self.listenControls.Add(self.clearOutput)
 
         self.main.Add(self.listenControls, 0,
                       wx.EXPAND | wx.wx.TOP | wx.LEFT | wx.RIGHT, 10);
         self.main.Add(self.outputArea, 1, wx.EXPAND | wx.ALL, 5);
 
-        self.Bind(wx.EVT_BUTTON, self.doClear, self.clear)
+        self.Bind(wx.EVT_BUTTON, self.doClear, self.clear)         
         self.Bind(wx.EVT_BUTTON, self.updateMotelist, self.refresh)
+        self.Bind(wx.EVT_BUTTON, self.clearOutputArea, self.clearOutput)
         self.Bind(wx.EVT_COMBOBOX, self.changeTarget, self.ports)
         self.Bind(wx.EVT_TEXT, self.changeTarget, self.ports)
 
