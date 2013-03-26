@@ -27,6 +27,7 @@
 #include <digital.h>
 #include <delay.h>
 #include <leds.h>
+#include <print.h>
 
 #define SOFT_SERIAL_BAUDRATE 9600
 
@@ -34,13 +35,13 @@
 #define UART_BITTIME ((TIMER_CLOCK / SOFT_SERIAL_BAUDRATE))
 #define UART_HALF_BITTIME   UART_BITTIME / 2
 
-#define UART0_PORT    3
-#define UART0_TX_PIN  4
-#define UART0_RX_PIN  5
 
-#define UART1_PORT    3
-#define UART1_TX_PIN  6
-#define UART1_RX_PIN  7
+#ifndef UART0_HW_TX_PORT
+#define UART0_HW_TX_PORT UART0_TX_PORT
+#define UART0_HW_TX_PIN  UART0_TX_PIN
+#define UART0_HW_RX_PORT UART0_RX_PORT
+#define UART0_HW_RX_PIN  UART0_RX_PIN
+#endif
 
 // ---------------------------------------------
 
@@ -76,17 +77,33 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
     if (speed != SOFT_SERIAL_BAUDRATE) return -ENOSYS;
 
     if (id == 0) {
-        pinAsData(UART0_PORT, UART0_TX_PIN);
-        pinAsOutput(UART0_PORT, UART0_TX_PIN);
+        pinAsData(UART0_TX_PORT, UART0_TX_PIN);
+        pinAsOutput(UART0_TX_PORT, UART0_TX_PIN);
 
-        pinAsData(UART0_PORT, UART0_RX_PIN);
-        pinAsInput(UART0_PORT, UART0_RX_PIN);
-    } else {
-        pinAsData(UART1_PORT, UART1_TX_PIN);
-        pinAsOutput(UART1_PORT, UART1_TX_PIN);
+        pinAsData(UART0_RX_PORT, UART0_RX_PIN);
+        pinAsInput(UART0_RX_PORT, UART0_RX_PIN);
 
-        pinAsData(UART1_PORT, UART1_RX_PIN);
-        pinAsInput(UART1_PORT, UART1_RX_PIN);
+#if USE_SW_SERIAL_INTERRUPTS
+        PRINTF("serial int init\n");
+        pinEnableInt(UART0_RX_PORT, UART0_RX_PIN);
+        pinIntFalling(UART0_RX_PORT, UART0_RX_PIN);
+#endif
+
+        // also setup HW serial ports in the same mode
+#if UART0_HW_TX_PORT != UART0_TX_PORT
+        pinAsData(UART0_HW_TX_PORT, UART0_HW_TX_PIN);
+        pinAsInput(UART0_HW_TX_PORT, UART0_HW_TX_PIN);
+
+        pinAsData(UART0_HW_RX_PORT, UART0_HW_RX_PIN);
+        pinAsInput(UART0_HW_RX_PORT, UART0_HW_RX_PIN);
+#endif
+    }
+    else {
+        pinAsData(UART1_TX_PORT, UART1_TX_PIN);
+        pinAsOutput(UART1_TX_PORT, UART1_TX_PIN);
+
+        pinAsData(UART1_RX_PORT, UART1_RX_PIN);
+        pinAsInput(UART1_RX_PORT, UART1_RX_PIN);
     }
 
     // Configure Timer_B
@@ -95,15 +112,25 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
 
     // Initialize UART
     if (id == 0) {
-        pinSet(UART0_PORT, UART0_TX_PIN);
+        pinSet(UART0_TX_PORT, UART0_TX_PIN);
     } else {
-        pinSet(UART1_PORT, UART1_TX_PIN);
+        pinSet(UART1_TX_PORT, UART1_TX_PIN);
     }
-    TBCCTL1 = 0;
 
-    TBCCR0 = TBR + 100;
-    TBCCTL0 = CCIE;
-    // TBCCTL0 = 0;
+    TBCCTL0 = 0;
+    TBCCTL1 = 0;
+    TBCCTL2 = 0;
+    TBCCTL3 = 0;
+    TBCCTL4 = 0;
+    TBCCTL5 = 0;
+    TBCCTL6 = 0;
+
+    TACTL = TACLR;
+
+#ifndef USE_SW_SERIAL_INTERRUPTS
+    TBCCR2 = TBR + 100;
+    TBCCTL2 = CCIE;
+#endif
 
     return 0;
 }
@@ -115,17 +142,19 @@ void serialSendByte(uint8_t id, uint8_t data)
     uint16_t txd = data | 0x300;   // transmitter "shift register"
 
     // Start transmitter. This has to be done with interrupts disabled
-    DISABLE_INTS();
+    Handle_t h;
+    ATOMIC_START(h);
+
     TBCCTL1 = 0;                    // transmit start bit
     if (id == 0) {
-        pinClear(UART0_PORT, UART0_TX_PIN);
+        pinClear(UART0_TX_PORT, UART0_TX_PIN);
     } else {
-        pinClear(UART1_PORT, UART1_TX_PIN);
+        pinClear(UART1_TX_PORT, UART1_TX_PIN);
     }
     TBCCR1 = TBR + UART_BITTIME;    // set time till the first data bit
 
     //XXX: the stability is MUCH worse if ints are enabled at this point
-    //  ENABLE_INTS();
+    //  ATOMIC_END(h);
 
     // wait until the end of start bit
     while (0 == (TBCCTL1 & CCIFG));
@@ -136,17 +165,17 @@ void serialSendByte(uint8_t id, uint8_t data)
             // transmit "Mark" (1) using OUTMOD=1 (Set)
             TBCCTL1 = OUTMOD_1;
             if (id == 0) {
-                pinSet(UART0_PORT, UART0_TX_PIN);
+                pinSet(UART0_TX_PORT, UART0_TX_PIN);
             } else {
-                pinSet(UART1_PORT, UART1_TX_PIN);
+                pinSet(UART1_TX_PORT, UART1_TX_PIN);
             }
         } else {
             // transmit "Space" (0) using OUTMOD=5 (Reset)
             TBCCTL1 = OUTMOD_5;
             if (id == 0) {
-                pinClear(UART0_PORT, UART0_TX_PIN);
+                pinClear(UART0_TX_PORT, UART0_TX_PIN);
             } else {
-                pinClear(UART1_PORT, UART1_TX_PIN);
+                pinClear(UART1_TX_PORT, UART1_TX_PIN);
             }
         }
 
@@ -161,92 +190,152 @@ void serialSendByte(uint8_t id, uint8_t data)
     // all bits sent out; set TxD idle to "Mark"
     TBCCTL1 = OUT;
     if (id == 0) {
-        pinSet(UART0_PORT, UART0_TX_PIN);
+        pinSet(UART0_TX_PORT, UART0_TX_PIN);
     } else {
-        pinSet(UART1_PORT, UART1_TX_PIN);
+        pinSet(UART1_TX_PORT, UART1_TX_PIN);
     }
 
-    ENABLE_INTS();
+    ATOMIC_END(h);
 }
 
 static void rxByte0(void)
 {
     uint8_t rxByte, bitnum;
     bool rxOk;
+    uint16_t i;
 
-    TBCCTL0 = OUT;
-    TBCCR0 += UART_HALF_BITTIME - 100;
-    while (0 == (TBCCTL0 & CCIFG));
+#if USE_SW_SERIAL_INTERRUPTS
+    udelay(75);
+#endif
 
+  restart:
     rxByte = 0;
+    TBCCR2 = TBR;
     for (bitnum = 0; bitnum < 8; ++bitnum) {
         // wait for next data bit
-        TBCCTL0 = OUT;
-        TBCCR0 += UART_BITTIME;
-        while (0 == (TBCCTL0 & CCIFG));
+        TBCCTL2 = OUT;
+        TBCCR2 += UART_BITTIME;
+        while (0 == (TBCCTL2 & CCIFG));
 
-        rxByte |= pinRead(UART0_PORT, UART0_RX_PIN) << bitnum;
+        rxByte |= pinRead(UART0_RX_PORT, UART0_RX_PIN) << bitnum;
     }
 
     // wait for the stop bit
-    TBCCTL0 = OUT;
-    TBCCR0 += UART_BITTIME;
-    while (0 == (TBCCTL0 & CCIFG));
+    TBCCTL2 = OUT;
+    TBCCR2 += UART_BITTIME;
+    while (0 == (TBCCTL2 & CCIFG));
     // ok if stop bit is 1
-    rxOk = pinRead(UART0_PORT, UART0_RX_PIN);
+    rxOk = pinRead(UART0_RX_PORT, UART0_RX_PIN);
 
     if (rxOk) serialRecvCb[0](rxByte);
 
-    TBCCTL0 = CCIE;
+    // receive next byte immediately, do not wait for the next int
+    for (i = 0; i < 1000; ++i) {
+        if (!pinRead(UART0_RX_PORT, UART0_RX_PIN)) {
+            udelay(50);
+            goto restart;
+        }
+    }
 }
 
 static void rxByte1(void)
 {
     uint8_t rxByte, bitnum;
     bool rxOk;
+    uint16_t i;
 
-    TBCCTL0 = OUT;
-    TBCCR0 += UART_HALF_BITTIME - 100;
-    while (0 == (TBCCTL0 & CCIFG));
+#if USE_SW_SERIAL_INTERRUPTS
+    udelay(75);
+#endif
 
+  restart:
     rxByte = 0;
+    TBCCR2 = TBR;
     for (bitnum = 0; bitnum < 8; ++bitnum) {
         // wait for next data bit
-        TBCCTL0 = OUT;
-        TBCCR0 += UART_BITTIME;
-        while (0 == (TBCCTL0 & CCIFG));
+        TBCCTL2 = OUT;
+        TBCCR2 += UART_BITTIME;
+        while (0 == (TBCCTL2 & CCIFG));
 
-        rxByte |= pinRead(UART1_PORT, UART1_RX_PIN) << bitnum;
+        rxByte |= pinRead(UART1_RX_PORT, UART1_RX_PIN) << bitnum;
     }
 
     // wait for the stop bit
-    TBCCTL0 = OUT;
-    TBCCR0 += UART_BITTIME;
-    while (0 == (TBCCTL0 & CCIFG));
+    TBCCTL2 = OUT;
+    TBCCR2 += UART_BITTIME;
+    while (0 == (TBCCTL2 & CCIFG));
     // ok if stop bit is 1
-    rxOk = pinRead(UART1_PORT, UART1_RX_PIN);
+    rxOk = pinRead(UART1_RX_PORT, UART1_RX_PIN);
 
     if (rxOk) serialRecvCb[1](rxByte);
 
-    TBCCTL0 = CCIE;
+    // receive next byte immediately, do not wait for the next int
+    for (i = 0; i < 1000; ++i) {
+        if (!pinRead(UART0_RX_PORT, UART0_RX_PIN)) {
+            udelay(50);
+            goto restart;
+        }
+    }
 }
 
-ISR(TIMERB0, serialRxTimerInterrupt)
+#ifdef USE_SW_SERIAL_INTERRUPTS
+
+XISR(UART0_RX_PORT, serialRxInterrupt)
+{
+    if (!pinReadIntFlag(UART0_RX_PORT, UART0_RX_PIN)) return;
+
+//    PRINTF("rx int\n");
+
+    pinClearIntFlag(UART0_RX_PORT, UART0_RX_PIN);
+
+    if (serialRxEnabled[0]
+            && serialRecvCb[0]) {
+
+        pinDisableInt(UART0_RX_PORT, UART0_RX_PIN);
+
+        // read the whole byte
+        rxByte0();
+
+        pinEnableInt(UART0_RX_PORT, UART0_RX_PIN);
+        pinClearIntFlag(UART0_RX_PORT, UART0_RX_PIN);
+    }
+}
+
+// TODO: UART1 ?
+
+#else
+
+// use timer interrupts
+
+ISR(TIMERB1, serialRxTimerInterrupt)
 {
     // start of reception
     if (serialRxEnabled[0]
             && serialRecvCb[0]
-            && pinRead(UART0_PORT, UART0_RX_PIN) == 0) {
+            && pinRead(UART0_RX_PORT, UART0_RX_PIN) == 0) {
         // start bit detected on UART0!
+
+        TBCCTL2 = OUT;
+        TBCCR2 += UART_HALF_BITTIME - 100;
+        while (0 == (TBCCTL2 & CCIFG));
+
         rxByte0();
     }
     else if (serialRxEnabled[1]
             && serialRecvCb[1]
-            && pinRead(UART1_PORT, UART1_RX_PIN) == 0) {
+            && pinRead(UART1_RX_PORT, UART1_RX_PIN) == 0) {
         // start bit detected on UART1!
+
+        TBCCTL2 = OUT;
+        TBCCR2 += UART_HALF_BITTIME - 100;
+        while (0 == (TBCCTL2 & CCIFG));
+
         rxByte1();
     }
 
     // heuristic value...
-    TBCCR0 = TBR + UART_HALF_BITTIME;
+    TBCCR2 = TBR + UART_HALF_BITTIME;
+    TBCCTL2 = CCIE;
 }
+
+#endif

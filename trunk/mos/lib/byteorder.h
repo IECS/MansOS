@@ -55,9 +55,14 @@
 
 #ifdef MCU_AVR
 // AVR is little endian
-#define __IEEE_LITTLE_ENDIAN
+#define BYTE_ORDER LITTLE_ENDIAN
+#else
+#ifdef MCU_MSP430
+// MSP430 is little endian
+#define BYTE_ORDER LITTLE_ENDIAN
 #else
 #include <endian.h>
+#endif
 #endif
 
 #if BYTE_ORDER == BIG_ENDIAN

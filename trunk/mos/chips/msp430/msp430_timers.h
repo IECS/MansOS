@@ -137,10 +137,18 @@ enum {
 // Interrupts are synchronously enabled/disabled for mspsim purposes:
 // otherwise mspsim generates interrupts even when the timer is not counting.
 //
+#if CUSTOM_TIMER_INTERRUPT_HANDLERS
+#define msp430StartTimerA() TACTL |= MC_CONT
+#else
 #define msp430StartTimerA() TACTL |= MC_CONT | TAIE
+#endif
 #define msp430StopTimerA()  TACTL &= ~(MC_3 | TAIE)
 
+#if CUSTOM_TIMER_INTERRUPT_HANDLERS
 #define msp430StartTimerB() TBCTL |= MC_CONT | TBIE
+#else
+#define msp430StartTimerB() TBCTL |= MC_CONT
+#endif
 #define msp430StopTimerB()  TBCTL &= ~(MC_3 | TBIE)
 
 #define msp430InitTimerA() \
@@ -175,7 +183,7 @@ enum {
 // ---------------------------------------------------
 // Alarm timer
 // ---------------------------------------------------
-#define ALARM_TIMER_INIT()  msp430InitTimerA()
+#define ALARM_TIMER_INIT()  msp430InitTimerA()x
 #define ALARM_TIMER_START() msp430StartTimerA()
 #define ALARM_TIMER_STOP()  msp430StopTimerA()
 #define ALARM_TIMER_READ_STOPPED() (TAR)

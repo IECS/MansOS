@@ -64,7 +64,7 @@
 #include <fatfs/fatfs.h>
 #endif
 
-#if (defined DEBUG && !defined DPRINT_TO_RADIO)
+#if (defined DEBUG) && !DPRINT_TO_RADIO
 #define INIT_PRINTF(...) PRINTF(__VA_ARGS__)
 #else
 #define INIT_PRINTF(...) // nothing

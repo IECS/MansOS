@@ -70,7 +70,7 @@ static inline bool serialIsI2C(uint8_t id) {
 
 static inline void serialSendByte(uint8_t id, uint8_t data)
 {
-    STACK_GUARD();
+//    STACK_GUARD();
 
     if (id == 0) {
         U0TXBUF = data;

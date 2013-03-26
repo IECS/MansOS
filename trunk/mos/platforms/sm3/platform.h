@@ -21,8 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PLATFORM_SADMOTE3_H_
-#define _PLATFORM_SADMOTE3_H_
+#ifndef PLATFORM_SADMOTE3_H
+#define PLATFORM_SADMOTE3_H
 
 #include <msp430/msp430_clock.h>
 #include <msp430/msp430_timers.h>
@@ -90,6 +90,27 @@ static inline uint16_t sq100LightRead(void)
 #define SERIAL_COUNT 2
 // use USART 1 for PRINTF
 #define PRINTF_SERIAL_ID  1
+
+
+
+// serial pins, for sw serial
+#define UART0_TX_PORT 4
+#define UART0_TX_PIN  6
+#define UART0_RX_PORT 2
+#define UART0_RX_PIN  6
+
+#define UART0_HW_TX_PORT 3
+#define UART0_HW_TX_PIN  4
+#define UART0_HW_RX_PORT 3
+#define UART0_HW_RX_PIN  5
+
+#define UART1_TX_PORT 3
+#define UART1_TX_PIN  6
+#define UART1_RX_PORT 3
+#define UART1_RX_PIN  7
+
+// we will be using interrupts, as oposed to telosb
+//#define USE_SW_SERIAL_INTERRUPTS 1
 
 
 #endif

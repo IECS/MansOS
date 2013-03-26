@@ -158,5 +158,19 @@ static inline int8_t hw_spiBusInit(uint8_t busId, SpiBusMode_t spiBusMode)
     return 0;
 }
 
+static inline void hw_spiBusDisable(uint8_t busId) {
+    extern void msp430UsciDisableSPI0(void);
+    extern void msp430UsciDisableSPI1(void);
+    extern void msp430UsciDisableSPI2(void);
+    extern void msp430UsciDisableSPI3(void);
+
+    if (busId == 0) msp430UsciDisableSPI0();
+    else if (busId == 1) msp430UsciDisableSPI1();
+#if SERIAL_COUNT > 1
+    else if (busId == 2) msp430UsciDisableSPI2();
+    else msp430UsciDisableSPI3();
+#endif
+}
+
 
 #endif

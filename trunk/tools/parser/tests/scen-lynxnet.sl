@@ -16,7 +16,7 @@ set IsMainControllerOff false;
 
 // The logic is simple:
 // when battery of the main controller is low, turn it off,
-// but turn it back on after a while (however, lit the number of tries)
+// but turn it back on after a while (however, limit the number of tries)
 set NextRetryTime 0;
 set NumBatteryRetry 0;
 const MAX_RETRY 5;
