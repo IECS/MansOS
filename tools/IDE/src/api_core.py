@@ -345,7 +345,7 @@ class ApiCore:
         else:
             self.activePlatform = self.platforms.index("telosb")
 
-        self.printInfo(self.tr("Changed platform to") + " " + self.getActivePlatform() + "\n")
+        self.printInfo(localize("Changed platform to") + " " + self.getActivePlatform() + "\n")
 
     def getActivePlatform(self):
         if self.platformOnly == None:
@@ -408,7 +408,7 @@ class ApiCore:
                 if x != '':
                     if x.find("->") != -1:
                         name, port = x.strip().split("->")
-                        Motelist.addMote(port, name, "User defined")
+                        Motelist.addMote(port, name, localize("User defined"))
 
     def saveUserMotes(self, name, port):
         os.chdir(self.path)
