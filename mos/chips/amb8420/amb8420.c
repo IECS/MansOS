@@ -223,9 +223,6 @@ void amb8420Reset(void)
 
     RPRINTF("  device ready\n");
 
-    //XXX
-    serialSendByte(AMB8420_UART_ID, 0xff);
-
     // restore sleep mode
     AMB8420_RESTORE_MODE(ctx);
 
