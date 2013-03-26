@@ -231,7 +231,6 @@ static inline void cc2420StopVreg(void)
 
 void cc2420Init(void)
 {
-    uint16_t reg;
     Handle_t h;
 
     if (initialized) {

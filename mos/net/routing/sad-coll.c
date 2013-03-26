@@ -153,8 +153,8 @@ static void roStartListeningTimerCb(void *x)
 static void roStopListeningTimerCb(void *x)
 {
 //    PRINTF("%lu: (%c) turn radio off\n", getSyncTimeMs(), isRoutingInfoValid() ? '+' : '-');
-//    RADIO_OFF_ENERGSAVE();
     PRINTF("%lu: --- stop\n", getSyncTimeSec());
+    RADIO_OFF_ENERGSAVE();
     isListening = false;
     if (!seenRoutingInThisFrame) {
         //PRINTF("%lu: NO ROUTING PACKET THIS TIME!\n", (uint32_t) getJiffies());

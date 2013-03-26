@@ -201,6 +201,7 @@ def buildTrace():
     ignoreFunctions = ["__ctors_end"]
     ignoreMode = False
     currentFunction = None
+    issueWarning = False
 
     binaryCode = os.popen(objdump + " -d " + target).readlines()
     for line in binaryCode:
@@ -232,7 +233,7 @@ def buildTrace():
             if currentFunction.name in functionsWithAllowedCallbacks:
                 continue
             print("Warning! Unhandled call-by-pointer in function " + currentFunction.name)
-            print("Stack usage analysis results may be incorrect.")
+            issueWarning = True
         elif pushPopInstr.match(line):
             #print "push/pop:", line.strip()
             #print pushPopInstr.group(1)
@@ -252,9 +253,12 @@ def buildTrace():
                     or currentFunction.name in threadInternalFunctions:
                 continue
             print("Warning! Unhandled stack-related instruction in function " \
-                      + currentFunction.name)
-            print("Stack usage analysis results may be incorrect. The instruction was:")
+                      + currentFunction.name + ":")
             print(line)
+            issueWarning = True
+
+    if issueWarning:
+        print("Stack usage analysis results may be incorrect.")
 
     # save the old current function
     if currentFunction:

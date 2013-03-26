@@ -149,7 +149,7 @@ static bool filterPass(MacInfo_t *mi)
     if (!mi->immedSrc.shortAddr) return true; // XXX
 
 #define BASE_STATION_ADDRESS 0x0001
-#define FORWARDER_ADDRESS    0x1690
+#define FORWARDER_ADDRESS    0x1696
 #define COLLECTOR_ADDRESS    0x7BAA
 
 #if 1

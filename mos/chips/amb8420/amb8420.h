@@ -29,9 +29,6 @@
 
 #define AMB8420_MAX_PACKET_LEN        128
 
-#define AMB8420_TX_POWER_MIN          0  // -38.75 dBm
-#define AMB8420_TX_POWER_MAX          31 // 0 dBm
-
 #define AMB8420_TRANSPARENT_MODE      0x00
 #define AMB8420_COMMAND_MODE          0x10
 
@@ -76,14 +73,28 @@ typedef enum {
     AMB8420_ADDR_MODE_ADDRNET = 2, // 1 byte addr, 1 byte net
 } AMB8420AddrMode_t;
 
-#ifndef PLATFORM_ARDUINO
-#define RTS_WAIT_TIMEOUT_TICKS        TIMER_100_MS
-//#define RTS_WAIT_TIMEOUT_TICKS        TIMER_SECOND
-#define AMB8420_WAIT_FOR_RTS_READY(ok) \
-    BUSYWAIT_UNTIL(pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN) == 0, RTS_WAIT_TIMEOUT_TICKS, ok)
-#else
+#if defined PLATFORM_ARDUINO || defined CUSTOM_TIMER_INTERRUPT_HANDLERS
 #define AMB8420_WAIT_FOR_RTS_READY(ok) \
     while ((ok = pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN) == 0));
+
+// -- the correct form, but hangs the system when radio fails to respond
+// #define AMB8420_BUSYWAIT_UNTIL(cond, maxTime, ok)
+//     while (!(ok = cond))
+// -- solution: just use mdelay
+#define AMB8420_BUSYWAIT_UNTIL(cond, maxTime, ok)   \
+    mdelay(100)
+#define AMB8420_BUSYWAIT_UNTIL_NORET(cond, maxTime) \
+    mdelay(100)
+
+#else
+// normal waiting using timer A
+#define RTS_WAIT_TIMEOUT_TICKS        TIMER_100_MS
+#define AMB8420_WAIT_FOR_RTS_READY(ok) \
+    BUSYWAIT_UNTIL(pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN) == 0, RTS_WAIT_TIMEOUT_TICKS, ok)
+#define AMB8420_BUSYWAIT_UNTIL(cond, maxTime, ok) \
+    BUSYWAIT_UNTIL(cond, maxTime, ok)
+#define AMB8420_BUSYWAIT_UNTIL_NORET(cond, maxTime) \
+    BUSYWAIT_UNTIL_NORET(cond, maxTime)
 #endif
 
 // ----------------------------------------

@@ -111,7 +111,7 @@ typedef struct RoutingRequestPacket_s {
 // during this time, radio is never turned off on forwarders and collectors
 # define NETWORK_STARTUP_TIME_SEC     (2 * 60 * 60) // 2h in seconds
 #else // for testing
-# define ROUTING_ORIGINATE_TIMEOUT    (15 * 1000ul)
+# define ROUTING_ORIGINATE_TIMEOUT    (5 * 1000ul)
 # define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
 # define SAD_SUPERFRAME_LENGTH        32768ul // (30 * 1000ul)
 # define ROUTING_INFO_VALID_TIME      (70 * 1000ul)

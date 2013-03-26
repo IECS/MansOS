@@ -34,17 +34,24 @@ Alarm_t alarm;
 
 void onAlarm(void *x) {
    redLedToggle();
+
+   // schedule the next alarm *exactly* 1000 milliseconds after this one
    nextPeriod += PERIOD;
    alarmSchedule(&alarm, nextPeriod - getJiffies());
 }
 
 void appMain(void)
 {
-    alarmInit(&alarm, onAlarm, NULL);
     redLedToggle();
+
+    // initialize and schedule the alarm
+    alarmInit(&alarm, onAlarm, NULL);
     nextPeriod = PERIOD;
+    // jiffie counter starts from 0 (zero) after reset
     alarmSchedule(&alarm, PERIOD - getJiffies());
 
+
+    // enter infinite low-power loop
     for (;;) {
         sleep(10);
     }

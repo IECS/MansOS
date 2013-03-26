@@ -31,8 +31,12 @@
 #include <random.h>
 #include <string.h>
 
-#define RECV 0
-#define HW_ADDRESSING 1
+#define RECV 1
+#define HW_ADDRESSING 0
+
+#if !USE_PRINT
+#define PRINTF(...)
+#endif
 
 //-------------------------------------------
 
@@ -59,7 +63,7 @@ void appMain(void)
     PRINTF("%s %#04x starting...\n",
             RECV ? "Receiver" : "Sender", localAddress);
 
-    setLocalAddress();
+//    setLocalAddress();
 
 #if RECV
     radioSetReceiveHandle(recvCounter);
