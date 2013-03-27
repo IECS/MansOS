@@ -118,7 +118,9 @@ stackdump:
 
 stackdump-build:
 ifeq (1,$(NEW_GCC))
+ifeq (y,$(USE_THREADS))
 	$(_QUIET) $(STACKDUMP) $(OUTDIR)/$(APPMOD).elf msp430 $(VERBOSE)
+endif
 endif
 
 mspsim: build

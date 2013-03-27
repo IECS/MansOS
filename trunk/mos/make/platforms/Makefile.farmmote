@@ -52,6 +52,8 @@ PSOURCES += $(MOS)/chips/msp430/msp430x1xx_clock.c
 PSOURCES-$(USE_RADIO) += $(MOS)/chips/cc1101/cc1101.c
 PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
 
+ifneq ($(USE_SOFT_SERIAL),y)
 PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
+endif
 PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
 PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c

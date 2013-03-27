@@ -25,6 +25,7 @@
 #define MANSOS_WATCHDOG_HAL
 
 #define watchdogStop()
+#define watchdogStart()
 
 void watchdogReboot(void);
 void watchdogRebootSimple(void);

@@ -109,8 +109,4 @@ static inline uint16_t sq100LightRead(void)
 #define UART1_RX_PORT 3
 #define UART1_RX_PIN  7
 
-// we will be using interrupts, as oposed to telosb
-//#define USE_SW_SERIAL_INTERRUPTS 1
-
-
 #endif

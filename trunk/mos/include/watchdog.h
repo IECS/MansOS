@@ -37,6 +37,21 @@
 ///
 extern inline void watchdogStop(void);
 
+//! Watchdog timer expiry
+typedef enum {
+    WATCHDOG_EXPIRE_1000MS,
+    WATCHDOG_EXPIRE_250MS,
+    WATCHDOG_EXPIRE_16MS,
+    WATCHDOG_EXPIRE_2MS, // 1.9 actually
+} WatchdogMode_e;
+
+///
+/// Start the watchdog timer. Resets system on expiration.
+///
+/// The timer is restarted every time this function is called.
+///
+extern inline void watchdogStart(WatchdogMode_e mode);
+
 ///
 /// Reboot the mote by using watchdog interface.
 ///

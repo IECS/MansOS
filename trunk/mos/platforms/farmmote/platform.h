@@ -69,4 +69,19 @@ void initPlatform(void);
 // Analog input enable bit for the soil humidity sensor input
 #define SOIL_HUMIDITY_AE_BIT  4 // In ADC10AE1
 
+
+
+// serial pins, for sw serial (TODO: check if correct!)
+#define UART0_TX_PORT 3
+#define UART0_TX_PIN  4
+#define UART0_RX_PORT 3
+#define UART0_RX_PIN  5
+
+#define UART1_TX_PORT 3
+#define UART1_TX_PIN  6
+#define UART1_RX_PORT 3
+#define UART1_RX_PIN  7
+
+
+
 #endif
