@@ -28,6 +28,12 @@
 
 #define watchdogStop() msp430WatchdogStop()
 
+#define watchdogStart(e) \
+    if (e == WATCHDOG_EXPIRE_1000MS) msp430WatchdogStart(WDT_ARST_1000); \
+    else if (e == WATCHDOG_EXPIRE_250MS) msp430WatchdogStart(WDT_ARST_250); \
+    else if (e == WATCHDOG_EXPIRE_16MS) msp430WatchdogStart(WDT_ARST_16); \
+    else msp430WatchdogStart(WDT_ARST_1_9)
+
 #define watchdogRebootSimple() do { \
         WDTCTL = 0;                 \
         for (;;);                   \

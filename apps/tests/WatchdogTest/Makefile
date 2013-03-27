@@ -21,51 +21,27 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+# --------------------------------------------------------------------
+#	Makefile for the sample application
+#
+#  The developer must define at least SOURCES and APPMOD in this file
+#
+#  In addition, PROJDIR and MOSROOT must be defined, before including 
+#  the main Makefile at ${MOSROOT}/mos/make/Makefile
+# --------------------------------------------------------------------
 
-#############################################
-# XM1000 mote
-#############################################
+# Sources are all project source files, excluding MansOS files
+SOURCES = main.c
 
-#############################################
-# Define platform variables
+# Module is the name of the main module buit by this makefile
+APPMOD = UserButtonRead
 
-ARCH = msp430
-# Older mspgcc can't handle 'f', newer can't handle 'x'
-MCU_MODEL = \
-  $(if $(filter $(GCC_VERSION).$(GCC_SUBVERSION),4.6),msp430f2618,msp430x2618)
-
-# Upload target
-UPLOAD_TARGET=upload-xm1000
-
-# Default clock speed: 8MHz
-ifeq ($(USE_HARDWARE_TIMERS),y)
-CPU_MHZ ?= 8
-else
-CPU_MHZ ?= 1  # actually the default DCO frequency is around 800 kHz
+# --------------------------------------------------------------------
+# Set the key variables
+PROJDIR = $(CURDIR)
+ifndef MOSROOT
+  MOSROOT = $(PROJDIR)/../../..
 endif
 
-XM1000-BSL = python $(MOS)/make/scripts/xm1000-bsl
-
-INTERRUPT_VECTOR_COUNT=32
-
-CFLAGS += -DPLATFORM_XM1000=1 -mivcnt=$(INTERRUPT_VECTOR_COUNT)
-
-#############################################
-# Define platform-specific sources
-# (excluding architecture-specific sources)
-
-PSOURCES += $(MOS)/platforms/xm1000/platform.c
-
-PSOURCES += $(MOS)/chips/msp430/msp430x2xx_clock.c
-
-PSOURCES-$(USE_USER_BUTTON) += $(MOS)/arch/msp430/user_button.c
-
-PSOURCES-$(USE_RADIO) += $(MOS)/chips/cc2420/cc2420.c
-PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
-PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/m25p80/m25p80.c
-
-ifneq ($(USE_SOFT_SERIAL),y)
-PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
-endif
-PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
-PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c
+# Include the main makefile
+include ${MOSROOT}/mos/make/Makefile

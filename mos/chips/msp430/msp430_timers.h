@@ -180,6 +180,9 @@ enum {
 // Stop watchdog timer
 #define msp430WatchdogStop() WDTCTL = WDTPW + WDTHOLD
 
+// Start the watchdog timer
+#define msp430WatchdogStart(mode) WDTCTL = mode
+
 // ---------------------------------------------------
 // Alarm timer
 // ---------------------------------------------------

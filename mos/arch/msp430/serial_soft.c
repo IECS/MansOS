@@ -120,10 +120,12 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
     TBCCTL0 = 0;
     TBCCTL1 = 0;
     TBCCTL2 = 0;
+#ifdef TBCCTL3_
     TBCCTL3 = 0;
     TBCCTL4 = 0;
     TBCCTL5 = 0;
     TBCCTL6 = 0;
+#endif
 
     TACTL = TACLR;
 

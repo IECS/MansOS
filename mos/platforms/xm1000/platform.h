@@ -67,4 +67,16 @@ void initPlatform(void);
 #define DS2411_PORT 2
 #define DS2411_PIN  4
 
+
+// serial pins, for sw serial
+#define UART0_TX_PORT 3
+#define UART0_TX_PIN  4
+#define UART0_RX_PORT 3
+#define UART0_RX_PIN  5
+
+#define UART1_TX_PORT 3
+#define UART1_TX_PIN  6
+#define UART1_RX_PORT 3
+#define UART1_RX_PIN  7
+
 #endif

@@ -64,4 +64,12 @@ void initPlatform(void);
 
 #define RADIO_CHIP  RADIO_CHIP_SOFTWARE // simulation
 
+
+// sleeping
+#include <unistd.h>
+
+extern inline void doMsleep(uint16_t milliseconds) {
+    usleep(milliseconds * 1000);
+}
+
 #endif
