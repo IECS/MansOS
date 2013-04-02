@@ -195,6 +195,8 @@ IDE developed by: Janis Judvaitis, (c) 2011-2013, janis.judvaitis@gmail.com
             "Clean target": u"Notīrīt mērķi",
             "Open config file": u"Atvērt konfigurācijas datni",
             "User defined": u"Lietotāja definēta",
+            "routing": u"Maršrutēšana",
+            "protocol": u"Protokols",
 
             ### Naturally specific part
             "__ABOUT__": u"""
