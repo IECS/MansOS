@@ -53,6 +53,7 @@ class ListenModule(wx.Panel):
         self.clear = wx.Button(self, label = localize("Start listening"))
         self.refresh = wx.Button(self, label = localize("Refresh"))
         self.clearOutput = wx.Button(self, label = localize("Clear"))
+        self.saveOutput = wx.Button(self, label = localize("Save to file"))
 
         self.ports.SetEditable(False)
 
@@ -65,6 +66,7 @@ class ListenModule(wx.Panel):
         self.listenControls.Add(self.refresh)     
         self.listenControls.Add(self.clear)
         self.listenControls.Add(self.clearOutput)
+        self.listenControls.Add(self.saveOutput)
 
         self.main.Add(self.listenControls, 0,
                       wx.EXPAND | wx.wx.TOP | wx.LEFT | wx.RIGHT, 10);
@@ -73,6 +75,7 @@ class ListenModule(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.doClear, self.clear)         
         self.Bind(wx.EVT_BUTTON, self.updateMotelist, self.refresh)
         self.Bind(wx.EVT_BUTTON, self.clearOutputArea, self.clearOutput)
+        self.Bind(wx.EVT_BUTTON, self.saveOutputArea, self.saveOutput)
         self.Bind(wx.EVT_COMBOBOX, self.changeTarget, self.ports)
         self.Bind(wx.EVT_TEXT, self.changeTarget, self.ports)
 
@@ -153,3 +156,14 @@ class ListenModule(wx.Panel):
 
         if val.count("(") != 0:
             self.args['serialPort'] = val.split("(")[1].split(")")[0]
+
+    def saveOutputArea(self, event):
+        save = wx.FileDialog(self,
+            localize("Save node output") + " \"",
+            wildcard = localize('All files') + '|*',
+            style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+            defaultFile = self.args["serialPort"])
+        if save.ShowModal() == wx.ID_OK:
+            with open(save.GetPath(),"w") as out:
+                out.write(self.outputArea.outputArea.GetValue())
+        save.Destroy()
