@@ -49,7 +49,7 @@ class OutputArea(wx.Panel):
         if not text:
             text = "\n"
         try:
-            self.outputArea.AppendText(text)
+            self.outputArea.AppendText(text.strip() + "\n")
         except:
             pass
         self.outputArea.ScrollLines(1)

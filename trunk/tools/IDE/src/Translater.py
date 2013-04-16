@@ -197,6 +197,8 @@ IDE developed by: Janis Judvaitis, (c) 2011-2013, janis.judvaitis@gmail.com
             "User defined": u"Lietotāja definēta",
             "routing": u"Maršrutēšana",
             "protocol": u"Protokols",
+            "Save to file": u"Saglabāt datnē",
+            "Save node output": u"Saglabāt sensoru mezgla izvadu",
 
             ### Naturally specific part
             "__ABOUT__": u"""
