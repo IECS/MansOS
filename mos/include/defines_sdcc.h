@@ -42,5 +42,6 @@
 #define MESSAGE(x)
 #define PRINTF_LIKE
 #define restrict
+#define UNUSED
 
 #endif

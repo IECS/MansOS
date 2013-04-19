@@ -67,18 +67,6 @@ bool readAdsRegister(uint8_t reg, uint16_t *val)
     return err == 0;
 }
 
-ISR(PORT2, adsInterrupt)
-{
-    if (pinReadIntFlag(ADS_INT_PORT, ADS_INT_PIN)) {
-        //PRINTF("got ads interrupt!\n");
-        pinClearIntFlag(ADS_INT_PORT, ADS_INT_PIN);
-
-        // TODO?
-    } else {
-        //PRINTF("got some other port2 interrupt!\n");
-    }
-}
-
 void adsInit(void)
 {
     i2cInit(ADS111X_I2C_ID);

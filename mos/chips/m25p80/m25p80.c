@@ -27,6 +27,7 @@
 
 #include <m25p80_pins.h>
 #include "m25p80.h"
+#include <serial.h>
 
 #define M25P80_DEBUG 0
 
@@ -35,18 +36,28 @@
 #include <lib/dprint.h>
 #endif
 
+#define M25P80_SERIAL_CAPTURE()                                    \
+    if (serial[M25P80_SPI_ID].function != SERIAL_FUNCTION_FLASH) { \
+        spiBusInit(M25P80_SPI_ID, SPI_MODE_MASTER);                \
+    }
+
+
 // actual power mode;
 static uint_t m25p80IsOn;
 
 void m25p80_sleep(void)
 {
+    M25P80_SERIAL_CAPTURE();
     M25P80_WAIT_WHILE_WIP();
     M25P80_DEEP_POWERDOWN();
     m25p80IsOn = false;
+    serial[M25P80_SPI_ID].function = SERIAL_FUNCTION_UNUSED;
+    spiBusDisable(M25P80_SPI_ID);
 }
 
 void m25p80_wake(void)
 {
+    M25P80_SERIAL_CAPTURE();
     if (!m25p80IsOn) {
         M25P80_INSTR(RES);
         m25p80IsOn = true;
@@ -74,6 +85,7 @@ static void m25p80_pageProgram(uint32_t addr, const uint8_t *buffer,
 
 void m25p80_bulkErase(void)
 {
+    M25P80_SERIAL_CAPTURE();
     M25P80_WAIT_WHILE_WIP();
     M25P80_WRITE_ENABLE();
     M25P80_INSTR(BE);
@@ -81,6 +93,7 @@ void m25p80_bulkErase(void)
 
 void m25p80_eraseSector(uint32_t addr)
 {
+    M25P80_SERIAL_CAPTURE();
     M25P80_WAIT_WHILE_WIP();
     M25P80_WRITE_ENABLE();
     M25P80_SPI_ENABLE();
@@ -91,6 +104,7 @@ void m25p80_eraseSector(uint32_t addr)
 
 void m25p80_read(uint32_t addr, void* buffer, uint16_t len)
 {
+    M25P80_SERIAL_CAPTURE();
     M25P80_WAIT_WHILE_WIP();
     M25P80_SPI_ENABLE();
     M25P80_WR_BYTE(READ);
@@ -102,6 +116,7 @@ void m25p80_read(uint32_t addr, void* buffer, uint16_t len)
 // Write len bytes (len <= 256) to flash at addr
 void m25p80_write(uint32_t addr, const void *buf, uint16_t len)
 {
+    M25P80_SERIAL_CAPTURE();
 #if M25P80_DEBUG
     PRINTF("m25p80_write(%llu, %u)\n", addr, len);
 #endif
@@ -111,9 +126,9 @@ void m25p80_write(uint32_t addr, const void *buf, uint16_t len)
     // if buffer tail goes over page boundaries, split to two writes, because
     // otherwise the remaining bytes will be written to the beginning of
     // the same page (see M25P80 specification of Page Program instruction)
-    
+
     const uint8_t *bufCopy = (const uint8_t *)buf;
-    
+
     // each page is 256 byte long
     uint16_t pageOffset = (uint16_t) (addr & 0xff);
 #if M25P80_DEBUG

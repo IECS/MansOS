@@ -157,7 +157,7 @@ enum {
     /* source: 32768Hz ACLK, DIV = 1, interrupt disabled */ \
     TACTL = TASSEL_ACLK | ID_DIV1;  \
     /* set interrupt intervals */  \
-    TACCR0 = PLATFORM_ALARM_TIMER_PERIOD;  \
+    TACCR0 = PLATFORM_ALARM_TIMER_PERIOD; \
     TACCR1 = PLATFORM_TIME_CORRECTION_PERIOD;  \
     /* enable interrupts */ \
     TACCTL0 = TACCTL1 = CCIE; \
@@ -176,6 +176,10 @@ enum {
     TBCTL = TBSSEL_ACLK | ID_DIV8 | CNTL_0;    \
     /* enable CCR1 interrupt */ \
     TBCCTL1 = CCIE;             \
+    TBCCTL2 = 0;                \
+    TBCCTL0 = 0;                \
+    TBCCR0 = TBCCR1 = TBCCR2 = 0xffff; \
+    TBCCR3 = TBCCR4 = TBCCR5 = TBCCR6 = 0xffff; \
 
 // Stop watchdog timer
 #define msp430WatchdogStop() WDTCTL = WDTPW + WDTHOLD
@@ -186,7 +190,7 @@ enum {
 // ---------------------------------------------------
 // Alarm timer
 // ---------------------------------------------------
-#define ALARM_TIMER_INIT()  msp430InitTimerA()x
+#define ALARM_TIMER_INIT()  msp430InitTimerA()
 #define ALARM_TIMER_START() msp430StartTimerA()
 #define ALARM_TIMER_STOP()  msp430StopTimerA()
 #define ALARM_TIMER_READ_STOPPED() (TAR)

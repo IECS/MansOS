@@ -63,7 +63,7 @@ void appMain(void)
     PRINTF("%s %#04x starting...\n",
             RECV ? "Receiver" : "Sender", localAddress);
 
-//    setLocalAddress();
+    setLocalAddress();
 
 #if RECV
     radioSetReceiveHandle(recvCounter);
@@ -82,7 +82,7 @@ void appMain(void)
     }
 #else
     // radioSetReceiveHandle(radioDiscard);
-    radioOn();
+//    radioOn();
     sendCounter();
 #endif
 }

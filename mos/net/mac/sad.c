@@ -143,14 +143,14 @@ static bool filterPass(MacInfo_t *mi)
 {
 // #if USE_ROLE_BASE_STATION
     // PRINTF("filter: from=%#04x, orig=%#04x\n",
-    //         mi->immedSrc.shortAddr, mi->originalSrc.shortAddr);
+    //          mi->immedSrc.shortAddr, mi->originalSrc.shortAddr);
 // #endif
 
     if (!mi->immedSrc.shortAddr) return true; // XXX
 
 #define BASE_STATION_ADDRESS 0x0001
 #define FORWARDER_ADDRESS    0x1696
-#define COLLECTOR_ADDRESS    0x7BAA
+#define COLLECTOR_ADDRESS    0x3B9B
 
 #if 1
     // network with all four mote roles, two intermediate hops

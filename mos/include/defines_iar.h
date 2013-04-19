@@ -44,6 +44,8 @@
 // attribute for a function place in RAM (i.e. .data section) instead of flash
 //# define RAMFUNC __ramfunc   // already defined in IAR headers!
 
+#define UNUSED
+
 #define PRINTF_LIKE
 
 #define ENABLE_INTS() __enable_interrupt()
