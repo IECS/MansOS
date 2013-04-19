@@ -98,8 +98,8 @@ static void rxPacket(uint8_t checksum)
             commandInProgress = 0;
         }
         return;
-    case (AMB8420_CMD_SET_REQ |  AMB8420_REPLY_FLAG):
-    case (AMB8420_CMD_GET_REQ |  AMB8420_REPLY_FLAG):
+    case (AMB8420_CMD_SET_REQ | AMB8420_REPLY_FLAG):
+    case (AMB8420_CMD_GET_REQ | AMB8420_REPLY_FLAG):
     case (AMB8420_CMD_SET_DESTADDR_REQ | AMB8420_REPLY_FLAG):
     case (AMB8420_CMD_SET_DESTNETID_REQ | AMB8420_REPLY_FLAG):
     case (AMB8420_CMD_SET_CHANNEL_REQ | AMB8420_REPLY_FLAG):
@@ -202,6 +202,7 @@ void amb8420Reset(void)
     mdelay(10); // wait for some time
     pinSet(AMB8420_RESET_PORT, AMB8420_RESET_PIN);
     mdelay(2);
+
     // wait for initialization to complete
     AMB8420_WAIT_FOR_RTS_READY(ok);
 
@@ -221,7 +222,11 @@ void amb8420Reset(void)
     // Wait for device to become ready
     AMB8420_WAIT_FOR_RTS_READY(ok);
 
-    RPRINTF("  device ready\n");
+    if (pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN) == 0) {
+        RPRINTF("  device ready\n");
+    } else {
+        RPRINTF("  device NOT ready\n");
+    }
 
     // restore sleep mode
     AMB8420_RESTORE_MODE(ctx);

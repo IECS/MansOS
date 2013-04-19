@@ -66,6 +66,7 @@
 #include <kernel/protothreads/process.h>
 #include <kernel/protothreads/radio-process.h>
 #endif
+#include <serial.h>
 
 
 // for 4MHz CPU speed? (326us required)
@@ -84,7 +85,7 @@
 
 static void cc2420SetPanAddr(unsigned pan,
                              unsigned addr,
-                             const uint8_t *ieee_addr);
+                             const uint8_t *ieee_addr) UNUSED;
 
 static void cc2420DisableSpi(void);
 static void cc2420Start(void);
@@ -112,7 +113,8 @@ static uint8_t receive_on;
 /* Radio stuff in network byte order. */
 static uint16_t pan_id;
 
-static int channel = RADIO_CHANNEL;
+static uint8_t channel = RADIO_CHANNEL;
+static uint8_t txPower = RADIO_TX_POWER;
 
 static bool initialized;
 
@@ -153,8 +155,9 @@ static void on(void)
 {
     RPRINTF("turn CC2420 radio rx on\n");
 
-    CC2420_SET_VREG_ACTIVE();
+    // start the CC2420
     cc2420InitSpi();
+    cc2420Start();
 
     CC2420_ENABLE_FIFOP_INT();
     strobe(CC2420_SRXON);
@@ -202,10 +205,12 @@ static inline void setreg(enum cc2420_register regname, unsigned value)
 
 void cc2420InitSpi(void)
 {
-    spiBusInit(CC2420_SPI_ID, SPI_MODE_MASTER);
     pinAsOutput(CC2420_CSN_PORT, CC2420_CSN_PIN);
     // Unselect radio
     CC2420_SPI_DISABLE();
+
+    serial[CC2420_SPI_ID].function = SERIAL_FUNCTION_RADIO;
+    spiBusInit(CC2420_SPI_ID, SPI_MODE_MASTER);
 }
 
 static void cc2420DisableSpi(void)
@@ -220,6 +225,7 @@ static inline void cc2420StartVreg(void)
     CC2420_SET_RESET_ACTIVE();
     ALARM_TIMER_WAIT_TICKS(20);
     CC2420_SET_RESET_INACTIVE();
+    ALARM_TIMER_WAIT_TICKS(20); // ?
 }
 
 static inline void cc2420StopVreg(void)
@@ -258,11 +264,6 @@ void cc2420Init(void)
         CC2420_FIFOP_INT_INIT();
     }
     ATOMIC_END(h);
-
-    cc2420Start();
-
-    cc2420StopVreg();
-    cc2420DisableSpi();
 }
 
 static void cc2420Start(void)
@@ -310,9 +311,9 @@ static void cc2420Start(void)
     reg &= ~SECCTRL0_RXFIFO_PROTECTION;
     setreg(CC2420_SECCTRL0, reg);
 
-    cc2420SetPanAddr(0xffff, 0x0000, NULL);
-    cc2420SetChannel(RADIO_CHANNEL);
-    cc2420SetTxPower(RADIO_TX_POWER);
+    // cc2420SetPanAddr(0xffff, 0x0000, NULL); // ?
+    cc2420SetChannel(channel);
+    cc2420SetTxPower(txPower);
 
     flushrx();
 }
@@ -616,6 +617,7 @@ CC2420RxHandle cc2420SetReceiver(CC2420RxHandle recv)
 void cc2420SetTxPower(uint8_t power)
 {
     uint16_t reg;
+    txPower = power;
     reg = getreg(CC2420_TXCTRL);
     reg = (reg & 0xffe0) | (power & 0x1f);
     setreg(CC2420_TXCTRL, reg);

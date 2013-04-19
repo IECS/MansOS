@@ -97,7 +97,7 @@ static inline uint16_t sq100LightRead(void)
 #define UART0_TX_PORT 4
 #define UART0_TX_PIN  6
 #define UART0_RX_PORT 2
-#define UART0_RX_PIN  6
+#define UART0_RX_PIN  7
 
 #define UART0_HW_TX_PORT 3
 #define UART0_HW_TX_PIN  4

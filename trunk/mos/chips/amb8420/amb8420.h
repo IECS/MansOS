@@ -75,7 +75,7 @@ typedef enum {
 
 #if defined PLATFORM_ARDUINO || defined CUSTOM_TIMER_INTERRUPT_HANDLERS
 #define AMB8420_WAIT_FOR_RTS_READY(ok) \
-    while ((ok = pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN) == 0));
+    while (!(ok = (pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN) == 0));
 
 // -- the correct form, but hangs the system when radio fails to respond
 // #define AMB8420_BUSYWAIT_UNTIL(cond, maxTime, ok)
@@ -89,6 +89,7 @@ typedef enum {
 #else
 // normal waiting using timer A
 #define RTS_WAIT_TIMEOUT_TICKS        TIMER_100_MS
+//#define RTS_WAIT_TIMEOUT_TICKS        TIMER_SECOND
 #define AMB8420_WAIT_FOR_RTS_READY(ok) \
     BUSYWAIT_UNTIL(pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN) == 0, RTS_WAIT_TIMEOUT_TICKS, ok)
 #define AMB8420_BUSYWAIT_UNTIL(cond, maxTime, ok) \

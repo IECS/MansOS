@@ -42,6 +42,8 @@
 #define SET_NEXT_CORRECTION_TIMER(value)
 
 
+#define SLEEP_TIMER_INIT()
+#define SLEEP_TIMER_START()
 #define SLEEP_TIMER_STOP()
 #define SLEEP_TIMER_EXPIRED() (1)
 #define SLEEP_TIMER_READ() 0

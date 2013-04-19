@@ -88,6 +88,9 @@
 #define NAKED
 #endif
 
+//! This function may be unused
+#define UNUSED __attribute__((unused))
+
 #define PRINTF_LIKE __attribute__ ((format (printf, 1, 2)))
 
 /// WEAK_SYMBOL attribute tells that the function might be left unresolved by the linker.

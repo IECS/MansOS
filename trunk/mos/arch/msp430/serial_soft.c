@@ -48,8 +48,8 @@
 SerialCallback_t serialRecvCb[SERIAL_COUNT];
 volatile Serial_t serial[SERIAL_COUNT];
 
-bool serialRxEnabled[SERIAL_COUNT];
-bool serialTxEnabled[SERIAL_COUNT];
+volatile bool serialRxEnabled[SERIAL_COUNT];
+volatile bool serialTxEnabled[SERIAL_COUNT];
 
 // ---------------------------------------------
 
@@ -83,19 +83,21 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
         pinAsData(UART0_RX_PORT, UART0_RX_PIN);
         pinAsInput(UART0_RX_PORT, UART0_RX_PIN);
 
-#if USE_SW_SERIAL_INTERRUPTS
-        PRINTF("serial int init\n");
-        pinEnableInt(UART0_RX_PORT, UART0_RX_PIN);
-        pinIntFalling(UART0_RX_PORT, UART0_RX_PIN);
-#endif
-
-        // also setup HW serial ports in the same mode
 #if UART0_HW_TX_PORT != UART0_TX_PORT
+        // -- also setup HW serial ports in the same mode
         pinAsData(UART0_HW_TX_PORT, UART0_HW_TX_PIN);
         pinAsInput(UART0_HW_TX_PORT, UART0_HW_TX_PIN);
+//        pinAsOutput(UART0_HW_TX_PORT, UART0_HW_TX_PIN);
 
         pinAsData(UART0_HW_RX_PORT, UART0_HW_RX_PIN);
         pinAsInput(UART0_HW_RX_PORT, UART0_HW_RX_PIN);
+#endif
+
+#if USE_SW_SERIAL_INTERRUPTS
+        // PRINTF("serial int init\n");
+        pinEnableInt(UART0_RX_PORT, UART0_RX_PIN);
+        pinIntFalling(UART0_RX_PORT, UART0_RX_PIN);
+        pinClearIntFlag(UART0_RX_PORT, UART0_RX_PIN);
 #endif
     }
     else {
@@ -113,6 +115,7 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
     // Initialize UART
     if (id == 0) {
         pinSet(UART0_TX_PORT, UART0_TX_PIN);
+//        pinSet(UART0_HW_TX_PORT, UART0_HW_TX_PIN);
     } else {
         pinSet(UART1_TX_PORT, UART1_TX_PIN);
     }
@@ -127,7 +130,7 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
     TBCCTL6 = 0;
 #endif
 
-    TACTL = TACLR;
+//    TACTL = TACLR;
 
 #ifndef USE_SW_SERIAL_INTERRUPTS
     TBCCR2 = TBR + 100;
@@ -150,6 +153,7 @@ void serialSendByte(uint8_t id, uint8_t data)
     TBCCTL1 = 0;                    // transmit start bit
     if (id == 0) {
         pinClear(UART0_TX_PORT, UART0_TX_PIN);
+//        pinClear(UART0_HW_TX_PORT, UART0_HW_TX_PIN);
     } else {
         pinClear(UART1_TX_PORT, UART1_TX_PIN);
     }
@@ -168,6 +172,7 @@ void serialSendByte(uint8_t id, uint8_t data)
             TBCCTL1 = OUTMOD_1;
             if (id == 0) {
                 pinSet(UART0_TX_PORT, UART0_TX_PIN);
+//                pinSet(UART0_HW_TX_PORT, UART0_HW_TX_PIN);
             } else {
                 pinSet(UART1_TX_PORT, UART1_TX_PIN);
             }
@@ -176,6 +181,7 @@ void serialSendByte(uint8_t id, uint8_t data)
             TBCCTL1 = OUTMOD_5;
             if (id == 0) {
                 pinClear(UART0_TX_PORT, UART0_TX_PIN);
+//                pinClear(UART0_HW_TX_PORT, UART0_HW_TX_PIN);
             } else {
                 pinClear(UART1_TX_PORT, UART1_TX_PIN);
             }
@@ -193,6 +199,7 @@ void serialSendByte(uint8_t id, uint8_t data)
     TBCCTL1 = OUT;
     if (id == 0) {
         pinSet(UART0_TX_PORT, UART0_TX_PIN);
+//        pinSet(UART0_HW_TX_PORT, UART0_HW_TX_PIN);
     } else {
         pinSet(UART1_TX_PORT, UART1_TX_PIN);
     }
@@ -230,6 +237,7 @@ static void rxByte0(void)
     rxOk = pinRead(UART0_RX_PORT, UART0_RX_PIN);
 
     if (rxOk) serialRecvCb[0](rxByte);
+    else redLedToggle();
 
     // receive next byte immediately, do not wait for the next int
     for (i = 0; i < 1000; ++i) {
@@ -270,6 +278,7 @@ static void rxByte1(void)
     rxOk = pinRead(UART1_RX_PORT, UART1_RX_PIN);
 
     if (rxOk) serialRecvCb[1](rxByte);
+    else redLedToggle();
 
     // receive next byte immediately, do not wait for the next int
     for (i = 0; i < 1000; ++i) {
@@ -280,13 +289,22 @@ static void rxByte1(void)
     }
 }
 
+volatile bool appRunning;
+
 #ifdef USE_SW_SERIAL_INTERRUPTS
 
 XISR(UART0_RX_PORT, serialRxInterrupt)
+// void serialRxInterrupt(void) __attribute__((interrupt (PORT2_VECTOR), wakeup));
+// void serialRxInterrupt(void)
 {
     if (!pinReadIntFlag(UART0_RX_PORT, UART0_RX_PIN)) return;
 
-//    PRINTF("rx int\n");
+//    if (appRunning) { PRINTF("rx int\n"); }
+//    if (appRunning) {
+//        redLedToggle();
+    //     greenLedOn();
+    //     blueLedOn();
+//    }
 
     pinClearIntFlag(UART0_RX_PORT, UART0_RX_PIN);
 
@@ -314,7 +332,7 @@ ISR(TIMERB1, serialRxTimerInterrupt)
     // start of reception
     if (serialRxEnabled[0]
             && serialRecvCb[0]
-            && pinRead(UART0_RX_PORT, UART0_RX_PIN) == 0) {
+            && pinRead(UART0_RX_PORT, UART0_RX_PIN) == 0) {x
         // start bit detected on UART0!
 
         TBCCTL2 = OUT;
