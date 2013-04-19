@@ -42,6 +42,7 @@ enum {
 void appMain(void)
 {
     adcSetChannel(ADC_CHAN);
+    adcOn();
     uint32_t i;
     for (;;) {
         uint32_t time1 = getTimeMs();
@@ -51,6 +52,6 @@ void appMain(void)
         }
         uint32_t time2 = getTimeMs();
         uint32_t samplesHz = STATS_AFTER * 1000ul / (uint32_t) (time2 - time1);
-        PRINTF("Sampling rate: %i Hz\n", samplesHz);
+        PRINTF("Sampling rate: %lu Hz\n", samplesHz);
     }
 }

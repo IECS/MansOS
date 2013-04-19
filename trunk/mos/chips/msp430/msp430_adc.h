@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -89,77 +89,105 @@
 // Procedures
 //===========================================================
 
-/* 1.5V reference voltage, clock divided by 128 */
-/* SAMPCON is sourced from sampling timer */
-/* use ACLK for ADC12CLK */
-/* We will be working with memory register 2, so let's configure it */
-/* start conversion in memory reg 2 */
-/* VR+ = VREF+ and VR- = AVSS */
-#define hplAdcInit() \
-    ADC12CTL0 = SHT0_DIV4;                      \
-    ADC12CTL1 = SHP;                            \
-    ADC12CTL1 |= ADC12SSEL_ACLK;                \
-    ADC12CTL1 |= CSTARTADD_2;                   \
-    ADC12MCTL2 = SREF_VREF_AVSS
+#define ADC_CHANNEL_COUNT 16
 
-// Use VeREF
-#define hplAdcUseExtVRef() \
-    pinAsInput(ADC0_PORT, ADC0_PIN); \
-    ADC12MCTL2 &= ~(SREF_VREF_AVSS); \
-    ADC12MCTL2 |= SREF_VEREF_AVSS;
+// Initialize ADC
+static inline void hplAdcInit(void)
+{
+    ADC12CTL0 = SHT0_DIV4;
+    ADC12CTL1 = SHP;
+    ADC12CTL1 |= ADC12SSEL_ACLK;
+    ADC12CTL1 |= CSTARTADD_2;
+    ADC12MCTL2 = SREF_VREF_AVSS;
+    // turn on ADC12
+    ADC12CTL0 |= ADC12ON;
+}
 
-// Use 2.5V Internal voltage reference instead of 1.5V
-#define hplAdcUse2V5VRef() \
-    ADC12CTL0 |= REF2_5V
+// Switch to 2.5V reference instead of 1.5V
+static inline void hplAdcUse2V5VRef(void)
+{
+    ADC12CTL0 |= REF2_5V;
+}
 
-// Use MCU supply voltage (VCC & GND) as voltage reference
-// Set SREFx bits to 0 (keep other bits untouched)
-#define hplAdcUseSupplyRef() \
-    ADC12MCTL2 &= ~(SREF_7);
+// Turn ADC on
+static inline void hplAdcOn(void)
+{
+    ADC12CTL0 |= REFON;     // Turn on reference generator
+    ADC12CTL0 |= ENC;       // Allow conversion
 
-#define hplAdcOn()    \
-    /* turn on reference generator */           \
-    ADC12CTL0 |= REFON;                         \
-    /* turn on ADC12 */                         \
-    ADC12CTL0 |= ADC12ON;                       \
-    /* enable conversion to take place */       \
-    ADC12CTL0 |= ENC
+    // XXX: add delay after turning the reference on?
+}
 
-#define hplAdcOff()    \
-    /* turn off conversions */          \
-    ADC12CTL0 &= ~ENC;                  \
-    /* turn off reference voltage */    \
-    ADC12CTL0 &= ~REFON;                \
-    /* turn off adc core */             \
-    ADC12CTL0 &= ~ADC12ON
+// Turn ADC off
+static inline void hplAdcOff(void)
+{
+    ADC12CTL0 &= ~ENC;
+    ADC12CTL0 &= ~REFON;
+}
 
-#define hplAdcIsOn()  (ADC12CTL0 & ADC12ON)
+static inline bool hplAdcIsOn(void)
+{
+    return ADC12CTL0 & REFON;
+}
 
-// we always use ACLK
-#define hplAdcUsesSMCLK()  false
+static inline bool hplAdcUsesSMCLK(void)
+{
+    // we always use ACLK
+    return false;
+}
 
-#define ADC_INT_HEADER() interrupt (ADC_VECTOR) adcInt()
+// Get converted value
+static inline uint16_t hplAdcGetVal(void)
+{
+    return ADC12MEM2;
+}
 
-// why not use MEM2 as buffer area?
-#define hplAdcGetVal() (ADC12MEM2)
+// ADC channel count
+static inline unsigned hplAdcGetChannelCount(void)
+{
+    return ADC_CHANNEL_COUNT;
+}
 
-#define hplAdcGetChannelCount() (16)
+// Set ADC channel
+static inline void hplAdcSetChannel(unsigned ch)
+{
+    // channel is held in four smallest bits
+    ADC12MCTL2 = (ADC12MCTL2 & 0xf0) | ch;
+}
 
-// channel held in four smallest bits
-#define hplAdcSetChannel(ch) ADC12MCTL2 = (ADC12MCTL2 & 0xf0) | (ch)
+static inline uint8_t hplAdcGetChannel(void)
+{
+    return ADC12MCTL2 & 0xf;
+}
 
-#define hplAdcGetChannel(ch) (ADC12MCTL2 & 0xf)
+// Enable ADC interrupts
+static inline void hplAdcEnableInterrupt(void)
+{
+    ADC12IE |= 1 << 2;
+}
 
-// enable/disable interrupt for mem area 2
-#define hplAdcEnableInterrupt() ADC12IE |= (1 << 2)
-#define hplAdcDisableInterrupt() ADC12IE &= ~(1 << 2)
+// Disable ADC interrupts
+static inline void hplAdcDisableInterrupt(void)
+{
+    ADC12IE &= ~(1 << 2);
+}
 
-#define hplAdcIntsUsed() (ADC12IE & (1 << 2))
+// Check if interrupts are enabled
+static inline bool hplAdcIntsUsed(void)
+{
+    return ADC12IE & (1 << 2);
+}
 
-#define hplAdcIsBusy() (ADC12CTL1 & ADC12BUSY)
+// Start conversion
+static inline void hplAdcStartConversion(void)
+{
+    ADC12CTL0 |= ADC12SC;
+}
 
-#define hplAdcNotifyValueReady()
-
-#define hplAdcStartConversion() ADC12CTL0 |= ADC12SC;
+// Check if ADC is busy
+static inline bool hplAdcIsBusy(void)
+{
+    return ADC12CTL1 & ADC12BUSY;
+}
 
 #endif  // !_MSP430_ADC_H_
