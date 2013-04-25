@@ -48,7 +48,6 @@
 
 #else // USE_TRACE not defined
 
-#define TRACE_ENTER()     ((void)0)
 #define TRACE_MSG(s)      ((void)0)
 #define TRACE_ENTER()     ((void)0)
 #define TRACE_LEAVE()     ((void)0)
