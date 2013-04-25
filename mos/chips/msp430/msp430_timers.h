@@ -179,7 +179,6 @@ enum {
     TBCCTL2 = 0;                \
     TBCCTL0 = 0;                \
     TBCCR0 = TBCCR1 = TBCCR2 = 0xffff; \
-    TBCCR3 = TBCCR4 = TBCCR5 = TBCCR6 = 0xffff; \
 
 // Stop watchdog timer
 #define msp430WatchdogStop() WDTCTL = WDTPW + WDTHOLD
