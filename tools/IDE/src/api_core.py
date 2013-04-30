@@ -279,7 +279,7 @@ class ApiCore:
     def killAllThreads(self):
         for x in self.activeThreads:
             if self.activeThreads[x]:
-                self.activeThreads[x].process.terminate()
+                self.activeThreads[x].stop = True
 
     def doCompile(self, event = None):
         self.printInfo("Starting to compile ... \n", False)
