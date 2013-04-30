@@ -271,6 +271,7 @@ class ApiCore:
 
     def performExit(self):
         print "Prepering to exit:"
+        os.chdir(self.path)
         for function in self.onExit:
             print "    Calling ", str(function)
             function()
