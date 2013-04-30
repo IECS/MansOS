@@ -1,0 +1,4 @@
+
+# optimize away unneeded things
+USE_PRINT=y
+USE_ASSERT=n
