@@ -4,7 +4,7 @@
 #include <string.h>
 #include <kernel/threads/threads.h>
 
-#include <leds.h>
+//#include <leds.h>
 
 #if DEBUG
 #define RADIO_DEBUG 1
@@ -118,8 +118,8 @@ static void rxPacket(uint8_t checksum)
     // wake up the kernel thread
     // XXX: done in ISR because it cannot be done here!
     // EXIT_SLEEP_MODE();
-    PRINTF("%lu: packet rx\n", (uint32_t) getTimeMs());
-    redLedOn();
+    // PRINTF("%lu: packet rx\n", (uint32_t) getTimeMs());
+    // redLedOn();
 #else
     if (rxHandle) {
         rxHandle();
@@ -337,7 +337,7 @@ int amb8420Send(const void *header_, uint16_t headerLen,
     AMB8420_WAIT_FOR_RTS_READY(ok);
     if (!ok) {
         amb8420Reset(); // XXX: reset the radio in hope it will help
-        blueLedOn();
+        // blueLedOn();
         goto end;
     }
 

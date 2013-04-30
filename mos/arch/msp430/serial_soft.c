@@ -26,8 +26,8 @@
 #include <errors.h>
 #include <digital.h>
 #include <delay.h>
-#include <leds.h>
-#include <print.h>
+//#include <leds.h>
+//#include <print.h>
 
 #define SOFT_SERIAL_BAUDRATE 9600
 
@@ -51,6 +51,12 @@ volatile Serial_t serial[SERIAL_COUNT];
 volatile bool serialRxEnabled[SERIAL_COUNT];
 volatile bool serialTxEnabled[SERIAL_COUNT];
 
+static void rxByte0(void) UNUSED;
+static void rxByte1(void) UNUSED;
+
+static void softSerialStop(void) UNUSED;
+static void softSerialRestart(void) UNUSED;
+
 // ---------------------------------------------
 
 void serialEnableTX(uint8_t id) {
@@ -69,6 +75,45 @@ void serialDisableRX(uint8_t id) {
     serialRxEnabled[id] = false;
 }
 
+static inline void softSerialTimerStart(void) {
+    TBCTL = TBSSEL_2 + MC_2; // clock = SMCLK
+}
+
+static inline void softSerialTimerStop(void) {
+    TBCTL &= ~MC_3;
+}
+
+static void softSerialStop(void)
+{
+    // disable serial, so that we wont even try to send anything,
+    // if woken in an intrrupt
+    serialTxEnabled[0] = false;
+#if SERIAL_COUNT > 1
+    serialTxEnabled[1] = false;
+#endif
+    // disable serial rx interrupt
+#if USE_SW_SERIAL_INTERRUPTS
+    pinDisableInt(UART0_RX_PORT, UART0_RX_PIN);
+#endif
+    // stop timer
+    TBCTL &= ~MC_3;
+}
+
+static void softSerialRestart(void)
+{
+    // XXX: this is not correct if the user wants it disabled fro some reason
+    // enable back serial
+    serialTxEnabled[0] = true;
+#if SERIAL_COUNT > 1
+    serialTxEnabled[1] = true;
+#endif
+    // enable back serial rx interrupt
+#if USE_SW_SERIAL_INTERRUPTS
+    pinEnableInt(UART0_RX_PORT, UART0_RX_PIN);
+#endif
+    // start timer
+    TBCTL |= MC_2;
+}
 
 uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
 {
@@ -87,7 +132,7 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
         // -- also setup HW serial ports in the same mode
         pinAsData(UART0_HW_TX_PORT, UART0_HW_TX_PIN);
         pinAsInput(UART0_HW_TX_PORT, UART0_HW_TX_PIN);
-//        pinAsOutput(UART0_HW_TX_PORT, UART0_HW_TX_PIN);
+
 
         pinAsData(UART0_HW_RX_PORT, UART0_HW_RX_PIN);
         pinAsInput(UART0_HW_RX_PORT, UART0_HW_RX_PIN);
@@ -110,7 +155,7 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
 
     // Configure Timer_B
     TBCTL = TBCLR;
-    TBCTL = TBSSEL_2 + MC_2; // clock = SMCLK
+//    TBCTL = TBSSEL_2 + MC_2; // clock = SMCLK
 
     // Initialize UART
     if (id == 0) {
@@ -132,10 +177,10 @@ uint_t serialInit(uint8_t id, uint32_t speed, uint8_t conf)
 
 //    TACTL = TACLR;
 
-#ifndef USE_SW_SERIAL_INTERRUPTS
-    TBCCR2 = TBR + 100;
-    TBCCTL2 = CCIE;
-#endif
+// #ifndef USE_SW_SERIAL_INTERRUPTS
+//     TBCCR2 = TBR + 100;
+//     TBCCTL2 = CCIE;
+// #endif
 
     return 0;
 }
@@ -150,6 +195,8 @@ void serialSendByte(uint8_t id, uint8_t data)
     Handle_t h;
     ATOMIC_START(h);
 
+    softSerialTimerStart();
+
     TBCCTL1 = 0;                    // transmit start bit
     if (id == 0) {
         pinClear(UART0_TX_PORT, UART0_TX_PIN);
@@ -160,7 +207,7 @@ void serialSendByte(uint8_t id, uint8_t data)
     TBCCR1 = TBR + UART_BITTIME;    // set time till the first data bit
 
     //XXX: the stability is MUCH worse if ints are enabled at this point
-    //  ATOMIC_END(h);
+    // ATOMIC_END(h);
 
     // wait until the end of start bit
     while (0 == (TBCCTL1 & CCIFG));
@@ -204,6 +251,8 @@ void serialSendByte(uint8_t id, uint8_t data)
         pinSet(UART1_TX_PORT, UART1_TX_PIN);
     }
 
+    softSerialTimerStop();
+
     ATOMIC_END(h);
 }
 
@@ -237,7 +286,7 @@ static void rxByte0(void)
     rxOk = pinRead(UART0_RX_PORT, UART0_RX_PIN);
 
     if (rxOk) serialRecvCb[0](rxByte);
-    else redLedToggle();
+//    else redLedToggle();
 
     // receive next byte immediately, do not wait for the next int
     for (i = 0; i < 1000; ++i) {
@@ -278,7 +327,7 @@ static void rxByte1(void)
     rxOk = pinRead(UART1_RX_PORT, UART1_RX_PIN);
 
     if (rxOk) serialRecvCb[1](rxByte);
-    else redLedToggle();
+//    else redLedToggle();
 
     // receive next byte immediately, do not wait for the next int
     for (i = 0; i < 1000; ++i) {
@@ -293,23 +342,19 @@ volatile bool appRunning;
 
 #ifdef USE_SW_SERIAL_INTERRUPTS
 
+// on msp430 interrupt vectors are present only for port1 and port2
+#if UART0_RX_PORT <= 2 
+
 XISR(UART0_RX_PORT, serialRxInterrupt)
-// void serialRxInterrupt(void) __attribute__((interrupt (PORT2_VECTOR), wakeup));
-// void serialRxInterrupt(void)
 {
     if (!pinReadIntFlag(UART0_RX_PORT, UART0_RX_PIN)) return;
-
-//    if (appRunning) { PRINTF("rx int\n"); }
-//    if (appRunning) {
-//        redLedToggle();
-    //     greenLedOn();
-    //     blueLedOn();
-//    }
 
     pinClearIntFlag(UART0_RX_PORT, UART0_RX_PIN);
 
     if (serialRxEnabled[0]
             && serialRecvCb[0]) {
+
+        softSerialTimerStart();
 
         pinDisableInt(UART0_RX_PORT, UART0_RX_PIN);
 
@@ -318,8 +363,12 @@ XISR(UART0_RX_PORT, serialRxInterrupt)
 
         pinEnableInt(UART0_RX_PORT, UART0_RX_PIN);
         pinClearIntFlag(UART0_RX_PORT, UART0_RX_PIN);
+
+        softSerialTimerStop();
     }
 }
+
+#endif // UART0_RX_PORT <= 2 
 
 // TODO: UART1 ?
 
@@ -332,7 +381,7 @@ ISR(TIMERB1, serialRxTimerInterrupt)
     // start of reception
     if (serialRxEnabled[0]
             && serialRecvCb[0]
-            && pinRead(UART0_RX_PORT, UART0_RX_PIN) == 0) {x
+            && pinRead(UART0_RX_PORT, UART0_RX_PIN) == 0) {
         // start bit detected on UART0!
 
         TBCCTL2 = OUT;

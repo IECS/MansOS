@@ -24,20 +24,25 @@
 #ifndef TIMERS_HAL_H
 #define TIMERS_HAL_H
 
+extern uint16_t pcAlarmTimerRegister;
+extern uint16_t pcSleepTimerRegister;
+
 // PC platform uses NO interrupts
 #define ALARM_TIMER_INTERRUPT0() void alarmTimerInterrupt0(void)
 #define ALARM_TIMER_INTERRUPT1() void alarmTimerInterrupt1(void)
 #define SLEEP_TIMER_INTERRUPT() void sleepTimerInterrupt(void)
 
 #define ALARM_TIMER_START()
+#define ALARM_TIMER_STOP()
 #define ALARM_TIMER_EXPIRED() (1)
 #define ALARM_TIMER_READ() 0
 #define ALARM_TIMER_READ_STOPPED() 0
 #define SET_NEXT_ALARM_TIMER(value)
 #define NEXT_ALARM_TIMER() 0
 #define ALARM_TIMER_WAIT_TICKS(ticks)
+#define ALARM_TIMER_REGISTER pcAlarmTimerRegister
 
-#define CORRECTION_TIMER_EXPIRED() false
+#define CORRECTION_TIMER_EXPIRED false
 #define NEXT_CORRECTION_TIMER() 0
 #define SET_NEXT_CORRECTION_TIMER(value)
 
@@ -45,8 +50,9 @@
 #define SLEEP_TIMER_INIT()
 #define SLEEP_TIMER_START()
 #define SLEEP_TIMER_STOP()
-#define SLEEP_TIMER_EXPIRED() (1)
+#define SLEEP_TIMER_EXPIRED 1
 #define SLEEP_TIMER_READ() 0
+#define SLEEP_TIMER_REGISTER pcSleepTimerRegister
 
 #define ENTER_SLEEP_MODE()
 #define EXIT_SLEEP_MODE()
@@ -75,6 +81,8 @@ enum {
 #define SLEEP_CYCLES_DEC    0
 #define SLEEP_CLOCK_SPEED   1
 #define SLEEP_CLOCK_DIVIDER 1
+
+#define TIMER_INTERRUPT_VECTOR 0
 
 // no DCO recalibration
 #define hplInitClocks() 

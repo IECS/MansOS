@@ -23,6 +23,7 @@
 
 #include <kernel/alarms_internal.h>
 #include <platform.h>
+#include <print.h>
 #include <timing.h>
 
 #if USE_PROTOTHREADS
@@ -49,23 +50,24 @@ ALARM_TIMER_INTERRUPT0()
          EXIT_SLEEP_MODE();
     }
 #endif
-    
+
     // Advance the counter register
-    SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
+    ALARM_TIMER_REGISTER += PLATFORM_ALARM_TIMER_PERIOD;
 
     // If TAR still > TACCR0 at this point, we are in trouble:
     // the interrupt will not be generated until the next wraparound (2 seconds).
     // So avoid it at all costs.
     uint16_t tar = ALARM_TIMER_READ_STOPPED() + 1;
-    while (!timeAfter16(NEXT_ALARM_TIMER(), tar)) {
+    while (!timeAfter16(ALARM_TIMER_REGISTER, tar)) {
         jiffies += JIFFY_TIMER_MS;
-        SET_NEXT_ALARM_TIMER(PLATFORM_ALARM_TIMER_PERIOD);
+        ALARM_TIMER_REGISTER += PLATFORM_ALARM_TIMER_PERIOD;
     }
 }
 
 ALARM_TIMER_INTERRUPT1()
 {
-    if (CORRECTION_TIMER_EXPIRED()) {
+    switch (TIMER_INTERRUPT_VECTOR) {
+    case CORRECTION_TIMER_EXPIRED:
         //
         // On MSP430 platforms binary ACLK oscillator usually is used.
         // It has constant rate 32768 Hz (the ACLK_SPEED define)
@@ -74,10 +76,18 @@ ALARM_TIMER_INTERRUPT1()
         // The clock error is (32768 / 32) - 1000 = 1024 - 1000 = 24 milliseconds.
         // We improve the precision by applying a fix 24 times per second.
         //
-        while (!timeAfter16(NEXT_CORRECTION_TIMER(), ALARM_TIMER_READ_STOPPED())) {
-            SET_NEXT_CORRECTION_TIMER(PLATFORM_TIME_CORRECTION_PERIOD);
+#if PLATFORM_TIME_CORRECTION_PERIOD
+        while (!timeAfter16(CORRECTION_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED())) {
+            CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;
             jiffies--;
         }
+#endif
+        break;
+
+    case SLEEP_TIMER_EXPIRED:
+        // exit low power mode
+        EXIT_SLEEP_MODE();
+        break;
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -65,7 +65,7 @@
 #define SLEEP_CLOCK_USE_ACLK 1
 
 #define JIFFY_CLOCK_DIVIDER 1
-#define SLEEP_CLOCK_DIVIDER 8
+#define SLEEP_CLOCK_DIVIDER 1
 
 #if JIFFY_CLOCK_USE_ACLK
 // use ACLK as source for the jiffy clock
@@ -84,7 +84,7 @@
 #endif
 
 enum {
-    JIFFY_TIMER_MS = 1000 / TIMER_INTERRUPT_HZ, // jiffy counter signals every 10 milliseconds
+    JIFFY_TIMER_MS = 1000 / TIMER_INTERRUPT_HZ, // jiffy counter signals every 1 millisecond
 
     // timer interrupt takes place every millisecond
     PLATFORM_ALARM_TIMER_PERIOD = ACLK_SPEED / TIMER_INTERRUPT_HZ,
@@ -124,25 +124,34 @@ enum {
 #define TAIV TA0IV
 #endif
 
-//
-// Timer A is active only while MCU is in the active mode, while
-// timer B is active only while MCU is in any of low power modes.
-//
-// Timer A counts continuously 0..0xffff and generates interrupt each millisecond.
+// Timer A counts continuously 0..0xffff and, unless sleep mode is active,
+// generates interrupt each millisecond;
 // 24Hz interrupt is also generated for time corrections.
-
-// Timer B counts continuously 0..0xffff and generates interrupt at end-of-sleep time.
-// Interrupt is also generated on timer wraparound (every 16 seconds).
+//
+// In sleep mode the interrupt is only generated at the end of sleep.
 //
 // Interrupts are synchronously enabled/disabled for mspsim purposes:
 // otherwise mspsim generates interrupts even when the timer is not counting.
 //
-#if CUSTOM_TIMER_INTERRUPT_HANDLERS
-#define msp430StartTimerA() TACTL |= MC_CONT
-#else
-#define msp430StartTimerA() TACTL |= MC_CONT | TAIE
-#endif
-#define msp430StopTimerA()  TACTL &= ~(MC_3 | TAIE)
+#define msp430StartTimerA() {\
+        TACCTL0 = CCIE;                         \
+        TACCTL1 = CCIE;                         \
+        TACCTL2 = 0;                            \
+        TACTL |= MC_CONT | TAIE;                \
+}
+#define msp430StopTimerA()  { \
+        TACTL &= ~(MC_3 | TAIE);                \
+    }
+
+#define msp430StartTimerAS() {\
+        TACCTL0 = 0;                            \
+        TACCTL1 = 0;                            \
+        TACCTL2 = CCIE;                         \
+        TACTL |= MC_CONT | TAIE;                \
+}
+#define msp430StopTimerAS()  { \
+        TACTL &= ~(MC_3 | TAIE);                \
+    }
 
 #if CUSTOM_TIMER_INTERRUPT_HANDLERS
 #define msp430StartTimerB() TBCTL |= MC_CONT | TBIE
@@ -161,6 +170,21 @@ enum {
     TACCR1 = PLATFORM_TIME_CORRECTION_PERIOD;  \
     /* enable interrupts */ \
     TACCTL0 = TACCTL1 = CCIE; \
+    TACCTL2 = 0; \
+
+
+#define msp430InitTimerAS() \
+    /* begin reset/init */ \
+    TACTL = TACLR; \
+    /* source: 32768Hz ACLK, DIV = 8, interrupt disabled */ \
+    TACTL = TASSEL_ACLK | ID_DIV8;  \
+    /* set interrupt intervals */  \
+    TACCR2 = PLATFORM_ALARM_TIMER_PERIOD; \
+    TACCR1 = PLATFORM_TIME_CORRECTION_PERIOD;  \
+    /* enable interrupts */ \
+    TACCTL0 = TACCTL1 = 0; \
+    TACCTL2 = CCIE; \
+
 
 #define msp430InitTimerB() \
     /* TBCTL: */ \
@@ -192,17 +216,15 @@ enum {
 #define ALARM_TIMER_INIT()  msp430InitTimerA()
 #define ALARM_TIMER_START() msp430StartTimerA()
 #define ALARM_TIMER_STOP()  msp430StopTimerA()
-#define ALARM_TIMER_READ_STOPPED() (TAR)
-#define NEXT_ALARM_TIMER() TACCR0
-#define SET_NEXT_ALARM_TIMER(value) TACCR0 += value
+#define ALARM_TIMER_READ_STOPPED() TAR
+#define ALARM_TIMER_REGISTER TACCR0
 #define ALARM_TIMER_WAIT_TICKS(ticks) { \
         uint16_t end = TAR + ticks;     \
         while (TAR != end);             \
     }
 
-#define CORRECTION_TIMER_EXPIRED() (TAIV == 2)
-#define NEXT_CORRECTION_TIMER() TACCR1
-#define SET_NEXT_CORRECTION_TIMER(value) TACCR1 += value
+#define CORRECTION_TIMER_REGISTER TACCR1
+#define CORRECTION_TIMER_READ_STOPPED() TAR
 
 // this expands to ALARM_TIMER_READ
 ACTIVE_TIMER_READ(ALARM, TAR)
@@ -210,25 +232,19 @@ ACTIVE_TIMER_READ(ALARM, TAR)
 // ---------------------------------------------------
 // Sleep timer
 // ---------------------------------------------------
-#ifdef PLATFORM_HAS_TIMERB
 
-#define SLEEP_TIMER_INIT()  msp430InitTimerB()
-#define SLEEP_TIMER_START() msp430StartTimerB()
-#define SLEEP_TIMER_STOP()  msp430StopTimerB()
-// make sure the interrupt was triggered
-// because of a capture of CCR1
-#define SLEEP_TIMER_EXPIRED() (TBIV == 2)
+#define SLEEP_TIMER_INIT()  msp430InitTimerAS()
+#define SLEEP_TIMER_START() msp430StartTimerAS()
+#define SLEEP_TIMER_STOP()  msp430StopTimerAS()
 
-#define SLEEP_TIMER_SET(value) TBCCR1 = (value)
+#define SLEEP_TIMER_REGISTER TACCR2
 
-#define SLEEP_TIMER_WRAPAROUND() (TBIV == 14)
-#define SLEEP_TIMER_RESET_WRAPAROUND() (TBCTL &= ~TBIFG)
+#define SLEEP_TIMER_RESET_WRAPAROUND() (TACTL &= ~TAIFG)
 
 // this expands to SLEEP_TIMER_READ
-ACTIVE_TIMER_READ(SLEEP, TBR)
-#define SLEEP_TIMER_READ_STOPPED(ms) (TBR)
+ACTIVE_TIMER_READ(SLEEP, TAR)
+#define SLEEP_TIMER_READ_STOPPED(ms) TAR
 
-#endif // PLATFORM_HAS_TIMERB
 
 #ifdef TIMERA0_VECTOR
 #define ALARM_TIMER_INTERRUPT0() ISR(TIMERA0, alarmTimerInterrupt0)
@@ -238,6 +254,15 @@ ACTIVE_TIMER_READ(SLEEP, TBR)
 #define ALARM_TIMER_INTERRUPT1() ISR(TIMER0_A1, alarmTimerInterrupt1)
 #endif
 #define SLEEP_TIMER_INTERRUPT()  ISR(TIMERB1, sleepTimerInterrupt)
+
+// TAIV values
+#define CORRECTION_TIMER_EXPIRED 2
+#define SLEEP_TIMER_EXPIRED      4
+
+#define TIMER_INTERRUPT_VECTOR  TAIV
+
+// no need for time correction
+#define PLATFORM_HAS_CORRECTION_TIMER 0
 
 //===========================================================
 //===========================================================

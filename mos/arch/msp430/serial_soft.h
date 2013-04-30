@@ -30,4 +30,7 @@ static inline bool serialUsesSMCLK(void) {
     return false;
 }
 
+// void softSerialStop(void);
+// void softSerialRestart(void);
+
 #endif

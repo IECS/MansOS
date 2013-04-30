@@ -33,42 +33,9 @@
 
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 
-//
-// Include sleep functionality only on platforms where timer B is available.
-//
-#if PLATFORM_HAS_TIMERB
-
 static volatile uint16_t timeWentToSleep;
-static volatile uint16_t millisecondsInSleepMode;
-
-//
-// sleep timer interrupt handler
-//
-SLEEP_TIMER_INTERRUPT()
-{
-    if (SLEEP_TIMER_WRAPAROUND()) {
-        //
-        // Fix jiffies for greater good/precision!
-        //
-        uint16_t milliseconds = convertSleepTimerToMs(-timeWentToSleep);
-        jiffies += milliseconds;
-        millisecondsInSleepMode += milliseconds;
-        // Now we know we have slept for exactly 16000 milliseconds;
-        // use the value of how much we *think* we have slept to calc correction.
-        int16_t correction = 16000 - millisecondsInSleepMode;
-        // PRINTF("sleep timer correction = %d ms\n", correction);
-        jiffies += correction;
-
-        timeWentToSleep = 0;
-        millisecondsInSleepMode = 0;
-        SLEEP_TIMER_RESET_WRAPAROUND();
-
-        if (!(SLEEP_TIMER_EXPIRED())) return;
-    }
-
-    // exit low power mode
-    EXIT_SLEEP_MODE();
-}
+static volatile uint16_t ticksInSleepMode;
+static volatile uint16_t jiffiesInSleepMode;
 
 static inline void sleepTimerSet(uint16_t ms)
 {
@@ -78,10 +45,17 @@ static inline void sleepTimerSet(uint16_t ms)
         ms = PLATFORM_MIN_SLEEP_MS;
     }
 
-    uint16_t tbr = SLEEP_TIMER_READ_STOPPED();
-    timeWentToSleep = tbr;
+    // wait for end of tick and read the new value
+    uint16_t ticksNow = SLEEP_TIMER_READ();
+    timeWentToSleep = ticksNow;
 
-    SLEEP_TIMER_SET(tbr + convertMsToSleepTimer(ms));
+    uint16_t sleepTicks = convertMsToSleepTimer(ms);
+    SLEEP_TIMER_REGISTER = ticksNow + sleepTicks;
+    // advance alarm and correction timers too
+    ALARM_TIMER_REGISTER += sleepTicks;
+#if PLATFORM_HAS_CORRECTION_TIMER
+    CORRECTION_TIMER_REGISTER += sleepTicks;
+#endif
 }
 
 void doMsleep(uint16_t milliseconds)
@@ -94,17 +68,12 @@ void doMsleep(uint16_t milliseconds)
         energyConsumerOff(ENERGY_CONSUMER_MCU);
         energyConsumerOn(ENERGY_CONSUMER_LPM);
 
-#if USE_SOFT_SERIAL
-        serialDisableTX(0);
-        serialDisableTX(1);
-        SLEEP_TIMER_INIT();
-#endif
         // setup sleep timer
         sleepTimerSet(milliseconds);
-        // start timer B
-        SLEEP_TIMER_START();
         // stop timer A
         ALARM_TIMER_STOP();
+        // start timer B
+        SLEEP_TIMER_START();
         // enter low power mode
         ENTER_SLEEP_MODE();
 
@@ -112,28 +81,40 @@ void doMsleep(uint16_t milliseconds)
 
         // after wakeup: determine for how long we actually slept
         // (unexpected wakeups are possible because of interrupts)
-        milliseconds = convertSleepTimerToMs(
-                SLEEP_TIMER_READ() - timeWentToSleep);
-        // adjust jiffies accordingly
-        jiffies += milliseconds;
-        millisecondsInSleepMode += milliseconds;
+        uint16_t ticksNow = SLEEP_TIMER_READ();
+        ticksInSleepMode += ticksNow - timeWentToSleep;
+        // this is calibrated for 32 ticks ~= 1 jiffy
+        jiffies += ticksInSleepMode / 32;
+        jiffiesInSleepMode += ticksInSleepMode / 32;
+        ticksInSleepMode %= 32;
+        // on every 128 jiffies the time correction is 3 jiffies,
+        // because 4000 ticks = 125 and 4096 = 128 uncorrected jiffies
+        // but should be 4096 ticks = 125 corrected jiffies
+        while (jiffiesInSleepMode > 128) {
+            jiffiesInSleepMode -= 128;
+            jiffies -= 3;
+        }
 
         // change energy accounting mode back to active
         energyConsumerOff(ENERGY_CONSUMER_LPM);
         energyConsumerOn(ENERGY_CONSUMER_MCU);
 
-        // restart timer A (count from the place where it left)
-        ALARM_TIMER_START();
-
         // sleep timer should not automatically restart
         SLEEP_TIMER_STOP();
 
-#if USE_SOFT_SERIAL
-        // in case printing and radio is using serial port
-        printInit();
-        radioReinit();
-//        amb8420Reset();
+        // fix jiffies taking into account the time spent for local processing
+        while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED())) {
+            jiffies += JIFFY_TIMER_MS;
+            ALARM_TIMER_REGISTER += PLATFORM_ALARM_TIMER_PERIOD;
+        }
+#if PLATFORM_TIME_CORRECTION_PERIOD
+        while (!timeAfter16(CORRECTION_TIMER_REGISTER, CORRECTION_TIMER_READ_STOPPED())) {
+            CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;
+            jiffies--;
+        }
 #endif
+        // restart timer A (count from the place where it left)
+        ALARM_TIMER_START();
     } else {
         // Zero sleep time requested. Allow, because this way
         // scheduler code becomes simpler, but don't even try going to sleep.
@@ -152,7 +133,5 @@ void doMsleep(uint16_t milliseconds)
     }
 #endif
 }
-
-#endif // Timer B present
 
 #endif // CUSTOM_TIMER_INTERRUPT_HANDLERS not defined

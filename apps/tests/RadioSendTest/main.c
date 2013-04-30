@@ -70,10 +70,16 @@ void appMain(void)
     radioOn();
 
     for (;;) {
-        mdelay(1000);
+        msleep(1000);
+
         blueLedOn();
-        mdelay(100);
+        msleep(100);
         blueLedOff();
+
+        radioOff();
+        msleep(100);
+        radioOn();
+
         // radioSend("hello world\n", sizeof("hello world\n"));
         // int rssi = amb8420GetRSSI();
         // int8_t rssi = radioGetRSSI();
