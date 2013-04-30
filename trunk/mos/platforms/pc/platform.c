@@ -28,6 +28,9 @@
 #include <pthread.h>
 #include "platform.h"
 
+uint16_t pcAlarmTimerRegister;
+uint16_t pcSleepTimerRegister;
+
 // semaphore used for SLEEP implementation - call to SLEEP
 // waits on a semaphore which is incremented when wake-up
 // must be processed

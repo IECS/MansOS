@@ -29,28 +29,39 @@
 #include "stdmansos.h"
 #include <hil/atomic.h>
 
-void appMainx(void);
+void appMainD(void);
+void appMainS(void);
 void appMainLong(void);
 void appMainTimesave(void);
 
 void appMain(void) {
     // XXX: if alarms are not used, this must be done manually!
-    ALARM_TIMER_START();
+    // ALARM_TIMER_START();
 
-    appMainx();
+    appMainD();
 }
-
-//extern volatile bool hadWr;
 
 //
 // Simple time accounting, no tricks
 //
-void appMainx(void)
+void appMainD(void)
 {
     for (;;) {
         uint32_t t = getTimeMs();
         PRINTF("real time = %lu\n", t);
         mdelay(1000);
+    }
+}
+
+//
+// Simple time accounting with sleeping
+//
+void appMainS(void)
+{
+    for (;;) {
+        uint32_t t = getTimeMs();
+        PRINTF("real time = %lu\n", t);
+        msleep(1000);
     }
 }
 

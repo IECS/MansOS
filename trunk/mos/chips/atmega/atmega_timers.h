@@ -148,31 +148,32 @@ enum {
 #define SLEEP_TIMER_INIT() atmegaInitTimer1()
 #define SLEEP_TIMER_START() atmegaStartTimer1()
 #define SLEEP_TIMER_STOP() atmegaStopTimer1()
-#define ALARM_TIMER_READ_STOPPED() (TCNT0)
+#define ALARM_TIMER_READ_STOPPED() TCNT0
 #define ALARM_TIMER_WAIT_TICKS(ticks) { \
         uint16_t end = TCNT0 + ticks;   \
         while (TCNT0 != end);           \
     }
 
-#define NEXT_ALARM_TIMER() OCR0A
-#define SET_NEXT_ALARM_TIMER(value) OCR0A += value
+#define ALARM_TIMER_REGISTER OCR0A
 
-#define CORRECTION_TIMER_EXPIRED() false
-#define NEXT_CORRECTION_TIMER() 0
-#define SET_NEXT_CORRECTION_TIMER(value)
+// no need for time correction
+#define CORRECTION_TIMER_REGISTER 0
+#define CORRECTION_TIMER_EXPIRED false
+#define PLATFORM_TIME_CORRECTION_PERIOD 0
+#define CORRECTION_TIMER_READ_STOPPED() 0
 
 
 // this expands to ALARM_TIMER_READ
 ACTIVE_TIMER_READ(ALARM, TCNT0)
 
-#define SLEEP_TIMER_SET(value) OCR1A = (value)
+#define SLEEP_TIMER_REGISTER OCR1A
 
 #define SLEEP_TIMER_WRAPAROUND() false
 #define SLEEP_TIMER_RESET_WRAPAROUND()
 
 // this expands to SLEEP_TIMER_READ
 ACTIVE_TIMER_READ(SLEEP, TCNT1)
-#define SLEEP_TIMER_READ_STOPPED(ms) (TCNT1)
+#define SLEEP_TIMER_READ_STOPPED(ms) TCNT1
 
 // perform sleep/idle
 // FIXME: why is power-save mode not working?
@@ -195,11 +196,13 @@ ACTIVE_TIMER_READ(SLEEP, TCNT1)
       /* while ((ASSR & (1 << OCR0UB)) || (ASSR & (1 << TCN0UB))); */
 
 // no need to check explicitly
-#define ALARM_TIMER_EXPIRED() (1)
+#define ALARM_TIMER_EXPIRED (1)
 
 // assume that timer compare interrupt occurs only on compare match
-#define SLEEP_TIMER_EXPIRED() (1)
+#define SLEEP_TIMER_EXPIRED (1)
 #define SLEEP_TIMER_INTERRUPT() SIGNAL(TIMER1_COMPA_vect)
+
+#define TIMER_INTERRUPT_VECTOR 0
 
 
 // no DCO recalibration

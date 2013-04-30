@@ -27,7 +27,9 @@
 
 #include "stdmansos.h"
 
-#define PERIOD 1000 // milliseconds
+//#define PERIOD 1000 // milliseconds
+//#define PERIOD 60000ul // milliseconds
+#define PERIOD 5000ul // milliseconds
 
 uint32_t nextPeriod;
 Alarm_t alarm;
