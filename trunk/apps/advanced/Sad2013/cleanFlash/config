@@ -1,0 +1,5 @@
+#
+# Application specific config file
+#
+
+USE_EXT_FLASH=y
