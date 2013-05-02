@@ -25,6 +25,7 @@
 #include <timing.h>
 #include <kernel/alarms_internal.h>
 #include <radio.h> // XXX
+#include <lib/dprint.h>
 
 // --------------------------------------------- alarm / time accounting timer
 

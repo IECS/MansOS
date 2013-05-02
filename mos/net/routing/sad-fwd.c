@@ -163,7 +163,7 @@ static void roForwardTimerCb(void *x)
     routingInfo.rootClockMs = getSyncTimeMs64();
     routingInfo.moteNumber = 0;
 
-    redLedToggle();
+//    redLedToggle();
 
     // XXX: INC_NETSTAT(NETSTAT_PACKETS_SENT, EMPTY_ADDR);
     socketSendEx(&roSocket, &routingInfo, sizeof(routingInfo), downstreamAddress);
@@ -259,7 +259,11 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         lastRootMessageTime = (uint32_t) getJiffies();
         int32_t oldRootClockDeltaMs = rootClockDeltaMs;
         rootClockDeltaMs = ri.rootClockMs - getTimeMs64();
+        //TPRINTF("process packet, rx time=%lu\n", (uint32_t) ri.rootClockMs);
         PRINTF("delta: old=%ld, new=%ld\n", (int32_t)oldRootClockDeltaMs, (int32_t)rootClockDeltaMs);
+        if (abs((int32_t)oldRootClockDeltaMs - (int32_t)rootClockDeltaMs) > 500) {
+            PRINTF("large delta=%ld, time sync off?!\n", (int32_t)oldRootClockDeltaMs - (int32_t)rootClockDeltaMs);
+        }
         PRINTF("%lu: OK!%s\n", getSyncTimeSec(),
                  isListening ? "" : " (not listening)");
     }

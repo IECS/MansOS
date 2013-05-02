@@ -92,7 +92,8 @@ enum {
     PLATFORM_TIME_CORRECTION_PERIOD = ACLK_SPEED / 24,
 
     PLATFORM_MIN_SLEEP_MS = 1, // min sleep amount = 1ms
-    PLATFORM_MAX_SLEEP_MS = 0xffff / (SLEEP_CLOCK_SPEED / 1000 / SLEEP_CLOCK_DIVIDER + 1),
+    // take off 100ms just to be safe
+    PLATFORM_MAX_SLEEP_MS = 0xffff / (SLEEP_CLOCK_SPEED / 1000 / SLEEP_CLOCK_DIVIDER + 1) - 100,
     PLATFORM_MAX_SLEEP_SECONDS = PLATFORM_MAX_SLEEP_MS / 1000,
 
     // clock cycles in every sleep ms: significant digits and decimal part

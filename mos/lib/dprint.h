@@ -36,6 +36,7 @@
 
 #include <serial.h>
 #include <stdtypes.h>
+#include <timing.h> // for getTimeMs()
 
 #ifndef DPRINT_TO_RADIO
 // Define this to 1 to send print output to radio.
@@ -103,13 +104,7 @@ extern char *_print_buf;
 //
 // TPRINTF: print text with timestamp
 //
-#if PLATFORM_PC
-#include <timing.h> // for getTimeMs()
-#define TPRINTF(format, ...) debugPrintf(PRINT_FUNCTION, "[%u] " format, getTimeMs(), ##__VA_ARGS__)
-#else
-#define TPRINTF(...) PRINTF(__VA_ARGS__)
-#endif
-
+#define TPRINTF(...) do { PRINTF("[%lu] ", getTimeMs()); PRINTF(__VA_ARGS__); } while (0)
 
 //
 // DEBUG_PRINTF: print only when DEBUG=y

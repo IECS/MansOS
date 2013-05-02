@@ -339,6 +339,9 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         rootClockDeltaMs = ri.rootClockMs - getTimeMs64();
         greenLedToggle();
         PRINTF("delta: old=%ld, new=%ld\n", (int32_t)oldRootClockDeltaMs, (int32_t)rootClockDeltaMs);
+        if (abs((int32_t)oldRootClockDeltaMs - (int32_t)rootClockDeltaMs) > 500) {
+            PRINTF("large delta=%ld, time sync off?!\n", (int32_t)oldRootClockDeltaMs - (int32_t)rootClockDeltaMs);
+        }
         PRINTF("%lu: OK!%s\n", getSyncTimeSec(), isListening ? "" : " (not listening)");
     }
 }

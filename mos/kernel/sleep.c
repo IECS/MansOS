@@ -45,17 +45,13 @@ static inline void sleepTimerSet(uint16_t ms)
         ms = PLATFORM_MIN_SLEEP_MS;
     }
 
+    uint16_t sleepTicks = convertMsToSleepTimer(ms);
+
     // wait for end of tick and read the new value
     uint16_t ticksNow = SLEEP_TIMER_READ();
     timeWentToSleep = ticksNow;
 
-    uint16_t sleepTicks = convertMsToSleepTimer(ms);
     SLEEP_TIMER_REGISTER = ticksNow + sleepTicks;
-    // advance alarm and correction timers too
-    ALARM_TIMER_REGISTER += sleepTicks;
-#if PLATFORM_HAS_CORRECTION_TIMER
-    CORRECTION_TIMER_REGISTER += sleepTicks;
-#endif
 }
 
 void doMsleep(uint16_t milliseconds)
@@ -81,8 +77,17 @@ void doMsleep(uint16_t milliseconds)
 
         // after wakeup: determine for how long we actually slept
         // (unexpected wakeups are possible because of interrupts)
-        uint16_t ticksNow = SLEEP_TIMER_READ();
-        ticksInSleepMode += ticksNow - timeWentToSleep;
+        uint16_t ticksSlept = SLEEP_TIMER_READ() - timeWentToSleep;
+
+        // sleep timer should not automatically restart
+        SLEEP_TIMER_STOP();
+
+        // advance alarm and correction timers too
+        ALARM_TIMER_REGISTER += ticksSlept;
+#if PLATFORM_HAS_CORRECTION_TIMER
+        CORRECTION_TIMER_REGISTER += ticksSlept;
+#endif
+        ticksInSleepMode += ticksSlept;
         // this is calibrated for 32 ticks ~= 1 jiffy
         jiffies += ticksInSleepMode / 32;
         jiffiesInSleepMode += ticksInSleepMode / 32;
@@ -90,7 +95,8 @@ void doMsleep(uint16_t milliseconds)
         // on every 128 jiffies the time correction is 3 jiffies,
         // because 4000 ticks = 125 and 4096 = 128 uncorrected jiffies
         // but should be 4096 ticks = 125 corrected jiffies
-        while (jiffiesInSleepMode > 128) {
+        while (jiffiesInSleepMode >= 128) {
+            // PRINTF("@");
             jiffiesInSleepMode -= 128;
             jiffies -= 3;
         }
@@ -99,16 +105,15 @@ void doMsleep(uint16_t milliseconds)
         energyConsumerOff(ENERGY_CONSUMER_LPM);
         energyConsumerOn(ENERGY_CONSUMER_MCU);
 
-        // sleep timer should not automatically restart
-        SLEEP_TIMER_STOP();
-
         // fix jiffies taking into account the time spent for local processing
         while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED())) {
+            // PRINTF("*");
             jiffies += JIFFY_TIMER_MS;
             ALARM_TIMER_REGISTER += PLATFORM_ALARM_TIMER_PERIOD;
         }
 #if PLATFORM_TIME_CORRECTION_PERIOD
         while (!timeAfter16(CORRECTION_TIMER_REGISTER, CORRECTION_TIMER_READ_STOPPED())) {
+            // PRINTF("#");
             CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;
             jiffies--;
         }
