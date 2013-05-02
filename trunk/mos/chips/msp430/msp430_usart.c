@@ -262,7 +262,8 @@ ISR(UART0RX, UART0InterruptHandler)
     // in case radio chip uses UART0 and threads are used (e.g. on SM3)...
 #if RADIO_ON_UART0 && USE_THREADS
     // wake up the kernel thread in case radio packet is received
-    if (processFlags.value) {
+    if (processFlags.bits.radioProcess) {
+        // TPRINTF("wake up kernel, packet start=%lu\n", packetStart);
         EXIT_SLEEP_MODE();
     }
 #endif
@@ -284,7 +285,7 @@ ISR(UART1RX, UART1InterruptHandler)
 
 #if RADIO_ON_UART1 && USE_THREADS
     // wake up the kernel thread in case radio packet is received
-    if (processFlags.value) {
+    if (processFlags.bits.radioProcess) {
         EXIT_SLEEP_MODE();
     }
 #endif

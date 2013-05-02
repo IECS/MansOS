@@ -27,6 +27,7 @@
 #include <kernel/threads/radio.h>
 #include <net/radio_packet_buffer.h>
 #include <net/mac.h>
+#include <lib/dprint.h>
 
 ProcessFlags_t processFlags;
 

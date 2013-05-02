@@ -26,9 +26,11 @@
 #include <errors.h>
 #include <digital.h>
 #include <delay.h>
-//#include <leds.h>
-//#include <print.h>
+#if USE_THREADS
+#include <kernel/threads/threads.h>
+#endif
 
+// only this baudrate is supported
 #define SOFT_SERIAL_BAUDRATE 9600
 
 #define TIMER_CLOCK (CPU_HZ)
@@ -365,6 +367,13 @@ XISR(UART0_RX_PORT, serialRxInterrupt)
         pinClearIntFlag(UART0_RX_PORT, UART0_RX_PIN);
 
         softSerialTimerStop();
+
+#if RADIO_ON_UART0 && USE_THREADS
+        // wake up the kernel thread in case radio packet is received
+        if (processFlags.value) {
+            EXIT_SLEEP_MODE();
+        }
+#endif
     }
 }
 
@@ -389,6 +398,13 @@ ISR(TIMERB1, serialRxTimerInterrupt)
         while (0 == (TBCCTL2 & CCIFG));
 
         rxByte0();
+
+#if RADIO_ON_UART0 && USE_THREADS
+        // wake up the kernel thread in case radio packet is received
+        if (processFlags.value) {
+            EXIT_SLEEP_MODE();
+        }
+#endif
     }
     else if (serialRxEnabled[1]
             && serialRecvCb[1]
@@ -400,6 +416,13 @@ ISR(TIMERB1, serialRxTimerInterrupt)
         while (0 == (TBCCTL2 & CCIFG));
 
         rxByte1();
+
+#if RADIO_ON_UART1 && USE_THREADS
+        // wake up the kernel thread in case radio packet is received
+        if (processFlags.value) {
+            EXIT_SLEEP_MODE();
+        }
+#endif
     }
 
     // heuristic value...

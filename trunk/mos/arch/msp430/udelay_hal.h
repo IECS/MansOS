@@ -38,11 +38,6 @@
 
 #include "iomacros.h"
 
-// Left in for debugging
-// #define STR_HELPER(x) #x
-// #define STR(x) STR_HELPER(x)
-// #pragma message "Selected MCU frequency in MHZ is = " STR(CPU_MHZ)
-
 //
 // This function takes ~4 CPU cycles for CPU_MHZ <= 4,
 // and correspondingly more for faster CPU frequencies.

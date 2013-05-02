@@ -111,21 +111,21 @@ typedef struct RoutingRequestPacket_s {
 // during this time, radio is never turned off on forwarders and collectors
 # define NETWORK_STARTUP_TIME_SEC     (2 * 60 * 60) // 2h in seconds
 #else // for testing
-# define ROUTING_ORIGINATE_TIMEOUT    (5 * 1000ul)
+# define ROUTING_ORIGINATE_TIMEOUT    (15 * 1000ul)
 # define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
 # define SAD_SUPERFRAME_LENGTH        32768ul // (30 * 1000ul)
 # define ROUTING_INFO_VALID_TIME      (70 * 1000ul)
 # define NETWORK_STARTUP_TIME_SEC     0
 #endif
 
-#define MOTE_INFO_VALID_TIME         (5 * SAD_SUPERFRAME_LENGTH)
+#define MOTE_INFO_VALID_TIME          (5 * SAD_SUPERFRAME_LENGTH)
 
-#define TIMESLOT_LENGTH              1000
+#define TIMESLOT_LENGTH               1000
 // timeslot is adjusted (to both ends) by this number
-#define TIMESLOT_IMPRECISION         1000 // because time sync protocol has second graduality
-#define TOTAL_LISTENING_TIME         (TIMESLOT_LENGTH + 2 * TIMESLOT_IMPRECISION)
+#define TIMESLOT_IMPRECISION          1000 // because time sync protocol has second graduality
+#define TOTAL_LISTENING_TIME          (TIMESLOT_LENGTH + 2 * TIMESLOT_IMPRECISION)
 
-#define ROUTING_REPLY_WAIT_TIMEOUT   1000 + TIMESLOT_IMPRECISION
+#define ROUTING_REPLY_WAIT_TIMEOUT    1000 + TIMESLOT_IMPRECISION
 
 // XXX: this must be chip-specific. For AMB8420 its quite large (all the serial comm)
 #define RADIO_TX_TIME 0
