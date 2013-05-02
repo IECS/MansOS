@@ -55,12 +55,12 @@
 //
 #  define PRINT_INIT(len) PRINT_INIT_DEFAULT(len)
 #  define PRINT_FUNCTION radioPrint
-#  define PRINTF(...)                             \
+#  define PRINTF(...) {                           \
     if (COUNT_PARMS(__VA_ARGS__) == 1) {          \
         radioPrintV(__VA_ARGS__);                 \
     } else {                                      \
         debugPrintf(radioPrint, __VA_ARGS__);     \
-    }
+    } }
 
 # else
 //
@@ -72,12 +72,12 @@
      serialEnableTX(PRINTF_SERIAL_ID);                          \
      serial[PRINTF_SERIAL_ID].function = SERIAL_FUNCTION_PRINT
 #  define PRINT_FUNCTION serialPrint
-#  define PRINTF(...)                             \
+#  define PRINTF(...)  {                          \
     if (COUNT_PARMS(__VA_ARGS__) == 1) {          \
         serialPrintV(__VA_ARGS__);                \
     } else {                                      \
         debugPrintf(serialPrint, __VA_ARGS__);    \
-    }
+    } }
 
 # endif // DPRINT_TO_RADIO
 
