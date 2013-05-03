@@ -97,12 +97,16 @@ ALARM_TIMER_INTERRUPT1()
         // We improve the precision by applying a fix 24 times per second.
         //
         while (!timeAfter16(CORRECTION_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED())) {
+            // if (CORRECTION_TIMER_REGISTER <= PLATFORM_TIME_CORRECTION_PERIOD) {
+            //     PRINTF("@");
+            // }
             CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;
             jiffies--;
         }
         break;
 
     case SLEEP_TIMER_EXPIRED:
+        // PRINTF("*");
         // exit low power mode
         EXIT_SLEEP_MODE();
         break;
