@@ -78,3 +78,5 @@ PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usart_spi.c
 
 PSOURCES-$(USE_SDCARD) += $(MOS)/chips/sdcard/sdcard.c
 PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/sdcard/sdcard.c
+
+PSOURCES-$(USE_ISL1219) += $(MOS)/chips/rtc/isl1219/isl1219.c

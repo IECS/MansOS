@@ -71,7 +71,7 @@ i2cError_t i2cSoftWriteByte(uint8_t txByte)
     i2cError_t err=0;
   
     for (mask = 0x80; mask > 0; mask >>= 1)   //shift bit for masking (8 times)
-    { 
+    {
         if ((mask & txByte) == 0) {
             I2C_SDA_LO();               //write a bit to SDA-Line
         }
@@ -108,7 +108,7 @@ uint8_t i2cSoftReadByte(i2cAck_t ack)
 
     I2C_SDA_IN();                       //release SDA-line
     for (mask = 0x80; mask > 0; mask >>= 1)   //shift bit for masking 
-    { 
+    {
         I2C_SCL_HI();                   //start clock on SCL-line
         udelay(4);
         if (I2C_SDA_GET() != 0) {
@@ -144,7 +144,9 @@ i2cError_t i2cSoftWrite(uint8_t addr,
 {
     i2cSoftStart();
     i2cError_t err = i2cSoftWriteByte((addr << 1) | I2C_WRITE_FLAG);
-    if (err != I2C_OK) return err;
+    if (err != I2C_OK) {
+        return err;
+    }
     uint8_t *b = (uint8_t *) buf;
     while (len--) {
         err = i2cSoftWriteByte(*b);

@@ -59,6 +59,9 @@
 #if USE_AD5258
 #include <ad5258/ad5258.h>
 #endif
+#if USE_ISL1219
+#include <rtc/isl1219/isl1219.h>
+#endif
 #include <fs/init.h>
 #if USE_FATFS
 #include <fatfs/fatfs.h>
@@ -170,6 +173,10 @@ static inline void initSystem(void)
 #if USE_AD5258
     INIT_PRINTF("init AD5258 digital potentiometer...\n");
     ad5258Init();
+#endif
+#if USE_ISL1219
+    INIT_PRINTF("init ISL1219 real-time clock chip...\n");
+    isl1219Init();
 #endif
 #ifdef USE_HUMIDITY
     INIT_PRINTF("init humidity sensor...\n");

@@ -1,0 +1,13 @@
+#
+# Application specific config file
+#
+
+PLATFORM_ONLY=sm3
+
+USE_SOFT_I2C=y
+USE_ISL1219=y
+
+CONST_SDA_PORT=2
+CONST_SDA_PIN=3
+CONST_SCL_PORT=2
+CONST_SCL_PIN=4
