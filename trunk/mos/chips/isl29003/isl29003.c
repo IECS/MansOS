@@ -207,15 +207,16 @@ bool islInit(void)
     // configure ISL29003 turn ON:
     // mode                    -> Use ~(DIODE1 - DIODE2)
     // clock_cycles            -> 2^16 = 65,536
-    // range_gain            -> 62,272
-    // integration_cycles    -> 16
+    // range_gain              -> 62,272
+    // integration_cycles      -> 16
     IslConfigure_t conf = {
         .mode = USE_BOTH_DIODES,
         .clock_cycles = CLOCK_CYCLES_16,
         .range_gain = RANGE_GAIN_62,
         .integration_cycles = INTEGRATION_CYCLES_16,
     };
-    return (configureIsl(conf) && islOn() && islWake());
+	islInitOk = (configureIsl(conf) && islOn() && islWake());
+    return islInitOk;
 }
 
 // Write ISL29003 register
@@ -336,6 +337,13 @@ bool clearIslInterupt(void)
 bool islRead(uint16_t *data, bool checkInterupt)
 {
     uint8_t val;
+	
+	/* Check if init went OK */
+	if (!islInitOk) {
+		*data = 0xffff;
+		return false;
+	}
+	
     /* Check ISL29003 current state. */
     bool on = isIslOn();
     bool awake = isIslWake();

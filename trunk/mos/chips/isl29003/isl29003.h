@@ -102,6 +102,9 @@ typedef struct IslConfigure_s {
     } integration_cycles;
 } IslConfigure_t;
 
+// Is ISL sensor present??
+bool islInitOk;
+
 // Enable ISL29003
 bool islOn();
 
