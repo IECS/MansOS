@@ -148,11 +148,15 @@ static bool filterPass(MacInfo_t *mi)
 
     if (!mi->immedSrc.shortAddr) return true; // XXX
 
+#if SINGLE_HOP
+    return true;
+#endif
+
 #define BASE_STATION_ADDRESS 0x0001
 #define FORWARDER_ADDRESS    0x1696
 #define COLLECTOR_ADDRESS    0x3B9B
 
-#if 1
+#if 0
     // network with all four mote roles, two intermediate hops
     switch (localAddress) {
     case BASE_STATION_ADDRESS:
@@ -169,7 +173,7 @@ static bool filterPass(MacInfo_t *mi)
         if (mi->immedSrc.shortAddr != COLLECTOR_ADDRESS) return false;
         break;
     }
-#else
+#elif 0
     // smaller network with three mote roles, one intermediate hop
     switch (localAddress) {
     case BASE_STATION_ADDRESS:
@@ -182,6 +186,8 @@ static bool filterPass(MacInfo_t *mi)
         if (mi->immedSrc.shortAddr == COLLECTOR_ADDRESS) return false;
         break;
     }
+#else
+    // network with direct base station reachability, do nothing
 #endif
     return true;
 }

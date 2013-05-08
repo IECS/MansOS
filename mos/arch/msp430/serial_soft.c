@@ -79,7 +79,7 @@ void serialDisableRX(uint8_t id) {
 
 static inline void softSerialTimerStart(void) {
     // wait for timer to stop in case it is used
-    while (TBCTL & MC_3);
+    // while (TBCTL & MC_3);
     // start the timer
     TBCTL = TBSSEL_2 + MC_2; // clock = SMCLK
 }

@@ -213,7 +213,7 @@ static void roOutOfOrderForwardTimerCb(void *x)
 
 static void roRequestTimerCb(void *x)
 {
-    alarmSchedule(&roRequestTimer, ROUTING_REQUEST_TIMEOUT + randomNumberBounded(300));
+    alarmSchedule(&roRequestTimer, ROUTING_REQUEST_INIT_TIMEOUT + randomNumberBounded(300));
 
     if (isRoutingInfoValid()) {
         return;
