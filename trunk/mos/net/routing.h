@@ -105,18 +105,20 @@ typedef struct RoutingRequestPacket_s {
 
 #if 0
 # define ROUTING_ORIGINATE_TIMEOUT    (60 * 1000ul)
-# define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
 # define SAD_SUPERFRAME_LENGTH        524288ul // (10 * 60 * 1000ul)
 # define ROUTING_INFO_VALID_TIME      (1600 * 1000ul)
 // during this time, radio is never turned off on forwarders and collectors
 # define NETWORK_STARTUP_TIME_SEC     (2 * 60 * 60) // 2h in seconds
 #else // for testing
 # define ROUTING_ORIGINATE_TIMEOUT    (15 * 1000ul)
-# define ROUTING_REQUEST_TIMEOUT      (5 * 1000ul)
 # define SAD_SUPERFRAME_LENGTH        32768ul // (30 * 1000ul)
 # define ROUTING_INFO_VALID_TIME      (70 * 1000ul)
 # define NETWORK_STARTUP_TIME_SEC     0
 #endif
+
+// the real timeout is in range between these numbers (exponential backoff)
+#define ROUTING_REQUEST_INIT_TIMEOUT  (2 * 1000ul)
+#define ROUTING_REQUEST_MAX_TIMEOUT   (3600 * 1000ul)
 
 #define MOTE_INFO_VALID_TIME          (5 * SAD_SUPERFRAME_LENGTH)
 
@@ -125,7 +127,7 @@ typedef struct RoutingRequestPacket_s {
 #define TIMESLOT_IMPRECISION          1000 // because time sync protocol has second graduality
 #define TOTAL_LISTENING_TIME          (TIMESLOT_LENGTH + 2 * TIMESLOT_IMPRECISION)
 
-#define ROUTING_REPLY_WAIT_TIMEOUT    1000 + TIMESLOT_IMPRECISION
+#define ROUTING_REPLY_WAIT_TIMEOUT    2000
 
 // XXX: this must be chip-specific. For AMB8420 its quite large (all the serial comm)
 #define RADIO_TX_TIME 0

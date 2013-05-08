@@ -38,6 +38,8 @@ static Socket_t roSocket;
 static Alarm_t roOriginateTimer;
 static Seqnum_t mySeqnum;
 
+static uint8_t originateRetries;
+
 static void roOriginateTimerCb(void *);
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len);
 
@@ -78,7 +80,18 @@ static void roOriginateTimerCb(void *x) {
     }
 
     socketSendEx(&roSocket, &routingInfo, sizeof(routingInfo), downstreamAddress);
-    alarmSchedule(&roOriginateTimer, ROUTING_ORIGINATE_TIMEOUT + randomNumberBounded(500));
+
+    uint16_t newTime;
+    if (originateRetries)  {
+        originateRetries--;
+        newTime = 200;
+    } else {
+        newTime = ROUTING_ORIGINATE_TIMEOUT + randomNumberBounded(500);
+        if  (downstreamAddress == MOS_ADDR_BROADCAST) {
+            originateRetries = 2;
+        }
+    }
+    alarmSchedule(&roOriginateTimer, newTime);
 }
 
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
@@ -91,20 +104,30 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 
     uint8_t type = *data;
     if (type == ROUTING_REQUEST) {
+        // try to reply muliple times
+        originateRetries = 2;
         // reschedule the origination timer sooner
         if (getAlarmTime(&roOriginateTimer) > 1200) {
             alarmSchedule(&roOriginateTimer, randomInRange(800, 1200));
         }
     }
+
+#if !SINGLE_HOP
+    // set forwarder address to increase communication reliability
+    uint8_t sender = *(data + 1);
+    if (sende == SENDER_FORWARDER && s->recvMacInfo.immedSrc.shortAddr) {
+        downstreamAddress = s->recvMacInfo.immedSrc.shortAddr;
+    }
+#endif
 }
 
 RoutingDecision_e routePacket(MacInfo_t *info) {
     // This is simple. Base station never forwards packets,
     // just sends and receives.
     MosAddr *dst = &info->originalDst;
-    if (!IS_LOCAL(info) && info->immedSrc.shortAddr) {
-        downstreamAddress = info->immedSrc.shortAddr;
-    }
+    // if (!IS_LOCAL(info) && info->immedSrc.shortAddr) {
+    //     downstreamAddress = info->immedSrc.shortAddr;
+    // }
     fillLocalAddress(&info->immedSrc);
 
     // PRINTF("dst address=0x%04x, nexthop=0x%04x\n", dst->shortAddr,

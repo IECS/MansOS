@@ -171,7 +171,7 @@ static void roForwardTimerCb(void *x)
 
 static void roRequestTimerCb(void *x)
 {
-    alarmSchedule(&roRequestTimer, ROUTING_REQUEST_TIMEOUT + randomNumberBounded(1000));
+    alarmSchedule(&roRequestTimer, ROUTING_REQUEST_INIT_TIMEOUT + randomNumberBounded(1000));
 
     if (isRoutingInfoValid()) {
         return;
