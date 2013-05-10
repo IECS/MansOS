@@ -226,6 +226,13 @@ class UseCase(object):
         else:
             self.duration = None
 
+
+        p = self.parameters.get("sync")
+        if p:
+            self.sync = bool(p.value)
+        else:
+            self.sync = None
+
         p = self.parameters.get("blink")
         if p and p.value is not None:
             blink = int(p.value)
@@ -589,8 +596,16 @@ class UseCase(object):
             elif self.once:
                 pass
             elif self.period:
-                outputFile.write("    alarmSchedule(&{0}Alarm{1}, {2}_PERIOD{1});\n".format(
-                        ccname, self.numInBranch, ucname))
+                if self.sync:
+                    outputFile.write("    uint64_t nextTime = getSyncTimeMs64() + {0}_PERIOD{1};\n".format(
+                            ucname, self.numInBranch))
+                    outputFile.write("    nextTime -= nextTime % {0}_PERIOD{1};\n".format(
+                            ucname, self.numInBranch))
+                    outputFile.write("    alarmSchedule(&{0}Alarm{1}, (uint32_t)(nextTime - getSyncTimeMs64()));\n".format(
+                            ccname, self.numInBranch))
+                else:
+                    outputFile.write("    alarmSchedule(&{0}Alarm{1}, {2}_PERIOD{1});\n".format(
+                            ccname, self.numInBranch, ucname))
             elif self.pattern:
                 outputFile.write("    alarmSchedule(&{0}Alarm{1}, pattern_{2}[pattern_{2}Cursor]);\n".format(
                         ccname, self.numInBranch, self.pattern))

@@ -103,7 +103,7 @@ typedef struct RoutingRequestPacket_s {
 //! The destination port used by the MansOS routing protocol
 #define ROUTING_PROTOCOL_PORT  112
 
-#if 0
+#if 1
 # define ROUTING_ORIGINATE_TIMEOUT    (60 * 1000ul)
 # define SAD_SUPERFRAME_LENGTH        524288ul // (10 * 60 * 1000ul)
 # define ROUTING_INFO_VALID_TIME      (1600 * 1000ul)
