@@ -105,8 +105,10 @@ static inline bool isSingleValued(SealNetListener_t *l)
 
 static void receivePacketData(SealNetListener_t *l, uint32_t typeMask, const uint8_t *data)
 {
+//    PRINTF("receivePacketData for %p\n", l);
+
     uint16_t code = ffs(l->typeMask) - 1; // XXX: warning on msp430
-    bool isSingleValued = !(l->typeMask & ~(1 << code));
+    bool isSingleValued = !(l->typeMask & ~(1ul << code));
 
     int32_t *write;
     if (isSingleValued) write = &l->u.lastValue;
@@ -135,7 +137,7 @@ static void receivePacketData(SealNetListener_t *l, uint32_t typeMask, const uin
 
 static void sealRecv(uint8_t *data, uint16_t length)
 {
-    PRINTF("%lu: seal rx\n", (uint32_t) getTimeMs());
+    RPRINTF("%lu: seal rx\n", (uint32_t) getTimeMs());
 
     if (length < sizeof(SealHeader_t)) {
         DPRINTF("sealRecv: too short!\n");
@@ -186,12 +188,12 @@ bool sealNetPacketRegisterInterest(uint32_t typeMask,
 }
 
 bool sealNetRegisterInterest(uint16_t code,
-                              SingleValueCallbackFunction callback)
+                             SingleValueCallbackFunction callback)
 {
     for_all_listeners(
             if (l->callback.sv == NULL) {
                 l->callback.sv = callback;
-                l->typeMask = 1 << code;
+                l->typeMask = 1ul << code;
                 l->u.buffer = NULL;
                 return true;
             });
@@ -214,7 +216,7 @@ bool sealNetPacketUnregisterInterest(uint32_t typeMask,
 bool sealNetUnregisterInterest(uint16_t code,
                                 SingleValueCallbackFunction callback)
 {
-    uint32_t typeMask = 1 << code;
+    uint32_t typeMask = 1ul << code;
     for_all_listeners(
             if (l->typeMask == typeMask && l->callback.sv == callback) {
                 l->callback.sv = NULL;
@@ -237,7 +239,7 @@ void sealNetPacketAddField(uint16_t code, int32_t value)
     ASSERT(packetInProgress);
     ASSERT(code < 31); // XXX TODO: add support for larger codes
 
-    packetInProgress->header.typeMask |= (1 << code);
+    packetInProgress->header.typeMask |= (1ul << code);
     memcpy(packetInProgress->fields + packetInProgressNumFields, &value, sizeof(value));
     packetInProgressNumFields++;
 }
@@ -267,7 +269,7 @@ void sealNetSendValue(uint16_t code, int32_t value)
 int32_t sealNetReadValue(uint16_t code) 
 {
     ASSERT(listenerBeingProcessed);
-    ASSERT(listenerBeingProcessed->typeMask & (1 << code));
+    ASSERT(listenerBeingProcessed->typeMask & (1ul << code));
 
     int32_t *read;
     if (isSingleValued(listenerBeingProcessed)) {

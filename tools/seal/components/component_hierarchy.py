@@ -54,6 +54,8 @@ class SealComponent(object):
         self.pattern = SealParameter(None)
         # read/use just once?
         self.once = SealParameter(None, [False, True])
+        # read/use synchronized to the read period? (the result is read-at-once in the whole network)
+        self.sync = SealParameter(None, [False, True])
         # read/use just a few times? ("times 1" is the same as "once")
         self.times = SealParameter(None, ['1', '2', '3', '4', '5', '10', '20', '50', '100'])
         # read/use just for a time period?

@@ -102,7 +102,11 @@ endif
 ifeq ($(USE_ROLE_BASE_STATION),y)
 
 ifeq ($(CONST_ROUTING_PROTOCOL),ROUTING_PROTOCOL_SAD)
+ifeq ($(CONST_SINGLE_HOP),1)
+PSOURCES-$(USE_NET) += $(NET)/routing/sad-bs-single.c
+else
 PSOURCES-$(USE_NET) += $(NET)/routing/sad-bs.c
+endif
 else
 PSOURCES-$(USE_NET) += $(NET)/routing/dv-bs.c
 endif
@@ -117,7 +121,11 @@ else
 ifeq ($(USE_ROLE_COLLECTOR),y)
 PSOURCES-$(USE_NET) += $(NET)/routing/sad-coll.c
 else
+ifeq ($(CONST_SINGLE_HOP),1)
+PSOURCES-$(USE_NET) += $(NET)/routing/sad-mote-single.c
+else
 PSOURCES-$(USE_NET) += $(NET)/routing/sad-mote.c
+endif
 endif
 endif
 
