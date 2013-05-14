@@ -57,7 +57,6 @@ void routingInit(void) {
     socketSetDstAddress(&roSocket, MOS_ADDR_BROADCAST);
 
     alarmInit(&roOriginateTimer, roOriginateTimerCb, NULL);
-    alarmSchedule(&roOriginateTimer, 500);
 
     radioOn();
 }
@@ -80,18 +79,6 @@ static void roOriginateTimerCb(void *x) {
     }
 
     socketSendEx(&roSocket, &routingInfo, sizeof(routingInfo), downstreamAddress);
-
-    // uint16_t newTime;
-    // if (originateRetries)  {
-    //     originateRetries--;
-    //     newTime = 200;
-    // } else {
-    //     newTime = ROUTING_ORIGINATE_TIMEOUT + randomNumberBounded(500);
-    //     if  (downstreamAddress == MOS_ADDR_BROADCAST) {
-    //         originateRetries = 2;
-    //     }
-    // }
-    // alarmSchedule(&roOriginateTimer, newTime);
 }
 
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
@@ -107,7 +94,7 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         if (s->recvMacInfo->immedSrc.shortAddr) {
             downstreamAddress = s->recvMacInfo->immedSrc.shortAddr;
         }
-        alarmSchedule(&roOriginateTimer, 100);
+        alarmSchedule(&roOriginateTimer, 1);
     }
 }
 
@@ -119,7 +106,7 @@ RoutingDecision_e routePacket(MacInfo_t *info) {
             && info->immedSrc.shortAddr != MOS_ADDR_BASESTATION) {
         downstreamAddress = info->immedSrc.shortAddr;
         // reply to the packet with routing info as soon as possible
-        alarmSchedule(&roOriginateTimer, 100);
+        alarmSchedule(&roOriginateTimer, 1);
     }
     fillLocalAddress(&info->immedSrc);
 

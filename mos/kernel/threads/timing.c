@@ -94,14 +94,14 @@ ALARM_TIMER_INTERRUPT1()
         // When ACLK ticks are converted to milliseconds, rounding error is introduced.
         // When TIMER_INTERRUPT_HZ = 1000, there are 32 ACLK ticks per millisecond;
         // The clock error is (32768 / 32) - 1000 = 1024 - 1000 = 24 milliseconds.
-        // We improve the precision by applying a fix 24 times per second.
+        // We improve the precision by applying a fix 24/3 = 8 times per second.
         //
         while (!timeAfter16(CORRECTION_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED())) {
             // if (CORRECTION_TIMER_REGISTER <= PLATFORM_TIME_CORRECTION_PERIOD) {
             //     PRINTF("@");
             // }
             CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;
-            jiffies--;
+            jiffies -= 3;
         }
         break;
 

@@ -137,7 +137,7 @@ static void receivePacketData(SealNetListener_t *l, uint32_t typeMask, const uin
 
 static void sealRecv(uint8_t *data, uint16_t length)
 {
-    RPRINTF("%lu: seal rx\n", (uint32_t) getTimeMs());
+    DPRINTF("%lu: seal rx\n", (uint32_t) getTimeMs());
 
     if (length < sizeof(SealHeader_t)) {
         DPRINTF("sealRecv: too short!\n");

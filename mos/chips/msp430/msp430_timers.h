@@ -88,8 +88,8 @@ enum {
 
     // timer interrupt takes place every millisecond
     PLATFORM_ALARM_TIMER_PERIOD = ACLK_SPEED / TIMER_INTERRUPT_HZ,
-    // time correction interrupt takes place with 24 Hz frequency (= 1024 - 1000)
-    PLATFORM_TIME_CORRECTION_PERIOD = ACLK_SPEED / 24,
+    // time correction interrupt takes place with 8 Hz frequency [= (1024 - 1000) / 3]
+    PLATFORM_TIME_CORRECTION_PERIOD = ACLK_SPEED / 8,
 
     PLATFORM_MIN_SLEEP_MS = 1, // min sleep amount = 1ms
     // take off 100ms just to be safe

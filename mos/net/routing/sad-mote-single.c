@@ -35,13 +35,9 @@
 #include <net/net_stats.h>
 
 static Socket_t roSocket;
-//static Alarm_t roCheckTimer;
-//static Alarm_t roRequestTimer;
 static Alarm_t roStartListeningTimer;
 static Alarm_t roStopListeningTimer;
 
-//static void roCheckTimerCb(void *);
-//static void roRequestTimerCb(void *);
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len);
 
 static Seqnum_t lastSeenSeqnum;
@@ -49,11 +45,6 @@ static uint8_t hopCountToRoot = MAX_HOP_COUNT;
 static uint32_t lastRootMessageTime;
 static MosShortAddr nexthopToRoot = MOS_ADDR_BROADCAST;
 static uint8_t moteNumber;
-
-//static bool isListening;
-
-// static uint32_t routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
-// static bool routingSearching;
 
 static void roStartListeningTimerCb(void *);
 static void roStopListeningTimerCb(void *);
@@ -90,130 +81,28 @@ static uint32_t calcSendTime(void)
     return randomNumber();
 }
 
-//     // leave 5 seconds for fwd stage
-//     uint32_t t = 5000;
-//     // leave 1 second for each mote
-//     t += 1000 * moteNumber;
-
-//     uint32_t now = getSyncTimeMs() % SAD_SUPERFRAME_LENGTH;
-
-//     if (t < now) {
-//         if (t + 1000 > now) {
-//             return 0; // send immediately
-//         }
-//         t += SAD_SUPERFRAME_LENGTH;
-//     }
-//     t -= now;
-//     // add random jitter [300..900]
-//     t += randomInRange(300, 900);
-//     return t + getSyncTimeMs();
-//}
-
-// static uint32_t calcListenStartTime(void)
-// {
-//     // leave 5 seconds for fwd stage
-//     uint32_t t = 5000;
-//     // leave 1 second for each mote
-//     t += 1000 * moteNumber;
-//     t = SAD_SUPERFRAME_LENGTH - t;
-
-//     //PRINTF("  l=%lu, t=%lu\n", SAD_SUPERFRAME_LENGTH, t);
-
-//     uint32_t toEnd = SAD_SUPERFRAME_LENGTH - getSyncTimeMs() % SAD_SUPERFRAME_LENGTH;
-//     if (toEnd < t + TOTAL_LISTENING_TIME) toEnd += SAD_SUPERFRAME_LENGTH;
-//     //PRINTF("  toEnd=%lu\n", toEnd);
-//     t = toEnd - t;
-//     //PRINTF("  result=%lu\n", t < TIMESLOT_IMPRECISION ? 0 : t - TIMESLOT_IMPRECISION);
-//     if (t < TIMESLOT_IMPRECISION) return 0;
-//     return t - TIMESLOT_IMPRECISION;
-// }
-
 void routingInit(void)
 {
     socketOpen(&roSocket, routingReceive);
     socketBind(&roSocket, ROUTING_PROTOCOL_PORT);
     socketSetDstAddress(&roSocket, MOS_ADDR_BROADCAST);
 
-//    alarmInit(&roCheckTimer, roCheckTimerCb, NULL);
-//    alarmInit(&roRequestTimer, roRequestTimerCb, NULL);
     alarmInit(&roStopListeningTimer, roStopListeningTimerCb, NULL);
     alarmInit(&roStartListeningTimer, roStartListeningTimerCb, NULL);
-//    alarmSchedule(&roCheckTimer, randomInRange(1000, 3000));
-//    alarmSchedule(&roStartListeningTimer, 110);
 }
 
 static void roStartListeningTimerCb(void *x)
 {
     TPRINTF("-- start listening\n");
     radioOn();
-    alarmSchedule(&roStopListeningTimer, ROUTING_REPLY_WAIT_TIMEOUT);
-//     alarmSchedule(&roStartListeningTimer, calcListenStartTime());
-
-//     // listen to info only when routing info is already valid (?)
-//     if (isRoutingInfoValid()) {
-//         RPRINTF("%lu: --- START LISTENING\n", getSyncTimeMs());
-//         isListening = true;
-//         radioOn();
-//         alarmSchedule(&roStopListeningTimer, TOTAL_LISTENING_TIME);
-//     }
+    alarmSchedule(&roStopListeningTimer, 1000);
 }
 
 static void roStopListeningTimerCb(void *x)
 {
     TPRINTF("-- stop listening\n");
     RADIO_OFF_ENERGSAVE();
-//    isListening = false;
 }
-
-// static void roCheckTimerCb(void *x)
-// {
-//     alarmSchedule(&roCheckTimer, 5000 + randomNumberBounded(1000));
-    
-//     bool routingOk = isRoutingInfoValid();
-
-//     if (routingSearching) {
-//         // was searching for routing info
-//         if (routingOk) {
-//             routingSearching = false;
-//             alarmRemove(&roRequestTimer);
-//         }
-//     } else {
-//         // was searching for routing info
-//         if (!routingOk) {
-//             routingSearching = true;
-//             routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
-//             roRequestTimerCb(NULL);
-//         }
-//     }
-// }
-
-// static void roRequestTimerCb(void *x)
-// {
-//     // check if already found the info
-//     if (isRoutingInfoValid()) return;
-
-//     // add jitter
-//     routingRequestTimeout += randomNumberBounded(100);
-//     alarmSchedule(&roRequestTimer, routingRequestTimeout);
-//     // use exponential backoff
-//     routingRequestTimeout *= 2;
-//     if (routingRequestTimeout > ROUTING_REQUEST_MAX_TIMEOUT) {
-//         // move back to initial (small) timeout
-//         routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
-//     }
-
-//     RPRINTF("send routing request\n");
-
-//     radioOn(); // wait for response
-//     isListening = true;
-
-//     RoutingRequestPacket_t req;
-//     req.packetType = ROUTING_REQUEST;
-//     req.senderType = SENDER_MOTE;
-//     socketSend(&roSocket, &req, sizeof(req));
-
-//     alarmSchedule(&roStopListeningTimer, ROUTING_REPLY_WAIT_TIMEOUT);
-// }
 
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 {
@@ -243,7 +132,7 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
     RoutingInfoPacket_t ri;
     memcpy(&ri, data, sizeof(RoutingInfoPacket_t));
 
-    PRINTF("got valid routing info\n");
+    TPRINTF("got valid routing info\n");
     rootAddress = ri.rootAddress;
     nexthopToRoot = s->recvMacInfo->originalSrc.shortAddr;
     lastSeenSeqnum = ri.seqnum;
@@ -257,7 +146,6 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
     if (abs((int32_t)oldRootClockDeltaMs - (int32_t)rootClockDeltaMs) > 500) {
         PRINTF("large delta=%ld, time sync off?!\n", (int32_t)oldRootClockDeltaMs - (int32_t)rootClockDeltaMs);
     }
-//    PRINTF("%lu: OK!%s\n", getSyncTimeSec(), isListening ? "" : " (not listening)");
 
     // stop listening immediately
     RADIO_OFF_ENERGSAVE();
