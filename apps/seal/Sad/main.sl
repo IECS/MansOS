@@ -1,5 +1,9 @@
 // use 64-bit counter
 config "USE_LONG_LIFETIME=y";
+config "USE_SOFT_SERIAL=y";
+config "USE_SW_SERIAL_INTERRUPTS=y";
+config "BAUDRATE=9600";
+config "CONST_SINGLE_HOP=1";
 
 // define red led to blink
 define HelperLed RedLed, blink;
@@ -17,7 +21,7 @@ end
 define AllSensors sync(MyLight, Humidity, Temperature, Battery);
 
 // define our action
-read AllSensors, period 10min, associate HelperLed, turnOnOff;
+read AllSensors, period 10min, associate HelperLed, turnOnOff, sync;
 
 // define our outputs
 output SdCard;
