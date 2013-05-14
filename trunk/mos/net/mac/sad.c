@@ -195,6 +195,7 @@ static bool filterPass(MacInfo_t *mi)
 #endif
 
 static void pollSadMac(void) {
+    // XXX: stack overflow possible if stack size is too small!
     MacInfo_t mi;
         
     INC_NETSTAT(NETSTAT_RADIO_RX, EMPTY_ADDR);
