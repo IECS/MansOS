@@ -38,13 +38,15 @@ extern uint64_t lastRootClockMilliseconds;
 
 #define DELIMITER '$'
 
-typedef struct TimeSyncPacket_s {
+struct TimeSyncPacket_s {
     uint8_t delimiter1;
     uint8_t isExtended;
     uint16_t crc;
     uint32_t time;
     uint16_t milliseconds;
-} TimeSyncPacket_t;
+} PACKED;
+
+typedef struct TimeSyncPacket_s TimeSyncPacket_t;
 
 static uint8_t rxBytes;
 
@@ -70,6 +72,12 @@ static void timesyncUsartReceive(uint8_t byte) {
     }
     ((uint8_t *) (void *) &packet)[rxBytes] = byte;
     rxBytes++;
+    if (rxBytes == sizeof(packet) - 2) {
+        if (!packet.isExtended) {
+            parsePacket(&packet);
+            rxBytes = 0;
+        }
+    }
     if (rxBytes == sizeof(packet)) {
         parsePacket(&packet);
         rxBytes = 0;

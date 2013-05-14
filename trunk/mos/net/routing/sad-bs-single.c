@@ -38,8 +38,6 @@ static Socket_t roSocket;
 static Alarm_t roOriginateTimer;
 static Seqnum_t mySeqnum;
 
-//static uint8_t originateRetries;
-
 static void roOriginateTimerCb(void *);
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len);
 
@@ -118,7 +116,8 @@ RoutingDecision_e routePacket(MacInfo_t *info) {
         INC_NETSTAT(NETSTAT_PACKETS_RECV, info->originalSrc.shortAddr);
         return RD_LOCAL;
     }
-    if (isBroadcast(dst)) {
+    // allow to receive packets sent to "root" (0x0000) too
+    if (isBroadcast(dst) || isUnspecified(dst)) {
         if (!IS_LOCAL(info)){
             INC_NETSTAT(NETSTAT_PACKETS_RECV, info->originalSrc.shortAddr);
         }
