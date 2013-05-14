@@ -35,6 +35,7 @@
 #include <net/net_stats.h>
 
 static Socket_t roSocket;
+static Alarm_t roRequestTimer;
 static Alarm_t roStartListeningTimer;
 static Alarm_t roStopListeningTimer;
 
@@ -46,6 +47,7 @@ static uint32_t lastRootMessageTime;
 static MosShortAddr nexthopToRoot = MOS_ADDR_BROADCAST;
 static uint8_t moteNumber;
 
+static void roRequestTimerCb(void *);
 static void roStartListeningTimerCb(void *);
 static void roStopListeningTimerCb(void *);
 
@@ -89,6 +91,31 @@ void routingInit(void)
 
     alarmInit(&roStopListeningTimer, roStopListeningTimerCb, NULL);
     alarmInit(&roStartListeningTimer, roStartListeningTimerCb, NULL);
+    alarmInit(&roRequestTimer, roRequestTimerCb, NULL);
+
+    alarmSchedule(&roRequestTimer, 100);
+}
+
+static void roRequestTimerCb(void *x)
+{
+    // check if already found the info
+    if (isRoutingInfoValid()) return;
+
+    // if tried too long, give up
+    if (timeAfter(getJiffies(), 1000ul * NETWORK_STARTUP_TIME_SEC)) return;
+
+    alarmSchedule(&roRequestTimer, 9000 + randomNumberBounded(1000));
+
+    RPRINTF("send routing request\n");
+
+    radioOn(); // wait for response
+
+    RoutingRequestPacket_t req;
+    req.packetType = ROUTING_REQUEST;
+    req.senderType = SENDER_MOTE;
+    socketSend(&roSocket, &req, sizeof(req));
+
+    alarmSchedule(&roStopListeningTimer, ROUTING_REPLY_WAIT_TIMEOUT);
 }
 
 static void roStartListeningTimerCb(void *x)
@@ -101,7 +128,7 @@ static void roStartListeningTimerCb(void *x)
 static void roStopListeningTimerCb(void *x)
 {
     TPRINTF("-- stop listening\n");
-    RADIO_OFF_ENERGSAVE();
+    radioOff();
 }
 
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
@@ -148,7 +175,7 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
     }
 
     // stop listening immediately
-    RADIO_OFF_ENERGSAVE();
+    radioOff();
 }
 
 RoutingDecision_e routePacket(MacInfo_t *info)
