@@ -115,7 +115,7 @@ void doMsleep(uint16_t milliseconds)
         while (!timeAfter16(CORRECTION_TIMER_REGISTER, CORRECTION_TIMER_READ_STOPPED())) {
             // PRINTF("#");
             CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;
-            jiffies--;
+            jiffies -= 3;
         }
 #endif
         // restart timer A (count from the place where it left)
