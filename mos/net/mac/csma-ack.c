@@ -202,6 +202,7 @@ static void pollCsmaMac(void)
         //PRINTF("got a packet from radio, size=%u\n", radioPacketBuffer->receivedLength);
         //debugHexdump(radioPacketBuffer->buffer, radioPacketBuffer->receivedLength);
 
+        // XXX: stack overflow possible if stack size is too small!
         MacInfo_t mi;
         uint8_t *data = defaultParseHeader(radioPacketBuffer->buffer,
                 radioPacketBuffer->receivedLength, &mi);
