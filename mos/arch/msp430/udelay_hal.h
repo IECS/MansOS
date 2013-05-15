@@ -31,7 +31,7 @@
 
 #include "intrinsics.h"
 #define udelay(x) __delay_cycles(x * CPU_MHZ)
-#define mdelay(x) __delay_cycles(x * CPU_MHZ * 1000ul)
+#define mdelay(x) __delay_cycles((uint32_t) x * CPU_MHZ * 1000ul)
 #define clock_delay(x) __delay_cycles(x * 4)
 
 #else // Old GCC
