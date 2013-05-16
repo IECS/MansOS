@@ -31,7 +31,7 @@
 #include <msp430/msp430_usci.h>
 
 #include "amb8420_pins.h"
-
+#include "m25p16_pins.h"
 #include "cc2420_pins.h"
 #include "sht_pins.h"
 #include "adxl_config.h"
@@ -69,8 +69,6 @@ void initPlatform(void);
 // Data types and constants
 //===========================================================
 
-//#define EXT_FLASH_CHIP FLASH_CHIP_AT25DF
-
 #ifndef RADIO_CHIP
 #define RADIO_CHIP RADIO_CHIP_CC2420
 #endif
@@ -79,6 +77,9 @@ void initPlatform(void);
 #define ACCEL_CHIP ACCEL_CHIP_ADXL345
 #endif
 
+#ifndef EXT_FLASH_CHIP
+#define EXT_FLASH_CHIP FLASH_CHIP_M25P16
+#endif
 
 //
 // TMP sensor pins

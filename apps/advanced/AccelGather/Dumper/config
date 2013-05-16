@@ -1,0 +1,9 @@
+# Zolertia Z1-specific accelerometer application
+
+PLATFORM_ONLY=z1
+
+#USE_ACCEL=y
+USE_EXT_FLASH=y
+#USE_USER_BUTTON=y
+
+BAUDRATE=115200

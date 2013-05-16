@@ -33,12 +33,14 @@
 //
 // List all supported external flash models here (before including extflash_hal.h)
 //
-//! M25P80 chip, e.g. on TelosB
+//! 1MB M25P80 chip, e.g. on TelosB
 #define FLASH_CHIP_M25P80  1
-//! AT25DF chip, e.g. on SADmote
+//! 2MB AT25DF chip, e.g. on SADmote
 #define FLASH_CHIP_AT25DF  2
 //! SD card. Not a flash chip, but can be used to emulate one
 #define FLASH_CHIP_SDCARD  3
+//! 2MB M25P16 chip, e.g. on Z1
+#define FLASH_CHIP_M25P16  4
 
 
 //! Enter low power mode
