@@ -30,7 +30,7 @@
 
 #include <digital.h>
 
-// Radio attached to USCI 1 SPI BUS
+// Radio attached to USCI 1 (B0) SPI BUS
 #define CC2420_SPI_ID   1
 
 // To use soft-SPI for communication with CC2420, uncomment the line below and
