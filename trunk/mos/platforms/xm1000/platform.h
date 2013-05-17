@@ -31,7 +31,7 @@
 #include <msp430/msp430_usci.h>
 
 #include "cc2420_pins.h"
-#include "m25p80_pins.h"
+#include "m25pxx_pins.h"
 #include "sht_pins.h"
 
 //===========================================================

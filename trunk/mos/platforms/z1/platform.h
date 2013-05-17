@@ -31,7 +31,7 @@
 #include <msp430/msp430_usci.h>
 
 #include "amb8420_pins.h"
-#include "m25p16_pins.h"
+#include "m25pxx_pins.h"
 #include "cc2420_pins.h"
 #include "sht_pins.h"
 #include "adxl_config.h"

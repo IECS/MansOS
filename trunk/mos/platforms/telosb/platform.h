@@ -32,7 +32,7 @@
 
 #include "cc2420_pins.h"
 #include "hd4478_pins.h"
-#include "m25p80_pins.h"
+#include "m25pxx_pins.h"
 #include "sht_pins.h"
 #include "sdcard_pins.h"
 

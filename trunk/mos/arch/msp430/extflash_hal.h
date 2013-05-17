@@ -33,35 +33,47 @@
 
 #if EXT_FLASH_CHIP == FLASH_CHIP_M25P80
 
-#include <m25p80/m25p80.h>
+// minimal unit that can be erased
+#define M25PXX_SECTOR_SIZE    0x10000ul  // 64kb
+#define M25PXX_SECTOR_COUNT   16         // 1 MiB total
+// maximal unit that can be written
+#define M25PXX_PAGE_SIZE      256
 
-#define EXT_FLASH_SECTOR_SIZE   M25P80_SECTOR_SIZE
-#define EXT_FLASH_SECTOR_COUNT  M25P80_SECTOR_COUNT
-#define EXT_FLASH_PAGE_SIZE     M25P80_PAGE_SIZE
+#include <m25pxx/m25pxx.h>
 
-#define extFlashInit() m25p80_init()
-#define extFlashSleep() m25p80_sleep()
-#define extFlashWake() m25p80_wake()
-#define extFlashRead(addr, buf, len) m25p80_read(addr, buf, len)
-#define extFlashWrite(addr, buf, len) m25p80_write(addr, buf, len)
-#define extFlashBulkErase() m25p80_bulkErase()
-#define extFlashEraseSector(addr) m25p80_eraseSector(addr)
+#define EXT_FLASH_SECTOR_SIZE   M25PXX_SECTOR_SIZE
+#define EXT_FLASH_SECTOR_COUNT  M25PXX_SECTOR_COUNT
+#define EXT_FLASH_PAGE_SIZE     M25PXX_PAGE_SIZE
+
+#define extFlashInit() m25pxx_init()
+#define extFlashSleep() m25pxx_sleep()
+#define extFlashWake() m25pxx_wake()
+#define extFlashRead(addr, buf, len) m25pxx_read(addr, buf, len)
+#define extFlashWrite(addr, buf, len) m25pxx_write(addr, buf, len)
+#define extFlashBulkErase() m25pxx_bulkErase()
+#define extFlashEraseSector(addr) m25pxx_eraseSector(addr)
 
 #elif EXT_FLASH_CHIP == FLASH_CHIP_M25P16
 
-#include <m25p16/m25p16.h>
+// minimal unit that can be erased
+#define M25PXX_SECTOR_SIZE    0x10000ul  // 64kb
+#define M25PXX_SECTOR_COUNT   32         // 2 MiB total
+// maximal unit that can be written
+#define M25PXX_PAGE_SIZE      256
 
-#define EXT_FLASH_SECTOR_SIZE   M25P16_SECTOR_SIZE
-#define EXT_FLASH_SECTOR_COUNT  M25P16_SECTOR_COUNT
-#define EXT_FLASH_PAGE_SIZE     M25P16_PAGE_SIZE
+#include <m25pxx/m25pxx.h>
 
-#define extFlashInit() m25p16_init()
-#define extFlashSleep() m25p16_sleep()
-#define extFlashWake() m25p16_wake()
-#define extFlashRead(addr, buf, len) m25p16_read(addr, buf, len)
-#define extFlashWrite(addr, buf, len) m25p16_write(addr, buf, len)
-#define extFlashBulkErase() m25p16_bulkErase()
-#define extFlashEraseSector(addr) m25p16_eraseSector(addr)
+#define EXT_FLASH_SECTOR_SIZE   M25PXX_SECTOR_SIZE
+#define EXT_FLASH_SECTOR_COUNT  M25PXX_SECTOR_COUNT
+#define EXT_FLASH_PAGE_SIZE     M25PXX_PAGE_SIZE
+
+#define extFlashInit() m25pxx_init()
+#define extFlashSleep() m25pxx_sleep()
+#define extFlashWake() m25pxx_wake()
+#define extFlashRead(addr, buf, len) m25pxx_read(addr, buf, len)
+#define extFlashWrite(addr, buf, len) m25pxx_write(addr, buf, len)
+#define extFlashBulkErase() m25pxx_bulkErase()
+#define extFlashEraseSector(addr) m25pxx_eraseSector(addr)
 
 #elif EXT_FLASH_CHIP == FLASH_CHIP_AT25DF
 
