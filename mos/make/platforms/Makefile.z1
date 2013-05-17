@@ -71,6 +71,6 @@ PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
 # because all my efforts to use the unified I2C interface for Z1 were in vain
 PSOURCES-$(USE_I2C) += $(MOS)/platforms/z1/i2c.c
 
-PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/m25p16/m25p16.c
+PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/m25pxx/m25pxx.c
 
 PSOURCES-$(USE_USER_BUTTON) += $(MOS)/arch/msp430/user_button.c

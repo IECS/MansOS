@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,39 +21,36 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef M25P80_SPI_HAL_H
-#define M25P80_SPI_HAL_H
+#ifndef M25PXX_SPI_HAL_H
+#define M25PXX_SPI_HAL_H
 
 #include <spi.h>
 
 /*
- * M25P80 Flash SPI bus configuration for TelosB platform
+ * M25P16 Flash SPI bus configuration for Z1 platform
  */
 
-// Flash attached to USCI 1 SPI BUS
-#define M25P80_SPI_ID      1
-#define EXT_FLASH_SPI_ID   M25P80_SPI_ID
+// Flash attached to USCI 1 (B0) SPI BUS
+#define M25PXX_SPI_ID      1
+#define EXT_FLASH_SPI_ID   M25PXX_SPI_ID
 
 // To use soft-SPI, uncomment the line below and define
 // MISO, MOSI and SCLK pins (see hil/spi_soft.h) in your config file!
-// #define M25P80_SPI_ID   SPI_BUS_SW
+// #define M25PXX_SPI_ID   SPI_BUS_SW
 
 // Flash pins
-#define M25P80_PWR_PORT   4   /* P4.3 Output */
-#define M25P80_PWR_PIN    3
+#define M25PXX_CS_PORT    4   /* P4.4 Output */
+#define M25PXX_CS_PIN     4
 
-#define M25P80_CS_PORT    4   /* P4.4 Output */
-#define M25P80_CS_PIN     4
+#define M25PXX_HOLD_PORT  5   /* P4.7 Output */
+#define M25PXX_HOLD_PIN   7
 
-#define M25P80_HOLD_PORT  4   /* P4.7 Output */
-#define M25P80_HOLD_PIN   7
-
-/* M25P80 flash functions */
-#define SPI_M25P80_HOLD()      pinClear(M25P80_HOLD_PORT, M25P80_HOLD_PIN);
-#define SPI_M25P80_UNHOLD()    pinSet(M25P80_HOLD_PORT, M25P80_HOLD_PIN);
+/* M25PXX flash functions */
+#define SPI_M25PXX_HOLD()      pinClear(M25PXX_HOLD_PORT, M25PXX_HOLD_PIN);
+#define SPI_M25PXX_UNHOLD()    pinSet(M25PXX_HOLD_PORT, M25PXX_HOLD_PIN);
 
 /* Enable/disable flash access to the SPI bus (active low). */
-#define M25P80_SPI_ENABLE()    spiSlaveEnable(M25P80_CS_PORT, M25P80_CS_PIN)
-#define M25P80_SPI_DISABLE()   spiSlaveDisable(M25P80_CS_PORT, M25P80_CS_PIN)
+#define M25PXX_SPI_ENABLE()    spiSlaveEnable(M25PXX_CS_PORT, M25PXX_CS_PIN)
+#define M25PXX_SPI_DISABLE()   spiSlaveDisable(M25PXX_CS_PORT, M25PXX_CS_PIN)
 
 #endif

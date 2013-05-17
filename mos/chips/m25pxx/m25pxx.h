@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,39 +21,32 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_M25P80_H
-#define MANSOS_M25P80_H
+#ifndef MANSOS_M25PXX_H
+#define MANSOS_M25PXX_H
 
 #include <stdtypes.h>
 #include <delay.h>
 
 //
-// Numonyx Forte Serial Flash Memory M25P80
+// Numonyx Forte Serial Flash Memory M25P80 and M25P16
 //
 
-// minimal unit that can be erased
-#define M25P80_SECTOR_SIZE    0x10000ul  // 64kb
-#define M25P80_SECTOR_COUNT   16         // 1 MiB total
-
-// maximal unit that can be written
-#define M25P80_PAGE_SIZE      256
-
 // initialize pin directions and SPI in general. Enter low power mode afterwards
-void m25p80_init(void);
+void m25pxx_init(void);
 // Enter low power mode (wait for last instruction to complete)
-void m25p80_sleep(void);
+void m25pxx_sleep(void);
 // Exit low power mode
-void m25p80_wake(void);
+void m25pxx_wake(void);
 // Read a block of data from addr
-void m25p80_read(uint32_t addr, void* buffer, uint16_t len);
+void m25pxx_read(uint32_t addr, void* buffer, uint16_t len);
 // Write len bytes (len <= 256) to flash at addr
 // Block can split over multiple sectors/pages
-void m25p80_write(uint32_t addr, const void *buf, uint16_t len);
+void m25pxx_write(uint32_t addr, const void *buf, uint16_t len);
 // Erase the entire flash
-void m25p80_bulkErase(void);
+void m25pxx_bulkErase(void);
 // Erase on sector, containing address addr. Addr is not the number of sector,
 // rather an address (any) inside the sector
-void m25p80_eraseSector(uint32_t addr);
+void m25pxx_eraseSector(uint32_t addr);
 
 
 // Wrappers, borrowed from WSN430 library
@@ -64,16 +57,16 @@ void m25p80_eraseSector(uint32_t addr);
  * \param page the memory page number to write to.
  * \param buffer a pointer to the data to copy
  */
-#define m25p80_savePage(page, buffer) \
-    m25p80_page_program(((uint32_t) (page)) << 8, (buffer), 256)
+#define m25pxx_savePage(page, buffer) \
+    m25pxx_page_program(((uint32_t) (page)) << 8, (buffer), 256)
 
 /**
  * \brief Read data from the memory
  * \param page the memory page number to read from.
  * \param buffer a pointer to the buffer to store the data to.
  */
-#define m25p80_loadPage(page, buffer) \
-    m25p80_read(((uint32_t) (page)) << 8, (buffer), 256)
+#define m25pxx_loadPage(page, buffer) \
+    m25pxx_read(((uint32_t) (page)) << 8, (buffer), 256)
 
 
 // ----------------------------------------------
@@ -92,7 +85,7 @@ void m25p80_eraseSector(uint32_t addr);
 #define RES   0xAB
 #define DUMMY 0xAA
 
-// Status Register Masks for the M25P80
+// Status Register Masks for the M25PXX
 #define WIP  0x01
 #define WEL  0x02
 #define BP0  0x04
@@ -102,62 +95,62 @@ void m25p80_eraseSector(uint32_t addr);
 
 
 // Shortcuts
-#define M25P80_WR_BYTE(b) \
-    spiWriteByte(M25P80_SPI_ID, b)
-#define M25P80_RD_BYTE() \
-    spiReadByte(M25P80_SPI_ID)
-#define M25P80_WR_MANY(buf, len) \
-    spiWrite(M25P80_SPI_ID, buf, len)
-#define M25P80_RD_MANY(buf, len) \
-    spiRead(M25P80_SPI_ID, buf, len)
+#define M25PXX_WR_BYTE(b) \
+    spiWriteByte(M25PXX_SPI_ID, b)
+#define M25PXX_RD_BYTE() \
+    spiReadByte(M25PXX_SPI_ID)
+#define M25PXX_WR_MANY(buf, len) \
+    spiWrite(M25PXX_SPI_ID, buf, len)
+#define M25PXX_RD_MANY(buf, len) \
+    spiRead(M25PXX_SPI_ID, buf, len)
 
 
 // Block while write in progress
-#define M25P80_WAIT_WHILE_WIP()        \
-    M25P80_SPI_ENABLE();               \
-    M25P80_WR_BYTE(RDSR);              \
+#define M25PXX_WAIT_WHILE_WIP()        \
+    M25PXX_SPI_ENABLE();               \
+    M25PXX_WR_BYTE(RDSR);              \
     do {                               \
         uint8_t dummy;                 \
         do {                           \
-            dummy = M25P80_RD_BYTE();  \
+            dummy = M25PXX_RD_BYTE();  \
         } while (dummy & WIP);         \
     } while (0);                       \
-    M25P80_SPI_DISABLE();
+    M25PXX_SPI_DISABLE();
 
-#define M25P80_INSTR(instr)      \
-    M25P80_SPI_ENABLE();         \
-    M25P80_WR_BYTE(instr);       \
-    M25P80_SPI_DISABLE();        \
+#define M25PXX_INSTR(instr)      \
+    M25PXX_SPI_ENABLE();         \
+    M25PXX_WR_BYTE(instr);       \
+    M25PXX_SPI_DISABLE();        \
 
 // Instruction executed before all modifying operations
-#define M25P80_WRITE_ENABLE()   \
-    M25P80_INSTR(WREN);
+#define M25PXX_WRITE_ENABLE()   \
+    M25PXX_INSTR(WREN);
 
 // Send address, 24 bits, most significant bits first
-#define M25P80_TX_ADDR(addr) \
-    M25P80_WR_BYTE((uint8_t) ((addr >> 16) & 0xFF)); \
-    M25P80_WR_BYTE(((uint8_t) (addr >>  8) & 0xFF)); \
-    M25P80_WR_BYTE((uint8_t) (addr & 0xFF));
+#define M25PXX_TX_ADDR(addr) \
+    M25PXX_WR_BYTE((uint8_t) ((addr >> 16) & 0xFF)); \
+    M25PXX_WR_BYTE(((uint8_t) (addr >>  8) & 0xFF)); \
+    M25PXX_WR_BYTE((uint8_t) (addr & 0xFF));
 
 // Enter low power mode */
-#define M25P80_DEEP_POWERDOWN()     \
-    M25P80_INSTR(DP);               \
+#define M25PXX_DEEP_POWERDOWN()     \
+    M25PXX_INSTR(DP);               \
 
 // ------------------------------------------------
 
-static inline void m25p80_init_low_power(void) 
+static inline void m25pxx_init_low_power(void) 
 {
-    spiBusInit(M25P80_SPI_ID, SPI_MODE_MASTER);
+    spiBusInit(M25PXX_SPI_ID, SPI_MODE_MASTER);
 
-    pinAsOutput(M25P80_HOLD_PORT, M25P80_HOLD_PIN);
-    pinAsOutput(M25P80_CS_PORT, M25P80_CS_PIN);
-    pinSet(M25P80_CS_PORT, M25P80_CS_PIN);
-    pinSet(M25P80_HOLD_PORT, M25P80_HOLD_PIN);
+    pinAsOutput(M25PXX_HOLD_PORT, M25PXX_HOLD_PIN);
+    pinAsOutput(M25PXX_CS_PORT, M25PXX_CS_PIN);
+    pinSet(M25PXX_CS_PORT, M25PXX_CS_PIN);
+    pinSet(M25PXX_HOLD_PORT, M25PXX_HOLD_PIN);
 
     udelay(1);
 
     // initialize into low power mode
-    M25P80_DEEP_POWERDOWN();
+    M25PXX_DEEP_POWERDOWN();
 }
 
 #endif

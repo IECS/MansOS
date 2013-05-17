@@ -62,7 +62,7 @@ PSOURCES-$(USE_USER_BUTTON) += $(MOS)/arch/msp430/user_button.c
 
 PSOURCES-$(USE_RADIO) += $(MOS)/chips/cc2420/cc2420.c
 PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
-PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/m25p80/m25p80.c
+PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/m25pxx/m25pxx.c
 
 ifneq ($(USE_SOFT_SERIAL),y)
 PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
