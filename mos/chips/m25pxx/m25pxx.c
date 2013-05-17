@@ -41,7 +41,7 @@
 
 
 // actual power mode;
-static uint_t m25pxxIsOn;
+static bool m25pxxIsOn;
 
 void m25pxx_sleep(void)
 {
