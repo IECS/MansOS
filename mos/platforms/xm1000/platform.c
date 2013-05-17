@@ -44,7 +44,7 @@ void initPlatform(void)
 #if !USE_EXT_FLASH
     // make sure the flash chip is in low power mode
     mdelay(10);
-    m25p80_init_low_power();
+    m25pxx_init_low_power();
     hw_spiBusOff(M25PXX_SPI_ID);
 #endif
 }
