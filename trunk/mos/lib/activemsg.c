@@ -22,7 +22,7 @@
  */
 
 #include <radio.h>
-#include "unaligned.h"
+#include "byteorder.h"
 #include "activemsg.h"
 #include <string.h>
 #include <net/address.h>
@@ -34,11 +34,11 @@ void activeMessageSend(const void *data, uint16_t length)
     CC2420Header_t header;
 
     header.length = length + sizeof(header);
-    le16write(header.fcf, 0x1234);
+    le16Write(header.fcf, 0x1234);
     header.dsn = localSendId++;
-    le16write(header.destpan, 0x0);
-    le16write(header.dest, 0xffff); // broadcast
-    le16write(header.src, localAddress);
+    le16Write(header.destpan, 0x0);
+    le16Write(header.dest, 0xffff); // broadcast
+    le16Write(header.src, localAddress);
     header.type = 0xAA;
 
     radioSendHeader(&header, sizeof(header), data, length);
