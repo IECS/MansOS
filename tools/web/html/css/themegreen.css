@@ -8,8 +8,8 @@ div.topmenu {
     border-radius: 7px;
 }
 .topmenu a{
-	background-color:#92B452;
-	color:#ffffff;
+    background-color:#92B452;
+    color:#ffffff;
     font-size:145%;
     padding:5px;
     margin-left:5px;
@@ -24,19 +24,19 @@ div.topmenu {
     color:#ddff55;
 }
 .table{
-	border:1px solid #92B452;
-	background-color:#ffffff;
+    border:1px solid #92B452;
+    background-color:#ffffff;
     border-radius:8px;
-	padding:5px;
-	padding-left:20px;
-	padding-right:20px;
+    padding:5px;
+    padding-left:20px;
+    padding-right:20px;
 }
 .table tr td{
-	border-top:1px solid #eeeeee;
+    border-top:1px solid #eeeeee;
 }
 .table tr:hover td{
-	background-color:#92B452;
-	color:#ddff55;
+    background-color:#92B452;
+    color:#ddff55;
     border-radius:5px;
 }
 div.box{
@@ -48,7 +48,7 @@ div.box{
 }
 #cont{
     width:80%;
-    min-width:890px;
+    min-width:975px;
     margin-top:15px;
     margin-bottom:15px;
     padding: 20px;

@@ -26,7 +26,7 @@ def crc8(s):
 class SensorData(object):
     def __init__(self, motename):
         self.columns = []
-        self.data = []
+        self.data = {}
         self.tempData = []
         self.seenInThisPacket = set()
         self.firstPacket = True
@@ -38,52 +38,9 @@ class SensorData(object):
         if not os.path.exists(self.dirname):
             os.makedirs(self.dirname)
 
-    def finishPacket(self):
-        self.seenInThisPacket = set()
-        if len(self.tempData) == 0:
-            return
-
-        if len(self.columns) == 0:
-            self.columns.append("serverTimestampUnix")
-            self.columns.append("serverTimestamp")
-            for (n,v) in self.tempData:
-                if n.lower() != "servertimestamp" \
-                        and n.lower() != "servertimestampunix":
-                    self.columns.append(n)
-        else:
-            self.firstPacket = False
-
-        if len(self.tempData) + 2 != len(self.columns):
-            self.tempData = []
-            return
-
-        tmpRow = []
-        # unix timestamp
-        tmpRow.append(str(int(round(time.time()))))
-        # formatted time
-        formattedTime = time.strftime("%d %b %Y %H:%M:%S", time.localtime())
-        tmpRow.append(formattedTime)
-        for (n,v) in self.tempData:
-            if n.lower() != "servertimestamp" \
-                    and n.lower() != "servertimestampunix":
-                tmpRow.append(v)
-        self.data.append(tmpRow)
-        self.tempData = []
-
-        # save to file if required (single file)
-        if settingsInstance.cfg.saveToFilename \
-                and settingsInstance.cfg.saveProcessedData \
-                and not settingsInstance.cfg.saveMultipleFiles:
-            # filename is determined by config and mote name only
-            filename = os.path.join(self.dirname,
-                                    settingsInstance.cfg.saveToFilename + ".csv")
-            with open(filename, "a") as f:
-                if self.firstPacket:
-                    f.write("\t".join(self.getColumns()))
-                f.write("\t".join(tmpRow))
-                f.close()
-
-    def addNewData(self, string):
+    def addNewData(self, string, motename):
+        if motename[:5].lower() == "/dev/":
+            motename = motename[5:]
         string = string.rstrip()
         eqSignPos = string.find('=')
         if eqSignPos == -1: return
@@ -96,10 +53,10 @@ class SensorData(object):
         # sanity check of dataName
         if not isasciiString(dataName):
             return
-
-        if dataName in self.seenInThisPacket:
-            self.finishPacket()
-        self.seenInThisPacket.add(dataName)
+        
+        if not dataName in self.seenInThisPacket:
+            self.seenInThisPacket.add(dataName)
+            self.data[dataName + "@" + motename] = []
 
         valueString = string[eqSignPos + 1:].strip()
 
@@ -113,13 +70,10 @@ class SensorData(object):
             except:
                 print("Sensor " + dataName + " value is in unknown format: " + valueString + "\n")
                 value = 0
-
-        self.tempData.append((dataName, value))
-
+        self.data[dataName + "@" + motename].append([int(round(time.time()*1000)),value])#miliseconds since 1970
         # save to file if required (multiple files)
         if settingsInstance.cfg.saveToFilename \
-                and settingsInstance.cfg.saveProcessedData \
-                and settingsInstance.cfg.saveMultipleFiles:
+                and settingsInstance.cfg.saveProcessedData:
 
             # one more sanity check of dataName
             if len(dataName) > 64:
@@ -138,7 +92,8 @@ class SensorData(object):
 
 
     def resize(self, newMaxSize):
-        self.data = self.data[-newMaxSize:]
+        for datalist in self.data.keys():
+            self.data[datalist] = self.data[datalist][-newMaxSize:]
 
     def reset(self):
         self.resize(0)
@@ -156,10 +111,11 @@ class SensorData(object):
 
     # return all sensor readings, except unix timestamp
     def getData(self):
-        return [self.getColumns()[1:]] + self.getRows()
+        return self.data
+        #return [self.getColumns()[1:]] + self.getRows()
 
     def hasData(self):
-        return len(self.columns) != 0
+        return len(self.data) != 0
 
 #############################################
 
@@ -202,7 +158,7 @@ class MoteData(object):
 
         if motename not in self.data:
             self.data[motename] = SensorData(motename)
-        self.data[motename].addNewData(newString)
+        self.data[motename].addNewData(newString, motename)
 
     def fixSizes(self):
         # use only last 27 lines of all motes - fits in screen ("listen_div")
@@ -220,9 +176,10 @@ class MoteData(object):
     # return all readings from the first sensor mote
     # TODO: allow the user to select which sensor to return!
     def getData(self):
+        returnData = []
         for sensorData in self.data.itervalues():
             if sensorData.hasData():
-                return sensorData.getData()
-        return []
+                returnData.append(sensorData.getData())
+        return returnData
 
 moteData = MoteData()

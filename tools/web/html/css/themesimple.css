@@ -10,8 +10,8 @@ div.topmenu {
     border-radius: 7px;
 }
 .topmenu a{
-	border:0;
-	color:#ffffff;
+    border:0;
+    color:#ffffff;
     background-image:url('chips.png');
     background-size:contain;
     background-repeat:repeat-x;
@@ -30,23 +30,23 @@ div.topmenu {
     color:rgb(255,255,0);
 }
 .table{
-	background-color:#ffffff;
+    background-color:#ffffff;
     border-radius:8px;
-	padding:5px;
-	padding-left:20px;
-	padding-right:20px;
+    padding:5px;
+    padding-left:20px;
+    padding-right:20px;
 }
 .table tr td{
-	border-top:1px solid #eeeeee;
+    border-top:1px solid #eeeeee;
 }
 .table tr:hover td{
-	background-color:#175186;
-	color:#ffff00;
+    background-color:#175186;
+    color:#ffff00;
     border-radius:5px;
 }
 #cont{
     width:80%;
-    min-width:890px;
+    min-width:975px;
     margin-top:15px;
     margin-bottom:15px;
     padding: 20px;

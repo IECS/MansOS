@@ -81,6 +81,12 @@ function Coded(){
 			elems[i].value = fromCode(elems[i].value, elems[i].id);
 			elems[i].style.display = "inline";
 		}
+		if((' ' + elems[i].className + ' ').indexOf(' list ') > -1) {
+			document.getElementById(elems[i].name).value = elems[i].value;
+		}
+		if((' ' + elems[i].className + ' ').indexOf(' bool ') > -1 && elems[i].value == "True") {
+			document.getElementById(elems[i].name).checked = true;
+		}
 	}
 }
 function Md5(){

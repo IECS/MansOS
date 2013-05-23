@@ -1,5 +1,5 @@
 <script>
-function userSave(){
+function settingsSave(){
 	var sma = getCookie("Msma37");
 	if (sma == undefined){
 		alert("Could not finde cookie! Try to go to other page and back or try after 5 seconds!")
@@ -8,10 +8,6 @@ function userSave(){
 	var sid = localStorage.getItem("Msid37");
 	if(sid == null){
 		alert("Could not finde cookie! Try to logout and in or try after 5 seconds!")
-		return false;
-	}
-	if(!pwsmd5(sid, sma)){
-		alert("Passwords do not match!")
 		return false;
 	}
 	codeInfo();
@@ -36,17 +32,6 @@ function codeInfo(){
 			elems[i].value = toCode(elems[i].value);
 		}
 	}
-}
-function pwsmd5(sid, sma){
-	var elems = [document.getElementById('psw1'), document.getElementById('psw2'),document.getElementById("pswcheck")];
-    if (elems[0] != undefined && elems[1] != undefined && elems[0].value != "" && elems[2] != undefined){
-		if(elems[0].value != elems[1].value) return false;
-		elems[0].style.color = "white";
-		elems[0].value = hex_md5(elems[0].value);
-		elems[2].value = hex_md5(sid + sma + elems[0].value);
-		return true;
-	}
-	return true;
 }
 </script>
 %INFO%

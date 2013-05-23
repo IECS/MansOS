@@ -37,7 +37,7 @@ Blockly.Seal = Blockly.Generator.get('Seal');
 //-------------------------------------
 Blockly.Language.seal_use = {
   category: 'Statements',
-  helpUrl: 'http://mansos.net/',
+  helpUrl: 'http://open-sci.net/',
   init: function() {
     this.setColour(Seal.block_color);
     this.setPreviousStatement(true);
@@ -65,7 +65,7 @@ Blockly.Language.seal_use.RESOURCES =
 //-------------------------------------
 Blockly.Language.seal_read = {
   category: 'Statements',
-  helpUrl: 'http://mansos.net/',
+  helpUrl: 'http://open-sci.net/',
   init: function() {
   	this.setColour(Seal.block_color);
   	this.setPreviousStatement(true);
@@ -94,7 +94,7 @@ Blockly.Language.seal_read.RESOURCES =
 //-------------------------------------
 Blockly.Language.seal_output = {
   category: 'Statements',
-  helpUrl: 'http://mansos.net/',
+  helpUrl: 'http://open-sci.net/',
   init: function () {
   	this.setColour(Seal.block_color);
   	this.setPreviousStatement(true);
@@ -119,7 +119,7 @@ Blockly.Language.seal_output.RESOURCES =
 
 Blockly.Language.lists_create_with = {
 	category: 'Statements',
-	helpUrl: 'http://mansos.net/',
+	helpUrl: 'http://open-sci.net/',
 	init: function () {
 		this.setColour(Seal.block_color);
 		this.setPreviousStatement(true);

@@ -30,13 +30,13 @@ function pwsmd5(){
 		fi=sma.substr(fi,2);
 	}
 	fi=parseInt(fi,10);
-	if(isNaN(fi)){fi=0;}
-	fi=fi%25;
+	if(isNaN(fi)){fi = 0;}
+	fi=fi%23;
     if (elem != undefined)
 	{
 		elem.style.color = "white";
 		elem.value = hex_md5(elem.value);
-		localStorage.setItem("Mcod37", elem.value.substr(fi,5));
+		localStorage.setItem("Mcod37", elem.value.substr(fi,9));
 		elem.value = hex_md5(elem.value+sma);
 	}
 }
