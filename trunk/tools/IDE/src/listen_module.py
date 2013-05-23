@@ -54,6 +54,8 @@ class ListenModule(wx.Panel):
         self.refresh = wx.Button(self, label = localize("Refresh"))
         self.clearOutput = wx.Button(self, label = localize("Clear"))
         self.saveOutput = wx.Button(self, label = localize("Save to file"))
+        self.baudrate = wx.ComboBox(self, choices = ['2400', '4800', '9600', '19200', '38400', '57600', '115200'])
+        self.baudrate.SetSelection(4);
 
         self.ports.SetEditable(False)
 
@@ -63,6 +65,7 @@ class ListenModule(wx.Panel):
         self.clearOutputArea = self.outputArea.clear
 
         self.listenControls.Add(self.ports)
+        self.listenControls.Add(self.baudrate)
         self.listenControls.Add(self.refresh)     
         self.listenControls.Add(self.clear)
         self.listenControls.Add(self.clearOutput)
@@ -77,6 +80,7 @@ class ListenModule(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.clearOutputArea, self.clearOutput)
         self.Bind(wx.EVT_BUTTON, self.saveOutputArea, self.saveOutput)
         self.Bind(wx.EVT_COMBOBOX, self.changeTarget, self.ports)
+        self.Bind(wx.EVT_COMBOBOX, self.changeBaudrate, self.baudrate)
         self.Bind(wx.EVT_TEXT, self.changeTarget, self.ports)
 
         #self.updateMotelist()
@@ -156,6 +160,16 @@ class ListenModule(wx.Panel):
 
         if val.count("(") != 0:
             self.args['serialPort'] = val.split("(")[1].split(")")[0]
+
+    def changeBaudrate(self, event):
+        # Stop listening
+        if self.listening:
+            self.doClear(None)
+
+        try:
+            self.args['baudrate'] = event.GetEventObject().GetValue()
+        except:
+            self.baudrate.setValue(self.args['baudrate']);
 
     def saveOutputArea(self, event):
         save = wx.FileDialog(self,
