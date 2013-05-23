@@ -135,7 +135,7 @@ static inline void radioPrintV(const char* str, ...) {
 
 typedef void (*PrintFunction_t)(const char* str);
 
-void debugPrintfFormat(const char* str, ...);
+void debugPrintfFormat(const char* str, ...) PRINTF_LIKE;
 void debugHexdump(void *data, unsigned len);
 
 void printInit(void) WEAK_SYMBOL;
