@@ -7,7 +7,7 @@ from settings import *
 import time
 
 # names of all platforms the web interface supports.
-# TODO: populate this from mansos Makefiles?
+# TODO: populate this from Makefiles?
 supportedPlatforms = ["telosb", "testbed", "testbed2", "sm3", "xm1000"]
 
 MAX_TIME_WAIT_FOR_REPLY = 0.1 # max time to wait for a single reply, seconds

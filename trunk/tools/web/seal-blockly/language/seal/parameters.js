@@ -36,7 +36,7 @@ Blockly.Seal = Blockly.Generator.get('Seal');
 
 Blockly.Language.seal_period = {
   category: 'Parameters',
-  helpUrl: 'http://mansos.net/',
+  helpUrl: 'http://open-sci.net/',
   init: function () {
   	this.setColour(Seal.block_color);
   	this.setOutput(true);
@@ -64,7 +64,7 @@ Blockly.Language.seal_period.TIME =
 Blockly.Language.seal_state = {
 	// Boolean data type: true and false.
 	category: "Parameters",
-	helpUrl: 'http://mansos.net/',
+	helpUrl: 'http://open-sci.net/',
 	init: function () {
 		this.setColour(Seal.block_color);
 		this.setOutput(true, String);

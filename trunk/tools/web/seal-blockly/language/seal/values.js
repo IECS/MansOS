@@ -12,7 +12,7 @@ Blockly.Seal = Blockly.Generator.get('Seal');
 
 Blockly.Language.seal_number = {
 	category: "Values",
-	helpUrl: 'http://mansos.net/',
+	helpUrl: 'http://open-sci.net/',
 	init: function () {
 		this.setColour(230);
 		this.appendDummyInput()
@@ -24,7 +24,7 @@ Blockly.Language.seal_number = {
 
 Blockly.Language.seal_sensors = {
 	category: "Values",
-	helpUrl: 'http://mansos.net/',
+	helpUrl: 'http://open-sci.net/',
 	init: function () {
 		this.setColour(230);
 		this.setOutput(true, String);
@@ -37,7 +37,7 @@ Blockly.Language.seal_sensors = {
 
 Blockly.Language.seal_struct = {
 	category: 'Values',
-	helpUrl: 'http://mansos.net/',
+	helpUrl: 'http://open-sci.net/',
 	init: function () {
 		this.setColour(230);
 		this.setOutput(true, String);

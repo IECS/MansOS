@@ -21,33 +21,68 @@ class Settings(object):
             self.saveToFilename = ""
             self.saveToFilenameOnMote = ""
             self.saveProcessedData = "False"
-            self.saveMultipleFiles = "False"
             self.slowUpload = "False"
             self.htmlDirectory = "html"
             self.dataDirectory = "data"
             self.mansosDirectory = "../.."
             self.sealBlocklyDirectory = "seal-blockly"
             self.createDaemon = "False"
+            self.serverTheme = "simple"
+            self.serverWebSettings = ["serverTheme"]
+            self.serverSettingsType = [["simple","green"]]
             #user.cfg
             self.userDirectory = "user"
             self.userFile = "user.dat"
-            self.userAttributes = ["name","password","level"]
-            self.defaultValues = ["Unknown","5f4dcc3b5aa765d61d8327deb882cf99","1"] #password "password"
+            self.userAttributes = ["name", "password", "level"]
+            self.userAttributesType = ["text", "text", ["1", "9"]]
+            self.defaultValues = ["unknown","5f4dcc3b5aa765d61d8327deb882cf99","1"] #password "password"
             self.adminValues = ["admin","21232f297a57a5a743894a0e4a801fc3","9"] #password "admin"
             self.userWebAttributes = [] #user editable (password is built-in)
             self.adminWebAttributes = ["level"] #admin editable (reset password is built-in and name is uneditable)
+            #graph.cfg
+            self.graphTitle = "Measurements_from_all_motes"
+            self.graphYAxis = "Measurements"
+            self.graphInterval = "1000"
+            self.graphData = [["all"]]
+            self.graphMaxDisplay = "40"
+            
 
     cfg = ConfigValues()
 
-    configurationFileName = "server.cfg"
-    userconfigurationFileName = "user.cfg"
+    FileNames = ["server.cfg", "user.cfg","graph.cfg"]
     _inFile = {}
-
+    def listInList(self, alist):
+        i = len(alist) - 1
+        blist = [] #blist is end result
+        while i >= 0:
+            if alist[i][-1:] == "]":
+                if alist[i][:1] == "[":
+                    blist.insert(0, [alist[i][1:-1]])
+                    i -= 1
+                    continue
+                j = i - 1
+                clist = [alist[i][:-1]] #clist is list in list
+                while j > -1:
+                    if alist[j][:1] == "[":
+                        clist.insert(0, alist[j][1:])
+                        blist.insert(0, clist)
+                        i = j
+                        break
+                    else:
+                        clist.insert(0, alist[j])
+                    j -= 1
+                if j == -1: blist.insert(0, alist[i]) #no one befor start with "["
+            else:
+                blist.insert(0, alist[i])
+            i -= 1
+        if i == 0: blist.insert(0, alist[0])
+            #element [0] isn't check if it end with 0, but could be added
+        return blist
     def load(self):
         self.comments = {}
         tmpComment = ""
-
-        for files in [self.configurationFileName, self.userconfigurationFileName]:
+        
+        for files in self.FileNames:
             with open(files, 'r') as f:
                 line = 0
                 self._inFile[files] = []
@@ -77,18 +112,27 @@ class Settings(object):
                     # extract value list
                     vv = kv[1].strip('"').split(",")
 
-                    if len(vv) == 1:
+                    if len(vv) == 1 and (len(vv[0]) < 2 or (vv[0][:1] != "[" and vv[0][-1:] != "]")):
                         # single value
                         self.cfg.__setattr__(key, vv[0])
                     else:
                         # value list
+                        vv = self.listInList(vv)
                         self.cfg.__setattr__(key, vv)
 
                 if tmpComment:
                     self.comments["__EOF"] = tmpComment
 
-    def save(self):
-        for files in self._inFile.keys():
+    def save(self, setting = "all"):#save all file with given setting, "all" - saving all files
+        if setting == "all":
+            tfiles = self._inFile.keys()
+        else:
+            tfiles = []
+            for files in self._inFile.keys():
+                for key in self._inFile[files]:
+                    if setting == key:
+                        tfiles.append(files)
+        for files in tfiles:
             with open(files, 'w') as f:
                 for key in self._inFile[files]:
                     value = self.cfg.__dict__[key]
@@ -99,7 +143,14 @@ class Settings(object):
                     f.write('=')
                     if isinstance(value, list):
                         # value list
-                        f.write(",".join(value))
+                        first = True
+                        for values in value:
+                            if not first: f.write(",")
+                            if isinstance(values, list):
+                                f.write("[" + ",".join(values) + "]")
+                            else:
+                                f.write(values)
+                            first = False
                     else:
                         # single value
                         f.write(value)
