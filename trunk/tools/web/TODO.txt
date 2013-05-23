@@ -2,7 +2,7 @@ Upload lapa:
 * kompilēšana nofeilo, ja pirmoreiz ir bijusi kļūda
 * kompilēšana un uploadošana ir nestabila - ne vienmēr korekti tiek parādīts beigu statuss, dažreiz lapa palioek lādējoties
 * reizēm pēc kompilēšanas lietotāju izmet laukā no logina
-* vajadzētu pārliecināties, vai 
+* vajadzētu pārliecināties, vai kods un kompilācijas tips tiek saglabāts korekti (caur lapas pārlādēm), un vajadzētu tos saglabāt katram lietotājam atsevišķi
 
 Motes:
 * vajadzētu papildus statiski konfigurētajiem portiem automātiski nolasīt kuriem portiem ir pieslēgtas motes (kā to jau dara IDE)
