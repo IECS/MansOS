@@ -19,9 +19,6 @@ from mote import *
 from sensor_data import *
 from config import *
 from daemon import *
-from sqlalchemy import create_engine
-from sqlalchemy import Table, Column, MetaData
-from sqlalchemy.types import DateTime, Numeric, Integer, String
 import re as re
 from uuid import getnode as get_mac
 
@@ -56,20 +53,33 @@ sealBlocklyPath = "seal-blockly"
 usePacketSeparator = False
 packetSeparator = "==="
 packet = None
+sampleRe = re.compile('^\w+=\d+(\.\d+)?(,[\da-fA-F]{2})?$')
 
-# Database
-url = settingsInstance.getCfgValue("databaseServer")
-engine = create_engine(url)
-connection = None
-metadata = MetaData()
-observations = Table('observations', metadata,
-    Column('id', Integer, primary_key=True),
-    Column('obs_time', DateTime),
-    Column('unit_id', String),
-    Column('port', String),
-    Column('type', String),
-    Column('value', Numeric(20,6))
-)
+try:
+    from sqlalchemy import create_engine
+    from sqlalchemy import Table, Column, MetaData
+    from sqlalchemy.types import DateTime, Numeric, Integer, String
+
+    # Database
+    url = settingsInstance.getCfgValue("dbServer")
+    username = settingsInstance.getCfgValue("dbUsername")
+    password = settingsInstance.getCfgValue("dbPassword")
+    host = settingsInstance.getCfgValue("dbHost")
+    engine = create_engine(url % (username, password, host))
+    connection = None
+    metadata = MetaData()
+    observations = Table('observations', metadata,
+        Column('id', Integer, primary_key = True),
+        Column('obs_time', DateTime),
+        Column('unit_id', String),
+        Column('port', String),
+        Column('type', String),
+        Column('value', Numeric(20,6))
+    )
+except ImportError:
+    print "Warning: database storage dependencies are missing. "
+    print "The following packages should be installed to use the database - python-sqlalchemy, python-mysqldb."
+
 saveToDB = False
 
 def saveDataToDB(packet):
@@ -79,7 +89,7 @@ def saveDataToDB(packet):
     for key in packet.keys():
         arr = key.split(":")
         val = packet[key]
-        ins = observations.insert().values(obs_time=datetime.datetime.now(), unit_id=mac, port=arr[0], type=arr[1], value=val)
+        ins = observations.insert().values(obs_time = datetime.datetime.now(), unit_id = mac, port = arr[0], type = arr[1], value = val)
         connection.execute(ins)
 
 def processData(port, newString):
@@ -94,9 +104,8 @@ def processData(port, newString):
         else:
             packet = {}
     else:
-        p = re.compile('^\w+=\d+(\.\d+)?(,[\da-fA-F]{2})?$')
         str = newString.replace (" ", "")
-        if p.match(str) != None:
+        if sampleRe.match(str) != None:
             arr = str.split("=")
             if not usePacketSeparator:
                 ''' Save data to DB '''
