@@ -30,6 +30,7 @@ class Settings(object):
             self.serverTheme = "simple"
             self.serverWebSettings = ["serverTheme"]
             self.serverSettingsType = [["simple","green"]]
+            self.databaseServer = "mysql://root:ln29Tx@localhost/mansosdb"
             #user.cfg
             self.userDirectory = "user"
             self.userFile = "user.dat"
