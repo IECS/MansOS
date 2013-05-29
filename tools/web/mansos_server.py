@@ -19,6 +19,11 @@ from mote import *
 from sensor_data import *
 from config import *
 from daemon import *
+from sqlalchemy import create_engine
+from sqlalchemy import Table, Column, MetaData
+from sqlalchemy.types import DateTime, Numeric, Integer, String
+import re as re
+from uuid import getnode as get_mac
 
 def isPython3():
     return sys.version_info[0] >= 3
@@ -45,10 +50,65 @@ uploadResult = ""
 
 motes = MoteCollection()
 
-
 sealBlocklyPath = "seal-blockly"
 
+# Packet
+usePacketSeparator = False
+packetSeparator = "==="
+packet = None
+
+# Database
+url = settingsInstance.getCfgValue("databaseServer")
+engine = create_engine(url)
+connection = None
+metadata = MetaData()
+observations = Table('observations', metadata,
+    Column('id', Integer, primary_key=True),
+    Column('obs_time', DateTime),
+    Column('unit_id', String),
+    Column('port', String),
+    Column('type', String),
+    Column('value', Numeric(20,6))
+)
+saveToDB = False
+
+def saveDataToDB(packet):
+    global connection
+    
+    mac = str(get_mac())
+    for key in packet.keys():
+        arr = key.split(":")
+        val = packet[key]
+        ins = observations.insert().values(obs_time=datetime.datetime.now(), unit_id=mac, port=arr[0], type=arr[1], value=val)
+        connection.execute(ins)
+
+def processData(port, newString):
+    global usePacketSeparator, packet
+    
+    if newString == packetSeparator:
+        usePacketSeparator = True
+        if packet != None:
+            ''' Save data to DB '''
+            saveDataToDB(packet)
+            packet.clear()
+        else:
+            packet = {}
+    else:
+        p = re.compile('^\w+=\d+(\.\d+)?(,[\da-fA-F]{2})?$')
+        str = newString.replace (" ", "")
+        if p.match(str) != None:
+            arr = str.split("=")
+            if not usePacketSeparator:
+                ''' Save data to DB '''
+                saveDataToDB({port+":"+arr[0]: arr[1]})
+            else:
+                packet[port+":"+arr[0]] = arr[1]
+        else:
+            print "ERROR: Wrong data format!\n"
+
 def listenSerial():
+    global saveToDB
+    
     while isListening:
         for m in motes.getMotes():
 
@@ -66,6 +126,8 @@ def listenSerial():
                 pos = m.buffer.find('\n')
                 if pos != 0:
                     newString = m.buffer[:pos].strip()
+                    if saveToDB == True:
+                        processData(m.port.port, newString)
                     # print "got", newString
                     moteData.addNewData(newString, m.port.portstr)
                 m.buffer = m.buffer[pos + 1:]
@@ -74,21 +136,25 @@ def listenSerial():
         # pause for a bit
         time.sleep(0.01)
 
-
 def closeAllSerial():
     global listenThread
     global isListening
+    global connection
     isListening = False
     if listenThread:
         listenThread.join()
         listenThread = None
     for m in motes.getMotes():
         m.closeSerial()
+    # Close DB connection
+    connection.close()
 
-
-def openAllSerial():
+def openAllSerial(saveToDBFlag=False):
     global listenThread
     global isListening
+    global connection
+    global saveToDB
+    
     moteData.reset()
     if isListening: return
     isListening = True
@@ -96,7 +162,9 @@ def openAllSerial():
     listenThread.start()
     for m in motes.getMotes():
         m.tryToOpenSerial(False)
-
+    # Open DB connection
+    connection = engine.connect()
+    saveToDB = saveToDBFlag
 
 def getOswVersion():
     path = settingsInstance.getCfgValue("mansosDirectory")
@@ -112,6 +180,7 @@ def getOswVersion():
 class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin, PageServer, PageGraph, setAndServeSessionAndHeader):
     server_version = 'MansOS/' + getOswVersion() + ' Web Server'
     protocol_version = 'HTTP/1.1' # 'HTTP/1.0' is the default, but we want chunked encoding
+    
     def writeChunk(self, buffer):
         if self.wfile == None: return
         if self.wfile._sock == None: return
@@ -483,7 +552,10 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                     self.serveError("No motes selected!", False)
                 if isListening:
                     self.serveError("Already listening!", False)
-                openAllSerial()
+                saveToDB = False
+                if ("saveToDB" in qs and qs["saveToDB"][0] == 'on'):
+                    saveToDB = True
+                openAllSerial(saveToDB)
             else:
                 closeAllSerial()
 
