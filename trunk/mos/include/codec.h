@@ -46,7 +46,7 @@ uint8_t *frameEncode(int length, uint8_t* bufIn, uint8_t* bufOut);
 /// Decode a HDLC frame bufIn to a stream of bytes bufOut.
 ///
 /// At most 'length' bytes are decoded.
-/// The bufOut may coincide with bufIn since the result is never longer. 
+/// The 'bufOut' may coincide with 'bufIn' since the result is never longer. 
 /// Quits once the frame flag encountered at the end of frame.
 ///   @return a pointer to the next byte after the last encoded,
 ///           or NULL if the frame was aborted

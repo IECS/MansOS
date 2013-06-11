@@ -31,6 +31,8 @@
 #include <defines.h>
 #include <digital.h>
 
+#ifdef USE_ADC
+
 //===========================================================
 // Defines and macros
 //===========================================================
@@ -189,5 +191,7 @@ static inline bool hplAdcIsBusy(void)
 {
     return ADC12CTL1 & ADC12BUSY;
 }
+
+#endif // USE_ADC
 
 #endif  // !_MSP430_ADC_H_
