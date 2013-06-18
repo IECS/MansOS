@@ -38,6 +38,18 @@
 #define SW_SPI_RECV_BIT(rxByte) \
      rxByte |= SW_SPI_MISO_GET();
 
+void sw_spiInit(SpiBusMode_t mode)
+{
+    if (mode == SPI_MODE_MASTER) {
+        pinAsData(SW_MISO_PORT, SW_MISO_PIN);
+        pinAsData(SW_MOSI_PORT, SW_MOSI_PIN);
+        pinAsData(SW_SCLK_PORT, SW_SCLK_PIN);
+        pinAsInput(SW_MISO_PORT, SW_MISO_PIN);
+        pinAsOutput(SW_MOSI_PORT, SW_MOSI_PIN);
+        pinAsOutput(SW_SCLK_PORT, SW_SCLK_PIN);
+        SW_SPI_SCLK_TR();
+    }
+}
 
 /*
  * From Wikipedia:
@@ -102,6 +114,29 @@ uint8_t sw_spiExchByte(uint8_t byte) {
     }
 
     return byte;
+}
+
+void sw_spiWriteNibble(uint8_t nibble) {
+    // assumes SW_SPI_CPHA = 0
+    uint_t bit;
+    for (bit = 0; bit < 4; ++bit) {
+
+        // write MOSI on trailing edge of previous clock
+        SW_SPI_PROPAGATE_BIT(nibble);
+
+        // half a clock cycle before leading edge
+        SW_SPI_SLEEP_HALF_CYCLE();
+
+        // read MISO on leading edge
+        SW_SPI_SCLK_LE();
+        SW_SPI_RECV_BIT(nibble);
+
+        // half a clock cycle before trailing edge
+        SW_SPI_SLEEP_HALF_CYCLE();
+
+        // trailing edge
+        SW_SPI_SCLK_TR();
+    }
 }
 
 #else // SW_SPI_PIN_ERROR == 1

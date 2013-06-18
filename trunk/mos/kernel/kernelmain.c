@@ -170,6 +170,10 @@ static inline void initSystem(void)
     INIT_PRINTF("init ADS8638 ADC converter chip...\n");
     ads8638Init();
 #endif
+#if USE_ADS8328
+    INIT_PRINTF("init ADS8328 ADC converter chip...\n");
+    ads8328Init();
+#endif
 #if USE_AD5258
     INIT_PRINTF("init AD5258 digital potentiometer...\n");
     ad5258Init();

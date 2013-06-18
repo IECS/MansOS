@@ -1,5 +1,6 @@
 #-*-Makefile-*- vim:syntax=make
 #
+# Copyright (c) 2013 OSW. All rights reserved.
 # Copyright (c) 2008-2012 the MansOS team. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -21,50 +22,27 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+# --------------------------------------------------------------------
+#	Makefile for the sample application
+#
+#  The developer must define at least SOURCES and APPMOD in this file
+#
+#  In addition, PROJDIR and OSW must be defined, before including 
+#  the main Makefile at ${OSW}/src/make/Makefile
+# --------------------------------------------------------------------
 
-#############################################
-# TestBed mote (v2)
-#############################################
+# Sources are all project source files, excluding system files
+SOURCES = main.c
 
-#############################################
-# Define platform variables
+# Module is the name of the main module buit by this makefile
+APPMOD = Ads2Test
 
-ARCH = msp430
-MCU_MODEL ?= msp430f2471
-
-# Upload target
-UPLOAD_TARGET=upload-msp430
-
-# Default clock speed: 4MHz
-ifeq ($(USE_HARDWARE_TIMERS),y)
-CPU_MHZ ?= 8
-else
-CPU_MHZ ?= 1  # TODO?
+# --------------------------------------------------------------------
+# Set the key variables
+PROJDIR = $(CURDIR)
+ifndef MOSROOT
+  MOSROOT = $(PROJDIR)/../../../..
 endif
 
-INTERRUPT_VECTOR_COUNT=32
-
-CFLAGS += -DPLATFORM_TESTBED2=1 -mivcnt=$(INTERRUPT_VECTOR_COUNT)
-
-# TODO: this will not work on Mac or Windows!
-MOTELIST = $(MOS)/make/scripts/motelist
-
-#############################################
-# Define platform-specific sources
-# (excluding architecture-specific sources)
-
-PSOURCES += $(MOS)/platforms/testbed2/platform.c
-
-PSOURCES += $(MOS)/chips/msp430/msp430x2xx_clock.c
-
-PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usci_uart.c
-PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usci_spi.c
-PSOURCES-$(USE_I2C) += $(MOS)/chips/msp430/msp430_usci_i2c.c
-
-PSOURCES-$(USE_ADS8638) += $(MOS)/chips/ads8638/ads8638.c
-PSOURCES-$(USE_ADS8328) += $(MOS)/chips/ads8328/ads8328.c
-PSOURCES-$(USE_DAC7718) += $(MOS)/chips/dac7718/dac7718.c
-PSOURCES-$(USE_AD5258) += $(MOS)/chips/ad5258/ad5258.c
-
-PSOURCES-$(USE_SDCARD) += $(MOS)/chips/sdcard/sdcard.c
-PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/sdcard/sdcard.c
+# Include the main makefile
+include ${MOSROOT}/mos/make/Makefile

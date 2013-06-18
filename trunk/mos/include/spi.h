@@ -40,6 +40,9 @@
 //! The constant used to specify software-SPI bus
 #define SPI_BUS_SW 128
 
+extern void sw_spiInit(SpiBusMode_t mode);
+extern uint8_t sw_spiExchByte(uint8_t b);
+
 ///
 /// Initializes SPI bus in either master or slave mode
 ///
