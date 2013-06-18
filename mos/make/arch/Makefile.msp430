@@ -87,7 +87,7 @@ upload-tmote:
 	-$(MOTELIST)
 
 	$(Print) ""
-	$(BSL) --telosb -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+	$(BSL) --telosb -c $(BSLPORT) -r -e -I $(SLOW) -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-msp430: 
 	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)

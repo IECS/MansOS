@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2013 OSW. All rights reserved.
+ * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,55 +22,23 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ADC_DAC_PINS_H
-#define ADC_DAC_PINS_H
+//
+// Reads all 8 ADC channels periodically, sends values to serial
+//
 
-#include "ads8638/ads8638.h"
+#include "stdmansos.h"
 #include "ads8328/ads8328.h"
-#include "dac7718/dac7718.h"
 
-#ifdef USE_SOFT_SPI
-#define ADS8328_SPI_ID SPI_BUS_SW
-#define ADS8638_SPI_ID SPI_BUS_SW
-#define DAC7718_SPI_ID SPI_BUS_SW
-#else
-// id 2 is A1
-#define ADS8328_SPI_ID  2
-// id 3 is B1
-#define ADS8638_SPI_ID  3
-#define DAC7718_SPI_ID  3
-#endif
+#define READING_PERIOD 1000 // miliseconds
 
-// Testbed platform uses, first, ADS8328 analog/digital converter
+void appMain(void)
+{
+    for (;;) {
+        uint16_t val;
+        ads8328Read(&val);
 
-#define ADS8328_CS_PORT 5
-#define ADS8328_CS_PIN  3
+        PRINTF("ADC=%u\n", val);
 
-#define ADS8328_CONVST_PORT 5
-#define ADS8328_CONVST_PIN  5
-
-#define ADS8328_EOC_PORT 5
-#define ADS8328_EOC_PIN  4
-
-// Second, ADS8638 analog/digital converter
-
-#define ADS8638_CS_PORT 5
-#define ADS8638_CS_PIN  0
-
-// Testbed platform uses DAC7718 digital/analog converter
-
-#define DAC7718_CS_PORT   5
-#define DAC7718_CS_PIN    4
-
-#define DAC7718_RST_PORT  5
-#define DAC7718_RST_PIN   7
-
-// selects output voltage after reset
-#define DAC7718_RSTSEL_PORT 5
-#define DAC7718_RSTSEL_PIN  5
-
-// fix DAC latch (active low)
-#define DAC7718_LDAC_PORT 5
-#define DAC7718_LDAC_PIN  6
-
-#endif
+        mdelay(READING_PERIOD);
+    }
+}

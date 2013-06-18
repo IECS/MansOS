@@ -154,23 +154,14 @@ uint8_t sw_spiExchByte(uint8_t b);
 // Initializes the ports for SPI
 //------------------------------------------------------------------------------
 // TODO - handle slave mode
-#define sw_spiInit(mode)        \
-    if (mode == SPI_MODE_MASTER) { \
-        pinAsData(SW_MISO_PORT, SW_MISO_PIN);  \
-        pinAsData(SW_MOSI_PORT, SW_MOSI_PIN); \
-        pinAsData(SW_SCLK_PORT, SW_SCLK_PIN); \
-        pinAsInput(SW_MISO_PORT, SW_MISO_PIN);  \
-        pinAsOutput(SW_MOSI_PORT, SW_MOSI_PIN); \
-        pinAsOutput(SW_SCLK_PORT, SW_SCLK_PIN); \
-        SW_SPI_SCLK_TR(); \
-    }
+void sw_spiInit(SpiBusMode_t mode);
 
 #else // SW_SPI_PIN_ERROR == 1
 
 #warning Soft SPI is not usable because corresponding pins are not defined!
 
-#define sw_spiInit(mode) \
-    while (0) {}
+static inline void sw_spiInit(SpiBusMode_t mode) {
+}
 
 #endif // if SW_SPI_PIN_ERROR != 1
 
