@@ -62,7 +62,7 @@ def main():
             sys.stdout.write(PACKET_FIELDS[i] + ",")
         sys.stdout.write("\n")
 
-    with open(args.filename, 'r') as inputFile:
+    with open(args.filename, 'rb') as inputFile:
         while True:
             try:
                 data = inputFile.read(getPacketSize())
