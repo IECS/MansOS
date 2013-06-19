@@ -175,7 +175,7 @@ def openAllSerial(saveToDBFlag=False):
     connection = engine.connect()
     saveToDB = saveToDBFlag
 
-def getOswVersion():
+def getMansosVersion():
     path = settingsInstance.getCfgValue("mansosDirectory")
     result = ""
     try:
@@ -187,9 +187,9 @@ def getOswVersion():
 
 # --------------------------------------------
 class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin, PageServer, PageGraph, setAndServeSessionAndHeader):
-    server_version = 'MansOS/' + getOswVersion() + ' Web Server'
+    server_version = 'MansOS/' + getMansosVersion() + ' Web Server'
     protocol_version = 'HTTP/1.1' # 'HTTP/1.0' is the default, but we want chunked encoding
-    
+
     def writeChunk(self, buffer):
         if self.wfile == None: return
         if self.wfile._sock == None: return
