@@ -25,11 +25,6 @@
 // SAD routing, forwarder functionality
 //
 
-
-//
-// TODO: turn on/off listening
-//
-
 #include "../mac.h"
 #include "../routing.h"
 #include "../socket.h"
@@ -42,14 +37,19 @@
 #include <leds.h>
 
 static Socket_t roSocket;
+static Alarm_t roCheckTimer;
 static Alarm_t roForwardTimer;
 static Alarm_t roRequestTimer;
 static Alarm_t roStartListeningTimer;
 static Alarm_t roStopListeningTimer;
 
+static void roCheckTimerCb(void *);
 static void roForwardTimerCb(void *);
 static void roRequestTimerCb(void *);
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len);
+
+static uint32_t routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
+static bool routingSearching;
 
 static Seqnum_t lastSeenSeqnum;
 static uint8_t hopCountToRoot = MAX_HOP_COUNT;
@@ -121,17 +121,40 @@ static void roStopListeningTimerCb(void *x)
     seenRoutingInThisFrame = false;
 }
 
+static void roCheckTimerCb(void *x)
+{
+    alarmSchedule(&roCheckTimer, 5000 + randomNumberBounded(1000));
+    
+    bool routingOk = isRoutingInfoValid();
+
+    if (routingSearching) {
+        // was searching for routing info
+        if (routingOk) {
+            routingSearching = false;
+            alarmRemove(&roRequestTimer);
+        }
+    } else {
+        // was searching for routing info
+        if (!routingOk) {
+            routingSearching = true;
+            routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
+            roRequestTimerCb(NULL);
+        }
+    }
+}
+
 void routingInit(void)
 {
     socketOpen(&roSocket, routingReceive);
     socketBind(&roSocket, ROUTING_PROTOCOL_PORT);
     socketSetDstAddress(&roSocket, MOS_ADDR_BROADCAST);
 
+    alarmInit(&roCheckTimer, roCheckTimerCb, NULL);
     alarmInit(&roForwardTimer, roForwardTimerCb, NULL);
     alarmInit(&roRequestTimer, roRequestTimerCb, NULL);
     alarmInit(&roStopListeningTimer, roStopListeningTimerCb, NULL);
     alarmInit(&roStartListeningTimer, roStartListeningTimerCb, NULL);
-    alarmSchedule(&roRequestTimer, randomInRange(2000, 3000));
+    alarmSchedule(&roCheckTimer, randomInRange(1000, 3000));
     alarmSchedule(&roForwardTimer, calcNextForwardTime());
     alarmSchedule(&roStartListeningTimer, 90);
 }
@@ -152,7 +175,7 @@ static void roForwardTimerCb(void *x)
 
     // PRINTF("%lu: forward routing packet\n", getSyncTimeMs());
 //    PRINTF("%lu: send routing, nexthop=%#04x\n", (uint32_t)getJiffies(), downstreamAddress);
-    PRINTF("%lu: send routing\n", getSyncTimeSec());
+    RPRINTF("%lu: send routing\n", getSyncTimeSec());
 
     RoutingInfoPacket_t routingInfo;
     routingInfo.packetType = ROUTING_INFORMATION;
@@ -171,13 +194,20 @@ static void roForwardTimerCb(void *x)
 
 static void roRequestTimerCb(void *x)
 {
-    alarmSchedule(&roRequestTimer, ROUTING_REQUEST_INIT_TIMEOUT + randomNumberBounded(1000));
+    // check if already found the info
+    if (isRoutingInfoValid()) return;
 
-    if (isRoutingInfoValid()) {
-        return;
+    // add jitter
+    routingRequestTimeout += randomNumberBounded(100);
+    alarmSchedule(&roRequestTimer, routingRequestTimeout);
+    // use exponential backoff
+    routingRequestTimeout *= 2;
+    if (routingRequestTimeout > ROUTING_REQUEST_MAX_TIMEOUT) {
+        // move back to initial (small) timeout
+        routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
     }
 
-    PRINTF("%lu: send routing request\n", (uint32_t) getJiffies());
+    RPRINTF("send routing request\n");
 
     radioOn(); // wait for response
     isListening = true;
