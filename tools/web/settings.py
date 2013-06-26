@@ -29,7 +29,7 @@ class Settings(object):
             self.createDaemon = "False"
             self.serverTheme = "simple"
             self.serverWebSettings = ["serverTheme"]
-            self.serverSettingsType = [["simple","green"]]
+            self.serverSettingsType = [["simple", "green"]]
             self.dbServer = "mysql://%s:%s@%s/mansosdb"
             self.dbUsername = "root"
             self.dbPassword = "ln29Tx"
@@ -39,8 +39,8 @@ class Settings(object):
             self.userFile = "user.dat"
             self.userAttributes = ["name", "password", "level"]
             self.userAttributesType = ["text", "text", ["1", "9"]]
-            self.defaultValues = ["unknown","5f4dcc3b5aa765d61d8327deb882cf99","1"] #password "password"
-            self.adminValues = ["admin","21232f297a57a5a743894a0e4a801fc3","9"] #password "admin"
+            self.defaultValues = ["unknown", "5f4dcc3b5aa765d61d8327deb882cf99", "1"] #password "password"
+            self.adminValues = ["admin", "21232f297a57a5a743894a0e4a801fc3", "9"] #password "admin"
             self.userWebAttributes = [] #user editable (password is built-in)
             self.adminWebAttributes = ["level"] #admin editable (reset password is built-in and name is uneditable)
             #graph.cfg
@@ -48,7 +48,7 @@ class Settings(object):
             self.graphYAxis = "Measurements"
             self.graphInterval = "1000"
             self.graphData = [["all"]]
-            self.graphMaxDisplay = "40"
+            self.graphAttributes = ["graphTitle", "graphYAxis", "graphInterval", "graphData"]
             
 
     cfg = ConfigValues()
