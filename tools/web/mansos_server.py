@@ -861,7 +861,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                     mansosPath = os.path.join(mansosPath, "..")
                 outFile.write("  MOSROOT = " + mansosPath + "\n")
                 outFile.write("endif\n")
-                outFile.write("include ${MOSROOT}/src/make/Makefile\n")
+                outFile.write("include ${MOSROOT}/mos/make/Makefile\n")
                 outFile.close()
 
             closeAllSerial()
@@ -957,7 +957,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         retcode = self.compileAndUpload(code, config, fileContents, isSEAL)
 
         self.serveHeader("upload")
-        self.serveMotes("upload", "Upload", True)
+        self.serveMotes("upload", "Upload", {}, True)
         if retcode == 0:
             self.writeChunk("<strong>Upload done!</strong></div>")
         else:
