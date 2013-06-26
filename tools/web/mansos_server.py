@@ -21,6 +21,7 @@ from config import *
 from daemon import *
 import re as re
 from uuid import getnode as get_mac
+import urllib2
 
 def isPython3():
     return sys.version_info[0] >= 3
@@ -55,6 +56,7 @@ packetSeparator = "==="
 packet = None
 sampleRe = re.compile('^\w+=\d+(\.\d+)?(,[\da-fA-F]{2})?$')
 
+connection = None
 try:
     from sqlalchemy import create_engine
     from sqlalchemy import Table, Column, MetaData
@@ -66,7 +68,6 @@ try:
     password = settingsInstance.getCfgValue("dbPassword")
     host = settingsInstance.getCfgValue("dbHost")
     engine = create_engine(url % (username, password, host))
-    connection = None
     metadata = MetaData()
     observations = Table('observations', metadata,
         Column('id', Integer, primary_key = True),
@@ -81,6 +82,7 @@ except ImportError:
     print "The following packages should be installed to use the database - python-sqlalchemy, python-mysqldb."
 
 saveToDB = False
+sendToOpensense = False
 
 def saveDataToDB(packet):
     global connection
@@ -92,31 +94,71 @@ def saveDataToDB(packet):
         ins = observations.insert().values(obs_time = datetime.datetime.now(), unit_id = mac, port = arr[0], type = arr[1], value = val)
         connection.execute(ins)
 
+def sendDataToSense(packet):
+    url = 'http://api.sen.se/events/'
+    header = {
+      'sense_key' : settingsInstance.getCfgValue("senseApiKey"),
+    }
+    feeds = settingsInstance.getCfgValue("senseApiFeeds")
+    type2feedMap = {}
+    for feed in feeds:
+        arr = feed.split(":")
+        sensorType = arr[0]
+        feedId = arr[1]
+        type2feedMap[sensorType] = feedId   
+    data = []
+    #mac = str(get_mac())
+    for key in packet.keys():
+        arr = key.split(":")
+        #port = arr[0]
+        sensorType = arr[1]
+        value = packet[key]
+        measurement = {
+            "feed_id": type2feedMap[sensorType],
+            "value":   value 
+        }
+        data.append(measurement)
+    data_json = json.dumps(data)
+    host = "http://api.sen.se/events/"
+    req = urllib2.Request(host, data_json, header)
+    response_stream = urllib2.urlopen(req)
+    json_response = response_stream.read()
+    #print json_response
+
 def processData(port, newString):
     global usePacketSeparator, packet
+    global saveToDB, sendToOpensense
     
     if newString == packetSeparator:
         usePacketSeparator = True
         if packet != None:
-            ''' Save data to DB '''
-            saveDataToDB(packet)
+            if saveToDB == True:
+                # Save data to DB
+                saveDataToDB(packet)
+            if sendToOpensense == True:
+                #Send data to sen.se
+                sendDataToSense(packet)
             packet.clear()
         else:
             packet = {}
     else:
-        str = newString.replace (" ", "")
-        if sampleRe.match(str) != None:
-            arr = str.split("=")
+        s = newString.replace (" ", "")
+        if sampleRe.match(s) != None:
+            arr = s.split("=")
             if not usePacketSeparator:
-                ''' Save data to DB '''
-                saveDataToDB({port+":"+arr[0]: arr[1]})
+                if saveToDB == True:
+                    # Save data to DB
+                    saveDataToDB({port+":"+arr[0]: arr[1]})
+                if sendToOpensense == True:
+                    #Send data to sen.se
+                    sendDataToSense({port+":"+arr[0]: arr[1]})                               
             else:
                 packet[port+":"+arr[0]] = arr[1]
         else:
             print "ERROR: Wrong data format!\n"
 
 def listenSerial():
-    global saveToDB
+    global saveToDB, sendToOpensense
     
     while isListening:
         for m in motes.getMotes():
@@ -135,7 +177,7 @@ def listenSerial():
                 pos = m.buffer.find('\n')
                 if pos != 0:
                     newString = m.buffer[:pos].strip()
-                    if saveToDB == True:
+                    if saveToDB == True or sendToOpensense == True:
                         processData(m.port.port, newString)
                     # print "got", newString
                     moteData.addNewData(newString, m.port.portstr)
@@ -155,14 +197,14 @@ def closeAllSerial():
         listenThread = None
     for m in motes.getMotes():
         m.closeSerial()
-    # Close DB connection
-    connection.close()
+    if connection != None:
+        # Close DB connection
+        connection.close()
 
-def openAllSerial(saveToDBFlag=False):
+def openAllSerial():
     global listenThread
     global isListening
     global connection
-    global saveToDB
     
     moteData.reset()
     if isListening: return
@@ -173,7 +215,6 @@ def openAllSerial(saveToDBFlag=False):
         m.tryToOpenSerial(False)
     # Open DB connection
     connection = engine.connect()
-    saveToDB = saveToDBFlag
 
 def getMansosVersion():
     path = settingsInstance.getCfgValue("mansosDirectory")
@@ -189,7 +230,7 @@ def getMansosVersion():
 class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin, PageServer, PageGraph, setAndServeSessionAndHeader):
     server_version = 'MansOS/' + getMansosVersion() + ' Web Server'
     protocol_version = 'HTTP/1.1' # 'HTTP/1.0' is the default, but we want chunked encoding
-
+    
     def writeChunk(self, buffer):
         if self.wfile == None: return
         if self.wfile._sock == None: return
@@ -548,6 +589,9 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.serveFooter()
 
     def serveListen(self, qs):
+        global saveToDB
+        global sendToOpensense
+        
         self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
@@ -562,9 +606,12 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                 if isListening:
                     self.serveError("Already listening!", False)
                 saveToDB = False
+                sendToOpensense = False
                 if ("saveToDB" in qs and qs["saveToDB"][0] == 'on'):
                     saveToDB = True
-                openAllSerial(saveToDB)
+                if ("sendToOpensense" in qs and qs["sendToOpensense"][0] == 'on'):
+                    sendToOpensense = True                    
+                openAllSerial()
             else:
                 closeAllSerial()
 

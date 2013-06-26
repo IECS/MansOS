@@ -34,6 +34,8 @@ class Settings(object):
             self.dbUsername = "root"
             self.dbPassword = "ln29Tx"
             self.dbHost = "localhost"
+            self.senseApiKey = "cJ4Dm_Qb-3stWTWxCJgiFQ"
+            self.senseApiFeeds = "light:37012,humidity:37013,temperature:37014"
             #user.cfg
             self.userDirectory = "user"
             self.userFile = "user.dat"
