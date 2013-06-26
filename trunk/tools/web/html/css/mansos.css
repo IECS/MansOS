@@ -123,6 +123,9 @@ h4.war{
 .coded{
     display:none;
 }
+input.widthtext{
+	width:300px;
+}
 #logo{
     height:70px;
     float:left;

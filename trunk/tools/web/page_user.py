@@ -75,7 +75,9 @@ class PageUser():
         changes = {}
         changes["INFO"] = ''
         changes["PSW"] = ''
+        changes["ADD"] = ''
         if self.getLevel() > 8:
+            changes["ADD"] = '<a href="/users?useradd=true"><button>Add new user</button></a>'
             if "delete" in qs:
                 #delete users
                 if qs["delete"][0] == tses.to_md5("deleteuser") and self.isSafe() and "name" in qs:
