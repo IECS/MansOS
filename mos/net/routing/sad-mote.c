@@ -34,15 +34,19 @@
 #include <random.h>
 #include <net/net_stats.h>
 
+#include <leds.h>
+
 static Socket_t roSocket;
 static Alarm_t roCheckTimer;
 static Alarm_t roRequestTimer;
 static Alarm_t roStartListeningTimer;
 static Alarm_t roStopListeningTimer;
+static Alarm_t roGreenLedTimer;
 
 static void roCheckTimerCb(void *);
 static void roRequestTimerCb(void *);
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len);
+static void roGreenLedTimerCb(void *);
 
 static Seqnum_t lastSeenSeqnum;
 static uint8_t hopCountToRoot = MAX_HOP_COUNT;
@@ -51,6 +55,7 @@ static MosShortAddr nexthopToRoot;
 static uint8_t moteNumber;
 
 static bool isListening;
+static bool isGreenLedOn;
 
 static uint32_t routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
 static bool routingSearching;
@@ -134,8 +139,10 @@ void routingInit(void)
     alarmInit(&roRequestTimer, roRequestTimerCb, NULL);
     alarmInit(&roStopListeningTimer, roStopListeningTimerCb, NULL);
     alarmInit(&roStartListeningTimer, roStartListeningTimerCb, NULL);
+    alarmInit(&roGreenLedTimer, roGreenLedTimerCb, NULL);
     alarmSchedule(&roCheckTimer, randomInRange(1000, 3000));
     alarmSchedule(&roStartListeningTimer, 110);
+    alarmSchedule(&roGreenLedTimer, 10000);
 }
 
 static void roStartListeningTimerCb(void *x)
@@ -183,7 +190,9 @@ static void roCheckTimerCb(void *x)
 static void roRequestTimerCb(void *x)
 {
     // check if already found the info
-    if (isRoutingInfoValid()) return;
+    static uint8_t cnt;
+    if (isRoutingInfoValid() && cnt > 5) return;
+    cnt++;
 
     // add jitter
     routingRequestTimeout += randomNumberBounded(100);
@@ -208,10 +217,20 @@ static void roRequestTimerCb(void *x)
     alarmSchedule(&roStopListeningTimer, ROUTING_REPLY_WAIT_TIMEOUT);
 }
 
+static void roGreenLedTimerCb(void *x) {
+    isGreenLedOn = !isGreenLedOn;
+    if (isGreenLedOn) {
+        if (isRoutingInfoValid()) greenLedOn();
+    } else {
+        greenLedOff();
+    }
+    alarmSchedule(&roGreenLedTimer, isGreenLedOn ? 100 : 5000);
+}
+
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 {
     // RPRINTF("routingReceive %d bytes from %#04x\n", len,
-    //         s->recvMacInfo->originalSrc.shortAddr);
+    //          s->recvMacInfo->originalSrc.shortAddr);
 
     if (len == 0) {
         RPRINTF("routingReceive: no data!\n");

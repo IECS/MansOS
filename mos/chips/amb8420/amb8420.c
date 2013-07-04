@@ -268,6 +268,8 @@ void amb8420Init(void)
 
 void amb8420On(void)
 {
+    // TODO: re-init serial if required!
+
     if (!isOn) {
         RPRINTF("amb842On\n");
         isOn = true;

@@ -43,7 +43,7 @@ struct TimeSyncPacket_s {
     uint8_t isExtended;
     uint16_t crc;
     uint32_t time;
-    uint16_t milliseconds;
+    uint32_t milliseconds;
 } PACKED;
 
 typedef struct TimeSyncPacket_s TimeSyncPacket_t;
@@ -52,7 +52,7 @@ static uint8_t rxBytes;
 
 static void parsePacket(TimeSyncPacket_t *packet) 
 {
-    uint16_t calcCrc = crc16((uint8_t *)&packet->time, packet->isExtended ? 6 : 4);
+    uint16_t calcCrc = crc16((uint8_t *)&packet->time, packet->isExtended ? 8 : 4);
     if (packet->crc != calcCrc) {
         PRINTF("timesync: wrong format\n");
         return;
@@ -72,7 +72,7 @@ static void timesyncUsartReceive(uint8_t byte) {
     }
     ((uint8_t *) (void *) &packet)[rxBytes] = byte;
     rxBytes++;
-    if (rxBytes == sizeof(packet) - 2) {
+    if (rxBytes == sizeof(packet) - 4) {
         if (!packet.isExtended) {
             parsePacket(&packet);
             rxBytes = 0;

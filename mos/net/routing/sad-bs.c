@@ -115,8 +115,10 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 #if !SINGLE_HOP
     // set forwarder address to increase communication reliability
     uint8_t sender = *(data + 1);
-    if (sender == SENDER_FORWARDER && s->recvMacInfo->immedSrc.shortAddr) {
-        downstreamAddress = s->recvMacInfo->immedSrc.shortAddr;
+    // accept collector as dowstream too - for smaller networks
+    if ((sender == SENDER_COLLECTOR ||  sender == SENDER_FORWARDER)
+            && s->recvMacInfo->originalSrc.shortAddr) {
+        downstreamAddress = s->recvMacInfo->originalSrc.shortAddr;
     }
 #endif
 }

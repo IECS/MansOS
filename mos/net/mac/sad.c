@@ -142,8 +142,8 @@ static void delayTimerCb(void *unused)
 static bool filterPass(MacInfo_t *mi)
 {
 // #if USE_ROLE_BASE_STATION
-    // PRINTF("filter: from=%#04x, orig=%#04x\n",
-    //          mi->immedSrc.shortAddr, mi->originalSrc.shortAddr);
+    TPRINTF("filter: from=%#04x, orig=%#04x\n",
+            mi->immedSrc.shortAddr, mi->originalSrc.shortAddr);
 // #endif
 
     if (!mi->immedSrc.shortAddr) return true; // XXX
@@ -154,7 +154,9 @@ static bool filterPass(MacInfo_t *mi)
 
 #define BASE_STATION_ADDRESS 0x0001
 #define FORWARDER_ADDRESS    0x1696
-#define COLLECTOR_ADDRESS    0x3B9B
+#define COLLECTOR_ADDRESS    0x0875
+#define COLLECTOR_ADDRESS1   0x0875
+#define COLLECTOR_ADDRESS2   0x2BD4
 
 #if 0
     // network with all four mote roles, two intermediate hops
@@ -183,7 +185,23 @@ static bool filterPass(MacInfo_t *mi)
         // receive from all
         break;
     default:
-        if (mi->immedSrc.shortAddr == COLLECTOR_ADDRESS) return false;
+        if (mi->immedSrc.shortAddr != COLLECTOR_ADDRESS) return false;
+        break;
+    }
+#elif 1
+    // smaller network with three mote roles, one intermediate hop (two collectors)
+    switch (localAddress) {
+    case BASE_STATION_ADDRESS:
+        if (mi->immedSrc.shortAddr != COLLECTOR_ADDRESS1
+                && mi->immedSrc.shortAddr != COLLECTOR_ADDRESS2) return false;
+        break;
+    case COLLECTOR_ADDRESS1:
+    case COLLECTOR_ADDRESS2:
+        // receive from all
+        break;
+    default:
+        if (mi->immedSrc.shortAddr != COLLECTOR_ADDRESS1
+                && mi->immedSrc.shortAddr != COLLECTOR_ADDRESS2) return false;
         break;
     }
 #else

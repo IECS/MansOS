@@ -108,7 +108,7 @@ typedef struct RoutingRequestPacket_s {
 # define SAD_SUPERFRAME_LENGTH        524288ul // (10 * 60 * 1000ul)
 # define ROUTING_INFO_VALID_TIME      (1600 * 1000ul)
 // during this time, radio is never turned off on forwarders and collectors
-# define NETWORK_STARTUP_TIME_SEC     (2 * 60 * 60) // 2h in seconds
+# define NETWORK_STARTUP_TIME_SEC     (60 * 60) // 1h in seconds
 #else // for testing
 # define ROUTING_ORIGINATE_TIMEOUT    (15 * 1000ul)
 # define SAD_SUPERFRAME_LENGTH        32768ul // (30 * 1000ul)

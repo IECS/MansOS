@@ -175,7 +175,7 @@ static void roForwardTimerCb(void *x)
 
     // PRINTF("%lu: forward routing packet\n", getSyncTimeMs());
 //    PRINTF("%lu: send routing, nexthop=%#04x\n", (uint32_t)getJiffies(), downstreamAddress);
-    RPRINTF("%lu: send routing\n", getSyncTimeSec());
+    PRINTF("%lu: send routing\n", getSyncTimeSec());
 
     RoutingInfoPacket_t routingInfo;
     routingInfo.packetType = ROUTING_INFORMATION;
@@ -195,7 +195,9 @@ static void roForwardTimerCb(void *x)
 static void roRequestTimerCb(void *x)
 {
     // check if already found the info
-    if (isRoutingInfoValid()) return;
+    static uint8_t cnt;
+    if (isRoutingInfoValid() && cnt > 5) return;
+    cnt++;
 
     // add jitter
     routingRequestTimeout += randomNumberBounded(100);
@@ -207,7 +209,7 @@ static void roRequestTimerCb(void *x)
         routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
     }
 
-    RPRINTF("send routing request\n");
+    PRINTF("send routing request\n");
 
     radioOn(); // wait for response
     isListening = true;
