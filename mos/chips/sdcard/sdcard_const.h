@@ -78,7 +78,7 @@
 #define ACMD_SET_WR_BLK_ERASE_COUNT 0x17
 /** SD_SEND_OP_COMD - Sends host capacity support information and
     activates the card's initialization process */
-#define ACMD_SD_SEND_OP_COMD 0x29
+#define ACMD_SD_SEND_OP_COMD 0x29 // == 41_dec
 
 //------------------------------------------------------------------------------
 

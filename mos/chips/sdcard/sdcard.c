@@ -302,7 +302,7 @@ static bool waitCardNotBusyNoints(uint16_t timeout)
 
 static uint8_t sdcardCommand(uint8_t cmd, uint32_t arg, uint8_t crc)
 {
-//    SPRINTF("sdcardCommand\n");
+//    SPRINTF("sdcardCommand %u, TAR=%u\n", (uint16_t) cmd, TAR);
     STACK_GUARD();
 
     // wait up to 300 ms if busy
@@ -376,10 +376,14 @@ bool sdcardInit(void)
     if (!ok) {
         BUSYWAIT_UNTIL(sdcardCommand(CMD_GO_IDLE_STATE, 0, 0x95) == R1_IDLE_STATE, INIT_TIMEOUT_TICKS / 2, ok);
         if (!ok) {
+            SPRINTF("idle cmd failed\n");
             goto fail;
         }
     }
 
+    // This commented-out code block is from the Texas Instruments MMC sample.
+    // The original intent of it is unclear, but it appears to break on SDHC.
+#if 0 
     uint8_t response = 0x1;
     while (response == 0x01) {
         SDCARD_SPI_DISABLE();
@@ -389,6 +393,7 @@ bool sdcardInit(void)
     }
     SDCARD_SPI_DISABLE();
     SDCARD_WR_BYTE(0xff);
+#endif // 0
 
 #if PLATFORM_SM3
     SPRINTF("3\n");
