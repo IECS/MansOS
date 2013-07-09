@@ -40,9 +40,18 @@ void initPlatform(void)
 {
     msp430Init();
 
-    // Switch the UART/SDA-12 line to UART mode
+    // Set up UART interface:
+    // TODO: Should we leave pin 2.3 always on?
+
+    // 1. Enable UART mode
     pinAsOutput(1, 0);
     pinSet(1, 0);
+    // 2. Disable SDI-12 mode
+    pinAsOutput(4, 0);
+    pinClear(4, 0);
+    // 3. Turn on supplemental voltage (+3.3V_1) for sensors/UART
+    pinAsOutput(2, 3);
+    pinClear(2, 3);
 
 #if USE_ADC
     // TODO: 1.5V or 2.5V ?
