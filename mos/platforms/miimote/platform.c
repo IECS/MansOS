@@ -42,7 +42,7 @@ void initPlatform(void)
 
     // Switch the UART/SDA-12 line to UART mode
     pinAsOutput(1, 0);
-    pinClear(1, 0);
+    pinSet(1, 0);
 
 #if USE_ADC
     // TODO: 1.5V or 2.5V ?
