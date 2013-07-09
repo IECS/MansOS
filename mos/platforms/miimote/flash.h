@@ -24,8 +24,8 @@
  * flash.h -- Internal flash memory constants
  */
 
-#ifndef _PLATFORM_FARMMOTE_FLASH_H_
-#define _PLATFORM_FARMMOTE_FLASH_H_
+#ifndef _PLATFORM_MIIMOTE_FLASH_H_
+#define _PLATFORM_MIIMOTE_FLASH_H_
 
 // The values correspond to the MSP430 F2272 MCU
 
@@ -47,4 +47,4 @@
 // Information memory segment size
 #define MSP430_FLASH_INFOMEM_SEGMENT_SIZE  64
 
-#endif // _PLATFORM_FARMMOTE_FLASH_H_
+#endif // _PLATFORM_MIIMOTE_FLASH_H_
