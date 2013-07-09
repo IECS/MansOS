@@ -27,7 +27,7 @@
 
 #define START_ADDRESS  0x6000
 
-#if PLATFORM_FARMMOTE
+#if PLATFORM_FARMMOTE || PLATFORM_MIIMOTE
 // XXX: redefine this to smaller, so it will fit in RAM
 #undef INT_FLASH_SEGMENT_SIZE
 #define INT_FLASH_SEGMENT_SIZE 128

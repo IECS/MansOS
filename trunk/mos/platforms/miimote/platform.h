@@ -22,8 +22,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PLATFORM_FARMMOTE_H_
-#define _PLATFORM_FARMMOTE_H_
+#ifndef _PLATFORM_MIIMOTE_H_
+#define _PLATFORM_MIIMOTE_H_
 
 #include <msp430/msp430_clock.h>
 #include <msp430/msp430_timers.h>

@@ -55,7 +55,7 @@ typedef uint16_t FlashAddress_t;
 
 // the default size of print buffer
 #ifndef PRINT_BUFFER_SIZE
-# if PLATFORM_FARMMOTE || PLATFORM_LAUNCHPAD
+# if PLATFORM_FARMMOTE || PLATFORM_MIIMOTE || PLATFORM_LAUNCHPAD
 #  define PRINT_BUFFER_SIZE 31
 # else
 #  define PRINT_BUFFER_SIZE 127
