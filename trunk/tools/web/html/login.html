@@ -52,7 +52,9 @@ function pwsmd5(){
 	<h4 class='err'>%FAIL%</h4>
 </span>
 <form name="login" action="login" onsubmit="return IsAll()" >
-	<p>User name: <input type="Text" class="must" name="user"></p>
-	<p>Password: <input type="password" id="psw" class="must" name="password"></p>
-	<input type="submit" value="Login">
+	<table>
+		<tr><td><p>User name:</p></td><td width="10px">&nbsp;</td><td><input type="Text" class="must" name="user"></td>
+		<tr><td><p>Password:</p></td><td width="10px">&nbsp;</td><td><input type="password" id="psw" class="must" name="password"></td>
+		<tr><td><input type="submit" value="Login"></td></tr>
+	</table>
 </form>
