@@ -98,11 +98,13 @@ class PageAccount():
                             formCode += "<p>" + atr + ": <input autocomplete='off' type='text' class='coded tocode' id='" + tcod
                             formCode += "' value=\"" + tses.to_code(tuser.get(atr, ""), False, tcod) + "\" name='" + atr + "'></p>"
                 formCode += "<br><p><strong>Fill to change password:</strong></p>"
-                formCode += "<p>Password: <input autocomplete='off' type='password' class='tocode' id='psw1' name='password'></p>"
-                formCode += "<p><input type='hidden' id='pswcheck' name='pswcheck'>"
-                formCode += "Re password: <input autocomplete='off' type='password' class='tocode' id='psw2'></p>"
-                formCode += "<p><input type='hidden' class='md5' id='randtextsave' name='saveuser'>"
-                formCode += "<input type='submit' onclick='return userSave()' value='Save'></p>"
+                formCode += "<table>"
+                formCode += "<tr><td><p>Password:</p></td><td width='10px'>&nbsp;</td><td><input autocomplete='off' type='password' class='tocode' id='psw1' name='password'></td></tr>"
+                formCode += "<tr><td><input type='hidden' id='pswcheck' name='pswcheck'></td></tr>"
+                formCode += "<tr><td><p>Confirm:</p></td><td width='10px'>&nbsp;</td><td><input autocomplete='off' type='password' class='tocode' id='psw2'></td></tr>"
+                formCode += "<tr><td><input type='hidden' class='md5' id='randtextsave' name='saveuser'></td></tr>"
+                formCode += "<tr><td><input type='submit' onclick='return userSave()' value='Save'></td></tr>"
+                formCode += "<table>"
                 formCode += "</form>"
                 changes["FORM"] = formCode
 
