@@ -1,12 +1,17 @@
 import random
 class PageGraph():
     def serveGraphs(self, qs):
+        isMobile = "Android" in self.headers["user-agent"]
         self.setSession(qs)
         changes = {}
         changes["INFO"] = ''
         changes["ADD"] = ''
         if self.getLevel() > 1 and self.isSafe():
-            changes["ADD"] = '<a href="/graph?addnewgraph=true"><button>Add new graph</button></a>'
+            if isMobile == True:
+                changes["ADD"] = "<a href='/graph?addnewgraph=true'><button type='button' style='width: 100%' class='btn btn-primary' data-toggle='button'>Add new graph</button></a>"
+            else:
+                changes["ADD"] = '<a href="/graph?addnewgraph=true"><button>Add new graph</button></a>'
+            
             if "editgraph" in qs:
                 self.serveEditGraph(qs)
                 return
@@ -70,10 +75,21 @@ class PageGraph():
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        if self.getLevel() > 1:
-            buttons = "<button onclick='button(\" + i + \", this)'>Pause</button><a href='/graph?editgraph=\" + i + \"'><button>Edit graph</button></a>"
+        if isMobile == True:
+            if self.getLevel() > 1:
+                buttons = "<table width='100%'>"
+                buttons += "<tr><td><button type='button' style='width: 100%' class='btn btn-primary' data-toggle='button' onclick='button(\" + i + \", this)'>Pause</button></td></tr>"
+                buttons += "<tr><td><a href='/graph?editgraph=\" + i + \"'><button type='button' style='width: 100%' class='btn btn-primary' data-toggle='button'>Edit graph</button></a></td></tr>"
+                buttons += "<tr><td>" + changes["ADD"] + "</td></tr>"
+                buttons + "</table>"
+            else:
+                buttons = "<button type='button' class='btn btn-primary' data-toggle='button' onclick='button(\" + i + \", this)'>Pause</button>"
         else:
-            buttons = "<button onclick='button(\" + i + \", this)'>Pause</button>"
+            if self.getLevel() > 1:
+                buttons = "<button onclick='button(\" + i + \", this)'>Pause</button><a href='/graph?editgraph=\" + i + \"'><button>Edit graph</button></a>"
+            else:
+                buttons = "<button onclick='button(\" + i + \", this)'>Pause</button>"
+      
         self.serveHeader("graph", qs, True, True, {"BUTTONS": buttons})
         self.serveBody("graph", qs, changes)
         self.serveFooter()
