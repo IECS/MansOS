@@ -309,41 +309,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
             if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
             self.writeChunk(contents)
 
-
-    def serveMotesNew(self, action, namedAction, qs, isPost):
-        text = ''
-        disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
-        i = 0
-        for m in motes.getMotes():
-            name = "mote" + str(i)
-
-            if name in qs:
-                m.isSelected = qs[name][0] == 'on'
-            elif "action" in qs:
-                m.isSelected = False
-
-            checked = ' checked="checked"' if m.isSelected else ""
-
-            text += '<div class="mote"><strong>Mote: </strong>' + m.portName
-            text += ' (<strong>Platform: </strong>' + m.platform + ') '
-            text += ' <input type="checkbox" title="Select the mote" name="' + name + '"'
-            text += checked + ' ' + disabled + '/>' + namedAction + '</div>\n'
-            i += 1
-
-        # remember which motes were selected and which were not
-        motes.storeSelected()
-
-        if text:
-            text = '<div class="motes1">\nDirectly attached motes:\n<br/>\n' + text + '</div>\n'
-        return text
-
     def serveMotes(self, action, namedAction, qs, isPost, writeChunk=True):
-        text = ''
-        if isPost:
-            text += '<form method="post" enctype="multipart/form-data" action="' + action + '">'
-        else:
-            text += '<form action="' + action + '">'
-        self.writeChunk(text)
         disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
         c = ""
         i = 0
@@ -368,10 +334,18 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
 
         if c:
             c = '<div class="motes1">\nDirectly attached motes:\n<br/>\n' + c + '</div>\n'
-            if writeChunk == True:
-                self.writeChunk(c)
-        self.writeChunk('<div class="form">\n')
 
+        if writeChunk == True:
+            text = ''
+            if isPost:
+                text += '<form method="post" enctype="multipart/form-data" action="' + action + '">'
+            else:
+                text += '<form action="' + action + '">'
+            self.writeChunk(text)
+            self.writeChunk(c)
+            self.writeChunk('<div class="form">\n')
+        else:
+            return c
 
     def serveMoteMotes(self, qs):
         if motes.isEmpty():
@@ -588,7 +562,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.serveHeader("listen", qs)
         #self.serveMotes("listen", "Listen", qs, False, False)
 
-        motesText = self.serveMotesNew("listen", "Listen", qs, False)
+        motesText = self.serveMotes("listen", "Listen", qs, False, False)
         if "action" in qs and self.getLevel() > 1:
             if qs["action"][0] == "Start":
                 if not motes.anySelected():
@@ -650,7 +624,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.end_headers()
         self.serveHeader("upload", qs)
         #self.serveMotes("upload", "Upload", qs, True)
-        motesText = self.serveMotesNew("upload", "Upload", qs, True)
+        motesText = self.serveMotes("upload", "Upload", qs, True, False)
         isSealCode = settingsInstance.getCfgValueAsInt("isSealCode")
         isSlow = settingsInstance.getCfgValueAsInt("slowUpload")
         self.serveBody("upload", qs,
