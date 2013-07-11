@@ -78,8 +78,9 @@ try:
         Column('value', Numeric(20,6))
     )
 except ImportError:
-    print "Warning: database storage dependencies are missing. "
-    print "The following packages should be installed to use the database - python-sqlalchemy, python-mysqldb."
+    # TODO: do not print this if "silent" mode is configured in config file!
+    print("Warning: using a database for data storage is not possible, package dependencies are missing.")
+    print("To store to use a database, install: python-sqlalchemy, python-mysqldb\n")
 
 saveToDB = False
 sendToOpensense = False
