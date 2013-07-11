@@ -1,0 +1,58 @@
+<div style="padding: 10px;">
+<table width="100%" height="100%" cellpadding="10px">
+	<tr><td colspan="2"><p>Last 30 output lines:</p></td></tr>
+	<tr>
+		<td width="65%" id="listen_td">
+			<div id="listen_div" style="overflow-y:scroll">
+			
+			</div>
+		</td>
+		<td valign="top">
+			<form action="listen">
+				<div class="form">
+					%MOTES_TXT%
+					<p>
+					<input type="hidden" name="action" value="%MOTE_ACTION%"/>
+					<input type="hidden" name="sma" class="Msma37" value="0">
+					<input type="hidden" name="div_height" id="div_height" value="%DIV_HEIGHT%">
+					<button type='submit' class='btn btn-primary' data-toggle='button' %DISABLED%>
+						%MOTE_ACTION% listening
+					</button></p>
+					<p>
+					<label for="dataFile">Save data to file (empty to disable saving):</label><br/>
+					
+					<label><input type="text" name="dataFile" value="%DATA_FILENAME%" title="The file(s) will be created on your hard drive under web server's data directory. Existing files will be appended" %DISABLED% /><br/>
+					
+					<input type="radio" name="dataType" value="raw" title="Save all serial input without processing" %RAWDATA_CHECKED% %DISABLED% />Raw data
+					
+					<input type="radio" name="dataType" value="mprocessed" title="Save serial input in CSV format, each sensor data in a separate file" %MPROCDATA_CHECKED% %DISABLED% />CSV data, multiple files
+					</p>
+					
+					<table><tr>
+					    <td valign="middle">Save data to DB</td>
+					    <td valign="middle"><input type="checkbox" name="saveToDB"/></td>
+					</tr><tr>
+					    <td valign="middle">Send data to open.sen.se</td>
+					    <td valign="middle"><input type="checkbox" name="sendToOpensense"/></td>
+					</tr></table>
+				</div>
+			</form>	
+		</td>
+	</tr>
+</table>
+</div>
+
+<script language="javascript">
+    var target = document.getElementById("listen_div");
+    var parent = document.getElementById("listen_td");
+	var divHeight = document.getElementById("div_height");
+	if (divHeight.value != 0) {
+		target.style.height = divHeight.value;
+		divHeight.value = divHeight.value;
+	} else {
+		target.style.height = parent.clientHeight + "px";
+		divHeight.value = target.style.height;
+	}
+	target.innerHTML="%LISTEN_TXT%";
+	autoRefresh();
+</script>

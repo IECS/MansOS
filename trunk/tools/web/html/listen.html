@@ -1,3 +1,7 @@
+<form action="listen"><div class="form">
+
+%MOTES_TXT%
+
 <p>Last 30 output lines:</p>
 
 <div id="listen_div">%LISTEN_TXT%</div>
@@ -26,3 +30,9 @@
 </tr></table>
 
 </div></form> 
+
+<script language="javascript">
+    var target = document.getElementById("listen_div");
+	target.innerHTML="%LISTEN_TXT%";
+	autoRefresh();
+</script>

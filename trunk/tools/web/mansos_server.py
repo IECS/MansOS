@@ -257,12 +257,12 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         else:
             pagetitle = " &#8211; " + toTitleCase(name)
 
-        with open(htmlDirectory + "/header.html", "r") as f:
+        with open(self.htmlDirectory + "/header.html", "r") as f:
             contents = f.read()
             contents = contents.replace("%PAGETITLE%", pagetitle)
             self.writeChunk(contents)
         try:
-            with open(htmlDirectory + "/" + name + ".header.html", "r") as f:
+            with open(self.htmlDirectory + "/" + name + ".header.html", "r") as f:
                 contents = f.read()
                 if replaceValues:
                     for v in replaceValues:
@@ -280,7 +280,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                 print(e)
                 self.writeChunk('</head>\n<body>')
 
-            with open(htmlDirectory + "/top-start.html", "r") as f:
+            with open(self.htmlDirectory + "/top-start.html", "r") as f:
                 contents = f.read()
                 if replaceValues:
                     for v in replaceValues:
@@ -292,7 +292,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                 self.writeChunk(contents)
             
             suffix = "generic" if isGeneric else "mote"
-            with open(htmlDirectory + "/menu-" + suffix + ".html", "r") as f:
+            with open(self.htmlDirectory + "/menu-" + suffix + ".html", "r") as f:
                 contents = f.read()
                 if replaceValues:
                     for v in replaceValues:
@@ -301,7 +301,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                 self.writeChunk(contents)
             if isGeneric:
                 if self.getLevel() > 0:
-                    with open(htmlDirectory + "/menu-1.html", "r") as f:
+                    with open(self.htmlDirectory + "/menu-1.html", "r") as f:
                         contents = f.read()
                         if replaceValues:
                             for v in replaceValues:
@@ -309,7 +309,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                         if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
                         self.writeChunk(contents)
                 if self.getLevel() > 7:
-                    with open(htmlDirectory + "/menu-8.html", "r") as f:
+                    with open(self.htmlDirectory + "/menu-8.html", "r") as f:
                         contents = f.read()
                         if replaceValues:
                             for v in replaceValues:
@@ -317,7 +317,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                         if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
                         self.writeChunk(contents)
                 if self.getLevel() > 8:
-                    with open(htmlDirectory + "/menu-9.html", "r") as f:
+                    with open(self.htmlDirectory + "/menu-9.html", "r") as f:
                         contents = f.read()
                         if replaceValues:
                             for v in replaceValues:
@@ -325,7 +325,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                         if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
                         self.writeChunk(contents)
 
-            with open(htmlDirectory + "/top-end.html", "r") as f:
+            with open(self.htmlDirectory + "/top-end.html", "r") as f:
                 contents = f.read()
                 if replaceValues:
                     for v in replaceValues:
@@ -338,7 +338,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
 
     def serveBody(self, name, qs = {'sma': ['0000000'],}, replaceValues = None):
         disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
-        with open(htmlDirectory + "/" + name + ".html", "r") as f:
+        with open(self.htmlDirectory + "/" + name + ".html", "r") as f:
             contents = f.read()
             if replaceValues:
                 for v in replaceValues:
@@ -348,7 +348,34 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
             self.writeChunk(contents)
 
 
-    def serveMotes(self, action, namedAction, qs, isPost):
+    def serveMotesNew(self, action, namedAction, qs, isPost):
+        text = ''
+        disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
+        i = 0
+        for m in motes.getMotes():
+            name = "mote" + str(i)
+
+            if name in qs:
+                m.isSelected = qs[name][0] == 'on'
+            elif "action" in qs:
+                m.isSelected = False
+
+            checked = ' checked="checked"' if m.isSelected else ""
+
+            text += '<div class="mote"><strong>Mote: </strong>' + m.portName
+            text += ' (<strong>Platform: </strong>' + m.platform + ') '
+            text += ' <input type="checkbox" title="Select the mote" name="' + name + '"'
+            text += checked + ' ' + disabled + '/>' + namedAction + '</div>\n'
+            i += 1
+
+        # remember which motes were selected and which were not
+        motes.storeSelected()
+
+        if text:
+            text = '<div class="motes1">\nDirectly attached motes:\n<br/>\n' + text + '</div>\n'
+        return text
+
+    def serveMotes(self, action, namedAction, qs, isPost, writeChunk=True):
         text = ''
         if isPost:
             text += '<form method="post" enctype="multipart/form-data" action="' + action + '">'
@@ -379,8 +406,8 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
 
         if c:
             c = '<div class="motes1">\nDirectly attached motes:\n<br/>\n' + c + '</div>\n'
-            self.writeChunk(c)
-
+            if writeChunk == True:
+                self.writeChunk(c)
         self.writeChunk('<div class="form">\n')
 
 
@@ -418,7 +445,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
 
 
     def serveFooter(self):
-        with open(htmlDirectory + "/footer.html", "r") as f:
+        with open(self.htmlDirectory + "/footer.html", "r") as f:
             contents = f.read()
             self.writeChunk(contents)
         self.writeFinalChunk()
@@ -597,8 +624,9 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.sendDefaultHeaders()
         self.end_headers()
         self.serveHeader("listen", qs)
-        self.serveMotes("listen", "Listen", qs, False)
+        #self.serveMotes("listen", "Listen", qs, False, False)
 
+        motesText = self.serveMotesNew("listen", "Listen", qs, False)
         if "action" in qs and self.getLevel() > 1:
             if qs["action"][0] == "Start":
                 if not motes.anySelected():
@@ -640,12 +668,17 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         rawdataChecked = not saveProcessedData
         mprocessedChecked = saveProcessedData
 
+        div_height = "0"
+        if "div_height" in qs:
+            div_height = qs["div_height"][0]
         self.serveBody("listen", qs,
-                       {"LISTEN_TXT" : txt,
+                       {"MOTES_TXT" : motesText,
+                        "LISTEN_TXT" : txt,
                         "MOTE_ACTION": action,
                         "DATA_FILENAME" : dataFilename,
                         "RAWDATA_CHECKED" : 'checked="checked"' if rawdataChecked else "",
-                        "MPROCDATA_CHECKED" : 'checked="checked"' if mprocessedChecked else ""})
+                        "MPROCDATA_CHECKED" : 'checked="checked"' if mprocessedChecked else "",
+                        "DIV_HEIGHT" : div_height})
         self.serveFooter()
 
     def serveUpload(self, qs):
@@ -654,11 +687,13 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.sendDefaultHeaders()
         self.end_headers()
         self.serveHeader("upload", qs)
-        self.serveMotes("upload", "Upload", qs, True)
+        #self.serveMotes("upload", "Upload", qs, True)
+        motesText = self.serveMotesNew("listen", "Listen", qs, True)
         isSealCode = settingsInstance.getCfgValueAsInt("isSealCode")
         isSlow = settingsInstance.getCfgValueAsInt("slowUpload")
         self.serveBody("upload", qs,
-                       {"CCODE_CHECKED": 'checked="checked"' if not isSealCode else "",
+                       {"MOTES_TXT" : motesText,
+                        "CCODE_CHECKED": 'checked="checked"' if not isSealCode else "",
                         "SEALCODE_CHECKED" : 'checked="checked"' if isSealCode else "",
                         "UPLOAD_CODE" : lastUploadCode,
                         "UPLOAD_CONFIG" : lastUploadConfig,
@@ -745,7 +780,6 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.users = allUsers
         self.settings = settingsInstance
         self.tabuList = tabuList
-        self.htmlDirectory = htmlDirectory
         self.moteData = moteData
         #global end
         
@@ -754,6 +788,10 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         o = urlparse(self.path)
         qs = parse_qs(o.query)
 
+        self.htmlDirectory = htmlDirectory
+        if "Android" in self.headers["user-agent"]:
+            self.htmlDirectory = self.htmlDirectory+"_mobile"
+            
         if o.path == "/" or o.path == "/default":
             self.serveDefault(qs)
         elif o.path == "/motes":
@@ -798,11 +836,11 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                 self.compileAndUpload(code, config, None, True)
             self.serveSync(qs)
         elif o.path[-4:] == ".css":
-            self.serveFile(htmlDirectory + "/css/" + o.path)
+            self.serveFile(self.htmlDirectory + "/css/" + o.path)
         elif o.path[-4:] in [".png", ".jpg", ".gif", ".tif"]:
-            self.serveFile(htmlDirectory + "/img/" + o.path)
+            self.serveFile(self.htmlDirectory + "/img/" + o.path)
         elif o.path[-3:] in [".js"]:
-            self.serveFile(htmlDirectory + "/js/" + o.path)
+            self.serveFile(self.htmlDirectory + "/js/" + o.path)
         else:
             self.serve404Error(o.path, qs)
 

@@ -7,7 +7,7 @@ function autoRefresh()
 
     var doRefresh = function() 
     {
-       var xmlhttp=new XMLHttpRequest();
+	   var xmlhttp=new XMLHttpRequest();
        xmlhttp.open("GET",url,false);
        xmlhttp.send();
        if (xmlhttp.readyState==4 && xmlhttp.status==200) {
