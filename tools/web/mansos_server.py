@@ -13,6 +13,7 @@ from page_account import *
 from page_user import *
 from page_graph import *
 from settings import *
+from db_utils import *
 from user import *
 from session import *
 from mote import *
@@ -20,7 +21,6 @@ from sensor_data import *
 from config import *
 from daemon import *
 import re as re
-from uuid import getnode as get_mac
 import urllib2
 
 def isPython3():
@@ -56,44 +56,8 @@ packetSeparator = "==="
 packet = None
 sampleRe = re.compile('^\w+=\d+(\.\d+)?(,[\da-fA-F]{2})?$')
 
-connection = None
-try:
-    from sqlalchemy import create_engine
-    from sqlalchemy import Table, Column, MetaData
-    from sqlalchemy.types import DateTime, Numeric, Integer, String
-
-    # Database
-    url = settingsInstance.getCfgValue("dbServer")
-    username = settingsInstance.getCfgValue("dbUsername")
-    password = settingsInstance.getCfgValue("dbPassword")
-    host = settingsInstance.getCfgValue("dbHost")
-    engine = create_engine(url % (username, password, host))
-    metadata = MetaData()
-    observations = Table('observations', metadata,
-        Column('id', Integer, primary_key = True),
-        Column('obs_time', DateTime),
-        Column('unit_id', String),
-        Column('port', String),
-        Column('type', String),
-        Column('value', Numeric(20,6))
-    )
-except ImportError:
-    # TODO: do not print this if "silent" mode is configured in config file!
-    print("Warning: using a database for data storage is not possible, package dependencies are missing.")
-    print("To store to use a database, install: python-sqlalchemy, python-mysqldb\n")
-
 saveToDB = False
 sendToOpensense = False
-
-def saveDataToDB(packet):
-    global connection
-    
-    mac = str(get_mac())
-    for key in packet.keys():
-        arr = key.split(":")
-        val = packet[key]
-        ins = observations.insert().values(obs_time = datetime.datetime.now(), unit_id = mac, port = arr[0], type = arr[1], value = val)
-        connection.execute(ins)
 
 def sendDataToSense(packet):
     url = 'http://api.sen.se/events/'
@@ -191,21 +155,18 @@ def listenSerial():
 def closeAllSerial():
     global listenThread
     global isListening
-    global connection
     isListening = False
     if listenThread:
         listenThread.join()
         listenThread = None
     for m in motes.getMotes():
         m.closeSerial()
-    if connection != None:
-        # Close DB connection
-        connection.close()
+    # Close DB connection 
+    closeDBConnection()
 
 def openAllSerial():
     global listenThread
     global isListening
-    global connection
     
     moteData.reset()
     if isListening: return
@@ -215,7 +176,7 @@ def openAllSerial():
     for m in motes.getMotes():
         m.tryToOpenSerial(False)
     # Open DB connection
-    connection = engine.connect()
+    openDBConnection()
 
 def getMansosVersion():
     path = settingsInstance.getCfgValue("mansosDirectory")
@@ -689,7 +650,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.end_headers()
         self.serveHeader("upload", qs)
         #self.serveMotes("upload", "Upload", qs, True)
-        motesText = self.serveMotesNew("listen", "Listen", qs, True)
+        motesText = self.serveMotesNew("upload", "Upload", qs, True)
         isSealCode = settingsInstance.getCfgValueAsInt("isSealCode")
         isSlow = settingsInstance.getCfgValueAsInt("slowUpload")
         self.serveBody("upload", qs,
