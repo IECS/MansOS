@@ -2,61 +2,66 @@
 	<div class="form">
 		<p>
 			<input type="hidden" name="sma" class="Msma37" value="0">
-			<ul class="nav nav-tabs">
-				<li class="active"><a href="#code" data-toggle="tab">Code</a></li>
-				<li><a href="#config" data-toggle="tab">Configuration</a></li>
-				<li><a href="#upload" data-toggle="tab">Alternative upload</a></li>
-			</ul>
-			<div class="tab-content">
-				<div class="tab-pane active" id="code">
-					<table width="100%">
-						<tr><td width="60%">
-							<label for="code">Enter code:</label>
-							<textarea id="code" name="code" rows="10" style="width: 100%" title="Enter the C/SEAL code your would normally put in application's main file" %DISABLED%>%UPLOAD_CODE%</textarea>
-						</td><td width="20px">&nbsp;</td><td valign="top">
-							<p style="padding-top: 15px;">%MOTES_TXT%</p>
-							<p>Choose the programming language:</p>
-							<p>
-								<table>
-									<tr><td valign="middle"><input type="radio" name="language" value="C" title="Compile as C" %CCODE_CHECKED% %DISABLED% />C code</td>
-									<td width="10px">&nbsp</td>
-									<td valign="middle"><input type="radio" name="language" value="SEAL" title="Compile as SEAL" %SEALCODE_CHECKED% %DISABLED% />SEAL code</td></tr>
-								</table>
-							</p>
-						</td></tr>
-						<tr><td>
-							<input type="submit" name="compile" value="Compile and upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/>
-						</td></tr>
-					</table>
-				</div>
-				<div class="tab-pane" id="config">
-					<table width="100%">
-						<tr><td width="60%">
-								<label for="config">Enter configuration options (one per line):</label>
-								<textarea id="config" name="config" rows="10" style="width: 100%" title="Enter the configuration options your would normally put in application's config file" %DISABLED%>%UPLOAD_CONFIG%</textarea><br/>
-  							</td><td width="20px">&nbsp;</td><td valign="top">
-							<p style="padding-top: 15px;">%MOTES_TXT%</p>
-							<p>
-								<input type="checkbox" name="slow" title="Add delays to the upload script. Useful if serial protocol is tunneled over IP" %SLOW_CHECKED% %DISABLED%>Use SLOW switch when uploading
-							</p>
-						</td></tr>
-						<tr><td>
-							<input type="submit" name="compile" value="Compile and upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/>
-						</td></tr>
-					</table>
-				</div>
-				<div class="tab-pane" id="upload">
-					<form method="post" enctype="multipart/form-data" action="upload"><div class="form">
-					
-					  <label for="file">Alternatively, specify IHex filename: </label><br/>
-					  <input type="file" name="file" id="file" value="%UPLOAD_FILENAME%" title="Input a pre-compiled Intel HEX file" %DISABLED%/><br/><br/>
-					
-					  <input type="submit" name="upload" value="Upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/>
-					  <input type="checkbox" name="slow" title="Add delays to the upload script. Useful if serial protocol is tunneled over IP" %SLOW_CHECKED% %DISABLED%>Use SLOW switch when uploading<br/><br/>
+			<table width="100%">
+				<tr><td width="60%">
+					<ul class="nav nav-tabs">
+						<li class="active"><a href="#code" data-toggle="tab">Code</a></li>
+						<li><a href="#config" data-toggle="tab">Configuration</a></li>
+						<li><a href="#upload" data-toggle="tab">Alternative upload</a></li>
+					</ul>
+						
+					<div class="tab-content">
+						<div class="tab-pane active" id="code">
+							<table width="100%">
+								<tr><td>
+									<table>
+										<tr><td valign="middle">Choose the programming language:</td>
+										<td width="20px">&nbsp;</td>
+										<td valign="middle"><input type="radio" name="language" value="C" title="Compile as C" %CCODE_CHECKED% %DISABLED% />C code</td>
+										<td width="10px">&nbsp</td>
+										<td valign="middle"><input type="radio" name="language" value="SEAL" title="Compile as SEAL" %SEALCODE_CHECKED% %DISABLED% />SEAL code</td></tr>
+									</table>
+								</td></tr>
+								<tr><td>
+									<label for="code">Enter code:</label>
+									<textarea id="code" name="code" rows="10" style="width: 100%" title="Enter the C/SEAL code your would normally put in application's main file" %DISABLED%>%UPLOAD_CODE%</textarea>
+								</td></tr>
+								<tr><td>
+									<input type="submit" name="compile" value="Compile and upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/>
+								</td></tr>
+							</table>
 						</div>
-					</form>
-				</div>
-			</div>
+						<div class="tab-pane" id="config">
+							<table width="100%">
+								<tr><td width="60%">
+										<label for="config">Enter configuration options (one per line):</label>
+										<textarea id="config" name="config" rows="10" style="width: 100%" title="Enter the configuration options your would normally put in application's config file" %DISABLED%>%UPLOAD_CONFIG%</textarea><br/>
+		  						</td></tr><tr><td>
+									<p>
+										<input type="checkbox" name="slow" title="Add delays to the upload script. Useful if serial protocol is tunneled over IP" %SLOW_CHECKED% %DISABLED%>Use SLOW switch when uploading
+									</p>
+								</td></tr>
+								<tr><td>
+									<input type="submit" name="compile" value="Compile and upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/>
+								</td></tr>
+							</table>
+						</div>
+						<div class="tab-pane" id="upload">
+							<form method="post" enctype="multipart/form-data" action="upload"><div class="form">
+							
+							  <label for="file">Alternatively, specify IHex filename: </label><br/>
+							  <input type="file" name="file" id="file" value="%UPLOAD_FILENAME%" title="Input a pre-compiled Intel HEX file" %DISABLED%/><br/><br/>
+							
+							  <input type="submit" name="upload" value="Upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/>
+							  <input type="checkbox" name="slow" title="Add delays to the upload script. Useful if serial protocol is tunneled over IP" %SLOW_CHECKED% %DISABLED%>Use SLOW switch when uploading<br/><br/>
+								</div>
+							</form>
+						</div>
+					</div>
+				</td><td width="10px">&nbsp;</td><td valign="top">
+					<p style="padding: 12px;">%MOTES_TXT%</p>
+				</td></tr>
+			</table>
 		</p>
 	</div>
 </form>
