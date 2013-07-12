@@ -20,7 +20,7 @@ try:
     from sqlalchemy.types import DateTime, Numeric, Integer, String
 
     # Database
-    url = settingsInstance.getCfgValue("dbServer")
+    url = settingsInstance.getCfgValue("dbServer")+ "://%s:%s@%s/mansosdb"
     username = settingsInstance.getCfgValue("dbUsername")
     password = settingsInstance.getCfgValue("dbPassword")
     host = settingsInstance.getCfgValue("dbHost")
