@@ -30,7 +30,7 @@ class Settings(object):
             self.serverTheme = "simple"
             self.serverWebSettings = ["serverTheme"]
             self.serverSettingsType = [["simple", "green"]]
-            self.dbServer = "mysql://%s:%s@%s/mansosdb"
+            self.dbServer = "mysql"
             self.dbUsername = "root"
             self.dbPassword = "ln29Tx"
             self.dbHost = "localhost"
