@@ -6,22 +6,19 @@
 
 import os, sys, platform
 import threading, time, serial, select, socket, cgi, subprocess, struct, signal
-import json
 from page_login import *
 from page_server import *
 from page_account import *
 from page_user import *
 from page_graph import *
 from settings import *
-from db_utils import *
+from data_utils import *
 from user import *
 from session import *
 from mote import *
 from sensor_data import *
 from config import *
 from daemon import *
-import re as re
-import urllib2
 
 def isPython3():
     return sys.version_info[0] >= 3
@@ -50,81 +47,7 @@ motes = MoteCollection()
 
 sealBlocklyPath = "seal-blockly"
 
-# Packet
-usePacketSeparator = False
-packetSeparator = "==="
-packet = None
-sampleRe = re.compile('^\w+=\d+(\.\d+)?(,[\da-fA-F]{2})?$')
-
-saveToDB = False
-sendToOpensense = False
-
-def sendDataToSense(packet):
-    url = 'http://api.sen.se/events/'
-    header = {
-      'sense_key' : settingsInstance.getCfgValue("senseApiKey"),
-    }
-    feeds = settingsInstance.getCfgValue("senseApiFeeds")
-    type2feedMap = {}
-    for feed in feeds:
-        arr = feed.split(":")
-        sensorType = arr[0]
-        feedId = arr[1]
-        type2feedMap[sensorType] = feedId   
-    data = []
-    #mac = str(get_mac())
-    for key in packet.keys():
-        arr = key.split(":")
-        #port = arr[0]
-        sensorType = arr[1]
-        value = packet[key]
-        measurement = {
-            "feed_id": type2feedMap[sensorType],
-            "value":   value 
-        }
-        data.append(measurement)
-    data_json = json.dumps(data)
-    host = "http://api.sen.se/events/"
-    req = urllib2.Request(host, data_json, header)
-    response_stream = urllib2.urlopen(req)
-    json_response = response_stream.read()
-    #print json_response
-
-def processData(port, newString):
-    global usePacketSeparator, packet
-    global saveToDB, sendToOpensense
-    
-    if newString == packetSeparator:
-        usePacketSeparator = True
-        if packet != None:
-            if saveToDB == True:
-                # Save data to DB
-                saveDataToDB(packet)
-            if sendToOpensense == True:
-                #Send data to sen.se
-                sendDataToSense(packet)
-            packet.clear()
-        else:
-            packet = {}
-    else:
-        s = newString.replace (" ", "")
-        if sampleRe.match(s) != None:
-            arr = s.split("=")
-            if not usePacketSeparator:
-                if saveToDB == True:
-                    # Save data to DB
-                    saveDataToDB({port+":"+arr[0]: arr[1]})
-                if sendToOpensense == True:
-                    #Send data to sen.se
-                    sendDataToSense({port+":"+arr[0]: arr[1]})                               
-            else:
-                packet[port+":"+arr[0]] = arr[1]
-        else:
-            print "ERROR: Wrong data format!\n"
-
 def listenSerial():
-    global saveToDB, sendToOpensense
-    
     while isListening:
         for m in motes.getMotes():
 
@@ -142,7 +65,9 @@ def listenSerial():
                 pos = m.buffer.find('\n')
                 if pos != 0:
                     newString = m.buffer[:pos].strip()
-                    if saveToDB == True or sendToOpensense == True:
+                    saveToDB = settingsInstance.getCfgValue("saveToDB")
+                    sendToOpensense = settingsInstance.getCfgValue("sendToOpensense")
+                    if saveToDB or sendToOpensense:
                         processData(m.port.port, newString)
                     # print "got", newString
                     moteData.addNewData(newString, m.port.portstr)
@@ -552,9 +477,6 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.serveFooter()
 
     def serveListen(self, qs):
-        global saveToDB
-        global sendToOpensense
-        
         self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
@@ -569,12 +491,6 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                     self.serveError("No motes selected!", False)
                 if isListening:
                     self.serveError("Already listening!", False)
-                saveToDB = False
-                sendToOpensense = False
-                if ("saveToDB" in qs and qs["saveToDB"][0] == 'on'):
-                    saveToDB = True
-                if ("sendToOpensense" in qs and qs["sendToOpensense"][0] == 'on'):
-                    sendToOpensense = True                    
                 openAllSerial()
             else:
                 closeAllSerial()
