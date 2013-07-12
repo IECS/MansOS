@@ -36,6 +36,8 @@ class Settings(object):
             self.dbHost = "localhost"
             self.senseApiKey = "cJ4Dm_Qb-3stWTWxCJgiFQ"
             self.senseApiFeeds = "light:37012,humidity:37013,temperature:37014"
+            self.saveToDB = "False"
+            self.sendToOpensense = "False"
             #user.cfg
             self.userDirectory = "user"
             self.userFile = "user.dat"
