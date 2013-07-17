@@ -68,8 +68,7 @@ ALARM_TIMER_INTERRUPT0()
     // If TAR still > TACCR0 at this point, we are in trouble:
     // the interrupt will not be generated until the next wraparound (2 seconds).
     // So avoid it at all costs.
-    uint16_t tar = ALARM_TIMER_READ_STOPPED() + 1;
-    while (!timeAfter16(ALARM_TIMER_REGISTER, tar)) {
+    while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 1)) {
         jiffies += JIFFY_TIMER_MS;
         ALARM_TIMER_REGISTER += PLATFORM_ALARM_TIMER_PERIOD;
     }
