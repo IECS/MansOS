@@ -719,13 +719,21 @@ static void sdcardWriteInBlock(uint32_t address, const void* buffer, uint16_t le
         putInCache(buffer, len, address & (SDCARD_SECTOR_SIZE - 1));
         return;
     }
+
     if (cacheChanged) {
         sdcardWriteBlock(cacheAddress, cacheBuffer);
         cacheChanged = false;
     }
+
     cacheAddress = address & 0xfffffe00;
-    sdcardReadBlock(cacheAddress, cacheBuffer);
-    putInCache(buffer, len, address & (SDCARD_SECTOR_SIZE - 1));
+    if (len == SDCARD_SECTOR_SIZE) {
+        // special, optimized case for block-sized writes
+        ASSERT((address & (SDCARD_SECTOR_SIZE - 1)) == 0);
+        putInCache(buffer, SDCARD_SECTOR_SIZE, 0);
+    } else {
+        sdcardReadBlock(cacheAddress, cacheBuffer);
+        putInCache(buffer, len, address & (SDCARD_SECTOR_SIZE - 1));
+    }
 }
 
 // Write len bytes (len <= 512) at address

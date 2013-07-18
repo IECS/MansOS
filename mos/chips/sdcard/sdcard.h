@@ -26,10 +26,12 @@
 
 #include <stdtypes.h>
 
-// minimal unit that can be erased
+// The minimal unit that can be erased
+// (Actually this is "block"; the name "sector" comes from analogy with flash,
+// as in MansOS a SD card can be accessed as a type of flash memory chip)
 #define SDCARD_SECTOR_SIZE    512
 
-// maximal unit that can be written
+// The maximal unit that can be written
 #define SDCARD_PAGE_SIZE      512
 
 // 16 MB total default card size.
