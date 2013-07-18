@@ -186,12 +186,12 @@ class TabManager(aui.AuiNotebook):
         self.SetPageText(self.GetSelection(), newName)
 
     def markAsUnsaved(self):
-        self.titleChange('* ' + self.getPageObject().fileName)
+        self.titleChange('* ' + self.getPageObject().caption)
 
 
     def markAsSaved(self):
         if self.getPageObject() != None:
-            self.titleChange(self.getPageObject().fileName)
+            self.titleChange(self.getPageObject().caption)
 
     def getPageObject(self):
         if self.GetSelection() != -1:
@@ -205,6 +205,7 @@ class TabManager(aui.AuiNotebook):
                 localize("Untitled") + ' ' + str(self.nextPageNr) + '.sl')
         else:
             self.AddPage(EditorManager(self, self.API), newFile)
+            
         self.nextPageNr += 1
         self.SetSelection(self.GetPageCount() - 1)
         # Add any file associated with it
