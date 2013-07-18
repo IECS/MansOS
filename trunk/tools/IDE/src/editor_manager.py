@@ -43,6 +43,8 @@ class EditorManager(wx.Panel):
         self.saveState = False
         # Filename or untitled document
         self.fileName = localize('Untitled') + str(self.GetParent().nextPageNr) + '.sl'
+        # Tab caption
+        self.caption = self.fileName
         # Filename and full path(relative or absolute)
         self.filePath = localize('Untitled') + str(self.GetParent().nextPageNr) + '.sl'
         # This marks if document already have a file attached to it
@@ -65,13 +67,14 @@ class EditorManager(wx.Panel):
             self.changeCode('', False)
             # Update editor info
             self.updateInfo(initFilePath, saveState = True, hasAFile = True)
-            self.GetParent().titleChange(os.path.split(self.fileName)[1])
+            
+            self.caption = os.path.split(self.filePath)[0].split("\\")[-1] + "\\" + os.path.split(self.fileName)[1]
             self.detectSEAL()
         else:
             self.changeCode()
         self.lastSaved = self.code.GetText()
+        
         self.yieldChanges()
-
         self.parseConfigFile()
 
     def initUI(self):
