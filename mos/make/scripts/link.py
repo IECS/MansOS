@@ -32,7 +32,7 @@ arch = sys.argv[1]
 target = sys.argv[2]
 app_objects = sys.argv[3].split()
 system_objects = sys.argv[4].split()
-flags = sys.argv[5]
+flagString = sys.argv[5]
 unresolved = set(['main'])
 
 # find compiler and objdump executables
@@ -57,14 +57,18 @@ lib_exported = ['abort', 'abort', 'abs', 'atoi', 'atol', 'atol', 'bcmp', 'bcopy'
 lib_exported.append('sqrtf')
 
 if arch == 'pc':
+    # partial list of libc functions, extend when necessary
     lib_exported.extend(['atexit', 'sleep', 'usleep', 'pthread_exit', 'stdout', 'fgetc', 'sem_post', 'sem_trywait', 'fclose', 'pthread_mutex_lock', 'pthread_attr_init', 'printf', '__printf_chk', '__fprintf_chk', '__vsprintf_chk', 'pthread_create', 'fflush', 'fopen', 'feof', 'pthread_cond_init', 'pthread_attr_setschedparam', 'sem_getvalue', 'pthread_equal', 'sem_destroy', 'perror', 'puts', 'sem_wait', '__stack_chk_fail', 'pthread_mutex_init', 'pthread_cond_wait', 'sem_init', 'pthread_mutex_unlock', 'pthread_self', 'htonl', 'read', 'gettimeofday', 'abort', 'connect', 'getsockname', 'close', 'htons', 'setsockopt', 'poll', 'putchar', 'socket', 'fwrite', 'fseek', 'fread', '__xstat', 'rewind', '__errno_location', 'strerror', 'write', 'ntohs', 'stderr', 'socketpair', 'free', '__memcpy_chk', '__vsnprintf_chk', 'fileno', 'ferror', '__memset_chk', 'ftruncate', 'select', 'pthread_join', '__snprintf_chk'])
 elif arch == 'msp430':
     lib_exported.extend(['_end']);
-    unresolved.add('alarmTimerInterrupt0')   # TODO: don't do this if USE_HARDWARE_TIMERS=n
+    if "USE_HARDWARE_TIMERS" in flagString:
+        # don't do this if USE_HARDWARE_TIMERS=n
+        unresolved.add('alarmTimerInterrupt0')
 elif arch == 'avr':
     lib_exported.extend(['_end']);
-    unresolved.add('__vector_14') 
-    unresolved.add('__vector_15') 
+    if "USE_HARDWARE_TIMERS" in flagString:
+        unresolved.add('__vector_14') 
+        unresolved.add('__vector_15') 
 
 def filter_not_underscores(s):
     return len(s) <= 1 or (s[0] != '_' and s[1] != '_')
@@ -138,9 +142,6 @@ def find_needed_objects(app_o, system_o):
     remaining_system_files = set(system_o)
     progress = True
     while len(unresolved) != 0 and len(remaining_system_files) != 0 and progress:
-        #print 'one step, unresolved = '
-        #print unresolved
-
         progress = False
 
         # find one file that exports some of the unresolved symbols...
@@ -164,17 +165,9 @@ def find_needed_objects(app_o, system_o):
             progress = True
             break
 
-    # remove own-added symbols - this will help when USE_HARDWARE_TIMERS=n
-    unresolved.discard('alarmTimerInterrupt0')
-    unresolved.discard('__vector_14')
-    unresolved.discard('__vector_15')
-
     if len(unresolved) != 0:
         print("Warning: not all symbols found! Still unresolved:")
         print(unresolved)
-
-    #print 'files unused: '
-    #print string.join(remaining_system_files)
 
     return result
 
@@ -186,12 +179,7 @@ else:
     # filter out
     used_objects = find_needed_objects(app_objects, system_objects)
 
-arglist = [cc, " ".join(used_objects), '-o', target, flags]
-#arglist.append('-Wl,-T,linkerscript')
-#arglist.append('-Wl,--verbose')
-
-#print ('arglist:', arglist)
-#print (" ".join(arglist))
+arglist = [cc, " ".join(used_objects), '-o', target, flagString]
 
 try:
     retcode = subprocess.call(" ".join(arglist), shell=True)

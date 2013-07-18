@@ -38,14 +38,7 @@ PROJDIR = .
 # msp-bsl does not like /cygdrive...
 OUTDIRDOS = $(subst /cygdrive/c,C:,$(OUTDIR))
 
-ifeq ($(SHORT_UNAME),CYGWIN)
-#cygwin!
-BSL ?= python tos-bsl
-MSP430-BSL ?= python tos-bsl
-else
-BSL ?= python $(MOS)/make/scripts/tos-bsl
-MSP430-BSL ?= python $(MOSROOT)/mos/make/scripts/bsl.py
-endif
+BSL ?= python $(MOS)/make/scripts/ubsl.py
 
 # this option is needed for testbed device
 ifeq ($(SLOW_UPLOAD),y)
@@ -90,17 +83,16 @@ upload-tmote:
 	$(BSL) --telosb -c $(BSLPORT) -r -e -I $(SLOW) -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-msp430: 
-	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+	$(BSL) --invert-reset --invert-test -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-msp430-sm3: 
-	$(MSP430-BSL) --invert-reset --invert-test -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
-#	$(MSP430-BSL) -c $(BSLPORT) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+	$(BSL) --invert-reset --invert-test -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-z1:
-	$(Z1-BSL) --z1 -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+	$(BSL) --z1 -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-xm1000:
-	$(XM1000-BSL) --telosb -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+	$(BSL) --tmote2618 -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-launchpad:
 	$(MSPDEBUG) rf2500 "prog $(OUTDIR)/$(EXECUTABLE)"

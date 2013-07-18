@@ -45,8 +45,6 @@ endif
 # define missing __P1SEL2 and __P5SEL2 symbols
 LDFLAGS += -Wl,--defsym -Wl,__P1SEL2=0x0041 -Wl,--defsym -Wl,__P5SEL2=0x0045
 
-Z1-BSL = python $(MOS)/make/scripts/z1-bsl-nopic
-
 INTERRUPT_VECTOR_COUNT=32
 
 CFLAGS += -DPLATFORM_Z1=1 -mivcnt=$(INTERRUPT_VECTOR_COUNT)
