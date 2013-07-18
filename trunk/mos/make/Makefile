@@ -178,7 +178,7 @@ MEMDUMP = $(MOS)/make/scripts/memdump.py
 STACKDUMP = $(MOS)/make/scripts/stackdump.py
 
 # change this to your MSPsim installation location
-MSPSIM=/home/atis/work/contiki/tools/mspsim/mspsim.jar
+MSPSIM=$(MOSROOT)/../contiki/tools/mspsim/mspsim.jar
 JAVA = java
 
 
@@ -271,26 +271,11 @@ all: build
 platform_build: build saveplatform
 	$(Print) ""
 
-# SEAL code compiled successfully, now build C sources.
-#ifeq ($(SHORT_UNAME),MINGW3)
-
-# Sorry for this mess - needed to compile at all on MinGW...  
-#platform_build_seal: $(GENERATED_SOURCES)
-#	(cd $(BUILDDIR);\
-#	rm -rf ./build;\
-#	MAKECMDGOALS="$(TARGET)" $(MAKE) $(TARGET);\
-#	$(MakeDir) $(TARGET);\
-#	$(Copy) build/$(TARGET)/$(SEAL_EXECUTABLE) $(TARGET)/$(EXECUTABLE))
-
-#else
-
 # the target for all except MinGW
 platform_build_seal: $(GENERATED_SOURCES)
 	$(MAKE) -C $(BUILDDIR) $(TARGET)
 	$(MakeDir) $(OUTDIR)
 	$(Copy) build/$(OUTDIR)/$(SEAL_EXECUTABLE) $(OUTDIR)/$(EXECUTABLE)
-
-#endif
 
 platform_skip:
 	$(Print) "Skipping $(PROJDIR)/$(APPMOD) for $(TARGET): not for this platform!"
