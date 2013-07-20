@@ -38,7 +38,13 @@ PROJDIR = .
 # msp-bsl does not like /cygdrive...
 OUTDIRDOS = $(subst /cygdrive/c,C:,$(OUTDIR))
 
+ifeq ($(BSLPROXY),)
+# use regular upload
 BSL ?= python $(MOS)/make/scripts/ubsl.py
+else
+# use networked upload
+BSL ?= python $(MOS)/make/scripts/netbsl.py
+endif
 
 # this option is needed for testbed device
 ifeq ($(SLOW_UPLOAD),y)

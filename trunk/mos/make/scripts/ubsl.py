@@ -11,8 +11,8 @@
 # additional infos from slaa089a.pdf
 # 
 
-from __future__ import print_function  # for Python 2.6
-import sys, time, string, io, struct, os, glob
+from __future__ import print_function
+import sys, time, string, io, struct, os
 import serial
 
 #
@@ -1484,8 +1484,7 @@ def hexify(line, bytes, width=16):
         ('%c'*len(bytes)) % tuple([(x>=32 and x<127) and x or ord('.') for x in bytes])
         )
 
-#Main:
-def main():
+def parseCommandLine():
     global DEBUG
     import getopt
     filetype    = None
@@ -1509,8 +1508,6 @@ def main():
     dumpivt     = 0
     dumpinfo    = 0
  
-    sys.stderr.write("MSP430 Bootstrap Loader Version: %s\n" % VERSION)
-
     try:
         opts, args = getopt.getopt(sys.argv[1:],
             "hc:P:wf:m:eEpvrg:UDudsxbITNB:S:V14",
@@ -1711,6 +1708,52 @@ def main():
         usage()
         sys.exit(2)
 
+    return (filename,
+            filetype,
+            comPort,
+            speed,
+            unpatched,
+            reset,
+            wait,
+            goaddr,
+            bsl,
+            toinit,
+            todo,
+            startaddr,
+            size,
+            hexoutput,
+            notimeout,
+            bslrepl,
+            mayuseBSL,
+            forceBSL,
+            dumpivt,
+            dumpinfo)
+
+#Main:
+def main():
+    sys.stderr.write("MSP430 Bootstrap Loader Version: %s\n" % VERSION)
+
+    (filename,
+     filetype,
+     comPort,
+     speed,
+     unpatched,
+     reset,
+     wait,
+     goaddr,
+     bsl,
+     toinit,
+     todo,
+     startaddr,
+     size,
+     hexoutput,
+     notimeout,
+     bslrepl,
+     mayuseBSL,
+     forceBSL,
+     dumpivt,
+     dumpinfo) = parseCommandLine()
+ 
     if DEBUG:   #debug infos
         sys.stderr.write("Debug level set to %d\n" % DEBUG)
         sys.stderr.write("Python version: %s\n" % sys.version)
