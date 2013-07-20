@@ -178,7 +178,7 @@ MEMDUMP = $(MOS)/make/scripts/memdump.py
 STACKDUMP = $(MOS)/make/scripts/stackdump.py
 
 # change this to your MSPsim installation location
-MSPSIM=$(MOSROOT)/../contiki/tools/mspsim/mspsim.jar
+MSPSIM = $(MOSROOT)/../contiki/tools/mspsim/mspsim.jar
 JAVA = java
 
 
