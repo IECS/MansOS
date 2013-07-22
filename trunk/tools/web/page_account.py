@@ -1,4 +1,6 @@
+
 import random
+
 class PageAccount():
     def getAttributeType(self, attribute): #return given user attribute type from configuration file
         ua = self.settings.getCfgValue("userAttributes")

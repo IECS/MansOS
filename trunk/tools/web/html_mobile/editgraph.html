@@ -1,0 +1,65 @@
+<script>
+function graphSave(){
+	var sma = getCookie("Msma37");
+	if (sma == undefined){
+		alert("Could not finde cookie! Try to go to other page and back or try after 5 seconds!")
+		return false;
+	}
+	var sid = localStorage.getItem("Msid37");
+	if(sid == null){
+		alert("Could not finde cookie! Try to logout and in or try after 5 seconds!")
+		return false;
+	}
+	var poga = document.getElementById("GraphSettingsSave");
+	poga.value = hex_md5(sid + sma + poga.id);
+	codeInfo();
+	return true;
+}
+function graphDelete(){
+	var sma = getCookie("Msma37");
+	if (sma == undefined){
+		alert("Could not finde cookie! Try to go to other page and back or try after 5 seconds!")
+		return false;
+	}
+	var sid = localStorage.getItem("Msid37");
+	if(sid == null){
+		alert("Could not finde cookie! Try to logout and in or try after 5 seconds!")
+		return false;
+	}
+	if(confirm('Are you sure you want to delete user?')){
+		var poga = document.getElementById("deletegraph");
+		poga.value = hex_md5(sid + sma + poga.id);
+		codeInfo();
+		return true;
+	}
+	return false;
+}
+function codeInfo(){
+    var elems = document.getElementsByTagName('select'), i;
+	for (i = 0; i < elems.length; i++) {
+		if(elems[i].form[elems[i].id][0].type == "hidden") elems[i].form[elems[i].id][0].value = elems[i].value;
+		else elems[i].form[elems[i].id][1].value = elems[i].value;
+	}
+	elems = document.getElementsByTagName('input')
+	for (i = 0; i < elems.length; i++) {
+		if((' ' + elems[i].className + ' ').indexOf(' checkbox ') > -1) {
+			if(elems[i].form[elems[i].id][0].type == "hidden"){
+				if(elems[i].checked) elems[i].form[elems[i].id][0].value = "True";
+				else elems[i].form[elems[i].id][0].value = "False";
+			}
+			else{
+				if(elems[i].checked) elems[i].form[elems[i].id][1].value = "True";
+				else elems[i].form[elems[i].id][1].value = "False";
+			}
+		}
+	}
+	for (i = 0; i < elems.length; i++) {
+		if((' ' + elems[i].className + ' ').indexOf(' tocode ') > -1) {
+			elems[i].style.color = "white";
+			elems[i].value = toCode(elems[i].value);
+		}
+	}
+}
+</script>
+%FORM%
+<a href="/graph"><button>Back</button></a>

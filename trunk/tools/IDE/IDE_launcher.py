@@ -40,7 +40,7 @@ def importsOk():
         sealParserOK = False
 
     try:
-        motelistPath = os.path.join(os.getcwd(), '..', '..', 'tools', "motelist")
+        motelistPath = os.path.join(os.getcwd(), '..', '..', 'tools', "lib")
         path.append(motelistPath)
 
         from motelist import Motelist #@UnusedImport

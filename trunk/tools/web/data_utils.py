@@ -1,4 +1,8 @@
-from settings import *
+#
+# MansOS web server - the (optional) database connection codxe
+#
+
+import configuration
 from uuid import getnode as get_mac
 import datetime
 import json
@@ -20,10 +24,10 @@ try:
     from sqlalchemy.types import DateTime, Numeric, Integer, String
 
     # Database
-    url = settingsInstance.getCfgValue("dbServer")+ "://%s:%s@%s/mansosdb"
-    username = settingsInstance.getCfgValue("dbUsername")
-    password = settingsInstance.getCfgValue("dbPassword")
-    host = settingsInstance.getCfgValue("dbHost")
+    url = "mysql://%s:%s@%s/" + configuration.c.getCfgValue("dbName")
+    username = configuration.c.getCfgValue("dbUsername")
+    password = configuration.c.getCfgValue("dbPassword")
+    host = configuration.c.getCfgValue("dbHost")
     engine = create_engine(url % (username, password, host))
     metadata = MetaData()
     observations = Table('observations', metadata,
@@ -35,8 +39,9 @@ try:
         Column('value', Numeric(20,6))
     )
 except ImportError:
-    print "Warning: database storage dependencies are missing. "
-    print "The following packages should be installed to use the database - python-sqlalchemy, python-mysqldb."
+    # TODO: do not print this if "silent" mode is configured in config file!
+    print("Warning: using a database for data storage is not possible, package dependencies are missing.")
+    print("To store to use a database, install: python-sqlalchemy python-mysqldb\n")
     
 def openDBConnection():
     global connection
@@ -51,8 +56,8 @@ def closeDBConnection():
 def processData(port, newString):
     global usePacketSeparator, packet
 
-    saveToDB = settingsInstance.getCfgValue("saveToDB") == "True"
-    sendToOpensense = settingsInstance.getCfgValue("sendToOpensense") == "True"  
+    saveToDB = configuration.c.getCfgValue("saveToDB") == "True"
+    sendToOpensense = configuration.c.getCfgValue("sendToOpensense") == "True"  
     if newString == packetSeparator:
         usePacketSeparator = True
         if packet != None:
@@ -79,7 +84,7 @@ def processData(port, newString):
             else:
                 packet[port+":"+arr[0]] = arr[1]
         else:
-            print "ERROR: Wrong data format!\n"        
+            print("ERROR: received incorrectly formatted sensor data via serial port!\n")
         
 def saveDataToDB(packet):
     global connection
@@ -90,13 +95,13 @@ def saveDataToDB(packet):
         val = packet[key]
         ins = observations.insert().values(obs_time = datetime.datetime.now(), unit_id = mac, port = arr[0], type = arr[1], value = val)
         connection.execute(ins)
-        
+
 def sendDataToSense(packet):
     url = 'http://api.sen.se/events/'
     header = {
-      'sense_key' : settingsInstance.getCfgValue("senseApiKey"),
+      'sense_key' : configuration.c.getCfgValue("senseApiKey"),
     }
-    feeds = settingsInstance.getCfgValue("senseApiFeeds")
+    feeds = configuration.c.getCfgValue("senseApiFeeds")
     type2feedMap = {}
     for feed in feeds:
         arr = feed.split(":")
@@ -116,8 +121,7 @@ def sendDataToSense(packet):
         }
         data.append(measurement)
     data_json = json.dumps(data)
-    host = "http://api.sen.se/events/"
-    req = urllib2.Request(host, data_json, header)
+    req = urllib2.Request(url, data_json, header)
     response_stream = urllib2.urlopen(req)
     json_response = response_stream.read()
     #print json_response
