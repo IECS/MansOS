@@ -1,0 +1,20 @@
+
+This is an alternative remote access provider.
+The other options are to use the web interface and OMF.
+
+The pros of remote access proxy:
+* very simple, ASCII based communication over HTTP
+* low server-side complexity - all code fits in just a few python files!
+
+The pros of web interface:
+* the only method at the moment with per-user access control levels
+* a visual, easy-to-use user interface for beginners
+
+The pros of OMF:
+* unified method, can be used both for sensor node and WiFi router testing
+
+
+All three mothods can be combined. For example, remotely connected nodes
+can be made to appear in the web interface with help of remote access proxy.
+On the other hand, more experienced users can write OMF experiemnts
+than make use of the remote access client and server programs.

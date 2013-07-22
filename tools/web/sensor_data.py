@@ -3,7 +3,7 @@
 #
 
 import time, os
-from settings import *
+import configuration
 
 # Polynomial ^8 + ^5 + ^4 + 1
 def crc8Add(acc, byte):
@@ -21,8 +21,8 @@ def crc8(s):
         acc = crc8Add(acc, ord(c))
     return acc
 
-###############################################
 
+# -------------------------------------
 class SensorData(object):
     def __init__(self, motename):
         self.columns = []
@@ -33,7 +33,7 @@ class SensorData(object):
         baseDir = os.path.basename(motename)
         if baseDir[:3].lower() == "com":
             baseDir = "_" + baseDir
-        self.dirname = os.path.join(settingsInstance.cfg.dataDirectory,
+        self.dirname = os.path.join(configuration.c.getCfgValue("dataDirectory"),
                                     baseDir)
         if not os.path.exists(self.dirname):
             os.makedirs(self.dirname)
@@ -61,7 +61,7 @@ class SensorData(object):
         valueString = string[eqSignPos + 1:].strip()
 
         try:
-            # try to parse the vakue as int (in any base)
+            # try to parse the value as int (in any base)
             value = int(valueString, 0)
         except:
             try:
@@ -72,8 +72,8 @@ class SensorData(object):
                 value = 0
         self.data[dataName + "@" + motename].append([int(round(time.time()*1000)),value])#miliseconds since 1970
         # save to file if required (multiple files)
-        if settingsInstance.cfg.saveToFilename \
-                and settingsInstance.cfg.saveProcessedData:
+        if configuration.c.getCfgValue("saveToFilename") \
+                and configuration.c.getCfgValue("saveProcessedData"):
 
             # one more sanity check of dataName
             if len(dataName) > 64:
@@ -117,8 +117,8 @@ class SensorData(object):
     def hasData(self):
         return len(self.data) != 0
 
-#############################################
 
+# -------------------------------------
 class MoteData(object):
     def __init__(self):
         # unformatted data
@@ -182,4 +182,6 @@ class MoteData(object):
                 returnData.append(sensorData.getData())
         return returnData
 
+
+# -------------------------------------
 moteData = MoteData()

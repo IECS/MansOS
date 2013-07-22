@@ -15,10 +15,12 @@ class Session():
         self._oldsma = "0"
         self._end = datetime.datetime.now() + datetime.timedelta(minutes = 1)
         self._ode = False
+
     def add_sid(self, sid, user):
         self._sid = sid
         self._user = user
-        print("{} had loged in".format(self._user["name"]))
+        print("{} has logged in".format(self._user["name"]))
+
     def get_all_data(self):
         temp = {}
         temp["sma"] = self._sma
@@ -28,12 +30,14 @@ class Session():
         if hasattr(self, '_user'):
             temp["user"] = self._user
         return temp
+
     def del_sid(self):
         if hasattr(self, '_sid'):
             del self._sid
         if hasattr(self, '_user'):
-            print("{} had loged out".format(self._user["name"]))
+            print("{} has logged out".format(self._user["name"]))
             del self._user
+
     def to_code(self, text, span = True, cod = "0"):
         if cod == "0":
             cod = str(random.randint(10000000, 99999999))
@@ -63,6 +67,7 @@ class Session():
         if span:
             ntext = "<span class='coded' id='" + cod + "'>" + ntext + "</span>"
         return ntext
+
     def from_code(self, text): #code use to get coded information
         if not hasattr(self, '_sid'):
             return False
@@ -85,6 +90,7 @@ class Session():
                 ntext += text[i]
             i += 1
         return ntext
+
     def to_md5(self, text): #md5 use to check coded infromation
         if not hasattr(self, '_sid'):
             return False
@@ -92,9 +98,11 @@ class Session():
         m.update(self._sid + self._oldsma + text)
         return m.hexdigest()
 
+#-----------------------------------------
 class Sessions():
     def __init__(self):
         self._sessionList = []
+
     def is_session(self, sma):
         i = self._sessionList.__len__()-1
         while -1 < i:
@@ -102,6 +110,7 @@ class Sessions():
                 return True
             i -= 1
         return False
+
     def add_session(self, sma):
         self.delete_old()
         if self._sessionList.__len__() > 9999:
@@ -110,6 +119,7 @@ class Sessions():
         self._sessionList.append(Session(sma))
         print("Session count : {}".format(self._sessionList.__len__()))
         return True
+
     def get_session(self, sma):
         i = self._sessionList.__len__() - 1
         while -1 < i:
@@ -117,6 +127,7 @@ class Sessions():
                 return self._sessionList[i]
             i -= 1
         return False
+
     def get_session_old(self, oldsma):
         i = self._sessionList.__len__() - 1
         while -1 < i:
@@ -124,6 +135,7 @@ class Sessions():
                 return self._sessionList[i]
             i -= 1
         return False
+
     def delete_old(self):
         i = self._sessionList.__len__() - 1
         while -1 < i:
@@ -132,6 +144,7 @@ class Sessions():
                     print("{} session ended".format(self._sessionList[i]._user["name"]))
                 self._sessionList.pop(i)
             i -= 1
+
     def del_session(self, sma):
         i = self._sessionList.__len__() - 1
         while -1 < i:
@@ -155,6 +168,7 @@ class Sessions():
             nsma = nsma[:-1]+"0"
             self.add_session(nsma)
             return False
+
     def add_sid(self, sma, sid, user):
         i = self._sessionList.__len__() - 1
         while -1 < i:
@@ -162,6 +176,7 @@ class Sessions():
                 self._sessionList[i].add_sid(sid, user)
                 return
             i -= 1
+
     def get_sid(self, sma):
         i = self._sessionList.__len__() - 1
         while -1 < i:
@@ -169,6 +184,7 @@ class Sessions():
                 return self._sessionList[i]._sid
             i -= 1
         return False
+
     def del_sid(self, sma):
         i = self._sessionList.__len__() - 1
         while -1 < i:
@@ -176,6 +192,7 @@ class Sessions():
                 self._sessionList[i].del_sid()
                 return
             i -= 1
+
     def get_sessions(self):
         temp = {}
         i = self._sessionList.__len__() - 1
@@ -183,8 +200,9 @@ class Sessions():
             temp[i] = self._sessionList[i].get_all_data()
             i -= 1
         return temp
- #-----------------------------------------
-class setAndServeSessionAndHeader():
+
+#-----------------------------------------
+class SetAndServeSessionAndHeader():
     def getCookie(self, cookieName):
         tdict = {}
         if "Cookie" in self.headers:
@@ -213,9 +231,11 @@ class setAndServeSessionAndHeader():
         else:
             if value != "":
                 self.headers["Cookie"] = cookieName + "=" + value
+
     def setSafe(self, state):
         self.headers["Safe"] = state
         return
+
     def isSafe(self):
         if "Safe" in self.headers:
             if self.headers["Safe"] == "True":
@@ -318,7 +338,7 @@ class setAndServeSessionAndHeader():
         #print("This session is safe {}".format(self.isSafe()))
         #print("allSessions = ")
         #print(self.sessions.get_sessions()
-            
+
     def serveSession(self, qs, urlTo):
         with open(self.htmlDirectory + "/session.html", "r") as f:
             contents = f.read()

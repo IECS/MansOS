@@ -52,7 +52,7 @@ int createListenSock(int port);
 void newClientConnected();
 
 // return:
-//  0 = nothing red, but no error
+//  0 = nothing read, but no error
 // -1 = error or socket closed
 //  n = n bytes received (n > 0)
 int receiveData(int sockNr);
@@ -192,7 +192,7 @@ void newClientConnected()
 }
 
 // return:
-//  0 = nothing red, but no error
+//  0 = nothing read, but no error
 // -1 = error or socket closed
 //  n = n bytes received (n > 0)
 int receiveData(int sockNr)

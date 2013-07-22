@@ -1,4 +1,6 @@
+
 import random
+
 class PageServer():
     def getServerSettingsType(self, attribute):
         ua = self.settings.getCfgValue("serverWebSettings")

@@ -1,3 +1,10 @@
+#
+# This code allows Python processes started from the command line
+# to detach from the contolling terminal and run in the background.
+#
+# createDaemon() function Copyright (C) 2005 Chad J. Schroeder
+#
+
 import os
 
 LOGFILE = "log.log"
@@ -6,10 +13,6 @@ def log(msg):
    with open(LOGFILE, "a") as f:
       f.write(msg)
 
-# 
-# createDaemon() function
-# Copyright (C) 2005 Chad J. Schroeder
-#
 def createDaemon():
    """Detach a process from the controlling terminal and run it in the
    background as a daemon.

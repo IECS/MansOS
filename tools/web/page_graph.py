@@ -1,4 +1,6 @@
+
 import random
+
 class PageGraph():
     def serveGraphs(self, qs):
         isMobile = "Android" in self.headers["user-agent"]

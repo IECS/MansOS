@@ -3,7 +3,7 @@
 #
 
 from wmp import *
-from settings import *
+import configuration
 import time
 
 # names of all platforms the web interface supports.
@@ -137,7 +137,7 @@ class Config(object):
         self.state = self.READ_START_CHARACTER
         self.currentSp = SerialPacket()
         self.lastSp = None
-        self.filenameOnMote = settingsInstance.getCfgValue("saveToFilenameOnMote")
+        self.filenameOnMote = configuration.c.getCfgValue("saveToFilenameOnMote")
         for platform in supportedPlatforms:
             try:
                 module = __import__("sensorlist_" + platform)
@@ -200,7 +200,7 @@ class Config(object):
         if not self.mote:
             return ("mote not present!", False)
         if not self.mote.port:
-            return ("serial port " + self.mote.portName + " not opened!", False)
+            return ("serial port " + self.mote.getPortName() + " not opened!", False)
         if not self.activePlatform:
             return ("platform not selected!", False)
         return (None, True)
@@ -295,8 +295,8 @@ class Config(object):
         else:
             self.filenameOnMote = ""
 
-        settingsInstance.setCfgValue("saveToFilenameOnMote", self.filenameOnMote)
-        settingsInstance.save()
+        configuration.c.setCfgValue("saveToFilenameOnMote", self.filenameOnMote)
+        configuration.c.save()
         return (None, True)
 
 
@@ -320,8 +320,8 @@ class Config(object):
         newFilename = "".join(args)
         if ok and newFilename != self.filenameOnMote:
             self.filenameOnMote = newFilename
-            settingsInstance.setCfgValue("saveToFilenameOnMote", self.filenameOnMote)
-            settingsInstance.save()
+            configuration.c.setCfgValue("saveToFilenameOnMote", self.filenameOnMote)
+            configuration.c.save()
 
         self.configMode = False
         return "<strong>Configuration values read!</strong><br/>"
@@ -454,7 +454,7 @@ class Config(object):
         # mote
         text += '<strong>Mote:</strong><br/>\n'
         text += '<div class="subcontents">\n'
-        text += 'Port: <em>' + self.mote.portName + '</em><br/>\n'
+        text += 'Port: <em>' + self.mote.getPortName() + '</em><br/>\n'
         text += 'Platform: <em>' + self.activePlatform.name + '</em><br/>\n'
         text += '</div>\n'
 
@@ -494,7 +494,7 @@ class Config(object):
         text += '</div>\n'
 
         # end of form
-        motename = "mote" + str(self.mote.number)
+        motename = "mote" + os.path.basename(self.mote.getPortName())
         text += '<input type="hidden" name="' + motename + '_cfg" value="1"/>\n'
         text += '<input type="hidden" name="sel_' + motename \
             + '" value="' + self.activePlatform.name + '" />\n'

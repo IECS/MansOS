@@ -36,7 +36,7 @@ def main():
     path.append(sealPath)
     path.append(os.path.join(sealPath, 'seal', 'components'))
 
-    motelistPath = os.path.join(os.getcwd(), '..', '..', 'tools', "motelist")
+    motelistPath = os.path.join(os.getcwd(), '..', '..', 'tools', "lib")
     path.append(motelistPath)
 
     # Must import after PATH update!

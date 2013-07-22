@@ -4,21 +4,25 @@
 # MansOS web server - the main file
 #
 
-import os, sys, platform
-import threading, time, serial, select, socket, cgi, subprocess, struct, signal
+from __future__ import print_function
+import os, sys, platform, select, signal, traceback
+import threading, time, cgi
+# add library directory to the path
+sys.path.append(os.path.join(os.getcwd(), '..', "lib"))
 from page_login import *
 from page_server import *
 from page_account import *
 from page_user import *
 from page_graph import *
-from settings import *
 from data_utils import *
 from user import *
 from session import *
-from mote import *
+from motes import *
+from moteconfig import *
 from sensor_data import *
-from config import *
-from daemon import *
+import daemon
+import configuration
+import mansos_version
 
 def isPython3():
     return sys.version_info[0] >= 3
@@ -43,9 +47,6 @@ lastData = ""
 isInSubprocess = False
 uploadResult = ""
 
-motes = MoteCollection()
-
-sealBlocklyPath = "seal-blockly"
 
 def listenSerial():
     while isListening:
@@ -65,8 +66,8 @@ def listenSerial():
                 pos = m.buffer.find('\n')
                 if pos != 0:
                     newString = m.buffer[:pos].strip()
-                    saveToDB = settingsInstance.getCfgValue("saveToDB")
-                    sendToOpensense = settingsInstance.getCfgValue("sendToOpensense")
+                    saveToDB = configuration.c.getCfgValue("saveToDB")
+                    sendToOpensense = configuration.c.getCfgValue("sendToOpensense")
                     if saveToDB or sendToOpensense:
                         processData(m.port.port, newString)
                     # print "got", newString
@@ -103,28 +104,29 @@ def openAllSerial():
     # Open DB connection
     openDBConnection()
 
-def getMansosVersion():
-    path = settingsInstance.getCfgValue("mansosDirectory")
-    result = ""
-    try:
-        with open(os.path.join(path, "doc/VERSION")) as versionFile:
-            result = versionFile.readline().strip()
-    except Exception as e:
-        print(e)
-    return result
 
 # --------------------------------------------
-class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin, PageServer, PageGraph, setAndServeSessionAndHeader):
-    server_version = 'MansOS/' + getMansosVersion() + ' Web Server'
+class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin, PageServer, PageGraph, SetAndServeSessionAndHeader):
+    server_version = 'MansOS/' + mansos_version.getMansosVersion(
+        configuration.c.getCfgValue("mansosDirectory")) + ' Web Server'
     protocol_version = 'HTTP/1.1' # 'HTTP/1.0' is the default, but we want chunked encoding
-    
+
+    def __init__(self, request, client_address, server):
+        self.htmlDirectory = os.path.abspath(configuration.c.getCfgValue("htmlDirectory"))
+        self.dataDirectory = os.path.abspath(configuration.c.getCfgValue("dataDirectory"))
+        if not os.path.exists(self.dataDirectory):
+            os.makedirs(self.dataDirectory)
+        self.sealBlocklyDirectory = os.path.abspath(configuration.c.getCfgValue("sealBlocklyDirectory"))
+
+        BaseHTTPRequestHandler.__init__(self, request, client_address, server)
+
     def writeChunk(self, buffer):
         if self.wfile == None: return
         if self.wfile._sock == None: return
         self.wfile.write("{:x}\r\n".format(len(buffer)))
         self.wfile.write(buffer)
         self.wfile.write("\r\n")
-    
+
     def writeFinalChunk(self):
         self.wfile.write("0\r\n")
         self.wfile.write("\r\n")
@@ -135,7 +137,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         sys.stderr.write("%s - - [%s] %s\n" %
                          (self.client_address[0],
                           self.log_date_time_string(),
-                          format%args))
+                          format % args))
 
     def serveHeader(self, name, qs = {"no": "no"}, isGeneric = True, includeBodyStart = True, replaceValues = None, urlTo = ""):
         self.headerIsServed = True
@@ -248,7 +250,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
 
             checked = ' checked="checked"' if m.isSelected else ""
 
-            c += '<div class="mote"><strong>Mote: </strong>' + m.portName
+            c += '<div class="mote"><strong>Mote: </strong>' + m.getPortName()
             c += ' (<strong>Platform: </strong>' + m.platform + ') '
             c += ' <input type="checkbox" title="Select the mote" name="' + name + '"'
             c += checked + ' ' + disabled + '/>' + namedAction + '</div>\n'
@@ -285,7 +287,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         i = 0
         for m in motes.getMotes():
             name = "mote" + str(i)
-            text += '<div class="mote"><strong>Mote: </strong>' + m.portName
+            text += '<div class="mote"><strong>Mote: </strong>' + m.getPortName()
             text += ' <input type="submit" name="' + name \
                 + '_cfg" title="Get/set mote\'s configuration (e.g. sensor reading periods)" value="Configuration..." ' + disabled + '/>\n'
             text += ' <input type="submit" name="' + name \
@@ -325,7 +327,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
             mimetype = 'text/css'
             if filename[-9:] == 'theme.css':
                 tpath = filename[:-4]
-                filename = filename[:-4] + settingsInstance.getCfgValue("serverTheme") + '.css'
+                filename = filename[:-4] + configuration.c.getCfgValue("serverTheme") + '.css'
                 theme = self.getCookie("Msma37")
                 if theme:
                     theme = allSessions.get_session_old(theme)
@@ -418,24 +420,24 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
 
         openAllSerial()
 
-        moteIndex = None
+        motePortName = None
         filesRequired = False
         for s in qs:
             if s[:4] == "mote":
                 pair = s[4:].split('_')
                 try:
-                    moteIndex = int(pair[0])
+                    motePortName = pair[0]
                     filesRequired = pair[1] == "files"
                 except:
                     pass
                 break
 
-        if moteIndex is None or moteIndex >= len(motes.getMotes()):
+        if motePortName is None: # or moteIndex >= len(motes.getMotes()):
             self.serveError("Config page requested, but mote not specified!")
             return
 
         platform = None
-        dropdownName = "sel_mote" + str(moteIndex)
+        dropdownName = "sel_mote" + motePortName
         if dropdownName in qs:
             platform = qs[dropdownName][0]
 
@@ -443,12 +445,16 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
             self.serveError("Config page requested, but platform not specified or unknown!")
             return
 
-        moteidQS = "?sel_mote" + str(moteIndex) + "=" + platform + "&" + "mote" + str(moteIndex)
+        # TODO!
+        moteidQS = "?sel_mote" + motePortName + "=" + platform + "&" + "mote" + motePortName
         self.serveHeader("config", qs, isGeneric = False,
                          replaceValues = {"MOTEID_CONFIG" : moteidQS + "_cfg=1",
                           "MOTEID_FILES" : moteidQS + "_files=1"})
 
-        configInstance.setMote(motes.getMote(moteIndex), platform)
+        if os.name == "posix":
+            motePortName = "/dev/" + motePortName
+
+        configInstance.setMote(motes.getMote(motePortName), platform)
 
         (errmsg, ok) = configInstance.updateConfigValues(qs)
         if not ok:
@@ -501,8 +507,8 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
 
         action = "Stop" if isListening else "Start"
         
-        dataFilename = settingsInstance.getCfgValue("saveToFilename")
-        saveProcessedData = settingsInstance.getCfgValueAsBool("saveProcessedData")
+        dataFilename = configuration.c.getCfgValue("saveToFilename")
+        saveProcessedData = configuration.c.getCfgValueAsBool("saveProcessedData")
         
         if self.getLevel() > 1:
             if "dataFile" in qs:
@@ -513,9 +519,9 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                 saveProcessedData = not qs["dataType"][0] == "raw"
                 saveMultipleFiles = qs["dataType"][0] == "mprocessed"
 
-            settingsInstance.setCfgValue("saveToFilename", dataFilename)
-            settingsInstance.setCfgValue("saveProcessedData", bool(saveProcessedData))
-            settingsInstance.save()
+            configuration.c.setCfgValue("saveToFilename", dataFilename)
+            configuration.c.setCfgValue("saveProcessedData", bool(saveProcessedData))
+            configuration.c.save()
         
         rawdataChecked = not saveProcessedData
         mprocessedChecked = saveProcessedData
@@ -541,8 +547,8 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.serveHeader("upload", qs)
         #self.serveMotes("upload", "Upload", qs, True)
         motesText = self.serveMotes("upload", "Upload", qs, True, False)
-        isSealCode = settingsInstance.getCfgValueAsInt("isSealCode")
-        isSlow = settingsInstance.getCfgValueAsInt("slowUpload")
+        isSealCode = configuration.c.getCfgValueAsInt("isSealCode")
+        isSlow = configuration.c.getCfgValueAsInt("slowUpload")
         self.serveBody("upload", qs,
                        {"MOTES_TXT" : motesText,
                         "CCODE_CHECKED": 'checked="checked"' if not isSealCode else "",
@@ -598,7 +604,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
-        path = os.path.join(sealBlocklyPath, "index.html")
+        path = os.path.join(self.sealBlocklyDirectory, "index.html")
         with open(path) as f:
             contents = f.read()
             disabled = 'disabled="disabled"' if not self.getLevel() > 1 else ""
@@ -630,20 +636,19 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         #global
         self.sessions = allSessions
         self.users = allUsers
-        self.settings = settingsInstance
+        self.settings = configuration.c
         self.tabuList = tabuList
         self.moteData = moteData
         #global end
-        
+
         self.headerIsServed = False
 
         o = urlparse(self.path)
         qs = parse_qs(o.query)
 
-        self.htmlDirectory = htmlDirectory
         if "Android" in self.headers["user-agent"]:
-            self.htmlDirectory = self.htmlDirectory+"_mobile"
-            
+            self.htmlDirectory = self.htmlDirectory + "_mobile"
+
         if o.path == "/" or o.path == "/default":
             self.serveDefault(qs)
         elif o.path == "/motes":
@@ -677,7 +682,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         elif o.path == "/seal-frame":
             self.serveSealFrame(qs)
         elif o.path[:13] == "/seal-blockly":
-            self.serveFile(os.path.join(sealBlocklyPath, o.path[14:]))
+            self.serveFile(os.path.join(self.sealBlocklyDirectory, o.path[14:]))
         elif o.path == "/sync":
             self.serveSync(qs)
         elif o.path == "/code":
@@ -745,7 +750,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                 outFile.write("APPMOD = App\n")
                 outFile.write("PROJDIR = $(CURDIR)\n")
                 outFile.write("ifndef MOSROOT\n")
-                mansosPath = settingsInstance.getCfgValue("mansosDirectory")
+                mansosPath = configuration.c.getCfgValue("mansosDirectory")
                 if not os.path.isabs(mansosPath):
                     # one level up - because we are in build directory
                     mansosPath = os.path.join(mansosPath, "..")
@@ -754,11 +759,13 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                 outFile.write("include ${MOSROOT}/mos/make/Makefile\n")
                 outFile.close()
 
-            closeAllSerial()
+            closeAllSerial() # XXX: when the ports are reopened???
+
             for m in motes.getMotes():
+                if m.tryToOpenSerial(False): continue
                 r = m.tryToCompileAndUpload(self, filename)
-                if r != 0 and m.port:
-                    retcode = r
+                if r != 0: retcode = r
+                m.closeSerial()
 
         os.chdir("..")
         isInSubprocess = False
@@ -790,14 +797,14 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         if "compile" in form:
             if "language" in form:
                 isSEAL = form["language"].value.strip() == "SEAL"
-            settingsInstance.setCfgValue("isSealCode", isSEAL)
+            configuration.c.setCfgValue("isSealCode", isSEAL)
 
         if "slow" in form:
             slow = form["slow"].value == "on"
         else:
             slow = False
-        settingsInstance.setCfgValue("slowUpload", slow)
-        settingsInstance.save()
+        configuration.c.setCfgValue("slowUpload", slow)
+        configuration.c.save()
 
         if "code" in form.keys():
             code = form["code"].value
@@ -853,7 +860,8 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         else:
             self.writeChunk("<strong>Upload failed!</strong></div>")
         self.serveFooter()
-        motes.closeAll()
+        # TODO
+        # motes.closeAll()
 
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
@@ -887,10 +895,10 @@ def makeDefaultUserFile(userDirectory, userFile):
     if not os.path.exists(userDirectory):
         os.makedirs(userDirectory)
     uf = open(userDirectory + "/" + userFile, "w")
-    for at in settingsInstance.getCfgValue("userAttributes"):
+    for at in configuration.c.getCfgValue("userAttributes"):
         uf.write(at+" ")
     uf.write("\n")
-    for ad in settingsInstance.getCfgValue("adminValues"):
+    for ad in configuration.c.getCfgValue("adminValues"):
         uf.write(ad+" ")
     uf.write("\n")
     uf.close()
@@ -914,31 +922,30 @@ def initalizeUsers():
     
     allSessions = Sessions()
     
-    userDirectory = os.path.abspath(settingsInstance.getCfgValue("userDirectory"))
-    userFile = settingsInstance.getCfgValue("userFile")
+    userDirectory = os.path.abspath(configuration.c.getCfgValue("userDirectory"))
+    userFile = configuration.c.getCfgValue("userFile")
     if not os.path.exists(userDirectory + "/" + userFile):
-        print("No user file. Python add default in " + makeDefaultUserFile(userDirectory, userFile))
-        
-    
+        print("No user file. Add default in " + makeDefaultUserFile(userDirectory, userFile))
+
     if not readUsers(userDirectory, userFile):
         print("User file is empty!")
         print("New default file made in " + makeDefaultUserFile(userDirectory, userFile))
         readUsers(userDirectory, userFile)
-    
+
     if not "name" in allUsers._userAttributes:
-        print("User attribute \"name\" required! Python save old user file in " + allUsers.make_copy())
+        print("User attribute \"name\" required! Old user file backuped in " + allUsers.make_copy())
         print("New default file made in " + makeDefaultUserFile(userDirectory, userFile))
         readUsers(userDirectory, userFile)
     elif not allUsers.get_user("name", "admin"):
-        print("No admin! Python save old user file in " + allUsers.make_copy())
+        print("No admin! Old user file backuped in " + allUsers.make_copy())
         print("New default file made in " + makeDefaultUserFile(userDirectory, userFile))
         readUsers(userDirectory, userFile)
     elif not "password" in allUsers._userAttributes:
-        print("User attribute \"password\" required! Python save old user file in " + allUsers.make_copy())
+        print("User attribute \"password\" required! Old user file backuped in " + allUsers.make_copy())
         print("New default file made in " + makeDefaultUserFile(userDirectory, userFile))
         readUsers(userDirectory, userFile)
     elif not allUsers.check_psw():
-        print("Passwords do not match the md5 standard! Python save old user file in " + allUsers.make_copy())
+        print("Passwords do not match the MD5 standard! Old user file backuped in " + allUsers.make_copy())
         print("New default file made in " + makeDefaultUserFile(userDirectory, userFile))
         readUsers(userDirectory, userFile)
 
@@ -946,12 +953,12 @@ def initalizeUsers():
     if not allUsers.get_user("name", "admin") or not "name" in allUsers._userAttributes or not "password" in allUsers._userAttributes or not allUsers.check_psw():
         print("There is something wrong with user.cfg")
 
-    
-    ua = settingsInstance.getCfgValue("userAttributes")
+
+    ua = configuration.c.getCfgValue("userAttributes")
     na = set(ua) - set(allUsers._userAttributes) #new atributes
     if len(na) > 0:
-        dv = settingsInstance.getCfgValue("defaultValues")
-        av = settingsInstance.getCfgValue("adminValues")
+        dv = configuration.c.getCfgValue("defaultValues")
+        av = configuration.c.getCfgValue("adminValues")
         while len(na) > 0:
             n = na.pop()
             print("New attribute for users: " + str(n))
@@ -962,38 +969,33 @@ def initalizeUsers():
                     allUsers.set_attribute("admin", ua[i], av[i])
                     break
                 i -= 1
-        print("Python save old user file in " + allUsers.make_copy())
+        print("Save old user file in " + allUsers.make_copy())
         allUsers.write_in_file()
-    
-def initalizeConfig():
-    global htmlDirectory
-    global dataDirectory
-    global sealBlocklyPath
-    
-    htmlDirectory = os.path.abspath(settingsInstance.getCfgValue("htmlDirectory"))
-    dataDirectory = os.path.abspath(settingsInstance.getCfgValue("dataDirectory"))
-    if not os.path.exists(dataDirectory):
-        os.makedirs(dataDirectory)
-    sealBlocklyPath = os.path.abspath(settingsInstance.getCfgValue("sealBlocklyDirectory"))
-    
-    initalizeUsers()
-        
+
+
+# ---------------------------------------------
 def main():
     try:
-        if settingsInstance.getCfgValueAsBool("createDaemon"):
-            # detach from the tty and go to background
-            createDaemon()
-        initalizeConfig()
-        port = settingsInstance.getCfgValueAsInt("port", HTTP_SERVER_PORT)
+        if configuration.c.getCfgValueAsBool("createDaemon"):
+            # detach from controlling tty and go to background
+            daemon.createDaemon()
+        # load users
+        initalizeUsers()
+        # start the server
+        port = configuration.c.getCfgValueAsInt("port")
         server = ThreadingHTTPServer(('', port), HttpServerHandler)
+        # load motes
         motes.addAll()
+        # allow initialization to complete
         time.sleep(1)
+        # report ok and enter the main loop
         print("<http-server>: started, listening to TCP port {}, serial baudrate {}".format(port,
-              settingsInstance.getCfgValueAsInt("baudrate", SERIAL_BAUDRATE)))
+              configuration.c.getCfgValueAsInt("baudrate")))
         server.serve_forever()
     except Exception as e:
         print("<http-server>: exception occurred:")
         print(e)
+        print(traceback.format_exc())
         return 1
 
 if __name__ == '__main__':

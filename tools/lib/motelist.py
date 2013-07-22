@@ -1,9 +1,6 @@
 #!/usr/bin/env python
-import os
-from threading import Lock, Thread
-from time import sleep
-from sys import argv
-from serial import Serial, SerialException, PARITY_NONE
+
+import os, sys, threading, time, serial
 
 if os.name == 'posix':
     from motelist_src.get_ports_linux import comports  # @UnusedImport
@@ -14,7 +11,7 @@ elif os.name == "nt":
 elif os.name == 'darwin':  # OS X (confirmed) TODO: Not tested
     from motelist_src.get_ports_mac import comports  # @Reimport
 else:
-    print ("Your OS('{}') is not supported!".format(os.name))
+    print ("Your OS ('{}') is not supported!".format(os.name))
     exit()
 
 # Unified way of accessing motes
@@ -74,7 +71,7 @@ class Mote(object):
 
 class Motelist(object):
     motes = list()
-    lock = Lock()
+    lock = threading.Lock()
     updateCallbacks = list()
     infinite = False
 
@@ -88,6 +85,8 @@ class Motelist(object):
         else:
             Motelist.updateCallbacks.append(updateCallbacks)
 
+#       Motelist.startPeriodicUpdate()
+
     @staticmethod
     def addMote(port, name, reference):
         Motelist.lock.acquire();
@@ -97,7 +96,7 @@ class Motelist(object):
         for mote in Motelist.motes:
             if mote.getPort().lower() == port.lower():
                 portFound = True
-                break;
+                break
 
         if not portFound:
             Motelist.motes.append(Mote([port, name, reference], True))
@@ -186,14 +185,14 @@ class Motelist(object):
         Motelist.__activateCallbacks()
 
         while Motelist.infinite:
-            sleep(1)
+            time.sleep(1)
             Motelist.__activateCallbacks()
 
     @staticmethod
     def startPeriodicUpdate():
         # Call new Thread
-        thread = Thread(target = Motelist.updateMotelist, args = (True,),
-                        name = "Motelist thread")
+        thread = threading.Thread(target = Motelist.updateMotelist, args = (True,),
+                                  name = "Motelist thread")
 
         # Must have, if we don't plan on joining this thread
         thread.daemon = True
@@ -225,12 +224,12 @@ class Motelist(object):
     @staticmethod
     def portExists(port):
         try:
-            ser = Serial(port, 38400, timeout = 0, parity = PARITY_NONE, rtscts = 1)
+            ser = serial.Serial(port, 38400, timeout = 0, parity = serial.PARITY_NONE, rtscts = 1)
             while True:
                 ser.write("")
                 ser.close()
                 return True
-        except SerialException as msg:
+        except serial.SerialException as msg:
             return False
 
     @staticmethod
@@ -261,14 +260,29 @@ class Motelist(object):
                                        mote.getPort().ljust(lengths[1]),
                                        mote.getName().ljust(lengths[2])))
 
-if __name__ == '__main__':
-    if len(argv) == 1:
-        argv.append("")
 
-    if argv[1] == "-c":
-        for x in Motelist.getMotelist(True):
-            print (x.getCSVData())
-    elif argv[1] == "-h":
-        print ("Use motelist.py -c for CSV data.")
-    else:
-        Motelist.printMotelist()
+def main():
+    for arg in sys.argv[1:]:
+        if arg == "-c":
+            for x in Motelist.getMotelist(True):
+                print (x.getCSVData())
+            sys.exit(1)
+        elif arg == "-h":
+            print ("Use motelist.py -c for CSV data.")
+            sys.exit(1)
+    
+    Motelist.printMotelist()
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except SystemExit:
+        raise               #let pass exit() calls
+    except KeyboardInterrupt:
+        if DEBUG: raise     #show full trace in debug mode
+        sys.stderr.write("user abort.\n")   #short messy in user mode
+        sys.exit(1)
+    except Exception as msg:
+        sys.stderr.write("\nAn error occured:\n%s\n" % msg)
+        sys.exit(1)
