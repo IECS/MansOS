@@ -47,6 +47,7 @@ TEST_TARGETS = \
 	RadioRecvTest				\
 	RtcTest					\
 	SdCardBlockTest				\
+	SerialBridge				\
 	SerialPipe				\
 	SharingTest				\
 	SleepTest				\
