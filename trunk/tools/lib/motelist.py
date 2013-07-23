@@ -76,7 +76,7 @@ class Motelist(object):
     infinite = False
 
     @staticmethod
-    def initialize(updateCallbacks):
+    def initialize(updateCallbacks, startPeriodicUpdate = False):
         if updateCallbacks is None:
             return
 
@@ -85,7 +85,8 @@ class Motelist(object):
         else:
             Motelist.updateCallbacks.append(updateCallbacks)
 
-#       Motelist.startPeriodicUpdate()
+        if startPeriodicUpdate:
+            Motelist.startPeriodicUpdate()
 
     @staticmethod
     def addMote(port, name, reference):
@@ -129,7 +130,7 @@ class Motelist(object):
                 newMotes.append(Motelist.motes[Motelist.motes.index(newMote)])
 
         for mote in Motelist.motes:
-            if mote.isUserMote():
+            if mote.isUserMote() and mote not in newMotes:
                 newMotes.append(mote)
 
         haveNewMote = haveNewMote or not len(Motelist.motes) == len(newMotes)
@@ -236,6 +237,10 @@ class Motelist(object):
     def printMotelist():
         motelist = Motelist.getMotelist(True)
 
+        if len(motelist) == 0:
+            print "No attached motes found!"
+            return
+            
         # Prepare table column width
         lengths = [len("Reference"), len("Port"), len("Name")]
 
