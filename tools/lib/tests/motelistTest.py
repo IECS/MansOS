@@ -60,7 +60,7 @@ else:
 # to ensure that motelist is empty on manual scan, because
 # if there are already registred mote on that port, 
 # motelist will ignore it.
-ports = manualyScanForMotes("COM")
+ports = manualyScanForMotes(prefix)
 readKey()
 
 # This actually updates motelist with all connected motes, 
