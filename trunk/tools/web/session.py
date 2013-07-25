@@ -1,6 +1,8 @@
 #
 # MansOS web server - server-side session
 #
+
+from __future__ import print_function
 import datetime, random, md5
 
 alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,!?() '_-=+*/@$:%^#;~{}[]|`"
@@ -114,15 +116,17 @@ class Sessions():
     def add_session(self, sma):
         self.delete_old()
         if self._sessionList.__len__() > 9999:
-            print("Session count : {}".format(self._sessionList.__len__()))
+            print("Session count: {}".format(self._sessionList.__len__()))
             return
         self._sessionList.append(Session(sma))
-        print("Session count : {}".format(self._sessionList.__len__()))
+        print("Session count: {}".format(self._sessionList.__len__()))
         return True
 
     def get_session(self, sma):
+        #print("get_session, sma=" + sma)
         i = self._sessionList.__len__() - 1
         while -1 < i:
+            # print("  self._sessionList[i]._sma=" + self._sessionList[i]._sma)
             if self._sessionList[i]._sma == sma:
                 return self._sessionList[i]
             i -= 1
@@ -153,10 +157,11 @@ class Sessions():
                     print("{} session ended".format(self._sessionList[i]._user["name"]))
                 self._sessionList.pop(i)
             i -= 1
-        
+
     def set_sma(self, osma, nsma):
         temp = self.get_session(osma)
         if temp:
+            #print("set_sma: found!")
             if nsma[-1:] != "0":
                 temp._end = datetime.datetime.now() + datetime.timedelta(minutes = 15)
             else:
@@ -166,6 +171,7 @@ class Sessions():
             return True
         else:
             nsma = nsma[:-1]+"0"
+            #print("add session (set_sma)")
             self.add_session(nsma)
             return False
 
@@ -234,13 +240,13 @@ class SetAndServeSessionAndHeader():
 
     def setSafe(self, state):
         self.headers["Safe"] = state
-        return
 
     def isSafe(self):
         if "Safe" in self.headers:
             if self.headers["Safe"] == "True":
                 return True
         return False
+
     def setSession(self, qs):
         csma = self.getCookie("Msma37")
         if csma:
@@ -249,7 +255,7 @@ class SetAndServeSessionAndHeader():
                 qs["sma"].append(csma)
             else:
                 qs["sma"][0] = csma
-        csid=self.getCookie("Msid37")
+        csid = self.getCookie("Msid37")
         if csid:
             if not "sid" in qs:
                 qs["sid"] = []
@@ -275,14 +281,14 @@ class SetAndServeSessionAndHeader():
                     tsid = random.randint(10000000000, 99999999999)
                     tuser = self.users.get_user("name", qs["user"][0])
                     if "level" in tuser:
-                        tsma = tsma[:-1]+tuser["level"]
+                        tsma = tsma[:-1] + tuser["level"]
                     else:
-                        tsma = tsma[:-1]+"1"
+                        tsma = tsma[:-1] + "1"
                     if qs["sma"][0][:2].isdigit():
                         fi = int(qs["sma"][0][:2])
                     else:
                         fi = 0
-                    fi = fi%23
+                    fi = fi % 23
                     tcod = int(tuser["password"][fi:fi+9], 16)
                     qs["tsid"] = tsid - tcod
                     tsid = str(tsid)
@@ -293,6 +299,7 @@ class SetAndServeSessionAndHeader():
                     ms = md5.new()
                     ms.update(tsid + qs["sma"][0])
                     tsid = ms.hexdigest()
+                    # print("change SID cookie to login value")
                     self.changeHeadersCookie("Msid37", tsid)
                     if not "sid" in qs:
                         qs["sid"] = []
@@ -300,11 +307,12 @@ class SetAndServeSessionAndHeader():
                     else:
                         qs["sid"][0] = tsid
                 elif qs["log"] == "out":
-                    tsma = tsma[:-1]+"0"
+                    tsma = tsma[:-1] + "0"
                     qs["del"] = "yes"
                     self.sessions.del_sid(qs["sma"][0])
                     if "sid" in qs:
                         del qs["sid"]
+                    # print("change SID cookie to nothing")
                     self.changeHeadersCookie("Msid37", "")
             if "sid" in qs:
                 tses = self.sessions.get_session(qs["sma"][0])
@@ -316,19 +324,22 @@ class SetAndServeSessionAndHeader():
                             self.setSafe("True")
                         else:
                             self.setSafe("False")
-                            print("Possible security intrusions attempted!")
+                            print("Possible intrusion detected (setSession)!")
                             self.sessions.del_session(tses._sma)
             if not self.sessions.set_sma(qs["sma"][0], tsma):
+                # print("change ID to nothing")
                 tsma = tsma[:-1] + "0"
                 self.changeHeadersCookie("Msid37", "")
                 if "sid" in qs:
-                     del qs["sid"]
+                    del qs["sid"]
                 self.setSafe("False")
                 qs["del"] = "yes"
         else:
             tsma = tsma + "0"
+            # print("add session (setSession)")
             self.sessions.add_session(tsma)
             qs["del"] = "yes"
+        #print("change SMA cookie to new value")
         self.changeHeadersCookie("Msma37", tsma)
         if not "sma" in qs:
             qs["sma"] = []
@@ -367,6 +378,5 @@ class SetAndServeSessionAndHeader():
             if csma[-1:].isdigit():
                 return int(csma[-1:])
             return 0
-        else:
-            return 0
+        return 0
         

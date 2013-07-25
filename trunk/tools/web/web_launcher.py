@@ -4,6 +4,7 @@
 # MansOS web server - launcher (launches server and default browser)
 #
 
+from __future__ import print_function
 import mansos_server
 import time
 import webbrowser

@@ -1,4 +1,5 @@
 
+from __future__ import print_function
 import random
 
 class PageAccount():
@@ -52,7 +53,7 @@ class PageAccount():
                                 self.users.set_attribute(username, "password", tses.from_code(qs["password"][0]))
                                 #check if password has not changed while sending
                             else:
-                                print("Possible security intrusions attempted!")
+                                print("Possible intrusion detected (pswcheck)!")
                                 #it should  not be like that
                         changes["INFO"] = "<h4 class='suc'> Saved changes! </h4>"
                         self.users.write_in_file() #save in user file for backup is server turn off

@@ -106,7 +106,7 @@ div.box:hover{
     border:0;
     width:100%;
     text-align:center;
-    vertical-align:center;
+    vertical-align:middle;
 }
 .table tr th{
     height:20px;
@@ -124,7 +124,7 @@ h4.war{
     display:none;
 }
 input.widthtext{
-	width:300px;
+    width:300px;
 }
 #logo{
     height:70px;
@@ -142,14 +142,14 @@ input.widthtext{
 }
 .graph{
     width:98%;
-	margin:auto;
-	margin-top:30px;
-	margin-bottom:1px;
+    margin:auto;
+    margin-top:30px;
+    margin-bottom:1px;
     border:thin;
 }
 .graphbutton, .graphbutton p{
-	margin:0;
-	margin-left:1%;
+    margin:0;
+    margin-left:1%;
 }
 #listen_div {
     min-width:400px;

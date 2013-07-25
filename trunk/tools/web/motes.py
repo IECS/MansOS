@@ -2,22 +2,26 @@
 # MansOS web server - mote handler class
 #
 
+from __future__ import print_function
 import serial, subprocess, sys, time, os, threading
 from motelist import Motelist
 import configuration
+import utils
 
 def runSubprocess1(args, server):
+#    print("runSubprocess1: " + ",".join(args))
     retcode = -1
     try:
-        proc = subprocess.Popen(args, stderr = subprocess.STDOUT, stdout = subprocess.PIPE,
+        try:
+            outFileName = os.path.join("build", "child_output.txt")
+            outFile = open(outFileName, "ab")
+        except:
+            outFile = None
+        proc = subprocess.Popen(args, stderr = subprocess.STDOUT, stdout = outFile,
                                 shell = False)
-        while proc.poll() is None:
-            line = proc.stdout.readline()
-            if line:
-                if not server.uploadCallback(line):
-                    break
-            time.sleep(0.01)
         proc.wait()
+        if outFile: outFile.close()
+#        print("proc finished, retcode={}".format(proc.returncode))
         retcode = proc.returncode
     except OSError as e:
         print("runSubprocess1 OSError:" + str(e))
@@ -31,14 +35,10 @@ def runSubprocess1(args, server):
 
 
 class Mote(object):
-#    counter = 0
     def __init__(self, moteDescription):
-#        self.number = Mote.counter
-#        Mote.counter += 1
         self.moteDescription = moteDescription
         self.port = None
         self.isSelected = False
-        self.isStatic = False
         self.buffer = ""
         self.platform = "telosb"
         self.bufferLock = threading.Lock()
@@ -54,10 +54,12 @@ class Mote(object):
     def getPortName(self):
         return self.moteDescription.getPort()
 
+    def getPortBasename(self):
+        return os.path.basename(self.getPortName())
+
     def openSerial(self):
-        if not self.isSelected: return
         try:
-            baudrate = configuration.c.getCfgValueAsInt("baudrate", SERIAL_BAUDRATE)
+            baudrate = configuration.c.getCfgValueAsInt("baudrate")
             self.port = serial.Serial(self.moteDescription.getPort(),
                                       baudrate,
                                       timeout=1,
@@ -76,30 +78,26 @@ class Mote(object):
         print("Listening to serial port: " + self.port.portstr + ", rate: " + str(baudrate))
 
     def tryToOpenSerial(self, makeSelected):
-        self.portLock.acquire()
-        if not self.port:
-            if makeSelected: self.isSelected = True
-            self.openSerial()
-        result = self.port is not None
-        self.portLock.release()
+        with self.portLock:
+            if not self.port:
+                if makeSelected: self.isSelected = True
+                if self.isSelected: self.openSerial()
+            result = self.port is not None
         return result
 
-    def closeSerial(self):
-        self.portLock.acquire()
-        try:
-            if self.port:
-                self.port.close()
-                print("Serial port " + self.moteDescription.getPort() + " closed")
-                self.port = None
-        except:
-            raise
-        finally:
+    def ensureSerialIsClosed(self):
+        with self.portLock:
+            tmp = self.port
             self.port = None
-            self.portLock.release()
+            if tmp:
+                tmp.close()
+                print("Serial port " + self.moteDescription.getPort() + " closed")
 
     def tryRead(self, binaryToo):
+        if not self.port: return 0
+
         numRead = 0
-        if self.port:
+        with self.portLock:
             self.bufferLock.acquire()
             try:
               while self.port.inWaiting():
@@ -116,7 +114,7 @@ class Mote(object):
                         f.close()
 
                 # add to the local buffer
-                if binaryToo or isascii(c):
+                if binaryToo or utils.isascii(c):
                     self.buffer += c
                     numRead += 1
             except Exception as e:
@@ -129,9 +127,11 @@ class Mote(object):
         return numRead
 
     def tryToUpload(self, server, filename):
-        if not self.tryToOpenSerial(False): return 1
+#        print("tryToUpload for " + self.getPortName())
+        if not self.port: return 1
 
-        bsl = "mos/make/scripts/bsl.py"
+        bsl = os.path.join(configuration.c.getCfgValue("mansosDirectory"), 
+                           "mos", "make", "scripts", "bsl.py")
         if self.platform == "telosb":
             platformArgs = ["--telosb"]
         elif self.platform == "xm1000":
@@ -142,10 +142,9 @@ class Mote(object):
             # assume "generic" MSP430 board
             platformArgs = ["--invert-reset", "--invert-test"]
 
-        bsl = os.path.join(configuration.c.getCfgValue("mansosDirectory"), bsl)
         arglist = ["python", bsl, "-c", self.port.portstr, "-r", "-e", "-I", "-p", filename]
         argist.extend(platformArgs)
-        if configuration.c.getCfgValueAsInt("slowUpload"):
+        if configuration.c.getCfgValueAsBool("slowUpload"):
             arglist.append("--slow")
 
         os.environ['BSLPORT'] = self.moteDescription.getPort()
@@ -154,11 +153,14 @@ class Mote(object):
         return retcode
 
     def tryToCompileAndUpload(self, server, filename):
-        if not self.tryToOpenSerial(False): return 1
+#        print("tryToCompileAndUpload for " + self.getPortName())
+        if not self.port: return 1
 
         os.environ['BSLPORT'] = self.moteDescription.getPort()
-        arglist = ["make", self.platform, "upload"]
+        arglist = ["make", "-C", "build", self.platform, "upload"]
         retcode = runSubprocess1(arglist, server)
+
+#        print ("compile and upload done!")
 
         return retcode
 
@@ -175,8 +177,7 @@ class MoteCollection(object):
         cfgMotes = configuration.c.getCfgValueAsList("motes")
         for portName in cfgMotes:
             Motelist.addMote(portName, "A statically added mote", "")
-        Motelist.initialize(self.motesUpdated)
-        Motelist.startPeriodicUpdate()
+        Motelist.initialize(self.motesUpdated, startPeriodicUpdate = True)
         self.refreshMotes(Motelist.getMotelist(False))
         self.retrieveSelected()
 
