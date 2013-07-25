@@ -2,9 +2,12 @@
 # MansOS web server - mote configuration
 #
 
+from __future__ import print_function
 from wmp import *
+import os
 import configuration
 import time
+import utils
 
 # names of all platforms the web interface supports.
 # TODO: populate this from Makefiles?
@@ -13,31 +16,6 @@ supportedPlatforms = ["telosb", "testbed", "testbed2", "sm3", "xm1000"]
 MAX_TIME_WAIT_FOR_REPLY = 0.1 # max time to wait for a single reply, seconds
 MAX_RETRIES = 3               # send 3 times before giving up
 
-def toTitleCase(s):
-    if s == '': return ''
-    return s[0].upper() + s[1:]
-
-def toCamelCase(s):
-    if s == '': return ''
-    if len(s) > 1 and s[0].isupper() and s[1].isupper():
-        # acronyms are unchanged
-        return s
-    return s[0].lower() + s[1:]
-
-def le32read(args):
-    result = args[3] << 24
-    result += args[2] << 16
-    result += args[1] << 8
-    result += args[0]
-    return result
-
-def le32write(number):
-    args = [0, 0, 0, 0]
-    args[0] = number & 0xff
-    args[1] = (number >> 8) & 0xff
-    args[2] = (number >> 16) & 0xff
-    args[3] = (number >> 24) & 0xff
-    return args
 
 def isFatCharacterAcceptable(c):
     if c.isalnum(): return True
@@ -122,7 +100,7 @@ class SerialPacket(object):
 #
 # Class that manages configuration getting and setting
 #
-class Config(object):
+class MoteConfig(object):
     READ_START_CHARACTER = 0
     READ_COMMAND = 1
     READ_ARG_LEN = 2
@@ -237,7 +215,7 @@ class Config(object):
         (args, ok) = self.wmpExchangeCommand(WMP_CMD_GET_SENSOR, [sensorCode])
         if not ok or len(args) < 5:
             return 0 # default
-        return le32read(args[1:])
+        return utils.le32read(args[1:])
 
     def wmpGetOutputConfig(self, sensorCode):
         (args, ok) = self.wmpExchangeCommand(WMP_CMD_GET_OUTPUT, [sensorCode])
@@ -336,7 +314,7 @@ class Config(object):
 
         for s in self.activePlatform.sensors:
             args = [s.code]
-            args += le32write(s.period)
+            args += utils.le32write(s.period)
             self.wmpExchangeCommand(WMP_CMD_SET_SENSOR, args)
 
         for s in self.activePlatform.outputs:
@@ -356,7 +334,7 @@ class Config(object):
 
     def setMote(self, mote, platform):
         if self.mote and self.mote != mote:
-            self.mote.closeSerial()
+            self.mote.ensureSerialIsClosed()
             time.sleep(0.1)
 
         self.mote = mote
@@ -407,7 +385,7 @@ class Config(object):
         return (text, True)
 
 
-    def getFileListHTML(self, moteIndex):
+    def getFileListHTML(self, motename):
         (errst, ok) = self.checkValid()
         if not ok:
             return (errst, False)
@@ -422,7 +400,7 @@ class Config(object):
 
         namelist = str(bytearray(args)).split('\n')
 
-        motename = "mote" + str(moteIndex)
+        motename = "mote" + motename
 
         if len(namelist) == 0 or len(namelist[0]) == 0:
             text = "The SD card is empty!"
@@ -463,7 +441,7 @@ class Config(object):
         text += '<div class="subcontents">\n'
         for s in self.activePlatform.sensors:
             text += '<div class="entry">'
-            text += toTitleCase(s.name) + ": "
+            text += utils.toTitleCase(s.name) + ": "
             text += '<input type="text" name="' + s.varname + '" value="' + str(s.period) + '"/><br/></div>\n'
         text += '</div>\n'
 
@@ -474,7 +452,7 @@ class Config(object):
             text += '<div class="entry">'
             text += '<input type="checkbox" name="' + s.varname + '"'
             if s.isSelected: text += ' checked="checked"'
-            text += '/> Write to ' + toCamelCase(s.name)
+            text += '/> Write to ' + utils.toCamelCase(s.name)
             if s.varname == "file":
                 text += '<br/><label for="filename">Filename: </label>'
                 text += '<input type="input" name="filename" value="' + self.filenameOnMote + '"'
@@ -504,4 +482,4 @@ class Config(object):
         return (text, True)
 
 # global variable
-configInstance = Config()
+instance = MoteConfig()

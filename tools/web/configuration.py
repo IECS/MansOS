@@ -2,10 +2,11 @@
 # MansOS web server - server-side configuration settings
 #
 
+from __future__ import print_function
+import configfile
+
 HTTP_SERVER_PORT = 30000
 SERIAL_BAUDRATE = 38400
-
-import configfile
 
 # global variable
 c = configfile.ConfigFile("server.cfg", automaticSections = True)
@@ -39,7 +40,7 @@ c.setCfgValue("dbHost", "localhost")
 c.setCfgValue("senseApiKey", "cJ4Dm_Qb-3stWTWxCJgiFQ")
 c.setCfgValue("senseApiFeeds", "light:37012,humidity:37013,temperature:37014")
 c.setCfgValue("saveToDB", False)
-c.setCfgValue("sendToOpensense", False)
+c.setCfgValue("sendToOpenSense", False)
 # user config
 c.selectSection("user")
 c.setCfgValue("userDirectory", "user")

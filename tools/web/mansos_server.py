@@ -9,20 +9,19 @@ import os, sys, platform, select, signal, traceback
 import threading, time, cgi
 # add library directory to the path
 sys.path.append(os.path.join(os.getcwd(), '..', "lib"))
-from page_login import *
-from page_server import *
-from page_account import *
-from page_user import *
-from page_graph import *
-from data_utils import *
-from user import *
-from session import *
-from motes import *
-from moteconfig import *
-from sensor_data import *
+import page_login, page_server, page_account, page_user, page_graph
+import data_utils
+import utils
+import user
+import session
+from motes import motes
+import moteconfig
+import sensor_data
 import daemon
 import configuration
 import mansos_version
+
+DEBUG = 1
 
 def isPython3():
     return sys.version_info[0] >= 3
@@ -39,26 +38,32 @@ else:
 isListening = False
 listenThread = None
 
+#isInChildProcess = False
+
 lastUploadCode = ""
 lastUploadConfig = ""
 lastUploadFile = ""
 lastData = ""
 
-isInSubprocess = False
-uploadResult = ""
+maybeIsInSubprocess = False
+isPostEntered = False
+subprocessLock = threading.Lock()
+
+allSessions = None
+allUsers = None
 
 
 def listenSerial():
     while isListening:
         for m in motes.getMotes():
 
-            length = m.tryRead(binaryToo = configInstance.configMode)
+            length = m.tryRead(binaryToo = moteconfig.instance.configMode)
             if length == 0:
                 continue
 
-            if configInstance.configMode:
+            if moteconfig.instance.configMode:
                 for c in m.buffer:
-                    configInstance.byteRead(c)
+                    moteconfig.instance.byteRead(c)
                 m.buffer = ""
                 continue
 
@@ -67,14 +72,14 @@ def listenSerial():
                 if pos != 0:
                     newString = m.buffer[:pos].strip()
                     saveToDB = configuration.c.getCfgValue("saveToDB")
-                    sendToOpensense = configuration.c.getCfgValue("sendToOpensense")
-                    if saveToDB or sendToOpensense:
-                        processData(m.port.port, newString)
+                    sendToOpenSense = configuration.c.getCfgValue("sendToOpenSense")
+                    if saveToDB or sendToOpenSense:
+                        data_utils.maybeAddDataToDatabase(m.port.port, newString)
                     # print "got", newString
-                    moteData.addNewData(newString, m.port.portstr)
+                    sensor_data.moteData.addNewData(newString, m.port.portstr)
                 m.buffer = m.buffer[pos + 1:]
 
-        moteData.fixSizes()
+        sensor_data.moteData.fixSizes()
         # pause for a bit
         time.sleep(0.01)
 
@@ -86,15 +91,15 @@ def closeAllSerial():
         listenThread.join()
         listenThread = None
     for m in motes.getMotes():
-        m.closeSerial()
+        m.ensureSerialIsClosed()
     # Close DB connection 
-    closeDBConnection()
+    data_utils.closeDBConnection()
 
 def openAllSerial():
     global listenThread
     global isListening
-    
-    moteData.reset()
+
+    sensor_data.moteData.reset()
     if isListening: return
     isListening = True
     listenThread = threading.Thread(target = listenSerial)
@@ -102,21 +107,35 @@ def openAllSerial():
     for m in motes.getMotes():
         m.tryToOpenSerial(False)
     # Open DB connection
-    openDBConnection()
+    data_utils.openDBConnection()
 
 
 # --------------------------------------------
-class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin, PageServer, PageGraph, SetAndServeSessionAndHeader):
+class HttpServerHandler(BaseHTTPRequestHandler,
+                        page_user.PageUser,
+                        page_account.PageAccount,
+                        page_login.PageLogin,
+                        page_server.PageServer,
+                        page_graph.PageGraph,
+                        session.SetAndServeSessionAndHeader):
     server_version = 'MansOS/' + mansos_version.getMansosVersion(
         configuration.c.getCfgValue("mansosDirectory")) + ' Web Server'
     protocol_version = 'HTTP/1.1' # 'HTTP/1.0' is the default, but we want chunked encoding
 
     def __init__(self, request, client_address, server):
-        self.htmlDirectory = os.path.abspath(configuration.c.getCfgValue("htmlDirectory"))
-        self.dataDirectory = os.path.abspath(configuration.c.getCfgValue("dataDirectory"))
+        #global
+        self.sessions = allSessions
+        self.users = allUsers
+        self.settings = configuration.c
+        self.tabuList = session.tabuList
+        self.moteData = sensor_data.moteData
+        #global end
+
+        self.htmlDirectory = os.path.abspath(self.settings.getCfgValue("htmlDirectory"))
+        self.dataDirectory = os.path.abspath(self.settings.getCfgValue("dataDirectory"))
         if not os.path.exists(self.dataDirectory):
             os.makedirs(self.dataDirectory)
-        self.sealBlocklyDirectory = os.path.abspath(configuration.c.getCfgValue("sealBlocklyDirectory"))
+        self.sealBlocklyDirectory = os.path.abspath(self.settings.getCfgValue("sealBlocklyDirectory"))
 
         BaseHTTPRequestHandler.__init__(self, request, client_address, server)
 
@@ -139,12 +158,13 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                           self.log_date_time_string(),
                           format % args))
 
-    def serveHeader(self, name, qs = {"no": "no"}, isGeneric = True, includeBodyStart = True, replaceValues = None, urlTo = ""):
+#    def serveHeader(self, name, qs = {"no" : "no"}, isGeneric = True, includeBodyStart = True, replaceValues = None, urlTo = ""):
+    def serveHeader(self, name, qs, isGeneric = True, replaceValues = None, urlTo = ""):
         self.headerIsServed = True
         if name == "default":
             pagetitle = ""
         else:
-            pagetitle = " &#8211; " + toTitleCase(name)
+            pagetitle = " &#8211; " + utils.toTitleCase(name)
 
         with open(self.htmlDirectory + "/header.html", "r") as f:
             contents = f.read()
@@ -160,70 +180,70 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         except:
             pass
 
-        if includeBodyStart:
-            try:
-                if not "no" in qs:
-                    self.serveSession(qs, urlTo)
-            except Exception as e:
-                print("Error Session not served!:")
-                print(e)
-                self.writeChunk('</head>\n<body>')
+        try:
+            if not "no" in qs:
+                self.serveSession(qs, urlTo)
+        except Exception as e:
+            print("Error: Session not served!")
+            print(e)
+            self.writeChunk('</head>\n<body>')
 
-            with open(self.htmlDirectory + "/top-start.html", "r") as f:
-                contents = f.read()
-                if replaceValues:
-                    for v in replaceValues:
-                        contents = contents.replace("%" + v + "%", replaceValues[v])
-                # page title
-                contents = contents.replace("%PAGETITLE%", pagetitle)
-                # this page (for form)
-                contents = contents.replace("%THISPAGE%", name)
-                self.writeChunk(contents)
+        with open(self.htmlDirectory + "/top-start.html", "r") as f:
+            contents = f.read()
+            if replaceValues:
+                for v in replaceValues:
+                    contents = contents.replace("%" + v + "%", replaceValues[v])
+            # page title
+            contents = contents.replace("%PAGETITLE%", pagetitle)
+            # this page (for form)
+            contents = contents.replace("%THISPAGE%", name)
+            self.writeChunk(contents)
             
-            suffix = "generic" if isGeneric else "mote"
-            with open(self.htmlDirectory + "/menu-" + suffix + ".html", "r") as f:
-                contents = f.read()
-                if replaceValues:
-                    for v in replaceValues:
-                        contents = contents.replace("%" + v + "%", replaceValues[v])
-                if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
-                self.writeChunk(contents)
-            if isGeneric:
-                if self.getLevel() > 0:
-                    with open(self.htmlDirectory + "/menu-1.html", "r") as f:
-                        contents = f.read()
-                        if replaceValues:
-                            for v in replaceValues:
-                                contents = contents.replace("%" + v + "%", replaceValues[v])
-                        if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
-                        self.writeChunk(contents)
-                if self.getLevel() > 7:
-                    with open(self.htmlDirectory + "/menu-8.html", "r") as f:
-                        contents = f.read()
-                        if replaceValues:
-                            for v in replaceValues:
-                                contents = contents.replace("%" + v + "%", replaceValues[v])
-                        if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
-                        self.writeChunk(contents)
-                if self.getLevel() > 8:
-                    with open(self.htmlDirectory + "/menu-9.html", "r") as f:
-                        contents = f.read()
-                        if replaceValues:
-                            for v in replaceValues:
-                                contents = contents.replace("%" + v + "%", replaceValues[v])
-                        if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
-                        self.writeChunk(contents)
+        suffix = "generic" if isGeneric else "mote"
+        with open(self.htmlDirectory + "/menu-" + suffix + ".html", "r") as f:
+            contents = f.read()
+            if replaceValues:
+                for v in replaceValues:
+                    contents = contents.replace("%" + v + "%", replaceValues[v])
+            if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
+            self.writeChunk(contents)
 
-            with open(self.htmlDirectory + "/top-end.html", "r") as f:
-                contents = f.read()
-                if replaceValues:
-                    for v in replaceValues:
-                        contents = contents.replace("%" + v + "%", replaceValues[v])
-                if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
-                # login/logout
-                log = "Logout" if self.getLevel() > 0 else "Login"
-                contents = contents.replace("%LOG%", log)
-                self.writeChunk(contents)
+        if isGeneric:
+            if self.getLevel() > 0:
+                with open(self.htmlDirectory + "/menu-1.html", "r") as f:
+                    contents = f.read()
+                    if replaceValues:
+                        for v in replaceValues:
+                            contents = contents.replace("%" + v + "%", replaceValues[v])
+                    if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
+                    self.writeChunk(contents)
+            if self.getLevel() > 7:
+                with open(self.htmlDirectory + "/menu-8.html", "r") as f:
+                    contents = f.read()
+                    if replaceValues:
+                        for v in replaceValues:
+                            contents = contents.replace("%" + v + "%", replaceValues[v])
+                    if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
+                    self.writeChunk(contents)
+            if self.getLevel() > 8:
+               with open(self.htmlDirectory + "/menu-9.html", "r") as f:
+                   contents = f.read()
+                   if replaceValues:
+                       for v in replaceValues:
+                           contents = contents.replace("%" + v + "%", replaceValues[v])
+                   if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
+                   self.writeChunk(contents)
+
+        with open(self.htmlDirectory + "/top-end.html", "r") as f:
+            contents = f.read()
+            if replaceValues:
+                for v in replaceValues:
+                    contents = contents.replace("%" + v + "%", replaceValues[v])
+            if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
+            # login/logout
+            log = "Logout" if self.getLevel() > 0 else "Login"
+            contents = contents.replace("%LOG%", log)
+            self.writeChunk(contents)
 
     def serveBody(self, name, qs = {'sma': ['0000000'],}, replaceValues = None):
         disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
@@ -236,17 +256,22 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
             if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
             self.writeChunk(contents)
 
-    def serveMotes(self, action, namedAction, qs, isPost, writeChunk=True):
+    def serveMotes(self, action, namedAction, qs, form):
         disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
         c = ""
-        i = 0
         for m in motes.getMotes():
-            name = "mote" + str(i)
+            name = "mote" + m.getPortBasename()
 
-            if name in qs:
-                m.isSelected = qs[name][0] == 'on'
-            elif "action" in qs:
-                m.isSelected = False
+            if qs:
+                if name in qs:
+                    m.isSelected = qs[name][0] == 'on'
+                elif "action" in qs:
+                    m.isSelected = False
+            elif form:
+                if name in form:
+                    m.isSelected = form[name].value == "on"
+                else:
+                    m.isSelected = False
 
             checked = ' checked="checked"' if m.isSelected else ""
 
@@ -254,7 +279,6 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
             c += ' (<strong>Platform: </strong>' + m.platform + ') '
             c += ' <input type="checkbox" title="Select the mote" name="' + name + '"'
             c += checked + ' ' + disabled + '/>' + namedAction + '</div>\n'
-            i += 1
 
         # remember which motes were selected and which were not
         motes.storeSelected()
@@ -262,21 +286,11 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         if c:
             c = '<div class="motes1">\nDirectly attached motes:\n<br/>\n' + c + '</div>\n'
 
-        if writeChunk == True:
-            text = ''
-            if isPost:
-                text += '<form method="post" enctype="multipart/form-data" action="' + action + '">'
-            else:
-                text += '<form action="' + action + '">'
-            self.writeChunk(text)
-            self.writeChunk(c)
-            self.writeChunk('<div class="form">\n')
-        else:
-            return c
+        return c
 
     def serveMoteMotes(self, qs):
         if motes.isEmpty():
-            self.serveError("No motes connected!")
+            self.serveError("No motes connected!", qs)
             return
 
         text = '<form action="config"><div class="motes2">\n'
@@ -284,9 +298,8 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         
         disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
 
-        i = 0
         for m in motes.getMotes():
-            name = "mote" + str(i)
+            name = "mote" + m.getPortBasename()
             text += '<div class="mote"><strong>Mote: </strong>' + m.getPortName()
             text += ' <input type="submit" name="' + name \
                 + '_cfg" title="Get/set mote\'s configuration (e.g. sensor reading periods)" value="Configuration..." ' + disabled + '/>\n'
@@ -294,13 +307,11 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                 + '_files" title="View files on mote\'s filesystem" value="Files..." ' + disabled + '/>\n'
             text += ' Platform: <select name="sel_' + name \
                 + '" ' + disabled + ' title="Select the mote\'s platform: determines the list of sensors the mote has. Also has effect on code compilation and uploading">\n'
-            for platform in supportedPlatforms:
+            for platform in moteconfig.supportedPlatforms:
                 selected = ' selected="selected"' if platform == m.platform else ''
                 text += '  <option value="' + platform + '"' + selected + '>' + platform + '</option>\n'
             text += ' </select>\n'
             text += '</div>\n'
-
-            i += 1
 
         text += '<input type="submit" name="platform_set" value="Update platforms" ' + disabled + '/><br/>\n'
         text += "</div></form>"
@@ -321,7 +332,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.send_header('Cache-Control', 'no-store');
         self.send_header('Connection', 'close');
 
-    def serveFile(self, filename):
+    def serveFile(self, filename, qs):
         mimetype = 'text/html'
         if filename[-4:] == '.css':
             mimetype = 'text/css'
@@ -343,20 +354,25 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         elif filename[-4:] == '.tif': mimetype = 'image/tif'
 
         try:
-            with open(filename, "rb") as f:
-                contents = f.read()
-                self.send_response(200)
-                self.send_header('Content-Type', mimetype)
-                self.send_header('Content-Length', str(len(contents)))
-                self.end_headers()
-                self.wfile.write(contents)
-                f.close()
+            f = open(filename, "rb")
+            contents = f.read()
+            self.send_response(200)
+            self.send_header('Content-Type', mimetype)
+            self.send_header('Content-Length', str(len(contents)))
+            self.send_header('Cache-Control', 'public,max-age=1000')
+            if DEBUG:
+                # enable cache
+                self.send_header('Last-Modified', 'Wed, 15 Sep 2004 12:00:00 GMT')
+                self.send_header('Expires', 'Sun, 17 Jan 2038 19:14:07 GMT')
+            self.end_headers()
+            self.wfile.write(contents)
+            f.close()
         except:
             print("problem with file " + filename + "\n")
-            self.serve404Error(filename, {})
+            self.serve404Error(filename, qs)
 
     def serve404Error(self, path, qs):
-        #self.setSession(qs)
+        self.setSession(qs)
         self.send_response(404)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -365,9 +381,10 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.writeChunk("<strong>Path " + path + " not found on the server</strong>\n")
         self.serveFooter()
 
-    def serveError(self, message, serveFooter = True):
+    def serveError(self, message, qs, serveFooter = True):
         if not self.headerIsServed:
-            self.serveHeader("error")
+            qs["no"] = "no"
+            self.serveHeader("error", qs)
         self.writeChunk("\n<h4 class='err'>Error: " + message + "</h4>\n")
         if serveFooter:
             self.serveFooter()
@@ -379,7 +396,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.sendDefaultHeaders()
         self.end_headers()
         if isSession:
-            self.serveHeader("default", qs, True, True, None, "default")
+            self.serveHeader("default", qs, urlTo = "default")
         else:
             self.serveHeader("default", qs)
         self.serveBody("default", qs)
@@ -404,12 +421,10 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.end_headers()
 
         if "platform_set" in qs:
-            i = 0
             for m in motes.getMotes():
-                motename = "sel_mote" + str(i)
+                motename = "sel_mote" + m.getPortBasename()
                 if motename in qs:
                     m.platform = qs[motename][0]
-                i += 1
             motes.storeSelected()
 
             text = '<strong>Mote platforms updated!</strong>\n'
@@ -433,7 +448,7 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                 break
 
         if motePortName is None: # or moteIndex >= len(motes.getMotes()):
-            self.serveError("Config page requested, but mote not specified!")
+            self.serveError("Config page requested, but mote not specified!", qs)
             return
 
         platform = None
@@ -441,43 +456,46 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         if dropdownName in qs:
             platform = qs[dropdownName][0]
 
-        if platform not in supportedPlatforms:
-            self.serveError("Config page requested, but platform not specified or unknown!")
+        if platform not in moteconfig.supportedPlatforms:
+            self.serveError("Config page requested, but platform not specified or unknown!", qs)
             return
 
         # TODO!
         moteidQS = "?sel_mote" + motePortName + "=" + platform + "&" + "mote" + motePortName
         self.serveHeader("config", qs, isGeneric = False,
-                         replaceValues = {"MOTEID_CONFIG" : moteidQS + "_cfg=1",
-                          "MOTEID_FILES" : moteidQS + "_files=1"})
+                         replaceValues = {
+                            "MOTEID_CONFIG" : moteidQS + "_cfg=1",
+                            "MOTEID_FILES" : moteidQS + "_files=1"})
 
         if os.name == "posix":
-            motePortName = "/dev/" + motePortName
+            fullMotePortName = "/dev/" + motePortName
+        else:
+            fullMotePortName = motePortName
 
-        configInstance.setMote(motes.getMote(motePortName), platform)
+        moteconfig.instance.setMote(motes.getMote(fullMotePortName), platform)
 
-        (errmsg, ok) = configInstance.updateConfigValues(qs)
+        (errmsg, ok) = moteconfig.instance.updateConfigValues(qs)
         if not ok:
-            self.serveError(errmsg)
+            self.serveError(errmsg, qs)
             return
 
         # fill config values from the mote / send new values to the mote
         if "get" in qs:
-            reply = configInstance.getConfigValues()
+            reply = moteconfig.instance.getConfigValues()
             #self.writeChunk(reply)
         elif "set" in qs:
-            reply = configInstance.setConfigValues()
+            reply = moteconfig.instance.setConfigValues()
             #self.writeChunk(reply)
 
         if filesRequired:
             if "filename" in qs:
-                (text, ok) = configInstance.getFileContentsHTML(qs)
+                (text, ok) = moteconfig.instance.getFileContentsHTML(qs)
             else:
-                (text, ok) = configInstance.getFileListHTML(moteIndex)
+                (text, ok) = moteconfig.instance.getFileListHTML(motePortName)
         else:
-            (text, ok) = configInstance.getConfigHTML()
+            (text, ok) = moteconfig.instance.getConfigHTML()
         if not ok:
-            self.serveError(text)
+            self.serveError(text, qs)
             return
         self.writeChunk(text)
         self.serveFooter()
@@ -488,21 +506,20 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.sendDefaultHeaders()
         self.end_headers()
         self.serveHeader("listen", qs)
-        #self.serveMotes("listen", "Listen", qs, False, False)
 
-        motesText = self.serveMotes("listen", "Listen", qs, False, False)
+        motesText = self.serveMotes("listen", "Listen", qs, None)
         if "action" in qs and self.getLevel() > 1:
             if qs["action"][0] == "Start":
                 if not motes.anySelected():
-                    self.serveError("No motes selected!", False)
+                    self.serveError("No motes selected!", qs, False)
                 if isListening:
-                    self.serveError("Already listening!", False)
+                    self.serveError("Already listening!", qs, False)
                 openAllSerial()
             else:
                 closeAllSerial()
 
         txt = ""
-        for line in moteData.listenTxt:
+        for line in sensor_data.moteData.listenTxt:
             txt += line + "<br/>"
 
         action = "Stop" if isListening else "Start"
@@ -539,16 +556,15 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                         "DIV_HEIGHT" : div_height})
         self.serveFooter()
 
-    def serveUpload(self, qs):
+    def serveUploadGet(self, qs):
         self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
         self.serveHeader("upload", qs)
-        #self.serveMotes("upload", "Upload", qs, True)
-        motesText = self.serveMotes("upload", "Upload", qs, True, False)
-        isSealCode = configuration.c.getCfgValueAsInt("isSealCode")
-        isSlow = configuration.c.getCfgValueAsInt("slowUpload")
+        motesText = self.serveMotes("upload", "Upload", qs, None)
+        isSealCode = configuration.c.getCfgValueAsBool("isSealCode")
+        isSlow = configuration.c.getCfgValueAsBool("slowUpload")
         self.serveBody("upload", qs,
                        {"MOTES_TXT" : motesText,
                         "CCODE_CHECKED": 'checked="checked"' if not isSealCode else "",
@@ -559,36 +575,74 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                         "SLOW_CHECKED" : 'checked="checked"' if isSlow else ""})
         self.serveFooter()
 
-    def uploadCallback(self, line):
-        global uploadResult
-        uploadResult += line
-        return True
-
     def serveUploadResult(self, qs):
-        global uploadResult
-        global isInSubprocess
+        global maybeIsInSubprocess
+        global isPostEntered
+
         #if self.getLevel() < 2:
         #    self.serveDefault(qs)
-        isInSubprocess = True
+        inFileName = os.path.join("build", "child_output.txt")
+        inFile = None
+
+        maybeIsInSubprocess = True
+        startWait = time.time()
+        while not isPostEntered:
+            now = time.time()
+            # wait a maximum of 10 seconds
+            if now - startWait > 10.0:
+                break
+        isPostEntered = False
+
         try:
-            self.setSession(qs)
+            #self.setSession(qs)
             self.send_response(200)
             self.sendDefaultHeaders()
             self.end_headers()
+            qs["no"] = "no"
             self.serveHeader("upload", qs)
             self.writeChunk('<button type="button" onclick="window.open(\'\', \'_self\', \'\'); window.close();">OK</button><br/>')
             self.writeChunk("Upload result:<br/><pre>\n")
-            while isInSubprocess or uploadResult:
-                if uploadResult:
-                    self.writeChunk(uploadResult)
-                    uploadResult = ""
-                else:
+
+            # wait until subprocess output file appears
+            while maybeIsInSubprocess and inFile == None:
+                try:
+                    inFile = open(inFileName, "rb")
+                except:
+                    inFile = None
                     time.sleep(0.001)
+
+            if inFile:
+#                print("in file opened ok")
+                uploadLine = ""
+                while True:
+                    if utils.fileIsOver(inFile):
+                        if maybeIsInSubprocess:
+                            time.sleep(0.001)
+                            continue
+                        else:
+                            break
+                    # read one symbol
+                    c = inFile.read(1)
+                    uploadLine += c
+                    if c == '\n':
+                        # if newline reached, print out the current line
+                        self.writeChunk(uploadLine)
+                        uploadLine = ""
+                # write final chunk
+                if uploadLine:
+                    self.writeChunk(uploadLine)
             self.writeChunk("</pre>\n")
-            self.serveFooter()
         except:
             raise
         finally:
+            # clean up
+            try:
+                if inFile: inFile.close()
+                os.remove(inFileName)
+            except:
+                pass
+#            print("upload result served!")
+            self.serveFooter()
             uploadResult = ""
 
     def serveBlockly(self, qs):
@@ -626,157 +680,95 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
         self.sendDefaultHeaders()
         self.end_headers()
         text = ""
-        for line in moteData.listenTxt:
+        for line in sensor_data.moteData.listenTxt:
             text += line + "<br/>"
         if text:
             self.writeChunk(text)
         self.writeFinalChunk()
 
-    def do_GET(self):
-        #global
-        self.sessions = allSessions
-        self.users = allUsers
-        self.settings = configuration.c
-        self.tabuList = tabuList
-        self.moteData = moteData
-        #global end
-
-        self.headerIsServed = False
-
-        o = urlparse(self.path)
-        qs = parse_qs(o.query)
-
-        if "Android" in self.headers["user-agent"]:
-            self.htmlDirectory = self.htmlDirectory + "_mobile"
-
-        if o.path == "/" or o.path == "/default":
-            self.serveDefault(qs)
-        elif o.path == "/motes":
-            self.serveMoteSelect(qs)
-        elif o.path == "/config":
-            self.serveConfig(qs)
-        elif o.path == "/graph":
-            self.serveGraphs(qs)
-        elif o.path == "/graph-data":
-            self.serveGraphsData(qs)
-        elif o.path == "/graph-form":
-            self.serveGraphsForm(qs)
-        elif o.path == "/upload":
-            self.serveUpload(qs)
-        elif o.path == "/login":
-            self.serveLogin(qs)
-        elif o.path == "/server":
-            self.serveServer(qs)
-        elif o.path == "/account":
-            self.serveAccount(qs)
-        elif o.path == "/users":
-            self.serveUsers(qs)
-        elif o.path == "/upload-result":
-            self.serveUploadResult(qs)
-        elif o.path == "/listen":
-            self.serveListen(qs)
-        elif o.path == "/listen-data":
-            self.serveListenData(qs)
-        elif o.path == "/blockly":
-            self.serveBlockly(qs)
-        elif o.path == "/seal-frame":
-            self.serveSealFrame(qs)
-        elif o.path[:13] == "/seal-blockly":
-            self.serveFile(os.path.join(self.sealBlocklyDirectory, o.path[14:]))
-        elif o.path == "/sync":
-            self.serveSync(qs)
-        elif o.path == "/code":
-            # qs['src'] contains SEAL-Blockly code
-            code = qs.get('src')[0] if "src" in qs else ""
-            config = qs.get('config')[0] if "config" in qs else ""
-            if motes.anySelected():
-                self.compileAndUpload(code, config, None, True)
-            self.serveSync(qs)
-        elif o.path[-4:] == ".css":
-            self.serveFile(self.htmlDirectory + "/css/" + o.path)
-        elif o.path[-4:] in [".png", ".jpg", ".gif", ".tif"]:
-            self.serveFile(self.htmlDirectory + "/img/" + o.path)
-        elif o.path[-3:] in [".js"]:
-            self.serveFile(self.htmlDirectory + "/js/" + o.path)
-        else:
-            self.serve404Error(o.path, qs)
-
     def compileAndUpload(self, code, config, fileContents, isSEAL):
         global lastUploadCode
         global lastUploadConfig
         global lastUploadFile
+        global maybeIsInSubprocess
+
+        # print("compileAndUpload")
+
         #if self.getLevel < 2:
         #    return 1
-        retcode = 0
         if not os.path.exists("build"):
             os.mkdir("build")
-        # TODO FIXME: should do this in a new thread!
-        isInSubprocess = True
-        os.chdir("build")
 
-        if fileContents:
-            lastUploadFile = form["file"].filename
+        # do this synchronously
+        subprocessLock.acquire()
+        closeAllSerial()
+        maybeIsInSubprocess = True
+        try:
+           if fileContents:
+               lastUploadFile = form["file"].filename
 
-            filename = "tmp-file.ihex"
-            with open(filename, "w") as outFile:
-                outFile.write(fileContents)
-                outFile.close()
+               filename = os.path.join("build", "tmp-file.ihex")
+               with open(filename, "w") as outFile:
+                   outFile.write(fileContents)
+                   outFile.close()
 
-            closeAllSerial()
-            for m in motes.getMotes():
-                r = m.tryToUpload(self, filename)
-                if r != 0: retcode = r
+               retcode = 0
+               for m in motes.getMotes():
+                   if not m.tryToOpenSerial(False): continue
+                   r = m.tryToUpload(self, filename)
+                   if r != 0: retcode = r
 
-        elif code:
-            lastUploadCode = code
+           elif code:
+               lastUploadCode = code
 
-            filename = "main."
-            filename += "sl" if isSEAL else "c"
-            with open(filename, "w") as outFile:
-                outFile.write(code)
-                outFile.close()
+               filename = "main." + ("sl" if isSEAL else "c")
+               with open(os.path.join("build", filename), "w") as outFile:
+                   outFile.write(code)
+                   outFile.close()
 
-            with open("config", "w") as outFile:
-                if config is None:
-                    config = ""
-                outFile.write(config)
-                outFile.close()
+               with open(os.path.join("build", "config"), "w") as outFile:
+                   if config is None:
+                       config = ""
+                   outFile.write(config)
+                   outFile.close()
 
-            with open("Makefile", "w") as outFile:
-                if isSEAL:
-                    outFile.write("SEAL_SOURCES = main.sl\n")
-                else:
-                    outFile.write("SOURCES = main.c\n")
-                outFile.write("APPMOD = App\n")
-                outFile.write("PROJDIR = $(CURDIR)\n")
-                outFile.write("ifndef MOSROOT\n")
-                mansosPath = configuration.c.getCfgValue("mansosDirectory")
-                if not os.path.isabs(mansosPath):
-                    # one level up - because we are in build directory
-                    mansosPath = os.path.join(mansosPath, "..")
-                outFile.write("  MOSROOT = " + mansosPath + "\n")
-                outFile.write("endif\n")
-                outFile.write("include ${MOSROOT}/mos/make/Makefile\n")
-                outFile.close()
+               with open(os.path.join("build", "Makefile"), "w") as outFile:
+                   if isSEAL:
+                       outFile.write("SEAL_SOURCES = main.sl\n")
+                   else:
+                       outFile.write("SOURCES = main.c\n")
+                   outFile.write("APPMOD = App\n")
+                   outFile.write("PROJDIR = $(CURDIR)\n")
+                   outFile.write("ifndef MOSROOT\n")
+                   mansosPath = configuration.c.getCfgValue("mansosDirectory")
+                   if not os.path.isabs(mansosPath):
+                       # one level up - because we are in build directory
+                       mansosPath = os.path.join(mansosPath, "..")
+                   outFile.write("  MOSROOT = " + mansosPath + "\n")
+                   outFile.write("endif\n")
+                   outFile.write("include ${MOSROOT}/mos/make/Makefile\n")
+                   outFile.close()
 
-            closeAllSerial() # XXX: when the ports are reopened???
+               retcode = 0
+               for m in motes.getMotes():
+                   if not m.tryToOpenSerial(False): continue
+                   r = m.tryToCompileAndUpload(self, filename)
+                   if r != 0: retcode = r
 
-            for m in motes.getMotes():
-                if m.tryToOpenSerial(False): continue
-                r = m.tryToCompileAndUpload(self, filename)
-                if r != 0: retcode = r
-                m.closeSerial()
+        finally:
+            maybeIsInSubprocess = False
+            openAllSerial()
+            subprocessLock.release()
+            return retcode
 
-        os.chdir("..")
-        isInSubprocess = False
-        return retcode
-
-    def do_POST(self):
+    def serveUploadPost(self, qs):
         global lastUploadCode
         global lastUploadConfig
         global lastUploadFile
-        global isInSubprocess
-        self.headerIsServed = False
+        global maybeIsInSubprocess
+        global isPostEntered
+
+        self.setSession(qs)
 
         # Parse the form data posted
         form = cgi.FieldStorage(
@@ -785,7 +777,10 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
             environ = {'REQUEST_METHOD':'POST',
                      'CONTENT_TYPE':self.headers['Content-Type'],
                      })
-        #self.setSession(qs) ?
+
+        # signal the upload result thread that we are are ready to start serving
+        isPostEntered = True
+
         self.send_response(200)
         self.send_header('Content-Type', 'text/html')
         self.send_header('Transfer-Encoding', 'chunked')
@@ -818,13 +813,13 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
 
         # check if what to upload is provided
         if not fileContents and not code:
-            self.serveHeader("upload")
-            self.serveError("Neither filename nor code specified!")
+            self.serveHeader("upload", qs)
+            self.serveError("Neither filename nor code specified!", qs)
+            maybeIsInSubprocess = False
             return
 
-        i = 0
         for m in motes.getMotes():
-            name = "mote" + str(i)
+            name = "mote" + m.getPortBasename()
             if name in form:
                 isChecked = form[name].value == "on"
             else:
@@ -834,14 +829,14 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
                 m.isSelected = True
             else:
                 m.isSelected = False
-            i += 1
 
         # remember which motes were selected and which not
         motes.storeSelected()
         # check if any motes are selected
         if not motes.anySelected():
-            self.serveHeader("upload")
-            self.serveError("No motes selected!")
+            self.serveHeader("upload", qs)
+            self.serveError("No motes selected!", qs)
+            maybeIsInSubprocess = False
             return
 
         config = ""
@@ -853,15 +848,108 @@ class HttpServerHandler(BaseHTTPRequestHandler, PageUser, PageAccount, PageLogin
 
         retcode = self.compileAndUpload(code, config, fileContents, isSEAL)
 
-        self.serveHeader("upload")
-        self.serveMotes("upload", "Upload", {}, True)
+        self.serveHeader("upload", qs)
         if retcode == 0:
-            self.writeChunk("<strong>Upload done!</strong></div>")
+            self.writeChunk("<div><strong>Upload done!</strong></div><br/>")
         else:
-            self.writeChunk("<strong>Upload failed!</strong></div>")
+            self.writeChunk("<div><strong>Upload failed!</strong></div><br/>")
+        motesText = self.serveMotes("upload", "Upload", None, form)
+        isSealCode = configuration.c.getCfgValueAsBool("isSealCode")
+        isSlow = configuration.c.getCfgValueAsBool("slowUpload")
+        self.serveBody("upload", qs,
+                       {"MOTES_TXT" : motesText,
+                        "CCODE_CHECKED": 'checked="checked"' if not isSealCode else "",
+                        "SEALCODE_CHECKED" : 'checked="checked"' if isSealCode else "",
+                        "UPLOAD_CODE" : lastUploadCode,
+                        "UPLOAD_CONFIG" : lastUploadConfig,
+                        "UPLOAD_FILENAME": lastUploadFile,
+                        "SLOW_CHECKED" : 'checked="checked"' if isSlow else ""})
         self.serveFooter()
-        # TODO
-        # motes.closeAll()
+
+
+    def do_GET(self):
+        self.headerIsServed = False
+
+#        print("")
+#        print(self.headers)
+
+        o = urlparse(self.path)
+        qs = parse_qs(o.query)
+
+#        if "Android" in self.headers["user-agent"]:
+#            self.htmlDirectory = self.htmlDirectory + "_mobile"
+
+        if o.path == "/" or o.path == "/default":
+            self.serveDefault(qs)
+        elif o.path == "/motes":
+            self.serveMoteSelect(qs)
+        elif o.path == "/config":
+            self.serveConfig(qs)
+        elif o.path == "/graph":
+            self.serveGraphs(qs)
+        elif o.path == "/graph-data":
+            self.serveGraphsData(qs)
+        elif o.path == "/graph-form":
+            self.serveGraphsForm(qs)
+        elif o.path == "/upload":
+            self.serveUploadGet(qs)
+        elif o.path == "/login":
+            self.serveLogin(qs)
+        elif o.path == "/server":
+            self.serveServer(qs)
+        elif o.path == "/account":
+            self.serveAccount(qs)
+        elif o.path == "/users":
+            self.serveUsers(qs)
+        elif o.path == "/upload-result":
+            self.serveUploadResult(qs)
+        elif o.path == "/listen":
+            self.serveListen(qs)
+        elif o.path == "/listen-data":
+            self.serveListenData(qs)
+        elif o.path == "/blockly":
+            self.serveBlockly(qs)
+        elif o.path == "/seal-frame":
+            self.serveSealFrame(qs)
+        elif o.path[:13] == "/seal-blockly":
+            self.serveFile(os.path.join(self.sealBlocklyDirectory, o.path[14:]), qs)
+        elif o.path == "/sync":
+            self.serveSync(qs)
+        elif o.path == "/code":
+            # qs['src'] contains SEAL-Blockly code
+            code = qs.get('src')[0] if "src" in qs else ""
+            config = qs.get('config')[0] if "config" in qs else ""
+            if motes.anySelected():
+                self.compileAndUpload(code, config, None, True)
+            self.serveSync(qs)
+        elif o.path[-4:] == ".css":
+            self.serveFile(os.path.join(self.htmlDirectory, "css", o.path[1:]), qs)
+        elif o.path[-4:] in [".png", ".jpg", ".gif", ".tif"]:
+            self.serveFile(os.path.join(self.htmlDirectory, "img", o.path[1:]), qs)
+        elif o.path[-3:] in [".js"]:
+            self.serveFile(os.path.join(self.htmlDirectory, "js", o.path[1:]), qs)
+        else:
+            self.serve404Error(o.path, qs)
+
+
+    def do_POST(self):
+        self.headerIsServed = False
+
+#        print("")
+#        print(self.headers)
+
+        o = urlparse(self.path)
+        qs = parse_qs(o.query)
+
+# TODO
+#        if "Android" in self.headers["user-agent"]:
+#            self.htmlDirectory = self.htmlDirectory + "_mobile"
+
+        if o.path == "/upload":
+            self.serveUploadPost(qs)
+        else:
+            self.serve404Error(o.path, qs)
+
 
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
@@ -911,7 +999,7 @@ def readUsers(userDirectory, userFile):
     for line in uf:
          if not i:
              i = True
-             allUsers = Users(line.split(), userDirectory, userFile)
+             allUsers = user.Users(line.split(), userDirectory, userFile)
          else:
              allUsers.add_user(line.split())
     uf.close()
@@ -920,7 +1008,7 @@ def readUsers(userDirectory, userFile):
 def initalizeUsers():
     global allSessions
     
-    allSessions = Sessions()
+    allSessions = session.Sessions()
     
     userDirectory = os.path.abspath(configuration.c.getCfgValue("userDirectory"))
     userFile = configuration.c.getCfgValue("userFile")
@@ -986,17 +1074,17 @@ def main():
         server = ThreadingHTTPServer(('', port), HttpServerHandler)
         # load motes
         motes.addAll()
-        # allow initialization to complete
-        time.sleep(1)
         # report ok and enter the main loop
         print("<http-server>: started, listening to TCP port {}, serial baudrate {}".format(port,
               configuration.c.getCfgValueAsInt("baudrate")))
         server.serve_forever()
+    except SystemExit:
+        raise # XXX
     except Exception as e:
         print("<http-server>: exception occurred:")
         print(e)
         print(traceback.format_exc())
-        return 1
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

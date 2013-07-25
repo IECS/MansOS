@@ -2,8 +2,10 @@
 # MansOS web server - data parsing, storing and visualization
 #
 
+from __future__ import print_function
 import time, os
 import configuration
+import utils
 
 # Polynomial ^8 + ^5 + ^4 + 1
 def crc8Add(acc, byte):
@@ -51,7 +53,7 @@ class SensorData(object):
 
         dataName = string[:eqSignPos].strip().lower()
         # sanity check of dataName
-        if not isasciiString(dataName):
+        if not utils.isasciiString(dataName):
             return
         
         if not dataName in self.seenInThisPacket:

@@ -2,6 +2,7 @@
 # MansOS web server - the (optional) database connection codxe
 #
 
+from __future__ import print_function
 import configuration
 from uuid import getnode as get_mac
 import datetime
@@ -42,10 +43,10 @@ except ImportError:
     # TODO: do not print this if "silent" mode is configured in config file!
     print("Warning: using a database for data storage is not possible, package dependencies are missing.")
     print("To store to use a database, install: python-sqlalchemy python-mysqldb\n")
-    
+
 def openDBConnection():
     global connection
-    if engine != None:
+    if configuration.c.getCfgValueAsBool("saveToDB") and engine != None:
         connection = engine.connect()
  
 def closeDBConnection():           
@@ -53,20 +54,20 @@ def closeDBConnection():
     if connection != None:
         connection.close()
         
-def processData(port, newString):
+def maybeAddDataToDatabase(port, newString):
     global usePacketSeparator, packet
 
-    saveToDB = configuration.c.getCfgValue("saveToDB") == "True"
-    sendToOpensense = configuration.c.getCfgValue("sendToOpensense") == "True"  
+    saveToDB = configuration.c.getCfgValueAsBool("saveToDB")
+    sendToOpenSense = configuration.c.getCfgValueAsBool("sendToOpenSense")
     if newString == packetSeparator:
         usePacketSeparator = True
         if packet != None:
             if saveToDB:
                 # Save data to DB
                 saveDataToDB(packet)
-            if sendToOpensense:
+            if sendToOpenSense:
                 #Send data to sen.se
-                sendDataToSense(packet)
+                sendDataToOpenSense(packet)
             packet.clear()
         else:
             packet = {}
@@ -78,9 +79,9 @@ def processData(port, newString):
                 if saveToDB:
                     # Save data to DB
                     saveDataToDB({port+":"+arr[0]: arr[1]})
-                if sendToOpensense:
+                if sendToOpenSense:
                     #Send data to sen.se
-                    sendDataToSense({port+":"+arr[0]: arr[1]})                               
+                    sendDataToOpenSense({port+":"+arr[0]: arr[1]})                               
             else:
                 packet[port+":"+arr[0]] = arr[1]
         else:
@@ -96,7 +97,7 @@ def saveDataToDB(packet):
         ins = observations.insert().values(obs_time = datetime.datetime.now(), unit_id = mac, port = arr[0], type = arr[1], value = val)
         connection.execute(ins)
 
-def sendDataToSense(packet):
+def sendDataToOpenSense(packet):
     url = 'http://api.sen.se/events/'
     header = {
       'sense_key' : configuration.c.getCfgValue("senseApiKey"),

@@ -92,7 +92,7 @@ function Md5(){//Encrypts input fiels to prove identity when data are sent
 	if (sma == undefined) return;
 	var sid = localStorage.getItem("Msid37");
 	if(sid == null) return;
-	for (i in elems) {
+	for (i = 0; i < elems.length; i++) {
 		if((' ' + elems[i].className + ' ').indexOf(' md5 ') > -1) {
 			elems[i].value = hex_md5(sid + sma + elems[i].id);
 		}

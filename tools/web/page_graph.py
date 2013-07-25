@@ -1,9 +1,12 @@
 
+from __future__ import print_function
 import random
 
 class PageGraph():
     def serveGraphs(self, qs):
-        isMobile = "Android" in self.headers["user-agent"]
+# TODO
+#        isMobile = "Android" in self.headers["user-agent"]
+        isMobile = False
         self.setSession(qs)
         changes = {}
         changes["INFO"] = ''
@@ -92,7 +95,7 @@ class PageGraph():
             else:
                 buttons = "<button onclick='button(\" + i + \", this)'>Pause</button>"
       
-        self.serveHeader("graph", qs, True, True, {"BUTTONS": buttons})
+        self.serveHeader("graph", qs, replaceValues = {"BUTTONS": buttons})
         self.serveBody("graph", qs, changes)
         self.serveFooter()
 
@@ -115,7 +118,7 @@ class PageGraph():
             changes["FORM"] = formCode
         self.serveBody("addgraph", qs, changes)
         self.serveFooter()
-        
+
     def serveEditGraph(self, qs):
         tses = self.sessions.get_session(qs["sma"][0])
         graphAttributes = self.settings.getCfgValue("graphAttributes")
@@ -152,6 +155,7 @@ class PageGraph():
 
         self.serveBody("editgraph", qs, changes)
         self.serveFooter()
+
     def serveGraphsData(self, qs):
         global lastData
 
