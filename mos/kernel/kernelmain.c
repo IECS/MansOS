@@ -178,6 +178,10 @@ static inline void initSystem(void)
     INIT_PRINTF("init AD5258 digital potentiometer...\n");
     ad5258Init();
 #endif
+#if USE_DAC7718
+    INIT_PRINTF("init DAC7718 DAC converter chip...\n");
+    dac7718Init();
+#endif
 #if USE_ISL1219
     INIT_PRINTF("init ISL1219 real-time clock chip...\n");
     isl1219Init();

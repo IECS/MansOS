@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,11 +28,18 @@
 #define DAC7718_SPI_ENABLE()   spiSlaveEnable(DAC7718_CS_PORT, DAC7718_CS_PIN)
 #define DAC7718_SPI_DISABLE()  spiSlaveDisable(DAC7718_CS_PORT, DAC7718_CS_PIN)
 
+#define DAC7718_REINIT() do {                       \
+        UCB1CTL1 |= UCSWRST;                        \
+        UCB1CTL0 &= ~UCCKPH;                        \
+        UCB1CTL1 &= ~UCSWRST;                       \
+    } while (0)
+
 static uint8_t dacChannel;
 
 static void dac7718RegWrite(uint8_t address, uint16_t data)
 {
     // all writes must be 24 bit
+    DAC7718_REINIT();
     DAC7718_SPI_ENABLE();
     spiWriteByte(DAC7718_SPI_ID, address);
     spiWriteByte(DAC7718_SPI_ID, data >> 8);
@@ -60,30 +67,42 @@ static void dac7718SpiBusInit(void)
 
 void dac7718Init(void)
 {
+//    PRINTF("dac7718Init.\n");
     // spiBusInit(DAC7718_SPI_ID, SPI_MODE_MASTER);
     dac7718SpiBusInit();
 
+    //First, set levels! THEN set ports to output!
+    pinSet(DAC7718_RST_PORT, DAC7718_RST_PIN);
+    // 0V on output pins after reset. If set, DAC7718 may burn!!!! HW bug.
+    pinClear(DAC7718_RSTSEL_PORT, DAC7718_RSTSEL_PIN);
+    // async mode, update immediately
+    pinClear(DAC7718_LDAC_PORT, DAC7718_LDAC_PIN);
+    DAC7718_SPI_DISABLE();
+
     pinAsOutput(DAC7718_CS_PORT, DAC7718_CS_PIN);
     pinAsOutput(DAC7718_RSTSEL_PORT, DAC7718_RSTSEL_PIN);
-
+    pinAsOutput(DAC7718_RST_PORT, DAC7718_RST_PIN);
     pinAsOutput(DAC7718_LDAC_PORT, DAC7718_LDAC_PIN);
+
     // pinAsOutput(DAC7718_CLR_PORT, DAC7718_CLR_PIN);
     // pinAsOutput(DAC7718_WAKEUP_PORT, DAC7718_WAKEUP_PIN);
     // pinAsOutput(DAC7718_BTC_PORT, DAC7718_BTC_PIN);
 
-    DAC7718_SPI_DISABLE();
-    // pinSet(DAC7718_RST_PORT, DAC7718_RST_PIN);
-    // 0V on output pins after reset
-    pinSet(DAC7718_RSTSEL_PORT, DAC7718_RSTSEL_PIN);
-    // async mode, update immediately
-    pinClear(DAC7718_LDAC_PORT, DAC7718_LDAC_PIN);
-    // pinSet(DAC7718_CLR_PORT, DAC7718_CLR_PIN);
-    // pinClear(DAC7718_WAKEUP_PORT, DAC7718_WAKEUP_PIN);
-    // use straight binary code
-    // pinClear(DAC7718_BTC_PORT, DAC7718_BTC_PIN);
+    // DAC7718_SPI_DISABLE();
+    // // pinSet(DAC7718_RST_PORT, DAC7718_RST_PIN);
+    // // 0V on output pins after reset
+    // pinSet(DAC7718_RSTSEL_PORT, DAC7718_RSTSEL_PIN);
+    // // async mode, update immediately
+    // pinClear(DAC7718_LDAC_PORT, DAC7718_LDAC_PIN);
+    // // pinSet(DAC7718_CLR_PORT, DAC7718_CLR_PIN);
+    // // pinClear(DAC7718_WAKEUP_PORT, DAC7718_WAKEUP_PIN);
+    // // use straight binary code
+    // // pinClear(DAC7718_BTC_PORT, DAC7718_BTC_PIN);
 
-    // set up default config
+    // star with default config
     dac7718RegWrite(DAC7718_REG_CONFIG, DEFAULT_CONFIG);
+
+//    PRINTF("..done\n");
 }
 
 void dac7718SelectChannel(uint8_t channel)

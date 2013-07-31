@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2013 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,12 +30,19 @@
 #define ADS8638_SPI_ENABLE()   spiSlaveEnable(ADS8638_CS_PORT, ADS8638_CS_PIN)
 #define ADS8638_SPI_DISABLE()  spiSlaveDisable(ADS8638_CS_PORT, ADS8638_CS_PIN)
 
+#define ADS_REINIT() do {                       \
+        UCB1CTL1 |= UCSWRST;                    \
+        UCB1CTL0 |= UCCKPH;                     \
+        UCB1CTL1 &= ~UCSWRST;                   \
+    } while (0)
+
 static uint8_t adsChannel;
 static uint8_t adsRange;
 
 uint8_t ads8638RegRead(uint8_t address)
 {
     uint8_t result;
+    ADS_REINIT();
     ADS8638_SPI_ENABLE();
     spiWriteByte(ADS8638_SPI_ID, (address << 1) | ADS8638_SPI_WRITE_FLAG);
     result = spiReadByte(ADS8638_SPI_ID);
@@ -45,6 +52,7 @@ uint8_t ads8638RegRead(uint8_t address)
 
 void ads8638RegWrite(uint8_t address, uint8_t data)
 {
+    ADS_REINIT();
     ADS8638_SPI_ENABLE();
     spiWriteByte(ADS8638_SPI_ID, address << 1);
     spiWriteByte(ADS8638_SPI_ID, data);
@@ -53,15 +61,19 @@ void ads8638RegWrite(uint8_t address, uint8_t data)
 
 void ads8638Init(void)
 {
+//    PRINTF("ads8638Init.\n");
     spiBusInit(ADS8638_SPI_ID, SPI_MODE_MASTER);
 
     pinAsOutput(ADS8638_CS_PORT, ADS8638_CS_PIN);
+    ADS8638_SPI_DISABLE();
 
     // turn on internal ref
     ads8638RegWrite(ADS8638_REG_AUX_CONFIG, ADS8638_INTERNAL_VREF_ON);
 
     // select channel 0 with configured range
     ads8638SelectChannel(ADS8638_CHANNEL_0, ADS8638_RANGE_CONFIG);
+
+//    PRINTF("..done\n");
 }
 
 void ads8638SelectChannel(uint8_t channel, uint8_t range)
