@@ -57,8 +57,8 @@ static uint32_t cacheMirrorBlock;
 static void printFatInfo(FatInfo_t *fi) {
 #if FATFS_DEBUG
     PRINTF("sectorsPerFAT=%u\n", fi->sectorsPerFAT);
-    PRINTF("clusterCount=%u\n", fi->clusterCount);
-    PRINTF("dataStartBlock=%u\n", fi->dataStartBlock);
+    PRINTF("clusterCount=%lu\n", fi->clusterCount);
+    PRINTF("dataStartBlock=%lu\n", fi->dataStartBlock);
     PRINTF("numFATs=%u\n", (uint16_t) fi->numFATs);
     PRINTF("numRootEntries=%u\n", fi->numRootEntries);
 #endif
