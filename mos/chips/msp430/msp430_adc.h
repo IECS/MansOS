@@ -132,12 +132,6 @@ static inline bool hplAdcIsOn(void)
     return ADC12CTL0 & REFON;
 }
 
-static inline bool hplAdcUsesSMCLK(void)
-{
-    // we always use ACLK
-    return false;
-}
-
 // Get converted value
 static inline uint16_t hplAdcGetVal(void)
 {
@@ -193,5 +187,11 @@ static inline bool hplAdcIsBusy(void)
 }
 
 #endif // USE_ADC
+
+static inline bool hplAdcUsesSMCLK(void)
+{
+    // we always use ACLK
+    return false;
+}
 
 #endif  // !_MSP430_ADC_H_
