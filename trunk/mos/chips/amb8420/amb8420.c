@@ -2,6 +2,8 @@
 #include <print.h>
 #include <delay.h>
 #include <string.h>
+#include <errors.h>
+#include <alarms.h>
 #include <kernel/threads/threads.h>
 
 //#include <leds.h>
@@ -24,6 +26,8 @@
 static AMB8420RxHandle rxHandle;
 
 static bool isOn;
+static bool isRadioRxError;
+static bool somePacketsReceived;
 
 #ifndef RADIO_BUFFER_SIZE
 #define RADIO_BUFFER_SIZE AMB8420_MAX_PACKET_LEN
@@ -38,6 +42,9 @@ static volatile uint8_t commandInProgress;
 
 static AMB8420AddrMode_t currentAddressMode;
 
+Alarm_t radioResetTimer;
+#define RADIO_RESET_INTERVAL (20ul * 60 * 1000) // 20 min
+
 static enum {
     STATE_READ_DELIMITER,
     STATE_READ_COMMAND,
@@ -48,6 +55,8 @@ static enum {
 
 static uint8_t recvCommand;
 static uint8_t recvLength;
+
+static void onRadioReset(void *x);
 
 //
 // Enable/disable flash access to the USART
@@ -67,6 +76,9 @@ static void rxPacket(uint8_t checksum)
     int i;
     RPRINTF("AMB: command %#02x, len %d\n", recvCommand, recvLength);
     recvState = STATE_READ_DELIMITER;
+
+    if (isRadioRxError) goto end;
+    
     // verify checksum
     checksum ^= AMB8420_START_DELIMITER;
     checksum ^= recvCommand;
@@ -111,6 +123,7 @@ static void rxPacket(uint8_t checksum)
         return;
     }
 
+  end:
 #if USE_THREADS
     // disable Rx interrupts
     serialDisableRX(AMB8420_UART_ID); // TODO: is this ok?
@@ -146,6 +159,12 @@ static void serialReceive(uint8_t byte) {
     case STATE_READ_COMMAND:
         recvCommand = byte;
 //        PRINTF("command = %d\n", command);
+//        if ((recvCommand & 0xC0) == 0) {
+        if (recvCommand == 0 || recvCommand == 1) {
+            // not a reply command; something wrong!
+            PRINTF("not a reply command: cmd=0x%02x\n", recvCommand);
+            isRadioRxError = true;
+        }
         recvState = STATE_READ_LENGTH;
         break;
 
@@ -188,7 +207,7 @@ void amb8420InitSerial(void)
     serial[AMB8420_UART_ID].function = SERIAL_FUNCTION_RADIO;
 }
 
-void amb8420Reset(void)
+void amb8420Reset1(bool wtf)
 {
     bool ok;
 
@@ -209,8 +228,11 @@ void amb8420Reset(void)
     RPRINTF("  init completed\n");
 
     pinSet(AMB8420_RESET_PORT, AMB8420_RESET_PIN);
-    amb8420InitSerial();
-    mdelay(100);
+    if (wtf) {
+        amb8420InitSerial();
+    }
+//    mdelay(100);
+    mdelay(10);
 
     RPRINTF("  serial init completed\n");
 
@@ -230,9 +252,13 @@ void amb8420Reset(void)
 
     // restore sleep mode
     AMB8420_RESTORE_MODE(ctx);
+    
+    // reset clears all error conditions
+    isRadioRxError = false;
 
     // long delay, maybe helps for the RTS problem
-    mdelay(500);
+    // mdelay(500);
+    mdelay(10);
 }
 
 void amb8420Init(void)
@@ -256,12 +282,15 @@ void amb8420Init(void)
     //pinIntRising(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
     //pinEnableInt(AMB8420_DATA_INDICATE_PORT, AMB8420_DATA_INDICATE_PIN);
 
+    // put the system in reset
+    amb8420Reset();
+
     // make sure low power mode is enabled
     pinSet(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);
     pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);
 
-    // put the system in reset
-    amb8420Reset();
+    alarmInit(&radioResetTimer, onRadioReset, NULL);
+    alarmSchedule(&radioResetTimer, RADIO_RESET_INTERVAL);
  
     RPRINTF("..done\n");
 }
@@ -271,7 +300,7 @@ void amb8420On(void)
     // TODO: re-init serial if required!
 
     if (!isOn) {
-        RPRINTF("amb842On\n");
+//        RPRINTF("amb842On\n");
         isOn = true;
         pinClear(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);
         pinClear(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);
@@ -283,41 +312,11 @@ void amb8420On(void)
 void amb8420Off(void)
 {
     if (isOn) {
-        RPRINTF("amb842Off\n");
+//        RPRINTF("amb842Off\n");
         isOn = false;
         pinSet(AMB8420_TRX_DISABLE_PORT, AMB8420_TRX_DISABLE_PIN);
         pinSet(AMB8420_SLEEP_PORT, AMB8420_SLEEP_PIN);
     }
-}
-
-int amb8420Read(void *buf, uint16_t bufsize)
-{
-//    RPRINTF("amb8420Read\n");
-    uint8_t *src = rxBuffer;
-    int len = recvLength;
-    switch (currentAddressMode) {
-    case AMB8420_ADDR_MODE_NONE:
-        break;
-    case AMB8420_ADDR_MODE_ADDR:
-        len--; src++;
-        break;
-    case AMB8420_ADDR_MODE_ADDRNET:
-        len -= 2; src += 2;
-        break;
-    }
-
-    if (len > bufsize) len = bufsize;
-    else if (len <= 0) return -1;
-
-    memcpy(buf, src, len);
-    rxCursor = 0;
-
-#if USE_THREADS
-    // enable Rx interrupts back
-    serialEnableRX(AMB8420_UART_ID);
-#endif
-
-    return len;
 }
 
 int amb8420Send(const void *header_, uint16_t headerLen,
@@ -325,7 +324,7 @@ int amb8420Send(const void *header_, uint16_t headerLen,
 {
 //    RPRINTF("amb8420Send, size=%u\n", headerLen + dataLen);
 
-    int result = -1;
+    int result = -EBUSY;
 
     AMB8420ModeContext_t ctx;
     AMB8420_ENTER_ACTIVE_MODE(ctx);
@@ -381,9 +380,53 @@ int amb8420Send(const void *header_, uint16_t headerLen,
     return result;
 }
 
+int amb8420Read(void *buf, uint16_t bufsize)
+{
+//    RPRINTF("amb8420Read\n");
+    int result;
+    uint8_t *src = rxBuffer;
+
+    rxCursor = 0;
+    if (isRadioRxError) {
+        amb8420Reset();
+        result = -EIO;
+        goto end;
+    }
+
+    result = recvLength;
+    switch (currentAddressMode) {
+    case AMB8420_ADDR_MODE_NONE:
+        break;
+    case AMB8420_ADDR_MODE_ADDR:
+        result--; src++;
+        break;
+    case AMB8420_ADDR_MODE_ADDRNET:
+        result -= 2; src += 2;
+        break;
+    }
+
+    if (result > bufsize) result = bufsize;
+    else if (result <= 0) return -EBADMSG;
+
+    memcpy(buf, src, result);
+
+    somePacketsReceived = true;
+
+  end:
+#if USE_THREADS
+    // enable Rx interrupts back
+    serialEnableRX(AMB8420_UART_ID);
+#endif
+
+    return result;
+}
+
 void amb8420Discard(void)
 {
     rxCursor = 0;
+    if (isRadioRxError) {
+        amb8420Reset();
+    }
 }
 
 AMB8420RxHandle amb8420SetReceiver(AMB8420RxHandle handle)
@@ -435,7 +478,7 @@ static int amb8420Set(uint8_t position, uint8_t len, uint8_t *data)
     // Wait for device to become ready
     AMB8420_WAIT_FOR_RTS_READY(ok);
   end:
-    return ok ? 0 : -1;
+    return ok ? 0 : -EBUSY;
 }
 
 static inline int amb8420Set1b(uint8_t position, uint8_t variable)
@@ -490,7 +533,7 @@ int amb8420GetAll(void)
     // Wait for device to become ready
     AMB8420_WAIT_FOR_RTS_READY(ok);
   end:
-    return ok ? 0 : -1;
+    return ok ? 0 : -EBUSY;
 }
 
 void amb8420SetChannel(int channel)
@@ -686,4 +729,22 @@ bool amb8420SetDstAddress(uint8_t dstAddress)
     // PRINTF(" ok = %d\n", (int)ok);
     // if (!ok) amb8420Reset();
     return ok;
+}
+
+void amb8420ResetIfInactive(void)
+{
+    if (!somePacketsReceived) {
+        PRINTF("*** reset radio chip because no packets received in last 20 minutes!\n");
+        amb8420Reset();
+    } else {
+        somePacketsReceived = false;
+    }
+}
+
+static void onRadioReset(void *x)
+{
+#if RADIO_CHIP == RADIO_CHIP_AMB8420
+    amb8420ResetIfInactive();
+#endif
+    alarmSchedule(&radioResetTimer, RADIO_RESET_INTERVAL);
 }

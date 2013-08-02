@@ -175,7 +175,13 @@ bool amb8420IsChannelClear(void);
 
 void amb8420InitSerial(void);
 
-void amb8420Reset(void);
+void amb8420ResetIfInactive(void);
+
+void amb8420Reset1(bool wtf);
+
+static inline void amb8420Reset(void) {
+    amb8420Reset1(true);
+}
 
 int amb8420EnterAddressingMode(AMB8420AddrMode_t, uint8_t srcAddress);
 
