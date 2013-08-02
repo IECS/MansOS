@@ -63,7 +63,8 @@ void routingInit(void) {
 }
 
 static void roOriginateTimerCb(void *x) {
-    PRINTF("originate routing packet, downstreamAddress=%#04x\n", downstreamAddress);
+//    TPRINTF("RO (downstream %#04x)\n", downstreamAddress);
+    TPRINTF("RO\n");
 
     RoutingInfoPacket_t routingInfo;
     routingInfo.packetType = ROUTING_INFORMATION;
@@ -81,13 +82,18 @@ static void roOriginateTimerCb(void *x) {
 
     socketSendEx(&roSocket, &routingInfo, sizeof(routingInfo), downstreamAddress);
 
-    uint16_t newTime;
+    uint32_t newTime;
     if (originateRetries)  {
         originateRetries--;
-        newTime = 200;
+        newTime = 400;
     } else {
+#ifdef ROUTING_ORIGINATE_TIMEOUT
         newTime = ROUTING_ORIGINATE_TIMEOUT + randomNumberBounded(500);
+#else
+        newTime = timeToNextFrame() + randomInRange(200, 1000);
+#endif
         if  (downstreamAddress == MOS_ADDR_BROADCAST) {
+            // ARQ not possible; resend even unsolicited packets to increase reliability
             originateRetries = 2;
         }
     }
@@ -96,7 +102,7 @@ static void roOriginateTimerCb(void *x) {
 
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 {
-    PRINTF("BS: routingReceive %d bytes\n", len);
+//    TPRINTF("RR %d bytes\n", len);
     if (len < 2) {
         PRINTF("routingReceive: too short!\n");
         return;
@@ -104,7 +110,7 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 
     uint8_t type = *data;
     if (type == ROUTING_REQUEST) {
-        // try to reply muliple times
+        // always resend solicited packets
         originateRetries = 2;
         // reschedule the origination timer sooner
         if (getAlarmTime(&roOriginateTimer) > 1200) {
@@ -112,18 +118,22 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         }
     }
 
+// commented out: will not work correctly in case of multiple forwarders
+#if 0
 #if !SINGLE_HOP
     // set forwarder address to increase communication reliability
     uint8_t sender = *(data + 1);
-    // accept collector as dowstream too - for smaller networks
+    // accept collector as downstream too - for smaller networks
     if ((sender == SENDER_COLLECTOR ||  sender == SENDER_FORWARDER)
             && s->recvMacInfo->originalSrc.shortAddr) {
         downstreamAddress = s->recvMacInfo->originalSrc.shortAddr;
     }
-#endif
+#endif // !SINGLE_HOP
+#endif // 0
 }
 
-RoutingDecision_e routePacket(MacInfo_t *info) {
+RoutingDecision_e routePacket(MacInfo_t *info)
+{
     // This is simple. Base station never forwards packets,
     // just sends and receives.
     MosAddr *dst = &info->originalDst;
@@ -139,6 +149,8 @@ RoutingDecision_e routePacket(MacInfo_t *info) {
     if (isLocalAddress(dst)) {
         INC_NETSTAT(NETSTAT_PACKETS_RECV, info->originalSrc.shortAddr);
         return RD_LOCAL;
+    } else {
+        PRINTF("route packet\n");
     }
     // allow to receive packets sent to "root" (0x0000) too
     if (isBroadcast(dst) || isUnspecified(dst)) {

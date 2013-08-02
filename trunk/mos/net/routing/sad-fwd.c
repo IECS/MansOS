@@ -32,9 +32,9 @@
 #include <timing.h>
 #include <print.h>
 #include <random.h>
-#include <net/net_stats.h>
-
+#include <watchdog.h>
 #include <leds.h>
+#include <net/net_stats.h>
 
 static Socket_t roSocket;
 static Alarm_t roCheckTimer;
@@ -42,14 +42,21 @@ static Alarm_t roForwardTimer;
 static Alarm_t roRequestTimer;
 static Alarm_t roStartListeningTimer;
 static Alarm_t roStopListeningTimer;
+static Alarm_t roGreenLedTimer;
+static Alarm_t watchdogTimer;
 
 static void roCheckTimerCb(void *);
 static void roForwardTimerCb(void *);
 static void roRequestTimerCb(void *);
+static void roGreenLedTimerCb(void *);
+static void watchdogTimerCb(void *);
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len);
 
 static uint32_t routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
 static bool routingSearching;
+static bool isGreenLedOn;
+
+static uint8_t forwardRetries = 1;
 
 static Seqnum_t lastSeenSeqnum;
 static uint8_t hopCountToRoot = MAX_HOP_COUNT;
@@ -81,42 +88,36 @@ static inline bool isRoutingInfoValid(void)
     return true;
 }
 
-static uint32_t calcListenStartTime(void)
-{
-    // at start of frame
-    return SAD_SUPERFRAME_LENGTH - (getSyncTimeMs() + 5) % SAD_SUPERFRAME_LENGTH;
-}
-
 static uint32_t calcNextForwardTime(void)
 {
-    uint32_t t = getSyncTimeMs() % SAD_SUPERFRAME_LENGTH;
-    t = SAD_SUPERFRAME_LENGTH - t;
-    // add 1 second + random jitter
-    t += randomInRange(1000, 2000);
-    return t;
+    if (forwardRetries < 1) return 800;
+    uint32_t passed = timeSinceFrameStart();
+    uint32_t sinceFrameStart = randomInRange(2200, 3000);
+    if (passed > 2000) return timeToNextFrame() + sinceFrameStart;
+    return sinceFrameStart - passed;
 }
 
 static void roStartListeningTimerCb(void *x)
 {
 //    PRINTF("%lu: (%c) LISTEN START\n", getSyncTimeMs(), isRoutingInfoValid() ? '+' : '-');
     if (!isListening) {
-        PRINTF("%lu: +++ start\n", getSyncTimeSec());
+        TPRINTF("+++ start\n");
     }
-    alarmSchedule(&roStartListeningTimer, calcListenStartTime());
+    alarmSchedule(&roStartListeningTimer, timeToNextFrame());
 
     isListening = true;
     radioOn();
-    alarmSchedule(&roStopListeningTimer, 5000 + 1000 * MAX_MOTES);
+    alarmSchedule(&roStopListeningTimer, 4000ul + MOTE_TIME_FULL * MAX_MOTES);
 }
 
 static void roStopListeningTimerCb(void *x)
 {
 //    PRINTF("%lu: (%c) turn radio off\n", getSyncTimeMs(), isRoutingInfoValid() ? '+' : '-');
-    PRINTF("%lu: --- stop\n", getSyncTimeSec());
+    TPRINTF("--- stop\n");
     isListening = false;
     RADIO_OFF_ENERGSAVE();
     if (!seenRoutingInThisFrame) {
-        PRINTF("%lu: NO ROUTING PACKET THIS TIME!\n", getSyncTimeSec());
+        TPRINTF("NO ROUTING PACKET THIS TIME!\n");
     }
     seenRoutingInThisFrame = false;
 }
@@ -134,7 +135,7 @@ static void roCheckTimerCb(void *x)
             alarmRemove(&roRequestTimer);
         }
     } else {
-        // was searching for routing info
+        // was not searching for routing info
         if (!routingOk) {
             routingSearching = true;
             routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
@@ -154,28 +155,34 @@ void routingInit(void)
     alarmInit(&roRequestTimer, roRequestTimerCb, NULL);
     alarmInit(&roStopListeningTimer, roStopListeningTimerCb, NULL);
     alarmInit(&roStartListeningTimer, roStartListeningTimerCb, NULL);
+    alarmInit(&roGreenLedTimer, roGreenLedTimerCb, NULL);
+    alarmInit(&watchdogTimer, watchdogTimerCb, NULL);
     alarmSchedule(&roCheckTimer, randomInRange(1000, 3000));
     alarmSchedule(&roForwardTimer, calcNextForwardTime());
     alarmSchedule(&roStartListeningTimer, 90);
+    alarmSchedule(&roGreenLedTimer, 10000);
+    alarmSchedule(&watchdogTimer, 1000);
 }
 
 static void roForwardTimerCb(void *x)
 {
     gotRreq = false;
 
+    if (forwardRetries) {
+        forwardRetries--;
+    } else {
+        forwardRetries = 1;
+    }
     alarmSchedule(&roForwardTimer, calcNextForwardTime());
 
     if (hopCountToRoot >= MAX_HOP_COUNT) return;
+
     if (!isRoutingInfoValid()) {
         roRequestTimerCb(NULL); // enter "search for root" state
         return;
     }
 
-    if (downstreamAddress == MOS_ADDR_BROADCAST) return; // XXX
-
-    // PRINTF("%lu: forward routing packet\n", getSyncTimeMs());
-//    PRINTF("%lu: send routing, nexthop=%#04x\n", (uint32_t)getJiffies(), downstreamAddress);
-    PRINTF("%lu: send routing\n", getSyncTimeSec());
+    TPRINTF("send routing\n");
 
     RoutingInfoPacket_t routingInfo;
     routingInfo.packetType = ROUTING_INFORMATION;
@@ -185,8 +192,6 @@ static void roForwardTimerCb(void *x)
     routingInfo.seqnum = lastSeenSeqnum;
     routingInfo.rootClockMs = getSyncTimeMs64();
     routingInfo.moteNumber = 0;
-
-//    redLedToggle();
 
     // XXX: INC_NETSTAT(NETSTAT_PACKETS_SENT, EMPTY_ADDR);
     socketSendEx(&roSocket, &routingInfo, sizeof(routingInfo), downstreamAddress);
@@ -209,7 +214,7 @@ static void roRequestTimerCb(void *x)
         routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
     }
 
-    PRINTF("send routing request\n");
+    TPRINTF("send routing request\n");
 
     radioOn(); // wait for response
     isListening = true;
@@ -222,8 +227,24 @@ static void roRequestTimerCb(void *x)
     alarmSchedule(&roStopListeningTimer, ROUTING_REPLY_WAIT_TIMEOUT);
 }
 
+static void roGreenLedTimerCb(void *x) {
+    isGreenLedOn = !isGreenLedOn;
+    if (isGreenLedOn) {
+        if (isRoutingInfoValid()) greenLedOn();
+    } else {
+        greenLedOff();
+    }
+    alarmSchedule(&roGreenLedTimer, isGreenLedOn ? 100 : 5000);
+}
+
+static void watchdogTimerCb(void *x) {
+    watchdogStart(WATCHDOG_EXPIRE_1000MS);
+    alarmSchedule(&watchdogTimer, 500);
+}
+
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 {
+    PRINTF("routing rx\n");
     // uint32_t rrTime = (uint32_t) getJiffies();
     // PRINTF("radio: %lu to %lu, routing: %lu\n", radioStartTime, radioEndTime, rrTime);
 
@@ -241,7 +262,7 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
                 s->recvMacInfo->originalSrc.shortAddr);
         return;
     }
-    PRINTF("Got routing info from the nexthop\n");
+    TPRINTF("Got routing info from the nexthop\n");
 #endif
 
     uint8_t type = data[0];
@@ -271,16 +292,24 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         // XXX: theoretically should add some time to avoid switching to
         // worse path only because packets from it travel faster
         update = true;
-        PRINTF("update routing info - more recent seqnum\n");
-    } else if (ri.seqnum == lastSeenSeqnum) {
+        TPRINTF("update routing info - more recent seqnum\n");
+    }
+    else if (ri.seqnum == lastSeenSeqnum) {
         if (ri.hopCount < hopCountToRoot) {
             update = true;
-            PRINTF("update routing info - better metric\n");
+            TPRINTF("update routing info - better metric\n");
+        }
+        else if (ri.hopCount == hopCountToRoot && !seenRoutingInThisFrame) {
+            update = true;
+            TPRINTF("update routing info - same metric\n");
         }
     }
     if (ri.hopCount > MAX_HOP_COUNT) update = false;
 
     if (update) {
+        if (timeSinceFrameStart() > 2000) {
+            PRINTF("*** base station (?) sends out of time!\n");
+        }
         //PRINTF("got valid routing info\n");
 //        PRINTF("%lu: OK!\n", (uint32_t) getJiffies());
         seenRoutingInThisFrame = true;
@@ -294,10 +323,12 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         //TPRINTF("process packet, rx time=%lu\n", (uint32_t) ri.rootClockMs);
         PRINTF("delta: old=%ld, new=%ld\n", (int32_t)oldRootClockDeltaMs, (int32_t)rootClockDeltaMs);
         if (abs((int32_t)oldRootClockDeltaMs - (int32_t)rootClockDeltaMs) > 500) {
-            PRINTF("large delta=%ld, time sync off?!\n", (int32_t)oldRootClockDeltaMs - (int32_t)rootClockDeltaMs);
+            PRINTF("large delta change=%ld, time sync off?!\n", (int32_t)rootClockDeltaMs - (int32_t)oldRootClockDeltaMs);
         }
-        PRINTF("%lu: OK!%s\n", getSyncTimeSec(),
-                 isListening ? "" : " (not listening)");
+        TPRINTF("OK!%s\n", isListening ? "" : " (not listening)");
+
+        // reschedule next listen start after this timesync
+        alarmSchedule(&roStartListeningTimer, timeToNextFrame());
     }
 }
 
@@ -313,11 +344,14 @@ RoutingDecision_e routePacket(MacInfo_t *info)
 {
     MosAddr *dst = &info->originalDst;
     if (!IS_LOCAL(info)) {
+        PRINTF("route packet\n");
+#if 0
         if (info->immedSrc.shortAddr) {
             if (rootAddress != 0 && info->immedSrc.shortAddr != rootAddress) {
                 downstreamAddress = info->immedSrc.shortAddr;
             }
         }
+#endif // 0
     }
     fillLocalAddress(&info->immedSrc);
 
@@ -355,7 +389,7 @@ RoutingDecision_e routePacket(MacInfo_t *info)
             if (!IS_LOCAL(info)) {
 #if PRECONFIGURED_NH_TO_ROOT
                 if (info->immedDst.shortAddr != localAddress) {
-                    PRINTF("Dropping, I'm not a nexthop for sender %#04x\n",
+                    TPRINTF("Dropping, I'm not a nexthop for sender %#04x\n",
                             info->originalSrc.shortAddr);
                     INC_NETSTAT(NETSTAT_PACKETS_DROPPED_RX, EMPTY_ADDR);
                     return RD_DROP;
@@ -365,10 +399,10 @@ RoutingDecision_e routePacket(MacInfo_t *info)
                 //     PRINTF("Dropping, can't reach host with left hopCounts\n");
                 //     return RD_DROP;
                 // } 
-                PRINTF("****************** Forwarding a packet to root for %#04x!\n",
+                TPRINTF("****** Forwarding a packet to root for %#04x!\n",
                         info->originalSrc.shortAddr);
                 // delay a bit
-                info->timeWhenSend = getSyncTimeMs() + randomInRange(50, 150);
+                info->timeWhenSend = getSyncTimeMs() + randomNumberBounded(150);
                 INC_NETSTAT(NETSTAT_PACKETS_FWD, nexthopToRoot);
             } else{
                 //INC_NETSTAT(NETSTAT_PACKETS_SENT, nexthopToRoot);     // Done @ comm.c
@@ -377,7 +411,7 @@ RoutingDecision_e routePacket(MacInfo_t *info)
             return RD_UNICAST;
         } else {
             // PRINTF("root routing info not present or expired!\n");
-            PRINTF("DROP!\n");
+            TPRINTF("DROP!\n");
             return RD_DROP;
         }
     }

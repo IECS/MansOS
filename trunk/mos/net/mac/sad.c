@@ -88,7 +88,7 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
             return -1; // busy
         }
         uint32_t now = getSyncTimeMs();
-        if (now < mi->timeWhenSend) {
+        if (timeAfter32(mi->timeWhenSend, now)) {
             // PRINTF("delayed send after %ld\n", mi->timeWhenSend - now);
             delayedNexthop = getNexthop(mi) & 0xff;
             memcpy(delayedData, mi->macHeader, mi->macHeaderLen);
@@ -108,10 +108,6 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     }
     // PRINTF("%lu: mac tx %u bytes\n", getSyncTimeMs(), length);
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
-    // if (!amb8420SetDstAddress(getNexthop(mi) & 0xff)) {
-    //     bool b = amb8420SetDstAddress(getNexthop(mi) & 0xff);
-    //     PRINTF("MAC ADDR SET RETRY = %d\n", (int) b);
-    // }
     ret = radioSendHeader(mi->macHeader, mi->macHeaderLen, data, length);
     if (ret) return ret;
     return length;
@@ -139,12 +135,10 @@ static void delayTimerCb(void *unused)
 //
 // filter out unwanted communications
 //
-static bool filterPass(MacInfo_t *mi)
+static bool filterPass(MacInfo_t *mi, uint16_t len)
 {
-// #if USE_ROLE_BASE_STATION
-    TPRINTF("filter: from=%#04x, orig=%#04x\n",
-            mi->immedSrc.shortAddr, mi->originalSrc.shortAddr);
-// #endif
+    TPRINTF("rx %u bytes from %#04x (%#04x)\n",
+            len, mi->immedSrc.shortAddr, mi->originalSrc.shortAddr);
 
     if (!mi->immedSrc.shortAddr) return true; // XXX
 
@@ -153,12 +147,12 @@ static bool filterPass(MacInfo_t *mi)
 #endif
 
 #define BASE_STATION_ADDRESS 0x0001
-#define FORWARDER_ADDRESS    0x1696
-#define COLLECTOR_ADDRESS    0x0875
+#define FORWARDER_ADDRESS    0x15CE
+#define COLLECTOR_ADDRESS    0x0871
 #define COLLECTOR_ADDRESS1   0x0875
 #define COLLECTOR_ADDRESS2   0x2BD4
 
-#if 0
+#if 1
     // network with all four mote roles, two intermediate hops
     switch (localAddress) {
     case BASE_STATION_ADDRESS:
@@ -212,26 +206,23 @@ static bool filterPass(MacInfo_t *mi)
 
 #endif
 
-static void pollSadMac(void) {
+static void pollSadMac(void)
+{
     // XXX: stack overflow possible if stack size is too small!
     MacInfo_t mi;
         
     INC_NETSTAT(NETSTAT_RADIO_RX, EMPTY_ADDR);
     if (isRadioPacketReceived()) {
-// #if USE_ROLE_COLLECTOR
-//         greenLedToggle();
-// #endif
         if (macProtocol.recvCb) {
             uint8_t *data = defaultParseHeader(radioPacketBuffer->buffer,
                     radioPacketBuffer->receivedLength, &mi);
 
-            // PRINTF("%lu: mac rx %u bytes from %#04x\n",
-            //         getSyncTimeMs(),
+            // TPRINTF("mac rx %u bytes from %#04x\n",
             //         radioPacketBuffer->receivedLength,
             //         mi.immedSrc.shortAddr);
 
 #if TEST_FILTERS
-            if (!filterPass(&mi)) {
+            if (!filterPass(&mi, radioPacketBuffer->receivedLength)) {
                 // PRINTF("  filtered out\n");
                 data = NULL;
             }

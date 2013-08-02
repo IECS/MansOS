@@ -104,16 +104,15 @@ typedef struct RoutingRequestPacket_s {
 #define ROUTING_PROTOCOL_PORT  112
 
 #if 1
-# define ROUTING_ORIGINATE_TIMEOUT    (60 * 1000ul)
 # define SAD_SUPERFRAME_LENGTH        524288ul // (10 * 60 * 1000ul)
 # define ROUTING_INFO_VALID_TIME      (1600 * 1000ul)
 // during this time, radio is never turned off on forwarders and collectors
-# define NETWORK_STARTUP_TIME_SEC     (60 * 60) // 1h in seconds
+# define NETWORK_STARTUP_TIME_SEC     (10 * 60) // 10 min in seconds
 #else // for testing
-# define ROUTING_ORIGINATE_TIMEOUT    (15 * 1000ul)
 # define SAD_SUPERFRAME_LENGTH        32768ul // (30 * 1000ul)
 # define ROUTING_INFO_VALID_TIME      (70 * 1000ul)
 # define NETWORK_STARTUP_TIME_SEC     0
+# define MAX_MOTES 4
 #endif
 
 // the real timeout is in range between these numbers (exponential backoff)
@@ -122,18 +121,15 @@ typedef struct RoutingRequestPacket_s {
 
 #define MOTE_INFO_VALID_TIME          (5 * SAD_SUPERFRAME_LENGTH)
 
-#define TIMESLOT_LENGTH               1000
-// timeslot is adjusted (to both ends) by this number
-#define TIMESLOT_IMPRECISION          1000 // because time sync protocol has second graduality
-#define TOTAL_LISTENING_TIME          (TIMESLOT_LENGTH + 2 * TIMESLOT_IMPRECISION)
+// timeslots one mote are adjusted (to both ends) by this number
+#define TIMESLOT_IMPRECISION          1000
 
 #define ROUTING_REPLY_WAIT_TIMEOUT    2000
 
-// XXX: this must be chip-specific. For AMB8420 its quite large (all the serial comm)
-#define RADIO_TX_TIME 0
+#define MOTE_TIME      512ul  // milliseconds
+#define MOTE_TIME_FULL (MOTE_TIME * 3)
 
-
-//! The maximal number of nodes with the "mote" role serverd by a single collector
+//! The maximal number of nodes with the "mote" role served by a single collector
 #ifndef MAX_MOTES
 #define MAX_MOTES 22
 #endif
@@ -149,6 +145,23 @@ typedef struct RoutingRequestPacket_s {
 #define RADIO_OFF_ENERGSAVE() \
     radioOff()
 #endif
+
+static inline uint32_t timeToNextFrame(void)
+{
+    uint32_t t = getSyncTimeMs() % SAD_SUPERFRAME_LENGTH;
+    if (t + 50 > SAD_SUPERFRAME_LENGTH) {
+        // at start of frame beyond the next one
+        return 2 * SAD_SUPERFRAME_LENGTH - t;
+    }
+    // at start of the next frame
+    return SAD_SUPERFRAME_LENGTH - t;
+}
+
+static inline uint32_t timeSinceFrameStart(void)
+{
+    return getSyncTimeMs() % SAD_SUPERFRAME_LENGTH;
+}
+
 
 //! The address of the root node
 extern MosShortAddr rootAddress;
