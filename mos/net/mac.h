@@ -93,7 +93,7 @@ typedef struct MacInfo_s {
     uint8_t flags;
     //! Pointer to the buffer where this structure is stored in a size-optimized way
     uint8_t *macHeader;
-    //! Length of the packed buxffer
+    //! Length of the packet buffer
     uint16_t macHeaderLen;
     //! Time in miliseconds (absolute value) when this packet should be sent out
     uint32_t timeWhenSend;
