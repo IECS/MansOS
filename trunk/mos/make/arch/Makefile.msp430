@@ -81,24 +81,30 @@ $(OUTDIR)/$(EXECUTABLE): $(OUTDIR)/$(APPMOD).elf
 
 platform-upload: build $(UPLOAD_TARGET)
 
+ifneq ($(PROG_BAUDRATE),)
+BAUDRATE_OPT = --speed=$(PROG_BAUDRATE)
+else
+BAUDRATE_OPT =
+endif
+
 upload-tmote:
 	$(Print) ""
-	-$(MOTELIST)
+	$(_QUIET) -$(MOTELIST)
 
 	$(Print) ""
-	$(BSL) --telosb -c $(BSLPORT) -r -e -I $(SLOW) -p $(OUTDIR)/$(EXECUTABLE)
+	$(BSL) --telosb -c $(BSLPORT) $(BAUDRATE_OPT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-msp430: 
-	$(BSL) --invert-reset --invert-test -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+	$(BSL) --invert-reset --invert-test -c $(BSLPORT) $(BAUDRATE_OPT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-msp430-sm3: 
-	$(BSL) --invert-reset --invert-test -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+	$(BSL) --invert-reset --invert-test -c $(BSLPORT) $(BAUDRATE_OPT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-z1:
-	$(BSL) --z1 -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+	$(BSL) --z1 -c $(BSLPORT) $(BAUDRATE_OPT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-xm1000:
-	$(BSL) --tmote2618 -c $(BSLPORT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+	$(BSL) --tmote2618 -c $(BSLPORT) $(BAUDRATE_OPT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
 upload-launchpad:
 	$(MSPDEBUG) rf2500 "prog $(OUTDIR)/$(EXECUTABLE)"
