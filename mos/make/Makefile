@@ -174,36 +174,32 @@ PLATFORM_ACTION ?= $(BUILDDIR)/config.saved platform_build
 
 SEAL = $(MOSROOT)/tools/parser/main.py --path $(MOSROOT)
 
-MEMDUMP = $(MOS)/make/scripts/memdump.py
-STACKDUMP = $(MOS)/make/scripts/stackdump.py
+MEMDUMP = python $(MOS)/make/scripts/memdump.py
+STACKDUMP = python $(MOS)/make/scripts/stackdump.py
 
-# change this to your MSPsim installation location
-MSPSIM = $(MOSROOT)/../contiki/tools/mspsim/mspsim.jar
-JAVA = java
-
+MOTELIST ?= python $(MOSROOT)/tools/lib/motelist.py
+SENSORLIST ?= python $(MOS)/make/scripts/sensorlist.py
 
 ifeq ($(UNAME),Darwin)
   # apple wants special handling...
-  MOTELIST = $(MOS)/make/scripts/motelist.apple
+#  MOTELIST = $(MOS)/make/scripts/motelist.apple
 else
 ifeq ($(SHORT_UNAME),CYGWIN)
   # cygwin too
-  MOTELIST = $(MOS)/make/scripts/motelist.exe
+#  MOTELIST = $(MOS)/make/scripts/motelist.exe
   CFLAGS + =-DCYGWIN=1
 else
 ifeq ($(SHORT_UNAME),MINGW3)
   # mingw
-  MOTELIST=$(MOS)/make/scripts/motelist.exe
+#  MOTELIST=$(MOS)/make/scripts/motelist.exe
   CFLAGS += -DCYGWIN=1
   BSLPORT ?= "$(shell $(MOTELIST) -c | cut -f2 -d, )"
 else
   # the normal case 
-  MOTELIST ?= $(MOS)/make/scripts/motelist
+#  MOTELIST ?= $(MOS)/make/scripts/motelist
 endif
 endif
 endif
-
-SENSORLIST ?= python $(MOS)/make/scripts/sensorlist.py
 
 # Set up the correct programmer port
 BSLPORT ?= "$(shell $(MOTELIST) -c | xargs -0 echo | xargs echo | cut -f2 -d, )"
@@ -214,6 +210,10 @@ SERIAL ?= $(MOSROOT)/tools/serial/ser.py
 # this is for listening (use PROG_BAUDRATE for programming!)
 BAUDRATE ?= 38400
 
+# change this to your MSPsim installation location
+MSPSIM = $(MOSROOT)/../contiki/tools/mspsim/mspsim.jar
+JAVA = java
+
 #===== Source files =====
 
 ifeq ($(USE_REPROGRAMMING),y)
@@ -222,7 +222,7 @@ ifeq ($(USE_REPROGRAMMING),y)
 LDFLAGS += "-Wl,--section-start=.text=0x5000,--section-start=.usertext=0xf000,--section-start=.start=0x4000,--defsym=_reset_vector__=0x4000"
 endif
 
-LINKER_SCRIPT = $(MOS)/make/scripts/link.py
+LINKER_SCRIPT = python $(MOS)/make/scripts/link.py
 
 # include the file where platform independent sources are defined
 include $(MAKEFILE_HIL)
@@ -257,7 +257,7 @@ OBJDIRS = $(dir $(OBJS))
 
 # ===== Targets =====
 .PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs motelist serial sensorlist \
-	stackdump stackdump-build clean cleanall
+	stackdump stackdump-build clean cleanall help
 
 all: build
 
@@ -417,3 +417,24 @@ listen:
 
 sensorlist:
 	$(_QUIET) $(SENSORLIST) $(PLATFORM) "$(CFLAGS) $(LDFLAGS)"
+
+help:
+	@echo "    --- MansOS make system ---"
+	@echo Please run 'make' with one of these hardware platforms as target:
+	@echo "    $(PLATFORMS)"
+	@echo The following targets are also available:
+	@echo "    upload - put the program on a mote"
+	@echo "    serial - connect to serial port for read & write access"
+	@echo "    listen - synonym for 'serial'"
+	@echo "    motelist - list all connected motes"
+	@echo "    size - show code memory and RAM usage"
+	@echo "    memdump - analyze and show memory usage"
+	@echo "    stackdump - analyze and show stack usage"
+	@echo "    help - show this help"
+	@echo The make system uses al least these environmental variables:
+	@echo "    BSLPORT - select serial port to program"
+	@echo "    BSLPROXY - select hostname and IP port to program a remotely connected mote"
+	@echo "       for example: BSLPROXY=10.0.0.1:30001"
+	@echo "    PROG_BAUDRATE - select programming baudrate"
+	@echo "    V - verbose compilation, for example: V=1"
+	@echo

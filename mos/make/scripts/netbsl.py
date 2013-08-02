@@ -8,6 +8,8 @@ import os, sys, time
 import urllib2
 import ubsl
 
+DEFAULT_PORT = 30001
+
 def main():
     proxy = os.environ.get('BSLPROXY')
     if proxy is None:
@@ -20,7 +22,7 @@ def main():
         portSet = int(host.split(":")[-1])
     except:
         # port not set, add default port to the URL
-        host += ":30001"
+        host += ":" + str(DEFAULT_PORT)
     if host[:7] != "http://":
         host = "http://" + host
 
@@ -29,7 +31,9 @@ def main():
     url = host + "/program?"
 
     # use UBSL to extract the name of the file
-    filename = ubsl.parseCommandLine()[0]
+    cmdLine = ubsl.parseCommandLine()
+    filename = cmdLine[0]
+    port = cmdLine[2]
 
     argv = sys.argv
     if "python" in argv[0]: argv = argv[1:]
@@ -38,7 +42,8 @@ def main():
     joinedCommandLine = urllib2.quote(joinedCommandLine)
 
     url += "args=" + joinedCommandLine + "&"
-    url += "filename=" + urllib2.quote(filename)
+    url += "filename=" + urllib2.quote(filename) + "&"
+    url += "port=" + urllib2.quote(port)
 
     contents = None
     with open(filename, "rb") as infile:
