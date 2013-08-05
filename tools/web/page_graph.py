@@ -156,7 +156,7 @@ class PageGraph():
         self.serveBody("editgraph", qs, changes)
         self.serveFooter()
 
-    def serveGraphsData(self, qs):
+    def serveGraphData(self, qs):
         global lastData
 
         self.send_response(200)
@@ -185,35 +185,27 @@ class PageGraph():
         self.writeChunk(allData)
         self.writeFinalChunk()
         
-    def serveGraphsForm(self, qs):
+    def serveGraphForm(self, qs):
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
         tgraphForm = []
-        settings = self.settings.getCfgValue("graphTitle")
-        if isinstance(settings, str):
-            settings = [settings]
+        settings = self.settings.getCfgValueAsList("graphTitle")
         graphlen = len(settings)
         for setting in settings:
             tgraphForm.append(setting + ":")
         i = 0
-        settings = self.settings.getCfgValue("graphYAxis")
-        if isinstance(settings, str):
-            settings = [settings]
+        settings = self.settings.getCfgValueAsList("graphYAxis")
         while i < graphlen:
             tgraphForm[i] += settings[i] + ";"
             i += 1
         i = 0
-        settings = self.settings.getCfgValue("graphInterval")
-        if isinstance(settings, str):
-            settings = [settings]
+        settings = self.settings.getCfgValueAsList("graphInterval")
         while i < graphlen:
             tgraphForm[i] += settings[i] + ";"
             i += 1
         i = 0
-        settings = self.settings.getCfgValue("graphData")
-        if isinstance(settings, str):
-            settings = [settings]
+        settings = self.settings.getCfgValueAsList("graphData")
         while i < graphlen:
             tdata = ""
             for data in settings[i]:

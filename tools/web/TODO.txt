@@ -20,7 +20,7 @@ Listening lapa:
 [*] opcionāli: ļaut integrēt ar open.sen.se
 
 Grafiki:
-[*] vajadzētu uzlabot grafiku atablstu, pievienot edit funkcionalitāti, testēt stabilitāti
+[*] vajadzētu uzlabot grafiku atbalstu, pievienot edit funkcionalitāti, testēt stabilitāti
 
 Citi:
 * thread-safety

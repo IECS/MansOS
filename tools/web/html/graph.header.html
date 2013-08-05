@@ -7,16 +7,15 @@
 	var nd = new Date();
 	var TimezoneOffset = nd.getTimezoneOffset() * 60000;
 	var interval = new Array();
-	var dataSourse = "graph-data";
+	var dataSource = "graph-data";
 	var allGraph = new Array();
 	var allData;
 	var dataReadInterval = 1000;
-	//dataSourse = "data.js"; // for testing
-	
 
 	function getData(type) {
-	if (type == 1) source = dataSourse;
+	if (type == 1) source = dataSource;
 	else source = "graph-form"
+
 	var newData = $.ajax({
 			url: source, 
 			async: false
@@ -25,7 +24,7 @@
 			if(type == 1) allData = "";
 			return "";
 		}
-		newData = newData.split("|"); //diffrent measurements/graph
+		newData = newData.split("|"); //different measurements/graph
 		for(var i = 0; i < newData.length; i++){
 			if(newData[i].length > 0){
 				newData[i] = newData[i].split(":"); //title from data
