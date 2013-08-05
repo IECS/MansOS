@@ -55,7 +55,7 @@ def runSubprocess2(args):
     retcode = 0
     output = ""
     try:
-        #print("runSubprocess2, args=" + args)
+#        print("runSubprocess2, args=" + args)
         proc = subprocess.Popen(args.split(), stderr = subprocess.STDOUT,
                                 stdout = subprocess.PIPE, shell = False)
         (stdout, stderr) = proc.communicate()
@@ -94,7 +94,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(content)))
 
     def serveError(self, message):
-#        print("serveError")
+        print("serveError: " + message)
         content = "Error: " + message
         self.send_response(500)
         self.sendDefaultHeaders(content)
@@ -121,7 +121,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         content = ""
         all = motes.getMotes()
         for mote in all:
-            content += mote.getPortName() + "\n"
+            content += mote.moteDescription.getCSVData() + "\n"
         self.send_response(200)
         self.sendDefaultHeaders(content)
         self.end_headers()
@@ -227,7 +227,7 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         else:
             return self.serveError("content-length parameter expected!")
         arguments = urllib2.unquote(qs.get("args")[0])
-        port = qs.get("port")[0]
+        port = urllib2.unquote(qs.get("port")[0])
 
         mote = motes.getMote(port)
         if mote is None:
@@ -246,11 +246,10 @@ class HttpServerHandler(BaseHTTPRequestHandler):
             arguments += " --slow"
         arguments = "python " + bslDir + os.path.sep + arguments
 
-        bslLock.acquire()
-        os.chdir("tmpdir")
-        (retcode, content) = runSubprocess2(arguments)
-        os.chdir("..")
-        bslLock.release()
+        with bslLock:
+            os.chdir("tmpdir")
+            (retcode, content) = runSubprocess2(arguments)
+            os.chdir("..")
 
         self.send_response(200)
         self.sendDefaultHeaders(content)
@@ -326,8 +325,6 @@ def main():
         # start listening thread
         listenThread = threading.Thread(target = listenSerial)
         listenThread.start()
-        # allow initialization to complete
-        time.sleep(1)
         # report ok and enter the main loop
         print("<remoteaccess>: started, listening to TCP port {}, serial baudrate {}".format(
                 port, configuration.c.getCfgValueAsInt("baudrate")))
