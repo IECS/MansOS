@@ -19,12 +19,9 @@ class ConfigFile(object):
         self.cfg.read(self.filename)
 
     def save(self):
-        self.lock.acquire()
-        try:
+        with self.lock:
             with open(self.filename, 'wb') as configfile:
                 self.cfg.write(configfile)
-        finally:
-            self.lock.release()
 
     def selectSection(self, sectionName):
         self.currentSection = sectionName
@@ -38,44 +35,36 @@ class ConfigFile(object):
                     break
 
     def getCfgValue(self, name):
-        self.lock.acquire()
-        try:
+        result = ""
+        with self.lock:
             self.ensureCorrectSection(name)
             result = self.cfg.get(self.currentSection, name)
-        finally:
-            self.lock.release()
         return result
 
     def getCfgValueAsInt(self, name):
-        self.lock.acquire()
-        try:
+        result = 0
+        with self.lock:
             self.ensureCorrectSection(name)
             result = self.cfg.getint(self.currentSection, name)
-        finally:
-            self.lock.release()
         return result
 
     def getCfgValueAsFloat(self, name):
-        self.lock.acquire()
-        try:
+        result = 0.0
+        with self.lock:
             self.ensureCorrectSection(name)
             result = self.cfg.getfloat(self.currentSection, name)
-        finally:
-            self.lock.release()
         return result
 
     def getCfgValueAsBool(self, name):
-        self.lock.acquire()
-        try:
+        result = False
+        with self.lock:
             self.ensureCorrectSection(name)
             result = self.cfg.getboolean(self.currentSection, name)
-        finally:
-            self.lock.release()
         return result
 
     def getCfgValueAsList(self, name):
-        self.lock.acquire()
-        try:
+        result = []
+        with self.lock:
             self.ensureCorrectSection(name)
             value = self.cfg.get(self.currentSection, name)
             # convert to list
@@ -90,8 +79,6 @@ class ConfigFile(object):
             else:
                 # XXX: this means that comma cannot be part of well-formed config values!
                 result = value.split(",")
-        finally:
-            self.lock.release()
         return result
 
     def setCfgValue(self, name, value):
@@ -101,8 +88,7 @@ class ConfigFile(object):
         elif not isinstance(value, str):
             value = str(value)
 
-        self.lock.acquire()
-        try:
+        with self.lock:
             if self.cfg.has_section(self.currentSection):
                 # make sure the write is in correct section
                 self.ensureCorrectSection(name)
@@ -111,5 +97,3 @@ class ConfigFile(object):
                 self.cfg.add_section(self.currentSection)
             # write the value
             self.cfg.set(self.currentSection, name, value)
-        finally:
-            self.lock.release()

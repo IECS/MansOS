@@ -72,9 +72,9 @@ def usb_string(sysfs_path):
         result = "{} by {}".format(read_line("product"), read_line("manufacturer"))
     except:
         result = "Unknown device"
-
-    # Restore working directory
-    os.chdir(curPath)
+    finally:
+        # Restore working directory
+        os.chdir(curPath)
 
     return result
 
