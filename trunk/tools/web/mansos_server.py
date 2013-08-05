@@ -888,9 +888,9 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         elif o.path == "/graph":
             self.serveGraphs(qs)
         elif o.path == "/graph-data":
-            self.serveGraphsData(qs)
+            self.serveGraphData(qs)
         elif o.path == "/graph-form":
-            self.serveGraphsForm(qs)
+            self.serveGraphForm(qs)
         elif o.path == "/upload":
             self.serveUploadGet(qs)
         elif o.path == "/login":

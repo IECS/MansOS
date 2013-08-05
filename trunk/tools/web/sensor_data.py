@@ -48,7 +48,7 @@ class SensorData(object):
         if eqSignPos == -1: return
 
         if eqSignPos == 0:
-            self.finishPacket()
+            # TODO: self.finishPacket()
             return
 
         dataName = string[:eqSignPos].strip().lower()

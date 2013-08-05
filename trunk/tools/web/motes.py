@@ -222,7 +222,7 @@ class MoteCollection(object):
         for p in platforms:
             try:
                 (portName, platform) = p.split(':')
-                self.motes[m.getPortName()].platform = platform
+                self.motes[portName].platform = platform
             except:
                 pass
 
