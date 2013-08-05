@@ -6,13 +6,10 @@ printVID = False
 
 def read_line(filename):
     """help function to read a single line from a file. returns none"""
-    try:
-        f = open(filename)
+    line = "Unknown"
+    with open(filename) as f:
         line = f.readline().strip()
-        f.close()
-        return line
-    except IOError:
-        return "Unknown"
+    return line
 
 def re_group(regexp, text):
     """search for regexp in text, return 1st group on match"""
@@ -61,20 +58,15 @@ def usb_sysfs_hw_string(sysfs_path):
 def usb_string(sysfs_path):
     # Get dir name in /sys/bus/usb/drivers/usb for current usb dev
     dev = os.path.basename(os.path.realpath(sysfs_path))
-
-    # Save current working directory
-    curPath = os.getcwd()
+    devDir = os.path.join("/sys/bus/usb/drivers/usb", dev)
 
     try:
         # Go to usb dev directory
-        os.chdir(os.path.join("/sys/bus/usb/drivers/usb", dev))
-
-        result = "{} by {}".format(read_line("product"), read_line("manufacturer"))
+        product = read_line(os.path.join(devDir, "product"))
+        manufacturer = read_line(os.path.join(devDir, "manufacturer"))
+        result = product + " by " + manufacturer
     except:
         result = "Unknown device"
-    finally:
-        # Restore working directory
-        os.chdir(curPath)
 
     return result
 
