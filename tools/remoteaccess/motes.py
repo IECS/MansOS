@@ -74,10 +74,9 @@ class Mote(object):
         return numRead
 
     def getData(self):
-        self.bufferLock.acquire()
-        data = self.buffer
-        self.buffer = ""
-        self.bufferLock.release()
+        with self.bufferLock:
+            data = self.buffer
+            self.buffer = ""
         return data
 
     def writeData(self, data):
@@ -94,11 +93,10 @@ class Mote(object):
         return result
 
     def ensureSerialIsOpen(self):
-        self.portLock.acquire()
-        if self.port is None:
-            self.openSerial()
-        result = self.port is not None
-        self.portLock.release()
+        with self.portLock:
+            if self.port is None:
+                self.openSerial()
+            result = self.port is not None
         return result
 
     def ensureSerialIsClosed(self):
