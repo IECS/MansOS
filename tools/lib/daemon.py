@@ -22,7 +22,6 @@ def createDaemon():
        return
 
    UMASK = 0
-   WORKDIR = "/"
    MAXFD = 1024
    if (hasattr(os, "devnull")):
        REDIRECT_TO = os.devnull
@@ -88,10 +87,6 @@ def createDaemon():
          raise Exception, "%s [%d]" % (e.strerror, e.errno)
 
       if (pid == 0):	# The second child.
-         # Since the current working directory may be a mounted filesystem, we
-         # avoid the issue of not being able to unmount the filesystem at
-         # shutdown time by changing it to the root directory.
-         # -- os.chdir(WORKDIR)   # removed by Atis
          # We probably don't want the file mode creation mask inherited from
          # the parent, so we give the child complete control over permissions.
          os.umask(UMASK)
