@@ -112,4 +112,8 @@ static inline uint16_t sq100LightRead(void)
 
 #define ISL1219_I2C_ID I2C_BUS_SW    // use soft i2c as alternative
 
+
+#define SM3_SENSORS_ENABLE_PORT 2
+#define SM3_SENSORS_ENABLE_PIN  5
+
 #endif

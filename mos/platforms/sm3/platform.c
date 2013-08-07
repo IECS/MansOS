@@ -41,4 +41,8 @@ void initPlatform(void)
     if (amb8420Init == NULL) {
         amb8420EnsureOff();
     }
+
+    // XXX: always enable humidity and light sensors
+    pinAsOutput(SM3_SENSORS_ENABLE_PORT, SM3_SENSORS_ENABLE_PIN);
+    pinSet(SM3_SENSORS_ENABLE_PORT, SM3_SENSORS_ENABLE_PIN);
 }

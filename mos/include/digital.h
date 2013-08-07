@@ -79,7 +79,7 @@
 #define pinToggleMask( po, mask ) PIN_TOGGLE_MASK( po, mask )
 //! Read the value of a digital input pin. Returns either 1 or 0
 #define pinRead( po, pi ) PIN_READ( po, pi )
-//! Set a digital pin output to a specific value (0 or 1). Interprets 'val' as a boolean
+//! Set a digital pin output to a specific value (logical 0 or 1). Interprets 'val' as a boolean
 #define pinWrite( po, pi, val ) PIN_WRITE( po, pi, val )
 
 //! Configure the pin in data output mode (writing possible)
