@@ -90,7 +90,7 @@ class Motelist(object):
 
     @staticmethod
     def addMote(port, name, reference):
-        Motelist.lock.acquire();
+        Motelist.lock.acquire()
 
         portFound = not Motelist.portExists(port)
 
@@ -102,7 +102,7 @@ class Motelist(object):
         if not portFound:
             Motelist.motes.append(Mote([port, name, reference], True))
 
-        Motelist.lock.release();
+        Motelist.lock.release()
         if not portFound:
             Motelist.__activateCallbacks(True)
 
@@ -110,7 +110,7 @@ class Motelist(object):
 
     @staticmethod
     def recreateMoteList(iterator):
-        Motelist.lock.acquire();
+        Motelist.lock.acquire()
 
         newMotes = list()
         haveNewMote = False
@@ -124,10 +124,10 @@ class Motelist(object):
 
             # Add if no such mote exists, point to it otherwise
             if newMote not in Motelist.motes:
-                newMotes.append(newMote)
+                newMotes.insert(0, newMote)
                 haveNewMote = True
             else:
-                newMotes.append(Motelist.motes[Motelist.motes.index(newMote)])
+                newMotes.insert(0, Motelist.motes[Motelist.motes.index(newMote)])
 
         for mote in Motelist.motes:
             if mote.isUserMote() and mote not in newMotes:
@@ -137,7 +137,7 @@ class Motelist(object):
 
         Motelist.motes = newMotes
 
-        Motelist.lock.release();
+        Motelist.lock.release()
 
         return haveNewMote
 
@@ -146,18 +146,18 @@ class Motelist(object):
         if update:
             Motelist.updateMotelist(False)
 
-        Motelist.lock.acquire();
+        Motelist.lock.acquire()
 
         # return a copy of connected list
         retVal = list(Motelist.motes)
 
-        Motelist.lock.release();
+        Motelist.lock.release()
 
         return retVal
 
     @staticmethod
     def getMoteByUserData(userData):
-        Motelist.lock.acquire();
+        Motelist.lock.acquire()
 
         result = list()
 
@@ -165,7 +165,7 @@ class Motelist(object):
             if mote.getUserData() == userData:
                 result.append(mote)
 
-        Motelist.lock.release();
+        Motelist.lock.release()
 
         return result
 
@@ -210,11 +210,11 @@ class Motelist(object):
         if not Motelist.recreateMoteList(comports()) and not force:
             return
 
-        Motelist.lock.acquire();
+        Motelist.lock.acquire()
 
         updateCallbackTempList = list(Motelist.updateCallbacks)
 
-        Motelist.lock.release();
+        Motelist.lock.release()
 
         for x in updateCallbackTempList:
             try:
