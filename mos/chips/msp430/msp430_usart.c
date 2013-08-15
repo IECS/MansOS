@@ -48,8 +48,6 @@
 
 SerialCallback_t serialRecvCb[SERIAL_COUNT];
 
-volatile Serial_t serial[SERIAL_COUNT];
-
 //===========================================================
 // Procedures
 //===========================================================
