@@ -76,6 +76,11 @@
 // global time counter
 volatile ticks_t jiffies;
 
+#ifdef USE_SERIAL
+// serial interface state
+volatile Serial_t serial[SERIAL_COUNT];
+#endif
+
 //----------------------------------------------------------
 //      System initialization
 //----------------------------------------------------------
