@@ -1,0 +1,28 @@
+<form action="upload" method="post" enctype="multipart/form-data">
+	%MOTES_TXT%
+
+	<div class="form">
+	  <p><input type="radio" name="language" value="C" title="Compile as C" %CCODE_CHECKED% %DISABLED% />C code
+	  <input type="radio" name="language" value="SEAL" title="Compile as SEAL" %SEALCODE_CHECKED% %DISABLED% />SEAL code</p>
+	
+	  <label for="code">Enter code:</label><br/>
+	  <textarea id="code" name="code" cols="80" rows="20" title="Enter the C/SEAL code your would normally put in application's main file" %DISABLED%>%UPLOAD_CODE%</textarea><br/>
+	
+	  <label for="config">Enter configuration options (one per line):</label><br/>
+	  <textarea id="config" name="config" cols="80" rows="4"  title="Enter the configuration options your would normally put in application's config file" %DISABLED%>%UPLOAD_CONFIG%</textarea><br/>
+	
+	  <input type="hidden" name="sma" class="Msma37" value="0">
+	  <input type="submit" name="compile" value="Compile and upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/>
+	
+<!--	  <input type="checkbox" name="slow" title="Add delays to the upload script. Useful if serial protocol is tunneled over IP" %SLOW_CHECKED% %DISABLED%>Use SLOW switch when uploading<br/><br/> -->
+	</div>
+</form>
+
+<form method="post" enctype="multipart/form-data" action="upload"><div class="form">
+
+  <label for="file">Alternatively, specify IHex filename: </label><br/>
+  <input type="file" name="file" id="file" value="%UPLOAD_FILENAME%" title="Input a pre-compiled Intel HEX file" %DISABLED%/><br/><br/>
+
+  <input type="submit" name="upload" value="Upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/>
+<!--  <input type="checkbox" name="slow" title="Add delays to the upload script. Useful if serial protocol is tunneled over IP" %SLOW_CHECKED% %DISABLED%>Use SLOW switch when uploading<br/><br/> -->
+</div></form>

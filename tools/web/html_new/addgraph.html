@@ -1,0 +1,52 @@
+<script>
+function addGraph(){
+	var err=""
+	var elems = document.getElementsByTagName('input'), i;
+	for (i = 0; i < elems.length; i++) {
+		if((' ' + elems[i].className + ' ').indexOf(' must ') > -1)
+		{
+			if(elems[i].value == "") err=err+"Enter "+ elems[i].name+ "!\n";
+		}
+	}
+	if(err != "")
+	{
+		alert(err);
+		return false;
+	}
+	var sma = getCookie("Msma37");
+	if (sma == undefined){
+		alert("Could not finde cookie! Try to go to other page and back or try after 5 seconds!")
+		return false;
+	}
+	var sid = localStorage.getItem("Msid37");
+	if (sid == null){
+		alert("Could not finde cookie! Try to logout and in or try after 5 seconds!")
+		return false;
+	}
+	var poga = document.getElementById("addnewgraph");
+	poga.value = hex_md5(sid + sma + poga.id);
+	codeInfo();
+	return true;
+}
+function codeInfo(){
+    var elems = document.getElementsByTagName('input'), i;
+	for (i = 0; i < elems.length; i++) {
+		if((' ' + elems[i].className + ' ').indexOf(' tocode ') > -1) {
+			elems[i].style.color = "white";
+			elems[i].value = toCode(elems[i].value);
+		}
+	}
+}
+</script>
+%FORM%
+<a href="/graph"><button>Back</button></a>
+<!--
+<form>
+	<p>
+	New user name:
+	<input autocomplete='off' type="text" class="tocode must" name="username">
+	</p>
+	<input type="hidden" id="addnewuser" name="useradd">
+	<input type="submit" onclick="return userAdd()" value= "Add user">
+</form>
+-->

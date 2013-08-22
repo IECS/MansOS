@@ -1,0 +1,21 @@
+%INFO%
+%PSW%
+%ADD%
+%TAB%
+%ADD%
+
+<script>
+var rows = document.getElementById('usertable').getElementsByTagName('tr');
+var rowscount = rows.length;
+for(var i = 1; i < rowscount; i++){
+	rows[i].ondblclick = openPage;
+}
+function openPage(e){
+	var name = e.target;
+	while (name.nodeName != "TR")
+	{
+		name = name.parentNode;
+	}
+	window.location = window.location + "?edituser=" + toCode(name.firstChild.firstChild.innerHTML);
+}
+</script>
