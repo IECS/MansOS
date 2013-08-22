@@ -351,6 +351,7 @@ class SetAndServeSessionAndHeader():
         #print(self.sessions.get_sessions()
 
     def serveSession(self, qs, urlTo):
+        contents = ""
         with open(self.htmlDirectory + "/session.html", "r") as f:
             contents = f.read()
             if "sma" in qs:
@@ -367,7 +368,7 @@ class SetAndServeSessionAndHeader():
                 contents = contents.replace("%TO%", urlTo)
                 contents = contents.replace("/*?REDIR", "")
                 
-            self.writeChunk(contents)
+        return contents
             
     def getLevel(self, qs = {}):
         if "sma" in qs:
