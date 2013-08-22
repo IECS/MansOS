@@ -38,7 +38,9 @@
 //#define SDCARD_SPI_ID   SPI_BUS_SW
 
 // Flash pins
+#ifndef SDCARD_CS_PORT
 #define SDCARD_CS_PORT  3
 #define SDCARD_CS_PIN   0
+#endif
 
 #endif
