@@ -6,10 +6,16 @@
 
 from __future__ import print_function
 import os, sys, platform, select, signal, traceback
-import threading, time, cgi
+from string import Template
 # add library directory to the path
 sys.path.append(os.path.join(os.getcwd(), '..', "lib"))
-import page_login, page_server, page_account, page_user, page_graph
+import pages.page_login as page_login
+import pages.page_server as page_server
+import pages.page_account as page_account
+import pages.page_user as page_user
+import pages.page_graph as page_graph
+import pages.page_config as page_config
+import pages.page_upload as page_upload
 import data_utils
 import utils
 import user
@@ -20,6 +26,7 @@ import sensor_data
 import daemon
 import configuration
 import mansos_version
+import helper_tools as ht
 
 DEBUG = 1
 
@@ -36,79 +43,14 @@ else:
     from urlparse import *
 
 isListening = False
-listenThread = None
-
-#isInChildProcess = False
 
 lastUploadCode = ""
 lastUploadConfig = ""
 lastUploadFile = ""
 lastData = ""
 
-maybeIsInSubprocess = False
-isPostEntered = False
-subprocessLock = threading.Lock()
-
 allSessions = None
 allUsers = None
-
-
-def listenSerial():
-    while isListening:
-        for m in motes.getMotes():
-
-            length = m.tryRead(binaryToo = moteconfig.instance.configMode)
-            if length == 0:
-                continue
-
-            if moteconfig.instance.configMode:
-                for c in m.buffer:
-                    moteconfig.instance.byteRead(c)
-                m.buffer = ""
-                continue
-
-            while '\n' in m.buffer:
-                pos = m.buffer.find('\n')
-                if pos != 0:
-                    newString = m.buffer[:pos].strip()
-                    saveToDB = configuration.c.getCfgValue("saveToDB")
-                    sendToOpenSense = configuration.c.getCfgValue("sendToOpenSense")
-                    if saveToDB or sendToOpenSense:
-                        data_utils.maybeAddDataToDatabase(m.port.port, newString)
-                    # print "got", newString
-                    sensor_data.moteData.addNewData(newString, m.port.portstr)
-                m.buffer = m.buffer[pos + 1:]
-
-        sensor_data.moteData.fixSizes()
-        # pause for a bit
-        time.sleep(0.01)
-
-def closeAllSerial():
-    global listenThread
-    global isListening
-    isListening = False
-    if listenThread:
-        listenThread.join()
-        listenThread = None
-    for m in motes.getMotes():
-        m.ensureSerialIsClosed()
-    # Close DB connection 
-    data_utils.closeDBConnection()
-
-def openAllSerial():
-    global listenThread
-    global isListening
-
-    sensor_data.moteData.reset()
-    if isListening: return
-    isListening = True
-    listenThread = threading.Thread(target = listenSerial)
-    listenThread.start()
-    for m in motes.getMotes():
-        m.tryToOpenSerial(False)
-    # Open DB connection
-    data_utils.openDBConnection()
-
 
 # --------------------------------------------
 class HttpServerHandler(BaseHTTPRequestHandler,
@@ -117,6 +59,8 @@ class HttpServerHandler(BaseHTTPRequestHandler,
                         page_login.PageLogin,
                         page_server.PageServer,
                         page_graph.PageGraph,
+                        page_config.PageConfig,
+                        page_upload.PageUpload,
                         session.SetAndServeSessionAndHeader):
     server_version = 'MansOS/' + mansos_version.getMansosVersion(
         configuration.c.getCfgValue("mansosDirectory")) + ' Web Server'
@@ -158,8 +102,18 @@ class HttpServerHandler(BaseHTTPRequestHandler,
                           self.log_date_time_string(),
                           format % args))
 
+    def sendDefaultHeaders(self):
+        self.send_header('Content-Type', 'text/html')
+        # use chunked transfer encoding (to be able to send additional chunks 'later')
+        self.send_header('Transfer-Encoding', 'chunked')
+        # disable caching
+        self.send_header('Cache-Control', 'no-store');
+        self.send_header('Connection', 'close');
+
+
+
 #    def serveHeader(self, name, qs = {"no" : "no"}, isGeneric = True, includeBodyStart = True, replaceValues = None, urlTo = ""):
-    def serveHeader(self, name, qs, isGeneric = True, replaceValues = None, urlTo = ""):
+    def serveHeaderOld(self, name, qs, isGeneric = True, replaceValues = None, urlTo = ""):
         self.headerIsServed = True
         if name == "default":
             pagetitle = ""
@@ -182,7 +136,8 @@ class HttpServerHandler(BaseHTTPRequestHandler,
 
         try:
             if not "no" in qs:
-                self.serveSession(qs, urlTo)
+                text = self.serveSession(qs, urlTo)
+                self.writeChunk(text)
         except Exception as e:
             print("Error: Session not served!")
             print(e)
@@ -245,17 +200,233 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             contents = contents.replace("%LOG%", log)
             self.writeChunk(contents)
 
-    def serveBody(self, name, qs = {'sma': ['0000000'],}, replaceValues = None):
-        disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
-        with open(self.htmlDirectory + "/" + name + ".html", "r") as f:
-            contents = f.read()
+    '''
+    #########################################################################################
+    '''
+    
+    def serveAnyPage(self, name, qs, isGeneric = True, replaceValues = None, urlTo = "", 
+            title = None, content = None, infoMsg = None, errorMsg = None):
+        f = open(self.htmlDirectory + "/layout.html", "r")
+        contents = f.read()
+        t = Template(contents)
+        
+        self.headerIsServed = True
+        if name == "default":
+            pageTitle = ""
+        elif title != None:
+            pageTitle = title
+        else:
+            pageTitle = " &#8211; " + utils.toTitleCase(name)
+           
+        if errorMsg != None:
+           qs["no"] = "no"   
+           
+        suffix = "generic" if isGeneric else "mote"
+        menuContent = ""
+        with open(self.htmlDirectory + "/menu-" + suffix + ".html", "r") as f:
+            localMenuContent = f.read()
             if replaceValues:
                 for v in replaceValues:
-                    contents = contents.replace("%" + v + "%", replaceValues[v])
-            contents = contents.replace("%DISABLED%", disabled)
-            if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
-            self.writeChunk(contents)
+                    localMenuContent = localMenuContent.replace("%" + v + "%", replaceValues[v])
+            if "sma" in qs: localMenuContent = localMenuContent.replace("%SMA%", qs["sma"][0])
+            menuContent += localMenuContent
+            
+        if isGeneric:
+            if self.getLevel() > 0:
+                with open(self.htmlDirectory + "/menu-1.html", "r") as f:
+                    localMenuContent = f.read()
+                    if replaceValues:
+                        for v in replaceValues:
+                            localMenuContent = localMenuContent.replace("%" + v + "%", replaceValues[v])
+                    if "sma" in qs: localMenuContent = localMenuContent.replace("%SMA%", qs["sma"][0])
+                    menuContent += localMenuContent
+            if self.getLevel() > 7:
+                with open(self.htmlDirectory + "/menu-8.html", "r") as f:
+                    localMenuContent = f.read()
+                    if replaceValues:
+                        for v in replaceValues:
+                            localMenuContent = localMenuContent.replace("%" + v + "%", replaceValues[v])
+                    if "sma" in qs: localMenuContent = localMenuContent.replace("%SMA%", qs["sma"][0])
+                    menuContent += localMenuContent
+            if self.getLevel() > 8:
+                with open(self.htmlDirectory + "/menu-9.html", "r") as f:
+                    localMenuContent = f.read()
+                    if replaceValues:
+                        for v in replaceValues:
+                            localMenuContent = localMenuContent.replace("%" + v + "%", replaceValues[v])
+                    if "sma" in qs: localMenuContent = localMenuContent.replace("%SMA%", qs["sma"][0])
+                    menuContent += localMenuContent            
 
+        sma = ""
+        if "sma" in qs: 
+            sma = qs["sma"][0]
+        log = "Logout" if self.getLevel() > 0 else "Login"
+           
+        if name == "error":
+            bodyContent = errorMsg
+            contents = t.substitute(
+                pageTitle = pageTitle, pageHead = "", sessionHead = "", 
+                sma = sma, menuContent = menuContent, bodyContent = bodyContent, log = log)
+            self.writeChunk(contents)
+        elif name == "error:critical":
+            bodyContent = "\n<h4 class='err'>Error: " + errorMsg + "</h4>\n"
+            contents = t.substitute(
+                pageTitle = pageTitle, pageHead = "", sessionHead = "", 
+                sma = sma, menuContent = menuContent, bodyContent = bodyContent, log = log)
+            self.writeChunk(contents)
+        else:   
+            pageHead = "" 
+            try:
+                with open(self.htmlDirectory + "/" + name + ".header.html", "r") as f:
+                    pageHead = f.read()
+                    if replaceValues:
+                        for v in replaceValues:
+                            pageHead = pageHead.replace("%" + v + "%", replaceValues[v])
+            except:
+                pass
+            
+            hasError = False        
+            try:
+                if not "no" in qs:
+                    sessionHead = self.serveSession(qs, urlTo)
+            except Exception as e:
+                bodyContent = "Error: Session not served - " + str(e)
+                hasError = True            
+                            
+            if not hasError:
+                if content != None:
+                    bodyContent = content
+                else:    
+                    bodyContent = self.serveBody(name, qs, replaceValues)     
+        
+            sma = ""
+            if "sma" in qs: 
+                sma = qs["sma"][0]
+            log = "Logout" if self.getLevel() > 0 else "Login"
+            
+            if infoMsg != None:
+                bodyContent = infoMsg + bodyContent
+            contents = t.substitute(
+                pageTitle = pageTitle, pageHead = pageHead, sessionHead = sessionHead, 
+                sma = sma, menuContent = menuContent, bodyContent = bodyContent, log = log)
+            contents = contents.replace("&#44;", ",")
+            self.writeChunk(contents)
+    
+    def serveDefault(self, qs, isSession = False):
+        if not isSession:
+            self.setSession(qs)
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+        if isSession:
+            self.serveAnyPage("default", qs, urlTo = "default")
+        else:
+            self.serveAnyPage("default", qs)
+        
+    def serveMoteSelect(self, qs):
+        self.setSession(qs)
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+
+        if motes.isEmpty():
+            text = "No motes connected!"
+            self.serveAnyPage("error:critical", qs, errorMsg = text)
+            return
+
+        disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
+        desc = '<div class="mote"><strong>Mote: </strong>${portName}' \
+             + '<input type="submit" name="${name}_cfg" ' \
+             + 'title="Get/set mote\'s configuration (e.g. sensor reading periods)" ' \
+             + 'value="Configuration..." ' + disabled + '/>\n' \
+             + '<input type="submit" name="${name}_files" ' \
+             + 'title="View files on mote\'s filesystem" value="Files..." ' + disabled + '/>\n' \
+             + ' Platform: <select name="sel_${name}"' + disabled + ' ' \
+             + 'title="Select the mote\'s platform: determines the list of sensors the mote has. ' \
+             + '"Also has effect on code compilation and uploading">\n' \
+             + '${details}</select>\n</div>\n'
+        detail = '<option value="${platform}" ${selected}>${platform}</option>\n'
+            
+        text = '<form action="config"><div class="motes2">\n'
+        text += 'Directly attached motes:<br/>\n'
+        t1 = Template(desc)
+        t2 = Template(detail)
+        for m in motes.getMotes():
+            name = "mote" + m.getPortBasename()
+            details = ""
+            for platform in moteconfig.supportedPlatforms:
+                selected = 'selected="selected"' if platform == m.platform else ''
+                details += t2.substitute(platform = platform, selected = selected)
+            text += t1.substitute(
+                portName = m.getPortName(), name = name, details = details)
+        text += '<input type="submit" name="platform_set" value="Update platforms" ' + disabled + '/><br/>\n'
+        text += "</div></form>" 
+        self.serveAnyPage("motes", qs, content = text)
+  
+    def serveListen(self, qs):
+        self.setSession(qs)
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+
+        motesText = self.serveMotes("listen", "Listen", qs, None)
+        errorMsg = None
+        global isListening
+        if "action" in qs and self.getLevel() > 1:
+            if qs["action"][0] == "Start":
+                if not motes.anySelected():
+                    errorMsg = "\n<h4 class='err'>Error: No motes selected!</h4>\n"
+                if isListening:
+                    errorMsg = "\n<h4 class='err'>Already listening!</h4>\n"
+                else:
+                    sensor_data.moteData.reset()
+                    ht.openAllSerial()
+                    isListening = True
+                # Open DB connection
+                data_utils.openDBConnection()
+            else:
+                ht.closeAllSerial()
+                isListening = False
+                # Close DB connection 
+                data_utils.closeDBConnection()
+
+        txt = ""
+        for line in sensor_data.moteData.listenTxt:
+            txt += line + "<br/>"
+
+        action = "Stop" if isListening else "Start"
+        
+        dataFilename = configuration.c.getCfgValue("saveToFilename")
+        saveProcessedData = configuration.c.getCfgValueAsBool("saveProcessedData")
+        
+        if self.getLevel() > 1:
+            if "dataFile" in qs:
+                dataFilename = qs["dataFile"][0]
+                if len(dataFilename) and dataFilename.find(".") == -1:
+                    dataFilename += ".csv"
+            if "dataType" in qs:
+                saveProcessedData = not qs["dataType"][0] == "raw"
+                saveMultipleFiles = qs["dataType"][0] == "mprocessed"
+
+            configuration.c.setCfgValue("saveToFilename", dataFilename)
+            configuration.c.setCfgValue("saveProcessedData", bool(saveProcessedData))
+            configuration.c.save()
+        
+        rawdataChecked = not saveProcessedData
+        mprocessedChecked = saveProcessedData
+
+        div_height = "0"
+        if "div_height" in qs:
+            div_height = qs["div_height"][0]
+
+        self.serveAnyPage("listen", qs, True, {"MOTES_TXT" : motesText,
+                        "LISTEN_TXT" : txt,
+                        "MOTE_ACTION": action,
+                        "DATA_FILENAME" : dataFilename,
+                        "RAWDATA_CHECKED" : 'checked="checked"' if rawdataChecked else "",
+                        "MPROCDATA_CHECKED" : 'checked="checked"' if mprocessedChecked else "",
+                        "DIV_HEIGHT" : div_height}, errorMsg = errorMsg)
+        
     def serveMotes(self, action, namedAction, qs, form):
         disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
         c = ""
@@ -287,50 +458,34 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             c = '<div class="motes1">\nDirectly attached motes:\n<br/>\n' + c + '</div>\n'
 
         return c
-
-    def serveMoteMotes(self, qs):
-        if motes.isEmpty():
-            self.serveError("No motes connected!", qs)
-            return
-
-        text = '<form action="config"><div class="motes2">\n'
-        text += 'Directly attached motes:<br/>\n'
-        
-        disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
-
-        for m in motes.getMotes():
-            name = "mote" + m.getPortBasename()
-            text += '<div class="mote"><strong>Mote: </strong>' + m.getPortName()
-            text += ' <input type="submit" name="' + name \
-                + '_cfg" title="Get/set mote\'s configuration (e.g. sensor reading periods)" value="Configuration..." ' + disabled + '/>\n'
-            text += ' <input type="submit" name="' + name \
-                + '_files" title="View files on mote\'s filesystem" value="Files..." ' + disabled + '/>\n'
-            text += ' Platform: <select name="sel_' + name \
-                + '" ' + disabled + ' title="Select the mote\'s platform: determines the list of sensors the mote has. Also has effect on code compilation and uploading">\n'
-            for platform in moteconfig.supportedPlatforms:
-                selected = ' selected="selected"' if platform == m.platform else ''
-                text += '  <option value="' + platform + '"' + selected + '>' + platform + '</option>\n'
-            text += ' </select>\n'
-            text += '</div>\n'
-
-        text += '<input type="submit" name="platform_set" value="Update platforms" ' + disabled + '/><br/>\n'
-        text += "</div></form>"
-        self.writeChunk(text)
-
-
-    def serveFooter(self):
-        with open(self.htmlDirectory + "/footer.html", "r") as f:
+   
+    def serveBlockly(self, qs):
+        self.setSession(qs)
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+        self.serveAnyPage("blockly", qs)   
+   
+    def serveSealFrame(self, qs):
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+        path = os.path.join(self.sealBlocklyDirectory, "index.html")
+        with open(path) as f:
             contents = f.read()
+            disabled = 'disabled="disabled"' if not self.getLevel() > 1 else ""
+            contents = contents.replace("%DISABLED%", disabled)
             self.writeChunk(contents)
         self.writeFinalChunk()
-
-    def sendDefaultHeaders(self):
-        self.send_header('Content-Type', 'text/html')
-        # use chunked transfer encoding (to be able to send additional chunks 'later')
-        self.send_header('Transfer-Encoding', 'chunked')
-        # disable caching
-        self.send_header('Cache-Control', 'no-store');
-        self.send_header('Connection', 'close');
+   
+    def serve404Error(self, path, qs):
+        self.setSession(qs)
+        self.send_response(404)
+        self.sendDefaultHeaders()
+        self.end_headers()
+        qs["no"] = "no"
+        self.serveAnyPage("error", qs, 
+            errorMsg = "<strong>Error 404: path " + path + " not found on the server</strong>\n")        
 
     def serveFile(self, filename, qs):
         mimetype = 'text/html'
@@ -371,513 +526,17 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             print("problem with file " + filename + "\n")
             self.serve404Error(filename, qs)
 
-    def serve404Error(self, path, qs):
-        self.setSession(qs)
-        self.send_response(404)
-        self.sendDefaultHeaders()
-        self.end_headers()
-        qs["no"] = "no"
-        self.serveHeader("404", qs)
-        self.writeChunk("<strong>Path " + path + " not found on the server</strong>\n")
-        self.serveFooter()
-
-    def serveError(self, message, qs, serveFooter = True):
-        if not self.headerIsServed:
-            qs["no"] = "no"
-            self.serveHeader("error", qs)
-        self.writeChunk("\n<h4 class='err'>Error: " + message + "</h4>\n")
-        if serveFooter:
-            self.serveFooter()
-
-    def serveDefault(self, qs, isSession = False):
-        if not isSession:
-            self.setSession(qs)
-        self.send_response(200)
-        self.sendDefaultHeaders()
-        self.end_headers()
-        if isSession:
-            self.serveHeader("default", qs, urlTo = "default")
-        else:
-            self.serveHeader("default", qs)
-        self.serveBody("default", qs)
-        self.serveFooter()
-        
-    def serveMoteSelect(self, qs):
-        self.setSession(qs)
-        self.send_response(200)
-        self.sendDefaultHeaders()
-        self.end_headers()
-        self.serveHeader("motes", qs)
-        self.serveMoteMotes(qs)
-        self.serveFooter()
-
-    def serveConfig(self, qs):
-        self.setSession(qs)
-        if not self.getLevel() > 1:
-            self.serveDefault(qs, True)
-            return
-        self.send_response(200)
-        self.sendDefaultHeaders()
-        self.end_headers()
-
-        if "platform_set" in qs:
-            for m in motes.getMotes():
-                motename = "sel_mote" + m.getPortBasename()
-                if motename in qs:
-                    m.platform = qs[motename][0]
-            motes.storeSelected()
-
-            text = '<strong>Mote platforms updated!</strong>\n'
-            self.serveHeader("config", qs, isGeneric = True)
-            self.writeChunk(text)
-            self.serveFooter()
-            return
-
-        openAllSerial()
-
-        motePortName = None
-        filesRequired = False
-        for s in qs:
-            if s[:4] == "mote":
-                pair = s[4:].split('_')
-                try:
-                    motePortName = pair[0]
-                    filesRequired = pair[1] == "files"
-                except:
-                    pass
-                break
-
-        if motePortName is None: # or moteIndex >= len(motes.getMotes()):
-            self.serveError("Config page requested, but mote not specified!", qs)
-            return
-
-        platform = None
-        dropdownName = "sel_mote" + motePortName
-        if dropdownName in qs:
-            platform = qs[dropdownName][0]
-
-        if platform not in moteconfig.supportedPlatforms:
-            self.serveError("Config page requested, but platform not specified or unknown!", qs)
-            return
-
-        # TODO!
-        moteidQS = "?sel_mote" + motePortName + "=" + platform + "&" + "mote" + motePortName
-        self.serveHeader("config", qs, isGeneric = False,
-                         replaceValues = {
-                            "MOTEID_CONFIG" : moteidQS + "_cfg=1",
-                            "MOTEID_FILES" : moteidQS + "_files=1"})
-
-        if os.name == "posix":
-            fullMotePortName = "/dev/" + motePortName
-        else:
-            fullMotePortName = motePortName
-
-        moteconfig.instance.setMote(motes.getMote(fullMotePortName), platform)
-
-        (errmsg, ok) = moteconfig.instance.updateConfigValues(qs)
-        if not ok:
-            self.serveError(errmsg, qs)
-            return
-
-        # fill config values from the mote / send new values to the mote
-        if "get" in qs:
-            reply = moteconfig.instance.getConfigValues()
-            #self.writeChunk(reply)
-        elif "set" in qs:
-            reply = moteconfig.instance.setConfigValues()
-            #self.writeChunk(reply)
-
-        if filesRequired:
-            if "filename" in qs:
-                (text, ok) = moteconfig.instance.getFileContentsHTML(qs)
-            else:
-                (text, ok) = moteconfig.instance.getFileListHTML(motePortName)
-        else:
-            (text, ok) = moteconfig.instance.getConfigHTML()
-        if not ok:
-            self.serveError(text, qs)
-            return
-        self.writeChunk(text)
-        self.serveFooter()
-
-    def serveListen(self, qs):
-        self.setSession(qs)
-        self.send_response(200)
-        self.sendDefaultHeaders()
-        self.end_headers()
-        self.serveHeader("listen", qs)
-
-        motesText = self.serveMotes("listen", "Listen", qs, None)
-        if "action" in qs and self.getLevel() > 1:
-            if qs["action"][0] == "Start":
-                if not motes.anySelected():
-                    self.serveError("No motes selected!", qs, False)
-                if isListening:
-                    self.serveError("Already listening!", qs, False)
-                openAllSerial()
-            else:
-                closeAllSerial()
-
-        txt = ""
-        for line in sensor_data.moteData.listenTxt:
-            txt += line + "<br/>"
-
-        action = "Stop" if isListening else "Start"
-        
-        dataFilename = configuration.c.getCfgValue("saveToFilename")
-        saveProcessedData = configuration.c.getCfgValueAsBool("saveProcessedData")
-        
-        if self.getLevel() > 1:
-            if "dataFile" in qs:
-                dataFilename = qs["dataFile"][0]
-                if len(dataFilename) and dataFilename.find(".") == -1:
-                    dataFilename += ".csv"
-            if "dataType" in qs:
-                saveProcessedData = not qs["dataType"][0] == "raw"
-                saveMultipleFiles = qs["dataType"][0] == "mprocessed"
-
-            configuration.c.setCfgValue("saveToFilename", dataFilename)
-            configuration.c.setCfgValue("saveProcessedData", bool(saveProcessedData))
-            configuration.c.save()
-        
-        rawdataChecked = not saveProcessedData
-        mprocessedChecked = saveProcessedData
-
-        div_height = "0"
-        if "div_height" in qs:
-            div_height = qs["div_height"][0]
-        self.serveBody("listen", qs,
-                       {"MOTES_TXT" : motesText,
-                        "LISTEN_TXT" : txt,
-                        "MOTE_ACTION": action,
-                        "DATA_FILENAME" : dataFilename,
-                        "RAWDATA_CHECKED" : 'checked="checked"' if rawdataChecked else "",
-                        "MPROCDATA_CHECKED" : 'checked="checked"' if mprocessedChecked else "",
-                        "DIV_HEIGHT" : div_height})
-        self.serveFooter()
-
-    def serveUploadGet(self, qs):
-        self.setSession(qs)
-        self.send_response(200)
-        self.sendDefaultHeaders()
-        self.end_headers()
-        self.serveHeader("upload", qs)
-        motesText = self.serveMotes("upload", "Upload", qs, None)
-        isSealCode = configuration.c.getCfgValueAsBool("isSealCode")
-        isSlow = configuration.c.getCfgValueAsBool("slowUpload")
-        self.serveBody("upload", qs,
-                       {"MOTES_TXT" : motesText,
-                        "CCODE_CHECKED": 'checked="checked"' if not isSealCode else "",
-                        "SEALCODE_CHECKED" : 'checked="checked"' if isSealCode else "",
-                        "UPLOAD_CODE" : lastUploadCode,
-                        "UPLOAD_CONFIG" : lastUploadConfig,
-                        "UPLOAD_FILENAME": lastUploadFile,
-                        "SLOW_CHECKED" : 'checked="checked"' if isSlow else ""})
-        self.serveFooter()
-
-    def serveUploadResult(self, qs):
-        global maybeIsInSubprocess
-        global isPostEntered
-
-        #if self.getLevel() < 2:
-        #    self.serveDefault(qs)
-        inFileName = os.path.join("build", "child_output.txt")
-        inFile = None
-
-        maybeIsInSubprocess = True
-        startWait = time.time()
-        while not isPostEntered:
-            now = time.time()
-            # wait a maximum of 10 seconds
-            if now - startWait > 10.0:
-                break
-        isPostEntered = False
-
-        try:
-            #self.setSession(qs)
-            self.send_response(200)
-            self.sendDefaultHeaders()
-            self.end_headers()
-            qs["no"] = "no"
-            self.serveHeader("upload", qs)
-            self.writeChunk('<button type="button" onclick="window.open(\'\', \'_self\', \'\'); window.close();">OK</button><br/>')
-            self.writeChunk("Upload result:<br/><pre>\n")
-
-            # wait until subprocess output file appears
-            while maybeIsInSubprocess and inFile == None:
-                try:
-                    inFile = open(inFileName, "rb")
-                except:
-                    inFile = None
-                    time.sleep(0.001)
-
-            if inFile:
-#                print("in file opened ok")
-                uploadLine = ""
-                while True:
-                    if utils.fileIsOver(inFile):
-                        if maybeIsInSubprocess:
-                            time.sleep(0.001)
-                            continue
-                        else:
-                            break
-                    # read one symbol
-                    c = inFile.read(1)
-                    uploadLine += c
-                    if c == '\n':
-                        # if newline reached, print out the current line
-                        self.writeChunk(uploadLine)
-                        uploadLine = ""
-                # write final chunk
-                if uploadLine:
-                    self.writeChunk(uploadLine)
-            self.writeChunk("</pre>\n")
-        except:
-            raise
-        finally:
-            # clean up
-            try:
-                if inFile: inFile.close()
-                os.remove(inFileName)
-            except:
-                pass
-#            print("upload result served!")
-            self.serveFooter()
-            uploadResult = ""
-
-    def serveBlockly(self, qs):
-        self.setSession(qs)
-        self.send_response(200)
-        self.sendDefaultHeaders()
-        self.end_headers()
-        self.serveHeader("blockly", qs)
-        self.serveBody("blockly", qs)
-        self.serveFooter()
-
-    def serveSealFrame(self, qs):
-        self.send_response(200)
-        self.sendDefaultHeaders()
-        self.end_headers()
-        path = os.path.join(self.sealBlocklyDirectory, "index.html")
-        with open(path) as f:
-            contents = f.read()
-            disabled = 'disabled="disabled"' if not self.getLevel() > 1 else ""
-            contents = contents.replace("%DISABLED%", disabled)
-            self.writeChunk(contents)
-        self.writeFinalChunk()
-
-    # Dummy, have to respond somehow, so javascript knows we are here
-    def serveSync(self, qs):
-        self.send_response(200)
-        self.sendDefaultHeaders()
-        self.end_headers()
-        if self.getLevel() > 1:
-            self.writeChunk("writeAccess=True")
-        self.writeFinalChunk()
-
-    def serveListenData(self, qs):
-        self.send_response(200)
-        self.sendDefaultHeaders()
-        self.end_headers()
-        text = ""
-        for line in sensor_data.moteData.listenTxt:
-            text += line + "<br/>"
-        if text:
-            self.writeChunk(text)
-        self.writeFinalChunk()
-
-    def compileAndUpload(self, code, config, fileContents, isSEAL):
-        global lastUploadCode
-        global lastUploadConfig
-        global lastUploadFile
-        global maybeIsInSubprocess
-
-        # print("compileAndUpload")
-
-        #if self.getLevel < 2:
-        #    return 1
-        if not os.path.exists("build"):
-            os.mkdir("build")
-
-        # do this synchronously
-        subprocessLock.acquire()
-        closeAllSerial()
-        maybeIsInSubprocess = True
-        try:
-           if fileContents:
-               lastUploadFile = form["file"].filename
-
-               filename = os.path.join("build", "tmp-file.ihex")
-               with open(filename, "w") as outFile:
-                   outFile.write(fileContents)
-                   outFile.close()
-
-               retcode = 0
-               for m in motes.getMotes():
-                   if not m.tryToOpenSerial(False): continue
-                   r = m.tryToUpload(self, filename)
-                   if r != 0: retcode = r
-
-           elif code:
-               lastUploadCode = code
-
-               filename = "main." + ("sl" if isSEAL else "c")
-               with open(os.path.join("build", filename), "w") as outFile:
-                   outFile.write(code)
-                   outFile.close()
-
-               with open(os.path.join("build", "config"), "w") as outFile:
-                   if config is None:
-                       config = ""
-                   outFile.write(config)
-                   outFile.close()
-
-               with open(os.path.join("build", "Makefile"), "w") as outFile:
-                   if isSEAL:
-                       outFile.write("SEAL_SOURCES = main.sl\n")
-                   else:
-                       outFile.write("SOURCES = main.c\n")
-                   outFile.write("APPMOD = App\n")
-                   outFile.write("PROJDIR = $(CURDIR)\n")
-                   outFile.write("ifndef MOSROOT\n")
-                   mansosPath = configuration.c.getCfgValue("mansosDirectory")
-                   if not os.path.isabs(mansosPath):
-                       # one level up - because we are in build directory
-                       mansosPath = os.path.join(mansosPath, "..")
-                   outFile.write("  MOSROOT = " + mansosPath + "\n")
-                   outFile.write("endif\n")
-                   outFile.write("include ${MOSROOT}/mos/make/Makefile\n")
-                   outFile.close()
-
-               retcode = 0
-               for m in motes.getMotes():
-                   if not m.tryToOpenSerial(False): continue
-                   r = m.tryToCompileAndUpload(self, filename)
-                   if r != 0: retcode = r
-
-        finally:
-            maybeIsInSubprocess = False
-            openAllSerial()
-            subprocessLock.release()
-            return retcode
-
-    def serveUploadPost(self, qs):
-        global lastUploadCode
-        global lastUploadConfig
-        global lastUploadFile
-        global maybeIsInSubprocess
-        global isPostEntered
-
-        self.setSession(qs)
-
-        # Parse the form data posted
-        form = cgi.FieldStorage(
-            fp = self.rfile,
-            headers = self.headers,
-            environ = {'REQUEST_METHOD':'POST',
-                     'CONTENT_TYPE':self.headers['Content-Type'],
-                     })
-
-        # signal the upload result thread that we are are ready to start serving
-        isPostEntered = True
-
-        self.send_response(200)
-        self.send_header('Content-Type', 'text/html')
-        self.send_header('Transfer-Encoding', 'chunked')
-        self.end_headers()
-
-        file_data = None
-
-        isSEAL = False
-        if "compile" in form:
-            if "language" in form:
-                isSEAL = form["language"].value.strip() == "SEAL"
-            configuration.c.setCfgValue("isSealCode", isSEAL)
-
-        if "slow" in form:
-            slow = form["slow"].value == "on"
-        else:
-            slow = False
-        configuration.c.setCfgValue("slowUpload", slow)
-        configuration.c.save()
-
-        if "code" in form.keys():
-            code = form["code"].value
-        else:
-            code = None
-
-        if "file" in form.keys():
-            fileContents = form["file"].file.read()
-        else:
-            fileContents = None
-
-        # check if what to upload is provided
-        if not fileContents and not code:
-            self.serveHeader("upload", qs)
-            self.serveError("Neither filename nor code specified!", qs)
-            maybeIsInSubprocess = False
-            return
-
-        for m in motes.getMotes():
-            name = "mote" + m.getPortBasename()
-            if name in form:
-                isChecked = form[name].value == "on"
-            else:
-                isChecked = False
-
-            if isChecked:
-                m.isSelected = True
-            else:
-                m.isSelected = False
-
-        # remember which motes were selected and which not
-        motes.storeSelected()
-        # check if any motes are selected
-        if not motes.anySelected():
-            self.serveHeader("upload", qs)
-            self.serveError("No motes selected!", qs)
-            maybeIsInSubprocess = False
-            return
-
-        config = ""
-        if "config" in form.keys():
-            lastUploadConfig = form["config"].value
-            config = lastUploadConfig
-        if slow:
-            config += "\nSLOW_UPLOAD=y\n"
-
-        retcode = self.compileAndUpload(code, config, fileContents, isSEAL)
-
-        self.serveHeader("upload", qs)
-        if retcode == 0:
-            self.writeChunk("<div><strong>Upload done!</strong></div><br/>")
-        else:
-            self.writeChunk("<div><strong>Upload failed!</strong></div><br/>")
-        motesText = self.serveMotes("upload", "Upload", None, form)
-        isSealCode = configuration.c.getCfgValueAsBool("isSealCode")
-        isSlow = configuration.c.getCfgValueAsBool("slowUpload")
-        self.serveBody("upload", qs,
-                       {"MOTES_TXT" : motesText,
-                        "CCODE_CHECKED": 'checked="checked"' if not isSealCode else "",
-                        "SEALCODE_CHECKED" : 'checked="checked"' if isSealCode else "",
-                        "UPLOAD_CODE" : lastUploadCode,
-                        "UPLOAD_CONFIG" : lastUploadConfig,
-                        "UPLOAD_FILENAME": lastUploadFile,
-                        "SLOW_CHECKED" : 'checked="checked"' if isSlow else ""})
-        self.serveFooter()
-
-
     def do_GET(self):
         self.headerIsServed = False
-
-#        print("")
-#        print(self.headers)
-
         o = urlparse(self.path)
         qs = parse_qs(o.query)
+        global lastUploadCode
+        global lastUploadConfig
+        global lastUploadFile
 
-#        if "Android" in self.headers["user-agent"]:
-#            self.htmlDirectory = self.htmlDirectory + "_mobile"
+        # TODO:
+        # if "Android" in self.headers["user-agent"]:
+        #     self.htmlDirectory = self.htmlDirectory + "_mobile"
 
         if o.path == "/" or o.path == "/default":
             self.serveDefault(qs)
@@ -892,7 +551,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         elif o.path == "/graph-form":
             self.serveGraphForm(qs)
         elif o.path == "/upload":
-            self.serveUploadGet(qs)
+            self.serveUploadGet(qs, lastUploadCode, lastUploadConfig, lastUploadFile)
         elif o.path == "/login":
             self.serveLogin(qs)
         elif o.path == "/server":
@@ -929,15 +588,42 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         elif o.path[-3:] in [".js"]:
             self.serveFile(os.path.join(self.htmlDirectory, "js", o.path[1:]), qs)
         else:
-            self.serve404Error(o.path, qs)
+            self.serve404Error(o.path, qs)   
 
+    def serveBody(self, name, qs = {'sma': ['0000000'],}, replaceValues = None):
+        contents = ""
+        disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
+        with open(self.htmlDirectory + "/" + name + ".html", "r") as f:
+            contents = f.read()
+            if replaceValues:
+                for v in replaceValues:
+                    contents = contents.replace("%" + v + "%", replaceValues[v])
+            contents = contents.replace("%DISABLED%", disabled)
+            if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
+        return contents
+
+    # Dummy, have to respond somehow, so javascript knows we are here
+    def serveSync(self, qs):
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+        if self.getLevel() > 1:
+            self.writeChunk("writeAccess=True")
+        self.writeFinalChunk()
+
+    def serveListenData(self, qs):
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+        text = ""
+        for line in sensor_data.moteData.listenTxt:
+            text += line + "<br/>"
+        if text:
+            self.writeChunk(text)
+        self.writeFinalChunk()
 
     def do_POST(self):
         self.headerIsServed = False
-
-#        print("")
-#        print(self.headers)
-
         o = urlparse(self.path)
         qs = parse_qs(o.query)
 
@@ -945,8 +631,12 @@ class HttpServerHandler(BaseHTTPRequestHandler,
 #        if "Android" in self.headers["user-agent"]:
 #            self.htmlDirectory = self.htmlDirectory + "_mobile"
 
+        global lastUploadCode
+        global lastUploadConfig
+        global lastUploadFile
+        
         if o.path == "/upload":
-            self.serveUploadPost(qs)
+            self.serveUploadPost(qs, lastUploadCode, lastUploadConfig, lastUploadFile)
         else:
             self.serve404Error(o.path, qs)
 
