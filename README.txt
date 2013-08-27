@@ -1,4 +1,4 @@
-This is the root directory for MansOS WSN/embedded operating system.
+aThis is the root directory for MansOS WSN/embedded operating system.
 
 MansOS is an operating system for embedded systems with restricted resources, 
 such as platforms based on msp430 and Atmega controllers (Arduino).

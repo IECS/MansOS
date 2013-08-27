@@ -84,15 +84,16 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         BaseHTTPRequestHandler.__init__(self, request, client_address, server)
 
     def writeChunk(self, buffer):
-        if self.wfile == None: return
+        '''if self.wfile == None: return
         if self.wfile._sock == None: return
         self.wfile.write("{:x}\r\n".format(len(buffer)))
         self.wfile.write(buffer)
-        self.wfile.write("\r\n")
+        self.wfile.write("\r\n")'''
+        self.wfile.write(buffer)
 
     def writeFinalChunk(self):
-        self.wfile.write("0\r\n")
-        self.wfile.write("\r\n")
+        '''self.wfile.write("0\r\n")
+        self.wfile.write("\r\n")'''
 
     # overrides base class function, because in some versions
     # it tries to resolve dns and fails...
@@ -105,7 +106,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
     def sendDefaultHeaders(self):
         self.send_header('Content-Type', 'text/html')
         # use chunked transfer encoding (to be able to send additional chunks 'later')
-        self.send_header('Transfer-Encoding', 'chunked')
+        #self.send_header('Transfer-Encoding', 'chunked')
         # disable caching
         self.send_header('Cache-Control', 'no-store');
         self.send_header('Connection', 'close');
