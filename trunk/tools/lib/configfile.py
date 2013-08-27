@@ -84,7 +84,7 @@ class ConfigFile(object):
     def setCfgValue(self, name, value):
         # make sure the value is in acceptable format (lists are stored as strings)
         if isinstance(value, list):
-            value = ",".join(value)
+            value = ",".join([str(x) for x in value])
         elif not isinstance(value, str):
             value = str(value)
 
