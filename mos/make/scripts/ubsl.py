@@ -209,6 +209,7 @@ deviceids = {
     0x1232: F1x,
     0xf26f: F2x, # Zolertia Z1 and AdvanticSYS XM1000
     0xf227: F2x,
+    0xf249: F2x, # testbed
 }
 
 class BSLException(Exception):
