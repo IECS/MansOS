@@ -66,10 +66,10 @@ bool sdcardWriteBlock(uint32_t addr, const void *buf);
 #if USE_SDCARD_LOW_LEVEL_API
 // Read a block of data from addr
 void sdcardRead(uint32_t addr, void* buffer, uint16_t len);
-// Write len bytes (len <= 256) to flash at addr
-// Block can split over multiple sectors/pages
+// Write len bytes (len <= 512) to SD card at 'addr'
+// Block can split over multiple blocks
 void sdcardWrite(uint32_t addr, const void *buf, uint16_t len);
-// flush the cache to disk
+// Flush cache buffers to SD card
 void sdcardFlush(void);
 #endif // USE_SDCARD_LOW_LEVEL_API
 

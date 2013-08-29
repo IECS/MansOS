@@ -84,8 +84,8 @@ void writeData() {
         buf[i] = c;
     }
     PRINTF("writing flash from %lu to %lu\n",
-            (uint32_t)START_ADDR, (uint32_t)START_ADDR + BYTE_COUNT - 2);
-    extFlashWrite(START_ADDR, buf, BYTE_COUNT - 2);
+            (uint32_t)START_ADDR, (uint32_t)START_ADDR + BYTE_COUNT);
+    extFlashWrite(START_ADDR, buf, BYTE_COUNT);
     PRINTLN("done");
 }
 

@@ -239,7 +239,7 @@ void sdcardInitSerial(void)
 void sdcardInitSerial(void)
 {
     // disable USART interrupts
-    UC1IE &= ~(UCA1RXIE | UCA1RXIE);
+    UC0IE &= ~(UCB0RXIE | UCB0TXIE);             // Disable interrupts
 
     // Init Port for MMC (default high)
     MMC_PxOUT |= MMC_SIMO + MMC_UCLK;
@@ -249,15 +249,12 @@ void sdcardInitSerial(void)
     MMC_CS_PxOUT |= MMC_CS;
     MMC_CS_PxDIR |= MMC_CS;
 
-    // UCTL0 = SWRST;
-    // UCTL0 |= CHAR + SYNC + MST;               // 8-bit SPI Master **SWRST**
-    // UTCTL0 = CKPL + SSEL1 + SSEL0 + STC;      // SMCLK, 3-pin mode
-    // U0BR0 = 0x08;                             // UCLK/8
-    // U0BR1 = 0x00;                             // 0
-    // UMCTL0 = 0x00;                            // No modulation
-    // ME1 &= ~(UTXE0 | URXE0);                  // disable USART0 TXD/RXD
-    // ME1 |= USPIE0;                            // Enable USART0 SPI mode
-    // UCTL0 &= ~SWRST;                          // Initialize USART state machine
+    // UCB0CTL1 = UCSWRST;
+    // UCB0CTL0 = UCCKPL | UCMST | UCSYNC | UCMSB; // 8-bit SPI Master, 3-pin mode
+    // UCB0CTL1 |= UCSSEL_2;                       // SMCLK
+    // UCB0BR0 = 0x08;                             // UCLK/8
+    // UCB0BR1 = 0x00;                             // 0
+    // UCB0CTL1 &= ~UCSWRST;                       // Clear SW reset, resume operation
     spiBusInit(SDCARD_SPI_ID, SPI_MODE_MASTER);
 
     // Enable secondary function
@@ -343,7 +340,7 @@ bool sdcardInit(void)
 {
     uint8_t i;
     bool ok;
-#if PLATFORM_SM3
+#if PLATFORM_SM3 || PLATFORM_TESTBED2
     uint8_t status;
     uint32_t arg;
 #endif
@@ -395,7 +392,7 @@ bool sdcardInit(void)
     SDCARD_WR_BYTE(0xff);
 #endif // 0
 
-#if PLATFORM_SM3
+#if PLATFORM_SM3 || PLATFORM_TESTBED2
     SPRINTF("3\n");
 
     // check SD version
@@ -443,11 +440,14 @@ bool sdcardInit(void)
     SDCARD_SPI_DISABLE();
     SPRINTF("sdcard init OK\n");
 
-#endif // PLATFORM_SM3
+#endif // PLATFORM_SM3 || PLATFORM_TESTBED2
 
 #if USE_SDCARD_LOW_LEVEL_API
     // make cache valid
     mdelay(1);
+#if DEBUG
+    memset(cacheBuffer, 0xff, sizeof(cacheBuffer));
+#endif
     sdcardReadBlock(cacheAddress, cacheBuffer);
     SPRINTF("cache read OK\n");
 #endif // USE_SDCARD_LOW_LEVEL_API
@@ -618,7 +618,9 @@ bool sdcardWriteBlock(uint32_t address, const void *buf)
     if (sdcardCommand(CMD_WRITE_BLOCK, address, 0xff)) {
         goto fail;
     }
-    if (!sdcardWriteData(DATA_START_BLOCK, buf)) goto fail;
+    if (!sdcardWriteData(DATA_START_BLOCK, buf)) {
+        goto fail;
+    }
 
     // wait for flash programming to complete
     if (!waitCardNotBusyNoints(WRITE_TIMEOUT_TICKS)) {
@@ -630,12 +632,13 @@ bool sdcardWriteBlock(uint32_t address, const void *buf)
     }
     SDCARD_SPI_DISABLE();
     ATOMIC_END(handle);
+    SPRINTF("  ok\n");
     return true;
 
  fail:
     SDCARD_SPI_DISABLE();
     ATOMIC_END(handle);
-    SPRINTF("  done\n");
+    SPRINTF("  fail\n");
     return false;
 }
  
@@ -674,6 +677,9 @@ static void sdcardReadInBlock(uint32_t address, void* buffer, uint16_t len)
     }
 
     cacheAddress = address & 0xfffffe00;
+#if DEBUG
+    memset(cacheBuffer, 0xff, sizeof(cacheBuffer));
+#endif
     sdcardReadBlock(cacheAddress, cacheBuffer);
     takeFromCache(buffer, len, address & (SDCARD_SECTOR_SIZE - 1));
 
@@ -731,6 +737,9 @@ static void sdcardWriteInBlock(uint32_t address, const void* buffer, uint16_t le
         ASSERT((address & (SDCARD_SECTOR_SIZE - 1)) == 0);
         putInCache(buffer, SDCARD_SECTOR_SIZE, 0);
     } else {
+#if DEBUG
+        memset(cacheBuffer, 0xff, sizeof(cacheBuffer));
+#endif
         sdcardReadBlock(cacheAddress, cacheBuffer);
         putInCache(buffer, len, address & (SDCARD_SECTOR_SIZE - 1));
     }
