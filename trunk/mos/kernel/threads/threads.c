@@ -157,7 +157,13 @@ void threadWakeup(uint16_t threadIndex, ThreadState_t newState)
 }
 
 // --------------------------------------------------------------
-// local variables used in function schedule()
+
+// Note!
+// When all threads are waiting for something (i.e. in BLOCKED state),
+// the scheduler will select a random thread from them and return. This is fine.
+// The waiting should be implemented in a way that DOES NOT
+// allow to run the thread until the wait condition is explicitly fulfilled.
+// Until then, the thread should yield() in a loop.
 
 #if NUM_USER_THREADS == 1
 
