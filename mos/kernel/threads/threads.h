@@ -51,6 +51,7 @@
 #endif
 
 #define SCHEDULING_POLICY_ROUND_ROBIN    1
+// TODO: should handle the priority inversion problem in case this policy is enabled
 #define SCHEDULING_POLICY_PRIORITY_BASED 2
 
 #ifndef SCHEDULING_POLICY
