@@ -122,7 +122,7 @@ void routingInit(void)
     alarmSchedule(&roForwardTimer, calcNextForwardTime(0));
     alarmSchedule(&roStartListeningTimer, 110);
     alarmSchedule(&roGreenLedTimer, 10000);
-    alarmSchedule(&watchdogTimer, 1000);
+//    alarmSchedule(&watchdogTimer, 1000);
 }
 
 static void roStartListeningTimerCb(void *x)
@@ -236,7 +236,7 @@ static void roRequestTimerCb(void *x)
         routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
     }
 
-    TPRINTF("send routing request\n");
+    TPRINTF("SEND ROUTING REQUEST\n");
 
     radioOn(); // wait for response
     isListening = true;
@@ -299,7 +299,7 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
     // PRINTF("routingReceive %d bytes from %#04x\n", len,
     //         s->recvMacInfo->originalSrc.shortAddr);
 
-    PRINTF("routing rx\n");
+//    PRINTF("routing rx\n");
 
     if (len == 0) {
         PRINTF("routingReceive: no data!\n");
@@ -345,16 +345,16 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         // XXX: theoretically should add some time to avoid switching to
         // worse path only because packets from it travel faster
         update = true;
-        TPRINTF("update routing info - more recent seqnum\n");
+        TPRINTF("RI updated: > seqnum\n");
     }
     else if (ri.seqnum == lastSeenSeqnum) {
         if (ri.hopCount < hopCountToRoot) {
             update = true;
-            TPRINTF("update routing info - better metric\n");
+            TPRINTF("RI updated: < metric\n");
         }
         else if (ri.hopCount == hopCountToRoot && !seenRoutingInThisFrame) {
             update = true;
-            TPRINTF("update routing info - same metric\n");
+            TPRINTF("RI updated: == metric\n");
         }
     }
     if (ri.hopCount > MAX_HOP_COUNT) update = false;
@@ -372,17 +372,17 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         lastRootMessageTime = (uint32_t) getJiffies();
         int64_t oldRootClockDeltaMs = rootClockDeltaMs;
         rootClockDeltaMs = ri.rootClockMs - getTimeMs64();
-        PRINTF("delta: old=%ld, new=%ld\n", (int32_t)oldRootClockDeltaMs, (int32_t)rootClockDeltaMs);
         if (abs((int32_t)oldRootClockDeltaMs - (int32_t)rootClockDeltaMs) > 500) {
             PRINTF("large delta change=%ld, time sync off?!\n", (int32_t)rootClockDeltaMs - (int32_t)oldRootClockDeltaMs);
+            PRINTF("delta: old=%ld, new=%ld\n", (int32_t)oldRootClockDeltaMs, (int32_t)rootClockDeltaMs);
         }
-        TPRINTF("OK!%s\n", isListening ? "" : " (not listening)");
+        // TPRINTF("OK!%s\n", isListening ? "" : " (not listening)");
 
         // reschedule next listen start after this timesync
         alarmSchedule(&roStartListeningTimer, timeToNextFrame() + 2000);
     }
     else {
-        PRINTF("dont update\n");
+        TPRINTF("RI not updated!\n");
     }
 }
 
@@ -409,7 +409,7 @@ RoutingDecision_e routePacket(MacInfo_t *info)
             info->hoplimit = MAX_HOP_COUNT;
         }
     } else {
-        PRINTF("route packet, addr=0x%04x port=%02x\n", dst->shortAddr, info->dstPort);
+//        PRINTF("route packet, addr=0x%04x port=%02x\n", dst->shortAddr, info->dstPort);
         uint8_t index = markAsSeen(info->immedSrc.shortAddr, false);
         if (index != 0xff) {
             uint32_t expectedTimeStart = 4000ul + MOTE_TIME_FULL * index + MOTE_TIME;
