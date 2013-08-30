@@ -33,6 +33,7 @@
 #include <assert.h>
 #include <kernel/stack.h>
 #include <string.h>
+#include <hil/atomic.h>
 
 #if DEBUG
 #define SDCARD_DEBUG 1
@@ -46,6 +47,7 @@
 #endif
 
 // timeouts in milliseconds
+// TODO: they are 100/250/250 ms for read/write/erase by SD card spec!
 #define INIT_TIMEOUT  2000
 #define ERASE_TIMEOUT 10000
 #define READ_TIMEOUT  300
@@ -67,6 +69,13 @@ enum {
 static bool initOk;
 
 static uint8_t cardType;
+
+#define INITIAL_SPI_DIVIDER  (CPU_MHZ * 5 / 2)  // 400 kHz max
+#if CPU_MHZ > 50 
+#error Too high CPU frequency!                  // 25 MHz max
+#else
+#define NORMAL_SPI_DIVIDER   0x2                // minimum SPI divider
+#endif
 
 #if USE_SDCARD_LOW_LEVEL_API
 // card cache
@@ -137,9 +146,9 @@ void sdcardInitSerial(void)
     MMC_CS_PxDIR |= MMC_CS;
 
     UCTL0 = SWRST;
-    UCTL0 |= CHAR + SYNC + MST;               // 8-bit SPI Master **SWRST**
+    UCTL0 |= CHAR + SYNC + MST;               // 8-bit SPI Master
     UTCTL0 = CKPL + SSEL1 + SSEL0 + STC;      // SMCLK, 3-pin mode
-    U0BR0 = 0x08;                             // UCLK/8
+    U0BR0 = INITIAL_SPI_DIVIDER;              // 400 kHz max
     U0BR1 = 0x00;                             // 0
     UMCTL0 = 0x00;                            // No modulation
     ME1 &= ~(UTXE0 | URXE0);                  // disable USART0 TXD/RXD
@@ -153,6 +162,13 @@ void sdcardInitSerial(void)
 
     serial[SDCARD_SPI_ID].function = SERIAL_FUNCTION_SDCARD;
 }
+
+static inline void sdcardSetSPIdivider(uint8_t divider) {
+    UCTL0 |= SWRST;
+    U0BR0 = divider;
+    UCTL0 &= ~SWRST;
+}
+
 
 #elif PLATFORM_TELOSB
 
@@ -197,9 +213,10 @@ void sdcardInitSerial(void)
     // Card Detect
     MMC_CD_PxDIR &=  ~MMC_CD;
 
-    UCTL1 = CHAR + SYNC + MM + SWRST;         // 8-bit SPI Master **SWRST**
+    UCTL1 |= SWRST;
+    UCTL1 = CHAR + SYNC + MM;                 // 8-bit SPI Master
     UTCTL1 = CKPL + SSEL1 + SSEL0 + STC;      // SMCLK, 3-pin mode
-    UBR01 = 0x02;                             // UCLK/2
+    UBR10 = INITIAL_SPI_DIVIDER;              // 400 kHz max
     UBR11 = 0x00;                             // 0
     UMCTL1 = 0x00;                            // No modulation
     ME2 |= USPIE1;                            // Enable USART1 SPI mode
@@ -212,6 +229,13 @@ void sdcardInitSerial(void)
 
     serial[SDCARD_SPI_ID].function = SERIAL_FUNCTION_SDCARD;
 }
+
+static inline void sdcardSetSPIdivider(uint8_t divider) {
+    UCTL1 |= SWRST;
+    UBR10 = divider;
+    UCTL0 &= ~SWRST;
+}
+
 
 #elif PLATFORM_TESTBED2
 
@@ -249,13 +273,13 @@ void sdcardInitSerial(void)
     MMC_CS_PxOUT |= MMC_CS;
     MMC_CS_PxDIR |= MMC_CS;
 
-    // UCB0CTL1 = UCSWRST;
-    // UCB0CTL0 = UCCKPL | UCMST | UCSYNC | UCMSB; // 8-bit SPI Master, 3-pin mode
-    // UCB0CTL1 |= UCSSEL_2;                       // SMCLK
-    // UCB0BR0 = 0x08;                             // UCLK/8
-    // UCB0BR1 = 0x00;                             // 0
-    // UCB0CTL1 &= ~UCSWRST;                       // Clear SW reset, resume operation
-    spiBusInit(SDCARD_SPI_ID, SPI_MODE_MASTER);
+    UCB0CTL1 = UCSWRST;
+    UCB0CTL0 = UCCKPL | UCMST | UCSYNC | UCMSB; // 8-bit SPI Master, 3-pin mode
+    UCB0CTL1 |= UCSSEL_2;                       // SMCLK
+    UCB0BR0 = INITIAL_SPI_DIVIDER;              // 400 kHz max
+    UCB0BR1 = 0x00;                             // 0
+    UCB0CTL1 &= ~UCSWRST;                       // Clear SW reset, resume operation
+//    spiBusInit(SDCARD_SPI_ID, SPI_MODE_MASTER);
 
     // Enable secondary function
 #ifndef USE_SOFT_SPI
@@ -263,6 +287,12 @@ void sdcardInitSerial(void)
 #endif
 
     serial[SDCARD_SPI_ID].function = SERIAL_FUNCTION_SDCARD;
+}
+
+static inline void sdcardSetSPIdivider(uint8_t divider) {
+    UCB0CTL1 |= UCSWRST;
+    UCB0BR0 = divider;
+    UCB0CTL1 &= ~UCSWRST;
 }
 
 #endif
@@ -442,6 +472,9 @@ bool sdcardInit(void)
 
 #endif // PLATFORM_SM3 || PLATFORM_TESTBED2
 
+    // reconfigure SPI to faster speed after initialization
+    sdcardSetSPIdivider(NORMAL_SPI_DIVIDER);
+
 #if USE_SDCARD_LOW_LEVEL_API
     // make cache valid
     mdelay(1);
@@ -538,18 +571,18 @@ bool sdcardReadBlock(uint32_t address, void* buffer)
     //  if SDHC card: use block number instead of address
     if (cardType == SD_CARD_TYPE_SDHC) address >>= 9;
 
-    ATOMIC_START(h);
+    ATOMIC_START_TIMESAVE(h);
     SDCARD_SPI_ENABLE();
 
     if (sdcardCommand(CMD_READ_SINGLE_BLOCK, address, 0xff) != 0) {
-        goto fail;
+        goto end;
     }
 
     result = sdcardReadData(buffer, SDCARD_SECTOR_SIZE);
 
-  fail:
+  end:
     SDCARD_SPI_DISABLE();
-    ATOMIC_END(h);
+    ATOMIC_END_TIMESAVE(h);
     SPRINTF("  done\n");
     return result;
 }
@@ -609,37 +642,36 @@ bool sdcardWriteBlock(uint32_t address, const void *buf)
 {
     SPRINTF("sdcardWriteBlock at %lu\n", address);
     Handle_t handle;
-    ATOMIC_START(handle);
+    bool result = false;
+
+    ATOMIC_START_TIMESAVE(handle);
 
     //  if SDHC card: use block number instead of address
     if (cardType == SD_CARD_TYPE_SDHC) address >>= 9;
 
     SDCARD_SPI_ENABLE();
     if (sdcardCommand(CMD_WRITE_BLOCK, address, 0xff)) {
-        goto fail;
+        goto end;
     }
     if (!sdcardWriteData(DATA_START_BLOCK, buf)) {
-        goto fail;
+        goto end;
     }
 
     // wait for flash programming to complete
     if (!waitCardNotBusyNoints(WRITE_TIMEOUT_TICKS)) {
-        goto fail;
+        goto end;
     }
     // response is r2 so get and check two bytes for nonzero
     if (sdcardCommand(CMD_SEND_STATUS, 0, 0xff) || SDCARD_RD_BYTE()) {
-        goto fail;
+        goto end;
     }
-    SDCARD_SPI_DISABLE();
-    ATOMIC_END(handle);
-    SPRINTF("  ok\n");
-    return true;
+    result = true; // success
 
- fail:
+  end:
     SDCARD_SPI_DISABLE();
-    ATOMIC_END(handle);
-    SPRINTF("  fail\n");
-    return false;
+    ATOMIC_END_TIMESAVE(handle);
+    SPRINTF("  done\n");
+    return result;
 }
  
 // -----------------------------------------------------------------
