@@ -92,6 +92,7 @@ typedef enum {
 //#define RTS_WAIT_TIMEOUT_TICKS        TIMER_SECOND
 #define AMB8420_WAIT_FOR_RTS_READY(ok) \
     BUSYWAIT_UNTIL(pinRead(AMB8420_RTS_PORT, AMB8420_RTS_PIN) == 0, RTS_WAIT_TIMEOUT_TICKS, ok)
+
 #define AMB8420_BUSYWAIT_UNTIL(cond, maxTime, ok) \
     BUSYWAIT_UNTIL(cond, maxTime, ok)
 #define AMB8420_BUSYWAIT_UNTIL_NORET(cond, maxTime) \
@@ -177,11 +178,13 @@ void amb8420InitSerial(void);
 
 void amb8420ResetIfInactive(void);
 
-void amb8420Reset1(bool wtf);
+typedef enum {
+    AMB8420_INIT_HARD_FAIL,
+    AMB8420_INIT_SOFT_FAIL,
+    AMB8420_INIT_SUCCESS,
+} Amb8420InitCode_e;
 
-static inline void amb8420Reset(void) {
-    amb8420Reset1(true);
-}
+Amb8420InitCode_e amb8420Reset(void);
 
 int amb8420EnterAddressingMode(AMB8420AddrMode_t, uint8_t srcAddress);
 
