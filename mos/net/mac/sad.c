@@ -137,8 +137,8 @@ static void delayTimerCb(void *unused)
 //
 static bool filterPass(MacInfo_t *mi, uint16_t len)
 {
-    TPRINTF("rx %u bytes from %#04x (%#04x)\n",
-            len, mi->immedSrc.shortAddr, mi->originalSrc.shortAddr);
+    // TPRINTF("rx %u bytes from %#04x (%#04x)\n",
+    //         len, mi->immedSrc.shortAddr, mi->originalSrc.shortAddr);
 
     if (!mi->immedSrc.shortAddr) return true; // XXX
 
@@ -149,10 +149,14 @@ static bool filterPass(MacInfo_t *mi, uint16_t len)
 #define BASE_STATION_ADDRESS 0x0001
 #define FORWARDER_ADDRESS    0x15CE
 #define COLLECTOR_ADDRESS    0x0871
-#define COLLECTOR_ADDRESS1   0x0875
-#define COLLECTOR_ADDRESS2   0x2BD4
 
-#if 1
+#define FORWARDER_ADDRESS1   0x15CE
+#define FORWARDER_ADDRESS2   0x135B
+
+#define COLLECTOR_ADDRESS1   0x0871
+#define COLLECTOR_ADDRESS2   0x2C71
+
+#if 0
     // network with all four mote roles, two intermediate hops
     switch (localAddress) {
     case BASE_STATION_ADDRESS:
@@ -167,6 +171,32 @@ static bool filterPass(MacInfo_t *mi, uint16_t len)
         break;
     default: // mote
         if (mi->immedSrc.shortAddr != COLLECTOR_ADDRESS) return false;
+        break;
+    }
+#elif 1
+    // network with all four mote roles, two intermediate hops, multipath
+    switch (localAddress) {
+    case BASE_STATION_ADDRESS:
+        if (mi->immedSrc.shortAddr != FORWARDER_ADDRESS1
+                && mi->immedSrc.shortAddr != FORWARDER_ADDRESS2) return false;
+        break;
+    case FORWARDER_ADDRESS1:
+    case FORWARDER_ADDRESS2:
+        if (mi->immedSrc.shortAddr != BASE_STATION_ADDRESS
+                && mi->immedSrc.shortAddr != COLLECTOR_ADDRESS1
+                && mi->immedSrc.shortAddr != COLLECTOR_ADDRESS2) return false;
+        break;
+    case COLLECTOR_ADDRESS1:
+        if (mi->immedSrc.shortAddr == BASE_STATION_ADDRESS
+                || mi->immedSrc.shortAddr == COLLECTOR_ADDRESS2) return false;
+        break;
+    case COLLECTOR_ADDRESS2:
+        if (mi->immedSrc.shortAddr == BASE_STATION_ADDRESS
+                || mi->immedSrc.shortAddr == COLLECTOR_ADDRESS1) return false;
+        break;
+    default: // mote
+        if (mi->immedSrc.shortAddr != COLLECTOR_ADDRESS1
+                && mi->immedSrc.shortAddr != COLLECTOR_ADDRESS2) return false;
         break;
     }
 #elif 0

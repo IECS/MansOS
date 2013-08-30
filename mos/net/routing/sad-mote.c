@@ -75,7 +75,7 @@ static void roStopListeningTimerCb(void *);
 #define ROUTE_DEBUG 1
 
 #if ROUTE_DEBUG
-#define RPRINTF(...) PRINTF(__VA_ARGS__)
+#define RPRINTF(...) TPRINTF(__VA_ARGS__)
 #else
 #define RPRINTF(...) do {} while (0)
 #endif
@@ -91,6 +91,21 @@ static inline bool isRoutingInfoValid(void)
         hopCountToRoot = MAX_HOP_COUNT;
         return false;
     }
+    return true;
+}
+
+static inline bool hasRecentlySyncedWithRoot(void)
+{
+    if (lastRootMessageTime == 0) return false;
+
+    return !timeAfter32((uint32_t)getJiffies(), lastRootMessageTime + 4 * ROUTING_INFO_VALID_TIME);
+}
+
+static inline bool isCollectorMaybeListening(uint32_t atTime)
+{
+    uint32_t passed = timeSinceFrameStart();
+    if (passed < 2000) return false;
+    if (passed > 4000 + MOTE_TIME_FULL * MAX_MOTES) return false;
     return true;
 }
 
@@ -136,7 +151,7 @@ static void roStartListeningTimerCb(void *x)
 
     // listen to info only when routing info is already valid (?)
     if (isRoutingInfoValid()) {
-        TPRINTF("--- START LISTENING, number=%u\n", moteNumber);
+        TPRINTF("+++ mote #%u start\n", moteNumber);
         isListening = true;
         radioOn();
         alarmSchedule(&roStopListeningTimer, TIMESLOT_IMPRECISION * 2 + MOTE_TIME * 2);
@@ -145,7 +160,7 @@ static void roStartListeningTimerCb(void *x)
 
 static void roStopListeningTimerCb(void *x)
 {
-    TPRINTF("turn radio off\n");
+    TPRINTF("--- stop\n");
     seenRoutingInThisFrame = false;
     RADIO_OFF_ENERGSAVE();
     isListening = false;
@@ -181,17 +196,35 @@ static void roRequestTimerCb(void *x)
     if (isRoutingInfoValid() && cnt > 5) return;
     cnt++;
 
-    // add jitter
-    routingRequestTimeout += randomNumberBounded(100);
-    alarmSchedule(&roRequestTimer, routingRequestTimeout);
-    // use exponential backoff
-    routingRequestTimeout *= 2;
-    if (routingRequestTimeout > ROUTING_REQUEST_MAX_TIMEOUT) {
-        // move back to initial (small) timeout
-        routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
+    if (hasRecentlySyncedWithRoot()) {
+        // try to guess the time depending on the last information about collector
+        uint32_t passed = timeSinceFrameStart();
+        if (passed < 2000) {
+            routingRequestTimeout = 2500 - passed;
+        }
+        else if (passed + 5000 >= 4000 + MOTE_TIME_FULL * MAX_MOTES) {
+            routingRequestTimeout = timeToNextFrame() + 2500;
+        }
+        else {
+            routingRequestTimeout = 5000;
+        }
+        routingRequestTimeout += randomNumberBounded(100);
+        alarmSchedule(&roRequestTimer, routingRequestTimeout);
+    }
+    else {
+        // add jitter
+        routingRequestTimeout += randomNumberBounded(100);
+        alarmSchedule(&roRequestTimer, routingRequestTimeout);
+    
+        // use exponential backoff
+        routingRequestTimeout *= 2;
+        if (routingRequestTimeout > ROUTING_REQUEST_MAX_TIMEOUT) {
+            // move back to initial (small) timeout
+            routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
+        }
     }
 
-    PRINTF("send routing request\n");
+    TPRINTF("SEND ROUTING REQUEST\n");
 
     radioOn(); // wait for response
     isListening = true;
@@ -262,21 +295,31 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         // worse path only because packets from it travel faster
         update = true;
         //RPRINTF("update routing info - more recent seqnum\n");
+        RPRINTF("RI updated: > seqnum\n");
     }
     else if (ri.seqnum == lastSeenSeqnum) {
         if (ri.hopCount < hopCountToRoot) {
             update = true;
-            //RPRINTF("update routing info - better metric\n");
+            RPRINTF("RI updated: < metric\n");
         }
-        else if (ri.hopCount == hopCountToRoot && !seenRoutingInThisFrame) {
-            update = true;
-            //RPRINTF("update routing info - same metric\n");
+        else if (ri.hopCount == hopCountToRoot) {
+            if (s->recvMacInfo->originalSrc.shortAddr == nexthopToRoot) {
+                // same adress, update if not seen already
+                update = !seenRoutingInThisFrame;
+                RPRINTF("RI updated: == nh && == metric\n");
+            }
+            else if (s->recvMacInfo->originalSrc.shortAddr > nexthopToRoot) {
+                // At the moment nexthop is selected by "the largest address wins" algorithm.
+                // TODO: add a special "priority" field? or select nexhop in random?
+                update = true;
+                RPRINTF("RI updated: > nh && == metric\n");
+            }
         }
     }
     if (ri.hopCount > MAX_HOP_COUNT) update = false;
 
     if (update) {
-        TPRINTF("got valid routing info\n");
+        // TPRINTF("got valid routing info\n");
         seenRoutingInThisFrame = true;
         rootAddress = ri.rootAddress;
         nexthopToRoot = s->recvMacInfo->originalSrc.shortAddr;
@@ -288,16 +331,19 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         bool numberChanged = moteNumber != ri.moteNumber;
         moteNumber = ri.moteNumber;
         // PRINTF("%lu: ++++++++++++ fixed local time\n", getSyncTimeMs());
-        PRINTF("delta: old=%ld, new=%ld\n", (int32_t)oldRootClockDeltaMs, (int32_t)rootClockDeltaMs);
         if (abs((int32_t)oldRootClockDeltaMs - (int32_t)rootClockDeltaMs) > 500) {
             PRINTF("large delta change=%ld, time sync off?!\n", (int32_t)rootClockDeltaMs - (int32_t)oldRootClockDeltaMs);
+            PRINTF("delta: old=%ld, new=%ld\n", (int32_t)oldRootClockDeltaMs, (int32_t)rootClockDeltaMs);
         }
-        TPRINTF("OK!%s\n", isListening ? "" : " (not listening)");
+        // TPRINTF("OK!%s\n", isListening ? "" : " (not listening)");
 
         if (numberChanged) {
             // reschedule start of next listening
             alarmSchedule(&roStartListeningTimer, calcListenStartTime());
         }
+    }
+    else {
+        RPRINTF("RI not updated!\n");
     }
 }
 

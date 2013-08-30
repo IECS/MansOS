@@ -161,7 +161,7 @@ void routingInit(void)
     alarmSchedule(&roForwardTimer, calcNextForwardTime());
     alarmSchedule(&roStartListeningTimer, 90);
     alarmSchedule(&roGreenLedTimer, 10000);
-    alarmSchedule(&watchdogTimer, 1000);
+//    alarmSchedule(&watchdogTimer, 1000);
 }
 
 static void roForwardTimerCb(void *x)
@@ -182,7 +182,7 @@ static void roForwardTimerCb(void *x)
         return;
     }
 
-    TPRINTF("send routing\n");
+//    TPRINTF("send routing\n");
 
     RoutingInfoPacket_t routingInfo;
     routingInfo.packetType = ROUTING_INFORMATION;
@@ -214,7 +214,7 @@ static void roRequestTimerCb(void *x)
         routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
     }
 
-    TPRINTF("send routing request\n");
+    TPRINTF("SEND ROUTING REQUEST\n");
 
     radioOn(); // wait for response
     isListening = true;
@@ -244,7 +244,7 @@ static void watchdogTimerCb(void *x) {
 
 static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
 {
-    PRINTF("routing rx\n");
+//    PRINTF("routing rx\n");
     // uint32_t rrTime = (uint32_t) getJiffies();
     // PRINTF("radio: %lu to %lu, routing: %lu\n", radioStartTime, radioEndTime, rrTime);
 
@@ -292,16 +292,16 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         // XXX: theoretically should add some time to avoid switching to
         // worse path only because packets from it travel faster
         update = true;
-        TPRINTF("update routing info - more recent seqnum\n");
+        TPRINTF("RI updated: > seqnum\n");
     }
     else if (ri.seqnum == lastSeenSeqnum) {
         if (ri.hopCount < hopCountToRoot) {
             update = true;
-            TPRINTF("update routing info - better metric\n");
+            TPRINTF("RI updated: < metric\n");
         }
         else if (ri.hopCount == hopCountToRoot && !seenRoutingInThisFrame) {
             update = true;
-            TPRINTF("update routing info - same metric\n");
+            TPRINTF("RI updated: == metric\n");
         }
     }
     if (ri.hopCount > MAX_HOP_COUNT) update = false;
@@ -321,14 +321,17 @@ static void routingReceive(Socket_t *s, uint8_t *data, uint16_t len)
         int32_t oldRootClockDeltaMs = rootClockDeltaMs;
         rootClockDeltaMs = ri.rootClockMs - getTimeMs64();
         //TPRINTF("process packet, rx time=%lu\n", (uint32_t) ri.rootClockMs);
-        PRINTF("delta: old=%ld, new=%ld\n", (int32_t)oldRootClockDeltaMs, (int32_t)rootClockDeltaMs);
         if (abs((int32_t)oldRootClockDeltaMs - (int32_t)rootClockDeltaMs) > 500) {
             PRINTF("large delta change=%ld, time sync off?!\n", (int32_t)rootClockDeltaMs - (int32_t)oldRootClockDeltaMs);
+            PRINTF("delta: old=%ld, new=%ld\n", (int32_t)oldRootClockDeltaMs, (int32_t)rootClockDeltaMs);
         }
-        TPRINTF("OK!%s\n", isListening ? "" : " (not listening)");
+        // TPRINTF("OK!%s\n", isListening ? "" : " (not listening)");
 
         // reschedule next listen start after this timesync
         alarmSchedule(&roStartListeningTimer, timeToNextFrame());
+    }
+    else {
+        PRINTF("RI not updated!\n");
     }
 }
 
@@ -344,7 +347,7 @@ RoutingDecision_e routePacket(MacInfo_t *info)
 {
     MosAddr *dst = &info->originalDst;
     if (!IS_LOCAL(info)) {
-        PRINTF("route packet\n");
+//        PRINTF("route packet\n");
 #if 0
         if (info->immedSrc.shortAddr) {
             if (rootAddress != 0 && info->immedSrc.shortAddr != rootAddress) {
