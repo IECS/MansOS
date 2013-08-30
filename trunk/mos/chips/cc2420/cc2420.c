@@ -61,7 +61,7 @@
 #include <lib/codec/crc.h>
 #include <kernel/threads/threads.h>
 #include <lib/energy.h>
-#include <digital.h>
+#include <hil/atomic.h>
 #if USE_PROTOTHREADS
 #include <kernel/protothreads/process.h>
 #include <kernel/protothreads/radio-process.h>
@@ -329,7 +329,7 @@ int_t cc2420Send(const void *header, uint16_t headerLen,
     int_t result;
 
     Handle_t h;
-    ATOMIC_START(h);
+    ATOMIC_START_TIMESAVE(h);
 
     if (!receive_on)  {
         cc2420InitSpi();
@@ -415,7 +415,7 @@ int_t cc2420Send(const void *header, uint16_t headerLen,
         cc2420DisableSpi();
         cc2420StopVreg();
     }
-    ATOMIC_END(h);
+    ATOMIC_END_TIMESAVE(h);
     return result;
 }
 
