@@ -40,6 +40,9 @@
 #define ADS8328_REG_CONFIG_WRITE   0x0E
 #define ADS8328_REG_CONFIG_DEFAULT 0x0F
 
+
+#define ADS8328_CFR_AUTO_CHANSEL  (0x1 << 11ul)
+
 enum {
     ADS8328_CHANNEL_0,
     ADS8328_CHANNEL_1,
@@ -56,5 +59,7 @@ uint16_t ads8328ReadData(void);
 void ads8328RegWrite4(uint8_t address);
 
 void ads8328RegWrite16(uint8_t address, uint16_t data);
+
+uint16_t ads8328ConfigRegRead(void);
 
 #endif
