@@ -32,8 +32,6 @@ class PageUpload():
         global maybeIsInSubprocess
         global isPostEntered
 
-        self.setSession(qs)
-
         # Parse the form data posted
         form = cgi.FieldStorage(
             fp = self.rfile,
@@ -46,10 +44,9 @@ class PageUpload():
         isPostEntered = True
 
         self.send_response(200)
-        self.send_header('Content-Type', 'text/html')
-        self.send_header('Transfer-Encoding', 'chunked')
+        self.sendDefaultHeaders()
         self.end_headers()
-
+        
         file_data = None
 
         isSEAL = False
@@ -77,7 +74,6 @@ class PageUpload():
 
         # check if what to upload is provided
         if not fileContents and not code:
-            self.serveHeader("upload", qs)
             text = "Neither filename nor code specified!"
             maybeIsInSubprocess = False
             self.serveAnyPage("error:critical", qs, errorMsg = text)
@@ -99,11 +95,9 @@ class PageUpload():
         motes.storeSelected()
         # check if any motes are selected
         if not motes.anySelected():
-            self.serveHeader("upload", qs)
             text = "No motes selected!"
-            maybeIsInSubprocess = False
-            self.serveAnyPage("error:critical", qs, errorMsg = text)         
-            return
+            maybeIsInSubprocess = False         
+            return self.serveAnyPage("error:critical", qs, errorMsg = text, generatedContentOnly = True)
 
         config = ""
         if "config" in form.keys():
@@ -121,20 +115,23 @@ class PageUpload():
         else:
             infoMsg = "<div><strong>Upload failed!</strong></div><br/>"
             
-        self.serveAnyPage("upload", qs, True, {"MOTES_TXT" : motesText,
+        '''self.serveAnyPage("upload", qs, True, {"MOTES_TXT" : motesText,
                         "CCODE_CHECKED": 'checked="checked"' if not isSealCode else "",
                         "SEALCODE_CHECKED" : 'checked="checked"' if isSealCode else "",
                         "UPLOAD_CODE" : lastUploadCode,
                         "UPLOAD_CONFIG" : lastUploadConfig,
                         "UPLOAD_FILENAME": lastUploadFile,
-                        "SLOW_CHECKED" : 'checked="checked"' if isSlow else ""}, infoMsg = infoMsg)
+                        "SLOW_CHECKED" : 'checked="checked"' if isSlow else ""}, infoMsg = infoMsg)'''
+        self.writeChunk("ok")
 
     def serveUploadResult(self, qs):
         global maybeIsInSubprocess
         global isPostEntered
 
-        #if self.getLevel() < 2:
-        #    self.serveDefault(qs)
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+
         inFileName = os.path.join("build", "child_output.txt")
         inFile = None
 
@@ -147,16 +144,8 @@ class PageUpload():
                 break
         isPostEntered = False
 
+        result = ""
         try:
-            #self.setSession(qs)
-            self.send_response(200)
-            self.sendDefaultHeaders()
-            self.end_headers()
-            qs["no"] = "no"
-            self.serveHeaderOld("upload", qs)
-            self.writeChunk('<button type="button" onclick="window.open(\'\', \'_self\', \'\'); window.close();">OK</button><br/>')
-            self.writeChunk("Upload result:<br/><pre>\n")
-
             # wait until subprocess output file appears
             while maybeIsInSubprocess or inFile == None:
                 try:
@@ -166,7 +155,6 @@ class PageUpload():
                     time.sleep(0.001)
 
             if inFile:
-#                print("in file opened ok")
                 uploadLine = ""
                 while True:
                     if utils.fileIsOver(inFile):
@@ -180,12 +168,8 @@ class PageUpload():
                     uploadLine += c
                     if c == '\n':
                         # if newline reached, print out the current line
-                        self.writeChunk(uploadLine)
+                        result += uploadLine
                         uploadLine = ""
-                # write final chunk
-                if uploadLine:
-                    self.writeChunk(uploadLine)
-            self.writeChunk("</pre>\n")
         except:
             raise
         finally:
@@ -195,8 +179,7 @@ class PageUpload():
                 os.remove(inFileName)
             except:
                 pass
-#            print("upload result served!")
-            uploadResult = ""
+        self.writeChunk(result)
             
     def compileAndUpload(self, code, config, fileContents, isSEAL):
         global lastUploadCode

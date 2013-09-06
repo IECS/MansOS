@@ -84,16 +84,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         BaseHTTPRequestHandler.__init__(self, request, client_address, server)
 
     def writeChunk(self, buffer):
-        '''if self.wfile == None: return
-        if self.wfile._sock == None: return
-        self.wfile.write("{:x}\r\n".format(len(buffer)))
         self.wfile.write(buffer)
-        self.wfile.write("\r\n")'''
-        self.wfile.write(buffer)
-
-    def writeFinalChunk(self):
-        '''self.wfile.write("0\r\n")
-        self.wfile.write("\r\n")'''
 
     # overrides base class function, because in some versions
     # it tries to resolve dns and fails...
@@ -105,9 +96,6 @@ class HttpServerHandler(BaseHTTPRequestHandler,
 
     def sendDefaultHeaders(self):
         self.send_header('Content-Type', 'text/html')
-        # use chunked transfer encoding (to be able to send additional chunks 'later')
-        #self.send_header('Transfer-Encoding', 'chunked')
-        # disable caching
         self.send_header('Cache-Control', 'no-store');
         self.send_header('Connection', 'close');
 
@@ -206,7 +194,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
     '''
     
     def serveAnyPage(self, name, qs, isGeneric = True, replaceValues = None, urlTo = "", 
-            title = None, content = None, infoMsg = None, errorMsg = None):
+            title = None, content = None, infoMsg = None, errorMsg = None, generatedContentOnly = False):
         f = open(self.htmlDirectory + "/layout.html", "r")
         contents = f.read()
         t = Template(contents)
@@ -311,7 +299,10 @@ class HttpServerHandler(BaseHTTPRequestHandler,
                 pageTitle = pageTitle, pageHead = pageHead, sessionHead = sessionHead, 
                 sma = sma, menuContent = menuContent, bodyContent = bodyContent, log = log)
             contents = contents.replace("&#44;", ",")
-            self.writeChunk(contents)
+            if generatedContentOnly == False:
+                self.writeChunk(contents)
+            else:
+                return contents
     
     def serveDefault(self, qs, isSession = False):
         if not isSession:
@@ -477,7 +468,6 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             disabled = 'disabled="disabled"' if not self.getLevel() > 1 else ""
             contents = contents.replace("%DISABLED%", disabled)
             self.writeChunk(contents)
-        self.writeFinalChunk()
    
     def serve404Error(self, path, qs):
         self.setSession(qs)
@@ -610,7 +600,6 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         self.end_headers()
         if self.getLevel() > 1:
             self.writeChunk("writeAccess=True")
-        self.writeFinalChunk()
 
     def serveListenData(self, qs):
         self.send_response(200)
@@ -621,7 +610,6 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             text += line + "<br/>"
         if text:
             self.writeChunk(text)
-        self.writeFinalChunk()
 
     def do_POST(self):
         self.headerIsServed = False
