@@ -1,3 +1,24 @@
+<script src="http://static.scripting.com/github/bootstrap2/js/jquery.js"></script>
+<script src="http://static.scripting.com/github/bootstrap2/js/bootstrap-transition.js"></script>
+<script src="http://static.scripting.com/github/bootstrap2/js/bootstrap-modal.js"></script>
+
+<div id="windowTitleDialog" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="windowTitleLabel" aria-hidden="true">
+	<div class="modal-header">
+		<a href="#" class="close" data-dismiss="modal">&times;</a>
+		<h2 style="margin: 0px">Upload result:</h2>
+	</div>
+	<div class="modal-body">
+		<div class="divDialogElements">
+			<pre id="uploadResult">
+			
+			</pre>
+		</div>
+	</div>
+	<div class="modal-footer">
+		<button type="button" onclick="$('#windowTitleDialog').modal('hide')">OK</button>
+	</div>
+</div>
+
 <form action="upload" method="post" enctype="multipart/form-data">
 	%MOTES_TXT%
 
@@ -12,7 +33,7 @@
 	  <textarea id="config" name="config" cols="80" rows="4"  title="Enter the configuration options your would normally put in application's config file" %DISABLED%>%UPLOAD_CONFIG%</textarea><br/>
 	
 	  <input type="hidden" name="sma" class="Msma37" value="0">
-	  <input type="submit" name="compile" value="Compile and upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/>
+	  <input type="submit" name="compile" value="Compile and upload" class="submit_btn" %DISABLED%/>
 	
 <!--	  <input type="checkbox" name="slow" title="Add delays to the upload script. Useful if serial protocol is tunneled over IP" %SLOW_CHECKED% %DISABLED%>Use SLOW switch when uploading<br/><br/> -->
 	</div>
@@ -26,3 +47,60 @@
   <input type="submit" name="upload" value="Upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/>
 <!--  <input type="checkbox" name="slow" title="Add delays to the upload script. Useful if serial protocol is tunneled over IP" %SLOW_CHECKED% %DISABLED%>Use SLOW switch when uploading<br/><br/> -->
 </div></form>
+
+<script language="javascript">
+	$(function() {
+		$(".submit_btn").click(function() {
+			var dataString = '';
+			var inputElements = $('body').find(':input');
+			inputElements.each(function(index, para) {
+				if (!$(this).is("textarea")) {
+					if ($(para).attr("type") == 'radio') {
+						if ($(para).attr("checked") == 'checked') {
+							dataString += $(para).serialize() + '&';
+						}
+					} else if ($(para).attr("type") == 'submit') {
+						dataString += $(para).attr('name') + '=' + $(para).val() + '&';
+					} else {
+	    				dataString += $(para).serialize() + '&';
+	    			}
+	    		}
+			});
+			var txtElements = $('textarea');
+			txtElements.each(function(index, para) {
+  				dataString += $(para).serialize() + '&';
+			});
+			$.ajax({
+				type: "POST",
+				url: "upload",
+				data: dataString,
+				dataType: "text",
+				success: function(data) {
+					//alert(data);
+				},
+				error: function() {
+            		alert('Error occured');
+       			}
+			});
+			updateUploadPage();
+			return false;
+		});
+	});
+
+	function updateUploadPage() {
+		$('#uploadResult').text("");
+		$("#windowTitleDialog").modal('show');
+		$.ajax({
+			type: "GET",
+			url: "upload-result",
+			data: "",
+			dataType: "text",
+			success: function(data) {
+				$('#uploadResult').text(data);
+			},
+			error: function() {
+        		alert('Error occured');
+   			}
+		});
+	}
+</script>

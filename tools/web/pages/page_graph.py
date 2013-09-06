@@ -168,14 +168,6 @@ class PageGraph():
         self.sendDefaultHeaders()
         self.end_headers()
 
-        '''
-        # if not listening at the moment,
-        # but were listening previosly, send the previous data
-        if not isListening and lastData :
-            self.writeChunk(lastData)
-            self.writeFinalChunk()
-            return
-        '''
         # get the data to display in graphs
         allData = ""
         if self.moteData.hasData():
@@ -188,7 +180,6 @@ class PageGraph():
                     allData += "|"
         lastData = allData
         self.writeChunk(allData)
-        self.writeFinalChunk()
         
     def serveGraphForm(self, qs):
         self.send_response(200)
@@ -225,4 +216,3 @@ class PageGraph():
             i += 1
         
         self.writeChunk(graphForm)
-        self.writeFinalChunk()
