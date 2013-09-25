@@ -167,11 +167,11 @@ static bool filterPass(MacInfo_t *mi, uint16_t len)
 #define FORWARDER_ADDRESS    0x15CE
 #define COLLECTOR_ADDRESS    0x0871
 
-#define FORWARDER_ADDRESS1   0x15CE
-#define FORWARDER_ADDRESS2   0x135B
+#define FORWARDER_ADDRESS1   0x2
+#define FORWARDER_ADDRESS2   0x3
 
-#define COLLECTOR_ADDRESS1   0x0871
-#define COLLECTOR_ADDRESS2   0x2C71
+#define COLLECTOR_ADDRESS1   0x4
+#define COLLECTOR_ADDRESS2   0x5
 
 #if 0
     // network with all four mote roles, two intermediate hops
