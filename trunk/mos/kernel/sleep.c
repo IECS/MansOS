@@ -106,13 +106,13 @@ void doMsleep(uint16_t milliseconds)
         energyConsumerOn(ENERGY_CONSUMER_MCU);
 
         // fix jiffies taking into account the time spent for local processing
-        while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED())) {
+        while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 1)) {
             // PRINTF("*");
             jiffies += JIFFY_TIMER_MS;
             ALARM_TIMER_REGISTER += PLATFORM_ALARM_TIMER_PERIOD;
         }
 #if PLATFORM_TIME_CORRECTION_PERIOD
-        while (!timeAfter16(CORRECTION_TIMER_REGISTER, CORRECTION_TIMER_READ_STOPPED())) {
+        while (!timeAfter16(CORRECTION_TIMER_REGISTER, CORRECTION_TIMER_READ_STOPPED() + 1)) {
             // PRINTF("#");
             CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;
             jiffies -= 3;

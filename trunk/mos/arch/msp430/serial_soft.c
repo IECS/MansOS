@@ -106,7 +106,7 @@ static void softSerialStop(void)
 
 static void softSerialRestart(void)
 {
-    // XXX: this is not correct if the user wants it disabled fro some reason
+    // XXX: this is not correct if the user wants it disabled for some reason
     // enable back serial
     serialTxEnabled[0] = true;
 #if SERIAL_COUNT > 1
@@ -342,8 +342,6 @@ static void rxByte1(void)
         }
     }
 }
-
-volatile bool appRunning;
 
 #ifdef USE_SW_SERIAL_INTERRUPTS
 

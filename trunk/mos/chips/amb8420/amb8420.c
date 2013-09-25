@@ -45,7 +45,7 @@ static AMB8420AddrMode_t currentAddressMode;
 Amb8420InitCode_e initResult;
 
 Alarm_t radioResetTimer;
-#define RADIO_RESET_INTERVAL (60ul * 60 * 1000) // 60 min
+#define RADIO_RESET_INTERVAL (120ul * 60 * 1000) // 120 min
 
 static enum {
     STATE_READ_DELIMITER,
@@ -247,7 +247,7 @@ Amb8420InitCode_e amb8420Reset(void)
     AMB8420_WAIT_FOR_RTS_READY(ok);
     if (!ok) goto end;
     RPRINTF("  init completed\n");
-  
+
     ATOMIC_START(h);
     udelay(100);
 
@@ -834,7 +834,7 @@ void amb8420ResetIfInactive(void)
         }
 
         while (initResult == AMB8420_INIT_SOFT_FAIL) {
-            amb8420Reset();            
+            initResult = amb8420Reset();            
         }
     } else {
         somePacketsReceived = false;

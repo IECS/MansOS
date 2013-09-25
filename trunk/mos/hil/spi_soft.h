@@ -153,7 +153,6 @@ uint8_t sw_spiExchByte(uint8_t b);
 //------------------------------------------------------------------------------
 // Initializes the ports for SPI
 //------------------------------------------------------------------------------
-// TODO - handle slave mode
 void sw_spiInit(SpiBusMode_t mode);
 
 #else // SW_SPI_PIN_ERROR == 1

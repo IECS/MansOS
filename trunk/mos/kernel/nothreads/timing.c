@@ -76,7 +76,7 @@ ALARM_TIMER_INTERRUPT1()
         // We improve the precision by applying a fix 24/3 = 8 times per second.
         //
 #if PLATFORM_TIME_CORRECTION_PERIOD
-        while (!timeAfter16(CORRECTION_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED())) {
+        while (!timeAfter16(CORRECTION_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 1)) {
             CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;
             jiffies -= 3;
         }

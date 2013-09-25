@@ -207,9 +207,13 @@ static void roRequestTimerCb(void *x)
     // add jitter
     routingRequestTimeout += randomNumberBounded(100);
     alarmSchedule(&roRequestTimer, routingRequestTimeout);
-    // use exponential backoff
-    routingRequestTimeout *= 2;
-    if (routingRequestTimeout > ROUTING_REQUEST_MAX_TIMEOUT) {
+    if (routingRequestTimeout < ROUTING_REQUEST_MAX_EXP_TIMEOUT) {
+        // use exponential increments
+        routingRequestTimeout *= 2;
+    } else if (routingRequestTimeout < ROUTING_REQUEST_MAX_TIMEOUT) {
+        // use linear increments
+        routingRequestTimeout += ROUTING_REQUEST_MAX_EXP_TIMEOUT;
+    } else {
         // move back to initial (small) timeout
         routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
     }

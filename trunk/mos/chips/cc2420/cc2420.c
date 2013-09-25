@@ -329,7 +329,7 @@ int_t cc2420Send(const void *header, uint16_t headerLen,
     int_t result;
 
     Handle_t h;
-    ATOMIC_START_TIMESAVE(h);
+    ATOMIC_START(h);
 
     if (!receive_on)  {
         cc2420InitSpi();
@@ -415,7 +415,7 @@ int_t cc2420Send(const void *header, uint16_t headerLen,
         cc2420DisableSpi();
         cc2420StopVreg();
     }
-    ATOMIC_END_TIMESAVE(h);
+    ATOMIC_END(h);
     return result;
 }
 
