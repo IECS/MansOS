@@ -571,7 +571,7 @@ bool sdcardReadBlock(uint32_t address, void* buffer)
     //  if SDHC card: use block number instead of address
     if (cardType == SD_CARD_TYPE_SDHC) address >>= 9;
 
-    ATOMIC_START_TIMESAVE(h);
+    ATOMIC_START(h);
     SDCARD_SPI_ENABLE();
 
     if (sdcardCommand(CMD_READ_SINGLE_BLOCK, address, 0xff) != 0) {
@@ -582,7 +582,7 @@ bool sdcardReadBlock(uint32_t address, void* buffer)
 
   end:
     SDCARD_SPI_DISABLE();
-    ATOMIC_END_TIMESAVE(h);
+    ATOMIC_END(h);
     SPRINTF("  done\n");
     return result;
 }
@@ -644,7 +644,7 @@ bool sdcardWriteBlock(uint32_t address, const void *buf)
     Handle_t handle;
     bool result = false;
 
-    ATOMIC_START_TIMESAVE(handle);
+    ATOMIC_START(handle);
 
     //  if SDHC card: use block number instead of address
     if (cardType == SD_CARD_TYPE_SDHC) address >>= 9;
@@ -669,7 +669,7 @@ bool sdcardWriteBlock(uint32_t address, const void *buf)
 
   end:
     SDCARD_SPI_DISABLE();
-    ATOMIC_END_TIMESAVE(handle);
+    ATOMIC_END(handle);
     SPRINTF("  done\n");
     return result;
 }

@@ -78,7 +78,7 @@ uint16_t ads8328ConfigRegRead(void)
 
 void ads8328RegWrite4(uint8_t address)
 {
-#if 0
+#if 1
     uint8_t array[2];
     array[0] = address << 4;
     array[1] = 0;

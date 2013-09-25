@@ -95,7 +95,7 @@ ALARM_TIMER_INTERRUPT1()
         // The clock error is (32768 / 32) - 1000 = 1024 - 1000 = 24 milliseconds.
         // We improve the precision by applying a fix 24/3 = 8 times per second.
         //
-        while (!timeAfter16(CORRECTION_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED())) {
+        while (!timeAfter16(CORRECTION_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 1)) {
             // if (CORRECTION_TIMER_REGISTER <= PLATFORM_TIME_CORRECTION_PERIOD) {
             //     PRINTF("@");
             // }

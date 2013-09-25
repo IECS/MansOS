@@ -229,9 +229,14 @@ static void roRequestTimerCb(void *x)
     // add jitter
     routingRequestTimeout += randomNumberBounded(100);
     alarmSchedule(&roRequestTimer, routingRequestTimeout);
-    // use exponential backoff
-    routingRequestTimeout *= 2;
-    if (routingRequestTimeout > ROUTING_REQUEST_MAX_TIMEOUT) {
+
+    if (routingRequestTimeout < ROUTING_REQUEST_MAX_EXP_TIMEOUT) {
+        // use exponential increments
+        routingRequestTimeout *= 2;
+    } else if (routingRequestTimeout < ROUTING_REQUEST_MAX_TIMEOUT) {
+        // use linear increments
+        routingRequestTimeout += ROUTING_REQUEST_MAX_EXP_TIMEOUT;
+    } else {
         // move back to initial (small) timeout
         routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
     }
@@ -416,8 +421,8 @@ RoutingDecision_e routePacket(MacInfo_t *info)
             uint32_t expectedTimeEnd = expectedTimeStart + MOTE_TIME;
             uint32_t now = timeSinceFrameStart();
             if (now < expectedTimeStart || now > expectedTimeEnd) {
-                TPRINTF("*** mote sends out of its time: expected at %lu (+0-512 ms), now %lu!\n",
-                        expectedTimeStart, now);
+                TPRINTF("*** mote %#04x sends out of its time: expected at %lu (+0-512 ms), now %lu!\n",
+                        motes[index].address, expectedTimeStart, now);
             }
         } else {
             if (timeSinceFrameStart() > 4000) {

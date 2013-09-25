@@ -31,6 +31,7 @@
 #include <net/routing.h>
 #include <net/radio_packet_buffer.h>
 #include <leds.h>
+#include <codec.h>
 
 #define TEST_FILTERS 1
 
@@ -71,8 +72,13 @@ static void delayTimerCb(void *);
 // -----------------------------------------------
 
 static void initSadMac(RecvFunction recvCb) {
-    // use least significant byte of localAddress AMB8420 address  
-    amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, localAddress & 0xff);
+    // use crc8 of localAddress as the address on AMB8420
+    uint8_t calcAddress = crc8((const uint8_t *) &localAddress, sizeof(localAddress));
+    if (calcAddress == 0xff) calcAddress = 0xfe; // avoid using the broadcast address
+#if USE_PRINT
+    PRINTF("Using 0x%02x as radio address\n", calcAddress);
+#endif
+    amb8420EnterAddressingMode(AMB8420_ADDR_MODE_ADDR, calcAddress);
 
 #if DELAYED_SEND
     alarmInit(&delayTimer, delayTimerCb, NULL);
@@ -90,7 +96,12 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
         uint32_t now = getSyncTimeMs();
         if (timeAfter32(mi->timeWhenSend, now)) {
             // PRINTF("delayed send after %ld\n", mi->timeWhenSend - now);
-            delayedNexthop = getNexthop(mi) & 0xff;
+            uint16_t nh = getNexthop(mi);
+            if (nh == MOS_ADDR_BROADCAST) {
+                delayedNexthop = 0xff;
+            } else {
+                delayedNexthop = crc8((const uint8_t *) &nh, sizeof(nh));
+            }
             memcpy(delayedData, mi->macHeader, mi->macHeaderLen);
             delayedDataLength = mi->macHeaderLen;
             memcpy(delayedData + delayedDataLength, data, length);
@@ -101,10 +112,16 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     }
 #endif
     // use least significant byte
-    uint8_t nh = getNexthop(mi) & 0xff;
-    if (lastNexthop != nh) {
-        amb8420SetDstAddress(nh);
-        lastNexthop = nh;
+    uint16_t nh = getNexthop(mi);
+    uint8_t nhAddr;
+    if (nh == MOS_ADDR_BROADCAST) {
+        nhAddr = 0xff;
+    } else {
+        nhAddr = crc8((const uint8_t *) &nh, sizeof(nh));
+    }
+    if (lastNexthop != nhAddr) {
+        amb8420SetDstAddress(nhAddr);
+        lastNexthop = nhAddr;
     }
     // PRINTF("%lu: mac tx %u bytes\n", getSyncTimeMs(), length);
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);

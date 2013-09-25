@@ -120,7 +120,7 @@ static uint32_t calcListenStartTime(void)
 static uint32_t calcSendTime(void)
 {
     // decrease the random offset in order to speed up things!
-    uint32_t expected = 4000ul + MOTE_TIME_FULL * moteNumber + MOTE_TIME - 200 + randomInRange(0, 200); 
+    uint32_t expected = 4000ul + MOTE_TIME_FULL * moteNumber + MOTE_TIME - 200 + randomInRange(0, 100);
     uint32_t now = timeSinceFrameStart();
     if (now > expected) expected += SAD_SUPERFRAME_LENGTH;
     expected -= now;
@@ -169,7 +169,7 @@ static void roStopListeningTimerCb(void *x)
 static void roCheckTimerCb(void *x)
 {
     alarmSchedule(&roCheckTimer, 5000 + randomNumberBounded(1000));
-    
+
     bool routingOk = isRoutingInfoValid();
 
     if (routingSearching) {
@@ -215,10 +215,14 @@ static void roRequestTimerCb(void *x)
         // add jitter
         routingRequestTimeout += randomNumberBounded(100);
         alarmSchedule(&roRequestTimer, routingRequestTimeout);
-    
-        // use exponential backoff
-        routingRequestTimeout *= 2;
-        if (routingRequestTimeout > ROUTING_REQUEST_MAX_TIMEOUT) {
+
+        if (routingRequestTimeout < ROUTING_REQUEST_MAX_EXP_TIMEOUT) {
+            // use exponential increments
+            routingRequestTimeout *= 2;
+        } else if (routingRequestTimeout < ROUTING_REQUEST_MAX_TIMEOUT) {
+            // use linear increments
+            routingRequestTimeout += ROUTING_REQUEST_MAX_EXP_TIMEOUT;
+        } else {
             // move back to initial (small) timeout
             routingRequestTimeout = ROUTING_REQUEST_INIT_TIMEOUT;
         }

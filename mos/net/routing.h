@@ -115,9 +115,14 @@ typedef struct RoutingRequestPacket_s {
 # define MAX_MOTES 4
 #endif
 
-// the real timeout is in range between these numbers (exponential backoff)
-#define ROUTING_REQUEST_INIT_TIMEOUT  (2 * 1000ul)
-#define ROUTING_REQUEST_MAX_TIMEOUT   (3600 * 1000ul)
+// the real timeout is in range between these numbers;
+// the average frequency should be around once in 200-300 seconds (1% duty cycle)
+#define ROUTING_REQUEST_INIT_TIMEOUT    (2 * 1000ul)
+#define ROUTING_REQUEST_MAX_EXP_TIMEOUT (256 * 1000ul)
+#define ROUTING_REQUEST_MAX_TIMEOUT     (1500 * 1000ul)
+
+// the backoff is exponential at the start (until timeout < 5 minutes)
+// and linear afterwards (with ~5 minute step)
 
 #define MOTE_INFO_VALID_TIME          (5 * SAD_SUPERFRAME_LENGTH)
 
@@ -125,6 +130,9 @@ typedef struct RoutingRequestPacket_s {
 #define TIMESLOT_IMPRECISION          1000
 
 #define ROUTING_REPLY_WAIT_TIMEOUT    2000
+
+// #define FIVE_MINUTES        5 * 60ul * 1000
+// #define TEN_MINUTES        10 * 60ul * 1000
 
 #define MOTE_TIME      512ul  // milliseconds
 #define MOTE_TIME_FULL (MOTE_TIME * 3)

@@ -42,6 +42,8 @@
 
 extern void sw_spiInit(SpiBusMode_t mode);
 extern uint8_t sw_spiExchByte(uint8_t b);
+// writes 4 bits
+void sw_spiWriteNibble(uint8_t nibble);
 
 ///
 /// Initializes SPI bus in either master or slave mode
