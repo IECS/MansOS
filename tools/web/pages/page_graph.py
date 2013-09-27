@@ -21,9 +21,7 @@ class PageGraph():
                 self.serveEditGraph(qs)
                 return
             tses = self.sessions.get_session(qs["sma"][0])
-            graphAttributes = self.settings.getCfgValue("graphAttributes")
-            if isinstance(graphAttributes, str):
-                graphAttributes = graphAttributes.split(",")
+            graphAttributes = self.settings.getCfgValueAsList("graphAttributes")
             if "savegraph" in qs:
                 #save changes
                 if qs["savegraph"][0] == tses.to_md5("GraphSettingsSave") and self.isSafe():
@@ -62,14 +60,9 @@ class PageGraph():
             elif "addnewgraph" in qs:
                 if qs["addnewgraph"][0] != "true":
                     if  qs["addnewgraph"][0] == tses.to_md5("addnewgraph") and self.isSafe():
-                        number = len(self.settings.getCfgValue(graphAttributes[0]))
                         for atr in graphAttributes:
-                            #pievieno info beigas
                             tsettings = self.settings.getCfgValueAsList(atr)
-                            if isinstance(tsettings[0], list):
-                                tsettings.insert(number, tses.from_code(qs[atr][0]).translate(None, " ").split(","))
-                            else:
-                                tsettings.insert(number, tses.from_code(qs[atr][0]))                            
+                            tsettings.append(tses.from_code(qs[atr][0]));                          
                             self.settings.setCfgValue(atr, tsettings)
                         changes["INFO"] = "<h4 class='suc'> New graph added!</h4>"
                         self.settings.save()
@@ -108,9 +101,7 @@ class PageGraph():
         changes = {}
         changes["FORM"] = ''
         if self.getLevel() > 1:
-            graphAttributes = self.settings.getCfgValue("graphAttributes")
-            if isinstance(graphAttributes, str):
-                graphAttributes = graphAttributes.split(",")
+            graphAttributes = self.settings.getCfgValueAsList("graphAttributes")
             formCode = "<form>"
             for atr in graphAttributes:
                 formCode += "<p>" + atr + ": " + "<input autocomplete='off' type='text' class='tocode must widthtext' "
@@ -125,9 +116,7 @@ class PageGraph():
 
     def serveEditGraph(self, qs):
         tses = self.sessions.get_session(qs["sma"][0])
-        graphAttributes = self.settings.getCfgValue("graphAttributes")
-        if isinstance(graphAttributes, str):
-            graphAttributes = graphAttributes.split(",")
+        graphAttributes = self.settings.getCfgValueAsList("graphAttributes")
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -135,7 +124,7 @@ class PageGraph():
         if self.isSafe():
             formCode = "<form>"
             number = int(qs["editgraph"][0])
-            formCode += "<p> Graph: <strong>" + tses.to_code(self.settings.getCfgValue("graphTitle")[number]) + "</strong>"
+            formCode += "<p> Graph: <strong>" + tses.to_code(self.settings.getCfgValueAsList("graphTitle")[number]) + "</strong>"
             tcod = str(random.randint(10000000, 99999999))
             formCode += "<input type='hidden' class='coded tocode' id='" + tcod
             formCode += "' value=\"" + tses.to_code(qs["editgraph"][0], False, tcod) + "\" name='graph'></p>"
@@ -204,8 +193,11 @@ class PageGraph():
         settings = self.settings.getCfgValueAsList("graphData")
         while i < graphlen:
             tdata = ""
-            for data in settings[i]:
-                tdata += data + ";"
+            if isinstance(settings[i], list):
+                for data in settings[i]:
+                    tdata += data + ";"
+            else:
+                tdata += settings[i] + ";"
             tgraphForm[i] += tdata
             i += 1
             
