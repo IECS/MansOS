@@ -80,10 +80,12 @@ void sht11_conn_reset(void);
 #define SHT11_CLK_LO() pinClear(SHT11_SCL_PORT, SHT11_SCL_PIN)
 #define SHT11_SDA_IN() pinAsInput(SHT11_SDA_PORT, SHT11_SDA_PIN)
 #define SHT11_SDA_OUT() pinAsOutput(SHT11_SDA_PORT, SHT11_SDA_PIN)
-#define SHT11_SDA_HI() pinSet(SHT11_SDA_PORT, SHT11_SDA_PIN)
-#define SHT11_SDA_LO() pinClear(SHT11_SDA_PORT, SHT11_SDA_PIN)
+#ifndef SHT11_CUSTOM_HI_LO
+#define SHT11_SDA_HI() SHT11_SDA_IN() // NOTE: A pullup resistor should be connected to SDA
+#define SHT11_SDA_LO() SHT11_SDA_OUT() // Logical zero set up in SHT11_INIT()
+#define SHT11_SDA_SET(b) ((b) ? SHT11_SDA_HI() : SHT11_SDA_LO())
+#endif
 #define SHT11_SDA_GET() pinRead(SHT11_SDA_PORT, SHT11_SDA_PIN)
-#define SHT11_SDA_SET(b) pinWrite(SHT11_SDA_PORT, SHT11_SDA_PIN, b)
 
 // 11ms required for sensor to start up, wait 15ms just to be sure
 #define SHT11_ON() \
@@ -98,6 +100,9 @@ void sht11_conn_reset(void);
 
 // init sensor, turn power off
 #define SHT11_INIT() \
+    pinAsData(SHT11_SDA_PORT, SHT11_SDA_PIN); \
+    pinAsData(SHT11_SCL_PORT, SHT11_SCL_PIN); \
+    pinClear(SHT11_SDA_PORT, SHT11_SDA_PIN); \
     SHT11_PWR_OUT(); \
     SHT11_CLK_OUT(); \
     SHT11_OFF();     \
@@ -126,4 +131,3 @@ static inline uint16_t sht11_read_humidity(void) {
     (sht11_read_humidity() == 0xffff)
 
 #endif
-
