@@ -32,6 +32,10 @@
 // generate local address from serial number
 static inline uint16_t generateLocalAddress(void) 
 {
+#if PREDEFINED_LOCAL_ADDRESS
+    return PREDEFINED_LOCAL_ADDRESS;
+#endif
+
     uint16_t snum[4];
     bool ok = serialNumberRead((uint8_t *) snum);
     (void)ok;

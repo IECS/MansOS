@@ -95,12 +95,14 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
         }
         uint32_t now = getSyncTimeMs();
         if (timeAfter32(mi->timeWhenSend, now)) {
-            // PRINTF("delayed send after %ld\n", mi->timeWhenSend - now);
             uint16_t nh = getNexthop(mi);
+            // PRINTF("delayed send after %ld, nh=0x%04x\n", mi->timeWhenSend - now, nh);
             if (nh == MOS_ADDR_BROADCAST) {
                 delayedNexthop = 0xff;
             } else {
                 delayedNexthop = crc8((const uint8_t *) &nh, sizeof(nh));
+                // avoid using the broadcast address
+                if (delayedNexthop == 0xff) delayedNexthop = 0xfe;
             }
             memcpy(delayedData, mi->macHeader, mi->macHeaderLen);
             delayedDataLength = mi->macHeaderLen;
@@ -133,7 +135,7 @@ static int8_t sendSadMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
 #if DELAYED_SEND
 static void delayTimerCb(void *unused)
 {
-    // PRINTF("%lu: mac tx %u bytes\n", getSyncTimeMs(), delayedDataLength);
+    // TPRINTF("mac tx %u bytes, nh=0x%04x\n", delayedDataLength, delayedNexthop);
     // redLedToggle();
     INC_NETSTAT(NETSTAT_RADIO_TX, EMPTY_ADDR);
 #ifndef PLATFORM_ARDUINO
@@ -257,7 +259,7 @@ static void pollSadMac(void)
 {
     // XXX: stack overflow possible if stack size is too small!
     MacInfo_t mi;
-        
+
     INC_NETSTAT(NETSTAT_RADIO_RX, EMPTY_ADDR);
     if (isRadioPacketReceived()) {
         if (macProtocol.recvCb) {

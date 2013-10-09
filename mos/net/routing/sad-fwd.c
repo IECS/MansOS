@@ -107,7 +107,7 @@ static void roStartListeningTimerCb(void *x)
 
     isListening = true;
     radioOn();
-    alarmSchedule(&roStopListeningTimer, 4000ul + MOTE_TIME_FULL * MAX_MOTES);
+    alarmSchedule(&roStopListeningTimer, 4000ul + 2 * MOTE_TIME_FULL * MAX_MOTES);
 }
 
 static void roStopListeningTimerCb(void *x)

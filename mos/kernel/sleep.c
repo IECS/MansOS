@@ -92,6 +92,7 @@ void doMsleep(uint16_t milliseconds)
         jiffies += ticksInSleepMode / 32;
         jiffiesInSleepMode += ticksInSleepMode / 32;
         ticksInSleepMode %= 32;
+#if PLATFORM_HAS_CORRECTION_TIMER
         // on every 128 jiffies the time correction is 3 jiffies,
         // because 4000 ticks = 125 and 4096 = 128 uncorrected jiffies
         // but should be 4096 ticks = 125 corrected jiffies
@@ -100,18 +101,19 @@ void doMsleep(uint16_t milliseconds)
             jiffiesInSleepMode -= 128;
             jiffies -= 3;
         }
+#endif
 
         // change energy accounting mode back to active
         energyConsumerOff(ENERGY_CONSUMER_LPM);
         energyConsumerOn(ENERGY_CONSUMER_MCU);
 
-        // fix jiffies taking into account the time spent for local processing
+        // fix jiffies, taking into account the time spent for local processing
         while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 1)) {
             // PRINTF("*");
             jiffies += JIFFY_TIMER_MS;
             ALARM_TIMER_REGISTER += PLATFORM_ALARM_TIMER_PERIOD;
         }
-#if PLATFORM_TIME_CORRECTION_PERIOD
+#if PLATFORM_HAS_CORRECTION_TIMER
         while (!timeAfter16(CORRECTION_TIMER_REGISTER, CORRECTION_TIMER_READ_STOPPED() + 1)) {
             // PRINTF("#");
             CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;

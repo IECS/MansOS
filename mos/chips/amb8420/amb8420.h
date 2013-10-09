@@ -50,6 +50,9 @@
 
 #define AMB8420_START_DELIMITER       0x02
 
+#define AMB8420_DEFAULT_CHANNEL       106
+#define AMB8420_DEFAULT_TX_POWER      195
+
 // nonvolatile variable positions in memory
 #define MAC_NUM_RETRYS_POS            20
 #define MAC_ADDR_MODE_POS             21

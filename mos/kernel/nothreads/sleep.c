@@ -69,7 +69,11 @@ void msleep(uint16_t ms)
         }
         // do the real sleeping
         doMsleep(msToSleep);
+// comment this out to achieve "wake-on-interrupt" like behavior
+#if 1
         //check for exit conditions
         if (allTimeSpent) break;
+#endif
+        break;
     }
 }
