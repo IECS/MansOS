@@ -66,6 +66,7 @@ ALARM_TIMER_INTERRUPT0()
 ALARM_TIMER_INTERRUPT1()
 {
     switch (TIMER_INTERRUPT_VECTOR) {
+#if PLATFORM_HAS_CORRECTION_TIMER
     case CORRECTION_TIMER_EXPIRED:
         //
         // On MSP430 platforms binary ACLK oscillator usually is used.
@@ -75,13 +76,12 @@ ALARM_TIMER_INTERRUPT1()
         // The clock error is (32768 / 32) - 1000 = 1024 - 1000 = 24 milliseconds.
         // We improve the precision by applying a fix 24/3 = 8 times per second.
         //
-#if PLATFORM_TIME_CORRECTION_PERIOD
         while (!timeAfter16(CORRECTION_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 1)) {
             CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;
             jiffies -= 3;
         }
-#endif
         break;
+#endif // PLATFORM_HAS_CORRECTION_TIMER
 
     case SLEEP_TIMER_EXPIRED:
         // exit low power mode

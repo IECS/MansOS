@@ -116,7 +116,7 @@ static inline void serialDisableRX(uint8_t id) {
 }
 
 static inline bool serialUsesSMCLK(void ) {
-    // return true ONLY if SMCL is used for reception - it is impossible
+    // return true ONLY if SMCLK is used for reception - it is impossible
     // to *transmit* anything while the MCU is sleeping
     if ((UC0IE & UCA0RXIE) && (UCA0CTL1 & UCSSEL_2)) return true;
 #if SERIAL_COUNT > 1

@@ -53,6 +53,9 @@ void alarmsProcess(void)
     while (*a) {
         Alarm_t *ap = *a;
 
+        // the alarm must have valid callback
+        ASSERT(ap->callback != NULL);
+
         // PRINTF("processAlarms: ap=%p, ap->jiffies=%lu\n", ap, ap->jiffies);
 
         if (timeAfter32(ap->jiffies, now)) {
@@ -72,6 +75,9 @@ void alarmsProcess(void)
 
 void alarmSchedule(Alarm_t *alarm, uint32_t milliseconds)
 {
+    // the alarm must have valid callback
+    ASSERT(alarm->callback != NULL);
+
     // we want to avoid inserting local variables in the global alarm list
     // (but this warning, not an error, because the user function may never return)
     WARN_ON(isStackAddress(alarm));

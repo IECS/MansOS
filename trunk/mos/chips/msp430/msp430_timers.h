@@ -262,8 +262,8 @@ ACTIVE_TIMER_READ(SLEEP, TAR)
 
 #define TIMER_INTERRUPT_VECTOR  TAIV
 
-// no need for time correction
-#define PLATFORM_HAS_CORRECTION_TIMER 0
+// need for time correction
+#define PLATFORM_HAS_CORRECTION_TIMER 1
 
 //===========================================================
 //===========================================================

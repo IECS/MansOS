@@ -79,6 +79,8 @@ static bool seenRoutingInThisFrame;
 static bool isListening;
 static bool isGreenLedOn;
 
+#define IS_ODD_COLLECTOR (localAddress & 0x1)
+
 // -----------------------------------------------
 
 static inline bool isRoutingInfoValid(void)
@@ -96,11 +98,13 @@ static uint32_t calcNextForwardTime(uint8_t moteToProcess)
 {
     uint16_t rnd = randomInRange(200, 400);
     if (moteToProcess == 0) {
-        return timeToNextFrame() + 4000 + rnd;
+        return timeToNextFrame() + 4000 + rnd
+                + (IS_ODD_COLLECTOR ? MAX_MOTES * MOTE_TIME_FULL : 0);
     }
     
     uint32_t passedTime = timeSinceFrameStart();
-    uint32_t requiredTime = 4000ul + MOTE_TIME_FULL * moteToProcess + rnd;
+    uint32_t requiredTime = 4000ul + (IS_ODD_COLLECTOR ? MAX_MOTES * MOTE_TIME_FULL : 0)
+            + MOTE_TIME_FULL * moteToProcess + rnd;
     if (passedTime >= requiredTime) return 0;
     return requiredTime - passedTime;
 }
@@ -135,7 +139,7 @@ static void roStartListeningTimerCb(void *x)
 
     radioOn();
     isListening = true;
-    alarmSchedule(&roStopListeningTimer, 2000 + MOTE_TIME_FULL * MAX_MOTES);
+    alarmSchedule(&roStopListeningTimer, 2000 + 2 * MOTE_TIME_FULL * MAX_MOTES);
 }
 
 static void roStopListeningTimerCb(void *x)
@@ -417,7 +421,8 @@ RoutingDecision_e routePacket(MacInfo_t *info)
 //        PRINTF("route packet, addr=0x%04x port=%02x\n", dst->shortAddr, info->dstPort);
         uint8_t index = markAsSeen(info->immedSrc.shortAddr, false);
         if (index != 0xff) {
-            uint32_t expectedTimeStart = 4000ul + MOTE_TIME_FULL * index + MOTE_TIME;
+            uint32_t expectedTimeStart = 4000ul + MOTE_TIME_FULL * index + MOTE_TIME
+                    + (IS_ODD_COLLECTOR ? MOTE_TIME_FULL * MAX_MOTES : 0);
             uint32_t expectedTimeEnd = expectedTimeStart + MOTE_TIME;
             uint32_t now = timeSinceFrameStart();
             if (now < expectedTimeStart || now > expectedTimeEnd) {

@@ -82,6 +82,7 @@ ALARM_TIMER_INTERRUPT0()
 ALARM_TIMER_INTERRUPT1()
 {
     switch (TIMER_INTERRUPT_VECTOR) {
+#if PLATFORM_HAS_CORRECTION_TIMER
     case CORRECTION_TIMER_EXPIRED:
         if (CORRECTION_TIMER_REGISTER <= PLATFORM_ALARM_TIMER_PERIOD) {
             wasWraparound = true;
@@ -103,6 +104,7 @@ ALARM_TIMER_INTERRUPT1()
             jiffies -= 3;
         }
         break;
+#endif // PLATFORM_HAS_CORRECTION_TIMER
 
     case SLEEP_TIMER_EXPIRED:
         // PRINTF("*");

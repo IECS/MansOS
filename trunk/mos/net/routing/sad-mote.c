@@ -68,6 +68,8 @@ static bool seenRoutingInThisFrame;
 static void roStartListeningTimerCb(void *);
 static void roStopListeningTimerCb(void *);
 
+#define IS_ODD_COLLECTOR (nexthopToRoot & 0x1)
+
 #if DEBUG
 #define ROUTE_DEBUG 1
 #endif
@@ -89,6 +91,7 @@ static inline bool isRoutingInfoValid(void)
     bool old = timeAfter32((uint32_t)getJiffies(), lastRootMessageTime + ROUTING_INFO_VALID_TIME);
     if (old) {
         hopCountToRoot = MAX_HOP_COUNT;
+        nexthopToRoot = 0;
         return false;
     }
     return true;
@@ -105,13 +108,14 @@ static inline bool isCollectorMaybeListening(uint32_t atTime)
 {
     uint32_t passed = timeSinceFrameStart();
     if (passed < 2000) return false;
-    if (passed > 4000 + MOTE_TIME_FULL * MAX_MOTES) return false;
+    if (passed > 4000 + 2 * MOTE_TIME_FULL * MAX_MOTES) return false;
     return true;
 }
 
 static uint32_t calcListenStartTime(void)
 {
     uint32_t result = timeToNextFrame() + 4000ul + MOTE_TIME_FULL * moteNumber;
+    if (IS_ODD_COLLECTOR) result += MOTE_TIME_FULL * MAX_MOTES;
     if (result < TIMESLOT_IMPRECISION) result = 0;
     else result -= TIMESLOT_IMPRECISION;
     return result;
@@ -121,6 +125,7 @@ static uint32_t calcSendTime(void)
 {
     // decrease the random offset in order to speed up things!
     uint32_t expected = 4000ul + MOTE_TIME_FULL * moteNumber + MOTE_TIME - 200 + randomInRange(0, 100);
+    if (IS_ODD_COLLECTOR) expected += MOTE_TIME_FULL * MAX_MOTES;
     uint32_t now = timeSinceFrameStart();
     if (now > expected) expected += SAD_SUPERFRAME_LENGTH;
     expected -= now;
@@ -202,7 +207,7 @@ static void roRequestTimerCb(void *x)
         if (passed < 2000) {
             routingRequestTimeout = 2500 - passed;
         }
-        else if (passed + 5000 >= 4000 + MOTE_TIME_FULL * MAX_MOTES) {
+        else if (passed + 5000 >= 4000 + 2 * MOTE_TIME_FULL * MAX_MOTES) {
             routingRequestTimeout = timeToNextFrame() + 2500;
         }
         else {
@@ -357,7 +362,7 @@ RoutingDecision_e routePacket(MacInfo_t *info)
     fillLocalAddress(&info->immedSrc);
 
     // RPRINTF("dst address=0x%04x, nexthop=0x%04x\n", dst->shortAddr, info->immedDst.shortAddr);
-    // RPRINTF("  localAddress=0x%04x\n", localAddress);
+    // RPRINTF("  is_local=%u localAddress=0x%04x\n", IS_LOCAL(info) ? 1 : 0, localAddress);
 
     // fix root address if we are sending it to the root
     if (IS_LOCAL(info) && dst->shortAddr == MOS_ADDR_ROOT) {
@@ -385,7 +390,7 @@ RoutingDecision_e routePacket(MacInfo_t *info)
         TPRINTF("root routing info not present or expired!\n");
         return RD_DROP;
     }
-    //RPRINTF("using 0x%04x as nexthop to root\n", nexthopToRoot);
+    // RPRINTF("using 0x%04x as nexthop to root\n", nexthopToRoot);
     info->immedDst.shortAddr = nexthopToRoot;
     // delay until our frame
     info->timeWhenSend = calcSendTime();
