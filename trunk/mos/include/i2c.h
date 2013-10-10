@@ -65,7 +65,7 @@ static inline i2cError_t i2cWrite(uint8_t busId, uint8_t addr,
                                   const void *buf, uint8_t len)
 {
     if (busId == I2C_BUS_SW) return i2cSoftWrite(addr, buf, len);
-    return i2cWrite(busId, addr, buf, len);
+    return i2cHwWrite(busId, addr, buf, len);
 }
 
 ///
@@ -79,7 +79,7 @@ static inline uint8_t i2cRead(uint8_t busId, uint8_t addr,
                               void *buf, uint8_t len)
 {
     if (busId == I2C_BUS_SW) return i2cSoftRead(addr, buf, len);
-    return i2cRead(busId, addr, buf, len);
+    return i2cHwRead(busId, addr, buf, len);
 }
 
 ///
@@ -91,7 +91,7 @@ static inline uint8_t i2cRead(uint8_t busId, uint8_t addr,
 static inline i2cError_t i2cWriteByte(uint8_t busId, uint8_t addr, uint8_t txByte)
 {
     if (busId == I2C_BUS_SW) return i2cSoftWriteByte(txByte);
-    return i2cWrite(busId, addr, &txByte, 1);
+    return i2cHwWrite(busId, addr, &txByte, 1);
 }
 
 ///
@@ -103,7 +103,7 @@ static inline uint8_t i2cReadByte(uint8_t busId, uint8_t addr)
 {
     if (busId == I2C_BUS_SW) return i2cSoftReadByte(I2C_ACK);
     uint8_t byte = 0;
-    i2cRead(busId, addr, &byte, 1);
+    i2cHwRead(busId, addr, &byte, 1);
     return byte;
 }
 
