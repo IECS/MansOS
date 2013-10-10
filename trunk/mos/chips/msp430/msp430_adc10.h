@@ -25,6 +25,8 @@
 #ifndef _MSP430_ADC10_H_
 #define _MSP430_ADC10_H_
 
+#ifdef USE_ADC
+
 //
 // msp430_adc10.h -- ADC10 functionality on MSP430x2xx family
 //
@@ -150,5 +152,7 @@ static inline bool hplAdcIsBusy(void)
 }
 
 #define hplAdcUseSupplyRef()
+
+#endif // USE_ADC
 
 #endif // _MSP430_ADC10_H_
