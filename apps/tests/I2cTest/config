@@ -1,0 +1,6 @@
+USE_I2C=y
+
+# uncomment to use soft I2C
+#USE_SOFT_I2C = y
+
+USE_ASSERT=y
