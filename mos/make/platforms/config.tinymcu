@@ -1,0 +1,7 @@
+USE_RADIO=n
+USE_NET=n
+USE_SERIAL_NUMBER=n
+USE_THREADS=n
+
+# force serial port baudrate to 9600
+BAUDRATE = 9600
