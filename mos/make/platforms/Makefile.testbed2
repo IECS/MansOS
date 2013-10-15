@@ -35,6 +35,9 @@ MCU_MODEL ?= msp430f2471
 # Upload target
 UPLOAD_TARGET=upload-msp430
 
+# use 38400 rather than 9600 by default, for faster (but less stable) uploads
+PROG_BAUDRATE ?= 38400
+
 # Default clock speed: 4MHz
 ifeq ($(USE_HARDWARE_TIMERS),y)
 CPU_MHZ ?= 8
