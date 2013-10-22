@@ -99,100 +99,6 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         self.send_header('Cache-Control', 'no-store');
         self.send_header('Connection', 'close');
 
-
-
-#    def serveHeader(self, name, qs = {"no" : "no"}, isGeneric = True, includeBodyStart = True, replaceValues = None, urlTo = ""):
-    def serveHeaderOld(self, name, qs, isGeneric = True, replaceValues = None, urlTo = ""):
-        self.headerIsServed = True
-        if name == "default":
-            pagetitle = ""
-        else:
-            pagetitle = " &#8211; " + utils.toTitleCase(name)
-
-        with open(self.htmlDirectory + "/header.html", "r") as f:
-            contents = f.read()
-            contents = contents.replace("%PAGETITLE%", pagetitle)
-            self.writeChunk(contents)
-        try:
-            with open(self.htmlDirectory + "/" + name + ".header.html", "r") as f:
-                contents = f.read()
-                if replaceValues:
-                    for v in replaceValues:
-                        contents = contents.replace("%" + v + "%", replaceValues[v])
-                self.writeChunk(contents)
-        except:
-            pass
-
-        try:
-            if not "no" in qs:
-                text = self.serveSession(qs, urlTo)
-                self.writeChunk(text)
-        except Exception as e:
-            print("Error: Session not served!")
-            print(e)
-            self.writeChunk('</head>\n<body>')
-
-        with open(self.htmlDirectory + "/top-start.html", "r") as f:
-            contents = f.read()
-            if replaceValues:
-                for v in replaceValues:
-                    contents = contents.replace("%" + v + "%", replaceValues[v])
-            # page title
-            contents = contents.replace("%PAGETITLE%", pagetitle)
-            # this page (for form)
-            contents = contents.replace("%THISPAGE%", name)
-            self.writeChunk(contents)
-            
-        suffix = "generic" if isGeneric else "mote"
-        with open(self.htmlDirectory + "/menu-" + suffix + ".html", "r") as f:
-            contents = f.read()
-            if replaceValues:
-                for v in replaceValues:
-                    contents = contents.replace("%" + v + "%", replaceValues[v])
-            if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
-            self.writeChunk(contents)
-
-        if isGeneric:
-            if self.getLevel() > 0:
-                with open(self.htmlDirectory + "/menu-1.html", "r") as f:
-                    contents = f.read()
-                    if replaceValues:
-                        for v in replaceValues:
-                            contents = contents.replace("%" + v + "%", replaceValues[v])
-                    if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
-                    self.writeChunk(contents)
-            if self.getLevel() > 7:
-                with open(self.htmlDirectory + "/menu-8.html", "r") as f:
-                    contents = f.read()
-                    if replaceValues:
-                        for v in replaceValues:
-                            contents = contents.replace("%" + v + "%", replaceValues[v])
-                    if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
-                    self.writeChunk(contents)
-            if self.getLevel() > 8:
-               with open(self.htmlDirectory + "/menu-9.html", "r") as f:
-                   contents = f.read()
-                   if replaceValues:
-                       for v in replaceValues:
-                           contents = contents.replace("%" + v + "%", replaceValues[v])
-                   if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
-                   self.writeChunk(contents)
-
-        with open(self.htmlDirectory + "/top-end.html", "r") as f:
-            contents = f.read()
-            if replaceValues:
-                for v in replaceValues:
-                    contents = contents.replace("%" + v + "%", replaceValues[v])
-            if "sma" in qs: contents = contents.replace("%SMA%", qs["sma"][0])
-            # login/logout
-            log = "Logout" if self.getLevel() > 0 else "Login"
-            contents = contents.replace("%LOG%", log)
-            self.writeChunk(contents)
-
-    '''
-    #########################################################################################
-    '''
-    
     def serveAnyPage(self, name, qs, isGeneric = True, replaceValues = None, urlTo = "", 
             title = None, content = None, infoMsg = None, errorMsg = None, generatedContentOnly = False):
         f = open(self.htmlDirectory + "/layout.html", "r")
@@ -302,7 +208,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             if generatedContentOnly == False:
                 self.writeChunk(contents)
             else:
-                return contents
+                return bodyContent
     
     def serveDefault(self, qs, isSession = False):
         if not isSession:
@@ -327,33 +233,40 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             return
 
         disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
-        desc = '<div class="mote"><strong>Mote: </strong>${portName}' \
-             + '<input type="submit" name="${name}_cfg" ' \
-             + 'title="Get/set mote\'s configuration (e.g. sensor reading periods)" ' \
-             + 'value="Configuration..." ' + disabled + '/>\n' \
-             + '<input type="submit" name="${name}_files" ' \
-             + 'title="View files on mote\'s filesystem" value="Files..." ' + disabled + '/>\n' \
-             + ' Platform: <select name="sel_${name}"' + disabled + ' ' \
-             + 'title="Select the mote\'s platform: determines the list of sensors the mote has. ' \
-             + '"Also has effect on code compilation and uploading">\n' \
-             + '${details}</select>\n</div>\n'
+        tableDesc = "<form action='config'><table class='table'>" \
+            + "<thead><tr><th>Mote</th><th>Platform</th><th>Actions</th></tr></thead>" \
+            + "${tableContent}</table></form>"
+        platformSelect = '<select id="sel_${name}"' + disabled + ' ' \
+            + 'title="Select the mote\'s platform: determines the list of sensors the mote has. ' \
+            + '"Also has effect on code compilation and uploading">\n' \
+            + '${details}</select>&nbsp;<input type="button" name="platform_set" value="Update" ' + disabled \
+            +' onclick="updatePlatform(sel_${name})"/>'
         detail = '<option value="${platform}" ${selected}>${platform}</option>\n'
-            
-        text = '<form action="config"><div class="motes2">\n'
-        text += 'Directly attached motes:<br/>\n'
-        t1 = Template(desc)
-        t2 = Template(detail)
+        actions = '<input type="button" name="${name}_cfg" ' \
+            + 'title="Get/set mote\'s configuration (e.g. sensor reading periods)" ' \
+            + 'value="Configuration" ' + disabled + ' onclick="onConfig(\'${name}\')"/>\n' \
+            + '<input type="button" name="${name}_files" ' \
+            + 'title="View files on mote\'s filesystem" value="Files" ' + disabled \
+            + ' onclick="viewFiles(\'${name}\', sel_${name})"/>'
+        tableRow = "<tr><td><a href='javascript:void(0)'>${portName}</a></td><td>${platformSelect}</td>" \
+            "<td>${actions}</td></tr>" 
+        t1 = Template(tableDesc)
+        t2 = Template(tableRow)
+        t3 = Template(detail)
+        t4 = Template(platformSelect)
+        t5 = Template(actions)
+        tableContent = ""
         for m in motes.getMotes():
             name = "mote" + m.getPortBasename()
             details = ""
             for platform in moteconfig.supportedPlatforms:
                 selected = 'selected="selected"' if platform == m.platform else ''
-                details += t2.substitute(platform = platform, selected = selected)
-            text += t1.substitute(
-                portName = m.getPortName(), name = name, details = details)
-        text += '<input type="submit" name="platform_set" value="Update platforms" ' + disabled + '/><br/>\n'
-        text += "</div></form>" 
-        self.serveAnyPage("motes", qs, content = text)
+                details += t3.substitute(platform = platform, selected = selected)
+            tableContent += t2.substitute(portName = m.getPortName(), 
+                platformSelect = t4.substitute(name = name, details = details),
+                actions = t5.substitute(name = name))
+        text = t1.substitute(tableContent = tableContent)
+        self.serveAnyPage("motes", qs, True, {"MOTE_TABLE" : text})
   
     def serveListen(self, qs):
         self.setSession(qs)
