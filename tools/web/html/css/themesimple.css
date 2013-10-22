@@ -31,7 +31,6 @@ div.topmenu {
 }
 .table{
     background-color:#ffffff;
-    border-radius:8px;
     padding:5px;
     padding-left:20px;
     padding-right:20px;
@@ -42,7 +41,6 @@ div.topmenu {
 .table tr:hover td{
     background-color:#175186;
     color:#ffff00;
-    border-radius:5px;
 }
 #cont{
     width:80%;

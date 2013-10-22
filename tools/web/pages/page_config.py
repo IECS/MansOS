@@ -9,10 +9,6 @@ from motes import motes
 
 class PageConfig():
     def serveConfig(self, qs):
-        self.setSession(qs)
-        if not self.getLevel() > 1:
-            self.serveDefault(qs, True)
-            return
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -24,7 +20,7 @@ class PageConfig():
                     m.platform = qs[motename][0]
             motes.storeSelected()
             text = '<strong>Mote platforms updated!</strong>\n'
-            self.serveAnyPage("config", qs, content = text)
+            self.writeChunk(self.serveAnyPage("config", qs, content = text, generatedContentOnly = True))
             return
         else:
             global isListening
@@ -45,8 +41,7 @@ class PageConfig():
                     break
     
             if motePortName is None: # or moteIndex >= len(motes.getMotes()):
-                self.serveAnyPage("error:critical", qs, 
-                    errorMsg = "Config page requested, but mote not specified!")
+                self.writeChunk("<h4 class='err'>Config page requested, but mote not specified!</h4>")
                 return
     
             platform = None
@@ -55,8 +50,7 @@ class PageConfig():
                 platform = qs[dropdownName][0]
     
             if platform not in moteconfig.supportedPlatforms:
-                self.serveAnyPage("error:critical", qs, 
-                    errorMsg = "Config page requested, but platform not specified or unknown!")
+                self.writeChunk("<h4 class='err'>Config page requested, but platform not specified or unknown!</h4>")
                 return
 
             if os.name == "posix":
@@ -68,7 +62,7 @@ class PageConfig():
     
             (errmsg, ok) = moteconfig.instance.updateConfigValues(qs)
             if not ok:
-                self.serveAnyPage("error:critical", qs, errorMsg = errmsg)
+                self.writeChunk(errmsg)
                 return
 
             # fill config values from the mote / send new values to the mote
@@ -85,10 +79,10 @@ class PageConfig():
             else:
                 (text, ok) = moteconfig.instance.getConfigHTML()
             if not ok:
-                self.serveAnyPage("error:critical", qs, errorMsg = text)
+                self.writeChunk("\n<h4 class='err'>Error: " + text + "</h4>\n")
                 return
-            
+                
             moteidQS = "?sel_mote" + motePortName + "=" + platform + "&" + "mote" + motePortName
-            self.serveAnyPage("config", qs, isGeneric = False, content = text, replaceValues = {
+            self.writeChunk(self.serveAnyPage("config", qs, isGeneric = False, content = text, replaceValues = {
                               "MOTEID_CONFIG" : moteidQS + "_cfg=1",
-                              "MOTEID_FILES" : moteidQS + "_files=1"})
+                              "MOTEID_FILES" : moteidQS + "_files=1"}, generatedContentOnly = True))

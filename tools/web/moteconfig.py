@@ -427,7 +427,7 @@ class MoteConfig(object):
             return (errst, False)
 
         # start of form
-        text = '<form action="config"><div class="form">\n'
+        text = '<form action="config" id="configForm"><div class="form">\n'
 
         # mote
         text += '<strong>Mote:</strong><br/>\n'
@@ -437,15 +437,28 @@ class MoteConfig(object):
         text += '</div>\n'
 
         # sensors
-        text += '<strong>Sensor reading periods (in milliseconds, "0" means disabled):</strong><br/>\n'
-        text += '<div class="subcontents">\n'
+        text += "<table class='table'><thead><tr style='background-color: #f5f5f5;'><th>&nbsp;</th>"
         for s in self.activePlatform.sensors:
-            text += '<div class="entry">'
-            text += utils.toTitleCase(s.name) + ": "
-            text += '<input type="text" name="' + s.varname + '" value="' + str(s.period) + '"/><br/></div>\n'
-        text += '</div>\n'
+            text += "<th>" + utils.toTitleCase(s.name) + "</th>"
+        text += "</thead></tr><tbody>"
+        text += "<tr><th valign='middle'>Period</th>"
+        for s in self.activePlatform.sensors:
+            text += "<td>"
+            text += '<input type="text" title="Sensor reading periods (in milliseconds, \'0\' means disabled)" name="' + s.varname + '" value="' + str(s.period) + '" style="width: 50px"/><br/></div>\n'
+            text += "</td>"
+        text += "</tr>"
+        text += "<tr><th valign='middle'>Actions</th>"
+        for s in self.activePlatform.sensors:
+            text += "<td>"
+            text += "<input type='checkbox' name='graph'>&nbsp;<a href='javascript:void(0)'>graph</a></input>"
+            text += "<br/>"
+            text += "<input type='checkbox' name='store'>&nbsp;<a href='javascript:void(0)'>store</a></input>"
+            text += "</td>"
+        text += "</tr>"
+        text += "</tbody></table>"
 
         # outputs
+        text += "<table><tr><td valign='top'>"        
         text += '<strong>System outputs:</strong><br/>\n'
         text += '<div class="subcontents">\n'
         for s in self.activePlatform.outputs:
@@ -459,6 +472,7 @@ class MoteConfig(object):
                 text += ' title="The file will be created on mote\'s SD card" />\n'
             text += '<br/></div>\n'
         text += '</div>\n'
+        text += "</td><td width='40px'></td><td valign='top'>"
 
         # leds
         text += '<strong>LED:</strong><br/>\n'
@@ -470,14 +484,13 @@ class MoteConfig(object):
             text += '/> ' + s.name + " LED on"
             text += '<br/></div>\n'
         text += '</div>\n'
+        text += "</td></tr></table>"
 
         # end of form
         motename = "mote" + os.path.basename(self.mote.getPortName())
         text += '<input type="hidden" name="' + motename + '_cfg" value="1"/>\n'
         text += '<input type="hidden" name="sel_' + motename \
             + '" value="' + self.activePlatform.name + '" />\n'
-        text += '<input type="submit" name="get" title="Read the currently active configuration values from the mote" value="Get values"/> \n'
-        text += '<input type="submit" name="set" title="Set the web configuration values as active" value="Set values"/>\n'
         text += '</div></form>\n'
         return (text, True)
 
