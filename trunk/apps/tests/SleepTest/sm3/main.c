@@ -59,7 +59,7 @@ void appMain(void)
     DMA1CTL = 0;
 #endif
 
-
+#if 0
     pinAsData(1, 0);
     pinAsData(1, 1);
     pinAsData(1, 2);
@@ -113,8 +113,7 @@ void appMain(void)
     pinAsData(6, 5);
     pinAsData(6, 6);
     pinAsData(6, 7);
-
-
+#endif
 
     pinAsInput(1, 0);
     pinAsInput(1, 1);
