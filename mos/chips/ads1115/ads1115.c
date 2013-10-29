@@ -74,6 +74,9 @@ void adsInit(void)
     writeAdsRegister(ADS_CONFIG_REGISTER, 0x8483);
     adsSelectInput(0);
     adsPowerDownSingleShotMode();
+
+    // this decreases energy usage if ADS is never read
+    i2cSoftStop();
 }
 
 bool readAds(uint16_t *val)

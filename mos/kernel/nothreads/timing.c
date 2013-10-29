@@ -35,8 +35,12 @@
 // alarm timer interrupt handler
 ALARM_TIMER_INTERRUPT0()
 {
-    // Advance the jiffies (MansOS internal time counter)
-    jiffies += JIFFY_TIMER_MS;
+    // Advance jiffies (MansOS time counter) while counter register <= counter
+    // Spurios interrupts may happen when the alarm timer is restarted after stopping!
+    while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED())) {
+        jiffies += JIFFY_TIMER_MS;
+        ALARM_TIMER_REGISTER += PLATFORM_ALARM_TIMER_PERIOD;
+    }
 
 #ifdef USE_ALARMS
     if (hasAnyReadyAlarms(jiffies)) {
@@ -51,16 +55,15 @@ ALARM_TIMER_INTERRUPT0()
     }
 #endif
 
-    // Advance the counter register
-    ALARM_TIMER_REGISTER += PLATFORM_ALARM_TIMER_PERIOD;
-
     // If TAR still > TACCR0 at this point, we are in trouble:
     // the interrupt will not be generated until the next wraparound (2 seconds).
     // So avoid it at all costs.
-    while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 1)) {
+    while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 10)) {
         jiffies += JIFFY_TIMER_MS;
         ALARM_TIMER_REGISTER += PLATFORM_ALARM_TIMER_PERIOD;
     }
+
+    ALARM_INTERRUPT_CLEAR();
 }
 
 ALARM_TIMER_INTERRUPT1()
@@ -76,16 +79,18 @@ ALARM_TIMER_INTERRUPT1()
         // The clock error is (32768 / 32) - 1000 = 1024 - 1000 = 24 milliseconds.
         // We improve the precision by applying a fix 24/3 = 8 times per second.
         //
-        while (!timeAfter16(CORRECTION_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 1)) {
+        while (!timeAfter16(CORRECTION_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 10)) {
             CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;
             jiffies -= 3;
         }
+        CORRECTION_INTERRUPT_CLEAR();
         break;
 #endif // PLATFORM_HAS_CORRECTION_TIMER
 
     case SLEEP_TIMER_EXPIRED:
         // exit low power mode
         EXIT_SLEEP_MODE();
+        SLEEP_INTERRUPT_CLEAR();
         break;
     }
 }
