@@ -62,9 +62,9 @@ void msleep(uint16_t ms)
                 continue;
             }
             allTimeSpent = false;
-        } else if (msToSleep > 2000) {
-            // maximum value allowed by hardware
-            msToSleep = 2000;
+        } else if (msToSleep > PLATFORM_MAX_SLEEP_MS) {
+            // maximum value allowed by platform
+            msToSleep = PLATFORM_MAX_SLEEP_MS;
             ATOMIC_END(handle);
         } else {
             ATOMIC_END(handle);
