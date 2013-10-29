@@ -142,10 +142,8 @@ enum {
 #define ALARM_TIMER_INTERRUPT0() ISR(TIMER0_COMPA_vect)
 #define ALARM_TIMER_INTERRUPT1() ISR(TIMER0_COMPB_vect)
 
-#define ALARM_TIMER_INIT() atmegaInitTimer0()
 #define ALARM_TIMER_START() atmegaStartTimer0()
 #define ALARM_TIMER_STOP() atmegaStopTimer0()
-#define SLEEP_TIMER_INIT() atmegaInitTimer1()
 #define SLEEP_TIMER_START() atmegaStartTimer1()
 #define SLEEP_TIMER_STOP() atmegaStopTimer1()
 #define ALARM_TIMER_READ_STOPPED() TCNT0
@@ -156,11 +154,15 @@ enum {
 
 #define ALARM_TIMER_REGISTER OCR0A
 
+#define ALARM_INTERRUPT_CLEAR()
+
 // no need for time correction
 #define CORRECTION_TIMER_REGISTER 0
 #define CORRECTION_TIMER_EXPIRED false
 #define PLATFORM_TIME_CORRECTION_PERIOD 0
 #define CORRECTION_TIMER_READ_STOPPED() 0
+
+#define CORRECTION_INTERRUPT_CLEAR()
 
 
 // this expands to ALARM_TIMER_READ
@@ -170,6 +172,8 @@ ACTIVE_TIMER_READ(ALARM, TCNT0)
 
 #define SLEEP_TIMER_WRAPAROUND() false
 #define SLEEP_TIMER_RESET_WRAPAROUND()
+
+#define SLEEP_INTERRUPT_CLEAR()
 
 // this expands to SLEEP_TIMER_READ
 ACTIVE_TIMER_READ(SLEEP, TCNT1)

@@ -42,17 +42,22 @@ extern uint16_t pcSleepTimerRegister;
 #define ALARM_TIMER_WAIT_TICKS(ticks)
 #define ALARM_TIMER_REGISTER pcAlarmTimerRegister
 
+#define ALARM_INTERRUPT_CLEAR()
+
 #define CORRECTION_TIMER_EXPIRED false
 #define NEXT_CORRECTION_TIMER() 0
 #define SET_NEXT_CORRECTION_TIMER(value)
 
+#define CORRECTION_INTERRUPT_CLEAR()
 
-#define SLEEP_TIMER_INIT()
+
 #define SLEEP_TIMER_START()
 #define SLEEP_TIMER_STOP()
 #define SLEEP_TIMER_EXPIRED 1
 #define SLEEP_TIMER_READ() 0
 #define SLEEP_TIMER_REGISTER pcSleepTimerRegister
+
+#define SLEEP_INTERRUPT_CLEAR()
 
 #define ENTER_SLEEP_MODE()
 #define EXIT_SLEEP_MODE()

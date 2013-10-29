@@ -59,12 +59,10 @@ static inline void i2cHwOff(uint8_t busId) {
  * @param   addr        address of the slave receiver
  * @param   buf         the buffer containing the string
  * @param   len         buffer length in bytes
- * @param   sendStop    whether to send stop condition after data
  * @return  0           on success, error code otherwise
  */
 static inline i2cError_t i2cHwWrite(uint8_t busId, uint8_t addr,
-                                    const void *buf, uint8_t len,
-                                    bool sendStop) {
+                                    const void *buf, uint8_t len) {
     return twiWrite(addr, buf, len, 1);
 }
 
@@ -75,12 +73,10 @@ static inline i2cError_t i2cHwWrite(uint8_t busId, uint8_t addr,
  * @param   addr        address of the slave transmitter
  * @param   buf         the buffer to store the message
  * @param   len         buffer length in bytes
- * @param   sendStop    whether to send stop condition after data
  * @return  received byte count
  */
 static inline uint8_t i2cHwRead(uint8_t busId, uint8_t addr,
-                               void *buf, uint8_t len,
-                               bool sendStop) {
+                               void *buf, uint8_t len) {
     return twiRead(addr, buf, len);
 }
 

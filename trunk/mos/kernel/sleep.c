@@ -30,6 +30,7 @@
 #include <print.h>
 #include <leds.h>
 #include <radio.h>
+#include <assert.h>
 
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 
@@ -70,6 +71,7 @@ void doMsleep(uint16_t milliseconds)
         ALARM_TIMER_STOP();
         // start timer B
         SLEEP_TIMER_START();
+
         // enter low power mode
         ENTER_SLEEP_MODE();
 
@@ -108,18 +110,21 @@ void doMsleep(uint16_t milliseconds)
         energyConsumerOn(ENERGY_CONSUMER_MCU);
 
         // fix jiffies, taking into account the time spent for local processing
-        while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 1)) {
+        while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 10)) {
             // PRINTF("*");
             jiffies += JIFFY_TIMER_MS;
             ALARM_TIMER_REGISTER += PLATFORM_ALARM_TIMER_PERIOD;
         }
 #if PLATFORM_HAS_CORRECTION_TIMER
-        while (!timeAfter16(CORRECTION_TIMER_REGISTER, CORRECTION_TIMER_READ_STOPPED() + 1)) {
+        while (!timeAfter16(CORRECTION_TIMER_REGISTER, CORRECTION_TIMER_READ_STOPPED() + 10)) {
             // PRINTF("#");
             CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;
             jiffies -= 3;
         }
 #endif
+
+        ALARM_INTERRUPT_CLEAR();
+        CORRECTION_INTERRUPT_CLEAR();
         // restart timer A (count from the place where it left)
         ALARM_TIMER_START();
     } else {

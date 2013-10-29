@@ -134,24 +134,26 @@ enum {
 // Interrupts are synchronously enabled/disabled for mspsim purposes:
 // otherwise mspsim generates interrupts even when the timer is not counting.
 //
-#define msp430StartTimerA() {\
-        TACCTL0 = CCIE;                         \
-        TACCTL1 = CCIE;                         \
-        TACCTL2 = 0;                            \
+#define msp430StartTimerA01() {\
+        TACTL &= ~TAIE;                         \
+        TACCTL2 &= ~CCIE;                       \
+        TACCTL0 |= CCIE;                        \
+        TACCTL1 |= CCIE;                        \
         TACTL |= MC_CONT | TAIE;                \
 }
-#define msp430StopTimerA()  { \
-        TACTL &= ~(MC_3 | TAIE);                \
+#define msp430StopTimerA01()  { \
+        TACTL &= ~(TAIE);                       \
     }
 
-#define msp430StartTimerAS() {\
-        TACCTL0 = 0;                            \
-        TACCTL1 = 0;                            \
-        TACCTL2 = CCIE;                         \
+#define msp430StartTimerA2() {\
+        TACTL &= ~TAIE;                         \
+        TACCTL0 &= ~CCIE;                       \
+        TACCTL1 &= ~CCIE;                       \
+        TACCTL2 |= CCIE;                        \
         TACTL |= MC_CONT | TAIE;                \
 }
-#define msp430StopTimerAS()  { \
-        TACTL &= ~(MC_3 | TAIE);                \
+#define msp430StopTimerA2()  { \
+        TACTL &= ~(TAIE);                       \
     }
 
 #if CUSTOM_TIMER_INTERRUPT_HANDLERS
@@ -161,20 +163,21 @@ enum {
 #endif
 #define msp430StopTimerB()  TBCTL &= ~(MC_3 | TBIE)
 
-#define msp430InitTimerA() \
+#define msp430InitTimerA01() \
     /* begin reset/init */ \
     TACTL = TACLR; \
     /* source: 32768Hz ACLK, DIV = 1, interrupt disabled */ \
     TACTL = TASSEL_ACLK | ID_DIV1;  \
     /* set interrupt intervals */  \
     TACCR0 = PLATFORM_ALARM_TIMER_PERIOD; \
-    TACCR1 = PLATFORM_TIME_CORRECTION_PERIOD;  \
-    /* enable interrupts */ \
+    TACCR1 = PLATFORM_TIME_CORRECTION_PERIOD; \
+    /* enable CCR0 and CCR1 interrupts */ \
     TACCTL0 = TACCTL1 = CCIE; \
     TACCTL2 = 0; \
+    TACTL |= MC_CONT;                    \
 
 
-#define msp430InitTimerAS() \
+#define msp430InitTimerA2() \
     /* begin reset/init */ \
     TACTL = TACLR; \
     /* source: 32768Hz ACLK, DIV = 8, interrupt disabled */ \
@@ -182,9 +185,10 @@ enum {
     /* set interrupt intervals */  \
     TACCR2 = PLATFORM_ALARM_TIMER_PERIOD; \
     TACCR1 = PLATFORM_TIME_CORRECTION_PERIOD;  \
-    /* enable interrupts */ \
+    /* enable CCR2 interrupt */ \
     TACCTL0 = TACCTL1 = 0; \
     TACCTL2 = CCIE; \
+    TACTL |= MC_CONT;                    \
 
 
 #define msp430InitTimerB() \
@@ -214,18 +218,19 @@ enum {
 // ---------------------------------------------------
 // Alarm timer
 // ---------------------------------------------------
-#define ALARM_TIMER_INIT()  msp430InitTimerA()
-#define ALARM_TIMER_START() msp430StartTimerA()
-#define ALARM_TIMER_STOP()  msp430StopTimerA()
+#define ALARM_TIMER_START() msp430StartTimerA01()
+#define ALARM_TIMER_STOP()  msp430StopTimerA01()
 #define ALARM_TIMER_READ_STOPPED() TAR
 #define ALARM_TIMER_REGISTER TACCR0
 #define ALARM_TIMER_WAIT_TICKS(ticks) { \
         uint16_t end = TAR + ticks;     \
         while (TAR != end);             \
     }
+#define ALARM_INTERRUPT_CLEAR()      TACCTL0 &= ~CCIFG
 
 #define CORRECTION_TIMER_REGISTER TACCR1
 #define CORRECTION_TIMER_READ_STOPPED() TAR
+#define CORRECTION_INTERRUPT_CLEAR() TACCTL1 &= ~CCIFG
 
 // this expands to ALARM_TIMER_READ
 ACTIVE_TIMER_READ(ALARM, TAR)
@@ -234,9 +239,8 @@ ACTIVE_TIMER_READ(ALARM, TAR)
 // Sleep timer
 // ---------------------------------------------------
 
-#define SLEEP_TIMER_INIT()  msp430InitTimerAS()
-#define SLEEP_TIMER_START() msp430StartTimerAS()
-#define SLEEP_TIMER_STOP()  msp430StopTimerAS()
+#define SLEEP_TIMER_START() msp430StartTimerA2()
+#define SLEEP_TIMER_STOP()  msp430StopTimerA2()
 
 #define SLEEP_TIMER_REGISTER TACCR2
 
@@ -246,6 +250,7 @@ ACTIVE_TIMER_READ(ALARM, TAR)
 ACTIVE_TIMER_READ(SLEEP, TAR)
 #define SLEEP_TIMER_READ_STOPPED(ms) TAR
 
+#define SLEEP_INTERRUPT_CLEAR()      TACCTL2 &= ~CCIFG
 
 #ifdef TIMERA0_VECTOR
 #define ALARM_TIMER_INTERRUPT0() ISR(TIMERA0, alarmTimerInterrupt0)
