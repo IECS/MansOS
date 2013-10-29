@@ -62,6 +62,10 @@ void msleep(uint16_t ms)
                 continue;
             }
             allTimeSpent = false;
+        } else if (msToSleep > 2000) {
+            // maximum value allowed by hardware
+            msToSleep = 2000;
+            ATOMIC_END(handle);
         } else {
             ATOMIC_END(handle);
             // PRINTF("sleep to end\n");
