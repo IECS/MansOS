@@ -5,8 +5,7 @@
 #
 
 from __future__ import print_function
-import os, sys, platform, select, signal, traceback
-from string import Template
+import os, sys, platform, select, signal, traceback, string
 # add library directory to the path
 sys.path.append(os.path.join(os.getcwd(), '..', "lib"))
 import pages.page_login as page_login
@@ -28,7 +27,7 @@ import configuration
 import mansos_version
 import helper_tools as ht
 
-DEBUG = 1
+DEBUG = 0
 
 def isPython3():
     return sys.version_info[0] >= 3
@@ -103,7 +102,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             title = None, content = None, infoMsg = None, errorMsg = None, generatedContentOnly = False):
         f = open(self.htmlDirectory + "/layout.html", "r")
         contents = f.read()
-        t = Template(contents)
+        t = string.Template(contents)
         
         self.headerIsServed = True
         if name == "default":
@@ -250,12 +249,13 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             + ' onclick="viewFiles(\'${name}\', sel_${name})"/>'
         tableRow = "<tr><td><a href='javascript:void(0)'>${portName}</a></td><td>${platformSelect}</td>" \
             "<td>${actions}</td></tr>" 
-        t1 = Template(tableDesc)
-        t2 = Template(tableRow)
-        t3 = Template(detail)
-        t4 = Template(platformSelect)
-        t5 = Template(actions)
+        t1 = string.Template(tableDesc)
+        t2 = string.Template(tableRow)
+        t3 = string.Template(detail)
+        t4 = string.Template(platformSelect)
+        t5 = string.Template(actions)
         tableContent = ""
+
         for m in motes.getMotes():
             name = "mote" + m.getPortBasename()
             details = ""
@@ -529,9 +529,9 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         o = urlparse(self.path)
         qs = parse_qs(o.query)
 
-# TODO
-#        if "Android" in self.headers["user-agent"]:
-#            self.htmlDirectory = self.htmlDirectory + "_mobile"
+        # TODO
+        # if "Android" in self.headers["user-agent"]:
+        #    self.htmlDirectory = self.htmlDirectory + "_mobile"
 
         global lastUploadCode
         global lastUploadConfig
