@@ -28,7 +28,7 @@ void appMain(void) {
     uint32_t i = 1;
 
     while(true) {
-        PRINTF("Sqrt(%lu) = %lu\n",i, intSqrt(i));
+        PRINTF("Sqrt(%lu) = %u\n",i, intSqrt(i));
         i++;
         // wait for 1000 milliseconds
         msleep(1000);
