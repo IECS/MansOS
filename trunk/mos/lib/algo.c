@@ -22,6 +22,7 @@
  */
 
 #include "algo.h"
+#include <timing.h>
 
 // Calculate square root, rounded down, exception:
 // intSqrt(8) = 3

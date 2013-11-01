@@ -40,7 +40,7 @@ APPMOD = sqrt
 # Set the key variables
 PROJDIR = $(CURDIR)
 ifndef MOSROOT
-  MOSROOT = $(PROJDIR)/../../..
+  MOSROOT = $(PROJDIR)/../../../..
 endif
 
 # Include the main makefile
