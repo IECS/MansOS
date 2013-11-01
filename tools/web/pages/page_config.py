@@ -9,6 +9,8 @@ from motes import motes
 
 class PageConfig():
     def serveConfig(self, qs):
+        global isListening
+
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
@@ -23,7 +25,6 @@ class PageConfig():
             self.writeChunk(self.serveAnyPage("config", qs, content = text, generatedContentOnly = True))
             return
         else:
-            global isListening
             sensor_data.moteData.reset()
             ht.openAllSerial()
             isListening = True

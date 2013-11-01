@@ -12,6 +12,8 @@ subprocessLock = threading.Lock()
 class PageUpload():
     
     def serveUploadGet(self, qs, lastUploadCode, lastUploadConfig, lastUploadFile):
+        global isListening
+
         self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
@@ -27,7 +29,7 @@ class PageUpload():
                         "UPLOAD_CONFIG" : lastUploadConfig,
                         "UPLOAD_FILENAME": lastUploadFile,
                         "SLOW_CHECKED" : 'checked="checked"' if isSlow else ""})
-        
+
     def serveUploadPost(self, qs, lastUploadCode, lastUploadConfig, lastUploadFile):
         global maybeIsInSubprocess
         global isPostEntered
@@ -96,7 +98,7 @@ class PageUpload():
         # check if any motes are selected
         if not motes.anySelected():
             text = "No motes selected!"
-            maybeIsInSubprocess = False         
+            maybeIsInSubprocess = False
             return self.serveAnyPage("error:critical", qs, errorMsg = text, generatedContentOnly = True)
 
         config = ""
@@ -114,15 +116,15 @@ class PageUpload():
             infoMsg = "<div><strong>Upload done!</strong></div><br/>"
         else:
             infoMsg = "<div><strong>Upload failed!</strong></div><br/>"
-            
-        '''self.serveAnyPage("upload", qs, True, {"MOTES_TXT" : motesText,
+
+        self.serveAnyPage("upload", qs, True, {"MOTES_TXT" : motesText,
                         "CCODE_CHECKED": 'checked="checked"' if not isSealCode else "",
                         "SEALCODE_CHECKED" : 'checked="checked"' if isSealCode else "",
                         "UPLOAD_CODE" : lastUploadCode,
                         "UPLOAD_CONFIG" : lastUploadConfig,
                         "UPLOAD_FILENAME": lastUploadFile,
-                        "SLOW_CHECKED" : 'checked="checked"' if isSlow else ""}, infoMsg = infoMsg)'''
-        self.writeChunk("ok")
+                        "SLOW_CHECKED" : 'checked="checked"' if isSlow else ""}, infoMsg = infoMsg)
+# ???      self.writeChunk("ok")
 
     def serveUploadResult(self, qs):
         global maybeIsInSubprocess
@@ -144,10 +146,10 @@ class PageUpload():
                 break
         isPostEntered = False
 
-        result = ""
+        uploadLine = ""
         try:
             # wait until subprocess output file appears
-            while maybeIsInSubprocess or inFile == None:
+            while maybeIsInSubprocess and inFile == None:
                 try:
                     inFile = open(inFileName, "rb")
                 except:
@@ -155,7 +157,7 @@ class PageUpload():
                     time.sleep(0.001)
 
             if inFile:
-                uploadLine = ""
+                self.writeChunk("<pre>\n")
                 while True:
                     if utils.fileIsOver(inFile):
                         if maybeIsInSubprocess:
@@ -168,7 +170,7 @@ class PageUpload():
                     uploadLine += c
                     if c == '\n':
                         # if newline reached, print out the current line
-                        result += uploadLine
+                        self.writeChunk(uploadLine)
                         uploadLine = ""
         except:
             raise
@@ -179,8 +181,11 @@ class PageUpload():
                 os.remove(inFileName)
             except:
                 pass
-        self.writeChunk(result)
-            
+        # write final chunk, if any
+        if uploadLine:
+            self.writeChunk(uploadLine)
+        self.writeChunk("</pre>\n")
+
     def compileAndUpload(self, code, config, fileContents, isSEAL):
         global lastUploadCode
         global lastUploadConfig
@@ -192,7 +197,6 @@ class PageUpload():
 
         # do this synchronously
         subprocessLock.acquire()
-        global isListening
         ht.closeAllSerial()
         isListening = False
         maybeIsInSubprocess = True
@@ -250,11 +254,8 @@ class PageUpload():
 
         finally:
             maybeIsInSubprocess = False
-            global isListening
             sensor_data.moteData.reset()
             ht.openAllSerial()
             isListening = True
             subprocessLock.release()
             return retcode
-
-        
