@@ -32,6 +32,11 @@
 
 #define ADS8328_SPI_ENABLE()   spiSlaveEnable(ADS8328_CS_PORT, ADS8328_CS_PIN)
 #define ADS8328_SPI_DISABLE()  spiSlaveDisable(ADS8328_CS_PORT, ADS8328_CS_PIN)
+#define ADS8328_REINIT() do {                       \
+        UCB1CTL1 |= UCSWRST;                        \
+        UCB1CTL0 &= ~UCCKPH;                        \
+        UCB1CTL1 &= ~UCSWRST;                       \
+    } while (0)
 
 static void spiExchange(uint8_t busId, void *buf_, uint16_t len) {
     uint8_t *buf = (uint8_t *) buf_;
@@ -46,7 +51,7 @@ static void spiExchange(uint8_t busId, void *buf_, uint16_t len) {
 uint16_t ads8328ReadData(void)
 {
     uint16_t result;
-
+    ADS8328_REINIT();
     ADS8328_SPI_ENABLE();
     result = spiReadByte(ADS8328_SPI_ID);
     result <<= 8;
@@ -63,6 +68,7 @@ uint16_t ads8328ConfigRegRead(void)
     uint8_t array[2];
     array[0] = ADS8328_REG_CONFIG_READ << 4;
     array[1] = 0;
+    ADS8328_REINIT();
     ADS8328_SPI_ENABLE();
     spiExchange(ADS8328_SPI_ID, array, sizeof(array));
     ADS8328_SPI_DISABLE();
@@ -82,10 +88,12 @@ void ads8328RegWrite4(uint8_t address)
     uint8_t array[2];
     array[0] = address << 4;
     array[1] = 0;
+    ADS8328_REINIT();
     ADS8328_SPI_ENABLE();
     spiExchange(ADS8328_SPI_ID, array, sizeof(array));
     ADS8328_SPI_DISABLE();
 #else
+    ADS8328_REINIT();
     ADS8328_SPI_ENABLE();
     sw_spiWriteNibble(address);
     ADS8328_SPI_DISABLE();
@@ -97,6 +105,7 @@ void ads8328RegWrite16(uint8_t address, uint16_t data)
     uint8_t array[2];
     array[0] = (address << 4) | ((data >> 8) & 0xf);
     array[1] = data & 0xff;
+    ADS8328_REINIT();
     ADS8328_SPI_ENABLE();
     spiExchange(ADS8328_SPI_ID, array, sizeof(array));
     ADS8328_SPI_DISABLE();
@@ -147,6 +156,7 @@ bool ads8328Read(uint16_t *value)
     uint8_t array[2];
     array[0] = ADS8328_REG_DATA << 4;
     array[1] = 0;
+    ADS8328_REINIT();
     ADS8328_SPI_ENABLE();
     spiExchange(ADS8328_SPI_ID, array, sizeof(array));
     ADS8328_SPI_DISABLE();
