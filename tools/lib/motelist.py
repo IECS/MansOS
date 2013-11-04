@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import os, sys, threading, time, serial
+import os, sys, threading, time, serial, itertools, urllib2
+import configfile
 
 if os.name == 'posix':
     from motelist_src.get_ports_linux import comports  # @UnusedImport
@@ -21,6 +22,7 @@ class Mote(object):
             self.__port = None
             self.__name = "No motes found!"
             self.__reference = "Make sure mote(s) are connected and drivers are installed."
+            self.__host = None
             self.__userdata = None
             self.__manualyAdded = manualyAdded
 
@@ -28,22 +30,40 @@ class Mote(object):
             self.__port = mote[0]
             self.__name = mote[1]
             self.__reference = mote[2]
+            self.__host = "Local"
+            self.__userdata = None
+            self.__manualyAdded = manualyAdded
+            
+        elif len(mote) == 4:
+            self.__port = mote[0]
+            self.__name = mote[1]
+            self.__reference = mote[2]
+            self.__host = mote[3]
             self.__userdata = None
             self.__manualyAdded = manualyAdded
         else:
             print ("Failed to initialize mote from " + str(mote))
 
     def getNiceName(self):
-        if self.__name.find(self.__port) != -1:
-            return self.__name
+        if self.__host is None:
+            if self.__name.find(self.__port) != -1:
+                return "{}".format(self.__name)
+            else:
+                return "{}({})".format(self.__name, self.__port)
         else:
-            return "{} ({})".format(self.__name, self.__port)
+            if self.__name.find(self.__port) != -1:
+                return "{} @ {}".format(self.__name, self.__host)
+            else:
+                return "{}({}) @ {}".format(self.__name, self.__port, self.__host)
 
     def getFullName(self):
         return "{} [{}]".format(self.getNiceName(), self.__reference)
 
     def getCSVData(self):
-        return "{},{},{}".format(self.__reference, self.__port, self.__name)
+        if self.__host is None:
+            return "{},{},{}".format(self.__reference, self.__port, self.__name)
+        else:
+            return "{},{},{},{}".format(self.__reference, self.__port, self.__name, self.__host)
 
     def isUserMote(self):
         return self.__manualyAdded
@@ -57,6 +77,12 @@ class Mote(object):
     def getPort(self):
         return self.__port
 
+    def getHost(self):
+        if self.__host is None:
+            return ''
+        else:
+            return self.__host
+        
     def getName(self):
         return self.__name
 
@@ -66,17 +92,40 @@ class Mote(object):
     # Makes equal work on different mote classes
     def __eq__(self, other):
         if type(other) is type(self):
-            return self.__port == other.__port
+            return self.__port == other.__port and self.__host == other.__host
         return False
+        
+    def __ne__(self, other):
+        return not self.__eq__(other)
+        
+def getRemoteServers():
+    retVal = list()
 
+    try:
+        bslProxy = os.environ['BSLPROXY']
+        if bslProxy is not None and bslProxy != '':
+            retVal.append(bslProxy)
+    except:
+        pass
+        
+    try:
+        cfg = configfile.ConfigFile("remoteServers.cfg")
+        cfg.load()
+        retVal += cfg.getCfgValueAsRealList("remoteServers")
+    except:
+        pass
+
+    return retVal
+    
 class Motelist(object):
     motes = list()
     lock = threading.Lock()
     updateCallbacks = list()
+    remoteServerList = getRemoteServers()
     infinite = False
 
     @staticmethod
-    def initialize(updateCallbacks, startPeriodicUpdate = False):
+    def initialize(updateCallbacks, startPeriodicUpdate = False, onlyLocalMotes = False):
         if updateCallbacks is None:
             return
 
@@ -87,7 +136,10 @@ class Motelist(object):
 
         if startPeriodicUpdate:
             Motelist.startPeriodicUpdate()
-
+        
+        if onlyLocalMotes:
+            Motelist.remoteServerList = list()
+    
     @staticmethod
     def addMote(port, name, reference):
         Motelist.lock.acquire()
@@ -114,14 +166,25 @@ class Motelist(object):
 
         newMotes = list()
         haveNewMote = False
+        
+        for host in Motelist.remoteServerList:
+            iterator = itertools.chain(iterator, Motelist.getRemoteMotelist(host))
 
         for mote in iterator:
             # this filters out fake motes on linux, i hope!
             if mote[2] == "n/a":
                 continue
-
+                
             newMote = Mote(mote)
-
+    
+            for m in newMotes:
+                if newMote == m:
+                    newMote = None
+                    break;
+            
+            if newMote is None:
+                continue
+                
             # Add if no such mote exists, point to it otherwise
             if newMote not in Motelist.motes:
                 newMotes.insert(0, newMote)
@@ -132,7 +195,7 @@ class Motelist(object):
         for mote in Motelist.motes:
             if mote.isUserMote() and mote not in newMotes:
                 newMotes.append(mote)
-
+        
         haveNewMote = haveNewMote or not len(Motelist.motes) == len(newMotes)
 
         Motelist.motes = newMotes
@@ -141,6 +204,23 @@ class Motelist(object):
 
         return haveNewMote
 
+    @staticmethod
+    def getRemoteMotelist(host):
+        retVal = list()
+        
+        try:
+            req = urllib2.urlopen(host + "/ports")
+            motes = req.read().split("\n")
+            for mote in motes:
+                info = mote.split(",")
+                if len(info) >= 3:
+                    continue
+                retVal.append([info[1], info[2], info[0], host])
+        except:
+            pass
+        
+        return retVal
+    
     @staticmethod
     def getMotelist(update):
         if update:
@@ -242,28 +322,32 @@ class Motelist(object):
             return
             
         # Prepare table column width
-        lengths = [len("Reference"), len("Port"), len("Name")]
+        lengths = [len("Reference"), len("Port"), len("Host"), len("Name")]
 
         for mote in motelist:
             lengths[0] = max(lengths[0], len(mote.getReference()))
             lengths[1] = max(lengths[1], len(mote.getPort()))
-            lengths[2] = max(lengths[2], len(mote.getName()))
+            lengths[2] = max(lengths[2], len(mote.getHost()))
+            lengths[3] = max(lengths[3], len(mote.getName()))
 
         # Print header
-        print ("{}  {}  {}".format("Reference".ljust(lengths[0]),
-                                   "Port".ljust(lengths[1]),
-                                   "Name".ljust(lengths[2])))
+        print ("{}  {}  {}  {}".format("Reference".ljust(lengths[0]),
+                                       "Port".ljust(lengths[1]),
+                                       "Host".ljust(lengths[2]),
+                                       "Name".ljust(lengths[3])))
 
         # Print seperator
-        print ("{}  {}  {}".format("".ljust(lengths[0], "-"),
-                                   "".ljust(lengths[1], "-"),
-                                   "".ljust(lengths[2], "-")))
+        print ("{}  {}  {}  {}".format("".ljust(lengths[0], "-"),
+                                       "".ljust(lengths[1], "-"),
+                                       "".ljust(lengths[2], "-"),
+                                       "".ljust(lengths[3], "-")))
 
         # Print motelist
         for mote in motelist:
-            print ("{}  {}  {}".format(mote.getReference().ljust(lengths[0]),
-                                       mote.getPort().ljust(lengths[1]),
-                                       mote.getName().ljust(lengths[2])))
+            print ("{}  {}  {}  {}".format(mote.getReference().ljust(lengths[0]),
+                                           mote.getPort().ljust(lengths[1]),
+                                           mote.getHost().ljust(lengths[2]),
+                                           mote.getName().ljust(lengths[3])))
 
 
 def main():
@@ -288,6 +372,6 @@ if __name__ == '__main__':
         if DEBUG: raise     #show full trace in debug mode
         sys.stderr.write("user abort.\n")   #short messy in user mode
         sys.exit(1)
-    except Exception as msg:
-        sys.stderr.write("\nAn error occured:\n%s\n" % msg)
-        sys.exit(1)
+    #except Exception as msg:
+    #    sys.stderr.write("\nAn error occured:\n%s\n" % msg)
+    #    sys.exit(1)
