@@ -213,7 +213,7 @@ class Motelist(object):
             motes = req.read().split("\n")
             for mote in motes:
                 info = mote.split(",")
-                if len(info) >= 3:
+                if len(info) < 3:
                     continue
                 retVal.append([info[1], info[2], info[0], host])
         except:
