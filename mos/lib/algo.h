@@ -31,6 +31,7 @@
 #define MANSOS_ALGO_H
 
 #include <defines.h>
+#include <timing.h>
 
 
 //! Swap two values
