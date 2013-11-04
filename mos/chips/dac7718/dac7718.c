@@ -47,6 +47,7 @@ static void dac7718RegWrite(uint8_t address, uint16_t data)
     DAC7718_SPI_DISABLE();
 }
 
+#if PLATFORM_TESTBED
 // nondefault SPI bus init: use
 static void dac7718SpiBusInit(void)
 {
@@ -64,12 +65,21 @@ static void dac7718SpiBusInit(void)
     UC0IE &= ~UCB0RXIE;
     UCB0CTL1 &= ~UCSWRST;
 }
+#endif
 
 void dac7718Init(void)
 {
 //    PRINTF("dac7718Init.\n");
-    // spiBusInit(DAC7718_SPI_ID, SPI_MODE_MASTER);
+#if PLATFORM_TESTBED
     dac7718SpiBusInit();
+#else
+    spiBusInit(DAC7718_SPI_ID, SPI_MODE_MASTER);
+#endif
+
+    pinAsOutput(DAC7718_CS_PORT, DAC7718_CS_PIN);
+    pinAsOutput(DAC7718_RSTSEL_PORT, DAC7718_RSTSEL_PIN);
+    pinAsOutput(DAC7718_RST_PORT, DAC7718_RST_PIN);
+    pinAsOutput(DAC7718_LDAC_PORT, DAC7718_LDAC_PIN);
 
     //First, set levels! THEN set ports to output!
     pinSet(DAC7718_RST_PORT, DAC7718_RST_PIN);
@@ -78,11 +88,6 @@ void dac7718Init(void)
     // async mode, update immediately
     pinClear(DAC7718_LDAC_PORT, DAC7718_LDAC_PIN);
     DAC7718_SPI_DISABLE();
-
-    pinAsOutput(DAC7718_CS_PORT, DAC7718_CS_PIN);
-    pinAsOutput(DAC7718_RSTSEL_PORT, DAC7718_RSTSEL_PIN);
-    pinAsOutput(DAC7718_RST_PORT, DAC7718_RST_PIN);
-    pinAsOutput(DAC7718_LDAC_PORT, DAC7718_LDAC_PIN);
 
     // pinAsOutput(DAC7718_CLR_PORT, DAC7718_CLR_PIN);
     // pinAsOutput(DAC7718_WAKEUP_PORT, DAC7718_WAKEUP_PIN);
@@ -99,7 +104,7 @@ void dac7718Init(void)
     // // use straight binary code
     // // pinClear(DAC7718_BTC_PORT, DAC7718_BTC_PIN);
 
-    // star with default config
+    // start with default config
     dac7718RegWrite(DAC7718_REG_CONFIG, DEFAULT_CONFIG);
 
 //    PRINTF("..done\n");
