@@ -121,7 +121,7 @@ class MoteCollection(object):
         cfgMotes = configuration.c.getCfgValueAsList("motes")
         for portName in cfgMotes:
             Motelist.addMote(portName, "A statically added mote", "")
-        Motelist.initialize(self.motesUpdated)
+        Motelist.initialize(self.motesUpdated, False, False)
         Motelist.startPeriodicUpdate()
         self.refreshMotes(Motelist.getMotelist(False))
 

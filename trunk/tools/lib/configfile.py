@@ -74,6 +74,18 @@ class ConfigFile(object):
                 result = [value]
         return result
 
+    def getCfgValueAsRealList(self, name):
+        result = []
+        with self.lock:
+            self.ensureCorrectSection(name)
+            value = self.cfg.get(self.currentSection, name)
+            try:
+                import json
+                result = json.loads(value)
+            except ValueError:
+                result = value.split(",")
+        return result
+
     def setCfgValue(self, name, value):
         # make sure the value is in acceptable format (lists are stored as strings)
         if isinstance(value, list):
