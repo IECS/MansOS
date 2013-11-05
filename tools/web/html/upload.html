@@ -23,9 +23,13 @@
 	%MOTES_TXT%
 
 	<div class="form">
-	  <p><input type="radio" name="language" value="C" title="Compile as C" %CCODE_CHECKED% %DISABLED% />C code
-	  <input type="radio" name="language" value="SEAL" title="Compile as SEAL" %SEALCODE_CHECKED% %DISABLED% />SEAL code</p>
-	
+	  <p>Compile as: <select name="language" %DISABLED% >
+          <option value="c" %CCODE_SELECTED% >MansOS C</option>
+          <option value="plain_c" %PLAINCODE_SELECTED% >Plain C</option>
+          <option value="nesc" %NESCCODE_SELECTED% >TinyOS nesC</option>
+          <option value="seal" %SEALCODE_SELECTED% >SEAL</option>
+          </select></p>
+
 	  <label for="code">Enter code:</label><br/>
 	  <textarea id="code" name="code" style="font-family: monospace; width: 80%" rows="20" title="Enter the C/SEAL code your would normally put in application's main file" %DISABLED%>%UPLOAD_CODE%</textarea><br/>
 	

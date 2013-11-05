@@ -18,7 +18,7 @@ c.setCfgValue("motes", [])
 c.setCfgValue("selectedMotes", [])
  # in format <port>:<platform>, e.g. /dev/ttyUSB0:telosb
 c.setCfgValue("motePlatforms", [])
-c.setCfgValue("isSealCode", False)
+c.setCfgValue("codeType", "C")
 c.setCfgValue("saveToFilename", "")
 c.setCfgValue("saveToFilenameOnMote", "")
 c.setCfgValue("saveProcessedData", False)

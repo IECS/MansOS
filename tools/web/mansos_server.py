@@ -179,7 +179,8 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             except:
                 pass
             
-            hasError = False        
+            hasError = False
+            sessionHead = ""
             try:
                 if not "no" in qs:
                     sessionHead = self.serveSession(qs, urlTo)
