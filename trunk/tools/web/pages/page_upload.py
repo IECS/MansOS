@@ -20,11 +20,13 @@ class PageUpload():
         self.end_headers()
 
         motesText = self.serveMotes("upload", "Upload", qs, None)
-        isSealCode = configuration.c.getCfgValueAsBool("isSealCode")
+        codeType = configuration.c.getCfgValue("codeType").lower()
         isSlow = configuration.c.getCfgValueAsBool("slowUpload")
         self.serveAnyPage("upload", qs, True, {"MOTES_TXT" : motesText,
-                        "CCODE_CHECKED": 'checked="checked"' if not isSealCode else "",
-                        "SEALCODE_CHECKED" : 'checked="checked"' if isSealCode else "",
+                        "CCODE_SELECTED": 'selected="selected"' if codeType == "c" else "",
+                        "PLAINCCODE_SELECTED": 'selected="selected"' if codeType == "plain_c" else "",
+                        "NESCCODE_SELECTED": 'selected="selected"' if codeType == "nesc" else "",
+                        "SEALCODE_SELECTED": 'selected="selected"' if codeType == "seal" else "",
                         "UPLOAD_CODE" : lastUploadCode,
                         "UPLOAD_CONFIG" : lastUploadConfig,
                         "UPLOAD_FILENAME": lastUploadFile,
@@ -51,11 +53,11 @@ class PageUpload():
         
         file_data = None
 
-        isSEAL = False
+        codeType = "C"
         if "compile" in form:
             if "language" in form:
-                isSEAL = form["language"].value.strip() == "SEAL"
-            configuration.c.setCfgValue("isSealCode", isSEAL)
+                codeType = form["language"].value.strip().lower()
+            configuration.c.setCfgValue("codeType", codeType)
 
         if "slow" in form:
             slow = form["slow"].value == "on"
@@ -108,9 +110,9 @@ class PageUpload():
         if slow:
             config += "\nSLOW_UPLOAD=y\n"
 
-        retcode = self.compileAndUpload(code, config, fileContents, isSEAL)
+        retcode = self.compileAndUpload(code, config, fileContents, codeType)
         motesText = self.serveMotes("upload", "Upload", None, form)
-        isSealCode = configuration.c.getCfgValueAsBool("isSealCode")
+        codeType = configuration.c.getCfgValue("codeType")
         isSlow = configuration.c.getCfgValueAsBool("slowUpload")
         if retcode == 0:
             infoMsg = "<div><strong>Upload done!</strong></div><br/>"
@@ -118,8 +120,10 @@ class PageUpload():
             infoMsg = "<div><strong>Upload failed!</strong></div><br/>"
 
         self.serveAnyPage("upload", qs, True, {"MOTES_TXT" : motesText,
-                        "CCODE_CHECKED": 'checked="checked"' if not isSealCode else "",
-                        "SEALCODE_CHECKED" : 'checked="checked"' if isSealCode else "",
+                        "CCODE_SELECTED": 'selected="selected"' if codeType == "c" else "",
+                        "PLAINCCODE_SELECTED": 'selected="selected"' if codeType == "plain_c" else "",
+                        "NESCCODE_SELECTED": 'selected="selected"' if codeType == "nesc" else "",
+                        "SEALCODE_SELECTED": 'selected="selected"' if codeType == "seal" else "",
                         "UPLOAD_CODE" : lastUploadCode,
                         "UPLOAD_CONFIG" : lastUploadConfig,
                         "UPLOAD_FILENAME": lastUploadFile,
@@ -186,11 +190,12 @@ class PageUpload():
             self.writeChunk(uploadLine)
         self.writeChunk("</pre>\n")
 
-    def compileAndUpload(self, code, config, fileContents, isSEAL):
+    def compileAndUpload(self, code, config, fileContents, codeType):
         global lastUploadCode
         global lastUploadConfig
         global lastUploadFile
         global maybeIsInSubprocess
+        global isListening
 
         if not os.path.exists("build"):
             os.mkdir("build")
@@ -218,7 +223,7 @@ class PageUpload():
            elif code:
                lastUploadCode = code
 
-               filename = "main." + ("sl" if isSEAL else "c")
+               filename = "main." + ("sl" if codeType == "seal" else "c")
                with open(os.path.join("build", filename), "w") as outFile:
                    outFile.write(code)
                    outFile.close()
@@ -226,11 +231,15 @@ class PageUpload():
                with open(os.path.join("build", "config"), "w") as outFile:
                    if config is None:
                        config = ""
+                   if codeType == "plain_c":
+                       # do not use mansos main in this case
+                       config += "USE_KERNEL_MAIN=n\n"
+                       config += "USE_HARDWARE_TIMERS=n\n"
                    outFile.write(config)
                    outFile.close()
 
                with open(os.path.join("build", "Makefile"), "w") as outFile:
-                   if isSEAL:
+                   if codeType == "seal":
                        outFile.write("SEAL_SOURCES = main.sl\n")
                    else:
                        outFile.write("SOURCES = main.c\n")
