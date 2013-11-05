@@ -111,7 +111,7 @@ def getRemoteServers():
     try:
         cfg = configfile.ConfigFile("remoteServers.cfg")
         cfg.load()
-        retVal += cfg.getCfgValueAsRealList("remoteServers")
+        retVal += cfg.getCfgValueAsList("remoteServers")
     except:
         pass
 

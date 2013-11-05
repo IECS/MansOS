@@ -67,30 +67,22 @@ class ConfigFile(object):
         with self.lock:
             self.ensureCorrectSection(name)
             value = self.cfg.get(self.currentSection, name)
-            try:
-                import json
-                result = json.loads(value)
-            except ValueError:
-                result = [value]
-        return result
-
-    def getCfgValueAsRealList(self, name):
-        result = []
-        with self.lock:
-            self.ensureCorrectSection(name)
-            value = self.cfg.get(self.currentSection, name)
-            try:
-                import json
-                result = json.loads(value)
-            except ValueError:
+            split_by_bracket = value.split("]")
+            if len(split_by_bracket) > 1:
+                # ok, got list in a list here
+                result = []
+                for s in split_by_bracket:
+                    if len(s):
+                        result.append(s.strip(",[").split(","))
+            else:
+                # XXX: this means that comma cannot be part of well-formed config values!
                 result = value.split(",")
         return result
 
     def setCfgValue(self, name, value):
         # make sure the value is in acceptable format (lists are stored as strings)
         if isinstance(value, list):
-            import json
-            value = json.dumps(value)
+            value = ",".join(value)
         elif not isinstance(value, str):
             value = str(value)
 
