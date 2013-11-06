@@ -1,10 +1,69 @@
 
 from __future__ import print_function
 import random
+import os
+import json
+import configuration
 
 class PageGraph():
     def serveGraphs(self, qs):
-# TODO
+        self.setSession(qs)
+
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+        changes = {}
+        buttons = "<button onclick='button(\" + i + \", this)'>Pause</button>"
+        changes["BUTTONS"] = buttons
+        content = self.serveBody("graph", qs, changes)
+        self.serveAnyPage("graph", qs, content = content, replaceValues = changes)
+     
+    def serveGraphData(self, qs):
+        global lastData
+
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+
+        # get the data to display in graphs
+        allData = ""
+        if self.moteData.hasData():
+            data = self.moteData.getData()
+            for mote in data:
+                for sensor in mote.keys():
+                    allData += sensor + ":"
+                    for measur in mote[sensor]:
+                        allData += str(measur[0]) + "," + str(measur[1]) + ";"
+                    allData += "|"
+        lastData = allData
+        self.writeChunk(allData)
+        
+    def serveGraphForm(self, qs):
+        self.send_response(200)
+        self.sendDefaultHeaders()
+        self.end_headers()
+        
+        graphForm = ""
+        try:
+            configuration.c.selectSection("graph")
+            graphSensors = json.loads(configuration.c.getCfgValue("graphsensors"))
+            motes = list(graphSensors.keys())
+            for motePortName in motes:
+                if os.name == "posix":
+                    fullMotePortName = "/dev/" + motePortName
+                else:
+                    fullMotePortName = motePortName
+                moteConfig = self.settings.getCfgValue("graphTitle") + " (" + fullMotePortName + ")"
+                moteConfig += ":"
+                moteConfig += self.settings.getCfgValue("graphYAxis")
+                moteConfig += ":"
+                moteConfig += self.settings.getCfgValue("graphInterval")
+                graphForm += moteConfig + "|"
+        except:
+            graphForm = ""
+        self.writeChunk(graphForm)
+        
+'''# TODO
 #        isMobile = "Android" in self.headers["user-agent"]
         isMobile = False
         self.setSession(qs)
@@ -15,7 +74,7 @@ class PageGraph():
             if isMobile == True:
                 changes["ADD"] = "<a href='/graph?addnewgraph=true'><button type='button' style='width: 100%' class='btn btn-primary' data-toggle='button'>Add new graph</button></a>"
             else:
-                changes["ADD"] = '<a href="/graph?addnewgraph=true"><button>Add new graph</button></a>'
+                changes["ADD"] = '<a href="/graph?addnewgraph=true"><button>Add new graph</button></a>
             
             if "editgraph" in qs:
                 self.serveEditGraph(qs)
@@ -207,4 +266,4 @@ class PageGraph():
             graphForm += tgraphForm[i] + "|"
             i += 1
         
-        self.writeChunk(graphForm)
+        self.writeChunk(graphForm)'''
