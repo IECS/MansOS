@@ -105,10 +105,15 @@ class Mote(object):
 
                 # save to file if required (raw data)
                 if configuration.c.getCfgValue("saveToFilename") \
-                        and not configuration.c.getCfgValue("saveProcessedData"):
-                    filename = os.path.join(configuration.c.getCfgValue("dataDirectory"),
-                                            self.moteDescription.getPort(),
-                                            configuration.c.getCfgValue("saveToFilename"))
+                        and not configuration.c.getCfgValueAsBool("saveProcessedData"):
+                    if self.moteDescription.getPort().startswith("/dev/"):
+                         filename = os.path.join(configuration.c.getCfgValue("dataDirectory"),
+                                                self.moteDescription.getPort()[5:],
+                                                configuration.c.getCfgValue("saveToFilename"))                      
+                    else: 
+                        filename = os.path.join(configuration.c.getCfgValue("dataDirectory"),
+                                                self.moteDescription.getPort(),
+                                                configuration.c.getCfgValue("saveToFilename"))
                     with open(filename, "a") as f:
                         f.write(c)
                         f.close()

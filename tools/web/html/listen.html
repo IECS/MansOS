@@ -1,24 +1,27 @@
 <form action="listen"><div class="form">
 
+<div class="alert alert-danger" style="display: %ERROR_STATUS%">
+  <a href="#" class="alert-link">%ERROR_MSG%</a>
+</div>
+
 %MOTES_TXT%
 
 <p>Last 30 output lines:</p>
 
 <div id="listen_div">%LISTEN_TXT%</div>
 
-<p>
-<input type="hidden" name="action" value="%MOTE_ACTION%"/>
-<input type="hidden" name="sma" class="Msma37" value="0">
-<input type="submit" value="%MOTE_ACTION% listening" %DISABLED%/></p>
+<br/>
 
 <p>
-<label for="dataFile">Save data to file (empty to disable saving):</label><br/>
+	<input type="hidden" name="action" value="%MOTE_ACTION%"/>
+	<input type="hidden" name="sma" class="Msma37" value="0">
+	<input type="submit" value="%MOTE_ACTION% listening" %DISABLED%/>
+</p>
 
-<label><input type="text" name="dataFile" value="%DATA_FILENAME%" title="The file(s) will be created on your hard drive under web server's data directory. Existing files will be appended" %DISABLED% /><br/>
-
-<input type="radio" name="dataType" value="raw" title="Save all serial input without processing" %RAWDATA_CHECKED% %DISABLED% />Raw data
-
-<input type="radio" name="dataType" value="mprocessed" title="Save serial input in CSV format, each sensor data in a separate file" %MPROCDATA_CHECKED% %DISABLED% />CSV data, multiple files
+<p>
+	<label for="dataFile">Save data to file (empty to disable saving):</label><input type="text" name="dataFile" value="%DATA_FILENAME%" title="The file(s) will be created on your hard drive under web server's data directory. Existing files will be appended" %DISABLED% /><br/>
+	<input type="radio" name="dataType" value="raw" title="Save all serial input without processing" %RAWDATA_CHECKED% %DISABLED%>&nbsp;Raw data</input><br/>
+	<input type="radio" name="dataType" value="mprocessed" title="Save serial input in CSV format, each sensor data in a separate file" %MPROCDATA_CHECKED% %DISABLED%>&nbsp;CSV data, multiple files</input>
 </p>
 
 </div></form> 

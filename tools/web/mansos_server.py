@@ -276,14 +276,17 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         self.end_headers()
 
         motesText = self.serveMotes("listen", "Listen", qs, None)
-        errorMsg = None
+        errorStyle = "none"
+        errorMsg = ""
         global isListening
         if "action" in qs and self.getLevel() > 1:
             if qs["action"][0] == "Start":
                 if not motes.anySelected():
                     errorMsg = "\n<h4 class='err'>Error: No motes selected!</h4>\n"
-                if isListening:
+                    errorStyle = "block"
+                elif isListening:
                     errorMsg = "\n<h4 class='err'>Already listening!</h4>\n"
+                    errorStyle = "block"
                 else:
                     sensor_data.moteData.reset()
                     ht.openAllSerial()
@@ -300,7 +303,10 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         for line in sensor_data.moteData.listenTxt:
             txt += line + "<br/>"
 
-        action = "Stop" if isListening else "Start"
+        if errorMsg == "":
+            action = "Stop" if isListening else "Start"
+        else:
+            action = "Start"
         
         dataFilename = configuration.c.getCfgValue("saveToFilename")
         saveProcessedData = configuration.c.getCfgValueAsBool("saveProcessedData")
@@ -321,17 +327,14 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         rawdataChecked = not saveProcessedData
         mprocessedChecked = saveProcessedData
 
-        div_height = "0"
-        if "div_height" in qs:
-            div_height = qs["div_height"][0]
-
         self.serveAnyPage("listen", qs, True, {"MOTES_TXT" : motesText,
                         "LISTEN_TXT" : txt,
                         "MOTE_ACTION": action,
                         "DATA_FILENAME" : dataFilename,
                         "RAWDATA_CHECKED" : 'checked="checked"' if rawdataChecked else "",
                         "MPROCDATA_CHECKED" : 'checked="checked"' if mprocessedChecked else "",
-                        "DIV_HEIGHT" : div_height}, errorMsg = errorMsg)
+                        "ERROR_MSG" : errorMsg,
+                        "ERROR_STATUS" : errorStyle})
         
     def serveMotes(self, action, namedAction, qs, form):
         disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
