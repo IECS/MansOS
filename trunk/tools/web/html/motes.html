@@ -1,0 +1,133 @@
+<script src="http://static.scripting.com/github/bootstrap2/js/jquery.js"></script>
+<script src="http://static.scripting.com/github/bootstrap2/js/bootstrap-transition.js"></script>
+<script src="http://static.scripting.com/github/bootstrap2/js/bootstrap-modal.js"></script>
+
+<div id="ConfigurationDialog" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="windowTitleLabel" aria-hidden="true">
+	<div class="modal-header">
+		<a href="#" class="close" data-dismiss="modal">&times;</a>
+		<h2 style="margin: 0px">Configuration:</h2>
+	</div>
+	<div class="modal-body">
+		<div class="divDialogElements" id="configContent">
+
+		</div>
+	</div>
+	<div class="modal-footer">
+		<button type="button" title="Read the currently active configuration values from the mote" onclick="getOrSetValues('get')">Get values</button>
+		<button type="button" title="Set the web configuration values as active" onclick="getOrSetValues('set')">Set values</button>
+		<button type="button" onclick="$('#ConfigurationDialog').modal('hide')">OK</button>
+	</div>
+</div><br/>
+
+<div id="InfoDialog" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="windowTitleLabel" aria-hidden="true">
+	<div class="modal-header">
+		<a href="#" class="close" data-dismiss="modal">&times;</a>
+		<h2 style="margin: 0px">Information:</h2>
+	</div>
+	<div class="modal-body">
+		<div class="divDialogElements" id="infoContent">
+
+		</div>
+	</div>
+	<div class="modal-footer">
+		<button type="button" onclick="$('#InfoDialog').modal('hide')">OK</button>
+	</div>
+</div><br/>
+
+<div id="ErrorDialog" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="windowTitleLabel" aria-hidden="true">
+	<div class="modal-header">
+		<a href="#" class="close" data-dismiss="modal">&times;</a>
+		<h2 style="margin: 0px">Information:</h2>
+	</div>
+	<div class="modal-body">
+		<div class="divDialogElements" id="errorContent">
+
+		</div>
+	</div>
+	<div class="modal-footer">
+		<button type="button" onclick="$('#ErrorDialog').modal('hide')">OK</button>
+	</div>
+</div><br/>
+
+%MOTE_TABLE%
+
+<script language="javascript">
+	var selectedMoteName;
+
+	function onConfig(selName) {
+		selectedMoteName = selName;
+	
+		$('#configContent').html("");
+		$("#ConfigurationDialog").modal("toggle")
+			.css({'width': '80%', 'margin-left':'auto', 
+			'margin-right':'auto', 'left':'10%'});
+		selPlatform = 
+			("sel_" + selName + "=" + $('#sel_' + selName).find(":selected").val());
+		dataString = selName + "_cfg=true" + '&' + selPlatform
+		$.ajax({
+			type: "GET",
+			url: "config",
+			data: dataString,
+			dataType: "text",
+			success: function(data) {
+				$('#configContent').html(data);
+			},
+			error: function() {
+	    		alert('Error occured');
+			}
+		});
+	}	
+
+	function updatePlatform(motePlatform) {
+		$('#infoContent').html("");
+		$("#InfoDialog").modal("toggle");
+		dataString = "platform_set=true" + '&' + motePlatform.id + "=" + motePlatform.value
+		$.ajax({
+			type: "GET",
+			url: "config",
+			data: dataString,
+			dataType: "text",
+			success: function(data) {
+				$('#infoContent').html(data);
+			},
+			error: function() {
+	    		alert('Error occured');
+			}
+		});
+	}
+
+	function viewFiles(moteName, motePlatform) {
+		$('#infoContent').html("");
+		$("#InfoDialog").modal("toggle");
+		dataString = moteName + "_files=true" + "&" + motePlatform.id + "=" + motePlatform.value
+		$.ajax({
+			type: "GET",
+			url: "config",
+			data: dataString,
+			dataType: "text",
+			success: function(data) {
+				$('#infoContent').html(data);
+			},
+			error: function() {
+	    		alert('Error occured');
+			}
+		});
+	}
+	
+	function getOrSetValues(action) {
+		dataString = action + "=true&" + $("#configForm").serialize(); 
+		$('#configContent').html("");
+		$.ajax({
+			type: "GET",
+			url: "config",
+			data: dataString,
+			dataType: "text",
+			success: function(data) {
+				$('#configContent').html(data);
+			},
+			error: function() {
+	    		alert('Error occured');
+			}
+		});
+	}
+</script>
