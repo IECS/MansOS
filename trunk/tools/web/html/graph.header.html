@@ -232,7 +232,7 @@
 			if(settings[i][1][1] < minInterval) minInterval = Number(settings[i][1][1]);
 			allGraph[i]["play"] = false;
 			allGraph[i]["title"] = settings[i][0];
-			allGraph[i]["data"] = settings[i][2];
+			allGraph[i]["data"] = "all";//settings[i][2];
 			allGraph[i]["yAxis"] = settings[i][1][0];
 		}
 		getData(1);
