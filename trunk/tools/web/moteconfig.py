@@ -450,9 +450,9 @@ class MoteConfig(object):
         text += "<tr><th valign='middle'>Actions</th>"
         for s in self.activePlatform.sensors:
             text += "<td>"
-            text += "<input type='checkbox' name='graph'>&nbsp;<a href='javascript:void(0)'>graph</a></input>"
-            text += "<br/>"
-            text += "<input type='checkbox' name='store'>&nbsp;<a href='javascript:void(0)'>store</a></input>"
+            text += "<input type='checkbox' name='graph_" + s.varname + "' %graph_" + s.varname + "%>&nbsp;<a href='javascript:void(0)'>graph</a></input>"
+            #text += "<br/>"
+            #text += "<input type='checkbox' name='store_" + s.varname + "'>&nbsp;<a href='javascript:void(0)'>store</a></input>"
             text += "</td>"
         text += "</tr>"
         text += "</tbody></table>"
