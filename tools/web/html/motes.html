@@ -15,7 +15,8 @@
 	<div class="modal-footer">
 		<button type="button" title="Read the currently active configuration values from the mote" onclick="getOrSetValues('get')">Get values</button>
 		<button type="button" title="Set the web configuration values as active" onclick="getOrSetValues('set')">Set values</button>
-		<button type="button" onclick="$('#ConfigurationDialog').modal('hide')">OK</button>
+		<button type="button" onclick="updateUIConfig()">Save</button>
+		<button type="button" onclick="$('#ConfigurationDialog').modal('hide')">Cancel</button>
 	</div>
 </div><br/>
 
@@ -124,6 +125,23 @@
 			dataType: "text",
 			success: function(data) {
 				$('#configContent').html(data);
+			},
+			error: function() {
+	    		alert('Error occured');
+			}
+		});
+	}
+	
+	function updateUIConfig() {
+		$('#ConfigurationDialog').modal('hide');
+		dataString = "update_sensors=true&" + $("#configForm").serialize()
+		$.ajax({
+			type: "GET",
+			url: "config",
+			data: dataString,
+			dataType: "text",
+			success: function(data) {
+				$('#infoContent').html(data);
 			},
 			error: function() {
 	    		alert('Error occured');

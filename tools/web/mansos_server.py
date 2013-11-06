@@ -201,6 +201,9 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             
             if infoMsg != None:
                 bodyContent = infoMsg + bodyContent
+            if replaceValues:
+                for v in replaceValues:
+                    bodyContent = bodyContent.replace("%" + v + "%", replaceValues[v])
             contents = t.substitute(
                 pageTitle = pageTitle, pageHead = pageHead, sessionHead = sessionHead, 
                 sma = sma, menuContent = menuContent, bodyContent = bodyContent, log = log)

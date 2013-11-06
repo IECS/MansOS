@@ -6,6 +6,8 @@ import sensor_data
 import helper_tools as ht
 import moteconfig
 from motes import motes
+import configuration
+import json
 
 class PageConfig():
     def serveConfig(self, qs):
@@ -84,6 +86,41 @@ class PageConfig():
                 return
                 
             moteidQS = "?sel_mote" + motePortName + "=" + platform + "&" + "mote" + motePortName
-            self.writeChunk(self.serveAnyPage("config", qs, isGeneric = False, content = text, replaceValues = {
-                              "MOTEID_CONFIG" : moteidQS + "_cfg=1",
-                              "MOTEID_FILES" : moteidQS + "_files=1"}, generatedContentOnly = True))
+            replaceValues = {
+                "MOTEID_CONFIG" : moteidQS + "_cfg=1",
+                "MOTEID_FILES" : moteidQS + "_files=1"
+            }
+            
+            if "update_sensors" in qs:
+                configuration.c.selectSection("graph")
+                graphConfig = []
+                storeConfig = []
+                try:
+                    graphSensors = json.load(configuration.c.setCfgValue("graphsensors"))
+                except:
+                    graphSensors = {}
+                for s in moteconfig.instance.activePlatform.sensors:
+                    storeFlag = "store_" + s.varname
+                    graphFlag = "graph_" + s.varname
+                    if storeFlag in qs and qs[storeFlag][0] == 'on':
+                        storeConfig.append(s.varname)
+                    if graphFlag in qs and qs[graphFlag][0] == 'on':
+                        graphConfig.append(s.varname)
+                configuration.c.selectSection("graph")
+                graphSensors[motePortName] = graphConfig
+                configuration.c.setCfgValue("graphsensors", json.dumps(graphSensors))
+                configuration.c.save()
+            else:
+                try:
+                    configuration.c.selectSection("graph")
+                    graphSensors = json.loads(configuration.c.getCfgValue("graphsensors"))
+                    graphConfig = graphSensors[motePortName]
+                except:
+                    graphConfig = []
+                for s in moteconfig.instance.activePlatform.sensors:
+                    if s.varname in graphConfig:
+                        replaceValues["graph_" + s.varname] = "checked"
+                    else:
+                        replaceValues["graph_" + s.varname] = ""
+                
+            self.writeChunk(self.serveAnyPage("config", qs, isGeneric = False, content = text, replaceValues = replaceValues, generatedContentOnly = True))
