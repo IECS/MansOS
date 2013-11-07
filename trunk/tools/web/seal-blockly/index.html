@@ -120,23 +120,75 @@ function wopen(url, name, w, h)
  win.resizeTo(w, h);
  win.focus();
 }
+	
+	var line = 1;
+	var data = "";
 
-function updateUploadPage() {
-	$('#uploadResult').text("");
-	$("#windowTitleDialog").modal('show');	
-	$.ajax({
-		type: "GET",
-		url: "upload-result",
-		data: "",
-		dataType: "text",
-		success: function(data) {
+	function endsWith(str, suffix) {
+	    return str.indexOf(suffix, str.length - suffix.length) !== -1;
+	}
+
+	function uploadSealCode() {
+	    var code = Blockly.Generator.workspaceToCode('Seal');
+	    dataParams = {'src' : code}
+	    arr = $("#motesForm").serialize().split('&');
+	    for (i = 0; i < arr.length; i++) {
+	    	values = arr[i].split("=");
+	    	if (values.length == 2) {
+	    		dataParams[values[0]] = values[1];
+	    	}
+	    }
+		config = $('body').find('textarea[name="config"]');
+		dataParams['config'] = config.val();
+	    
+	    $.ajax({
+	        type: "GET", // change to POST if needed
+	        url: '/code',
+	        data: dataParams
+	    });
+	}
+
+	function updateUploadPage() {
+		data = "";
+		$('#uploadResult').text("");
+		$("#windowTitleDialog").modal('show');
+		line = 1;
+		
+		processUpload();
+	}
+		
+	function processUpload() {
+		if (line != 0) {
+			$('#uploadResult').text("");
 			$('#uploadResult').text(data);
-		},
-		error: function() {
-    		alert('Error occured');
+			if (!endsWith(data, "Finished!")) {
+				currentLine = line;
+				line = 0;
+				refreshUploadPage(currentLine);
+			} else {
+				line = -1;
+			}
+		}	
+		if (line != -1) {
+			setTimeout(processUpload, 1);
 		}
-	});
-}
+	}
+	
+	function refreshUploadPage(currentLine) {
+		$.ajax({
+			type: "GET",
+			url: "upload-result",
+			data: "line=" + currentLine,
+			dataType: "text",
+			success: function(d) {
+				data = d;
+				line = currentLine + 1;
+			},
+			error: function() {
+        		alert('Error occured');
+   			}
+		});
+	}
 	
   </script>
   <style>
@@ -257,6 +309,7 @@ function updateUploadPage() {
         <h1> Put together your <a href="http://open-sci.net/wiki/index.php/SEAL" target = "_new">Seal</a> code.</h1>
       </td>
     </tr>
+    <tr><td><form id="motesForm">%MOTES_TXT%</form></td></tr>
     <tr>
       <td>
         <table>
@@ -271,12 +324,13 @@ function updateUploadPage() {
               <button onclick="save()">Save XML</button>
               <button id="fakeload">Load XML</button>
               <input type="file" id="load" style="display: none;"/>
-              <button class="launch" onclick="document.getElementById('content_blocks').contentWindow.uploadSealCode(); updateUploadPage();" %DISABLED% >Try Program</button>
+              <button class="launch" onclick="uploadSealCode(); updateUploadPage();" %DISABLED% >Try Program</button>
             </td>
           </tr>
         </table>
       </td>
     </tr>
+    
     <tr>
       <td height="99%">
         <iframe id="content_blocks" src="/seal-blockly/frame.html?sma=%SMA%"></iframe>
@@ -286,6 +340,13 @@ function updateUploadPage() {
         </div>
       </td>
     </tr>
+    
+    <tr><td>
+    	<br/>
+     	<label for="config">Enter configuration options (one per line):</label><br/>
+	 	<textarea id="config" name="config" style="font-family: monospace; width: 80%" rows="4"  title="Enter the configuration options your would normally put in application's config file" %DISABLED%></textarea><br/>
+		<br/>
+	</td></tr>
   </table>
 </body>
 </html>

@@ -37,8 +37,8 @@
 	  <textarea id="config" name="config" style="font-family: monospace; width: 80%" rows="4"  title="Enter the configuration options your would normally put in application's config file" %DISABLED%>%UPLOAD_CONFIG%</textarea><br/>
 	
 	  <input type="hidden" name="sma" class="Msma37" value="0">
-<!--	  <input type="submit" name="compile" value="Compile and upload" class="submit_btn" %DISABLED%/> -->
-          <input type="submit" name="compile" value="Compile and upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/>
+	  <input type="submit" name="compile" value="Compile and upload" class="submit_btn" %DISABLED%/> 
+<!--  <input type="submit" name="compile" value="Compile and upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/> -->
 	
 <!--	  <input type="checkbox" name="slow" title="Add delays to the upload script. Useful if serial protocol is tunneled over IP" %SLOW_CHECKED% %DISABLED%>Use SLOW switch when uploading<br/><br/> -->
 	</div>
@@ -54,6 +54,9 @@
 </div></form>
 
 <script language="javascript">
+	var line = 1;
+	var data = "";
+
 	$(function() {
 		$(".submit_btn").click(function() {
 			var dataString = '';
@@ -92,16 +95,44 @@
 		});
 	});
 
+	function endsWith(str, suffix) {
+	    return str.indexOf(suffix, str.length - suffix.length) !== -1;
+	}
+
 	function updateUploadPage() {
+		data = "";
 		$('#uploadResult').text("");
 		$("#windowTitleDialog").modal('show');
+		line = 1;
+		processUpload();
+	}
+		
+	function processUpload() {
+		if (line != 0) {
+			$('#uploadResult').text("");
+			$('#uploadResult').text(data);
+			if (!endsWith(data, "Finished!")) {
+				currentLine = line;
+				line = 0;
+				refreshUploadPage(currentLine);
+			} else {
+				line = -1;
+			}
+		}	
+		if (line != -1) {
+			setTimeout(processUpload, 1);
+		}
+	}
+	
+	function refreshUploadPage(currentLine) {
 		$.ajax({
 			type: "GET",
 			url: "upload-result",
-			data: "",
+			data: "line=" + currentLine,
 			dataType: "text",
-			success: function(data) {
-				$('#uploadResult').text(data);
+			success: function(d) {
+				data = d;
+				line = currentLine + 1;
 			},
 			error: function() {
         		alert('Error occured');
