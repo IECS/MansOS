@@ -26,6 +26,7 @@ import daemon
 import configuration
 import mansos_version
 import helper_tools as ht
+import cgi
 
 DEBUG = 0
 
@@ -387,6 +388,8 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             contents = f.read()
             disabled = 'disabled="disabled"' if not self.getLevel() > 1 else ""
             contents = contents.replace("%DISABLED%", disabled)
+            motesText = self.serveMotes("upload", "Upload", qs, None)
+            contents = contents.replace("%MOTES_TXT%", motesText)
             self.writeChunk(contents)
    
     def serve404Error(self, path, qs):
@@ -489,8 +492,10 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             # qs['src'] contains SEAL-Blockly code
             code = qs.get('src')[0] if "src" in qs else ""
             config = qs.get('config')[0] if "config" in qs else ""
+            # Parse the form data posted
+            self.serveMotes("upload", "Upload", qs, None)
             if motes.anySelected():
-                self.compileAndUpload(code, config, None, True)
+                self.compileAndUpload(code, config, None, 'seal')
             self.serveSync(qs)
         elif o.path[-4:] == ".css":
             self.serveFile(os.path.join(self.htmlDirectory, "css", o.path[1:]), qs)

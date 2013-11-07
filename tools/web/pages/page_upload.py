@@ -128,7 +128,6 @@ class PageUpload():
                         "UPLOAD_CONFIG" : lastUploadConfig,
                         "UPLOAD_FILENAME": lastUploadFile,
                         "SLOW_CHECKED" : 'checked="checked"' if isSlow else ""}, infoMsg = infoMsg)
-# ???      self.writeChunk("ok")
 
     def serveUploadResult(self, qs):
         global maybeIsInSubprocess
@@ -141,19 +140,14 @@ class PageUpload():
         inFileName = os.path.join("build", "child_output.txt")
         inFile = None
 
-        maybeIsInSubprocess = True
-        startWait = time.time()
-        while not isPostEntered:
-            now = time.time()
-            # wait a maximum of 10 seconds
-            if now - startWait > 10.0:
-                break
-        isPostEntered = False
+        limit = int(qs['line'][0])
+        if limit == 1:
+            maybeIsInSubprocess = True
 
         uploadLine = ""
         try:
             # wait until subprocess output file appears
-            while maybeIsInSubprocess and inFile == None:
+            while inFile == None:
                 try:
                     inFile = open(inFileName, "rb")
                 except:
@@ -161,13 +155,20 @@ class PageUpload():
                     time.sleep(0.001)
 
             if inFile:
-                self.writeChunk("<pre>\n")
+                i = 0;
                 while True:
                     if utils.fileIsOver(inFile):
                         if maybeIsInSubprocess:
                             time.sleep(0.001)
                             continue
                         else:
+                            self.writeChunk("Finished!")
+                            # clean up
+                            try:
+                                if inFile: inFile.close()
+                                os.remove(inFileName)
+                            except:
+                                pass
                             break
                     # read one symbol
                     c = inFile.read(1)
@@ -176,19 +177,11 @@ class PageUpload():
                         # if newline reached, print out the current line
                         self.writeChunk(uploadLine)
                         uploadLine = ""
+                        i = i + 1
+                        if i > limit:
+                            break;
         except:
             raise
-        finally:
-            # clean up
-            try:
-                if inFile: inFile.close()
-                os.remove(inFileName)
-            except:
-                pass
-        # write final chunk, if any
-        if uploadLine:
-            self.writeChunk(uploadLine)
-        self.writeChunk("</pre>\n")
 
     def compileAndUpload(self, code, config, fileContents, codeType):
         global lastUploadCode

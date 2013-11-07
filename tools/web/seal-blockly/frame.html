@@ -82,7 +82,7 @@ sync = setTimeout("doSync()",5000);
 
 function uploadSealCode() {
     var code = Blockly.Generator.workspaceToCode('Seal');
-
+	
     $.ajax({
         type: "GET", // change to POST if needed
         url: '/code',
