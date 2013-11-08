@@ -8,10 +8,14 @@
 		<h2 style="margin: 0px">Upload result:</h2>
 	</div>
 	<div class="modal-body">
+		<div class="alert alert-success" id="successMsg" style="display: none;">...</div>
+		<div class="alert alert-info" id="infoMsg" style="display: none;">...</div>
+		<div class="alert alert-warning" id="warningMsg" style="display: none;">...</div>
+		<div class="alert alert-danger" id="dangerMsg" style="display: none;">...</div>	
 		<div class="divDialogElements">
-			<pre id="uploadResult">
-			
-			</pre>
+		<pre id="uploadResult">
+		
+		</pre>
 		</div>
 	</div>
 	<div class="modal-footer">
@@ -19,7 +23,7 @@
 	</div>
 </div>
 
-<form action="upload" method="post" enctype="multipart/form-data">
+<form action="upload" method="post" enctype="multipart/form-data" id="uploadForm">
 	%MOTES_TXT%
 
 	<div class="form">
@@ -37,20 +41,15 @@
 	  <textarea id="config" name="config" style="font-family: monospace; width: 80%" rows="4"  title="Enter the configuration options your would normally put in application's config file" %DISABLED%>%UPLOAD_CONFIG%</textarea><br/>
 	
 	  <input type="hidden" name="sma" class="Msma37" value="0">
-	  <input type="submit" name="compile" value="Compile and upload" class="submit_btn" %DISABLED%/> 
-<!--  <input type="submit" name="compile" value="Compile and upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/> -->
-	
-<!--	  <input type="checkbox" name="slow" title="Add delays to the upload script. Useful if serial protocol is tunneled over IP" %SLOW_CHECKED% %DISABLED%>Use SLOW switch when uploading<br/><br/> -->
+	  <input type="button" name="compile" value="Compile and upload" class="submit_btn" %DISABLED%/> 
+	  <!-- <input type="checkbox" name="slow" title="Add delays to the upload script. Useful if serial protocol is tunneled over IP" %SLOW_CHECKED% %DISABLED%>Use SLOW switch when uploading<br/><br/> -->
 	</div>
-</form>
-
-<form method="post" enctype="multipart/form-data" action="upload"><div class="form">
 
   <label for="file">Alternatively, specify IHex filename: </label><br/>
   <input type="file" name="file" id="file" value="%UPLOAD_FILENAME%" title="Input a pre-compiled Intel HEX file" %DISABLED%/><br/><br/>
 
-  <input type="submit" name="upload" value="Upload" onclick="wopen('upload-result', 'Upload result', 800, 600);" %DISABLED%/>
-<!--  <input type="checkbox" name="slow" title="Add delays to the upload script. Useful if serial protocol is tunneled over IP" %SLOW_CHECKED% %DISABLED%>Use SLOW switch when uploading<br/><br/> -->
+  <input type="button" name="upload" value="Upload" class="submit_btn" %DISABLED%/> 
+  <!-- <input type="checkbox" name="slow" title="Add delays to the upload script. Useful if serial protocol is tunneled over IP" %SLOW_CHECKED% %DISABLED%>Use SLOW switch when uploading<br/><br/> -->
 </div></form>
 
 <script language="javascript">
@@ -59,37 +58,53 @@
 
 	$(function() {
 		$(".submit_btn").click(function() {
-			var dataString = '';
+			var fd = new FormData();
+			
 			var inputElements = $('body').find(':input');
 			inputElements.each(function(index, para) {
 				if (!$(this).is("textarea")) {
-					if ($(para).attr("type") == 'radio') {
+					if ($(para).attr("type") == 'radio' || $(para).attr("type") == 'checkbox') {
 						if ($(para).attr("checked") == 'checked') {
-							dataString += $(para).serialize() + '&';
+							fd.append($(para).attr('name'), $(para).val());
 						}
-					} else if ($(para).attr("type") == 'submit') {
-						dataString += $(para).attr('name') + '=' + $(para).val() + '&';
-					} else {
-	    				dataString += $(para).serialize() + '&';
+					} else if ($(para).attr('name') != undefined && $(para).attr('name') != 'file') {
+	    				fd.append($(para).attr('name'), $(para).val());
 	    			}
 	    		}
 			});
 			var txtElements = $('textarea');
 			txtElements.each(function(index, para) {
-  				dataString += $(para).serialize() + '&';
+  				fd.append($(para).attr('name'), $(para).val());
 			});
+			if ($("#file")[0].files[0] != undefined) {
+				fd.append("file", $("#file")[0].files[0]);
+			}
+			
+			$('#successMsg').hide();
+			$('#warningMsg').hide();
+			$('#dangerMsg').hide();
 			$.ajax({
-				type: "POST",
-				url: "upload",
-				data: dataString,
-				dataType: "text",
-				success: function(data) {
-					//alert(data);
-				},
-				error: function() {
-            		alert('Error occured');
-       			}
-			});
+			  url: 'upload',
+			  data: fd,
+			  processData: false,
+			  contentType: false,
+			  type: 'POST',
+			  success: function(data) {
+				if (data == "Upload done!") {
+					$('#successMsg').show();
+					$('#successMsg').text(data);
+				} else if (data == "Upload failed!") {
+					$('#dangerMsg').show();
+					$('#dangerMsg').text(data);
+				} else {
+					$('#warningMsg').show();
+					$('#warningMsg').text(data);
+				}
+			  },
+			  error: function() {
+            	alert('Error occured');
+       		  }
+			});		
 			updateUploadPage();
 			return false;
 		});
