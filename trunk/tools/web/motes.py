@@ -148,7 +148,7 @@ class Mote(object):
             platformArgs = ["--invert-reset", "--invert-test"]
 
         arglist = ["python", bsl, "-c", self.port.portstr, "-r", "-e", "-I", "-p", filename]
-        argist.extend(platformArgs)
+        arglist.extend(platformArgs)
         if configuration.c.getCfgValueAsBool("slowUpload"):
             arglist.append("--slow")
 

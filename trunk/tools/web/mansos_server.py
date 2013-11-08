@@ -495,7 +495,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             # Parse the form data posted
             self.serveMotes("upload", "Upload", qs, None)
             if motes.anySelected():
-                self.compileAndUpload(code, config, None, 'seal')
+                self.compileAndUpload(code, config, None, None, 'seal')
             self.serveSync(qs)
         elif o.path[-4:] == ".css":
             self.serveFile(os.path.join(self.htmlDirectory, "css", o.path[1:]), qs)

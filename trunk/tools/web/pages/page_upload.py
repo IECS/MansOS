@@ -6,7 +6,7 @@ import utils
 import sensor_data
 
 maybeIsInSubprocess = False
-isPostEntered = False
+forceInterrupt = False
 subprocessLock = threading.Lock()
 
 class PageUpload():
@@ -34,18 +34,16 @@ class PageUpload():
 
     def serveUploadPost(self, qs, lastUploadCode, lastUploadConfig, lastUploadFile):
         global maybeIsInSubprocess
-        global isPostEntered
+        global forceInterrupt
 
         # Parse the form data posted
         form = cgi.FieldStorage(
             fp = self.rfile,
             headers = self.headers,
-            environ = {'REQUEST_METHOD':'POST',
-                     'CONTENT_TYPE':self.headers['Content-Type'],
-                     })
-
-        # signal the upload result thread that we are are ready to start serving
-        isPostEntered = True
+            environ = {
+                'REQUEST_METHOD':'POST',
+                'CONTENT_TYPE':self.headers['Content-Type']
+            })
 
         self.send_response(200)
         self.sendDefaultHeaders()
@@ -73,14 +71,17 @@ class PageUpload():
 
         if "file" in form.keys():
             fileContents = form["file"].file.read()
+            fileName = form["file"].filename
         else:
             fileContents = None
+            fileName = None
 
         # check if what to upload is provided
         if not fileContents and not code:
-            text = "Neither filename nor code specified!"
+            infoMsg = "Neither filename nor code specified!"
             maybeIsInSubprocess = False
-            self.serveAnyPage("error:critical", qs, errorMsg = text)
+            forceInterrupt = True
+            self.writeChunk(infoMsg);
             return
 
         for m in motes.getMotes():
@@ -99,9 +100,11 @@ class PageUpload():
         motes.storeSelected()
         # check if any motes are selected
         if not motes.anySelected():
-            text = "No motes selected!"
+            infoMsg = "No motes selected!"
             maybeIsInSubprocess = False
-            return self.serveAnyPage("error:critical", qs, errorMsg = text, generatedContentOnly = True)
+            forceInterrupt = True
+            self.writeChunk(infoMsg);
+            return
 
         config = ""
         if "config" in form.keys():
@@ -110,28 +113,19 @@ class PageUpload():
         if slow:
             config += "\nSLOW_UPLOAD=y\n"
 
-        retcode = self.compileAndUpload(code, config, fileContents, codeType)
+        retcode = self.compileAndUpload(code, config, fileName, fileContents, codeType)
         motesText = self.serveMotes("upload", "Upload", None, form)
         codeType = configuration.c.getCfgValue("codeType")
         isSlow = configuration.c.getCfgValueAsBool("slowUpload")
         if retcode == 0:
-            infoMsg = "<div><strong>Upload done!</strong></div><br/>"
+            infoMsg = "Upload done!"
         else:
-            infoMsg = "<div><strong>Upload failed!</strong></div><br/>"
-
-        self.serveAnyPage("upload", qs, True, {"MOTES_TXT" : motesText,
-                        "CCODE_SELECTED": 'selected="selected"' if codeType == "c" else "",
-                        "PLAINCCODE_SELECTED": 'selected="selected"' if codeType == "plain_c" else "",
-                        "NESCCODE_SELECTED": 'selected="selected"' if codeType == "nesc" else "",
-                        "SEALCODE_SELECTED": 'selected="selected"' if codeType == "seal" else "",
-                        "UPLOAD_CODE" : lastUploadCode,
-                        "UPLOAD_CONFIG" : lastUploadConfig,
-                        "UPLOAD_FILENAME": lastUploadFile,
-                        "SLOW_CHECKED" : 'checked="checked"' if isSlow else ""}, infoMsg = infoMsg)
+            infoMsg = "Upload failed!"
+        self.writeChunk(infoMsg);
 
     def serveUploadResult(self, qs):
         global maybeIsInSubprocess
-        global isPostEntered
+        global forceInterrupt
 
         self.send_response(200)
         self.sendDefaultHeaders()
@@ -149,6 +143,10 @@ class PageUpload():
             # wait until subprocess output file appears
             while inFile == None:
                 try:
+                    if forceInterrupt:
+                        self.writeChunk("Finished!")
+                        forceInterrupt = False
+                        return
                     inFile = open(inFileName, "rb")
                 except:
                     inFile = None
@@ -183,7 +181,7 @@ class PageUpload():
         except:
             raise
 
-    def compileAndUpload(self, code, config, fileContents, codeType):
+    def compileAndUpload(self, code, config, fileName, fileContents, codeType):
         global lastUploadCode
         global lastUploadConfig
         global lastUploadFile
@@ -200,7 +198,7 @@ class PageUpload():
         maybeIsInSubprocess = True
         try:
            if fileContents:
-               lastUploadFile = form["file"].filename
+               lastUploadFile = fileName
 
                filename = os.path.join("build", "tmp-file.ihex")
                with open(filename, "w") as outFile:
