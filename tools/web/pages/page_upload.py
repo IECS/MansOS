@@ -64,17 +64,15 @@ class PageUpload():
         configuration.c.setCfgValue("slowUpload", slow)
         configuration.c.save()
 
-        if "code" in form.keys():
-            code = form["code"].value
-        else:
-            code = None
+        code = None
+        fileContents = None
+        fileName = None
 
-        if "file" in form.keys():
+        if "compile" in form and "code" in form:
+            code = form["code"].value
+        if "upload" in form and "file" in form:
             fileContents = form["file"].file.read()
             fileName = form["file"].filename
-        else:
-            fileContents = None
-            fileName = None
 
         # check if what to upload is provided
         if not fileContents and not code:
