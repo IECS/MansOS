@@ -60,6 +60,7 @@
 		$(".submit_btn").click(function() {
 			var fd = new FormData();
 			
+			fd.append($(this).attr('name'), $(this).val());
 			var inputElements = $('body').find(':input');
 			inputElements.each(function(index, para) {
 				if (!$(this).is("textarea")) {
@@ -67,7 +68,7 @@
 						if ($(para).attr("checked") == 'checked') {
 							fd.append($(para).attr('name'), $(para).val());
 						}
-					} else if ($(para).attr('name') != undefined && $(para).attr('name') != 'file') {
+					} else if ($(para).attr('name') != undefined && $(para).attr('name') != 'file' && $(para).attr('type') != 'button') {
 	    				fd.append($(para).attr('name'), $(para).val());
 	    			}
 	    		}
