@@ -96,7 +96,7 @@ class PageConfig():
                 graphConfig = []
                 storeConfig = []
                 try:
-                    graphSensors = json.load(configuration.c.setCfgValue("graphsensors"))
+                    graphSensors = json.loads(configuration.c.getCfgValue("graphsensors"))
                 except:
                     graphSensors = {}
                 for s in moteconfig.instance.activePlatform.sensors:
