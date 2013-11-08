@@ -48,17 +48,23 @@ class PageGraph():
             configuration.c.selectSection("graph")
             graphSensors = json.loads(configuration.c.getCfgValue("graphsensors"))
             motes = list(graphSensors.keys())
+            moteConfig = self.settings.getCfgValue("graphTitle") 
+            moteConfig += ":"
+            moteConfig += self.settings.getCfgValue("graphYAxis")
+            moteConfig += ":"
+            moteConfig += self.settings.getCfgValue("graphInterval")
+            moteConfig += ":"
+            configuration.c.selectSection("graph")
             for motePortName in motes:
                 if os.name == "posix":
                     fullMotePortName = "/dev/" + motePortName
                 else:
                     fullMotePortName = motePortName
-                moteConfig = self.settings.getCfgValue("graphTitle") + " (" + fullMotePortName + ")"
-                moteConfig += ":"
-                moteConfig += self.settings.getCfgValue("graphYAxis")
-                moteConfig += ":"
-                moteConfig += self.settings.getCfgValue("graphInterval")
-                graphForm += moteConfig + "|"
+                graphSensors = json.loads(configuration.c.getCfgValue("graphsensors"))
+                graphConfig = graphSensors[motePortName]
+                for s in graphConfig:
+                    moteConfig += s + "@" + motePortName + ","
+            graphForm += moteConfig + "|"
         except:
             graphForm = ""
         self.writeChunk(graphForm)
