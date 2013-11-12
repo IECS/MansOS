@@ -8,6 +8,7 @@ import moteconfig
 from motes import motes
 import configuration
 import json
+import utils
 
 class PageConfig():
     def serveConfig(self, qs):
@@ -19,7 +20,7 @@ class PageConfig():
         
         if "platform_set" in qs:
             for m in motes.getMotes():
-                motename = "sel_mote" + m.getPortBasename()
+                motename = "sel_mote" + utils.urlEscape(m.getFullBasename())
                 if motename in qs:
                     m.platform = qs[motename][0]
             motes.storeSelected()
@@ -46,9 +47,11 @@ class PageConfig():
             if motePortName is None: # or moteIndex >= len(motes.getMotes()):
                 self.writeChunk("<h4 class='err'>Config page requested, but mote not specified!</h4>")
                 return
+
+            motePortNameEsc = utils.urlEscape(motePortName)
     
             platform = None
-            dropdownName = "sel_mote" + motePortName
+            dropdownName = "sel_mote" + motePortNameEsc
             if dropdownName in qs:
                 platform = qs[dropdownName][0]
     
@@ -56,12 +59,7 @@ class PageConfig():
                 self.writeChunk("<h4 class='err'>Config page requested, but platform not specified or unknown!</h4>")
                 return
 
-            if os.name == "posix":
-                fullMotePortName = "/dev/" + motePortName
-            else:
-                fullMotePortName = motePortName
-    
-            moteconfig.instance.setMote(motes.getMote(fullMotePortName), platform)
+            moteconfig.instance.setMote(motes.getMote(motePortName), platform)
     
             (errmsg, ok) = moteconfig.instance.updateConfigValues(qs)
             if not ok:
@@ -78,14 +76,14 @@ class PageConfig():
                 if "filename" in qs:
                     (text, ok) = moteconfig.instance.getFileContentsHTML(qs)
                 else:
-                    (text, ok) = moteconfig.instance.getFileListHTML(motePortName)
+                    (text, ok) = moteconfig.instance.getFileListHTML(motePortNameEsc)
             else:
                 (text, ok) = moteconfig.instance.getConfigHTML()
             if not ok:
                 self.writeChunk("\n<h4 class='err'>Error: " + text + "</h4>\n")
                 return
                 
-            moteidQS = "?sel_mote" + motePortName + "=" + platform + "&" + "mote" + motePortName
+            moteidQS = "?sel_mote" + motePortNameEsc + "=" + platform + "&" + "mote" + motePortNameEsc
             replaceValues = {
                 "MOTEID_CONFIG" : moteidQS + "_cfg=1",
                 "MOTEID_FILES" : moteidQS + "_files=1"
@@ -107,14 +105,14 @@ class PageConfig():
                     if graphFlag in qs and qs[graphFlag][0] == 'on':
                         graphConfig.append(s.varname)
                 configuration.c.selectSection("graph")
-                graphSensors[motePortName] = graphConfig
+                graphSensors[motePortNameEsc] = graphConfig
                 configuration.c.setCfgValue("graphsensors", json.dumps(graphSensors))
                 configuration.c.save()
             else:
                 try:
                     configuration.c.selectSection("graph")
                     graphSensors = json.loads(configuration.c.getCfgValue("graphsensors"))
-                    graphConfig = graphSensors[motePortName]
+                    graphConfig = graphSensors[motePortNameEsc]
                 except:
                     graphConfig = []
                 for s in moteconfig.instance.activePlatform.sensors:

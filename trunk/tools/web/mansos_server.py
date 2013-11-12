@@ -26,7 +26,7 @@ import daemon
 import configuration
 import mansos_version
 import helper_tools as ht
-import cgi
+import urllib2
 
 DEBUG = 0
 
@@ -44,9 +44,9 @@ else:
 
 isListening = False
 
-lastUploadCode = ""
-lastUploadConfig = ""
-lastUploadFile = ""
+#lastUploadCode = ""
+#lastUploadConfig = ""
+#lastUploadFile = ""
 lastData = ""
 
 allSessions = None
@@ -240,9 +240,9 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         tableDesc = "<form action='config'><table class='table'>" \
             + "<thead><tr><th>Mote</th><th>Platform</th><th>Actions</th></tr></thead>" \
             + "${tableContent}</table></form>"
-        platformSelect = '<select id="sel_${name}"' + disabled + ' ' \
+        platformSelect = '\n<select id="sel_${name}" ' + disabled + ' ' \
             + 'title="Select the mote\'s platform: determines the list of sensors the mote has. ' \
-            + '"Also has effect on code compilation and uploading">\n' \
+            + 'Also has effect on code compilation and uploading">\n' \
             + '${details}</select>&nbsp;<input type="button" name="platform_set" value="Update" ' + disabled \
             +' onclick="updatePlatform(sel_${name})"/>'
         detail = '<option value="${platform}" ${selected}>${platform}</option>\n'
@@ -262,27 +262,81 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         tableContent = ""
 
         for m in motes.getMotes():
-            name = "mote" + m.getPortBasename()
+            name = "mote" + m.getFullBasename()
+            escapedName = utils.urlEscape(name)
             details = ""
             for platform in moteconfig.supportedPlatforms:
                 selected = 'selected="selected"' if platform == m.platform else ''
                 details += t3.substitute(platform = platform, selected = selected)
-            tableContent += t2.substitute(portName = m.getPortName(), 
-                platformSelect = t4.substitute(name = name, details = details),
-                actions = t5.substitute(name = name))
+            tableContent += t2.substitute(portName = m.getFullName(), 
+                platformSelect = t4.substitute(name = escapedName, details = details),
+                actions = t5.substitute(name = escapedName))
         text = t1.substitute(tableContent = tableContent)
         self.serveAnyPage("motes", qs, True, {"MOTE_TABLE" : text})
   
     def serveListen(self, qs):
+        if "single" in qs and self.getLevel() > 1:
+            # listen to a single mote and return
+            motePortName = utils.urlUnescape(qs["single"][0])
+            mote = motes.getMote(motePortName)
+            if mote is None:
+                self.setSession(qs)
+                self.send_response(200)
+                self.sendDefaultHeaders()
+                self.end_headers()
+                motesText = self.serveMotes("listen", "Listen", qs, None, True)
+                self.serveAnyPage("error:critical", qs,
+                                  errorMsg = "Single mote selected, but no mote with this name found")
+                return
+
+            if "max_data" in qs:
+                max_data = qs["max_data"][0]
+            else:
+                max_data = "100"
+
+            # do not set session info
+            self.send_response(200)
+            self.sendDefaultHeaders()
+            # auto refresh
+            self.send_header('Refresh', '1')
+            self.end_headers()
+            if mote.isLocal():
+                # TODO!
+                pass
+            else:
+                # Example URL: "http://localhost:30001/read?port=/dev/ttyUSB0"
+                (portname, host) = motePortName.split('@')
+                if os.name == "posix":
+                    fullPortName = "/dev/" + portname
+                else:
+                    fullPortName = portname
+                url = "http://" + host + "/read?max_data=" + max_data + "&port=" + fullPortName
+                try:
+                    req = urllib2.urlopen(url)
+                    output = req.read()
+                    self.writeChunk("<pre>")
+                    self.writeChunk(output)
+                    self.writeChunk("</pre>")
+                except Exception as e:
+                    print("exception when listening to remote mote:")
+                    print(e)
+                    print(traceback.format_exc())
+                    self.writeChunk("Failed!")
+            return
+
         self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
 
-        motesText = self.serveMotes("listen", "Listen", qs, None)
+        motesText = self.serveMotes("listen", "Listen", qs, None, True)
+
         errorStyle = "none"
         errorMsg = ""
         global isListening
+
+
+
         if "action" in qs and self.getLevel() > 1:
             if qs["action"][0] == "Start":
                 if not motes.anySelected():
@@ -340,11 +394,11 @@ class HttpServerHandler(BaseHTTPRequestHandler,
                         "ERROR_MSG" : errorMsg,
                         "ERROR_STATUS" : errorStyle})
         
-    def serveMotes(self, action, namedAction, qs, form):
+    def serveMotes(self, action, namedAction, qs, form, extra = False):
         disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
         c = ""
         for m in motes.getMotes():
-            name = "mote" + m.getPortBasename()
+            name = "mote" + m.getFullBasename()
 
             if qs:
                 if name in qs:
@@ -359,16 +413,24 @@ class HttpServerHandler(BaseHTTPRequestHandler,
 
             checked = ' checked="checked"' if m.isSelected else ""
 
-            c += '<div class="mote"><strong>Mote: </strong>' + m.getPortName()
+            c += '<div class="mote"><strong>Mote: </strong>' + m.getFullName()
             c += ' (<strong>Platform: </strong>' + m.platform + ') '
             c += ' <input type="checkbox" title="Select the mote" name="' + name + '"'
-            c += checked + ' ' + disabled + '/>' + namedAction + '</div>\n'
+            c += checked + ' ' + disabled + '/>' + namedAction
+
+            if extra:
+                title = namedAction + ' specifically to ' + m.getFullBasename()
+                c += '\n<a href="' + namedAction.lower() + '?single=' + \
+                    utils.urlEscape(m.getFullBasename()) + \
+                    '&max_data=100" ' + disabled + ' onClick="stopRefresh()" >' + title + '</a>'
+
+            c += '</div>\n'
 
         # remember which motes were selected and which were not
         motes.storeSelected()
 
         if c:
-            c = '<div class="motes1">\nDirectly attached motes:\n<br/>\n' + c + '</div>\n'
+            c = '<div class="motes1">\nAttached motes:\n<br/>\n' + c + '</div>\n'
 
         return c
    
@@ -444,9 +506,9 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         self.headerIsServed = False
         o = urlparse(self.path)
         qs = parse_qs(o.query)
-        global lastUploadCode
-        global lastUploadConfig
-        global lastUploadFile
+#        global lastUploadCode
+#        global lastUploadConfig
+#        global lastUploadFile
 
         # TODO:
         # if "Android" in self.headers["user-agent"]:
@@ -465,7 +527,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         elif o.path == "/graph-form":
             self.serveGraphForm(qs)
         elif o.path == "/upload":
-            self.serveUploadGet(qs, lastUploadCode, lastUploadConfig, lastUploadFile)
+            self.serveUploadGet(qs) #, lastUploadCode, lastUploadConfig, lastUploadFile)
         elif o.path == "/login":
             self.serveLogin(qs)
         elif o.path == "/server":
@@ -545,12 +607,12 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         # if "Android" in self.headers["user-agent"]:
         #    self.htmlDirectory = self.htmlDirectory + "_mobile"
 
-        global lastUploadCode
-        global lastUploadConfig
-        global lastUploadFile
+#        global lastUploadCode
+#        global lastUploadConfig
+#        global lastUploadFile
         
         if o.path == "/upload":
-            self.serveUploadPost(qs, lastUploadCode, lastUploadConfig, lastUploadFile)
+            self.serveUploadPost(qs) #, lastUploadCode, lastUploadConfig, lastUploadFile)
         else:
             self.serve404Error(o.path, qs)
 
@@ -587,12 +649,20 @@ def makeDefaultUserFile(userDirectory, userFile):
     if not os.path.exists(userDirectory):
         os.makedirs(userDirectory)
     uf = open(userDirectory + "/" + userFile, "w")
-    for at in configuration.c.getCfgValue("userAttributes"):
-        uf.write(at+" ")
+
+    for at in configuration.c.getCfgValueAsList("userAttributes"):
+        uf.write(at + " ")
     uf.write("\n")
-    for ad in configuration.c.getCfgValue("adminValues"):
-        uf.write(ad+" ")
+
+    for ad in configuration.c.getCfgValueAsList("adminValues"):
+        uf.write(ad + " ")
     uf.write("\n")
+
+    for x in configuration.c.getCfgValueAsList("defaultValues"):
+        if x.lower() == "unknown": x = "user"
+        uf.write(x + " ")
+    uf.write("\n")
+
     uf.close()
     return str(userDirectory + "/" + userFile)
     
@@ -632,6 +702,10 @@ def initalizeUsers():
         print("No admin! Old user file backuped in " + allUsers.make_copy())
         print("New default file made in " + makeDefaultUserFile(userDirectory, userFile))
         readUsers(userDirectory, userFile)
+    elif not allUsers.get_user("name", "user"):
+        print("No default user! Old user file backuped in " + allUsers.make_copy())
+        print("New default file made in " + makeDefaultUserFile(userDirectory, userFile))
+        readUsers(userDirectory, userFile)
     elif not "password" in allUsers._userAttributes:
         print("User attribute \"password\" required! Old user file backuped in " + allUsers.make_copy())
         print("New default file made in " + makeDefaultUserFile(userDirectory, userFile))
@@ -646,11 +720,11 @@ def initalizeUsers():
         print("There is something wrong with user.cfg")
 
 
-    ua = configuration.c.getCfgValue("userAttributes")
+    ua = configuration.c.getCfgValueAsList("userAttributes")
     na = set(ua) - set(allUsers._userAttributes) #new atributes
     if len(na) > 0:
-        dv = configuration.c.getCfgValue("defaultValues")
-        av = configuration.c.getCfgValue("adminValues")
+        dv = configuration.c.getCfgValueAsList("defaultValues")
+        av = configuration.c.getCfgValueAsList("adminValues")
         while len(na) > 0:
             n = na.pop()
             print("New attribute for users: " + str(n))

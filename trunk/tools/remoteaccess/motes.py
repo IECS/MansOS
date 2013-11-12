@@ -73,10 +73,14 @@ class Mote(object):
 
         return numRead
 
-    def getData(self):
+    def getData(self, doClean, maxData):
         with self.bufferLock:
-            data = self.buffer
-            self.buffer = ""
+            if maxData:
+                data = self.buffer[-maxData:]
+            else:
+                data = self.buffer
+            if doClean:
+                self.buffer = ""
         return data
 
     def writeData(self, data):

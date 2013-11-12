@@ -49,6 +49,7 @@ c.setCfgValue("userAttributes", ["name", "password", "level"])
 c.setCfgValue("userAttributesType", ["text", "text", "[1, 9]"])
 c.setCfgValue("defaultValues", ["unknown", "5f4dcc3b5aa765d61d8327deb882cf99", "1"]) #password "password"
 c.setCfgValue("adminValues", ["admin", "21232f297a57a5a743894a0e4a801fc3", "9"]) #password "admin"
+#c.setCfgValue("defaultUserValues", ["user", "5f4dcc3b5aa765d61d8327deb882cf99", "8"]) #password "password"
 c.setCfgValue("userWebAttributes", []) #user editable (password is built-in)
 c.setCfgValue("adminWebAttributes", ["level"]) #admin editable (reset password is built-in and name is uneditable)
 # graph config

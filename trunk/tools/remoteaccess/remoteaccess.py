@@ -161,7 +161,6 @@ class HttpServerHandler(BaseHTTPRequestHandler):
 
     # Read a specific port
     def serveRead(self, qs):
-#        print("serveRead")
 
         if "port" not in qs:
             return self.serveError("port parameter expected!")
@@ -173,7 +172,20 @@ class HttpServerHandler(BaseHTTPRequestHandler):
         if not mote.ensureSerialIsOpen():
             return self.serveError("Port " + port + " cannot be opened!")
 
-        content = mote.getData()
+        if "clean" in qs:
+            doClean = qs.get("clean")[0].lower() in ['true', '1', 't', 'y', 'yes']
+        else:
+            doClean = False
+
+        if "max_data" in qs:
+            try:
+                maxData = int(qs.get("max_data")[0].lower(),0)
+            except:
+                maxData = None
+        else:
+            maxData = None
+
+        content = mote.getData(doClean, maxData)
 
         self.send_response(200)
         self.sendDefaultHeaders(content)

@@ -82,6 +82,11 @@ class Mote(object):
             return ''
         else:
             return self.__host
+
+    def isLocal(self):
+        return self.__host is None \
+            or len(self.__host) == 0 \
+            or self.__host == "Local"
         
     def getName(self):
         return self.__name
@@ -107,7 +112,7 @@ def getRemoteServers():
             retVal.append(bslProxy)
     except:
         pass
-        
+
     try:
         cfg = configfile.ConfigFile("remoteServers.cfg")
         cfg.load()
@@ -166,7 +171,7 @@ class Motelist(object):
 
         newMotes = list()
         haveNewMote = False
-        
+       
         for host in Motelist.remoteServerList:
             iterator = itertools.chain(iterator, Motelist.getRemoteMotelist(host))
 
@@ -207,17 +212,23 @@ class Motelist(object):
     @staticmethod
     def getRemoteMotelist(host):
         retVal = list()
+
+        if host.find("://") == -1:
+            # assume http by defualt
+            url = "http://" + host
+        else:
+            url = host
         
         try:
-            req = urllib2.urlopen(host + "/ports")
+            req = urllib2.urlopen(url + "/ports")
             motes = req.read().split("\n")
             for mote in motes:
                 info = mote.split(",")
                 if len(info) < 3:
                     continue
                 retVal.append([info[1], info[2], info[0], host])
-        except:
-            pass
+        except Exception as e:
+            print ("Exception while getting remote motelist: ", e)
         
         return retVal
     

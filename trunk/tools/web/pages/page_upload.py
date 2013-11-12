@@ -11,13 +11,18 @@ subprocessLock = threading.Lock()
 
 class PageUpload():
     
-    def serveUploadGet(self, qs, lastUploadCode, lastUploadConfig, lastUploadFile):
+    def serveUploadGet(self, qs): #, lastUploadCode, lastUploadConfig, lastUploadFile):
         global isListening
 
         self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
         self.end_headers()
+
+        # TODO
+        lastUploadCode = ""
+        lastUploadConfig = ""
+        lastUploadFile = ""
 
         motesText = self.serveMotes("upload", "Upload", qs, None)
         codeType = configuration.c.getCfgValue("codeType").lower()
@@ -32,9 +37,14 @@ class PageUpload():
                         "UPLOAD_FILENAME": lastUploadFile,
                         "SLOW_CHECKED" : 'checked="checked"' if isSlow else ""})
 
-    def serveUploadPost(self, qs, lastUploadCode, lastUploadConfig, lastUploadFile):
+    def serveUploadPost(self, qs): #, lastUploadCode, lastUploadConfig, lastUploadFile):
         global maybeIsInSubprocess
         global forceInterrupt
+
+        # TODO
+        lastUploadCode = ""
+        lastUploadConfig = ""
+        lastUploadFile = ""
 
         # Parse the form data posted
         form = cgi.FieldStorage(
@@ -83,7 +93,7 @@ class PageUpload():
             return
 
         for m in motes.getMotes():
-            name = "mote" + m.getPortBasename()
+            name = "mote" + m.getFullBasename()
             if name in form:
                 isChecked = form[name].value == "on"
             else:
@@ -180,9 +190,9 @@ class PageUpload():
             raise
 
     def compileAndUpload(self, code, config, fileName, fileContents, codeType):
-        global lastUploadCode
-        global lastUploadConfig
-        global lastUploadFile
+#        global lastUploadCode
+#        global lastUploadConfig
+#        global lastUploadFile
         global maybeIsInSubprocess
         global isListening
 
