@@ -178,7 +178,7 @@ class MoteConfig(object):
         if not self.mote:
             return ("mote not present!", False)
         if not self.mote.port:
-            return ("serial port " + self.mote.getPortName() + " not opened!", False)
+            return ("serial port " + self.mote.getFullName() + " not opened!", False)
         if not self.activePlatform:
             return ("platform not selected!", False)
         return (None, True)
@@ -432,7 +432,7 @@ class MoteConfig(object):
         # mote
         text += '<strong>Mote:</strong><br/>\n'
         text += '<div class="subcontents">\n'
-        text += 'Port: <em>' + self.mote.getPortName() + '</em><br/>\n'
+        text += 'Port: <em>' + self.mote.getFullName() + '</em><br/>\n'
         text += 'Platform: <em>' + self.activePlatform.name + '</em><br/>\n'
         text += '</div>\n'
 
@@ -487,7 +487,7 @@ class MoteConfig(object):
         text += "</td></tr></table>"
 
         # end of form
-        motename = "mote" + os.path.basename(self.mote.getPortName())
+        motename = "mote" + self.mote.getFullBasename()
         text += '<input type="hidden" name="' + motename + '_cfg" value="1"/>\n'
         text += '<input type="hidden" name="sel_' + motename \
             + '" value="' + self.activePlatform.name + '" />\n'

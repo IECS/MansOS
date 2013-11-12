@@ -54,8 +54,20 @@ class Mote(object):
     def getPortName(self):
         return self.moteDescription.getPort()
 
+    def getHostName(self):
+        return self.moteDescription.getHost()
+
+    def getFullName(self):
+        return self.getPortName() + "@" + self.getHostName()
+
     def getPortBasename(self):
         return os.path.basename(self.getPortName())
+
+    def getFullBasename(self):
+        return os.path.basename(self.getFullName())
+
+    def isLocal(self):
+        return self.moteDescription.isLocal()
 
     def openSerial(self):
         try:
@@ -189,32 +201,36 @@ class MoteCollection(object):
     def refreshMotes(self, newMotelist):
         toRemove = set()
 
+#        print("refreshMotes:" + ", ".join(newMotelist))
+
         for m in self.motes.values():
             found = False
             for d in newMotelist:
-                if d.getPort() == m.getPortName():
+                if d.getPort() == m.getPortName() \
+                        and d.getHost() == m.getHostName():
                     found = True
                     break
             if not found:
                 toRemove.add(m)
 
         for m in toRemove:
-            print("remove " + m.getPortName())
+            print("remove " + m.getFullName())
             m.ensureSerialIsClosed()
-            del self.motes[m.getPortName()]
+            del self.motes[m.getFullName()]
 
         for d in newMotelist:
-            if d.getPort() not in self.motes:
-                print("add " + d.getPort())
-                self.motes[d.getPort()] = Mote(d)
+            name = d.getPort() + "@" + d.getHost()
+            if name not in self.motes:
+                print("add " + name)
+                self.motes[name] = Mote(d)
 
     def storeSelected(self):
         selected = []
         platforms = []
         for m in self.motes.values():
             if m.isSelected:
-                selected.append(m.getPortName())
-            platforms.append(m.getPortName() + ":" + m.platform)
+                selected.append(m.getFullName())
+            platforms.append(m.getFullName() + ":" + m.platform)
         configuration.c.setCfgValue("selectedMotes", selected)
         configuration.c.setCfgValue("motePlatforms", platforms)
         configuration.c.save()
@@ -223,11 +239,16 @@ class MoteCollection(object):
         selected = configuration.c.getCfgValueAsList("selectedMotes")
         platforms = configuration.c.getCfgValueAsList("motePlatforms")
         for m in self.motes.values():
-            m.isSelected = m.getPortName() in selected
+            m.isSelected = m.getFullName() in selected
         for p in platforms:
             try:
-                (portName, platform) = p.split(':')
-                self.motes[portName].platform = platform
+                lst = p.split(":")
+                if len(lst) > 2:
+                    fullName = ":".join(lst[:-1])
+                    platform = lst[-1]
+                else:
+                    (fullName, platform) = lst
+                self.motes[fullName].platform = platform
             except:
                 pass
 
@@ -235,7 +256,11 @@ class MoteCollection(object):
         return self.motes.values()
 
     def getMote(self, portname):
-        return self.motes.get(portname, None)
+        if os.name == "posix":
+            fullPortName = "/dev/" + portname
+        else:
+            fullPortName = portname
+        return self.motes.get(fullPortName, None)
 
     def isEmpty(self):
         return len(self.motes) == 0

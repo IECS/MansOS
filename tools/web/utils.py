@@ -56,3 +56,10 @@ def fileIsOver(f):
     newPos = f.tell()
     f.seek(currentPos, 0)  # seek back to initial position
     return currentPos == newPos
+
+
+def urlEscape(name):
+    return name.replace("@", "_at_").replace(":", "_port_")
+
+def urlUnescape(name):
+    return name.replace("_at_", "@").replace("_port_", ":")

@@ -1,12 +1,16 @@
 <script type="text/javascript">
 /* <![CDATA[ */
+var doRefresh;
+var skipRefresh = false;
 function autoRefresh()
 {
     var url    = "listen-data";
     var target = document.getElementById("listen_div");
 
-    var doRefresh = function() 
+    doRefresh = function() 
     {
+       if (window.skipRefresh) return;
+       if (skipRefresh) return;
        var xmlhttp=new XMLHttpRequest();
        xmlhttp.open("GET",url,false);
        xmlhttp.send();
@@ -15,6 +19,13 @@ function autoRefresh()
        }
     }
     setInterval(doRefresh, 500);
+}
+function stopRefresh()
+{
+   window.skipRefresh = true;
+   skipRefresh = true;
+   clearInterval(window.doRefresh);
+   clearInterval(doRefresh);
 }
 /* ]]> */
 </script>
