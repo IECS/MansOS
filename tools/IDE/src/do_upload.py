@@ -27,6 +27,7 @@ import os
 from generate_makefile import GenerateMakefile
 from helperFunctions import doPopen
 from myThread import MyThread
+from motelist import Motelist
 from globals import * #@UnusedWildImport
 
 class DoUpload():
@@ -109,11 +110,9 @@ class DoUpload():
     def changeTarget(self, newTarget = None):
         if newTarget == None:
             os.unsetenv("BSLPORT")
-            #newTarget = self.API.motelist[0][1]
-            #os.environ["BSLPORT"] = str(newTarget.strip().strip("\x00"))
+            try:
+                os.environ["BSLPORT"] = Motelist.getMotelist(False)[0].getPort()
+            except:
+                pass
         else:
-            #newTarget = self.API.motelist[newTarget][1]
-            # Windows puts "\x00" at port end and it is not allowed in 
-            # environment variable
-            #os.environ["BSLPORT"] = str(newTarget.strip().strip("\x00"))
             os.environ["BSLPORT"] = newTarget
