@@ -7,9 +7,11 @@ printVID = False
 def read_line(filename):
     """help function to read a single line from a file. returns none"""
     line = "Unknown"
-    with open(filename) as f:
-        line = f.readline().strip()
-    return line
+    try:
+        with open(filename) as f:
+            line = f.readline().strip()
+    finally:
+        return line
 
 def re_group(regexp, text):
     """search for regexp in text, return 1st group on match"""
@@ -22,12 +24,7 @@ def re_group(regexp, text):
 
 def usb_sysfs_hw_string(sysfs_path):
     """given a path to a usb device in sysfs, return a string describing it"""
-    try:
-        # XXX: this sometimes fails
-        snr = read_line(sysfs_path + '/serial')
-    except:
-        snr = ''
-
+    snr = read_line(sysfs_path + '/serial')
     if snr:
         snr_txt = '%s' % (snr,)
     else:
