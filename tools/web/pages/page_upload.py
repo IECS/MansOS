@@ -256,7 +256,8 @@ class PageUpload():
 
                retcode = 0
                for m in motes.getMotes():
-                   if not m.tryToOpenSerial(False): continue
+                   if m.isLocal():
+                       if not m.tryToOpenSerial(False): continue
                    r = m.tryToCompileAndUpload(self, filename)
                    if r != 0: retcode = r
 
