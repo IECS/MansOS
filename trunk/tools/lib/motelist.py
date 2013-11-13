@@ -94,14 +94,34 @@ class Mote(object):
     def getReference(self):
         return self.__reference
 
-    # Makes equal work on different mote classes
+    def cmp(self, other):
+        host1 = self.getHost()
+        host2 = other.getHost()
+        if host1 == "Local": host1 = ""
+        if host2 == "Local": host2 = ""
+        if host1.find("://") != -1: host1 = host1[host1.find("://") + 3:]
+        if host2.find("://") != -1: host2 = host2[host2.find("://") + 3:]
+        if host1 == host2:
+            if self.getPort() == other.getPort(): return 0
+            if self.getPort() < other.getPort(): return -1
+            return 1
+        if host1 < host2: return -1
+        return 1
+    def __lt__(self, other):
+         return self.cmp(other) < 0
+    def __gt__(self, other):
+        return self.cmp(other) > 0
+    def __le__(self, other):
+        return self.cmp(other) <= 0
+    def __ge__(self, other):
+        return self.cmp(other) >= 0
     def __eq__(self, other):
-        if type(other) is type(self):
-            return self.__port == other.__port and self.__host == other.__host
-        return False
-        
+        # Makes equal work on different mote classes
+        if type(other) is not type(self): return False
+        return self.cmp(other) == 0
     def __ne__(self, other):
-        return not self.__eq__(other)
+        if type(other) is not type(self): return True
+        return self.cmp(other) != 0
         
 def getRemoteServers():
     retVal = list()
@@ -203,7 +223,7 @@ class Motelist(object):
         
         haveNewMote = haveNewMote or not len(Motelist.motes) == len(newMotes)
 
-        Motelist.motes = newMotes
+        Motelist.motes = sorted(newMotes)
 
         Motelist.lock.release()
 
@@ -229,7 +249,7 @@ class Motelist(object):
                 retVal.append([info[1], info[2], info[0], host])
         except Exception as e:
             print ("Exception while getting remote motelist: ", e)
-        
+
         return retVal
     
     @staticmethod
