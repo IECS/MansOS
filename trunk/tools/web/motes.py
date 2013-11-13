@@ -90,6 +90,9 @@ class Mote(object):
         print("Listening to serial port: " + self.port.portstr + ", rate: " + str(baudrate))
 
     def tryToOpenSerial(self, makeSelected):
+        if not self.isLocal():
+            if makeSelected: self.isSelected = True
+            return True
         with self.portLock:
             if not self.port:
                 if makeSelected: self.isSelected = True
@@ -171,9 +174,14 @@ class Mote(object):
 
     def tryToCompileAndUpload(self, server, filename):
 #        print("tryToCompileAndUpload for " + self.getPortName())
-        if not self.port: return 1
 
-        os.environ['BSLPORT'] = self.moteDescription.getPort()
+        if self.isLocal():
+            if not self.port: return 1
+            os.environ['BSLPORT'] = self.moteDescription.getPort()
+        else:
+            if not self.isSelected: return 1
+            os.environ['BSLPROXY'] = self.moteDescription.getHost()
+
         arglist = ["make", "-C", "build", self.platform, "upload"]
         retcode = runSubprocess1(arglist, server)
 

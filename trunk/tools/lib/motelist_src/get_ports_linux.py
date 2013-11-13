@@ -22,7 +22,12 @@ def re_group(regexp, text):
 
 def usb_sysfs_hw_string(sysfs_path):
     """given a path to a usb device in sysfs, return a string describing it"""
-    snr = read_line(sysfs_path + '/serial')
+    try:
+        # XXX: this sometimes fails
+        snr = read_line(sysfs_path + '/serial')
+    except:
+        snr = ''
+
     if snr:
         snr_txt = '%s' % (snr,)
     else:
