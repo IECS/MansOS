@@ -51,6 +51,19 @@ class Mote(object):
         if not os.path.exists(dirname):
             os.makedirs(dirname)
 
+    def __lt__(self, other):
+        return self.moteDescription < other.moteDescription
+    def __gt__(self, other):
+        return self.moteDescription > other.moteDescription
+    def __le__(self, other):
+        return self.moteDescription <= other.moteDescription
+    def __ge__(self, other):
+        return self.moteDescription >= other.moteDescription
+    def __eq__(self, other):
+        return self.moteDescription == other.moteDescription
+    def __ne__(self, other):
+        return self.moteDescription != other.moteDescription
+
     def getPortName(self):
         return self.moteDescription.getPort()
 
@@ -64,7 +77,7 @@ class Mote(object):
         return os.path.basename(self.getPortName())
 
     def getFullBasename(self):
-        return os.path.basename(self.getFullName())
+        return self.getPortBasename() + "@" + self.getHostName()
 
     def isLocal(self):
         return self.moteDescription.isLocal()
@@ -262,6 +275,9 @@ class MoteCollection(object):
 
     def getMotes(self):
         return self.motes.values()
+
+    def getMotesSorted(self):
+        return sorted(list(self.motes.values()))
 
     def getMote(self, portname):
         if os.name == "posix":

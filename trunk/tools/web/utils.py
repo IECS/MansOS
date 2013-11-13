@@ -59,7 +59,7 @@ def fileIsOver(f):
 
 
 def urlEscape(name):
-    return name.replace("@", "_at_").replace(":", "_port_")
+    return name.replace("@", "_at_").replace(":", "_port_").replace(".", "_dot_").replace("/", "_slash_")
 
 def urlUnescape(name):
-    return name.replace("_at_", "@").replace("_port_", ":")
+    return name.replace("_at_", "@").replace("_port_", ":").replace("_dot_", ".").replace("_slash_", "/")

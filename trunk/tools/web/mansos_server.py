@@ -261,7 +261,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         t5 = string.Template(actions)
         tableContent = ""
 
-        for m in motes.getMotes():
+        for m in motes.getMotesSorted():
             name = "mote" + m.getFullBasename()
             escapedName = utils.urlEscape(name)
             details = ""
@@ -273,8 +273,8 @@ class HttpServerHandler(BaseHTTPRequestHandler,
                 actions = t5.substitute(name = escapedName))
         text = t1.substitute(tableContent = tableContent)
         self.serveAnyPage("motes", qs, True, {"MOTE_TABLE" : text})
-  
-    def serveListen(self, qs):
+
+    def serveListenSingle(self, qs):
         if "single" in qs and self.getLevel() > 1:
             # listen to a single mote and return
             motePortName = utils.urlUnescape(qs["single"][0])
@@ -310,7 +310,9 @@ class HttpServerHandler(BaseHTTPRequestHandler,
                     fullPortName = "/dev/" + portname
                 else:
                     fullPortName = portname
-                url = "http://" + host + "/read?max_data=" + max_data + "&port=" + fullPortName
+                if host.find("://") == -1:
+                    host = "http://" + host
+                url = host + "/read?max_data=" + max_data + "&port=" + fullPortName
                 try:
                     req = urllib2.urlopen(url)
                     output = req.read()
@@ -322,8 +324,9 @@ class HttpServerHandler(BaseHTTPRequestHandler,
                     print(e)
                     print(traceback.format_exc())
                     self.writeChunk("Failed!")
-            return
 
+  
+    def serveListen(self, qs):
         self.setSession(qs)
         self.send_response(200)
         self.sendDefaultHeaders()
@@ -334,8 +337,6 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         errorStyle = "none"
         errorMsg = ""
         global isListening
-
-
 
         if "action" in qs and self.getLevel() > 1:
             if qs["action"][0] == "Start":
@@ -397,7 +398,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
     def serveMotes(self, action, namedAction, qs, form, extra = False):
         disabled = "" if self.getLevel() > 1 else 'disabled="disabled" '
         c = ""
-        for m in motes.getMotes():
+        for m in motes.getMotesSorted():
             name = "mote" + m.getFullBasename()
 
             if qs:
@@ -420,7 +421,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
 
             if extra:
                 title = namedAction + ' specifically to ' + m.getFullBasename()
-                c += '\n<a href="' + namedAction.lower() + '?single=' + \
+                c += '\n<a href="' + namedAction.lower() + '-single?single=' + \
                     utils.urlEscape(m.getFullBasename()) + \
                     '&max_data=100" ' + disabled + ' onClick="stopRefresh()" >' + title + '</a>'
 
@@ -540,6 +541,8 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             self.serveUploadResult(qs)
         elif o.path == "/listen":
             self.serveListen(qs)
+        elif o.path == "/listen-single":
+            self.serveListenSingle(qs)
         elif o.path == "/listen-data":
             self.serveListenData(qs)
         elif o.path == "/blockly":
