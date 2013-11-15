@@ -36,10 +36,9 @@
 #define KERNEL_THREAD_INDEX (NUM_THREADS - 1)
 
 #ifndef THREAD_STACK_SIZE
-#if PLATFORM_FARMMOTE || PLATFORM_MIIMOTE
- // minimal sufficient for threads + printf when compiled on gcc 4.6
-#define THREAD_STACK_SIZE 160
-#elif PLATFORM_ARDUINO
+// Note: the minimal sufficient stack size for threads + printf
+// when compiled on gcc 4.6 is 160 bytes!
+#if PLATFORM_ARDUINO
 #define THREAD_STACK_SIZE 256
 #else
 #define THREAD_STACK_SIZE 512
@@ -143,7 +142,7 @@ void threadWakeup(uint16_t threadIndex, ThreadState_t newState);
 //
 void systemMain(void) NORETURN;
 
-// Maximal supported sleeping time for telosb is 15984 msec;
+// Maximal supported sleeping time for telosb is 1800 msec;
 // Even if the user schedules longer sleeping interval,
 // the kernel will wake up after this much time in any case.
 // (Of course, both alarms and msleep() support larger sleep times, but only logically!)

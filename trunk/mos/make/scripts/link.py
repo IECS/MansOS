@@ -63,12 +63,11 @@ elif arch == 'msp430':
     lib_exported.extend(['_end']);
     if "USE_HARDWARE_TIMERS" in flagString:
         # don't do this if USE_HARDWARE_TIMERS=n
-        unresolved.add('alarmTimerInterrupt0')
+        unresolved.add('alarmTimerInterrupt')
 elif arch == 'avr':
     lib_exported.extend(['_end']);
     if "USE_HARDWARE_TIMERS" in flagString:
         unresolved.add('__vector_14') 
-        unresolved.add('__vector_15') 
 
 def filter_not_underscores(s):
     return len(s) <= 1 or (s[0] != '_' and s[1] != '_')

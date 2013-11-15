@@ -56,18 +56,19 @@ extern inline void yield(void);
 ///
 /// Sleep for n seconds. The signature is compatible with POSIX sleep()
 ///
-static inline uint16_t sleep(uint16_t seconds)
+static inline uint16_t sleep(unsigned int seconds)
 {
     // 
     // Maximal supported sleeping time is 15984 msec.
     // XXX: we do not account for the time that was spent
     // in the loop and in function calls.
-    // 
-    while (seconds > PLATFORM_MAX_SLEEP_SECONDS) {
-        seconds -= PLATFORM_MAX_SLEEP_SECONDS;
+    //
+    uint32_t ms = seconds * 1000;
+    while (ms > PLATFORM_MAX_SLEEP_MS) {
+        ms -= PLATFORM_MAX_SLEEP_MS;
         msleep(PLATFORM_MAX_SLEEP_MS);
     }
-    msleep(seconds * 1000);
+    msleep(ms);
 
     //  return 0 on success to keep this function POSIX-compatible
     return 0;

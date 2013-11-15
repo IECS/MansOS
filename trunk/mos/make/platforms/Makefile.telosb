@@ -58,7 +58,9 @@ PSOURCES-$(USE_USER_BUTTON) += $(MOS)/arch/msp430/user_button.c
 
 PSOURCES-$(USE_RADIO) += $(MOS)/chips/cc2420/cc2420.c
 PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
+ifneq ($(CONST_EXT_FLASH_CHIP),FLASH_CHIP_SDCARD)
 PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/m25pxx/m25pxx.c
+endif
 PSOURCES-$(USE_ISL29003) += $(MOS)/chips/isl29003/isl29003.c
 PSOURCES-$(USE_APDS9300) += $(MOS)/chips/apds9300/apds9300.c
 

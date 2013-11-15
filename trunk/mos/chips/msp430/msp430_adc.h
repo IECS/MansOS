@@ -111,6 +111,14 @@ static inline void hplAdcUse2V5VRef(void)
     ADC12CTL0 |= REF2_5V;
 }
 
+// Use MCU supply voltage (VCC & GND) as voltage reference
+// Set SREFx bits to 0 (keep other bits untouched)
+static inline void hplAdcUseSupplyRef(void)
+{
+    ADC12MCTL2 &= ~(SREF_7);
+}
+
+
 // Turn ADC on
 static inline void hplAdcOn(void)
 {

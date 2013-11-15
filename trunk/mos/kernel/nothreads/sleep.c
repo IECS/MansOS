@@ -52,10 +52,10 @@ void msleep(uint16_t ms)
             msToSleep = first->jiffies - now;
             // PRINTF("alarms, dont sleep to end!, msToSleep=%u\n", msToSleep);
             // do the alarm processing with enabled interrupts - it can take long!
-            ATOMIC_END(handle);
             // make sure no outstanding alarms are present
             if (msToSleep <= 0) {
                 // PRINTF("process and restart\n");
+                ATOMIC_END(handle);
                 // take care of expired alarms
                 alarmsProcess();
                 // restart the loop
@@ -65,14 +65,15 @@ void msleep(uint16_t ms)
         } else if (msToSleep > PLATFORM_MAX_SLEEP_MS) {
             // maximum value allowed by platform
             msToSleep = PLATFORM_MAX_SLEEP_MS;
-            ATOMIC_END(handle);
         } else {
-            ATOMIC_END(handle);
             // PRINTF("sleep to end\n");
             allTimeSpent = true;
         }
+
         // do the real sleeping
         doMsleep(msToSleep);
+
+        ATOMIC_END(handle);
 #if 1
         // check for exit conditions
         if (allTimeSpent) break;

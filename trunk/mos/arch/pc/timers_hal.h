@@ -27,37 +27,15 @@
 extern uint16_t pcAlarmTimerRegister;
 extern uint16_t pcSleepTimerRegister;
 
-// PC platform uses NO interrupts
-#define ALARM_TIMER_INTERRUPT0() void alarmTimerInterrupt0(void)
-#define ALARM_TIMER_INTERRUPT1() void alarmTimerInterrupt1(void)
-#define SLEEP_TIMER_INTERRUPT() void sleepTimerInterrupt(void)
+#define ALARM_TIMER_INTERRUPT() void alarmTimerInterrupt(void)
 
 #define ALARM_TIMER_START()
 #define ALARM_TIMER_STOP()
-#define ALARM_TIMER_EXPIRED() (1)
 #define ALARM_TIMER_READ() 0
-#define ALARM_TIMER_READ_STOPPED() 0
-#define SET_NEXT_ALARM_TIMER(value)
-#define NEXT_ALARM_TIMER() 0
 #define ALARM_TIMER_WAIT_TICKS(ticks)
 #define ALARM_TIMER_REGISTER pcAlarmTimerRegister
 
-#define ALARM_INTERRUPT_CLEAR()
-
-#define CORRECTION_TIMER_EXPIRED false
-#define NEXT_CORRECTION_TIMER() 0
-#define SET_NEXT_CORRECTION_TIMER(value)
-
-#define CORRECTION_INTERRUPT_CLEAR()
-
-
-#define SLEEP_TIMER_START()
-#define SLEEP_TIMER_STOP()
-#define SLEEP_TIMER_EXPIRED 1
-#define SLEEP_TIMER_READ() 0
 #define SLEEP_TIMER_REGISTER pcSleepTimerRegister
-
-#define SLEEP_INTERRUPT_CLEAR()
 
 #define ENTER_SLEEP_MODE()
 #define EXIT_SLEEP_MODE()
@@ -70,7 +48,6 @@ extern sem_t sleepSem;
 enum {
     PLATFORM_MIN_SLEEP_MS = 1, // min sleep amount = 1ms
     PLATFORM_MAX_SLEEP_MS = 0xffff,
-    PLATFORM_MAX_SLEEP_SECONDS = PLATFORM_MAX_SLEEP_MS / 1000,
     PLATFORM_ALARM_TIMER_PERIOD = 1,
 };
 

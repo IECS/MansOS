@@ -51,7 +51,7 @@ static inline void beeperBeepEx(uint16_t ms, uint16_t frequency) {
     uint16_t adjustedPeriod = period > 50 ? period - 50 : 0;
     while (usec >= period) {
         beeperToggle();
-        udelay(adjustedPeriod);
+        udelayVariable(adjustedPeriod);
         usec -= period;
     }
 }

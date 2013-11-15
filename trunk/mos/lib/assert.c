@@ -44,10 +44,9 @@ void panic(void)
     abort();
 #else
     //make LEDs blink like linux kernel on panic
-    uint16_t x = 0;
     DISABLE_INTS();
     for (;;) {
-        ledsSet(x ^= ~0u);
+        ledsToggle(~0u);
         volatile uint32_t t = 100000;
         while (--t);
     }
