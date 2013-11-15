@@ -26,6 +26,13 @@
 
 #include <defines.h>
 
+///
+/// Delay macros and functions.
+///
+/// Use udelay(), mdelay(), and clock_cycles() for constant-period delays.
+/// Use udelayVariable(), mdelayVariable(), etc. for variable-period delays.
+///
+
 #if defined(__IAR_SYSTEMS_ICC__) || \
     (defined(__GNUC__) && __GNUC__ >= 4 && __GNUC_MINOR__ >= 6)
 
@@ -36,6 +43,13 @@
 
 #else // Old GCC
 
+#define udelay(x) udelayVariable(x)
+#define mdelay(x) mdelayVariable(x)
+#define clock_delay(x) clock_delayVariable(x)
+
+#endif // __delay_cycles provided by the compiler
+
+
 #include "iomacros.h"
 
 //
@@ -44,8 +58,8 @@
 // It should be safe to optimizations.
 // If very short time interval is needed, using NOPs might be a better idea.
 //
-static inline void clock_delay(uint16_t n) INLINE;
-static inline void clock_delay(uint16_t n)
+static inline void clock_delayVariable(uint16_t n) INLINE;
+static inline void clock_delayVariable(uint16_t n)
 {
     __asm__ __volatile__ (
             "1:\n"
@@ -85,12 +99,12 @@ static inline void clock_delay(uint16_t n)
 // Delay for approximate amount of milliseconds.
 // The function is not very precise! If precise delays are required, use timers.
 //
-static inline void mdelay(uint16_t ms) {
+static inline void mdelayVariable(uint16_t ms) {
     while (ms > 64) {
         ms -= 64;
         clock_delay(64000 / CPU_MHZ_DIVIDER);
     }
-    clock_delay(ms * 1000 / CPU_MHZ_DIVIDER);
+    clock_delayVariable(ms * 1000 / CPU_MHZ_DIVIDER);
 }
 
 #if CPU_MHZ == 1
@@ -112,7 +126,7 @@ static inline void mdelay(uint16_t ms) {
 // This works only for delays under 64k usec under 4Mhz CPU!
 // Use mdelay() or msleep() and sleep() for larger delays.
 //
-static inline void udelay(uint16_t us) {
+static inline void udelayVariable(uint16_t us) {
     if (__builtin_constant_p(us) && us < 6) {
         switch (us) {
         case 5:
@@ -129,10 +143,8 @@ static inline void udelay(uint16_t us) {
             return;
         }
     }
-    clock_delay((uint32_t) us / CPU_MHZ_DIVIDER);
+    clock_delayVariable((uint32_t) us / CPU_MHZ_DIVIDER);
 }
-
-#endif // GCC
 
 /*
  * Where call overhead dominates, use a macro!
