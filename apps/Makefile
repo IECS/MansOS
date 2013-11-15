@@ -5,7 +5,7 @@
 #   (telosb must have all targets, otherwise they will not be cleared)
 #
 
-PLATFORMS = pc telosb sadmote sm3 farmmote atmega z1
+PLATFORMS = pc telosb sadmote sm3 atmega z1
 # launchpad
 
 DEMO_TARGETS = \
@@ -74,9 +74,6 @@ TEST_TARGETS = \
 	ExpThreadTests/5-Radio			\
 	ExpThreadTests/6-MAC			\
 	ExpThreadTests/7-Sockets		\
-	TestBed/AdsTest				\
-	TestBed/DacTest				\
-	TestBed/PotTest				\
 	ProtoThreadTests/01-PTYield		\
 	ProtoThreadTests/02-PTBlink		\
 	ProtoThreadTests/03-PTRadio		\

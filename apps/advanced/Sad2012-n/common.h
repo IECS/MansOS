@@ -6,7 +6,7 @@
 #include <net/socket.h>
 #include <net/routing.h>
 #include <lib/codec/crc.h>
-#include <lib/assert.h>
+#include <assert.h>
 
 #define MANSOS
 #include "data_packet.h"

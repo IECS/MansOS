@@ -34,7 +34,7 @@
 
 #define TEST_PACKET_SIZE            30
 
-#define WRITE_TO_FILE               PLATFORM_SM3
+#define WRITE_TO_FILE               0 // PLATFORM_SM3
 #define ENABLE_HW_ADDRESSING        1 // has effect only on SM3
 #define ADDRESS 0xAA
 
@@ -42,6 +42,7 @@
 // AMB8420 is MUCH slower on the default settings
 #define PACKETS_IN_TEST             10u
 #define SEND_INTERVAL               20
+//#define SEND_INTERVAL               1000
 #define MAX_TEST_TIME               ((SEND_INTERVAL + 100) *  PACKETS_IN_TEST)
 #define PAUSE_BETWEEN_TESTS_MS      1000 // ms
 #else
@@ -114,6 +115,10 @@ void extFlashPrepare(void)
 //-------------------------------------------
 void appMain(void)
 {
+    // ------------------------- serial number
+    PRINTF("%s %#04X starting...\n",
+            RECV ? "Receiver" : "Sender", localAddress);
+
 #if WRITE_TO_FILE
     outFile = fopenEx("data.txt", "a", &outFileBuffer);
 #endif
@@ -441,6 +446,7 @@ void recvCallback1(void)
     int16_t len;
 
     len = radioRecv(buffer, sizeof(buffer));
+//    PRINTF("rx something\n");
     if (len > 0) {
         recvCallback(buffer, len);
     } else {
@@ -459,6 +465,7 @@ void recvCounter(void)
     radioSetReceiveHandle(recvCallback1);
     radioOn();
 
+    uint32_t nextTime = getJiffies();
     for (;;) {
         if (testInProgress) {
             if (timeAfter32(getJiffies(), testStartTime + MAX_TEST_TIME)) {
@@ -497,6 +504,15 @@ void recvCounter(void)
         } else {
             prevTestNumber = 0;
         }
+
+//        uint32_t now = getJiffies();
+//        if (timeAfter32(now, nextTime)) {
+//            radioOff();
+//            PRINTF(".\n");
+//            nextTime = now + 1000;
+//            mdelay(10);
+//            radioOn();
+//        }
     }
 }
 #endif // !USE_THREADS

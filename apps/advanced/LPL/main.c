@@ -76,7 +76,7 @@ void sendPackets(void)
     int16_t ret;
     radioOn(); // XXX: to avoid switching the radio on and off in cc2420Send()
     for (i = 0; ; ++i) {
-        mdelay(randomInRange(1000, 3000));
+        mdelayVariable(randomInRange(1000, 3000));
         buffer[0] = i;
         redLedOn();
         PRINTF("tx packet... (%#x)\n", *buffer);

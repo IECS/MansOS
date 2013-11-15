@@ -23,11 +23,11 @@
 
 #include "stdmansos.h"
 #include <string.h>
-#include <hil/i2c_soft.h>
+//#include <hil/i2c_soft.h>
 #include <serial_number.h>
 #include <extflash.h>
 #include <lib/codec/crc.h>
-#include <lib/assert.h>
+#include <assert.h>
 #include <isl29003/isl29003.h>
 #include <apds9300/apds9300.h>
 #include <ads1115/ads1115.h>
@@ -36,9 +36,9 @@
 
 // ---------------------------------------------
 
-#define WRITE_TO_FLASH  1
-#define PRINT_TO_SERIAL 0
-#define PRINT_PACKET    0
+#define WRITE_TO_FLASH  0
+#define PRINT_TO_SERIAL 1
+#define PRINT_PACKET    1
 
 #define BLINK_INTERVAL      (1000ul * 5)
 
@@ -46,7 +46,7 @@
 
 #if PRINT_TO_SERIAL
 #define DPRINTF(...) PRINTF(__VA_ARGS__)
-#define DPRINT(x)    PRINT(x)
+#define DPRINT(x)    PRINTF(x)
 #else
 #define DPRINTF(...) do {} while (0)
 #define DPRINT(x)    do {} while (0)
@@ -125,7 +125,7 @@ void readSensors(DataPacket_t *packet)
 
 #if USE_ISL29003
     if (!islRead(&packet->islLight, true)) {
-        PRINT("islRead failed\n");
+        PRINTF("islRead failed\n");
         packet->islLight = 0xffff;
     }
     packet->apdsLight0 = 0xffff;
@@ -133,17 +133,17 @@ void readSensors(DataPacket_t *packet)
 #else
     packet->islLight = 0xffff;
     if (apdsReadWord(COMMAND | DATA0LOW_REG, &packet->apdsLight0) != 0) {
-        PRINT("apdsReadWord 0 failed\n");
+        PRINTF("apdsReadWord 0 failed\n");
         packet->apdsLight0 = 0xffff; // error value
     }
     if (apdsReadWord(COMMAND | DATA1LOW_REG, &packet->apdsLight1) != 0) {
-        PRINT("apdsReadWord 1 failed\n");
+        PRINTF("apdsReadWord 1 failed\n");
         packet->apdsLight1 = 0xffff; // error value
     }
 #endif
 #if USE_ADS1115
     if (!readAds(&packet->sq100Light)) {
-        PRINT("readAdsRegister failed\n");
+        PRINTF("readAdsRegister failed\n");
         packet->sq100Light = 0xffff;
     }
 #else
@@ -181,7 +181,7 @@ void readSensors(DataPacket_t *packet)
 #if PRINT_PACKET
 void printPacket(DataPacket_t *packet)
 {
-    PRINT("===========================\n");
+    PRINTF("===========================\n");
     PRINTF("dataSeqnum=%#x\n", packet->dataSeqnum);
     PRINTF("islLight=%#x\n", packet->islLight);
     PRINTF("apdsLight=%#x/%#x\n", packet->apdsLight0, packet->apdsLight1);
@@ -233,7 +233,7 @@ void appMain(void)
     uint32_t nextDataReadTime = 0;
     uint32_t nextBlinkTime = 0;
     for (;;) {
-        uint32_t now = getRealTime();
+        uint32_t now = getTimeMs();
         if (timeAfter32(now, nextDataReadTime)) {
             if (getJiffies() < 300 * 1000ul ) {
                 nextDataReadTime = now + DATA_INTERVAL_SMALL;
