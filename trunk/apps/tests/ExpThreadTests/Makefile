@@ -1,6 +1,7 @@
 TARGET ?= telosb
 
 all:
+	(cd 0-Deadlock; $(MAKE) $(TARGET))
 	(cd 0-Lockup; $(MAKE) $(TARGET))
 	(cd 0-Overflow-User; $(MAKE) $(TARGET))
 	(cd 0-Overflow-Kernel; $(MAKE) $(TARGET))
@@ -17,6 +18,7 @@ all:
 
 
 clean:
+	(cd 0-Deadlock; $(MAKE) clean)
 	(cd 0-Lockup; $(MAKE) clean)
 	(cd 0-Overflow-User; $(MAKE) clean)
 	(cd 0-Overflow-Kernel; $(MAKE) clean)
