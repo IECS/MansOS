@@ -1,8 +1,0 @@
-#
-# Application specific config file
-#
-
-# only for testbed
-PLATFORM_ONLY=testbed testbed2
-
-USE_DAC7718=y
