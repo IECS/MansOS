@@ -25,22 +25,52 @@
 #include <platform.h>
 #include <print.h>
 #include <timing.h>
+#include <leds.h>
 
 #if USE_PROTOTHREADS
 #include <etimer.h>
 #endif
 
+volatile bool isInSleepMode;
+
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 
 // alarm timer interrupt handler
-ALARM_TIMER_INTERRUPT0()
+ALARM_TIMER_INTERRUPT()
 {
+    // read & unset the highest bit
+    volatile uint16_t x = TIMER_INTERRUPT_VECTOR;
+    (void) x;
+
+    if (isInSleepMode) {
+        // wakeup and return
+        EXIT_SLEEP_MODE();
+        return;
+    }
+
+    uint16_t tar = ALARM_TIMER_READ();
+
     // Advance jiffies (MansOS time counter) while counter register <= counter
     // Spurios interrupts may happen when the alarm timer is restarted after stopping!
-    while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED())) {
+    while (!timeAfter16(ALARM_TIMER_REGISTER, tar)) {
         jiffies += JIFFY_TIMER_MS;
         ALARM_TIMER_REGISTER += PLATFORM_ALARM_TIMER_PERIOD;
     }
+
+#if PLATFORM_HAS_CORRECTION_TIMER
+    //
+    // On MSP430 platforms binary ACLK oscillator usually is used.
+    // It has constant rate 32768 Hz (the ACLK_SPEED define)
+    // When ACLK ticks are converted to milliseconds, rounding error is introduced.
+    // When TIMER_INTERRUPT_HZ = 1000, there are 32 ACLK ticks per millisecond;
+    // The clock error is (32768 / 32) - 1000 = 1024 - 1000 = 24 milliseconds.
+    // We improve the precision by applying a fix 24/3 = 8 times per second.
+    //
+    while (!timeAfter16(CORRECTION_TIMER_REGISTER, tar)) {
+        CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;
+        jiffies -= 3;
+    }
+#endif
 
 #ifdef USE_ALARMS
     if (hasAnyReadyAlarms(jiffies)) {
@@ -58,41 +88,10 @@ ALARM_TIMER_INTERRUPT0()
     // If TAR still > TACCR0 at this point, we are in trouble:
     // the interrupt will not be generated until the next wraparound (2 seconds).
     // So avoid it at all costs.
-    while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 10)) {
+    while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ() + 2)) {
         jiffies += JIFFY_TIMER_MS;
         ALARM_TIMER_REGISTER += PLATFORM_ALARM_TIMER_PERIOD;
     }
-
-    ALARM_INTERRUPT_CLEAR();
 }
 
-ALARM_TIMER_INTERRUPT1()
-{
-    switch (TIMER_INTERRUPT_VECTOR) {
-#if PLATFORM_HAS_CORRECTION_TIMER
-    case CORRECTION_TIMER_EXPIRED:
-        //
-        // On MSP430 platforms binary ACLK oscillator usually is used.
-        // It has constant rate 32768 Hz (the ACLK_SPEED define)
-        // When ACLK ticks are converted to milliseconds, rounding error is introduced.
-        // When TIMER_INTERRUPT_HZ = 1000, there are 32 ACLK ticks per millisecond;
-        // The clock error is (32768 / 32) - 1000 = 1024 - 1000 = 24 milliseconds.
-        // We improve the precision by applying a fix 24/3 = 8 times per second.
-        //
-        while (!timeAfter16(CORRECTION_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 10)) {
-            CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;
-            jiffies -= 3;
-        }
-        CORRECTION_INTERRUPT_CLEAR();
-        break;
-#endif // PLATFORM_HAS_CORRECTION_TIMER
-
-    case SLEEP_TIMER_EXPIRED:
-        // exit low power mode
-        EXIT_SLEEP_MODE();
-        SLEEP_INTERRUPT_CLEAR();
-        break;
-    }
-}
-
-#endif // !CUSTOM_TIMER_INTERRUPT_HANDLERS
+#endif // CUSTOM_TIMER_INTERRUPT_HANDLERS not defined

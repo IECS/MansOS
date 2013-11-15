@@ -125,6 +125,8 @@ typedef uint32_t ticks_t;
 //! Align 32-bit addr up to align, which must be a power of 2
 #define ALIGN_UP_U32(addr, align) (((uint32_t)(addr) + (align - 1)) & ~(align - 1))
 
+#define IS_POWER_OF_2(x) ((x & (x - 1)) == 0)
+
 //! Get the Most Significant Byte of a 2-byte word
 #define MSB(a) ((a & 0xFF00) >> 8)
 //! Get the Least Significant Byte of a 2-byte word
@@ -161,17 +163,34 @@ typedef uint32_t ticks_t;
 //! Approximately one tenth part of a second in Timer A ticks
 #define TIMER_100_MS (ACLK_SPEED / 10 + 1)
 
-//! This idiom should be used for reading active timers
-#define ACTIVE_TIMER_READ(name, timer)             \
+///
+/// This idiom should be used for reading timer registers at least on msp430
+///
+/// Otherwise bit errors are possible. E.g. 0x4b00 might be read as 0x4a00,
+/// 0xcc00 as 0xcd00, 0x8000 as 0x0000 etc.
+///
+#define TIMER_READ(name, timer)                    \
 static inline uint16_t name ## _TIMER_READ(void)   \
 {                                                  \
-    uint16_t t1 = timer;                           \
-    uint16_t t2;                                   \
+    uint16_t t1, t2;                               \
     do {                                           \
+        t1 = timer;                                \
         t2 = timer;                                \
-    } while (t1 == t2);                            \
+    } while (t1 != t2);                            \
     return t2;                                     \
 }
 
+///
+/// Wait until the next increase of a timer register and return the new value.
+///
+#define READ_TIMER_EDGE(x)  ({                    \
+        uint16_t t1 = x;                          \
+        uint16_t t2;                              \
+        t1 = x;                                   \
+        do {                                      \
+            t2 = x;                               \
+        } while (t1 == t2);                       \
+        t2;                                       \
+    })
 
 #endif

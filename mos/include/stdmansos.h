@@ -87,5 +87,6 @@
 ///
 void appMain(void);
 
+#include "new.h"
 
 #endif

@@ -132,7 +132,7 @@ else:
     print("Error: unknown arhitecture!")
     sys.exit(1)
 
-interruptFunctions = ["alarmTimerInterrupt0", "alarmTimerInterrupt1", "sleepTimerInterrupt",
+interruptFunctions = ["alarmTimerInterrupt",
                       "userButtonInterrupt", "USCI0InterruptHandler", "USCI1InterruptHandler",
                       "UART0InterruptHandler", "UART1InterruptHandler", "USCIAInterruptHandler",
                       "mrf24Interrupt", "cc1011Interrupt", "cc2420Interrupt", "apds_interrupt",

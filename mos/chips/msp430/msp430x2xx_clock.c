@@ -105,7 +105,7 @@ void msp430InitClocks(void)
     // IE1 &= ~OFIE;
 
     // initialize main timers in system mode
-    msp430InitTimerA01();
+    msp430InitTimerA();
     msp430InitTimerB();
 #endif
 }

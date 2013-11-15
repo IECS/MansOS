@@ -52,10 +52,13 @@
 
 #include <defines.h>
 
+// versions with constant parametrs
+#define udelay(x) udelayVariable(x)
+#define mdelay(x) mdelayVariable(x)
 
 /* Delay for the given number of microseconds.  Assumes a 8 or 16 MHz clock. */
 // Warning: Max delay time is 16384us = 16.384ms!
-static inline void udelay(uint16_t us)
+static inline void udelayVariable(uint16_t us)
 {
 //    Handle_t h;
 
@@ -110,13 +113,13 @@ static inline void udelay(uint16_t us)
 
 
 // we lose approximately 3us on mdelay header & footer + 1ms on each udelay call
-static inline void mdelay(uint16_t ms) {
+static inline void mdelayVariable(uint16_t ms) {
     // max udelay = 16768us
     while (ms > 16) {
         ms -= 16;
         udelay(15999); // 15999us = 16ms - 1us (which is lost on call)
     }
-    udelay(ms * 1000 - 3); // regain the lost 3us
+    udelayVariable(ms * 1000 - 3); // regain the lost 3us
 }
 
 #endif

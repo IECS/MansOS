@@ -30,62 +30,71 @@
 #include <print.h>
 #include <leds.h>
 #include <radio.h>
-#include <assert.h>
 
 #ifndef CUSTOM_TIMER_INTERRUPT_HANDLERS
 
-static volatile uint16_t timeWentToSleep;
 static volatile uint16_t ticksInSleepMode;
 static volatile uint16_t jiffiesInSleepMode;
 
-static inline void sleepTimerSet(uint16_t ms)
-{
-    if (ms > PLATFORM_MAX_SLEEP_MS) {
-        ms = PLATFORM_MAX_SLEEP_MS;
-    } else if (ms < PLATFORM_MIN_SLEEP_MS) {
-        ms = PLATFORM_MIN_SLEEP_MS;
-    }
-
-    uint16_t sleepTicks = convertMsToSleepTimer(ms);
-
-    // wait for end of tick and read the new value
-    uint16_t ticksNow = SLEEP_TIMER_READ();
-    timeWentToSleep = ticksNow;
-
-    SLEEP_TIMER_REGISTER = ticksNow + sleepTicks;
-}
+extern volatile bool isInSleepMode;
 
 void doMsleep(uint16_t milliseconds)
 {
     if (milliseconds) {
         // PRINTF("doMsleep, ms=%u\n", milliseconds);
+        uint16_t tar;
 
-        DISABLE_INTS();
+        if (milliseconds > PLATFORM_MAX_SLEEP_MS) {
+            milliseconds = PLATFORM_MAX_SLEEP_MS;
+        } else if (milliseconds < PLATFORM_MIN_SLEEP_MS) {
+            milliseconds = PLATFORM_MIN_SLEEP_MS;
+        }
+        uint16_t sleepTicks = convertMsToSleepTimer(milliseconds);
+
+        // wait for end of tick and read the new value
+#if USE_ENERGY_EFFICIENCY_PRESET
+        tar = ALARM_TIMER_READ();
+#else
+        tar = READ_TIMER_EDGE(ALARM_TIMER_READ());
+#endif
+        uint16_t timeWentToSleep = tar;
+
         // change energy accounting mode
         energyConsumerOff(ENERGY_CONSUMER_MCU);
         energyConsumerOn(ENERGY_CONSUMER_LPM);
 
-        // setup sleep timer
-        sleepTimerSet(milliseconds);
-        // stop timer A
-        ALARM_TIMER_STOP();
-        // start timer B
-        SLEEP_TIMER_START();
+        int16_t untilNextInterrupt = ALARM_TIMER_REGISTER - tar;
+        // XXX: imprecision introduced here
+        if (untilNextInterrupt < 0) untilNextInterrupt = 0;
+
+        // setup the sleep timer register with the expected wakeup time
+        ALARM_TIMER_REGISTER = timeWentToSleep + sleepTicks;
+
+        // signal that we are in sleep mode (used in the interrupt handler)
+        isInSleepMode = true;
 
         // enter low power mode
         ENTER_SLEEP_MODE();
 
         // zzz... sleep... zzz...
 
-        // after wakeup: determine for how long we actually slept
+        // after wakeup: disable interrupts as soon as possible;
+        // the alarm timer will not fire anyway, but some other interrupt might.
+        DISABLE_INTS();
+
+        isInSleepMode = false;
+
+        // determine for how long we actually slept
         // (unexpected wakeups are possible because of interrupts)
-        uint16_t ticksSlept = SLEEP_TIMER_READ() - timeWentToSleep;
+#if USE_ENERGY_EFFICIENCY_PRESET
+        tar = ALARM_TIMER_READ();
+#else
+        tar = READ_TIMER_EDGE(ALARM_TIMER_READ());
+#endif
+        uint16_t ticksSlept = tar - timeWentToSleep;
 
-        // sleep timer should not automatically restart
-        SLEEP_TIMER_STOP();
+        ALARM_TIMER_REGISTER = tar + untilNextInterrupt;
 
-        // advance alarm and correction timers too
-        ALARM_TIMER_REGISTER += ticksSlept;
 #if PLATFORM_HAS_CORRECTION_TIMER
         CORRECTION_TIMER_REGISTER += ticksSlept;
 #endif
@@ -110,23 +119,11 @@ void doMsleep(uint16_t milliseconds)
         energyConsumerOn(ENERGY_CONSUMER_MCU);
 
         // fix jiffies, taking into account the time spent for local processing
-        while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ_STOPPED() + 10)) {
+        while (!timeAfter16(ALARM_TIMER_REGISTER, ALARM_TIMER_READ() + 2)) {
             // PRINTF("*");
             jiffies += JIFFY_TIMER_MS;
             ALARM_TIMER_REGISTER += PLATFORM_ALARM_TIMER_PERIOD;
         }
-#if PLATFORM_HAS_CORRECTION_TIMER
-        while (!timeAfter16(CORRECTION_TIMER_REGISTER, CORRECTION_TIMER_READ_STOPPED() + 10)) {
-            // PRINTF("#");
-            CORRECTION_TIMER_REGISTER += PLATFORM_TIME_CORRECTION_PERIOD;
-            jiffies -= 3;
-        }
-#endif
-
-        ALARM_INTERRUPT_CLEAR();
-        CORRECTION_INTERRUPT_CLEAR();
-        // restart timer A (count from the place where it left)
-        ALARM_TIMER_START();
     } else {
         // Zero sleep time requested. Allow, because this way
         // scheduler code becomes simpler, but don't even try going to sleep.

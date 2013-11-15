@@ -187,3 +187,7 @@ USE_ENERGY_STATS ?= n
 USE_DYNAMIC_MEMORY ?= n
 
 USE_DCO_RECALIBRATION ?= n
+
+# use maximum energy efficiency at the expense of other things
+# (timing precision, communication distance, etc.)
+USE_ENERGY_EFFICIENCY_PRESET ?= n

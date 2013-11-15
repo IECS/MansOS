@@ -29,6 +29,7 @@
 ///
 
 #include "address.h"
+#include <timing.h>
 
 //===========================================================
 // Data types and constants

@@ -56,7 +56,7 @@ void alarmsProcess(void)
         // the alarm must have valid callback
         ASSERT(ap->callback != NULL);
 
-        // PRINTF("processAlarms: ap=%p, ap->jiffies=%lu\n", ap, ap->jiffies);
+//        PRINTF("processAlarms: ap=%p, ap->jiffies=%lu\n", ap, ap->jiffies);
 
         if (timeAfter32(ap->jiffies, now)) {
             break;
