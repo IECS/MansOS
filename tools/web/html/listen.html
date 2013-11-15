@@ -1,3 +1,28 @@
+<script src="http://static.scripting.com/github/bootstrap2/js/jquery.js"></script>
+<script src="http://static.scripting.com/github/bootstrap2/js/bootstrap-transition.js"></script>
+<script src="http://static.scripting.com/github/bootstrap2/js/bootstrap-modal.js"></script>
+
+<div id="talkDialog" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="windowTitleLabel" aria-hidden="true">
+	<div class="modal-header">
+		<a href="#" class="close" data-dismiss="modal">&times;</a>
+		<h2 style="margin: 0px">&nbsp;</h2>
+	</div>
+	<div class="modal-body">
+		<div class="alert alert-success" id="successMsg" style="display: none;">...</div>
+		<div class="alert alert-info" id="infoMsg" style="display: none;">...</div>
+		<div class="alert alert-warning" id="warningMsg" style="display: none;">...</div>
+		<div class="alert alert-danger" id="dangerMsg" style="display: none;">...</div>	
+		<div class="divDialogElements">
+		<pre id="listenResult" style="height: 350px">
+		
+		</pre>
+		</div>
+	</div>
+	<div class="modal-footer">
+		<button type="button" onclick="$('#talkDialog').modal('hide')">OK</button>
+	</div>
+</div>
+
 <form action="listen"><div class="form">
 
 <div class="alert alert-danger" style="display: %ERROR_STATUS%">
@@ -28,6 +53,42 @@
 
 <script language="javascript">
     var target = document.getElementById("listen_div");
+    var text_output = "";
+    var selectedMote;
     target.innerHTML="%LISTEN_TXT%";
     autoRefresh();
+    
+    function talkToMote(mote) {
+    	$("#talkDialog").modal('show');
+    	selectedMote = mote;
+    	processListen();
+    }
+    
+	function processListen() {
+		refreshListenPage(selectedMote);
+		setTimeout(processListen, 1000);
+	}
+	
+	function refreshListenPage(mote) {
+		$.ajax({
+			type: "GET",
+			url: "listen-single",
+			data: "single=" + mote + "&max_data=100",
+			dataType: "text",
+			success: function(d) {
+				text_output += d;
+				arr = text_output.split("\n");
+				outputSize = 21;
+				if (arr.length > outputSize) {
+					i = arr.length - outputSize;
+					arr = arr.slice(i, i + outputSize);
+					text_output = arr.join("\n");
+				}
+				$('#listenResult').text(text_output);
+			},
+			error: function() {
+        		alert('Error occured');
+   			}
+		});
+	}
 </script>

@@ -316,9 +316,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
                 try:
                     req = urllib2.urlopen(url)
                     output = req.read()
-                    self.writeChunk("<pre>")
                     self.writeChunk(output)
-                    self.writeChunk("</pre>")
                 except Exception as e:
                     print("exception when listening to remote mote:")
                     print(e)
@@ -414,16 +412,20 @@ class HttpServerHandler(BaseHTTPRequestHandler,
 
             checked = ' checked="checked"' if m.isSelected else ""
 
-            c += '<div class="mote"><strong>Mote: </strong>' + m.getFullName()
+            c += '<div class="mote"><strong>Mote: </strong>' 
+            if extra:
+                c += "<a href='javascript:talkToMote(\"" + utils.urlEscape(m.getFullBasename()) +"\")' " + disabled + ">"
+                arr = m.getFullName().split("@")
+                if (len(arr) == 1):
+                    c += m.getFullName()
+                else:
+                    c += arr[0] + " @ " + m.getFullName().split("@")[1][7:].split(":")[0]
+                c += "</a>"
+            else:
+                c += m.getFullName()
             c += ' (<strong>Platform: </strong>' + m.platform + ') '
             c += ' <input type="checkbox" title="Select the mote" name="' + name + '"'
             c += checked + ' ' + disabled + '/>' + namedAction
-
-            if extra:
-                title = namedAction + ' specifically to ' + m.getFullBasename()
-                c += '\n<a href="' + namedAction.lower() + '-single?single=' + \
-                    utils.urlEscape(m.getFullBasename()) + \
-                    '&max_data=100" ' + disabled + ' onClick="stopRefresh()" >' + title + '</a>'
 
             c += '</div>\n'
 
