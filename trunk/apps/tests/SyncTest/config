@@ -1,0 +1,11 @@
+#
+# Application specific config file
+#
+
+PLATFORM_EXCLUDE=atmega
+
+USE_RANDOM=y
+#USE_THREADS=y
+
+
+USE_THREADS=y

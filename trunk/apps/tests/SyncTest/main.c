@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 the MansOS team. All rights reserved.
+ * Copyright (c) 2008-2012 the MansOS team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -22,19 +22,59 @@
  */
 
 #include "stdmansos.h"
-#include "watchdog.h"
+#include "assert.h"
 
-// This application demonstrates the functionality of watchdog timer.
-// The timer is restarted a few times, after which a red led is turned on,
-// and the timer is allowed to expire. This reboots the application.
+#define BLINK_INTERVAL (8 * 1024)
+
+Alarm_t blinkTimer;
+Alarm_t randTimer;
+
+#define PERIOD 5000
+
+void timerBInit(void) 
+{
+    // Configure Timer B
+    TBCTL = TBCLR;
+    // start Timer B
+    TBCTL = TBSSEL_1 + MC_CONT + TBIE; // clock = ACLK, continuos, interrupt
+}
+
+void onBlinkTimer(void *x)
+{
+    redLedOn();
+    mdelay(100);
+    redLedOff();
+
+    uint32_t now = getTimeMs();
+    uint32_t untilFrameEnd = BLINK_INTERVAL - now % BLINK_INTERVAL;
+    alarmSchedule(&blinkTimer, untilFrameEnd);
+}
+
+void onRandTimer(void *x)
+{
+    alarmSchedule(&randTimer, 100 + randomNumberBounded(100));
+}
 
 void appMain(void)
 {
-    int i;
-    for (i = 0; i < 3; ++i) {
-        watchdogStart(WATCHDOG_EXPIRE_1000MS);
-        mdelay(900);
+    timerBInit();
+
+    alarmInit(&blinkTimer, onBlinkTimer, NULL);
+    alarmInit(&randTimer, onRandTimer, NULL);
+
+    alarmSchedule(&blinkTimer, 100);
+    alarmSchedule(&randTimer, 101);
+
+    PRINTF("\n*** starting the app ***\n\n");
+
+    for (;;) {
+       msleep(1000);
     }
-    redLedOn();
-    watchdogStart(WATCHDOG_EXPIRE_1000MS);
+}
+
+ISR(TIMERB1, b1)
+{
+    volatile uint16_t x = TBIV;
+    (void) x;
+    PRINTF("interrupt, TAR=%u\n", TAR);
 }
