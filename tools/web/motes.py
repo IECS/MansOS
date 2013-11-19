@@ -168,7 +168,7 @@ class Mote(object):
             os.environ['BSLPORT'] = self.moteDescription.getPort()
             bslScript = "ubsl.py"
         else:
-            if not self.isSelected: return 1
+            if not self.isSelected: return 0
             os.environ['BSLPROXY'] = self.moteDescription.getHost()
             bslScript = "netbsl.py"
 
@@ -200,7 +200,7 @@ class Mote(object):
             if not self.port: return 1
             os.environ['BSLPORT'] = self.moteDescription.getPort()
         else:
-            if not self.isSelected: return 1
+            if not self.isSelected: return 0
             os.environ['BSLPROXY'] = self.moteDescription.getHost()
 
         # make telosb install bsl,/dev/ttyUSB0
