@@ -278,6 +278,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         if "single" in qs and self.getLevel() > 1:
             # listen to a single mote and return
             motePortName = utils.urlUnescape(qs["single"][0])
+            print("motePortName = " + motePortName)
             mote = motes.getMote(motePortName)
             if mote is None:
                 self.setSession(qs)
@@ -306,13 +307,13 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             else:
                 # Example URL: "http://localhost:30001/read?port=/dev/ttyUSB0"
                 (portname, host) = motePortName.split('@')
-                if os.name == "posix":
+                if os.name == "posix" and not os.path.isabs(portname):
                     fullPortName = "/dev/" + portname
                 else:
                     fullPortName = portname
                 if host.find("://") == -1:
                     host = "http://" + host
-                url = host + "/read?max_data=" + max_data + "&port=" + fullPortName
+                url = host + "/read?max_data=" + max_data + "&port=" + fullPortName + "&clean=1"
                 try:
                     req = urllib2.urlopen(url)
                     output = req.read()
@@ -747,6 +748,7 @@ def initalizeUsers():
 # ---------------------------------------------
 def main():
     try:
+        configuration.setupPaths()
         if configuration.c.getCfgValueAsBool("createDaemon"):
             # detach from controlling tty and go to background
             daemon.createDaemon()

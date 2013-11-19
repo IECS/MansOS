@@ -150,7 +150,10 @@ class MoteData(object):
         if len(newString) > 3 and newString.find(",") == len(newString) - 3:
             # checksum detected
             calcCrc = crc8(newString[:-3])
-            recvCrc = int(newString[-2:], 16) 
+            try:
+                recvCrc = int(newString[-2:], 16) 
+            except:
+                recvCrc = 0xffff # invalid value
             if calcCrc != recvCrc:
                 print("Received bad checksum:\n" + newString)
                 return

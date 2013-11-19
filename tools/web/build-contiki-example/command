@@ -1,0 +1,4 @@
+# compile:
+make TARGET=sky
+# compile and upload:
+make TARGET=sky app.upload
