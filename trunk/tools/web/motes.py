@@ -8,8 +8,8 @@ from motelist import Motelist
 import configuration
 import utils
 
-def runSubprocess1(args, server):
-#    print("runSubprocess1: " + ",".join(args))
+def runSubprocess(args, server):
+#    print("runSubprocess: " + ",".join(args))
     retcode = -1
     try:
         try:
@@ -24,12 +24,12 @@ def runSubprocess1(args, server):
 #        print("proc finished, retcode={}".format(proc.returncode))
         retcode = proc.returncode
     except OSError as e:
-        print("runSubprocess1 OSError:" + str(e))
+        print("runSubprocess OSError:" + str(e))
     except CalledProcessError as e:
-        print("runSubprocess1 CalledProcessError:" + str(e))
+        print("runSubprocess CalledProcessError:" + str(e))
         retcode = e.returncode
     except Exception as e:
-        print("runSubprocess1 exception:" + str(e))
+        print("runSubprocess exception:" + str(e))
     finally:
         return retcode
 
@@ -40,7 +40,8 @@ class Mote(object):
         self.port = None
         self.isSelected = False
         self.buffer = ""
-        self.platform = "telosb"
+#        self.platform = "telosb"
+        self.platform = "xm1000"
         self.bufferLock = threading.Lock()
         self.portLock = threading.Lock()
         baseDir = os.path.basename(moteDescription.getPort())
@@ -160,11 +161,19 @@ class Mote(object):
         return numRead
 
     def tryToUpload(self, server, filename):
-#        print("tryToUpload for " + self.getPortName())
-        if not self.port: return 1
+        # print("tryToUpload for " + self.getPortName() + " filename=" + filename)
 
-        bsl = os.path.join(configuration.c.getCfgValue("mansosDirectory"), 
-                           "mos", "make", "scripts", "bsl.py")
+        if self.isLocal():
+            if not self.port: return 1
+            os.environ['BSLPORT'] = self.moteDescription.getPort()
+            bslScript = "ubsl.py"
+        else:
+            if not self.isSelected: return 1
+            os.environ['BSLPROXY'] = self.moteDescription.getHost()
+            bslScript = "netbsl.py"
+
+        bslPath = os.path.join(configuration.c.getCfgValue("mansosDirectory"), 
+                               "mos", "make", "scripts", bslScript)
         if self.platform == "telosb":
             platformArgs = ["--telosb"]
         elif self.platform == "xm1000":
@@ -175,18 +184,17 @@ class Mote(object):
             # assume "generic" MSP430 board
             platformArgs = ["--invert-reset", "--invert-test"]
 
-        arglist = ["python", bsl, "-c", self.port.portstr, "-r", "-e", "-I", "-p", filename]
+        arglist = ["python", bslPath, "-c", self.getPortName(), "-r", "-e", "-I"]
         arglist.extend(platformArgs)
         if configuration.c.getCfgValueAsBool("slowUpload"):
             arglist.append("--slow")
+        arglist.append("-p")
+        arglist.append(filename)
 
-        os.environ['BSLPORT'] = self.moteDescription.getPort()
-        retcode = runSubprocess1(arglist, server)
+        return runSubprocess(arglist, server)
 
-        return retcode
-
-    def tryToCompileAndUpload(self, server, filename):
-#        print("tryToCompileAndUpload for " + self.getPortName())
+    def tryToCompileAndUpload(self, server, codeType):
+        # print("tryToCompileAndUpload for " + self.getPortName() + " codeType=" + codeType)
 
         if self.isLocal():
             if not self.port: return 1
@@ -195,10 +203,41 @@ class Mote(object):
             if not self.isSelected: return 1
             os.environ['BSLPROXY'] = self.moteDescription.getHost()
 
-        arglist = ["make", "-C", "build", self.platform, "upload"]
-        retcode = runSubprocess1(arglist, server)
+        # make telosb install bsl,/dev/ttyUSB0
 
-#        print ("compile and upload done!")
+        if codeType == "nesc":
+            arglist = ["make", "-C", "build", self.platform]
+        elif codeType == "contiki_c":
+            os.environ['TARGET'] = self.platform
+            arglist = ["make", "-C", "build"]
+        else:
+            # mansos build system
+            arglist = ["make", "-C", "build", self.platform, "upload"]
+
+        retcode = runSubprocess(arglist, server)
+        if retcode: return retcode
+
+        # In case of TinyOS and Contiki we must upload separately
+        # (using the same good old MansOS upload script)
+        if codeType == "nesc":
+            # TinyOS
+            try:
+                retcode = self.tryToUpload(server, "build/build/" + self.platform + "/main.ihex")
+            except Exception as e:
+                print("tinyos upload exception:" + str(e))
+                retcode = 1
+        elif codeType == "contiki_c":
+            try:
+                # Contiki
+                # copy .elf file to .ihex
+                subprocess.call("msp430-objcopy -O ihex build/app.xm1000 build/app.ihex", shell = True)
+                # pass the copied file to mansos BSL script (XXX: not really done as in Contiki)
+                retcode = self.tryToUpload(server, "build/app.ihex")
+            except Exception as e:
+                print("contiki upload exception:" + str(e))
+                retcode = 1
+
+        # print ("compile and upload done!")
 
         return retcode
 
@@ -280,7 +319,7 @@ class MoteCollection(object):
         return sorted(list(self.motes.values()))
 
     def getMote(self, portname):
-        if os.name == "posix":
+        if os.name == "posix" and not os.path.isabs(portname):
             fullPortName = "/dev/" + portname
         else:
             fullPortName = portname

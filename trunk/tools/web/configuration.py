@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 import configfile
+import os
 
 HTTP_SERVER_PORT = 30000
 SERIAL_BAUDRATE = 38400
@@ -27,6 +28,8 @@ c.setCfgValue("htmlDirectory", "html")
 c.setCfgValue("dataDirectory", "data")
 c.setCfgValue("mansosDirectory", "../..")
 c.setCfgValue("sealBlocklyDirectory", "seal-blockly")
+c.setCfgValue("contikiDirectory", "/opt/contiki")
+c.setCfgValue("tinyosDirectory", "/opt/tinyos")
 c.setCfgValue("createDaemon", False)
 c.setCfgValue("serverTheme", "simple")
 c.setCfgValue("serverWebSettings", ["serverTheme"])
@@ -68,3 +71,10 @@ except Exception as e:
     print(e)
     pass # let it be...
 
+# required for TinyOS compilation
+def setupPaths():
+    tinyosPath = c.getCfgValue("tinyosDirectory")
+    os.environ['TOSROOT'] = tinyosPath
+    os.environ['TOSDIR'] = tinyosPath + '/tos'
+    os.environ['MAKERULES'] = tinyosPath + '/support/make/Makerules'
+    os.environ['PATH'] = tinyosPath + ":" + os.environ['PATH']

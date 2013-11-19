@@ -1,0 +1,11 @@
+export TOSROOT=/opt/tinyos
+export TOSDIR="$TOSROOT/tos"
+export CLASSPATH=$CLASSPATH:$TOSROOT/support/sdk/java
+export MAKERULES="$TOSROOT/support/make/Makerules"
+export PATH=/opt/tinyos:$PATH
+
+# compile:
+make telosb
+
+# compile and upload:
+make telosb install bsl,/dev/ttyUSB0

@@ -56,7 +56,7 @@ class PageGraph():
             moteConfig += ":"
             configuration.c.selectSection("graph")
             for motePortName in motes:
-                if os.name == "posix":
+                if os.name == "posix" and not os.path.isabs(motePortName):
                     fullMotePortName = "/dev/" + motePortName
                 else:
                     fullMotePortName = motePortName
