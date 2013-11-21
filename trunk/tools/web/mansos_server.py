@@ -253,7 +253,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             + '<input type="button" name="${name}_files" ' \
             + 'title="View files on mote\'s filesystem" value="Files" ' + disabled \
             + ' onclick="viewFiles(\'${name}\', sel_${name})"/>'
-        tableRow = "<tr><td><a href='javascript:void(0)'>${portName}</a></td><td>${platformSelect}</td>" \
+        tableRow = "<tr><td><a href='javascript:talkToMote(\"${modPortName}\")'>${portName}</a></td><td>${platformSelect}</td>" \
             "<td>${actions}</td></tr>" 
         t1 = string.Template(tableDesc)
         t2 = string.Template(tableRow)
@@ -269,7 +269,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             for platform in moteconfig.supportedPlatforms:
                 selected = 'selected="selected"' if platform == m.platform else ''
                 details += t3.substitute(platform = platform, selected = selected)
-            tableContent += t2.substitute(portName = m.getFullName(), 
+            tableContent += t2.substitute(portName = m.getFullName(), modPortName = utils.urlEscape(m.getFullBasename()),
                 platformSelect = t4.substitute(name = escapedName, details = details),
                 actions = t5.substitute(name = escapedName))
         text = t1.substitute(tableContent = tableContent)
