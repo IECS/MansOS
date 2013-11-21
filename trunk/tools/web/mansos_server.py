@@ -6,6 +6,7 @@
 
 from __future__ import print_function
 import os, sys, platform, select, signal, traceback, string
+from urllib2 import URLError
 # add library directory to the path
 sys.path.append(os.path.join(os.getcwd(), '..', "lib"))
 import pages.page_login as page_login
@@ -275,7 +276,13 @@ class HttpServerHandler(BaseHTTPRequestHandler,
         self.serveAnyPage("motes", qs, True, {"MOTE_TABLE" : text})
 
     def serveListenSingle(self, qs):
-        if "single" in qs and self.getLevel() > 1:
+        if not self.getLevel() > 1:
+            self.setSession(qs)
+            self.send_response(200)
+            self.sendDefaultHeaders()
+            self.end_headers()
+            self.writeChunk("accessDenied")
+        elif "single" in qs:
             # listen to a single mote and return
             motePortName = utils.urlUnescape(qs["single"][0])
             print("motePortName = " + motePortName)
@@ -285,9 +292,12 @@ class HttpServerHandler(BaseHTTPRequestHandler,
                 self.send_response(200)
                 self.sendDefaultHeaders()
                 self.end_headers()
-                motesText = self.serveMotes("listen", "Listen", qs, None, True)
-                self.serveAnyPage("error:critical", qs,
-                                  errorMsg = "Single mote selected, but no mote with this name found")
+                try:
+                    urllib2.urlopen(motePortName.split('@')[1])
+                except URLError:
+                    self.writeChunk("hostUnreachable")
+                    return
+                self.writeChunk("noMotesSelected")
                 return
 
             if "max_data" in qs:
@@ -302,8 +312,16 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             self.send_header('Refresh', '1')
             self.end_headers()
             if mote.isLocal():
-                # TODO!
-                pass
+                # Prepare serial port for the first time
+                if "startListen" in qs and qs["startListen"][0] == '1':
+                    ht.closeAllSerial()
+                    mote.openSerial()
+                    ht.openMoteSerial(mote)
+                # Listen for data
+                output = ""
+                for line in sensor_data.moteData.listenTxt:
+                    output += line + "\n"
+                self.writeChunk("buffer:" + output)
             else:
                 # Example URL: "http://localhost:30001/read?port=/dev/ttyUSB0"
                 (portname, host) = motePortName.split('@')
@@ -319,10 +337,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
                     output = req.read()
                     self.writeChunk(output)
                 except Exception as e:
-                    print("exception when listening to remote mote:")
-                    print(e)
-                    print(traceback.format_exc())
-                    self.writeChunk("Failed!")
+                    self.writeChunk("hostUnreachable")
 
   
     def serveListen(self, qs):
@@ -420,7 +435,10 @@ class HttpServerHandler(BaseHTTPRequestHandler,
                 if (len(arr) == 1):
                     c += m.getFullName()
                 else:
-                    c += arr[0] + " @ " + m.getFullName().split("@")[1][7:].split(":")[0]
+                    c += arr[0]
+                    arr = m.getFullName().split("@")
+                    if arr[1] != "Local":
+                        c += " @ " + m.getFullName().split("@")[1][7:].split(":")[0]
                 c += "</a>"
             else:
                 c += m.getFullName()
