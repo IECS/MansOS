@@ -18,7 +18,7 @@
 		<button type="button" onclick="updateUIConfig()">Save</button>
 		<button type="button" onclick="$('#ConfigurationDialog').modal('hide')">Cancel</button>
 	</div>
-</div><br/>
+</div>
 
 <div id="InfoDialog" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="windowTitleLabel" aria-hidden="true">
 	<div class="modal-header">
@@ -33,7 +33,7 @@
 	<div class="modal-footer">
 		<button type="button" onclick="$('#InfoDialog').modal('hide')">OK</button>
 	</div>
-</div><br/>
+</div>
 
 <div id="ErrorDialog" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="windowTitleLabel" aria-hidden="true">
 	<div class="modal-header">
@@ -48,12 +48,37 @@
 	<div class="modal-footer">
 		<button type="button" onclick="$('#ErrorDialog').modal('hide')">OK</button>
 	</div>
+</div>
+
+<div id="talkDialog" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="windowTitleLabel" aria-hidden="true">
+	<div class="modal-header">
+		<a href="#" class="close" data-dismiss="modal">&times;</a>
+		<h2 style="margin: 0px">Talk to Mote</h2>
+	</div>
+	<div class="modal-body">
+		<div class="alert alert-success" id="talkDialog_successMsg" style="display: none;">...</div>
+		<div class="alert alert-info" id="talkDialog_infoMsg" style="display: none;">...</div>
+		<div class="alert alert-warning" id="talkDialog_warningMsg" style="display: none;">...</div>
+		<div class="alert alert-danger" id="talkDialog_dangerMsg" style="display: none;">...</div>	
+		<div class="divDialogElements">
+		<pre id="listenResult" style="height: 350px">
+		
+		</pre>
+		</div>
+	</div>
+	<div class="modal-footer">
+		<button type="button" onclick="$('#talkDialog').modal('hide')">OK</button>
+	</div>
 </div><br/>
 
 %MOTE_TABLE%
 
 <script language="javascript">
 	var selectedMoteName;
+    var text_output = "";
+    var selectedMote;
+    var processListeningOk = true; 
+    var startListen = 0;
 
 	function onConfig(selName) {
 		selectedMoteName = selName;
@@ -147,5 +172,71 @@
 	    		alert('Error occured');
 			}
 		});
+	}
+	    
+    function talkToMote(mote) {
+	    text_output = "";
+	    $('#listenResult').text("");
+	    $('#listenResult').show();
+	    $('#dangerMsg').hide();
+		$('#infoMsg').hide();
+	    $("#talkDialog").modal('show');
+    	selectedMote = mote;
+    	processListeningOk = true;
+    	startListen = 1;
+    	processListen();
+    }
+    
+	function processListen() {
+		refreshListenPage(selectedMote);
+		if (processListeningOk) {
+			setTimeout(processListen, 1000);
+		}
+	}
+	
+	function refreshListenPage(mote) {
+		$('#infoMsg').text("Waiting for data!");
+		$('#infoMsg').show();
+		$.ajax({
+			type: "GET",
+			url: "listen-single",
+			data: "single=" + mote + "&max_data=100&startListen=" + startListen,
+			dataType: "text",
+			success: function(d) {
+				if (d == "accessDenied") {
+					$('#talkDialog_dangerMsg').text("Access denied!");
+					$('#talkDialog_dangerMsg').show();
+					$('#talkDialog_infoMsg').hide();
+					$('#listenResult').hide();
+					processListeningOk = false;
+				} else if (d == "hostUnreachable") {
+					$('#talkDialog_dangerMsg').text("The remote server is unreachable!");
+					$('#talkDialog_dangerMsg').show();
+					$('#talkDialog_infoMsg').hide();
+					$('#listenResult').hide();
+					processListeningOk = false;
+				} else if (d == "noMotesSelected") {
+					processListeningOk = false;
+				} else {
+					if (d.substring(0, 7) === "buffer:") {
+						text_output = d.substring(7);
+					} else {
+						text_output += d;
+					}
+					arr = text_output.split("\n");
+					outputSize = 21;
+					if (arr.length > outputSize) {
+						i = arr.length - outputSize;
+						arr = arr.slice(i, i + outputSize);
+						text_output = arr.join("\n");
+					}
+					$('#listenResult').text(text_output);
+				}
+			},
+			error: function() {
+        		alert('Error occured');
+   			}
+		});
+		startListen = 0;
 	}
 </script>
