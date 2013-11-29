@@ -241,6 +241,18 @@ class Mote(object):
 
         return retcode
 
+    def writeData(self, data):
+        self.portLock.acquire()
+        try:
+            if self.port:
+                result = self.port.write(data)
+            else:
+                result = -1
+        except:
+            raise
+        finally:
+            self.portLock.release()
+        return result
 
 class MoteCollection(object):
     def __init__(self):

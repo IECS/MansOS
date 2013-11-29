@@ -7,16 +7,21 @@
 		<a href="#" class="close" data-dismiss="modal">&times;</a>
 		<h2 style="margin: 0px">Talk to Mote</h2>
 	</div>
-	<div class="modal-body">
+	<div class="modal-body" style="padding-bottom: 0px; margin-bottom: 0px">
 		<div class="alert alert-success" id="successMsg" style="display: none;">...</div>
 		<div class="alert alert-info" id="infoMsg" style="display: none;">...</div>
 		<div class="alert alert-warning" id="warningMsg" style="display: none;">...</div>
 		<div class="alert alert-danger" id="dangerMsg" style="display: none;">...</div>	
 		<div class="divDialogElements">
-		<pre id="listenResult" style="height: 350px">
-		
-		</pre>
+			<pre id="listenResult" style="height: 250px; overflow-y: scroll;">
+			
+			</pre>
 		</div>
+	</div>
+	<div class="modal-body" style="padding-top: 0px; margin-top: 0px">
+		<label for="moteCommand">Enter data:</label><br/>
+  		<textarea id="moteCommand" name="moteCommand" style="font-family: monospace; width: 80%" rows="2"  title="Enter data for sending to the mote" %DISABLED%></textarea><br/>
+		<button type="button" onclick="sendData()">Send</button>
 	</div>
 	<div class="modal-footer">
 		<button type="button" onclick="$('#talkDialog').modal('hide')">OK</button>
@@ -124,5 +129,34 @@
    			}
 		});
 		startListen = 0;
+	}
+	
+	function sendData() {
+		$.ajax({
+			type: "GET",
+			url: "talk-to",
+			data: "single=" + selectedMote + "&data=" + $('#moteCommand').val(),
+			dataType: "text",
+			success: function(d) {
+				if (d == "accessDenied") {
+					$('#dangerMsg').text("Access denied!");
+					$('#dangerMsg').show();
+					$('#infoMsg').hide();
+					$('#listenResult').hide();
+				} else if (d == "hostUnreachable") {
+					$('#dangerMsg').text("The remote server is unreachable!");
+					$('#dangerMsg').show();
+					$('#infoMsg').hide();
+					$('#listenResult').hide();
+				} else if (d == "noMotesSelected") {
+
+				} else {
+					alert("Data is successfully sent to the mote!");
+				}
+			},
+			error: function() {
+        		alert('Error occured');
+   			}
+		});
 	}
 </script>
