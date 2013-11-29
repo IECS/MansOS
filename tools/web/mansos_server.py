@@ -339,6 +339,55 @@ class HttpServerHandler(BaseHTTPRequestHandler,
                 except Exception as e:
                     self.writeChunk("hostUnreachable")
 
+    def serveTalkTo(self, qs):
+        if not self.getLevel() > 1:
+            self.setSession(qs)
+            self.send_response(200)
+            self.sendDefaultHeaders()
+            self.end_headers()
+            self.writeChunk("accessDenied")
+        elif "single" in qs:
+            # listen to a single mote and return
+            motePortName = utils.urlUnescape(qs["single"][0])
+            print("motePortName = " + motePortName)
+            mote = motes.getMote(motePortName)
+            if mote is None:
+                self.setSession(qs)
+                self.send_response(200)
+                self.sendDefaultHeaders()
+                self.end_headers()
+                try:
+                    urllib2.urlopen(motePortName.split('@')[1])
+                except URLError:
+                    self.writeChunk("hostUnreachable")
+                    return
+                self.writeChunk("noMotesSelected")
+                return
+
+            # do not set session info
+            self.send_response(200)
+            self.sendDefaultHeaders()
+            self.end_headers()
+            
+            if "data" in qs:
+                if mote.isLocal():
+                    mote.writeData(qs["data"][0])
+                    self.writeChunk("OK")
+                else:
+                    (portname, host) = motePortName.split('@')
+                    if os.name == "posix" and not os.path.isabs(portname):
+                        fullPortName = "/dev/" + portname
+                    else:
+                        fullPortName = portname
+                    if host.find("://") == -1:
+                        host = "http://" + host
+                    url = host + "/write?port=" + fullPortName
+                    try:
+                        req = urllib2.urlopen(url, qs["data"][0])
+                        output = req.read()
+                        self.writeChunk(output)
+                    except Exception as e:
+                        self.writeChunk("hostUnreachable")
   
     def serveListen(self, qs):
         self.setSession(qs)
@@ -564,6 +613,8 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             self.serveListen(qs)
         elif o.path == "/listen-single":
             self.serveListenSingle(qs)
+        elif o.path == "/talk-to":
+            self.serveTalkTo(qs)
         elif o.path == "/listen-data":
             self.serveListenData(qs)
         elif o.path == "/blockly":
