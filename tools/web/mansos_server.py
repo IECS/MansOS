@@ -368,7 +368,7 @@ class HttpServerHandler(BaseHTTPRequestHandler,
             self.send_response(200)
             self.sendDefaultHeaders()
             self.end_headers()
-            
+
             if "data" in qs:
                 if mote.isLocal():
                     mote.writeData(qs["data"][0])

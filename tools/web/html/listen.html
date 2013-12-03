@@ -135,7 +135,7 @@
 		$.ajax({
 			type: "GET",
 			url: "talk-to",
-			data: "single=" + selectedMote + "&data=" + $('#moteCommand').val(),
+			data: "single=" + selectedMote + "&data=" + escape($('#moteCommand').val()),
 			dataType: "text",
 			success: function(d) {
 				if (d == "accessDenied") {
