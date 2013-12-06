@@ -118,7 +118,7 @@ static inline void hplAdcSetChannel(unsigned ch)
 static inline uint8_t hplAdcGetChannel(void)
 {
     // The channel number is stored in four MSBs of ADC10CTL1
-    return (ADC10CTL1 & 0x0FFFU) >> 12;
+    return (ADC10CTL1 & 0xF000U) >> 12;
 }
 
 // Enable ADC interrupts

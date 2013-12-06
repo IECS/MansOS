@@ -121,10 +121,10 @@ uint16_t sht11_raw2rel_hum(const uint16_t raw) {
     return (uint16_t) res;
 }
 
-uint16_t sht11_raw2deg_temp(const uint16_t raw) {
+int16_t sht11_raw2deg_temp(const uint16_t raw) {
     int32_t res = raw;
     res *= SHT11_D2; // res = D2 * MT
     res += SHT11_D1; // res = D1 + D2 * MT
     res /= 100; // res = (D1 + D2 * MT) / 100
-    return (uint16_t) res;
+    return (int16_t) res;
 }
