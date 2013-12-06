@@ -32,7 +32,7 @@
 uint16_t sht11_raw2rel_hum(const uint16_t raw);
 
 // convert raw temperature value to degrees
-uint16_t sht11_raw2deg_temp(const uint16_t raw);
+int16_t sht11_raw2deg_temp(const uint16_t raw);
 
 #endif // !MANSOS_SHT11_CONV_H
 
