@@ -186,7 +186,6 @@ static inline uint16_t name ## _TIMER_READ(void)   \
 #define READ_TIMER_EDGE(x)  ({                    \
         uint16_t t1 = x;                          \
         uint16_t t2;                              \
-        t1 = x;                                   \
         do {                                      \
             t2 = x;                               \
         } while (t1 == t2);                       \
