@@ -539,6 +539,7 @@ int8_t cc1101Read(uint8_t *buf, uint8_t buflen)
 {
     uint8_t res, len;
     uint8_t aux[2];
+    int rawRSSI;
     Handle_t h;
 
     ATOMIC_START(h);
@@ -555,7 +556,15 @@ int8_t cc1101Read(uint8_t *buf, uint8_t buflen)
 
     burstRead(REG_FIFO, buf, len);
     burstRead(REG_FIFO, aux, sizeof(aux));
-    lastRSSI = aux[0];
+    rawRSSI = aux[0];
+    if (rawRSSI >= 128)
+    {
+        lastRSSI = (rawRSSI - 256)/2 - 74;
+    }
+    else
+    {
+        lastRSSI = rawRSSI/2 - 74;
+    }
     //
     // The CRC was already checked in the interrupt handler; now we just remove
     // the CRC bit
