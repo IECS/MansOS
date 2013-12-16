@@ -109,11 +109,12 @@ void ads8328RegWrite16(uint8_t address, uint16_t data)
 void ads8328Init(void)
 {
 
-    ADS8328_REINIT();
+    
 
     spiBusInit(ADS8328_SPI_ID, SPI_MODE_MASTER);
     pinAsOutput(ADS8328_CS_PORT, ADS8328_CS_PIN);
     
+    ADS8328_REINIT();
     // setup Conversion Start pin
     pinAsOutput(ADS8328_CONVST_PORT, ADS8328_CONVST_PIN);
     pinSet(ADS8328_CONVST_PORT, ADS8328_CONVST_PIN);
