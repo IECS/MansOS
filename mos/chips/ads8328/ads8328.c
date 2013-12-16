@@ -51,7 +51,6 @@ static void spiExchange(uint8_t busId, void *buf_, uint16_t len) {
 uint16_t ads8328ReadData(void)
 {
     uint16_t result;
-    ADS8328_REINIT();
     ADS8328_SPI_ENABLE();
     result = spiReadByte(ADS8328_SPI_ID);
     result <<= 8;
@@ -68,7 +67,6 @@ uint16_t ads8328ConfigRegRead(void)
     uint8_t array[2];
     array[0] = ADS8328_REG_CONFIG_READ << 4;
     array[1] = 0;
-    ADS8328_REINIT();
     ADS8328_SPI_ENABLE();
     spiExchange(ADS8328_SPI_ID, array, sizeof(array));
     ADS8328_SPI_DISABLE();
@@ -88,12 +86,10 @@ void ads8328RegWrite4(uint8_t address)
     uint8_t array[2];
     array[0] = address << 4;
     array[1] = 0;
-    ADS8328_REINIT();
     ADS8328_SPI_ENABLE();
     spiExchange(ADS8328_SPI_ID, array, sizeof(array));
     ADS8328_SPI_DISABLE();
 #else
-    ADS8328_REINIT();
     ADS8328_SPI_ENABLE();
     sw_spiWriteNibble(address);
     ADS8328_SPI_DISABLE();
@@ -105,7 +101,6 @@ void ads8328RegWrite16(uint8_t address, uint16_t data)
     uint8_t array[2];
     array[0] = (address << 4) | ((data >> 8) & 0xf);
     array[1] = data & 0xff;
-    ADS8328_REINIT();
     ADS8328_SPI_ENABLE();
     spiExchange(ADS8328_SPI_ID, array, sizeof(array));
     ADS8328_SPI_DISABLE();
@@ -113,17 +108,19 @@ void ads8328RegWrite16(uint8_t address, uint16_t data)
 
 void ads8328Init(void)
 {
+
+    ADS8328_REINIT();
+
     spiBusInit(ADS8328_SPI_ID, SPI_MODE_MASTER);
-
     pinAsOutput(ADS8328_CS_PORT, ADS8328_CS_PIN);
-
+    
     // setup Conversion Start pin
     pinAsOutput(ADS8328_CONVST_PORT, ADS8328_CONVST_PIN);
     pinSet(ADS8328_CONVST_PORT, ADS8328_CONVST_PIN);
-
+    
     // setup End of Conversion pin (low while conversion in progress)
     pinAsInput(ADS8328_EOC_PORT, ADS8328_EOC_PIN);
-
+    
     // select manual channel select mode
     uint16_t config = ads8328ConfigRegRead();
     config &= ~ADS8328_CFR_AUTO_CHANSEL;
@@ -156,7 +153,6 @@ bool ads8328Read(uint16_t *value)
     uint8_t array[2];
     array[0] = ADS8328_REG_DATA << 4;
     array[1] = 0;
-    ADS8328_REINIT();
     ADS8328_SPI_ENABLE();
     spiExchange(ADS8328_SPI_ID, array, sizeof(array));
     ADS8328_SPI_DISABLE();
