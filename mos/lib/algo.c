@@ -102,6 +102,11 @@ uint16_t signalSawtoothWave(uint16_t period, uint16_t low, uint16_t high)
     const uint16_t positionY = (positionX * amplitude) / period + low;
     return positionY;
 }
+//
+//Table of sin()*4096 values for signalSineWave() function
+//
+static const uint16_t sineTable[90] = {0,71,143,214,286,357,428,499,570,641,711,782,852,921,991,1060,1129,1198,1266,1334,1401,1468,1534,1600,1666,1731,1796,1860,1923,1986,2048,2110,2171,2231,2290,2349,2408,2465,2522,2578,2633,2687,2741,2793,2845,2896,2946,2996,3044,3091,3138,3183,3228,3271,3314,3355,3396,3435,3474,3511,3547,3582,3617,3650,3681,3712,3742,3770,3798,3824,3849,3873,3896,3917,3937,3956,3974,3991,4006,4021,4034,4046,4056,4065,4074,4080,4086,4090,4094,4095,4096
+};
 
 //
 // Calculate approximate sine wave value at given point of time
@@ -112,118 +117,22 @@ uint16_t signalSineWave(uint16_t period, uint16_t low, uint16_t high)
     const uint16_t halfhalfperiod = halfperiod/2;
     const uint16_t amp = (high - low)/2;
     const uint16_t off = (high + low)/2;
-    static uint16_t sin[89];//sin(deg)*4096
-    sin[0] = 0;
-    sin[1] =71;
-    sin[2] =143;
-    sin[3] =214;
-    sin[4] =286;
-    sin[5] =357;
-    sin[6] =428;
-    sin[7] =499;
-    sin[8] =570;
-    sin[9] =641;
-    sin[10] =711;
-    sin[11] =782;
-    sin[12] =852;
-    sin[13] =921;
-    sin[14] =991;
-    sin[15] =1060;
-    sin[16] =1129;
-    sin[17] =1198;
-    sin[18] =1266;
-    sin[19] =1334;
-    sin[20] =1401;
-    sin[21] =1468;
-    sin[22] =1534;
-    sin[23] =1600;
-    sin[24] =1666;
-    sin[25] =1731;
-    sin[26] =1796;
-    sin[27] =1860;
-    sin[28] =1923;
-    sin[29] =1986;
-    sin[30] =2048;
-    sin[31] =2110;
-    sin[32] =2171;
-    sin[33] =2231;
-    sin[34] =2290;
-    sin[35] =2349;
-    sin[36] =2408;
-    sin[37] =2465;
-    sin[38] =2522;
-    sin[39] =2578;
-    sin[40] =2633;
-    sin[41] =2687;
-    sin[42] =2741;
-    sin[43] =2793;
-    sin[44] =2845;
-    sin[45] =2896;
-    sin[46] =2946;
-    sin[47] =2996;
-    sin[48] =3044;
-    sin[49] =3091;
-    sin[50] =3138;
-    sin[51] =3183;
-    sin[52] =3228;
-    sin[53] =3271;
-    sin[54] =3314;
-    sin[55] =3355;
-    sin[56] =3396;
-    sin[57] =3435;
-    sin[58] =3474;
-    sin[59] =3511;
-    sin[60] =3547;
-    sin[61] =3582;
-    sin[62] =3617;
-    sin[63] =3650;
-    sin[64] =3681;
-    sin[65] =3712;
-    sin[66] =3742;
-    sin[67] =3770;
-    sin[68] =3798;
-    sin[69] =3824;
-    sin[70] =3849;
-    sin[71] =3873;
-    sin[72] =3896;
-    sin[73] =3917;
-    sin[74] =3937;
-    sin[75] =3956;
-    sin[76] =3974;
-    sin[77] =3991;
-    sin[78] =4006;
-    sin[79] =4021;
-    sin[80] =4034;
-    sin[81] =4046;
-    sin[82] =4056;
-    sin[83] =4065;
-    sin[84] =4074;
-    sin[85] =4080;
-    sin[86] =4086;
-    sin[87] =4090;
-    sin[88] =4094;
-    sin[89] =4095;
-    sin[90] =4096;
     int32_t val = getJiffies() % period;
-	bool invert =0;
-	if(val > halfperiod)
-	{
-		val = val - halfperiod;
-		invert = 1;
-	}
-	if(val > halfhalfperiod)
-	{
-		val = abs(val - halfperiod);
-	}
-	val = 90*val/halfhalfperiod;
-	val = sin[val];
-    if(invert)
-    {
-		val = off - amp*val/4096;
+    bool invert = 0;
+	  if(val > halfperiod) {
+        val = val - halfperiod;
+		    invert = 1;
+	  }
+	  if(val > halfhalfperiod) {
+		    val = abs(val - halfperiod);
+	  }
+	  val = 90*val/halfhalfperiod;
+	  val = sineTable[val];
+    if(invert) {
+		    val = off - amp*val/4096;
     }
-    if(!invert)
-    {      
-		val = off + amp*val/4096;
+    if(!invert) {      
+		    val = off + amp*val/4096;
     }
     return val;
 }
