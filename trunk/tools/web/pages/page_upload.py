@@ -1,4 +1,4 @@
-import threading, time, cgi, os
+import threading, time, cgi, os, re
 import configuration
 import helper_tools as ht
 from motes import motes
@@ -61,17 +61,31 @@ def emitCodePlainC(code, config):
         outFile.close()
 
 
-def emitCodeTinyOS(code, config):
-    with open(os.path.join("build", "MyC.nc"), "w") as outFile:
+def detectTinyOSAppName(code, config):
+    m = re.search('.*module\s+([a-zA-Z0-9_]+)\s+', code)
+    if not m is None:
+        componentName = m.group(1)
+    else:
+        componentName = "MyC"
+    m = re.search('.*configuration\s+([a-zA-Z0-9_]+)\s+', config)
+    if not m is None:
+        appName = m.group(1)
+    else:
+        appName = "MyAppC"
+    return (componentName, appName)
+
+
+def emitCodeTinyOS(code, config, componentName, appName):
+    with open(os.path.join("build", componentName + ".nc"), "w") as outFile:
         outFile.write(code)
         outFile.close()
 
-    with open(os.path.join("build", "MyAppC.nc"), "w") as outFile:
+    with open(os.path.join("build", appName + ".nc"), "w") as outFile:
         outFile.write(config)
         outFile.close()
 
     with open(os.path.join("build", "Makefile"), "w") as outFile:
-        outFile.write("COMPONENT = MyAppC\n")
+        outFile.write("COMPONENT = " + appName + "\n")
         outFile.write("include $(MAKERULES)\n")
         outFile.close()
 
@@ -344,7 +358,8 @@ class PageUpload():
                elif codeType == "plain_c":
                    emitCodePlainC(code, config)
                elif codeType == "nesc":
-                   emitCodeTinyOS(code, config)
+                   (componentName, appName) = detectTinyOSAppName(code, config)
+                   emitCodeTinyOS(code, config, componentName, appName)
                elif codeType == "contiki_c":
                    emitCodeContiki(code)
                elif codeType == "seal":

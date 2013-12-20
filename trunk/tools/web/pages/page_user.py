@@ -180,11 +180,15 @@ class PageUser():
             tabCode += "</tr>"
             for user in self.users._userList:
                 tabCode += "<tr>"
-                tabCode += "<td>" + tses.to_code(user.get_data("name")) + "</td>"
+                name = user.get_data("name")
+                if name != False:
+                    tabCode += "<td>" + tses.to_code(name) + "</td>"
                 for atr in webAttributes:
                     if atr in ["name"]:
                         continue
-                    tabCode += "<td>" + tses.to_code(user.get_data(atr)) + "</td>"
+                    value = user.get_data(atr)
+                    if value != False:
+                        tabCode += "<td>" + tses.to_code(value) + "</td>"
                 tabCode += "</tr>"
             tabCode += "</table>"
             changes["TAB"] = tabCode
