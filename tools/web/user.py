@@ -103,7 +103,7 @@ class Users():
         i=0
         while self._userList.__len__() > i:
             p = self._userList[i].get_data("password")
-            if p.__len__() != 32:
+            if p == False or p.__len__() != 32:
                 return False
             if not all(c in "0123456789abcdef" for c in p):
                 return False
