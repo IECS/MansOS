@@ -1,0 +1,4 @@
+Support for Santa mote, a TelosB compatible sensor node 
+using the Tmote Mini with msp430F1611 processor.
+The Santa Mote has 6 channels to control the antenna array and 6 LEDs.
+
