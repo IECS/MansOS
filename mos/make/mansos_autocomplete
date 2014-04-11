@@ -5,7 +5,7 @@ _make_mansos()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="telosb pc msp430 nrf atmega epic upload run clean"
+    opts="telosb pc msp430 nrf atmega epic upload run clean sm3 santa"
 
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )

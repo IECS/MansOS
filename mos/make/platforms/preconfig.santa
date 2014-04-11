@@ -1,0 +1,4 @@
+# do not use SD card unless explicitly specified in application config
+USE_SDCARD ?= n
+USE_FATFS ?= n
+USE_SDCARD_STREAM ?= n
