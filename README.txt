@@ -6,5 +6,9 @@ The OS also includes support for radio transceivers, such as cc2420.
 
 The OS is easy to use and easy to port to other platforms.
 
+More information can be learned at:
+
+http://mansos.net
+
 Please also read the CREDITS.txt file.
 
