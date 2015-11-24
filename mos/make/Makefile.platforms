@@ -59,10 +59,12 @@ ifeq ("", "$(filter clean cleanall help $(PLATFORMS:%=clean%) motelist $(TARGET)
   ifeq ("", "$(TARGET)")
     # Target still not specified; issue an error
     define W_NOTARGET
-      Warning: No target platform specified! 
-      Please re-run 'make' with one of the targets from the following list:
-         $(PLATFORMS)
-      ..
+      	Warning: No target platform specified! 
+      	Please re-run 'make' with one of the targets from the following list:
+        	$(PLATFORMS)
+
+	For more possible targets run \"make help\"
+      	..
     endef
     $(error $(W_NOTARGET))
   else

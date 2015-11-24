@@ -62,6 +62,7 @@ OUTDIR = $(PROJDIR)/build
 BUILDDIR = $(PROJDIR)/build
 
 #===== Files
+MAKEFILE_SITEOPTS = ~/.mansos.siteopts
 
 MAKEFILE_PLATFORMS = $(MOS)/make/Makefile.platforms
 MAKEFILE_CONFIG = $(MOS)/make/Makefile.config
@@ -102,7 +103,9 @@ SHORT_UNAME := $(shell uname | cut -b -6)
 #===== Include all necessary and optional files
 
 # user specific options
--include ~/.mansos.siteopts
+ifneq ("$(wildcard $(MAKEFILE_SITEOPTS))","")
+-include $(MAKEFILE_SITEOPTS)
+endif
 
 # Declare targets and options
 include $(MAKEFILE_OPTIONS)
@@ -257,7 +260,7 @@ OBJDIRS = $(dir $(OBJS))
 
 # ===== Targets =====
 .PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs motelist serial sensorlist \
-	stackdump stackdump-build clean cleanall help
+	stackdump stackdump-build clean cleanall help setup
 
 all: build
 
@@ -422,19 +425,22 @@ help:
 	@echo "    --- MansOS make system ---"
 	@echo Please run 'make' with one of these hardware platforms as target:
 	@echo "    $(PLATFORMS)"
+	@echo " "
 	@echo The following targets are also available:
-	@echo "    upload - put the program on a mote"
-	@echo "    serial - connect to serial port for read & write access"
-	@echo "    listen - synonym for 'serial'"
-	@echo "    motelist - list all connected motes"
-	@echo "    size - show code memory and RAM usage"
-	@echo "    memdump - analyze and show memory usage"
+	@echo "    setup <platform> - installs the toolchain for the platform"
+	@echo "    upload    - put the program on a mote"
+	@echo "    serial    - connect to serial port for read & write access"
+	@echo "    listen    - synonym for 'serial'"
+	@echo "    motelist  - list all connected motes"
+	@echo "    size      - show code memory and RAM usage"
+	@echo "    memdump   - analyze and show memory usage"
 	@echo "    stackdump - analyze and show stack usage"
-	@echo "    help - show this help"
-	@echo The make system uses al least these environmental variables:
-	@echo "    BSLPORT - select serial port to program"
-	@echo "    BSLPROXY - select hostname and IP port to program a remotely connected mote"
-	@echo "       for example: BSLPROXY=10.0.0.1:30001"
+	@echo "    help      - show this help"
+	@echo " "
+	@echo The make system uses at least these environmental variables:
+	@echo "    BSLPORT   - select serial port to program"
+	@echo "    BSLPROXY  - select hostname and IP port to program a remotely connected mote"
+	@echo "                for example: BSLPROXY=10.0.0.1:30001"
 	@echo "    PROG_BAUDRATE - select programming baudrate"
 	@echo "    V - verbose compilation, for example: V=1"
 	@echo

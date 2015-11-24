@@ -8,6 +8,9 @@
 *.gch
 *.pch
 
+# Compiled python scripts
+*.pyc
+
 # Libraries
 *.lib
 *.a

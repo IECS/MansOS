@@ -87,3 +87,7 @@ stackdump-build:
 
 size: build
 	$(_QUIET) size $(OUTDIR)/$(EXECUTABLE)
+
+# FIXME: Setup is OS agnostic, assumes linux (Ubuntu, debian)
+setup: 
+	sudo apt-get install build-essential gcc

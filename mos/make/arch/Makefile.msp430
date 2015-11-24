@@ -135,3 +135,7 @@ mspsim: build
 
 size: build
 	$(_QUIET) msp430-size $(OUTDIR)/$(APPMOD).elf
+
+# FIXME: Setup is OS agnostic, assumes linux (Ubuntu, debian)
+setup: 
+	sudo apt-get install gcc-msp430 binutils-msp430 msp430-libc msp430mcu
