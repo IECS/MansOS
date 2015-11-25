@@ -444,3 +444,6 @@ help:
 	@echo "    PROG_BAUDRATE - select programming baudrate"
 	@echo "    V - verbose compilation, for example: V=1"
 	@echo
+
+setupbase:
+	sudo apt-get install python-wxtools python-ply python-serial
