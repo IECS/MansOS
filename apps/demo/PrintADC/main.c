@@ -33,6 +33,8 @@ void appMain(void)
     uint16_t channel;
     uint16_t val;
 
+    adcInit();
+
     for (;;) {
         for (channel = 0; channel < adcGetChannelCount(); ++channel) {
             val = adcRead(channel);

@@ -1,0 +1,9 @@
+# This is a file for simulated ADC values when running on PC platform
+# The syntax of the file is: 
+# <ADC-channel>: { <ADC-value> }
+0: 6 7 8 9		# This is ADC channel 0.
+1: 1 2 3 4 5
+2: 11 22 33 
+4: 213 214 216
+5: 210 214 216
+10: 720 723
