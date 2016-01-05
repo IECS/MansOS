@@ -260,7 +260,7 @@ OBJDIRS = $(dir $(OBJS))
 
 # ===== Targets =====
 .PHONY: all $(PLATFORM_TARGET) build saveplatform objDirs motelist serial sensorlist \
-	stackdump stackdump-build clean cleanall help setup
+	stackdump stackdump-build clean cleanall help targets options setup
 
 all: build
 
@@ -421,12 +421,28 @@ listen:
 sensorlist:
 	$(_QUIET) $(SENSORLIST) $(PLATFORM) "$(CFLAGS) $(LDFLAGS)"
 
-help:
-	@echo "    --- MansOS make system ---"
-	@echo Please run 'make' with one of these hardware platforms as target:
-	@echo "    $(PLATFORMS)"
+#PLATLIST = $(subst  ,:,$(PLATFORMS))
+PLATLIST = $(addprefix "\n",$(PLATFORMS))
+
+targets:
 	@echo " "
-	@echo The following targets are also available:
+	@echo "    === MansOS make system targets ==="
+	@echo " "
+	@echo Please run 'make' with one of these hardware platforms as a target:
+	@echo "----------"
+	@for word in $(PLATFORMS); do echo "    $$word"; done
+	@echo "----------"
+
+
+options:
+	@echo " "
+	@echo "    === MansOS make system options ==="
+	@echo " "
+	@echo The following are the available build tasks:
+	@echo "    targets   - show available targets"
+	@echo "    options   - show options"
+	@echo "    help      - show full help"
+	@echo " "
 	@echo "    setup <platform> - installs the toolchain for the platform"
 	@echo "    upload    - put the program on a mote"
 	@echo "    serial    - connect to serial port for read & write access"
@@ -435,12 +451,13 @@ help:
 	@echo "    size      - show code memory and RAM usage"
 	@echo "    memdump   - analyze and show memory usage"
 	@echo "    stackdump - analyze and show stack usage"
-	@echo "    help      - show this help"
 	@echo " "
-	@echo The make system uses at least these environmental variables:
+	@echo The make system can use these environmental variables:
 	@echo "    BSLPORT   - select serial port to program"
 	@echo "    BSLPROXY  - select hostname and IP port to program a remotely connected mote"
 	@echo "                for example: BSLPROXY=10.0.0.1:30001"
 	@echo "    PROG_BAUDRATE - select programming baudrate"
-	@echo "    V - verbose compilation, for example: V=1"
+	@echo "    V - verbose compilation, for example: $$> V=1 make pc"
 	@echo
+
+help: targets options

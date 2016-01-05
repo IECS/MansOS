@@ -52,8 +52,8 @@ endef
 $(warning $(W_IGNOREDTARGETS))
 endif
 
-# 'clean' and 'help' targets do not require a platform specified
-ifeq ("", "$(filter clean cleanall help $(PLATFORMS:%=clean%) motelist $(TARGET), $(GOALS))")
+# These targets do not require a platform specified:  clean help targets options 
+ifeq ("", "$(filter clean cleanall help targets options $(PLATFORMS:%=clean%) motelist $(TARGET), $(GOALS))")
   # Target not specified; try to use saved target
   -include $(PROJDIR)/build/Makefile.target
   ifeq ("", "$(TARGET)")
