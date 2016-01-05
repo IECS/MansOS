@@ -460,9 +460,7 @@ options:
 	@echo "    V - verbose compilation, for example: $$> V=1 make pc"
 	@echo
 
-<<<<<<< HEAD
 help: targets options
-=======
+
 setupbase:
 	sudo apt-get install python-wxtools python-ply python-serial
->>>>>>> 1c8ba8359f27718b0484ea149a53744621579591
