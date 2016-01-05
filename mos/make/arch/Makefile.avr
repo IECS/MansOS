@@ -95,5 +95,5 @@ stackdump-build:
 	@echo
 
 # FIXME: Setup is OS agnostic, assumes linux (Ubuntu, debian)
-setup: 
+setup: setupbase
 	sudo apt-get install gcc-avr avr-libc avrdude 

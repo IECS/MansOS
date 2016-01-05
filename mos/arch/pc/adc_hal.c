@@ -28,6 +28,7 @@
 // where chnum: channel number
 // val1, ..., valn: values
 // values may be separated with any symbol outside the interval '0'..'9'
+// Comments may start with COMMENT_CHAR and stop at the end of line.
 
 #include "adc_hal.h"
 #include <string.h>
@@ -39,9 +40,19 @@
 
 // where the valueas are red from
 #define ADC_FILE_NAME "adcValues.txt"
+#define COMMENT_CHAR '#'    // Character that starts comments in the file
 
 // max count of values per each channel
 #define ADC_VALUE_COUNT_FOR_CH 256
+
+// Token type for parsing ADC simulation values file
+typedef enum {
+    tok_number,
+    tok_number_newline,
+    tok_number_eof,
+    tok_newline,
+    tok_eof
+} token_type_e;
 
 // indicates whether ADC value file was successfully red
 static bool adcOk = false;
@@ -57,74 +68,91 @@ static uint16_t currPos[PC_ADC_CHANNEL_COUNT];
 
 static uint8_t currChannel = 0;
 
-// reads number from CSV file, updates isNewLine (true, when new line started)
-static uint16_t readNum(int fd, bool *isNewLine, bool *isEOF);
+// Private. Reads a token (number) from a text file. Returns the token type.
+static token_type_e readToken(int fd, uint16_t * value);
+
 
 void hplAdcInit() {
     memset(values, 0, sizeof(values));
     memset(valueCount, 0, sizeof(valueCount));
     memset(currPos, 0, sizeof(currPos));
 
+    uint8_t chnum = 255;
+    bool flNeedChannel = true;
+
+    uint16_t num = 0;
+    token_type_e tok;
+
     int fd = open(ADC_FILE_NAME, O_RDONLY);
     if (fd < 0) return;
-    uint8_t chnum = 255;
-    bool wasNewLine = false;
-    bool isEOF = false;
-    while (!isEOF)
+
+    while (1)
     {
-        bool isNewLine;
-        uint16_t num = readNum(fd, &isNewLine, &isEOF);
-        if (num != 0xffff) {
-            if (wasNewLine || chnum == 255) {
+        tok = readToken(fd, &num);
+        if( tok == tok_eof ) break;
+        if( tok == tok_number || tok == tok_number_newline || tok == tok_number_eof ){
+            if( flNeedChannel ){
                 chnum = num;
-                //PRINTF("chnum = %u\n", chnum);
-                wasNewLine = false;
+                flNeedChannel = false;
+                // DEBUG_PRINTF("chnum = %u\n", chnum);
             } else {
-                if (chnum < PC_ADC_CHANNEL_COUNT) {
+                if( chnum < PC_ADC_CHANNEL_COUNT ){
                     values[chnum][valueCount[chnum]] = num;
-                    //PRINTF("values[%u, %u] = %u\n", chnum, valueCount[chnum], num);
+                    // DEBUG_PRINTF("values[%u, %u] = %u\n", chnum, valueCount[chnum], num);
                     ++valueCount[chnum];
                 }
-            }
-            if (isNewLine) {
-                wasNewLine = true;
+                if( tok == tok_number_eof ) break;
+                if( tok == tok_number_newline ) flNeedChannel = true;
             }
         }
+        if( tok == tok_newline ) flNeedChannel = true;
     }
     close(fd);
     adcOk = true;
 }
 
-static uint16_t readNum(int fd, bool *isNewLine, bool *isEOF) {
-    *isNewLine = false;
-    uint16_t n = 0xffff;
+
+static token_type_e readToken(int fd, uint16_t * value) {
     bool numStarted = false;
-    while (!*isEOF)
-    {
-        uint8_t c;
-        //fgetc(f);
+    bool fl_comment = false;
+    uint8_t c;
+    while (1)
+    {        
         int ret = read(fd, &c, 1);
-        if (ret != 1) {
-            *isEOF = true;
-            break;
+        if (ret != 1){
+            if( numStarted ) return tok_number_eof;
+            return tok_eof;  
+        } 
+        if( fl_comment ){
+            if (c == '\n' || c == '\r') {
+                fl_comment = false;
+                if( numStarted ) return tok_number_newline;
+                return tok_newline;
+            }
+            continue;
         }
         if (c >= '0' && c <= '9') {
-            if (n != 0xffff) {
-                n = n * 10;
+            if (numStarted) {
+                *value = *value * 10;
             } else {
-                n = 0;
+                *value = 0;
+                numStarted = true;
             }
-            n += (c - '0');
-            numStarted = true;
-        } else {
-            if (c == '\n' || c == '\r') {
-                *isNewLine = true;
-            }
-            if (numStarted) break; // separator after num
+            *value += (c - '0');
+            continue;
         }
+        if( c == COMMENT_CHAR) {
+            fl_comment = true;
+            continue;            
+        }
+        if (c == '\n' || c == '\r') {
+            if( numStarted ) return tok_number_newline;
+            return tok_newline;
+        }
+        if( numStarted ) return tok_number;
     }
-    return n;
 }
+
 
 uint16_t hplAdcGetVal() {
     uint16_t pos = currPos[currChannel]++;
