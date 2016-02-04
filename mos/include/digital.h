@@ -65,12 +65,13 @@
   that are extended with typical pin functions.
   The full list of the named pin functions is as follows:
 
-    - static inline void nameAsOutput(void)
-    - static inline void nameAsInput(void)
-    - static inline uint_t nameGet(void)
+    - static inline void nameAsOutput()
+    - static inline void nameAsInput()
+    - static inline uint_t nameRead()
     - static inline void nameWrite(uint8_t val)
-    - static inline void nameHi(void)
-    - static inline void nameLow(void)
+    - static inline void nameHi()
+    - static inline void nameLow()
+    - static inline void nameToggle()
 
   Usage example: define a pin with name MyEnable on the port 2 pin 3,
   and use it:
@@ -157,10 +158,12 @@
 #define PIN_DEFINE2(name, port, pin)  \
     static inline void name##AsOutput(void)  { pinAsOutput( port, pin ); }  \
     static inline void name##AsInput(void)   { pinAsInput( port, pin ); }   \
-    static inline uint_t name##Get(void)     { return (pinRead(port, pin) ? 1:0); } \
+    static inline uint_t name##Read(void)     { return (pinRead(port, pin) ? 1:0); } \
     static inline void name##Write(uint8_t val) { pinWrite( port, pin, ((val)?1:0) ); } \
-    static inline void name##Hi(void)        { name##Write(1); }   \
-    static inline void name##Low(void)       { name##Write(0); }   \
+    static inline void name##Hi(void)        { pinWrite( port, pin, 1); }  \
+    static inline void name##Low(void)       { pinWrite( port, pin, 0); }  \
+    static inline void name##Toggle(void)    { pinToggle( port, pin ); }   \                                                      \
+
 
 // include the platform-specific header
 #include "gpio_hal.h"
