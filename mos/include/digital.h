@@ -160,7 +160,7 @@
     static inline void name##AsInput(void)   { pinAsInput( port, pin ); }   \
     static inline uint_t name##Read(void)     { return (pinRead(port, pin) ? 1:0); } \
     static inline void name##Write(uint8_t val) { pinWrite( port, pin, ((val)?1:0) ); } \
-    static inline void name##Hi(void)        { pinWrite( port, pin, 1); }  \
+    static inline void name##High(void)      { pinWrite( port, pin, 1); }  \
     static inline void name##Low(void)       { pinWrite( port, pin, 0); }  \
     static inline void name##Toggle(void)    { pinToggle( port, pin ); }   \
 
