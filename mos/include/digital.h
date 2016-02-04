@@ -61,6 +61,25 @@
     - PIN_READ_INT_FLAG( portnum, pinnum )
     - PIN_CLEAR_INT_FLAG( portnum, pinnum )
 
+  There is a mechanism provided for defining meaningful pin names 
+  that are extended with typical pin functions.
+  The full list of the named pin functions is as follows:
+
+    - static inline void nameAsOutput(void)
+    - static inline void nameAsInput(void)
+    - static inline uint_t nameGet(void)
+    - static inline void nameWrite(uint8_t val)
+    - static inline void nameHi(void)
+    - static inline void nameLow(void)
+
+  Usage example: define a pin with name MyEnable on the port 2 pin 3,
+  and use it:
+
+    PIN_DEFINE( myEnable, 2, 3 );
+    myEnableAsOutput();
+    myEnableWrite(1);
+
+
  */
 
 #include <gpio_hal.h>
@@ -132,6 +151,16 @@
             pinRead(po, pi)                     \
     })
 
+
+//! Define a pin with a custom name. Enable utility functions for it.
+#define PIN_DEFINE(name, port, pin) PIN_DEFINE2( name, port, pin )
+#define PIN_DEFINE2(name, port, pin)  \
+    static inline void name##AsOutput(void)  { pinAsOutput( port, pin ); }  \
+    static inline void name##AsInput(void)   { pinAsInput( port, pin ); }   \
+    static inline uint_t name##Get(void)     { return (pinRead(port, pin) ? 1:0); } \
+    static inline void name##Write(uint8_t val) { pinWrite( port, pin, ((val)?1:0) ); } \
+    static inline void name##Hi(void)        { name##Write(1); }   \
+    static inline void name##Low(void)       { name##Write(0); }   \
 
 // include the platform-specific header
 #include "gpio_hal.h"
