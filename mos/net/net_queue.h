@@ -21,8 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MANSOS_QUEUE_H
-#define MANSOS_QUEUE_H
+#ifndef MANSOS_NET_QUEUE_H
+#define MANSOS_NET_QUEUE_H
 
 #include "mac.h"
 #include <lib/list.h>
@@ -41,13 +41,13 @@ extern PacketQueue_t packetQueue;
 
 // ---------------------------------------------
 
-void queueInit(void);
+void netQueueInit(void);
 
 //  add new packet to userQueue tail. returns error code. locks mutex.
-int8_t queueAddPacket(MacInfo_t *, const uint8_t *data, uint16_t length,
+int8_t netQueueAddPacket(MacInfo_t *, const uint8_t *data, uint16_t length,
                       QueuedPacket_t *result);
 // frees the userQueue head packet. locks mutex. 
-void queuePop(void);
+void netQueuePop(void);
 // mutex is not locked
 static inline QueuedPacket_t *queueHead(void) {
     return STAILQ_FIRST(&packetQueue);
@@ -57,9 +57,9 @@ static inline QueuedPacket_t *queueHead(void) {
 typedef void (*QpacketProcessFn)(QueuedPacket_t *);
 typedef bool (*QpacketMatchFn)(QueuedPacket_t *, void *userData);
 
-void queueForEachPacket(QpacketProcessFn);
-QueuedPacket_t *queueGetPacket(QpacketMatchFn, void *userData);
-QueuedPacket_t *queueRemovePacket(QpacketMatchFn, void *userData);
+void netQueueForEachPacket(QpacketProcessFn);
+QueuedPacket_t *netQueueGetPacket(QpacketMatchFn, void *userData);
+QueuedPacket_t *netQueueRemovePacket(QpacketMatchFn, void *userData);
 
 void queueFreePacket(QueuedPacket_t *);
 

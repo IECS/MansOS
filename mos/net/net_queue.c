@@ -21,7 +21,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "queue.h"
+#include "net_queue.h"
 #include <assert.h>
 #include <print.h>
 #include <errors.h>
@@ -35,15 +35,15 @@ static Mutex_t mutex;
 
 // -----------------------------------------------------
 
-void queueInit(void) {
+void netQueueInit(void) {
     STAILQ_INIT(&packetQueue);
 }
 
-int8_t queueAddPacket(MacInfo_t *mi, const uint8_t *data, uint16_t length,
+int8_t netQueueAddPacket(MacInfo_t *mi, const uint8_t *data, uint16_t length,
                       QueuedPacket_t *result) {
     // QueuedPacket_t *p = newQpacket(replace);
     if (!result || result->isUsed) {
-        PRINTF("queueAddPacket: queue is full!\n");
+        PRINTF("netQueueAddPacket: queue is full!\n");
         return -ENOMEM;
     }
     result->isUsed = true;
@@ -56,29 +56,29 @@ int8_t queueAddPacket(MacInfo_t *mi, const uint8_t *data, uint16_t length,
     return 0;
 }
 
-void queuePop() {
+void netQueuePop() {
     QueuedPacket_t *p = STAILQ_FIRST(&packetQueue);
     ASSERT(p);
     ASSERT(p->isUsed);
     p->isUsed = false;
-    // PRINTF("queuePop\n");
+    // PRINTF("netQueuePop\n");
     lock();
     STAILQ_REMOVE_HEAD(&packetQueue, chain);
     unlock();
 }
 
-void queueForEachPacket(QpacketProcessFn fn) {
+void netQueueForEachPacket(QpacketProcessFn fn) {
     QueuedPacket_t *p;
     STAILQ_FOREACH(p, &packetQueue, chain) fn(p);
 }
 
-QueuedPacket_t *queueGetPacket(QpacketMatchFn fn, void *userData) {
+QueuedPacket_t *netQueueGetPacket(QpacketMatchFn fn, void *userData) {
     QueuedPacket_t *p;
     STAILQ_FOREACH(p, &packetQueue, chain) if (fn(p, userData)) return p;
     return NULL;
 }
 
-QueuedPacket_t *queueRemovePacket(QpacketMatchFn fn, void *userData) {
+QueuedPacket_t *netQueueRemovePacket(QpacketMatchFn fn, void *userData) {
     QueuedPacket_t *ret;
     STAILQ_REMOVE_IF(&packetQueue, ret, chain, fn(__t, userData));
     if (ret) ret->isUsed = false;
