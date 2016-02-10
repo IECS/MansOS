@@ -54,6 +54,7 @@ PSOURCES-$(USE_PRINT) += $(MOS)/lib/usart_packet.c
 PSOURCES-$(USE_GPS) += $(MOS)/lib/nmea/nmea.c
 PSOURCES-$(USE_GPS) += $(MOS)/lib/nmea/nmea_stream.c
 PSOURCES-$(USE_HASH) += $(MOS)/lib/hash.c
+PSOURCES-$(USE_QUEUE) += $(MOS)/lib/queue.c
 PSOURCES-$(USE_ACTIVE_MSG_SERIAL) += $(MOS)/lib/tosmsg.c
 PSOURCES-$(USE_ACTIVE_MSG_RADIO) += $(MOS)/lib/activemsg.c
 PSOURCES-$(USE_CRC) += $(MOS)/lib/codec/crc.c
@@ -84,11 +85,11 @@ PSOURCES-$(USE_NET) += $(NET)/mac/null.c
 else
 ifeq ($(CONST_MAC_PROTOCOL),MAC_PROTOCOL_CSMA)
 PSOURCES-$(USE_NET) += $(NET)/mac/csma.c
-PSOURCES-$(USE_NET) += $(NET)/queue.c
+PSOURCES-$(USE_NET) += $(NET)/net_queue.c
 else
 ifeq ($(CONST_MAC_PROTOCOL),MAC_PROTOCOL_CSMA_ACK)
 PSOURCES-$(USE_NET) += $(NET)/mac/csma-ack.c
-PSOURCES-$(USE_NET) += $(NET)/queue.c
+PSOURCES-$(USE_NET) += $(NET)/net_queue.c
 else
 ifeq ($(CONST_MAC_PROTOCOL),MAC_PROTOCOL_SAD)
 PSOURCES-$(USE_NET) += $(NET)/mac/sad.c
