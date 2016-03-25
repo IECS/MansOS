@@ -22,7 +22,7 @@ def listenSerial():
     global writeBuffer
     
     try:
-        ser = serial.Serial(cliArgs.serialPort, cliArgs.baudRate, timeout=1, 
+        ser = serial.Serial(cliArgs.serialPort, cliArgs.baudRate, timeout=cliArgs.timeout, 
                             parity=serial.PARITY_NONE, rtscts=cliArgs.flowcontrol)
         ser.flushInput()
         ser.flushOutput()
@@ -75,6 +75,8 @@ def getCliArgs():
         help='platform (default: telosb)')
     parser.add_argument('-f', '--flowcontrol', dest='flowcontrol', action='store', default=False,
         help='enable hardware flow control (default: False)')
+    parser.add_argument('-t', '--timeout', dest='timeout', action='store', default=1,
+        help='timeout for serial (default: 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + version)
     return parser.parse_args()
 
