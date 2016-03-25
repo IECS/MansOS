@@ -22,7 +22,7 @@
  */
 
 #include "../mac.h"
-#include "../queue.h"
+#include "../net_queue.h"
 #include <radio.h>
 #include <errors.h>
 #include <alarms.h>
@@ -60,7 +60,7 @@ static uint8_t mySeqnum;
 // -----------------------------------------------
 
 static void initCsmaMac(RecvFunction recvCb) {
-    queueInit();
+    netQueueInit();
 
     macProtocol.recvCb = recvCb;
 
@@ -87,7 +87,7 @@ static int8_t sendCsmaMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     // PRINTF("send a packet with ACK expected\n");
     radioSendHeader(mi->macHeader, mi->macHeaderLen, data, length);
     QueuedPacket_t *p = &queuedPackets[0];
-    ret = queueAddPacket(mi, data, length, p);
+    ret = netQueueAddPacket(mi, data, length, p);
     if (ret) return ret;
 
     //PRINTF("%lu: packet added!\n", getTimeMs());
@@ -112,7 +112,7 @@ static void sendTimerCb(void *x) {
     // remove expired packets
     p = queueHead();
     while (p && p->sendTries == MAC_PROTOCOL_MAX_ATTEMPTS) {
-        queuePop();
+        netQueuePop();
         p = queueHead();
         INC_NETSTAT(NETSTAT_PACKETS_DROPPED_TX, EMPTY_ADDR);
     }
@@ -210,7 +210,7 @@ static void pollCsmaMac(void)
             if (mi.flags & MI_FLAG_IS_ACK) {
                 //PRINTF("got ack to a packet with seqnum %u\n", mi.seqnum);
                 INC_NETSTAT(NETSTAT_PACKETS_ACK_RX, mi.originalSrc.shortAddr);
-                queueRemovePacket(
+                netQueueRemovePacket(
                         matchPacketBySeqnum, (void *) (uint16_t) mi.seqnum);
             }
             else if (macProtocol.recvCb && filterPass(&mi)) {

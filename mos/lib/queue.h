@@ -21,46 +21,57 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+// Implementation of a simple (circular) queue data structure
+// Objects are arbitrary data structures
+
+
 #ifndef MANSOS_QUEUE_H
 #define MANSOS_QUEUE_H
 
-#include "mac.h"
-#include <lib/list.h>
+#include "stdtypes.h"
 
-typedef struct QueuedPacket_s {
-    STAILQ_ENTRY(QueuedPacket_s) chain;
-    bool isUsed;
-    uint8_t sendTries; // how many times already tried to send
-    uint32_t ackTime;  // await ACK until this time
-    uint8_t data[MAC_PROTOCOL_BUFFER_SIZE];
-    uint16_t dataLength;
-} QueuedPacket_t;
+// Queue item object type.
+// Use your own item type and cast to QItem_t as needed.
 
-typedef STAILQ_HEAD(head, QueuedPacket_s) PacketQueue_t;
-extern PacketQueue_t packetQueue;
+typedef void QItem_t;
 
-// ---------------------------------------------
+// Queue_t data structure for a circular queue
+typedef struct {
+    QItem_t **data;
+    int length;
 
-void queueInit(void);
+    int head;
+    int tail;
+} Queue_t;
 
-//  add new packet to userQueue tail. returns error code. locks mutex.
-int8_t queueAddPacket(MacInfo_t *, const uint8_t *data, uint16_t length,
-                      QueuedPacket_t *result);
-// frees the userQueue head packet. locks mutex. 
-void queuePop(void);
-// mutex is not locked
-static inline QueuedPacket_t *queueHead(void) {
-    return STAILQ_FIRST(&packetQueue);
-}
+// Initialize queue with a new buffer. Length must denote the size of the buffer
+#define queueInit( queue, buffer, buf_length ) \
+    queue->data = (QItem_t **)buffer; \
+    queue->length = buf_length;      \
+    queueReset( queue );             \
 
-// work queue processing. mutex is not locked.
-typedef void (*QpacketProcessFn)(QueuedPacket_t *);
-typedef bool (*QpacketMatchFn)(QueuedPacket_t *, void *userData);
 
-void queueForEachPacket(QpacketProcessFn);
-QueuedPacket_t *queueGetPacket(QpacketMatchFn, void *userData);
-QueuedPacket_t *queueRemovePacket(QpacketMatchFn, void *userData);
+// Reset queue, consider it empty.
+#define queueReset( queue )           \
+    queue->head = 0; \
+    queue->tail = 0; \
+    queue->data[queue->tail] = NULL;  \
 
-void queueFreePacket(QueuedPacket_t *);
 
-#endif
+// Return true if the queue is empty
+#define queueIsEmpty( queue ) \
+    ((queue->head == queue->tail) && (queue->data[queue->head] == NULL))
+
+
+#define queueIsFull( queue ) \
+    ((queue->head == queue->tail) && (queue->data[queue->head] != NULL))
+
+
+// Add item to queue. Return true on success
+bool queueEnq( Queue_t * queue, QItem_t *item );
+
+// Remove item from the queue and return. Return NULL on empty.
+QItem_t * queueDeq( Queue_t * queue );
+
+#endif      // MANSOS_QUEUE_H

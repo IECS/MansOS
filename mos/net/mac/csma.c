@@ -22,7 +22,7 @@
  */
 
 #include "../mac.h"
-#include "../queue.h"
+#include "../net_queue.h"
 #include <radio.h>
 #include <errors.h>
 #include <alarms.h>
@@ -77,7 +77,7 @@ static int8_t sendCsmaMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
 #if MAC_FORWARDING_DELAY
     if (!IS_LOCAL(mi)) {
         // add random backoff for forwarded packets
-        ret = queueAddPacket(mi, data, length, &queuedPackets[0]);
+        ret = netQueueAddPacket(mi, data, length, &queuedPackets[0]);
         if (ret) return ret;
         alarmSchedule(&sendTimer, randomNumberBounded(MAC_PROTOCOL_MAX_INITIAL_BACKOFF));
         // do NOT increase send tries, because we are not trying to send!
@@ -91,7 +91,7 @@ static int8_t sendCsmaMac(MacInfo_t *mi, const uint8_t *data, uint16_t length) {
     }
     PRINTF("*************** channel NOT free\n");
 
-    ret = queueAddPacket(mi, data, length, &queuedPackets[0]);
+    ret = netQueueAddPacket(mi, data, length, &queuedPackets[0]);
     if (ret) return ret;
 
     alarmSchedule(&sendTimer, MAC_PROTOCOL_RETRY_TIMEOUT);
@@ -117,7 +117,7 @@ static void sendTimerCb(void *x) {
     defaultParseHeader(p->data, p->dataLength, &mi);
     INC_NETSTAT(NETSTAT_PACKETS_RTX, mi.originalSrc.shortAddr);
     if (radioSend(p->data, p->dataLength) == 0) {
-        queuePop();
+        netQueuePop();
         sendTries = 0;
         return;
     }
@@ -127,7 +127,7 @@ static void sendTimerCb(void *x) {
         // XXX: return error code to user...
         INC_NETSTAT(NETSTAT_PACKETS_DROPPED_TX, EMPTY_ADDR);
         PRINTF("CSMA mac send failed: too many retries!");
-        queuePop();
+        netQueuePop();
         sendTries = 0;
         return;
     }
