@@ -24,10 +24,18 @@
 #ifndef _PLATFORM_ATMEGA_H_
 #define _PLATFORM_ATMEGA_H_
 
-#include <atmega/atmega_timers.h>
 #include <atmega/atmega_int.h>
+
+// #ifdef USE_HARDWARE_TIMERS
+#include <atmega/atmega_timers.h>
+// #endif
+
+#ifdef USE_ADC
 #include <atmega/atmega_adc.h>
+#endif
+#ifdef USE_SERIAL
 #include <atmega/atmega_usart.h>
+#endif
 
 #include <digital.h>
 

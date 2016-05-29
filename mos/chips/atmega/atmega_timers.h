@@ -35,7 +35,8 @@
 
 // these must be defined as macros
 #define JIFFY_CLOCK_DIVIDER 64
-#define SLEEP_CLOCK_DIVIDER 1024
+//! Atmel has straight decimal MHz
+#define SLEEP_CLOCK_DIVIDER 1000
 
 // TODO: test this
 #define ACLK_SPEED          (CPU_HZ / JIFFY_CLOCK_DIVIDER)
@@ -101,6 +102,9 @@ enum {
 #define TIMER1_DIVIDER_BITS TIMER1_DIV_1024
 #endif
 
+#ifdef USE_HARDWARE_TIMERS
+//=========================
+
 #define atmegaStartTimer0() TCCR0B |= TIMER0_DIVIDER_BITS
 #define atmegaStopTimer0() TCCR0B &= ~(TIMER0_DIVIDER_BITS)
 
@@ -108,6 +112,20 @@ enum {
     atmegaInitTimer0(); \
     atmegaInitTimer1();
 
+#if MCU_model==attiny88
+#define atmegaInitTimer0() \
+    /* disable timer power saving */ \
+    power_timer0_enable(); \
+    /* CTC mode, compare with OCRxA */ \
+    /* no clock source at the moment - timer not running */ \
+    TCCR0A = (1 << CTC0); \
+    /* set time slice to jiffy (1ms) */ \
+    OCR0A = PLATFORM_ALARM_TIMER_PERIOD - 1; \
+    /* Enable Compare-A interrupt */ \
+    TIMSK0 = (1 << OCIE0A); \
+    /* reset counter */ \
+    TCNT0 = 0;
+#else
 #define atmegaInitTimer0() \
     /* disable timer power saving */ \
     power_timer0_enable(); \
@@ -120,7 +138,7 @@ enum {
     TIMSK0 = (1 << OCIE0A); \
     /* reset counter */ \
     TCNT0 = 0;
-
+#endif
 
 #define atmegaInitTimer1() \
     /* disable timer power saving */ \
@@ -145,6 +163,10 @@ enum {
     }
 
 #define ALARM_TIMER_REGISTER OCR0A
+
+//=========================
+#endif   // USE_HARDWARE_TIMERS
+
 
 // no need for time correction
 #define CORRECTION_TIMER_REGISTER 0

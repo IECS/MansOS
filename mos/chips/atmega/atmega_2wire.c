@@ -1,45 +1,8 @@
-/*
-  twi.c - TWI/I2C library for Wiring & Arduino
-  Copyright (c) 2006 Nicholas Zambetti.  All right reserved.
-
-  This library is free software; you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public
-  License as published by the Free Software Foundation; either
-  version 2.1 of the License, or (at your option) any later version.
-
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
-
-/*
- * atmega_2wire.h and atmega_2wire.c is a modified version of 2-wire library
- * from Wiring (twi.h and twi.c). Modifications by MansOS team.
- * Modification made:
- * - Naming
- * - Static transmission buffer, only pointer for reception buffer - write data
- *     directly into user's buffer without copying it
- * - CPU_FREQ changed to CPU_HZ for compatibility
- * - TWI_FREQ changed to TWI_SPEED for compatibility
- * - Some comments added
- * - Slave operation removed, only master mode support left
- * - Some indentation and whitespace changes
- * - Error codes changed - HIL layer constants used
- * - Using void pointers for data buffers
- * - On/Off functions added (init does not enable the module implicitly)
- */
-
-
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/twi.h>
 #include "atmega_2wire.h"
-#include <i2c.h> // for error code constants
+
 
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
@@ -80,17 +43,17 @@ void twiInit()
   // initialize state
   twiState = TWI_READY;
 
-  #if defined(__AVR_ATmega168__) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega328P__)
-    // activate internal pull-ups for twi
-    // as per note from atmega8 manual pg167
+  // #if defined(__AVR_ATmega168__) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega328P__)
+  //   // activate internal pull-ups for twi
+  //   // as per note from atmega8 manual pg167
     sbi(PORTC, 4);
     sbi(PORTC, 5);
-  #else
-    // activate internal pull-ups for twi
-    // as per note from atmega128 manual pg204
-    sbi(PORTD, 0);
-    sbi(PORTD, 1);
-  #endif
+  // #else
+  //   // activate internal pull-ups for twi
+  //   // as per note from atmega128 manual pg204
+  //   sbi(PORTD, 0);
+  //   sbi(PORTD, 1);
+  // #endif
 
   // initialize twi prescaler and bit rate
   cbi(TWSR, TWPS0);
@@ -104,36 +67,24 @@ void twiInit()
 
   // enable acks
   // MOD: do not enable the module implicitly
-//  TWCR = _BV(TWEN) | _BV(TWIE) | _BV(TWEA);
   TWCR = _BV(TWEA);
+  // TWCR = _BV(TWEN) | _BV(TWIE) | _BV(TWEA);
 
-  // MOD: do not allocate buffers, use user's provided data buffer in any case
-  // allocate buffers
-//  twiMasterBuffer = (uint8_t*) calloc(TWI_BUFFER_LENGTH, sizeof(uint8_t));
-//  twi_txBuffer = (uint8_t*) calloc(TWI_BUFFER_LENGTH, sizeof(uint8_t));
-//  twi_rxBuffer = (uint8_t*) calloc(TWI_BUFFER_LENGTH, sizeof(uint8_t));
 }
 
 /**
  * Enable the I2C bus
  */
-void twiOn() {
+void twiOn(void) {
     TWCR = _BV(TWEN) | _BV(TWIE) | _BV(TWEA);
 }
 
 /**
  * Disable the I2C bus
  */
-void twiOff() {
+void twiOff(void) {
     TWCR = _BV(TWEA);
 }
-
-// not used anywhere
-//void twi_setAddress(uint8_t address)
-//{
-//  // set twi slave address (skip over TWGCE bit)
-//  TWAR = address << 1;
-//}
 
 /* 
  * Function twi_readFrom
@@ -186,14 +137,6 @@ uint8_t twiRead(uint8_t addr, void *data, uint8_t len)
   if (twiMasterBufferIndex < len)
     len = twiMasterBufferIndex;
 
-  // MOD: twiMasterBuffer set to data address, so data is directly filled
-  // in interrupt ctx, no need to copy anything
-  // copy twi buffer to data
-//  uint8_t i;
-//  for(i = 0; i < len; ++i) {
-//    data[i] = twiMasterBuffer[i];
-//  }
-
   return len;
 }
 
@@ -214,8 +157,6 @@ uint8_t twiRead(uint8_t addr, void *data, uint8_t len)
 uint8_t twiWrite(uint8_t addr, const void *data, uint8_t len,
         uint8_t wait)
 {
-  uint8_t i;
-
   // ensure data will fit into buffer
   if (TWI_BUFFER_LENGTH < len) {
     return I2C_OTHER;
@@ -233,11 +174,6 @@ uint8_t twiWrite(uint8_t addr, const void *data, uint8_t len,
   twiMasterBufferIndex = 0;
   twiMasterBufferLength = len;
   
-  // MOD: just copy the pointer
-  // copy data to twi buffer
-//  for(i = 0; i < len; ++i) {
-//    twiMasterBuffer[i] = data[i];
-//  }
   twiMasterBuffer = (void *) data;
   
   // build sla+w, slave device address + w bit
@@ -258,8 +194,9 @@ uint8_t twiWrite(uint8_t addr, const void *data, uint8_t len,
     return I2C_ACK; // error: address send, nack received
   else if (twiError == TW_MT_DATA_NACK)
     return I2C_ACK; // error: data send, nack received
-  else
-    return I2C_OTHER;  // other twi error
+  
+  // else
+  return I2C_OTHER;  // other twi error
 }
 
 /* 
@@ -339,7 +276,7 @@ void twiReply(uint8_t ack)
  * Input    none
  * Output   none
  */
-void twiStop()
+void twiStop(void)
 {
   // send stop condition
   TWCR = _BV(TWEN) | _BV(TWIE) | _BV(TWEA) | _BV(TWINT) | _BV(TWSTO);
@@ -360,7 +297,7 @@ void twiStop()
  * Input    none
  * Output   none
  */
-void twiReleaseBus()
+void twiReleaseBus(void)
 {
   // release bus
   TWCR = _BV(TWEN) | _BV(TWIE) | _BV(TWEA) | _BV(TWINT);
@@ -369,7 +306,8 @@ void twiReleaseBus()
   twiState = TWI_READY;
 }
 
-SIGNAL(TWI_vect)
+// SIGNAL(TWI_vect)
+void dummy()
 {
   switch(TW_STATUS) {
     // All Master
@@ -425,83 +363,6 @@ SIGNAL(TWI_vect)
       break;
     // TW_MR_ARB_LOST handled by TW_MT_ARB_LOST case
 
-//    // Slave Receiver
-//    case TW_SR_SLA_ACK:   // addressed, returned ack
-//    case TW_SR_GCALL_ACK: // addressed generally, returned ack
-//    case TW_SR_ARB_LOST_SLA_ACK:   // lost arbitration, returned ack
-//    case TW_SR_ARB_LOST_GCALL_ACK: // lost arbitration, returned ack
-//      // enter slave receiver mode
-//      twiState = TWI_SRX;
-//      // indicate that rx buffer can be overwritten and ack
-//      twi_rxBufferIndex = 0;
-//      twiReply(1);
-//      break;
-//    case TW_SR_DATA_ACK:       // data received, returned ack
-//    case TW_SR_GCALL_DATA_ACK: // data received generally, returned ack
-//      // if there is still room in the rx buffer
-//      if (twi_rxBufferIndex < TWI_BUFFER_LENGTH) {
-//        // put byte in buffer and ack
-//        twi_rxBuffer[twi_rxBufferIndex++] = TWDR;
-//        twiReply(1);
-//      } else {
-//        // otherwise nack
-//        twiReply(0);
-//      }
-//      break;
-//    case TW_SR_STOP: // stop or repeated start condition received
-//      // put a null char after data if there's room
-//      if (twi_rxBufferIndex < TWI_BUFFER_LENGTH) {
-//        twi_rxBuffer[twi_rxBufferIndex] = '\0';
-//      }
-//      // callback to user defined callback
-//      twi_onSlaveReceive(twi_rxBuffer, twi_rxBufferIndex);
-//      // ack future responses
-//      twiReply(1);
-//      // leave slave receiver state
-//      twiState = TWI_READY;
-//      break;
-//    case TW_SR_DATA_NACK:       // data received, returned nack
-//    case TW_SR_GCALL_DATA_NACK: // data received generally, returned nack
-//      // nack back at master
-//      twiReply(0);
-//      break;
-//
-//    // Slave Transmitter
-//    case TW_ST_SLA_ACK:          // addressed, returned ack
-//    case TW_ST_ARB_LOST_SLA_ACK: // arbitration lost, returned ack
-//      // enter slave transmitter mode
-//      twiState = TWI_STX;
-//      // ready the tx buffer index for iteration
-//      twi_txBufferIndex = 0;
-//      // set tx buffer length to be zero, to verify if user changes it
-//      twi_txBufferLength = 0;
-//      // request for txBuffer to be filled and length to be set
-//      // note: user must call twi_transmit(bytes, length) to do this
-//      twi_onSlaveTransmit();
-//      // if they didn't change buffer & length, initialize it
-//      if (0 == twi_txBufferLength) {
-//        twi_txBufferLength = 1;
-//        twi_txBuffer[0] = 0x00;
-//      }
-//      // transmit first byte from buffer, fall
-//    case TW_ST_DATA_ACK: // byte sent, ack returned
-//      // copy data to output register
-//      TWDR = twi_txBuffer[twi_txBufferIndex++];
-//      // if there is more to send, ack, otherwise nack
-//      if (twi_txBufferIndex < twi_txBufferLength) {
-//        twiReply(1);
-//      } else {
-//        twiReply(0);
-//      }
-//      break;
-//    case TW_ST_DATA_NACK: // received nack, we are done
-//    case TW_ST_LAST_DATA: // received ack, but we are done already!
-//      // ack future responses
-//      twiReply(1);
-//      // leave slave receiver state
-//      twiState = TWI_READY;
-//      break;
-
     // All
     case TW_NO_INFO:   // no state information
       break;
@@ -511,4 +372,6 @@ SIGNAL(TWI_vect)
       break;
   }
 }
+
+//========================================================
 

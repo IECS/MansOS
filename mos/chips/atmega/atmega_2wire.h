@@ -38,7 +38,26 @@
 #ifndef ATMEGA_2WIRE_H
 #define ATMEGA_2WIRE_H
 
-#include "atmega_timers.h"
+// #include "atmega_timers.h"
+
+// Custom hack for ATTiny88 
+#ifndef CPU_HZ
+#define CPU_HZ 1000000L
+#endif
+
+//! I2C acknowledge
+typedef enum {
+  I2C_NO_ACK = 0,
+  I2C_ACK    = 1,
+} i2cAck_t;
+
+//! I2C error
+typedef enum {
+  I2C_OK = 0,
+  I2C_ACK_ERROR = 1,
+  I2C_OTHER = 2,
+} i2cError_t;
+
 
 #ifndef TWI_SPEED
 #define TWI_SPEED 100000L
@@ -56,8 +75,8 @@
 //  #define TWI_STX   4
 
 void twiInit(void);
-void twiOn(); // Enable the I2C bus
-void twiOff(); // Disable the I2C bus
+void twiOn(void);  // Enable the I2C bus
+void twiOff(void); // Disable the I2C bus
 //void twiSetAddr(uint8_t addr);
 uint8_t twiRead(uint8_t addr, void *data, uint8_t len);
 uint8_t twiWrite(uint8_t addr, const void *data, uint8_t len,
@@ -66,8 +85,8 @@ uint8_t twiWrite(uint8_t addr, const void *data, uint8_t len,
 //void twiAttachSlaveRxEvent(void (*cb)(uint8_t*, int) );
 //void twiAttachSlaveTxEvent(void (*cb)(void) );
 void twiReply(uint8_t ack);
-void twiStop();
-void twiReleaseBus();
+void twiStop(void);
+void twiReleaseBus(void);
 
 #endif // !ATMEGA_2WIRE_H
 

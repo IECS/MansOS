@@ -30,7 +30,7 @@
 # Define platform variables
 
 ARCH = avr
-MCU_MODEL = atmega328p # Arduino Duemilanove
+MCU_MODEL ?= atmega328p # Arduino Duemilanove
 CPU_MHZ ?= 16
 
 CFLAGS += -DPLATFORM_ARDUINO=1
