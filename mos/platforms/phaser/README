@@ -1,0 +1,4 @@
+Support for Phaser mote, TelosB compatible sensor node 
+using the Tmote Mini with msp430F1611 processor and cc2420 transceiver.
+
+The phaser motes have the ability to change phase of two active antenna channels.
