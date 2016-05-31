@@ -25,7 +25,7 @@
 #define EXT_FLASH_HAL_H
 
 // let the platform define the chip it uses
-#include <platform.h>
+#include "platform.h"
 
 // #ifndef EXT_FLASH_CHIP
 // #define EXT_FLASH_CHIP FLASH_CHIP_M25P80

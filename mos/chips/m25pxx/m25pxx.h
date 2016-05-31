@@ -26,6 +26,7 @@
 
 #include <stdtypes.h>
 #include <delay.h>
+#include <spi.h>
 
 //
 // Numonyx Forte Serial Flash Memory M25P80 and M25P16
