@@ -23,7 +23,8 @@
 #
 
 #############################################
-# Santa mote (TelosB compatible except for programming, 6 LEDs and Antenna steering)
+# Santa mote: TelosB compatible except for upload.
+# Has 6 LEDs and ESPAR antenna beam steering.
 #############################################
 
 #############################################
@@ -61,12 +62,8 @@ PSOURCES-$(USE_SERIAL_NUMBER) += $(MOS)/chips/ds2411/ds2411.c
 ifneq ($(CONST_EXT_FLASH_CHIP),FLASH_CHIP_SDCARD)
 PSOURCES-$(USE_EXT_FLASH) += $(MOS)/chips/m25pxx/m25pxx.c
 endif
-PSOURCES-$(USE_ISL29003) += $(MOS)/chips/isl29003/isl29003.c
-PSOURCES-$(USE_APDS9300) += $(MOS)/chips/apds9300/apds9300.c
 
 ifneq ($(USE_SOFT_SERIAL),y)
 PSOURCES-$(USE_SERIAL) += $(MOS)/chips/msp430/msp430_usart.c
 endif
 PSOURCES-$(USE_SPI) += $(MOS)/chips/msp430/msp430_usart_spi.c
-
-PSOURCES-$(USE_SDCARD) += $(MOS)/chips/sdcard/sdcard.c
