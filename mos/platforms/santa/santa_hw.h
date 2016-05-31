@@ -1,5 +1,5 @@
 /* 
- * Message heder for SAntA directional motes
+ * hardware specifics for SAntA directional communications motes.
  */
   
 #ifndef _santa_hw_h_
