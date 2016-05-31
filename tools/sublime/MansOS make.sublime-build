@@ -1,0 +1,36 @@
+{
+    "cmd": ["make"],
+    "shell": true,
+    "selector": "source.c",
+    "working_dir": "$file_path",
+    // "file_regex": "^(...*?):([0-9]*):?([0-9]*)",
+    "file_regex": "^[\\w ]*(...*?(?:\\.h|\\.c)):([0-9]*):?([0-9]*)",
+
+    "variants": [
+
+        { "name": "upload",
+          "cmd": ["make upload"],
+          "shell": true
+        },
+
+        { "name": "clean",
+          "cmd": ["make clean"],
+          "shell": true
+        },
+
+        { "name": "telosb",
+          "cmd": ["make telosb"],
+          "shell": true
+        },
+
+        { "name": "phaser",
+          "cmd": ["make phaser"],
+          "shell": true
+        },
+
+        { "name": "santa",
+          "cmd": ["make santa"],
+          "shell": true
+        },
+    ]
+}
