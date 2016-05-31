@@ -103,6 +103,9 @@ upload-msp430-sm3:
 upload-santa: 
 	$(BSL) --invert-reset --invert-test -c $(BSLPORT) $(BAUDRATE_OPT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
+upload-phaser: 
+	$(BSL) --invert-reset --invert-test -c $(BSLPORT) $(BAUDRATE_OPT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
+
 upload-z1:
 	$(BSL) --z1 -c $(BSLPORT) $(BAUDRATE_OPT) $(SLOW) -r -e -I -p $(OUTDIR)/$(EXECUTABLE)
 
