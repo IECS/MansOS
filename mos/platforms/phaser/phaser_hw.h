@@ -11,9 +11,11 @@
 
 //========================================================
 // Phaser version v1d
+// Based on two digital phase shifter chips: PE44820
+// Phase setting time within 2 degrees is 365ns
 //========================================================
 
-// Phase shift control potys and pins
+// Phase shift control pors and pins
 //--------------------------------------------------------
 
 // Serial/parallel mode pin
@@ -58,14 +60,15 @@
 #define PHASER_B_A2 2
 #define PHASER_B_A3 3
 
-// API 
 //------------------------------------------
-#define PHASER_
+// Phaser API 
+//------------------------------------------
 
 // Init - default to parallel mode
 #define PHASER_INIT()   PHASER_SET_PARALLEL();
 
 // Set mode to parallel interface. Default all phase channels to 0.
+//------------------------------------------
 #define PHASER_SET_PARALLEL()    \
     pinAsOutput(PHASER_RFSP_PORT, PHASER_RFSP_PIN); \
     pinClear(PHASER_RFSP_PORT, PHASER_RFSP_PIN); \
@@ -76,8 +79,32 @@
     PHASER_A_SET_EXT(0,0); \
     PHASER_B_SET_EXT(0,0); \
 
+
+// Set phase using only 8 bits
+#define PHASER_A_SET(d07)             \
+    portWrite(PHASER_A_PORT, d07);            
+
+#define PHASER_B_SET(d07)             \
+    portWrite(PHASER_B_PORT, d07);            
+
+// Set the OPT bit
+#define PHASER_A_SET_OPT(d8)  pinWrite(PHASER_A_PORT8, PHASER_A_PIN8, d8);
+#define PHASER_B_SET_OPT(d8)  pinWrite(PHASER_B_PORT8, PHASER_B_PIN8, d8);
+
+//Set phase using 8+1 (OPT) bit
+#define PHASER_A_SET_EXT(d07, d8)  \
+    PHASER_A_SET(d07);      \
+    PHASER_A_SET_OPT(d8);
+
+#define PHASER_B_SET_EXT(d07, d8)  \
+    PHASER_B_SET(d07);      \
+    PHASER_B_SET_OPT(d8);
+
+// Wait till phase sifts to within 2 degrees
+#define PHASER_WAIT_SETTLE() mdelay(1);
+
 // Set mode to serial interface
-// Note, the 
+//------------------------------------------
 #define PHASER_SET_SERIAL()      \
     portAsInput(PHASER_A_PORT);  \
     portAsInput(PHASER_B_PORT);  \
@@ -111,25 +138,5 @@
     pinAsOutput(PHASER_RFSP_PORT, PHASER_RFSP_PIN); \
     pinSet(PHASER_RFSP_PORT, PHASER_RFSP_PIN); \
 
-
-// Set phase usong only 8 bits
-#define PHASER_A_SET(d07)             \
-    portWrite(PHASER_A_PORT, d07);            
-
-#define PHASER_B_SET(d07)             \
-    portWrite(PHASER_B_PORT, d07);            
-
-// Set the OPT bit
-#define PHASER_A_SET_OPT(d8)  pinWrite(PHASER_A_PORT8, PHASER_A_PIN8, d8);
-#define PHASER_B_SET_OPT(d8)  pinWrite(PHASER_B_PORT8, PHASER_B_PIN8, d8);
-
-//Set phase using 8+1 (OPT) bit
-#define PHASER_A_SET_EXT(d07, d8)  \
-    PHASER_A_SET(d07);      \
-    PHASER_A_SET_OPT(d8);
-
-#define PHASER_B_SET_EXT(d07, d8)  \
-    PHASER_B_SET(d07);      \
-    PHASER_B_SET_OPT(d8);
 
 #endif // _PHASER_HW_H_
