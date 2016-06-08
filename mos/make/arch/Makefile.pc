@@ -91,3 +91,4 @@ size: build
 # FIXME: Setup is OS agnostic, assumes linux (Ubuntu, debian)
 setup: setupbase
 	sudo apt-get install build-essential gcc
+	$(error Setup done.)

@@ -142,3 +142,4 @@ size: build
 # FIXME: Setup is OS agnostic, assumes linux (Ubuntu, debian)
 setup: setupbase
 	sudo apt-get install gcc-msp430 binutils-msp430 msp430-libc msp430mcu
+	$(error Setup done.)
