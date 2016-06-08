@@ -144,7 +144,7 @@ static void strobe(enum cc2420_register regname)
     CC2420_STROBE(regname);
 }
 
-static unsigned int status(void)
+uint8_t cc2420GetStatus(void)
 {
     uint8_t status;
     CC2420_UPD_STATUS(status);
@@ -162,7 +162,7 @@ static void on(void)
     CC2420_ENABLE_FIFOP_INT();
     strobe(CC2420_SRXON);
 
-    BUSYWAIT_UNTIL(status() & (BV(CC2420_XOSC16M_STABLE)), RTIMER_SECOND / 100);
+    BUSYWAIT_UNTIL(cc2420GetStatus() & (BV(CC2420_XOSC16M_STABLE)), RTIMER_SECOND / 100);
 
     receive_on = 1;
     energyConsumerOn(ENERGY_CONSUMER_RADIO_RX);
@@ -174,7 +174,7 @@ static void off(bool disableSpi)
     receive_on = 0;
 
     // Wait for transmission to end before turning radio off.
-    BUSYWAIT_UNTIL(!(status() & BV(CC2420_TX_ACTIVE)), RTIMER_SECOND / 10);
+    BUSYWAIT_UNTIL(!(cc2420GetStatus() & BV(CC2420_TX_ACTIVE)), RTIMER_SECOND / 10);
 
     energyConsumerOff(ENERGY_CONSUMER_RADIO_RX);
 
@@ -337,7 +337,7 @@ int_t cc2420Send(const void *header, uint16_t headerLen,
     }
 
     /* Wait for any previous transmission to finish. */
-    /*  while(status() & BV(CC2420_TX_ACTIVE));*/
+    /*  while(cc2420GetStatus() & BV(CC2420_TX_ACTIVE));*/
 
     /* Write packet to TX FIFO. */
     strobe(CC2420_SFLUSHTX);
@@ -369,7 +369,7 @@ int_t cc2420Send(const void *header, uint16_t headerLen,
 
 #if WITH_SEND_CCA
     strobe(CC2420_SRXON);
-    BUSYWAIT_UNTIL(status() & BV(CC2420_RSSI_VALID), RTIMER_SECOND / 10);
+    BUSYWAIT_UNTIL(cc2420GetStatus() & BV(CC2420_RSSI_VALID), RTIMER_SECOND / 10);
     strobe(CC2420_STXONCCA);
 #else /* WITH_SEND_CCA */
     strobe(CC2420_STXON);
@@ -377,7 +377,7 @@ int_t cc2420Send(const void *header, uint16_t headerLen,
 
     for (i = LOOP_20_SYMBOLS; i > 0; i--) {
         if (CC2420_SFD_IS_1) {
-            if (!(status() & BV(CC2420_TX_ACTIVE))) {
+            if (!(cc2420GetStatus() & BV(CC2420_TX_ACTIVE))) {
                 /* SFD went high but we are not transmitting. This means that
                    we just started receiving a packet, so we drop the transmission. */
                 result = -EBUSY;
@@ -389,7 +389,7 @@ int_t cc2420Send(const void *header, uint16_t headerLen,
 
             /* We wait until transmission has ended so that we get an
                accurate measurement of the transmission time.*/
-            BUSYWAIT_UNTIL(!(status() & BV(CC2420_TX_ACTIVE)), RTIMER_SECOND / 10);
+            BUSYWAIT_UNTIL(!(cc2420GetStatus() & BV(CC2420_TX_ACTIVE)), RTIMER_SECOND / 10);
 
             energyConsumerOffNoints(ENERGY_CONSUMER_RADIO_TX);
             if (!receive_on) {
@@ -541,10 +541,10 @@ void cc2420SetChannel(int c)
     /*
      * Writing RAM requires crystal oscillator to be stable.
      */
-    BUSYWAIT_UNTIL((status() & (BV(CC2420_XOSC16M_STABLE))), RTIMER_SECOND / 10);
+    BUSYWAIT_UNTIL((cc2420GetStatus() & (BV(CC2420_XOSC16M_STABLE))), RTIMER_SECOND / 10);
 
     /* Wait for any transmission to end. */
-    BUSYWAIT_UNTIL(!(status() & BV(CC2420_TX_ACTIVE)), RTIMER_SECOND / 10);
+    BUSYWAIT_UNTIL(!(cc2420GetStatus() & BV(CC2420_TX_ACTIVE)), RTIMER_SECOND / 10);
 
     setreg(CC2420_FSCTRL, f);
 
@@ -562,7 +562,7 @@ static void cc2420SetPanAddr(unsigned pan,
     /*
      * Writing RAM requires crystal oscillator to be stable.
      */
-    BUSYWAIT_UNTIL(status() & (BV(CC2420_XOSC16M_STABLE)), RTIMER_SECOND / 10);
+    BUSYWAIT_UNTIL(cc2420GetStatus() & (BV(CC2420_XOSC16M_STABLE)), RTIMER_SECOND / 10);
 
     pan_id = pan;
     CC2420_WRITE_RAM_LE(&pan, CC2420RAM_PANID, 2);
@@ -638,7 +638,7 @@ int cc2420GetRSSI(void)
     // radio must be turned on before calling this!
     if (!receive_on) return 0;
 
-    BUSYWAIT_UNTIL(status() & BV(CC2420_RSSI_VALID), RTIMER_SECOND / 100);
+    BUSYWAIT_UNTIL(cc2420GetStatus() & BV(CC2420_RSSI_VALID), RTIMER_SECOND / 100);
 
     return (int)((signed char)getreg(CC2420_RSSI));
 }
@@ -648,7 +648,7 @@ bool cc2420IsChannelClear(void)
     // radio must be turned on before calling this!
     if (!receive_on) return true;
 
-    BUSYWAIT_UNTIL(status() & BV(CC2420_RSSI_VALID), RTIMER_SECOND / 100);
+    BUSYWAIT_UNTIL(cc2420GetStatus() & BV(CC2420_RSSI_VALID), RTIMER_SECOND / 100);
 
     return CC2420_CCA_IS_1;
 }
@@ -697,7 +697,7 @@ void configureCCA(int8_t threshold, uint8_t mode)
     setreg(CC2420_RSSI, reg);
 
     // if (receive_on) {
-    //     BUSYWAIT_UNTIL(status() & BV(CC2420_RSSI_VALID), RTIMER_SECOND / 100);
+    //     BUSYWAIT_UNTIL(cc2420GetStatus() & BV(CC2420_RSSI_VALID), RTIMER_SECOND / 100);
     //     uint8_t on = CC2420_CCA_IS_1;
     //     PRINTF("CCA = %u\n", on);
     // }

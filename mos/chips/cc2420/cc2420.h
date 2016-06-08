@@ -25,6 +25,7 @@
 #define MANSOS_CC2420_H
 
 #include <defines.h>
+#include "cc2420_const.h"
 
 //
 // Configuration constants
@@ -85,5 +86,14 @@ int cc2420GetRSSI(void);
 bool cc2420IsChannelClear(void);
 
 void cc2420InitSpi(void);
+
+// Send continous wave (unmodulated signal carrier)
+void cc2420ContinousWave(bool on);
+
+// Get the CC2420 status byte. Check enum cc2420_status_byte.
+uint8_t cc2420GetStatus(void);
+
+// More API as Macro definitions
+#define cc2420IsTxBusy()  ( cc2420GetStatus() & (1 << CC2420_TX_ACTIVE))
 
 #endif

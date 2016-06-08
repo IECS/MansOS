@@ -66,7 +66,7 @@ enum cc2420_status_byte {
   CC2420_TX_UNDERFLOW   = 5,
   CC2420_ENC_BUSY   = 4,
   CC2420_TX_ACTIVE  = 3,
-  CC2420_LOCK       = 2,
+  CC2420_LOCK       = 2,  /* PLL is in lock */
   CC2420_RSSI_VALID = 1,
 };
 
