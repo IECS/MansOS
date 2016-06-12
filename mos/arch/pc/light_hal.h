@@ -24,6 +24,13 @@
 #ifndef PC_LIGHT_HAL_H
 #define PC_LIGHT_HAL_H
 
+#if USE_ADC
+#include <adc.h>
+#endif
+#include <platform.h>
+
+#ifndef lightRead
+
 // assume analog light sensors attached, same as on TelosB platform
 #define lightInit()
 #define lightOn()
@@ -31,6 +38,8 @@
 
 #define totalSolarRadiationRead()     adcRead(ADC_LIGHT_TOTAL)
 #define photosyntheticRadiationRead() adcRead(ADC_LIGHT_PHOTOSYNTHETIC)
-#define lightRead()                   totalSolarRadiationRead()
+#define lightRead()                   0
+
+#endif // lightRead not defined in platform-specific way
 
 #endif
