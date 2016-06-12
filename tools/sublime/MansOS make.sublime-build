@@ -32,5 +32,10 @@
           "cmd": ["make santa"],
           "shell": true
         },
+
+        { "name": "pc",
+          "cmd": ["make pc"],
+          "shell": true
+        },
     ]
 }
