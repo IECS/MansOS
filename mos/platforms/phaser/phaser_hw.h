@@ -60,12 +60,22 @@
 #define PHASER_B_A2 2
 #define PHASER_B_A3 3
 
+// User button
+// #define PHASER_BTN_PORT 1
+// #define PHASER_BTN_PIN 2
+
+PIN_DEFINE(PhaserBtn, 1, 2);
+
+
 //------------------------------------------
 // Phaser API 
 //------------------------------------------
 
 // Init - default to parallel mode
-#define PHASER_INIT()   PHASER_SET_PARALLEL();
+#define PHASER_INIT()       \
+   PhaserBtnAsInput();      \
+   PHASER_SET_PARALLEL();   \
+
 
 // Set mode to parallel interface. Default all phase channels to 0.
 //------------------------------------------
@@ -138,5 +148,10 @@
     pinAsOutput(PHASER_RFSP_PORT, PHASER_RFSP_PIN); \
     pinSet(PHASER_RFSP_PORT, PHASER_RFSP_PIN); \
 
+// Return true if button is down
+#define PHASER_BTN_DOWN()  (!PhaserBtnRead())
+
+// Return true if button is up
+#define PHASER_BTN_UP()  (PhaserBtnRead())
 
 #endif // _PHASER_HW_H_
