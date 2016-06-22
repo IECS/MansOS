@@ -45,9 +45,12 @@ def listenSerial():
                 ser.write(bytearray([c]))
             writeBuffer = ""
         # read
-        if ser.inWaiting():
-            s = ser.read(ser.inWaiting())
-            if type(s) is str: sys.stdout.write( s )
+        serLen = ser.inWaiting()
+        if serLen > 0:
+            s = ser.read(serLen)
+
+            if type(s) is str: 
+                sys.stdout.write( s )
             else:
                 for c in s:
                     sys.stdout.write( "{}".format(chr(c)) )
