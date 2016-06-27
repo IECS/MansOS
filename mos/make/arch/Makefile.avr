@@ -73,7 +73,7 @@ $(OUTDIR)/$(EXECUTABLE) : $(OUTDIR)/$(APPMOD).elf
 # TODO
 UPLOAD_TARGET=upload-atmega
 
-platform-upload : build $(UPLOAD_TARGET)
+platform-upload: build $(UPLOAD_TARGET)
 
 upload-atmega:
 	$(_QUIET) $(Print) ""
@@ -82,7 +82,7 @@ upload-atmega:
 	$(Print) ""
 	$(BSL) $(BSLCONFIG) -q -q -p $(MCU_MODEL) -c $(PROGRAMMER) -P $(BSLPORT) -b $(PROG_BAUDRATE) -D -Uflash:w:$(OUTDIR)/$(EXECUTABLE):i
 
-memdump : build
+memdump: build
 	$(_QUIET) $(MEMDUMP) $(OUTDIR)/$(APPMOD).elf avr
 
 size: build
