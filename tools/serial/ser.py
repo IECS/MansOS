@@ -64,6 +64,7 @@ def listenSerial():
     ser.close()
     return 0
 
+
 def serialPortsList():
     """ Lists serial port names
         :raises EnvironmentError:
@@ -71,13 +72,13 @@ def serialPortsList():
         :returns:
             A list of the serial ports available on the system
     """
-    if sys.platform.startswith('win'):
-        ports = ['COM%s' % (i + 1) for i in range(256)]
-    elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
+    if sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
         # this excludes your current terminal "/dev/tty"
         ports = glob.glob('/dev/tty[UA]*')
     elif sys.platform.startswith('darwin'):
-        ports = glob.glob('/dev/tty.serial*')
+        ports = glob.glob('/dev/tty.usbserial*')
+    elif sys.platform.startswith('win'):
+        ports = ['COM%s' % (i + 1) for i in range(256)]
     else:
         raise EnvironmentError('Unsupported platform')
 
@@ -91,6 +92,7 @@ def serialPortsList():
             pass
     result = sorted( result )
     return result
+
 
 def getCliArgs():
 
@@ -131,6 +133,9 @@ def main():
     flDone = False
 
     portsList = serialPortsList()
+    if len(portsList)<=0 :
+        sys.stderr.write("No serial ports found!\n")
+        return 1
 
     cliArgs = getCliArgs()
 
@@ -141,15 +146,12 @@ def main():
     sys.stderr.write("MansOS serial port access app, press Ctrl+C to exit\n")
 
     # Detect the platform. Serial ports are named differently for each
-    if _platform == "linux" or _platform == "linux2":
-        # linux
+    if sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
         sys.stderr.write("Detected Linux\n")
-    elif _platform == "darwin":
-        # MAC OS X
+    elif sys.platform.startswith('darwin'):
         sys.stderr.write("Detected Darwin\n")
     else:
-        # Windows
-        sys.stderr.write("Detected Windows\n")
+        sys.stderr.write("Assuming Windows\n")
 
     if cliArgs.list:
         sys.stderr.write("Available serial ports: ")
