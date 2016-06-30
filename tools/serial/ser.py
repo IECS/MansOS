@@ -4,7 +4,8 @@
 # Serial port communicator (listener/sender) application
 #
 
-import time, serial, sys, threading, argparse
+import time, serial, sys, threading, argparse, glob
+from sys import platform as _platform
 
 global flDone
 global cliArgs
@@ -62,9 +63,42 @@ def listenSerial():
     ser.close()
     return 0
 
+def serialPortsList():
+    """ Lists serial port names
+        :raises EnvironmentError:
+            On unsupported or unknown platforms
+        :returns:
+            A list of the serial ports available on the system
+    """
+    if sys.platform.startswith('win'):
+        ports = ['COM%s' % (i + 1) for i in range(256)]
+    elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
+        # this excludes your current terminal "/dev/tty"
+        ports = glob.glob('/dev/tty[UA]*')
+    elif sys.platform.startswith('darwin'):
+        ports = glob.glob('/dev/tty.serial*')
+    else:
+        raise EnvironmentError('Unsupported platform')
+
+    result = []
+    for port in ports:
+        try:
+            s = serial.Serial(port)
+            s.close()
+            result.append(port)
+        except (OSError, serial.SerialException):
+            pass
+    result = sorted( result )
+    return result
 
 def getCliArgs():
-    defaultSerialPort = "/dev/ttyUSB0"
+    
+    ports = serialPortsList()
+    print( ports )
+
+    # defaultSerialPort = "/dev/ttyUSB0"
+    defaultSerialPort = ports[0]
+
     defaultBaudRate = 38400
     version = "0.5/2013.01.17"
 
@@ -84,13 +118,23 @@ def getCliArgs():
     return parser.parse_args()
 
 
-
 def main():
     global flDone
     global cliArgs
     global writeBuffer
 
     flDone = False
+
+    # Detect the platform. Serial ports are named differently for each
+    if _platform == "linux" or _platform == "linux2":
+        # linux
+        sys.stderr.write("Detected Linux\n")
+    elif _platform == "darwin":
+        # MAC OS X
+        sys.stderr.write("Detected Darwin\n")
+    else:
+        # Windows
+        sys.stderr.write("Detected Windows\n")
 
     cliArgs = getCliArgs()
 
