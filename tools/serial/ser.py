@@ -10,6 +10,7 @@ from sys import platform as _platform
 global flDone
 global cliArgs
 global writeBuffer
+global portsList
 
 def getUserInput(prompt):
     if sys.version[0] >= '3':
@@ -92,15 +93,14 @@ def serialPortsList():
     return result
 
 def getCliArgs():
-    
-    ports = serialPortsList()
-    print( ports )
 
+    global portsList
+    
     # defaultSerialPort = "/dev/ttyUSB0"
-    defaultSerialPort = ports[0]
+    defaultSerialPort = portsList[0]
 
     defaultBaudRate = 38400
-    version = "0.5/2013.01.17"
+    version = "0.6/2016.06.30"
 
     parser = argparse.ArgumentParser(description="MansOS serial communicator", prog="ser")
 
@@ -122,8 +122,19 @@ def main():
     global flDone
     global cliArgs
     global writeBuffer
+    global portsList
 
     flDone = False
+
+    portsList = serialPortsList()
+
+    cliArgs = getCliArgs()
+
+    if cliArgs.serialPort in ("ACM", "chronos"):
+        cliArgs.serialPort = "/dev/ttyACM0" 
+        cliArgs.baudRate = 115200
+
+    sys.stderr.write("MansOS serial port access app, press Ctrl+C to exit\n")
 
     # Detect the platform. Serial ports are named differently for each
     if _platform == "linux" or _platform == "linux2":
@@ -136,13 +147,10 @@ def main():
         # Windows
         sys.stderr.write("Detected Windows\n")
 
-    cliArgs = getCliArgs()
+    sys.stderr.write("Available serial ports: ")
+    sys.stderr.write( str(portsList) )
+    sys.stderr.write("\n")
 
-    if cliArgs.serialPort in ("ACM", "chronos"):
-        cliArgs.serialPort = "/dev/ttyACM0" 
-        cliArgs.baudRate = 115200
-
-    sys.stderr.write("MansOS serial port access app, press Ctrl+C to exit\n")
     threading.Thread(target=listenSerial).start() 
 
     #Keyboard scanning loop
