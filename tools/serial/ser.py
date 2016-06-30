@@ -76,7 +76,7 @@ def serialPortsList():
         # this excludes your current terminal "/dev/tty"
         ports = glob.glob('/dev/tty[UA]*')
     elif sys.platform.startswith('darwin'):
-        ports = glob.glob('/dev/tty.usbserial*')
+        ports = glob.glob('/dev/tty.usb*')
     elif sys.platform.startswith('win'):
         ports = ['COM%s' % (i + 1) for i in range(256)]
     else:
