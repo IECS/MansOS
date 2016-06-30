@@ -115,6 +115,10 @@ def getCliArgs():
     parser.add_argument('-t', '--timeout', dest='timeout', action='store', default=1,
         help='timeout for serial (default: 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + version)
+
+    parser.add_argument('-l', '--list', action="store_true", default=False,
+        help='list available serial ports')
+
     return parser.parse_args()
 
 
@@ -147,9 +151,11 @@ def main():
         # Windows
         sys.stderr.write("Detected Windows\n")
 
-    sys.stderr.write("Available serial ports: ")
-    sys.stderr.write( str(portsList) )
-    sys.stderr.write("\n")
+    if cliArgs.list:
+        sys.stderr.write("Available serial ports: ")
+        sys.stderr.write( str(portsList) )
+        sys.stderr.write("\n")
+        return 0
 
     threading.Thread(target=listenSerial).start() 
 
