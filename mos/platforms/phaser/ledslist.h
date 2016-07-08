@@ -84,10 +84,10 @@ LED_UNIMPLEMENTED(led4)
 //-------------------------------------------
 #ifdef DOIT
 
+DOIT(ledOne)
 DOIT(blueLed)
 DOIT(greenLed)
 DOIT(redLed)
-DOIT(ledOne)
 
 // Reset DOIT for the next use
 #undef DOIT
