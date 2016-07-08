@@ -5,11 +5,12 @@ MansOS operating system has been developed since 2007
 with the following people contributing to the project at various times:
 
 * Leo Selavo (project idea and lead)
-* Girts Strazdins (from 2008)
-* Atis Elsts (from 2008)
+* Girts Strazdins (2008-2014)
+* Atis Elsts (2008-2014)
 * Janis Judvaitis (from 2011)
-* Andrey Vihrov (from 2011)
-* Viesturs Silins (from 2011)
+* Andrey Vihrov (2011-2014)
+* Georgijs Kanonirs (2013)
+* Viesturs Silins (2011)
 * Janis Gengeris (2007-2009)
 * Raimonds Samofals (2007-2009)
 * Leons Bekkers (2007-2008)
@@ -21,7 +22,7 @@ Certain aspects of MansOS have been influenced by the following other projects:
 * LiteOS operating system
 * Contiki operating system
 * Mantis operating system
-* Brennen Ball at http://blog.diyembedded.com/
+* Brennen Ball at http://blog.diyembedded.com/ - tutorials for Nordic semiconductors chips
 
 =================================
 Thanks to all contributors!
