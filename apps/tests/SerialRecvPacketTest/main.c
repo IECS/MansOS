@@ -57,13 +57,14 @@ static uint8_t buf[BUF_SIZE];
 void appMain(void)
 {
     // Set packet reception handler (callback function)
-    serialSetPacketReceiveHandle(1, serialPacketReceived, buf, BUF_SIZE);
+    serialSetPacketReceiveHandle(PRINTF_SERIAL_ID, serialPacketReceived, buf, BUF_SIZE);
     ledOff();
 
     // Send Ping every second
     static uint_t counter = 1;
     while (1) {
         PRINTF("Ping #%i\n", counter++);
+        ledToggle();
         mdelay(1000);
     }
 }
@@ -72,7 +73,7 @@ void serialPacketReceived(uint8_t bytes)
 {
     int i;
 
-    PRINTF("Pong ");
+    PRINTF("Pong: ");
     for(i=0; i<bytes; i++)
     {
         PRINTF("%c", (char)buf[i]);
