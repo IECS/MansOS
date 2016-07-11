@@ -42,7 +42,7 @@ void serialPacketReceived(uint8_t bytes);
  * Buffer size, in bytes
  */
 enum {
-    BUF_SIZE = 10
+    BUF_SIZE = 255
 };
 
 /**
@@ -68,10 +68,14 @@ void appMain(void)
     }
 }
 
-void serialPacketReceived(uint8_t bytes) {
-    // get ASCII digit from the first byte
-    uint8_t c = buf[0] - '0';
+void serialPacketReceived(uint8_t bytes) 
+{
+    int i;
 
-    ledsSet(c);
-    PRINTF("Pong %i %i\n", c, bytes);
+    PRINTF("Pong ");
+    for(i=0; i<bytes; i++)
+    {
+        PRINTF("%c", (char)buf[i]);
+    }
+    PRINTF("\n");
 }
