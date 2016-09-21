@@ -60,6 +60,10 @@
  * The page numbers below refer to pages in this document.
  */
 
+
+/* Page 48. */
+#define CC2420_RSSI_OFFSET -45
+
 /* Page 27. */
 enum cc2420_status_byte {
   CC2420_XOSC16M_STABLE = 6,

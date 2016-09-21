@@ -476,7 +476,7 @@ int_t cc2420Read(void *buf, uint16_t bufsize)
 #else
     if ((footer[1] & FOOTER1_CRC_OK)) {
 #endif // CC2420_CONF_CHECKSUM
-        cc2420_last_rssi = footer[0];
+        cc2420_last_rssi = footer[0] + CC2420_RSSI_OFFSET;
         cc2420_last_lqi = footer[1] & FOOTER1_LQI;
         result = len;
     } else {
@@ -640,7 +640,7 @@ int cc2420GetRSSI(void)
 
     BUSYWAIT_UNTIL(cc2420GetStatus() & BV(CC2420_RSSI_VALID), RTIMER_SECOND / 100);
 
-    return (int)((signed char)getreg(CC2420_RSSI));
+    return ((int)((signed char)getreg(CC2420_RSSI)) + CC2420_RSSI_OFFSET);
 }
 
 bool cc2420IsChannelClear(void)
