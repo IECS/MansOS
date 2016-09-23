@@ -63,7 +63,7 @@ ifeq ("", "$(filter clean cleanall help targets options $(PLATFORMS:%=clean%) mo
       	Please re-run 'make' with one of the targets from the following list:
         	$(PLATFORMS)
 
-	For more possible targets run \"make help\"
+	For more possible targets run: make help
       	..
     endef
     $(error $(W_NOTARGET))

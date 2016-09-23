@@ -140,6 +140,10 @@ size: build
 	$(_QUIET) msp430-size $(OUTDIR)/$(APPMOD).elf
 
 # FIXME: Setup is OS agnostic, assumes linux (Ubuntu, debian)
-setup: setupbase
+setup: setupbase setup-msp430
+	$(Print) ""
+	$(Print) "===== Setup for $(PLATFORM) : $(ARCH) architecture is done. ====="
+	$(Print) ""
+
+setup-msp430:
 	sudo apt-get install gcc-msp430 binutils-msp430 msp430-libc msp430mcu
-	$(error Setup done.)

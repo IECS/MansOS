@@ -95,6 +95,10 @@ stackdump-build:
 	@echo
 
 # FIXME: Setup is OS agnostic, assumes linux (Ubuntu, debian)
-setup: setupbase
+setup: setupbase setup-avr
+	$(Print) ""
+	$(Print) "===== Setup for $(PLATFORM) : $(ARCH) architecture is done. ====="
+	$(Print) ""
+
+setup-avr:
 	sudo apt-get install gcc-avr avr-libc avrdude
-	$(error Setup done.)

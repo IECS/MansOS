@@ -56,6 +56,7 @@
 #
 
 #===== Directories =====
+MOSROOT ?= /opt/MansOS
 MOS = $(MOSROOT)/mos
 
 OUTDIR = $(PROJDIR)/build
@@ -149,6 +150,12 @@ ifneq ($(PLATFORM),)
 endif
 
 # Decide whether to build or to skip this target for this platform
+
+SETUP_GOAL = $(filter setup, $(GOALS))
+ifneq ($(SETUP_GOAL),)
+PLATFORM_ACTION=platform_setup
+endif
+
 ifneq ("", "$(PLATFORM_ONLY)")
 ifeq ("","$(filter $(PLATFORM), $(PLATFORM_ONLY))")
 PLATFORM_ACTION=platform_skip
@@ -282,6 +289,10 @@ platform_build_seal: $(GENERATED_SOURCES)
 
 platform_skip:
 	$(Print) "Skipping $(PROJDIR)/$(APPMOD) for $(TARGET): not for this platform!"
+	$(Print) ""
+
+platform_setup:
+	$(Print) "===== Setup for $(TARGET) ====="
 	$(Print) ""
 
 ifeq ("$(SEAL_SOURCES)", "")
