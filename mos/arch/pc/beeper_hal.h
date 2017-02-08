@@ -29,11 +29,13 @@
 #define beeperInit()  
 #define beeperToggle() PRINTF("beep!\n")
 
-static inline void beeperBeep(uint16_t ms) {
+// static 
+inline void beeperBeep(uint16_t ms) {
     PRINTF("beep for %u ms in the default frequency\n", ms);
 }
 
-static inline void beeperBeepEx(uint16_t ms, uint16_t frequency) {
+// static 
+inline void beeperBeepEx(uint16_t ms, uint16_t frequency) {
     PRINTF("beep for %u ms in %u Hz frequency\n", ms, frequency);
 }
 

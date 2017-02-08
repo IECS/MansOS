@@ -33,7 +33,8 @@ ARCH = pc
 # code needs this
 CPU_MHZ ?= 4
 
-CFLAGS += -DPLATFORM_PC=1
+CFLAGS += -DPLATFORM_PC=1 -std=gnu89
+LDFLAGS += -std=gnu89
 
 #############################################
 # Define platform-specific sources

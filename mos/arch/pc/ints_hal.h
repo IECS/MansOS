@@ -25,16 +25,17 @@
 #define INTS_HAL_H
 
 // PC platform uses NO interrupts
-// #define DISABLE_INTS() // nothing
-// #define ENABLE_INTS()  // nothing
 
-// #define ATOMIC_START(x) (x) = 0
-// #define ATOMIC_END(x)   ((void) x)
+// void DISABLE_INTS(void){;}
+// void ENABLE_INTS(void){;}
 
-void DISABLE_INTS(void){;}
-void ENABLE_INTS(void){;}
+#define DISABLE_INTS() {;}
+#define ENABLE_INTS() {;}
 
-void ATOMIC_START(Handle_t handle) {(handle) = 0;}
-void ATOMIC_END(Handle_t handle) {;}
+// void ATOMIC_START(Handle_t handle) {(handle) = 0;}
+// void ATOMIC_END(Handle_t handle) {;}
+
+#define ATOMIC_START(handle) {;}
+#define ATOMIC_END(handle) {;}
 
 #endif
