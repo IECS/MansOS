@@ -106,11 +106,19 @@ void ads8328RegWrite16(uint8_t address, uint16_t data)
     ADS8328_SPI_DISABLE();
 }
 
+/*
+ADS8328 does not work with default MansOS HW SPI configuration, the phase needs to be changed
+Example for testbed2 platform:
+    UCA1CTL1 = UCSWRST;               
+    UCA1CTL1 |= UCSSEL_2;                        
+    UCA1BR0 = (CPU_HZ / SPI_SPEED) & 0xFF; 
+    UCA1BR1 = (CPU_HZ / SPI_SPEED) >> 8;   
+    UCA1CTL0 = (UCMSB | UCMST | UCMODE_2 | UCSYNC);            
+    UC1IE &= ~UCA1RXIE;             
+	UCA1CTL1 &= ~UCSWRST;   
+*/
 void ads8328Init(void)
 {
-
-    
-
     spiBusInit(ADS8328_SPI_ID, SPI_MODE_MASTER);
     pinAsOutput(ADS8328_CS_PORT, ADS8328_CS_PIN);
     
