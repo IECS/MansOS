@@ -673,7 +673,218 @@ bool sdcardWriteBlock(uint32_t address, const void *buf)
     SPRINTF("  done\n");
     return result;
 }
- 
+
+#if USE_SDCARD_DIVIDED_WRITE
+
+// Initialize step-by-step SD card block write
+void initDividedSdCardWrite(uint32_t address, const void *buf)
+{
+    // setup pointers for writting
+    targetAddress = address;
+    start = (uint8_t *) buf;
+    end = start + 512;
+    
+    //  if SDHC card: use block number instead of address
+    if (cardType == SD_CARD_TYPE_SDHC) targetAddress >>= 9;
+}
+
+// Process single step of SD card step-by-step write
+inline uint8_t dividedSdCardWrite()
+{
+    
+    pinSet(4, 6);
+	switch (sdWriteStep)
+	{
+	case 0:
+        if (serial[SDCARD_SPI_ID].busy != true)
+        {
+            SDCARD_SPI_ENABLE();
+        }
+        
+        sdWriteStep++;
+		break;
+    /*
+    sdcardCommand(CMD_WRITE_BLOCK, address, 0xff)
+static uint8_t sdcardCommand(uint8_t cmd, uint32_t arg, uint8_t crc)
+{
+//    SPRINTF("sdcardCommand %u, TAR=%u\n", (uint16_t) cmd, TAR);
+    STACK_GUARD();
+
+    // wait up to 300 ms if busy
+    waitCardNotBusyNoints(3 * TIMER_100_MS);
+
+    // send command
+    SDCARD_WR_BYTE(cmd | 0x40);
+
+    SDCARD_WR_LONG(arg);
+
+    // send CRC
+    SDCARD_WR_BYTE(crc);
+
+    // skip stuff byte for stop read
+    if (cmd == CMD_STOP_TRANSMISSION) SDCARD_RD_BYTE();
+
+    // wait for response
+    uint8_t i;
+    uint8_t status;
+    for (i = 0; i != 0xFF; i++) {
+        status = SDCARD_RD_BYTE();
+        // SPRINTF("status=%x\n", status);
+        // if (!(status & 0x80)) break;
+        if (status == 0 || status == 1) break;
+    }
+    
+    // do not disable SPI here!
+    return status;
+}
+*/    
+    case 1:
+        if (SDCARD_RD_BYTE() == 0xff)
+        {
+            sdWriteStep++;
+        }
+        break;
+        
+	case 2:
+        // send command
+        SDCARD_WR_BYTE(CMD_WRITE_BLOCK | 0x40);
+
+        sdWriteStep++;
+		break;
+        
+	case 3:
+        SDCARD_WR_LONG(targetAddress);
+
+        sdWriteStep++;
+		break;
+        
+	case 4:
+        // send CRC
+        SDCARD_WR_BYTE(0xff);
+
+        sdWriteStep++;
+		break;
+        
+	case 5:
+        status = SDCARD_RD_BYTE();
+        if (status == 0 || status == 1) 
+        {
+            sdWriteStep++;
+            return status;
+        }
+        
+		break;
+        
+        /*
+        static bool sdcardWriteData(uint8_t token, const uint8_t* data)
+{
+    SDCARD_WR_BYTE(token);
+    SDCARD_WR_MANY(data, 512);
+
+    // dummy crc
+    SDCARD_WR_BYTE(0xff);
+    SDCARD_WR_BYTE(0xff);
+
+    uint8_t status = SDCARD_RD_BYTE();
+    if ((status & DATA_RES_MASK) != DATA_RES_ACCEPTED) {
+        goto fail;
+    }
+    return true;
+
+  fail:
+    SDCARD_SPI_DISABLE();
+    return false;
+}
+*/
+	case 6:
+        SDCARD_WR_BYTE(DATA_START_BLOCK);
+        sdWriteStep++;
+		break;
+        
+	case 7:
+        spiExchByte(SDCARD_SPI_ID, *start++);
+        
+        if (start == end) 
+        {
+            sdWriteStep++;
+        }
+        break;
+        
+	case 8:
+        // dummy crc
+        SDCARD_WR_BYTE(0xff);
+        sdWriteStep++;
+        break;
+        
+	case 9:
+        SDCARD_WR_BYTE(0xff);
+        sdWriteStep++;
+		break;
+        
+	case 10:
+        if ((status = SDCARD_RD_BYTE() & DATA_RES_MASK) == DATA_RES_ACCEPTED) {
+            sdWriteStep++;
+        }
+		break;
+        
+	case 11:
+        if (SDCARD_RD_BYTE() == 0xff) {
+            sdWriteStep++;
+        }
+		break;
+        
+            
+    case 12:
+        if (SDCARD_RD_BYTE() == 0xff)
+        {
+            sdWriteStep++;
+        }
+        break;
+        
+    case 13:
+        // send command
+        SDCARD_WR_BYTE(CMD_SEND_STATUS | 0x40);
+
+        sdWriteStep++;
+		break;
+        
+	case 14:    
+        spiExchByte(SDCARD_SPI_ID, 0);
+        spiExchByte(SDCARD_SPI_ID, 0);
+        spiExchByte(SDCARD_SPI_ID, 0); 
+        spiExchByte(SDCARD_SPI_ID, 0);
+
+        sdWriteStep++;
+		break;
+        
+	case 15:
+        // send CRC
+        SDCARD_WR_BYTE(0xff);
+
+        sdWriteStep++;
+		break;
+        
+	case 16:
+        status = SDCARD_RD_BYTE();
+        if (status == 0 || status == 1) 
+        {
+            sdWriteStep = 0;
+        
+            SDCARD_SPI_DISABLE();
+            
+			pinClear(4, 6);
+            return 99;
+        }
+               
+		break;
+	}
+    
+    pinClear(4, 6);
+    return sdWriteStep;
+}
+
+#endif //USE_SDCARD_DIVIDED_WRITE
+
 // -----------------------------------------------------------------
 
 #if USE_SDCARD_LOW_LEVEL_API

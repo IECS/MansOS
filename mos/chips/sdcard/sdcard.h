@@ -59,6 +59,18 @@ void sdcardEraseSector(uint32_t addr);
 bool sdcardReadBlock(uint32_t addr, void* buffer);
 bool sdcardWriteBlock(uint32_t addr, const void *buf);
 
+#if USE_SDCARD_DIVIDED_WRITE
+uint32_t targetAddress;
+uint8_t sdWriteStep;
+
+uint8_t *start;
+uint8_t *end;
+uint8_t status;
+
+void initDividedSdCardWrite(uint32_t address, const void *buf);
+inline uint8_t dividedSdCardWrite();
+
+#endif //USE_SDCARD_DIVIDED_WRITE
 //
 // Higher-level API in case filesystem is not used.
 // Do not use both filesystem and these functions together.
