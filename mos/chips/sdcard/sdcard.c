@@ -684,6 +684,8 @@ void initDividedSdCardWrite(uint32_t address, const void *buf)
     start = (uint8_t *) buf;
     end = start + 512;
     
+    sdWriteStep = 0;
+    
     //  if SDHC card: use block number instead of address
     if (cardType == SD_CARD_TYPE_SDHC) targetAddress >>= 9;
 }
@@ -691,8 +693,6 @@ void initDividedSdCardWrite(uint32_t address, const void *buf)
 // Process single step of SD card step-by-step write
 inline uint8_t dividedSdCardWrite()
 {
-    
-    pinSet(4, 6);
 	switch (sdWriteStep)
 	{
 	case 0:
@@ -770,7 +770,6 @@ static uint8_t sdcardCommand(uint8_t cmd, uint32_t arg, uint8_t crc)
         if (status == 0 || status == 1) 
         {
             sdWriteStep++;
-            return status;
         }
         
 		break;
@@ -871,15 +870,11 @@ static uint8_t sdcardCommand(uint8_t cmd, uint32_t arg, uint8_t crc)
             sdWriteStep = 0;
         
             SDCARD_SPI_DISABLE();
-            
-			pinClear(4, 6);
-            return 99;
         }
                
 		break;
 	}
     
-    pinClear(4, 6);
     return sdWriteStep;
 }
 
