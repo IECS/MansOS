@@ -196,8 +196,10 @@ TIMER_READ(ALARM, TAR)
 
 #define TIMER_INTERRUPT_VECTOR  TAIV
 
+#ifndef PLATFORM_HAS_CORRECTION_TIMER
 // need for time correction
 #define PLATFORM_HAS_CORRECTION_TIMER 1
+#endif
     
 //===========================================================
 //===========================================================
