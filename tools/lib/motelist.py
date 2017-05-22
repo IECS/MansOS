@@ -349,6 +349,10 @@ class Motelist(object):
             return False
 
     @staticmethod
+    def getMotesByName(name):
+        return list(m for m in Motelist.getMotelist(True) if name in m.getName())
+
+    @staticmethod
     def printMotelist():
         motelist = Motelist.getMotelist(True)
 
