@@ -58,6 +58,7 @@ PSOURCES-$(USE_QUEUE) += $(MOS)/lib/queue.c
 PSOURCES-$(USE_ACTIVE_MSG_SERIAL) += $(MOS)/lib/tosmsg.c
 PSOURCES-$(USE_ACTIVE_MSG_RADIO) += $(MOS)/lib/activemsg.c
 PSOURCES-$(USE_CRC) += $(MOS)/lib/codec/crc.c
+PSOURCES-$(USE_TESTBED_COMM) += $(MOS)/lib/serialCommunication.c
 # Data processing
 PSOURCES-$(USE_ALGO) += $(MOS)/lib/algo.c
 PSOURCES-$(USE_AVERAGE) += $(MOS)/lib/processing/average.c
