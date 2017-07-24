@@ -182,7 +182,7 @@ PLATFORM_ACTION ?= $(BUILDDIR)/config.saved platform_build
 
 #===== Tools =====
 
-SEAL = $(MOSROOT)/tools/parser/main.py --path $(MOSROOT)
+SEAL = python $(MOSROOT)/tools/parser/main.py --path '$(MOSROOT)'
 
 MEMDUMP = python $(MOS)/make/scripts/memdump.py
 STACKDUMP = python $(MOS)/make/scripts/stackdump.py

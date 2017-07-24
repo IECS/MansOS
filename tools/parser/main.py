@@ -190,7 +190,7 @@ def main():
         numDirs = len(os.path.normpath(outputFileName).split(os.sep)) - 1
         dirname = os.path.dirname(os.path.realpath(outputFileName))
         if os.path.isabs(pathToOS):
-            makefilePathToOS = pathToOS
+            makefilePathToOS = pathToOS.strip('\\'); # \ is special character, creates problems in makefile where this path is inserted
         else:
             makefilePathToOS = os.path.normpath(dirname + os.sep + ('/..' * numDirs) + os.sep + pathToOS)
 
