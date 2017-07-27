@@ -4,7 +4,12 @@
 # Serial port communicator (listener/sender) application
 #
 
-import time, serial, sys, threading, argparse, glob
+import time
+import serial
+import sys
+import threading
+import argparse
+import glob
 from sys import platform as _platform
 
 global flDone
@@ -12,23 +17,25 @@ global cliArgs
 global writeBuffer
 global portsList
 
+
 def getUserInput(prompt):
     if sys.version[0] >= '3':
         return input(prompt)
     else:
         return raw_input(prompt)
 
+
 def listenSerial():
     global flDone
     global cliArgs
     global writeBuffer
-    
+
     try:
-        ser = serial.Serial(cliArgs.serialPort, cliArgs.baudRate, timeout=cliArgs.timeout, 
+        ser = serial.Serial(cliArgs.serialPort, cliArgs.baudRate, timeout=cliArgs.timeout,
                             parity=serial.PARITY_NONE, rtscts=cliArgs.flowcontrol)
         ser.flushInput()
         ser.flushOutput()
-        if cliArgs.platform not in ['xm1000', 'z1'] :
+        if cliArgs.platform not in ['xm1000', 'z1']:
             # make sure reset pin is low for the platforms that need it
             ser.setDTR(0)
             ser.setRTS(0)
@@ -37,8 +44,9 @@ def listenSerial():
         sys.stderr.write("\nSerial exception:\n\t{}".format(ex))
         flDone = True
         return
-    
-    sys.stderr.write("Using port {}, baudrate {}\n".format(ser.portstr, cliArgs.baudRate))
+
+    sys.stderr.write("Using port {}, baudrate {}\n".format(
+        ser.portstr, cliArgs.baudRate))
 
     while (not flDone):
         # write
@@ -51,11 +59,11 @@ def listenSerial():
         if serLen > 0:
             s = ser.read(serLen)
 
-            if type(s) is str: 
-                sys.stdout.write( s )
+            if type(s) is str:
+                sys.stdout.write(s)
             else:
                 for c in s:
-                    sys.stdout.write( "{}".format(chr(c)) )
+                    sys.stdout.write("{}".format(chr(c)))
             sys.stdout.flush()
         # allow other threads to run
         time.sleep(0.001)
@@ -90,36 +98,38 @@ def serialPortsList():
             result.append(port)
         except (OSError, serial.SerialException):
             pass
-    result = sorted( result )
+    result = sorted(result)
     return result
 
 
 def getCliArgs():
 
     global portsList
-    
+
     # defaultSerialPort = "/dev/ttyUSB0"
     defaultSerialPort = portsList[0]
 
     defaultBaudRate = 38400
     version = "0.6/2016.06.30"
 
-    parser = argparse.ArgumentParser(description="MansOS serial communicator", prog="ser")
+    parser = argparse.ArgumentParser(
+        description="MansOS serial communicator", prog="ser")
 
     parser.add_argument('-s', '--serial_port', dest='serialPort', action='store', default=defaultSerialPort,
-        help='serial port to listen (default: ' + defaultSerialPort + ' )')
+                        help='serial port to listen (default: ' + defaultSerialPort + ' )')
     parser.add_argument('-b', '--baud_rate', dest='baudRate', action='store', default=defaultBaudRate,
-        help='baud rate (default: ' + str(defaultBaudRate) + ')')
+                        help='baud rate (default: ' + str(defaultBaudRate) + ')')
     parser.add_argument('-p', '--platform', dest='platform', action='store', default='telosb',
-        help='platform (default: telosb)')
+                        help='platform (default: telosb)')
     parser.add_argument('-f', '--flowcontrol', dest='flowcontrol', action='store', default=False,
-        help='enable hardware flow control (default: False)')
+                        help='enable hardware flow control (default: False)')
     parser.add_argument('-t', '--timeout', dest='timeout', action='store', default=1,
-        help='timeout for serial (default: 1)')
-    parser.add_argument('--version', action='version', version='%(prog)s ' + version)
+                        help='timeout for serial (default: 1)')
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s ' + version)
 
     parser.add_argument('-l', '--list', action="store_true", default=False,
-        help='list available serial ports')
+                        help='list available serial ports')
 
     return parser.parse_args()
 
@@ -133,14 +143,14 @@ def main():
     flDone = False
 
     portsList = serialPortsList()
-    if len(portsList)<=0 :
+    if len(portsList) <= 0:
         sys.stderr.write("No serial ports found!\n")
         return 1
 
     cliArgs = getCliArgs()
 
     if cliArgs.serialPort in ("ACM", "chronos"):
-        cliArgs.serialPort = "/dev/ttyACM0" 
+        cliArgs.serialPort = "/dev/ttyACM0"
         cliArgs.baudRate = 115200
 
     sys.stderr.write("MansOS serial port access app, press Ctrl+C to exit\n")
@@ -155,25 +165,31 @@ def main():
 
     if cliArgs.list:
         sys.stderr.write("Available serial ports: ")
-        sys.stderr.write( str(portsList) )
+        sys.stderr.write(str(portsList))
         sys.stderr.write("\n")
         return 0
 
-    threading.Thread(target=listenSerial).start() 
+    threading.Thread(target=listenSerial).start()
 
-    #Keyboard scanning loop
+    # Keyboard scanning loop
     writeBuffer = ""
     while (not flDone):
         try:
             s = getUserInput("")
+
+            if s == "exit":
+                print("Exit command received")
+                flDone = True
+                return 0
         except BaseException as ex:
             sys.stderr.write("\nKeyboard interrupt\n")
             flDone = True
             return 0
 
         writeBuffer += s + '\r\n'
-    
+
     return 0
+
 
 if __name__ == "__main__":
     main()
