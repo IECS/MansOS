@@ -22,7 +22,7 @@
  */
 
 //-------------------------------------------
-// Blink - demo application that blinks a single LED with one second interval
+// Empty - demo application that compiles and does nothing
 //-------------------------------------------
 
 #include "stdmansos.h"
