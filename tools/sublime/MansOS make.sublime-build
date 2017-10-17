@@ -6,36 +6,74 @@
     // "file_regex": "^(...*?):([0-9]*):?([0-9]*)",
     "file_regex": "^(?:[\\w ]* )?(...*?(?:\\.h|\\.c)):([0-9]*):?([0-9]*)",
 
+    "windows": {
+      "cmd": ["bash.exe", "-ic", "make"],
+    },
+
     "variants": [
 
         { "name": "upload",
           "cmd": ["make upload"],
-          "shell": true
+          "shell": true,
+          "windows": {
+            "cmd": ["bash.exe", "-ic", "make upload"],
+          },
         },
 
         { "name": "clean",
           "cmd": ["make clean"],
-          "shell": true
+          "shell": true,
+          "windows": {
+            "cmd": ["bash.exe", "-ic", "make clean"],
+          },
         },
 
         { "name": "telosb",
           "cmd": ["make telosb"],
-          "shell": true
+          "shell": true,
+          "windows": {
+            "cmd": ["bash.exe", "-ic", "make telosb"],
+          },
         },
 
         { "name": "phaser",
           "cmd": ["make phaser"],
-          "shell": true
+          "shell": true,
+          "windows": {
+            "cmd": ["bash.exe", "-ic", "make phaser"],
+          },
         },
 
         { "name": "santa",
           "cmd": ["make santa"],
-          "shell": true
+          "shell": true,
+          "windows": {
+            "cmd": ["bash.exe", "-ic", "make santa"],
+          },
         },
 
         { "name": "pc",
           "cmd": ["make pc"],
-          "shell": true
+          "shell": true,
+          "windows": {
+            "cmd": ["bash.exe", "-ic", "make pc"],
+          },
+        },
+
+        { "name": "gcc and run",
+          "cmd": ["gcc $file && ./a.out"],
+          "shell": true,
+          "windows": {
+            "cmd": ["bash.exe", "-ic", "gcc $file && ./a.out"],
+          },
+        },
+
+        { "name": "Environment check: printenv | grep MOS",
+          "cmd": ["printenv | grep MOS"],
+          "shell": true,
+          "windows": {
+            "cmd": ["bash.exe", "-ic", "printenv | grep MOS"],
+          },
         },
     ]
 }
