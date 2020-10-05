@@ -1,5 +1,10 @@
 MansOS
 ===============
+**This repo is deprecated since 05.10.2020!**
+===============
+**New home of MansOS is here https://github.com/edi-riga/MansOS**
+
+
 An operating system for small embedded systems, wireless sensor networks and IoT.
 
 See the [wiki][] for a quick intro.
